@@ -1,0 +1,20 @@
+# Bazel settings for use in Github CI
+
+# Always display the flags being used
+common --announce_rc
+
+# Show errors in CI
+test --test_output=errors
+
+# Show more information about failures
+build --verbose_failures
+
+# UI for cleaner CI output
+common --color=no
+common --show_timestamps
+
+# Show all failures
+common --keep_going
+
+# TODO: Remove
+build --action_env=RULES_CC_AUTOCONF_DEBUG=2

@@ -1,0 +1,34 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+load("//autoconf/private/tests:diff_test.bzl", "diff_test")
+
+autoconf(
+    name = "config_gen",
+    package_name = "test_compute",
+    out = "config.h",
+    checks = [
+        macros.AC_COMPUTE_INT("TWO", "1 + 1"),
+        macros.AC_COMPUTE_INT("ANSWER", "42"),
+        macros.AC_COMPUTE_INT("HUNDRED", "100"),
+    ],
+    package_version = "1.0.0",
+    template = "config.h.in",
+)
+
+diff_test(
+    name = "diff_test",
+    file1 = "golden_config.h.in",
+    file2 = ":config.h",
+)
+
+cc_test(
+    name = "test_compute",
+    srcs = [
+        "test_compute.c",
+        ":config.h",
+    ],
+)
+
+# Note: AC_COMPUTE_INT is not cross-compile friendly (requires running compiled code)
+# so we don't compare against GNU autoconf output

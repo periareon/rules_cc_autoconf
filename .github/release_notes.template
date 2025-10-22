@@ -1,0 +1,8 @@
+# {version}
+
+## Setup
+```python
+bazel_dep(name = "rules_cc_autoconf", version = "{version}")
+```
+
+Additional documentation can be found at: https://github.com/periareon/rules_cc_autoconf

@@ -1,0 +1,45 @@
+load("@rules_rust_mdbook//:defs.bzl", "mdbook", "mdbook_server")
+load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
+load("@stardoc//stardoc:stardoc.bzl", "stardoc")
+
+stardoc(
+    name = "rules",
+    out = "src/rules.md",
+    input = "//autoconf:defs.bzl",
+    table_of_contents_template = "@stardoc//stardoc:templates/markdown_tables/table_of_contents.vm",
+    tags = ["manual"],
+    deps = ["//autoconf:defs_bzl"],
+)
+
+mdbook(
+    name = "book",
+    srcs = glob(["src/**/*.md"]) + [
+        ":rules",
+    ],
+    book = "book.toml",
+    # Windows builds are typically super slow in CI so they're avoided.
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
+alias(
+    name = "docs",
+    actual = ":book",
+    tags = ["manual"],
+)
+
+mdbook_server(
+    name = "server",
+    book = ":book",
+    tags = ["manual"],
+)
+
+sh_binary(
+    name = "publish_book",
+    srcs = ["publish_book.sh"],
+    data = [":book"],
+    env = {"BOOK_DIR": "$(rootpath :book)"},
+    tags = ["manual"],
+)

@@ -1,0 +1,30 @@
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+
+cc_binary(
+    name = "autoconf",
+    srcs = [
+        "arg_parse.cc",
+        "arg_parse.h",
+        "check.cc",
+        "check.h",
+        "check_result.h",
+        "check_runner.cc",
+        "check_runner.h",
+        "compilation.cc",
+        "config.cc",
+        "config.h",
+        "debug_logger.h",
+        "json.h",
+        "main.cc",
+        "source_generator.cc",
+        "source_generator.h",
+    ],
+    cxxopts = select({
+        "@rules_cc//cc/compiler:msvc-cl": ["/std:c++17"],
+        "//conditions:default": ["-std=c++17"],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "@nlohmann_json//:json",
+    ],
+)

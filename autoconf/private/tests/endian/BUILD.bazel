@@ -1,0 +1,21 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "config_gen",
+    package_name = "test_endian",
+    out = "config.h",
+    checks = [macros.AC_C_BIGENDIAN()],
+    package_version = "1.0.0",
+    template = "config.h.in",
+)
+
+# Note: endianness is platform-dependent, so we only run cc_test
+cc_test(
+    name = "test_endian",
+    srcs = [
+        "test_endian.c",
+        ":config.h",
+    ],
+)
