@@ -1,0 +1,40 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:macros.bzl", "macros")
+load("//autoconf:package_info.bzl", "package_info")
+
+package_info(
+    name = "package",
+    package_name = "test_symbols",
+    package_version = "1.0.0",
+)
+
+autoconf(
+    name = "autoconf",
+    checks = [
+        macros.AC_CHECK_SYMBOL(
+            "NULL",
+            code = "#include <stddef.h>",
+        ),
+        macros.AC_CHECK_SYMBOL("__linux__"),
+        macros.AC_CHECK_SYMBOL("NONEXISTENT_SYMBOL"),
+    ],
+    deps = [":package"],
+)
+
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    template = "config.h.in",
+    deps = [":autoconf"],
+)
+
+# Platform-dependent symbols, so only cc_test
+cc_test(
+    name = "test_symbols",
+    srcs = [
+        "test_symbols.c",
+        ":config.h",
+    ],
+)

@@ -1,0 +1,13 @@
+/* Test template file */
+#ifndef TEST_TEMPLATE_H
+#define TEST_TEMPLATE_H
+
+/* Package information */
+#undef PACKAGE_NAME
+#undef PACKAGE_VERSION
+
+/* Header checks */
+#undef HAVE_STDIO_H
+#undef HAVE_STDLIB_H
+
+#endif /* TEST_TEMPLATE_H */

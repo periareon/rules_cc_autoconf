@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  merge_group:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+env:
+  BAZEL_STARTUP_FLAGS: --bazelrc=${{ github.workspace }}/.github/github.bazelrc
+
+jobs:
+  ci:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+          - os: ubuntu-24.04
+          - os: ubuntu-24.04-arm
+          - os: windows-2022
+    steps:
+      # Checkout the code
+      - uses: actions/checkout@v4
+
+      - uses: bazel-contrib/setup-bazel@0.14.0
+        with:
+          bazelisk-cache: true
+          disk-cache: ${{ github.workflow }}
+          repository-cache: true
+
+      - name: Setup Bazelrc (Windows)
+        run: |
+          echo "TEMP=$env:RUNNER_TEMP" >> "$env:GITHUB_ENV"
+          echo "TMP=$env:RUNNER_TEMP" >> "$env:GITHUB_ENV"
+          echo "startup --output_user_root=D:/bzl" > ./user.bazelrc
+        if: startswith(runner.os, 'Windows')
+      - name: Setup Bazelrc
+        run: |
+          echo "common --keep_going" >> ./user.bazelrc
+
+      - name: Install Autoconf (MacOS)
+        run: |
+          brew install autoconf
+        if: startswith(runner.os, 'Mac')
+      - name: Install Autoconf (Linux)
+        run: |
+          apt install autoconf -y
+        if: startswith(runner.os, 'Ubuntu')
+
+      # Build and Test the code
+      - name: Test (Unix)
+        run: bazel ${BAZEL_STARTUP_FLAGS[@]} test //...
+        if: startswith(runner.os, 'Windows') != true
+      - name: Test (Windows)
+        run: bazel $env:BAZEL_STARTUP_FLAGS test //...
+        if: startswith(runner.os, 'Windows')
+
+  ci-format:
+    runs-on: ubuntu-24.04
+    steps:
+      # Checkout the code
+      - uses: actions/checkout@v4
+      - uses: bazel-contrib/setup-bazel@0.14.0
+        with:
+          bazelisk-cache: true
+          disk-cache: ${{ github.workflow }}
+          repository-cache: true
+
+      - name: Buildifier
+        run: |
+          wget "https://github.com/bazelbuild/buildtools/releases/download/v${BUILDIFIER_VERSION}/buildifier-linux-amd64" -O buildifier
+          chmod +x ./buildifier
+          ./buildifier -lint=warn -mode=check -warnings=all -r ${{ github.workspace }}
+          rm ./buildifier
+        env:
+          BUILDIFIER_VERSION: 8.2.0
+      - uses: DoozyX/clang-format-lint-action@v0.14
+        with:
+          source: '.'
+          extensions: 'h,c,cc'
+          clangFormatVersion: 14

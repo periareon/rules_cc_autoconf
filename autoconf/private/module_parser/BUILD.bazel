@@ -1,0 +1,12 @@
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("//autoconf/private:cxxopts.bzl", "cxxopts")
+
+cc_binary(
+    name = "module_parser",
+    srcs = [
+        "main.cc",
+    ],
+    cxxopts = cxxopts(),
+    visibility = ["//visibility:public"],
+    deps = ["//autoconf/private/json"],
+)

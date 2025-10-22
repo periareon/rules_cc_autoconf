@@ -1,0 +1,83 @@
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("//autoconf/private:cxxopts.bzl", "cxxopts")
+
+cc_library(
+    name = "check_types",
+    hdrs = [
+        "check.h",
+        "check_result.h",
+    ],
+    cxxopts = cxxopts(),
+    visibility = ["//autoconf/private:__subpackages__"],
+)
+
+cc_library(
+    name = "debug_logger",
+    hdrs = ["debug_logger.h"],
+    cxxopts = cxxopts(),
+)
+
+cc_library(
+    name = "config",
+    srcs = [
+        "check.cc",
+        "config.cc",
+    ],
+    hdrs = ["config.h"],
+    cxxopts = cxxopts(),
+    visibility = ["//autoconf/private:__subpackages__"],
+    deps = [
+        ":check_types",
+        ":debug_logger",
+        "//autoconf/private/json",
+    ],
+)
+
+cc_library(
+    name = "check_runner",
+    srcs = [
+        "check_runner.cc",
+        "compilation.cc",
+    ],
+    hdrs = [
+        "check_runner.h",
+    ],
+    cxxopts = cxxopts(),
+    visibility = ["//autoconf/private:__subpackages__"],
+    deps = [
+        ":check_types",
+        ":config",
+        ":debug_logger",
+        "//autoconf/private/json",
+    ],
+)
+
+cc_library(
+    name = "checker",
+    srcs = [
+        "checker.cc",
+    ],
+    hdrs = ["checker.h"],
+    cxxopts = cxxopts(),
+    visibility = ["//autoconf/private:__subpackages__"],
+    deps = [
+        ":check_runner",
+        "//autoconf/private/json",
+    ],
+)
+
+cc_binary(
+    name = "checker_bin",
+    srcs = [
+        "checker_arg_parse.cc",
+        "checker_arg_parse.h",
+        "main.cc",
+    ],
+    cxxopts = cxxopts(),
+    visibility = ["//visibility:public"],
+    deps = [
+        ":checker",
+        "//autoconf/private/json",
+    ],
+)

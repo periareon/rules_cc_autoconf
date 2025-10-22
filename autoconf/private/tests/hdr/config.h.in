@@ -1,0 +1,25 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Custom value */
+#undef CUSTOM_VALUE
+
+/* Enable feature */
+#undef ENABLE_FEATURE
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* Define to 1 if you have the <stdio.h> header file. */
+#undef HAVE_STDIO_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the `malloc' function. */
+#undef HAVE_MALLOC
+
+/* Define to 1 if you have the `printf' function. */
+#undef HAVE_PRINTF

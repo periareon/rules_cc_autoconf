@@ -1,0 +1,52 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:autoconf_srcs.bzl", "autoconf_srcs")
+load("//autoconf:macros.bzl", "macros")
+load("//autoconf:package_info.bzl", "package_info")
+
+package_info(
+    name = "package",
+    package_name = "test_srcs",
+    package_version = "1.0.0",
+)
+
+autoconf(
+    name = "autoconf",
+    checks = [
+        # Always-on feature.
+        macros.AC_DEFINE("HAVE_GOOD_SRC", "1"),
+        # Intentionally fails to compile so the check result is unsuccessful.
+        macros.AC_TRY_COMPILE(
+            code = "#error do not compile",
+            define = "HAVE_BAD_SRC",
+            language = "c",
+        ),
+    ],
+    deps = [":package"],
+)
+
+autoconf_hdr(
+    name = "config_h",
+    out = "config.h",
+    template = "config.h.in",
+    deps = [":autoconf"],
+)
+
+autoconf_srcs(
+    name = "generated_srcs",
+    srcs = {
+        "bad/bad.c": "HAVE_BAD_SRC",
+        "good/good.c": "HAVE_GOOD_SRC",
+    },
+    deps = [":autoconf"],
+)
+
+cc_test(
+    name = "test_srcs",
+    srcs = [
+        "test_driver.c",
+        ":config.h",
+        ":generated_srcs",
+    ],
+)

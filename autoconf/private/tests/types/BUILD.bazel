@@ -1,0 +1,70 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:macros.bzl", "macros")
+load("//autoconf:package_info.bzl", "package_info")
+load("//autoconf/private/tests:diff_test.bzl", "diff_test")
+
+package_info(
+    name = "package",
+    package_name = "test_types",
+    package_version = "1.0.0",
+)
+
+autoconf(
+    name = "autoconf",
+    checks = [
+        # Check without header - should fail
+        macros.AC_CHECK_TYPE("size_t"),
+        # Check with headers - should succeed
+        macros.AC_CHECK_TYPE(
+            "int8_t",
+            code = "#include <stdint.h>",
+        ),
+        macros.AC_CHECK_TYPE(
+            "int64_t",
+            code = "#include <stdint.h>",
+        ),
+        # Non-existent type
+        macros.AC_CHECK_TYPE("nonexistent_type_xyz"),
+    ],
+    deps = [":package"],
+)
+
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    template = "config.h.in",
+    deps = [":autoconf"],
+)
+
+diff_test(
+    name = "diff_test_unix",
+    file1 = "golden_config_unix.h.in",
+    file2 = ":config.h",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
+diff_test(
+    name = "diff_test_windows",
+    file1 = "golden_config_windows.h.in",
+    file2 = ":config.h",
+    target_compatible_with = select({
+        "@platforms//os:windows": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
+
+cc_test(
+    name = "test_types",
+    srcs = [
+        "test_types.c",
+        ":config.h",
+    ],
+)
+
+# gnu_autoconf_diff_test removed - we no longer support template-based checks
+# which GNU autoconf generates automatically
