@@ -1,0 +1,41 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/stdalign.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_ALIGNASOF from stdalign.m4
+# Check for alignas and alignof that conform to C23
+autoconf(
+    name = "stdalign",
+    checks = [
+        # Check for working alignas/alignof
+        macros.AC_TRY_COMPILE(
+            code = """\
+#include <stdint.h>
+#include <stddef.h>
+
+/* Test that alignof yields a result consistent with offsetof. */
+#define ao(type) offsetof (struct { char a; type b; }, b)
+char test_double[ao (double) % _Alignof (double) == 0 ? 1 : -1];
+char test_long[ao (long int) % _Alignof (long int) == 0 ? 1 : -1];
+
+int main(void) { return 0; }
+""",
+            define = "HAVE_WORKING_ALIGNOF",
+        ),
+        # Check with stdalign.h
+        macros.AC_TRY_COMPILE(
+            code = """\
+#include <stdint.h>
+#include <stdalign.h>
+#include <stddef.h>
+
+char test_alignof[alignof (double) == _Alignof (double) ? 1 : -1];
+
+int main(void) { return 0; }
+""",
+            define = "HAVE_STDALIGN_H",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

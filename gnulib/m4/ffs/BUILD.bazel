@@ -1,0 +1,20 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/ffs.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+# gl_FUNC_FFS macro from ffs.m4
+#
+# The M4 checks if ffs can be linked (might be static inline on Android).
+# If not found, it sets HAVE_FFS=0.
+#
+# Since strings_h already provides HAVE_FFS via AC_CHECK_FUNC, this module
+# just needs to depend on strings_h for the HAVE_FFS define.
+
+autoconf(
+    name = "ffs",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/strings_h",  # AC_REQUIRE([gl_STRINGS_H_DEFAULTS]) - provides HAVE_FFS
+    ],
+)

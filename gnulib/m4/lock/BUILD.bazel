@@ -1,0 +1,42 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/lock.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "lock",
+    checks = [
+        # Check for pthread types and features
+        # Equivalent to gl_LOCK macro from lock.m4
+        macros.AC_CHECK_TYPE(
+            "pthread_rwlock_t",
+            code = """\
+#include <pthread.h>
+int main(void) {
+    if (sizeof(pthread_rwlock_t))
+        return 0;
+    return 1;
+}
+""",
+            define = "HAVE_PTHREAD_RWLOCK",
+        ),
+        macros.AC_TRY_COMPILE(
+            code = """#include <pthread.h>
+#if __FreeBSD__ == 4
+error "No, in FreeBSD 4.0 recursive mutexes actually don't work."
+#elif (defined __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ \
+       && __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1070)
+error "No, in Mac OS X < 10.7 recursive mutexes actually don't work."
+#else
+int x = (int)PTHREAD_MUTEX_RECURSIVE;
+return !x;
+#endif""",
+            define = "HAVE_PTHREAD_MUTEX_RECURSIVE",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/threadlib",  # AC_REQUIRE([gl_THREADLIB])
+    ],
+)

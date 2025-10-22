@@ -1,0 +1,15 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/float_h.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "float_h",
+    checks = [
+        # gl_FLOAT_H macro from float_h.m4 has complex platform-specific checks
+        # for float.h completeness and ISO C23 conformance, including runtime
+        # checks that are not easily replicable in Bazel
+        # Note: AC_REQUIRE([AC_PROG_CC]) and AC_REQUIRE([AC_CANONICAL_HOST])
+        # are standard autoconf macros, not gnulib modules
+    ],
+    visibility = ["//visibility:public"],
+)

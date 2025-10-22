@@ -1,0 +1,40 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/pthread_mutex_timedlock.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# HAVE_PTHREAD_H comes from threadlib dependency
+
+autoconf(
+    name = "pthread_mutex_timedlock",
+    checks = [
+        # Check for the declaration - only if pthread.h exists
+        macros.AC_CHECK_DECL(
+            "pthread_mutex_timedlock",
+            headers = ["pthread.h"],
+            requires = ["HAVE_PTHREAD_H"],  # Skip if header doesn't exist
+        ),
+        # Check for actual function (FreeBSD 5.2.1 declares but doesn't define it)
+        macros.AC_TRY_COMPILE(
+            code = """\
+#include <pthread.h>
+#include <time.h>
+int main(void) {
+    pthread_mutex_t lock;
+    struct timespec ts = { 0 };
+    return pthread_mutex_timedlock (&lock, &ts);
+}
+""",
+            define = "HAVE_PTHREAD_MUTEX_TIMEDLOCK",
+            requires = [
+                "HAVE_PTHREAD_H",
+                "HAVE_DECL_PTHREAD_MUTEX_TIMEDLOCK",
+            ],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/pthread_h",  # AC_REQUIRE([gl_PTHREAD_H_DEFAULTS])
+        "//gnulib/m4/threadlib",  # Provides HAVE_PTHREAD_H
+    ],
+)

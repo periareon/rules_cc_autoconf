@@ -1,0 +1,42 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/argz.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "argz",
+    checks = [
+        # Check for argz functions and types
+        # Equivalent to gl_FUNC_ARGZ macro from argz.m4
+        macros.AC_CHECK_HEADER(
+            "argz.h",
+            define = "HAVE_ARGZ_H",
+        ),
+        macros.AC_CHECK_TYPE(
+            "error_t",
+            code = """\
+#include <argz.h>
+int main(void) {
+    if (sizeof(error_t))
+        return 0;
+    return 1;
+}
+""",
+            define = "HAVE_ERROR_T",
+        ),
+        # If argz_replace is not found, we need to generate argz.h
+        # Note: GL_GENERATE_ARGZ_H is handled as a shell variable in M4,
+        # but here we define a make variable or handle it via defines
+        macros.AC_CHECK_FUNC(
+            "argz_replace",
+            define = "HAVE_ARGZ_REPLACE",
+            if_false = [
+                macros.AC_DEFINE("GL_GENERATE_ARGZ_H", "1"),
+            ],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # Note: AC_C_RESTRICT and AC_CANONICAL_HOST are standard autoconf macros
+    ],
+)

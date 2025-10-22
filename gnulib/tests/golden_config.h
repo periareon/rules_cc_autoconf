@@ -1,0 +1,1 @@
+/* An empty config file to force all gnulib checks */

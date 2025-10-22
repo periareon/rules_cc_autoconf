@@ -1,0 +1,18 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/vasnwprintf-gnu.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "vasnwprintf-gnu",
+    checks = [
+        # gl_FUNC_VASNWPRINTF_GNU macro from vasnwprintf-gnu.m4 checks for GNU
+        # compatibility of vasnwprintf. Complex logic that depends on printf
+        # directive checks.
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # Note: gl_FUNC_VASNWPRINTF_IS_POSIX and gl_PRINTF_DIRECTIVE_UPPERCASE_B
+        # are likely in vasnwprintf and printf modules
+        # Note: gl_FUNC_VASNWPRINTF is likely in vasnwprintf module
+    ],
+)

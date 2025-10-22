@@ -1,0 +1,21 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fsusage.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# HAVE_SYS_VFS_H comes from sys_vfs_h dependency
+
+autoconf(
+    name = "fsusage",
+    checks = [
+        macros.AC_CHECK_HEADER("sys/statfs.h"),
+        macros.AC_CHECK_HEADER("sys/fs/s5param.h"),
+        macros.AC_CHECK_HEADER("sys/fs_types.h"),
+        macros.AC_CHECK_FUNC("statvfs"),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/pathmax",  # Provides HAVE_SYS_PARAM_H
+        "//gnulib/m4/sys_vfs_h",
+    ],
+)

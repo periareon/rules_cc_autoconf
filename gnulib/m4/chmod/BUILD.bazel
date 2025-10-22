@@ -1,0 +1,23 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/chmod.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "chmod",
+    checks = [
+        # Check for chmod function
+        # Equivalent to gl_FUNC_CHMOD macro from chmod.m4
+        # Note: Full implementation includes runtime checks for trailing slash
+        # handling that are not easily replicable in Bazel
+        macros.AC_CHECK_FUNC(
+            "chmod",
+            define = "HAVE_CHMOD",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/sys_stat_h",  # AC_REQUIRE([gl_SYS_STAT_H_DEFAULTS])
+        # Note: AC_REQUIRE([AC_CANONICAL_HOST]) is a standard autoconf macro
+    ],
+)

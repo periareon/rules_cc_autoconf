@@ -1,0 +1,35 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/vasnprintf.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# HAVE_SNPRINTF comes from snprintf dependency
+
+autoconf(
+    name = "vasnprintf",
+    checks = [
+        macros.AC_CHECK_FUNC("vasnprintf"),
+        macros.AC_CHECK_FUNC("wcrtomb"),
+        macros.AC_CHECK_TYPE("ptrdiff_t"),
+        macros.AC_CHECK_DECL(
+            "_snprintf",
+            headers = ["stdio.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "_snwprintf",
+            headers = ["stdio.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "wcsnlen",
+            headers = ["wchar.h"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/intmax_t",  # AC_REQUIRE([gt_AC_TYPE_INTMAX_T])
+        "//gnulib/m4/snprintf",  # Provides HAVE_SNPRINTF
+        "//gnulib/m4/strnlen",  # Provides HAVE_STRNLEN
+        "//gnulib/m4/wcslen",  # Provides HAVE_WCSLEN
+        "//gnulib/m4/wint_t",  # AC_REQUIRE([gt_TYPE_WINT_T])
+    ],
+)

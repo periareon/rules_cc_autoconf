@@ -1,0 +1,14 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/warn-on-use.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+# gl_WARN_ON_USE_PREPARE from warn-on-use.m4
+# This is a utility macro for preparing warning macros
+# No actual configure checks
+autoconf(
+    name = "warn-on-use",
+    checks = [
+        # No actual checks - utility macro for gnulib modules
+    ],
+    visibility = ["//visibility:public"],
+)

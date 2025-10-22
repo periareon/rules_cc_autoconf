@@ -1,0 +1,30 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/cnd.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "cnd",
+    checks = [
+        # Check for cnd_init function
+        # Equivalent to gl_FUNC_CND_INIT macro from cnd.m4
+        macros.AC_TRY_COMPILE(
+            code = """#include <threads.h>
+
+#ifdef __cplusplus
+extern "C"
+#endif
+char cnd_init ();
+
+int main(void) {
+    return cnd_init();
+}""",
+            define = "HAVE_CND_INIT",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/threads_h",  # AC_REQUIRE([gl_THREADS_H])
+    ],
+)

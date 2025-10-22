@@ -1,0 +1,15 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/rmdir.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+# gl_FUNC_RMDIR from rmdir.m4
+# HAVE_UNISTD_H comes from unistd_h dependency
+
+autoconf(
+    name = "rmdir",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/unistd_h",  # Provides HAVE_UNISTD_H
+    ],
+)

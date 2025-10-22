@@ -1,0 +1,13 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/gnu-make.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "gnu-make",
+    checks = [
+        # gl_GNU_MAKE macro from gnu-make.m4 checks for GNU Make at configure time.
+        # This is a build-time check that doesn't translate to Bazel autoconf checks.
+        # Bazel uses its own build system, so this check is not applicable.
+    ],
+    visibility = ["//visibility:public"],
+)

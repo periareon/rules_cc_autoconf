@@ -1,0 +1,16 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/mbrtoc32.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "mbrtoc32",
+    checks = [
+        macros.AC_CHECK_DECL(
+            "mbrtoc32",
+            define = "HAVE_DECL_MBRTOC32",
+            headers = ["uchar.h"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

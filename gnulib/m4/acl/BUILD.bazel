@@ -1,0 +1,124 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/acl.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "acl",
+    checks = [
+        macros.AC_CHECK_HEADER(
+            "sys/acl.h",
+            define = "HAVE_SYS_ACL_H",
+        ),
+        macros.AC_CHECK_HEADER(
+            "acl/libacl.h",
+            define = "HAVE_ACL_LIBACL_H",
+        ),
+        macros.AC_CHECK_HEADER(
+            "linux/xattr.h",
+            define = "HAVE_LINUX_XATTR_H",
+        ),
+        macros.AC_CHECK_HEADER(
+            "sys/smack.h",
+            define = "HAVE_SYS_SMACK_H",
+        ),
+        macros.AC_CHECK_FUNC(
+            "acl_get_file",
+            define = "HAVE_ACL_GET_FILE",
+        ),
+        macros.AC_CHECK_FUNC(
+            "acl_get_fd",
+            define = "HAVE_ACL_GET_FD",
+        ),
+        macros.AC_CHECK_FUNC(
+            "acl_set_file",
+            define = "HAVE_ACL_SET_FILE",
+        ),
+        macros.AC_CHECK_FUNC(
+            "acl_set_fd",
+            define = "HAVE_ACL_SET_FD",
+        ),
+        macros.AC_CHECK_FUNC(
+            "acl_get_link_np",
+            define = "HAVE_ACL_GET_LINK_NP",
+        ),
+        macros.AC_CHECK_FUNC(
+            "acl_free",
+            define = "HAVE_ACL_FREE",
+        ),
+        macros.AC_CHECK_FUNC(
+            "acl_from_mode",
+            define = "HAVE_ACL_FROM_MODE",
+        ),
+        macros.AC_CHECK_FUNC(
+            "acl_from_text",
+            define = "HAVE_ACL_FROM_TEXT",
+        ),
+        macros.AC_CHECK_FUNC(
+            "acl_delete_def_file",
+            define = "HAVE_ACL_DELETE_DEF_FILE",
+        ),
+        macros.AC_CHECK_FUNC(
+            "acl_extended_file",
+            define = "HAVE_ACL_EXTENDED_FILE",
+        ),
+        macros.AC_CHECK_FUNC(
+            "acl_delete_fd_np",
+            define = "HAVE_ACL_DELETE_FD_NP",
+        ),
+        macros.AC_CHECK_FUNC(
+            "acl_delete_file_np",
+            define = "HAVE_ACL_DELETE_FILE_NP",
+        ),
+        macros.AC_CHECK_FUNC(
+            "acl_copy_ext_native",
+            define = "HAVE_ACL_COPY_EXT_NATIVE",
+        ),
+        macros.AC_CHECK_FUNC(
+            "acl_create_entry_np",
+            define = "HAVE_ACL_CREATE_ENTRY_NP",
+        ),
+        macros.AC_CHECK_FUNC(
+            "acl_to_short_text",
+            define = "HAVE_ACL_TO_SHORT_TEXT",
+        ),
+        macros.AC_CHECK_FUNC(
+            "acl_free_text",
+            define = "HAVE_ACL_FREE_TEXT",
+        ),
+        # If acl_entries is found, HAVE_ACL_ENTRIES is automatically defined (default behavior)
+        # If not found, set NEED_ACL_ENTRIES=1
+        macros.AC_CHECK_FUNC(
+            "acl_entries",
+            define = "HAVE_ACL_ENTRIES",
+            if_false = [
+                macros.AC_DEFINE("NEED_ACL_ENTRIES", "1"),
+            ],
+        ),
+        macros.AC_CHECK_FUNC(
+            "facl",
+            define = "HAVE_FACL",
+        ),
+        macros.AC_CHECK_FUNC(
+            "acl_trivial",
+            define = "HAVE_ACL_TRIVIAL",
+        ),
+        macros.AC_CHECK_FUNC(
+            "getacl",
+            define = "HAVE_GETACL",
+        ),
+        macros.AC_CHECK_FUNC(
+            "aclx_get",
+            define = "HAVE_ACLX_GET",
+        ),
+        macros.AC_CHECK_FUNC(
+            "statacl",
+            define = "HAVE_STATACL",
+        ),
+        macros.AC_CHECK_FUNC(
+            "aclsort",
+            define = "HAVE_ACLSORT",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

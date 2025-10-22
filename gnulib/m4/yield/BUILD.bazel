@@ -1,0 +1,20 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/yield.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+# gl_YIELD macro from yield.m4
+# Note: The M4 macro conditionally sets YIELD_LIB based on gl_threads_api,
+# which requires runtime shell variable evaluation that cannot be directly
+# translated to Bazel. The dependencies provide the necessary checks.
+autoconf(
+    name = "yield",
+    checks = [
+        # No direct compile checks - only AC_REQUIRE and shell variable logic
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # AC_REQUIRE([gl_PTHREADLIB]) - included in threadlib
+        # AC_REQUIRE([gl_THREADLIB])
+        "//gnulib/m4/threadlib",
+    ],
+)

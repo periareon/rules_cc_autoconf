@@ -1,0 +1,26 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/inet_pton.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# HAVE_NETDB_H comes from netdb_h dependency
+
+autoconf(
+    name = "inet_pton",
+    checks = [
+        macros.AC_CHECK_FUNC("inet_pton"),
+        macros.AC_CHECK_DECL(
+            "inet_pton",
+            headers = [
+                "arpa/inet.h",
+                "netdb.h",
+            ],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/arpa_inet_h",  # AC_REQUIRE([gl_ARPA_INET_H_DEFAULTS])
+        "//gnulib/m4/netdb_h",  # Provides HAVE_NETDB_H
+        "//gnulib/m4/sys_socket_h",  # gl_PREREQ_SYS_H_WINSOCK2
+    ],
+)

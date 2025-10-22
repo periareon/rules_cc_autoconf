@@ -1,0 +1,19 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/pthread_h.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "pthread_h",
+    checks = [
+        macros.AC_CHECK_TYPE(
+            "pthread_t",
+            define = "HAVE_PTHREAD_T",
+        ),
+        macros.AC_CHECK_TYPE(
+            "pthread_spinlock_t",
+            define = "HAVE_PTHREAD_SPINLOCK_T",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

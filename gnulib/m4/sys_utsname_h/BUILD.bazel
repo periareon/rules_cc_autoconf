@@ -1,0 +1,15 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sys_utsname_h.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "sys_utsname_h",
+    checks = [
+        macros.AC_CHECK_TYPE(
+            "struct utsname",
+            define = "HAVE_STRUCT_UTSNAME",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

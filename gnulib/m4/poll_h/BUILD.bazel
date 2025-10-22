@@ -1,0 +1,15 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/poll_h.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "poll_h",
+    checks = [
+        macros.AC_CHECK_HEADER(
+            "poll.h",
+            define = "HAVE_POLL_H",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

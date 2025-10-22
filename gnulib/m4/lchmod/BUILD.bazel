@@ -1,0 +1,31 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/lchmod.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "lchmod",
+    checks = [
+        # Check for lchmod function
+        # Equivalent to gl_FUNC_LCHMOD macro from lchmod.m4
+        macros.AC_TRY_COMPILE(
+            code = """#include <sys/stat.h>
+
+#ifdef __cplusplus
+extern "C"
+#endif
+int lchmod ();
+
+int main(void) {
+    return lchmod();
+}""",
+            define = "HAVE_LCHMOD",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/sys_stat_h",  # AC_REQUIRE([gl_SYS_STAT_H_DEFAULTS])
+        # Note: AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
+    ],
+)

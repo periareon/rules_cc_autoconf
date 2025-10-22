@@ -1,0 +1,29 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/semaphore.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_SEMAPHORE from semaphore.m4
+# HAVE_LIBRT comes from threadlib dependency
+
+autoconf(
+    name = "semaphore",
+    checks = [
+        macros.AC_CHECK_HEADER("semaphore.h"),
+        macros.AC_TRY_COMPILE(
+            code = """\
+#include <semaphore.h>
+int main(void) {
+    sem_post ((sem_t *)0);
+    return 0;
+}
+""",
+            define = "HAVE_SEM_POST",
+            requires = ["HAVE_SEMAPHORE_H"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/threadlib",  # Provides HAVE_LIBRT
+    ],
+)

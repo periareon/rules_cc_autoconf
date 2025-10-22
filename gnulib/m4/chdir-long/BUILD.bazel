@@ -1,0 +1,16 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/chdir-long.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "chdir-long",
+    checks = [
+        # gl_FUNC_CHDIR_LONG macro from chdir-long.m4 checks for unlimited
+        # file name length support. This is a compile-time check using
+        # AC_EGREP_CPP to check if PATH_MAX is defined.
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/pathmax",  # AC_REQUIRE([gl_PATHMAX_SNIPPET_PREREQ])
+    ],
+)

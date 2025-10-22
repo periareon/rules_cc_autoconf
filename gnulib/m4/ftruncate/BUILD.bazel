@@ -1,0 +1,35 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/ftruncate.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "ftruncate",
+    checks = [
+        # Check for ftruncate function
+        # Equivalent to gl_FUNC_FTRUNCATE macro from ftruncate.m4
+        macros.AC_TRY_COMPILE(
+            code = """#include <unistd.h>
+
+#ifdef __cplusplus
+extern "C"
+#endif
+int ftruncate ();
+
+int main(void) {
+    return ftruncate();
+}""",
+            define = "HAVE_FTRUNCATE",
+            language = "c",
+        ),
+        macros.AC_CHECK_FUNC(
+            "_chsize",
+            define = "HAVE__CHSIZE",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
+        # Note: AC_REQUIRE([AC_CANONICAL_HOST]) is a standard autoconf macro
+    ],
+)

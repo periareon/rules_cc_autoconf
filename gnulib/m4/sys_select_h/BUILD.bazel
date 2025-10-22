@@ -1,0 +1,24 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sys_select_h.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_SYS_SELECT_H from sys_select_h.m4
+autoconf(
+    name = "sys_select_h",
+    checks = [
+        # Check if sys/select.h is self-contained
+        macros.AC_TRY_COMPILE(
+            code = """\
+#include <sys/select.h>
+int main(void) { return 0; }
+""",
+            define = "HAVE_SYS_SELECT_H_SELFCONTAINED",
+        ),
+        # Also check for select function
+        macros.AC_CHECK_FUNC("select"),
+        # Check for pselect function
+        macros.AC_CHECK_FUNC("pselect"),
+    ],
+    visibility = ["//visibility:public"],
+)

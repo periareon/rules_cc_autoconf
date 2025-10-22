@@ -1,0 +1,85 @@
+load("@rules_rust_mdbook//:defs.bzl", "mdbook", "mdbook_server")
+load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
+load("@stardoc//stardoc:stardoc.bzl", "stardoc")
+
+stardoc(
+    name = "autoconf",
+    out = "src/autoconf.md",
+    input = "//autoconf:autoconf.bzl",
+    table_of_contents_template = "@stardoc//stardoc:templates/markdown_tables/table_of_contents.vm",
+    tags = ["manual"],
+    deps = ["//autoconf:autoconf_bzl"],
+)
+
+stardoc(
+    name = "autoconf_hdr",
+    out = "src/autoconf_hdr.md",
+    input = "//autoconf:autoconf_hdr.bzl",
+    table_of_contents_template = "@stardoc//stardoc:templates/markdown_tables/table_of_contents.vm",
+    tags = ["manual"],
+    deps = ["//autoconf:autoconf_hdr_bzl"],
+)
+
+stardoc(
+    name = "autoconf_srcs",
+    out = "src/autoconf_srcs.md",
+    input = "//autoconf:autoconf_srcs.bzl",
+    table_of_contents_template = "@stardoc//stardoc:templates/markdown_tables/table_of_contents.vm",
+    tags = ["manual"],
+    deps = ["//autoconf:autoconf_srcs_bzl"],
+)
+
+stardoc(
+    name = "macros",
+    out = "src/macros.md",
+    input = "//autoconf:macros.bzl",
+    table_of_contents_template = "@stardoc//stardoc:templates/markdown_tables/table_of_contents.vm",
+    tags = ["manual"],
+    deps = ["//autoconf:macros_bzl"],
+)
+
+stardoc(
+    name = "package_info",
+    out = "src/package_info.md",
+    input = "//autoconf:package_info.bzl",
+    table_of_contents_template = "@stardoc//stardoc:templates/markdown_tables/table_of_contents.vm",
+    tags = ["manual"],
+    deps = ["//autoconf:package_info_bzl"],
+)
+
+mdbook(
+    name = "book",
+    srcs = glob(["src/**/*.md"]) + [
+        ":autoconf",
+        ":autoconf_hdr",
+        ":autoconf_srcs",
+        ":macros",
+        ":package_info",
+    ],
+    book = "book.toml",
+    # Windows builds are typically super slow in CI so they're avoided.
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
+alias(
+    name = "docs",
+    actual = ":book",
+    tags = ["manual"],
+)
+
+mdbook_server(
+    name = "server",
+    book = ":book",
+    tags = ["manual"],
+)
+
+sh_binary(
+    name = "publish_book",
+    srcs = ["publish_book.sh"],
+    data = [":book"],
+    env = {"BOOK_DIR": "$(rootpath :book)"},
+    tags = ["manual"],
+)

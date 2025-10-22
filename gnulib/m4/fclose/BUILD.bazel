@@ -1,0 +1,49 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fclose.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_FCLOSE macro from fclose.m4
+#
+# Sets REPLACE_FCLOSE=1 when:
+# - fflush doesn't work on input streams (from fflush dependency)
+# - REPLACE_CLOSE=1 (from close dependency)
+# - On OpenEdition
+# - fclose doesn't work on input streams (runtime test)
+#
+# Cross-compile heuristics for fclose_stdin:
+# - glibc: guess no → REPLACE_FCLOSE=1
+# - musl: guess yes
+# - mingw/windows: guess no → REPLACE_FCLOSE=1
+#
+# Since fflush already sets REPLACE_FFLUSH on broken platforms, and that
+# triggers REPLACE_FCLOSE, we mirror those + add glibc which has broken fclose_stdin.
+
+autoconf(
+    name = "fclose",
+    checks = select({
+        # glibc: fflush works but fclose_stdin doesn't
+        "@platforms//os:linux": [
+            macros.M4_DEFINE("REPLACE_FCLOSE", "1"),
+        ],
+        # NetBSD/OpenBSD: fflush broken → fclose needs replacement
+        "@platforms//os:netbsd": [
+            macros.M4_DEFINE("REPLACE_FCLOSE", "1"),
+        ],
+        "@platforms//os:openbsd": [
+            macros.M4_DEFINE("REPLACE_FCLOSE", "1"),
+        ],
+        # Windows: both fflush and fclose are broken
+        "@platforms//os:windows": [
+            macros.M4_DEFINE("REPLACE_FCLOSE", "1"),
+        ],
+        # musl and other platforms: assume fclose works
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/close",  # AC_REQUIRE([gl_FUNC_CLOSE]) - provides HAVE_UNISTD_H transitively
+        "//gnulib/m4/fflush",  # Uses gl_FUNC_FFLUSH_STDIN
+        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS])
+    ],
+)

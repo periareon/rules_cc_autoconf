@@ -1,0 +1,28 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Define to 1 if 'tm_nonexistent' is a member of 'struct tm'. */
+#undef HAVE_STRUCT_TM_TM_NONEXISTENT
+
+/* Define to 1 if 'tm_sec' is a member of 'struct tm'. */
+#undef HAVE_STRUCT_TM_TM_SEC
+
+/* Define to 1 if 'tm_year' is a member of 'struct tm'. */
+#undef HAVE_STRUCT_TM_TM_YEAR
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION

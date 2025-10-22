@@ -1,0 +1,14 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sys_uio_h.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_SYS_UIO_H from sys_uio_h.m4
+autoconf(
+    name = "sys_uio_h",
+    checks = [
+        # Check for sys/uio.h header
+        macros.AC_CHECK_HEADER("sys/uio.h"),
+    ],
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,21 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/modff.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "modff",
+    checks = [
+        # Check for modff function
+        # Equivalent to gl_FUNC_MODFF macro from modff.m4
+        # Note: Full implementation includes runtime checks for IEEE compliance
+        # that are complex to replicate in Bazel
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+        "//gnulib/m4/modf",  # AC_REQUIRE([gl_FUNC_MODF])
+        "//gnulib/m4/mathfunc",  # gl_MATHFUNC([modff], [float], [(float, float *)])
+        # Note: AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) and
+        # AC_REQUIRE([AC_CANONICAL_HOST]) are standard autoconf macros
+    ],
+)

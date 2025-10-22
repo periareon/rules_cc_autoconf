@@ -1,0 +1,42 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/ftello.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "ftello",
+    checks = [
+        # Check for ftello function and declaration
+        # Equivalent to gl_FUNC_FTELLO macro from ftello.m4
+        # Note: Full implementation includes runtime checks for Solaris and macOS bugs
+        # that are not easily replicable in Bazel
+        macros.AC_CHECK_DECL(
+            "ftello",
+            define = "HAVE_DECL_FTELLO",
+            headers = ["stdio.h"],
+        ),
+        macros.AC_TRY_COMPILE(
+            code = """\
+#include <stdio.h>
+
+int main(void) {
+    ftello(stdin);
+    return 0;
+}""",
+            define = "HAVE_FTELLO",
+            language = "c",
+        ),
+        macros.AC_CHECK_FUNC(
+            "_ftelli64",
+            define = "HAVE__FTELLI64",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS])
+        "//gnulib/m4/sys_types_h",  # AC_REQUIRE([gl_SYS_TYPES_H])
+        "//gnulib/m4/ungetc",  # Uses gl_FUNC_UNGETC_WORKS - conditional
+        # Note: AC_REQUIRE([AC_PROG_CC]), AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]),
+        # and AC_REQUIRE([AC_CANONICAL_HOST]) are standard autoconf macros
+    ],
+)

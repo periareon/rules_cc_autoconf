@@ -1,0 +1,17 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/msvc-inval.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "msvc-inval",
+    checks = [
+        # Check for _set_invalid_parameter_handler function
+        # Equivalent to gl_MSVC_INVAL macro from msvc-inval.m4
+        macros.AC_CHECK_FUNC(
+            "_set_invalid_parameter_handler",
+            define = "HAVE_MSVC_INVALID_PARAMETER_HANDLER",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

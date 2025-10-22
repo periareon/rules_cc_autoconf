@@ -1,0 +1,22 @@
+/* Gnulib header template - static inline content */
+#ifndef GNULIB_CONFIG_H
+#define GNULIB_CONFIG_H
+
+/* Package information from autoconf */
+#define GNULIB_PACKAGE_NAME PACKAGE_NAME
+#define GNULIB_PACKAGE_VERSION PACKAGE_VERSION
+
+/* Feature detection results */
+#if defined(HAVE_STDIO_H) && HAVE_STDIO_H
+#define GNULIB_HAVE_STDIO 1
+#else
+#define GNULIB_HAVE_STDIO 0
+#endif
+
+#if defined(HAVE_STDLIB_H) && HAVE_STDLIB_H
+#define GNULIB_HAVE_STDLIB 1
+#else
+#define GNULIB_HAVE_STDLIB 0
+#endif
+
+#endif /* GNULIB_CONFIG_H */

@@ -1,0 +1,19 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/wctype_h.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "wctype_h",
+    checks = [
+        macros.AC_CHECK_FUNC(
+            "towlower",
+            define = "HAVE_TOWLOWER",
+        ),
+        macros.AC_CHECK_DECL(
+            "towlower",
+            define = "HAVE_DECL_TOWLOWER",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

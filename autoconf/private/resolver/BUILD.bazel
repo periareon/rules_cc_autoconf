@@ -1,0 +1,46 @@
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("//autoconf/private:cxxopts.bzl", "cxxopts")
+
+# Library for source generation
+cc_library(
+    name = "source_generator",
+    srcs = ["source_generator.cc"],
+    hdrs = ["source_generator.h"],
+    cxxopts = cxxopts(),
+    visibility = ["//autoconf:__subpackages__"],
+    deps = [
+        "//autoconf/private/checker:check_types",
+        "//autoconf/private/checker:config",
+    ],
+)
+
+cc_library(
+    name = "resolver",
+    srcs = [
+        "resolver.cc",
+        "resolver.h",
+    ],
+    hdrs = ["resolver.h"],
+    cxxopts = cxxopts(),
+    visibility = ["//autoconf:__subpackages__"],
+    deps = [
+        ":source_generator",
+        "//autoconf/private/checker",
+        "//autoconf/private/json",
+    ],
+)
+
+cc_binary(
+    name = "resolver_bin",
+    srcs = [
+        "main.cc",
+        "resolver_arg_parse.cc",
+        "resolver_arg_parse.h",
+    ],
+    cxxopts = cxxopts(),
+    visibility = ["//visibility:public"],
+    deps = [
+        ":resolver",
+    ],
+)

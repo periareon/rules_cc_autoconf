@@ -1,0 +1,15 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/secure_getenv.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "secure_getenv",
+    checks = [
+        macros.AC_CHECK_FUNC(
+            "__secure_getenv",
+            define = "HAVE___SECURE_GETENV",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

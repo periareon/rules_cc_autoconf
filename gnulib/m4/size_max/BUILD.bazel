@@ -1,0 +1,30 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/size_max.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "size_max",
+    checks = [
+        # gl_SIZE_MAX from size_max.m4
+        # Check for stdint.h
+        macros.AC_CHECK_HEADER("stdint.h"),
+        # Check if SIZE_MAX is defined
+        macros.AC_TRY_COMPILE(
+            code = """\
+#include <limits.h>
+#if HAVE_STDINT_H
+#include <stdint.h>
+#endif
+#ifdef SIZE_MAX
+int main(void) { return 0; }
+#else
+#error SIZE_MAX not defined
+#endif
+""",
+            define = "HAVE_SIZE_MAX",
+            requires = ["HAVE_STDINT_H"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

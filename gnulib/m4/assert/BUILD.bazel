@@ -1,0 +1,12 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/assert.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "assert",
+    checks = [
+        # gl_ASSERT macro from assert.m4 handles --enable-assert/--disable-assert
+        # options. This is a configure-time option, not a compile-time check.
+    ],
+    visibility = ["//visibility:public"],
+)

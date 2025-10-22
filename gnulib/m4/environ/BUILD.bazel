@@ -1,0 +1,31 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/environ.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "environ",
+    checks = [
+        # Check for environ variable declaration
+        # Equivalent to gl_ENVIRON macro from environ.m4
+        macros.AC_TRY_COMPILE(
+            code = """#if HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#include <stdlib.h>
+
+extern char **environ;
+
+int main(void) {
+    return environ ? 0 : 1;
+}""",
+            define = "HAVE_DECL_ENVIRON",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
+        # Note: AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
+    ],
+)

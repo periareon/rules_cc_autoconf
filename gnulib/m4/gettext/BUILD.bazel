@@ -1,0 +1,14 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/gettext.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "gettext",
+    checks = [
+        # AM_GNU_GETTEXT macro from gettext.m4 is a complex macro for setting up
+        # internationalization. It involves library linking, NLS configuration,
+        # and many conditional checks that are not easily translatable to Bazel.
+        # This is typically handled at the project level rather than per-module.
+    ],
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,29 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/stat.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_STAT from stat.m4
+# On Windows (mingw/windows), REPLACE_STAT=1 is unconditionally set because
+# the original stat() returns st_atime, st_mtime, st_ctime values that are
+# affected by the time zone.
+autoconf(
+    name = "stat",
+    checks = [
+        macros.AC_CHECK_HEADER(
+            "sdkddkver.h",
+            define = "HAVE_SDKDDKVER_H",
+        ),
+    ] + select({
+        "@platforms//os:windows": [
+            # On Windows, unconditionally set REPLACE_STAT=1
+            macros.M4_DEFINE("REPLACE_STAT", "1"),
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        # AC_CHECK_FUNCS_ONCE([lstat]) - lstat also brings in sys_stat_h
+        "//gnulib/m4/lstat",
+    ],
+)

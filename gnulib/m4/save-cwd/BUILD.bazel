@@ -1,0 +1,14 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/save-cwd.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+# HAVE_FCHDIR comes from fchdir dependency
+
+autoconf(
+    name = "save-cwd",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/fchdir",  # Provides HAVE_FCHDIR
+    ],
+)

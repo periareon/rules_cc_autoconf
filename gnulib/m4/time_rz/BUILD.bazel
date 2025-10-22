@@ -1,0 +1,16 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/time_rz.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "time_rz",
+    checks = [
+        macros.AC_CHECK_TYPE(
+            "timezone_t",
+            define = "HAVE_TIMEZONE_T",
+        ),
+        macros.AC_DEFINE("HAVE_LOCALTIME_INFLOOP_BUG", "1"),
+    ],
+    visibility = ["//visibility:public"],
+)

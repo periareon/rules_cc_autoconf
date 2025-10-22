@@ -1,0 +1,17 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/configmake.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "configmake",
+    checks = [
+        # gl_CONFIGMAKE and gl_CONFIGMAKE_PREP macros from configmake.m4 handle
+        # directory variable configuration and transformation. These are complex
+        # macros that interact with autoconf's AC_SUBST and are not easily
+        # replicable in Bazel's compile-time check system.
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/build-to-host",  # Uses gl_BUILD_TO_HOST for directory variables
+    ],
+)

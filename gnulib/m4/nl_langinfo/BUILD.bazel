@@ -1,0 +1,32 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/nl_langinfo.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_NL_LANGINFO macro from nl_langinfo.m4
+# HAVE_THREADS_H comes from setlocale_null dependency
+
+autoconf(
+    name = "nl_langinfo",
+    checks = [
+        macros.AC_TRY_COMPILE(
+            code = """#include <langinfo.h>
+
+#ifdef __cplusplus
+extern "C"
+#endif
+char *nl_langinfo (nl_item);
+
+int main(void) {
+    return nl_langinfo(CODESET) != NULL ? 0 : 1;
+}""",
+            define = "HAVE_NL_LANGINFO",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/langinfo_h",  # AC_REQUIRE([gl_LANGINFO_H])
+        "//gnulib/m4/setlocale_null",  # Provides HAVE_THREADS_H
+    ],
+)

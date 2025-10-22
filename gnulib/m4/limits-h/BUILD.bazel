@@ -1,0 +1,35 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/limits-h.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "limits-h",
+    checks = [
+        # Check for limits.h header features
+        # Equivalent to gl_LIMITS_H macro from limits-h.m4
+        macros.AC_TRY_COMPILE(
+            code = """#ifndef __STDC_WANT_IEC_60559_BFP_EXT__
+#define __STDC_WANT_IEC_60559_BFP_EXT__ 1
+#endif
+#include <limits.h>
+long long llm = LLONG_MAX;
+int wb = WORD_BIT;
+int ullw = ULLONG_WIDTH;
+int bw = BOOL_WIDTH;
+int bm = BOOL_MAX;
+int mblm = MB_LEN_MAX;""",
+            define = "HAVE_LIMITS_H_WIDTH",
+            language = "c",
+        ),
+        macros.AC_TRY_COMPILE(
+            code = """#include <limits.h>
+#ifndef SSIZE_MAX
+#error "SSIZE_MAX is not defined"
+#endif""",
+            define = "HAVE_SSIZE_MAX",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

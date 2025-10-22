@@ -1,0 +1,19 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/signalblocking.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "signalblocking",
+    checks = [
+        # If sigprocmask is found, set HAVE_POSIX_SIGNALBLOCKING=1
+        macros.AC_CHECK_FUNC(
+            "sigprocmask",
+            define = "HAVE_SIGPROCMASK",
+            if_true = [
+                macros.AC_DEFINE("HAVE_POSIX_SIGNALBLOCKING", "1"),
+            ],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

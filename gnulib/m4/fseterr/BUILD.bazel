@@ -1,0 +1,28 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fseterr.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "fseterr",
+    checks = [
+        # Check for __fseterr function
+        # Equivalent to gl_FUNC_FSETERR macro from fseterr.m4
+        macros.AC_TRY_COMPILE(
+            code = """#include <stdio.h>
+#include <stdio_ext.h>
+
+#ifdef __cplusplus
+extern "C"
+#endif
+void __fseterr ();
+
+int main(void) {
+    return __fseterr();
+}""",
+            define = "HAVE___FSETERR",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

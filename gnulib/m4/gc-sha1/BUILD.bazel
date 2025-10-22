@@ -1,0 +1,15 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/gc-sha1.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "gc-sha1",
+    checks = [
+        # gl_GC_SHA1 macro from gc-sha1.m4 only has prerequisites
+        # No actual checks needed
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/gc",  # AC_REQUIRE([gl_GC])
+    ],
+)

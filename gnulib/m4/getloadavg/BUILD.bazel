@@ -1,0 +1,28 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/getloadavg.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# HAVE_PSTAT_GETDYNAMIC comes from physmem dependency
+# HAVE_SYS_PARAM_H comes from pathmax dependency
+
+autoconf(
+    name = "getloadavg",
+    checks = [
+        macros.AC_CHECK_HEADER("mach/mach.h"),
+        macros.AC_CHECK_HEADER("sys/loadavg.h"),
+        macros.AC_CHECK_HEADER("sys/dg_sys_info.h"),
+        macros.AC_CHECK_HEADER("inq_stats/cpustats.h"),
+        macros.AC_CHECK_HEADER("sys/cpustats.h"),
+        macros.AC_CHECK_DECL(
+            "getloadavg",
+            headers = ["stdlib.h"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/pathmax",  # Provides HAVE_SYS_PARAM_H
+        "//gnulib/m4/physmem",  # Provides HAVE_PSTAT_GETDYNAMIC
+        "//gnulib/m4/unistd_h",  # Provides HAVE_UNISTD_H
+    ],
+)

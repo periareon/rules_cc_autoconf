@@ -1,0 +1,25 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/gethostname.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_GETHOSTNAME macro from gethostname.m4
+# HAVE_SYS_SOCKET_H comes from sys_socket_h dependency
+# HAVE_SYS_PARAM_H comes from pathmax dependency
+# HAVE_NETDB_H comes from netdb_h dependency
+# HAVE_UNAME comes from uname dependency
+
+autoconf(
+    name = "gethostname",
+    checks = [
+        macros.AC_CHECK_FUNC("gethostname"),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/netdb_h",  # Provides HAVE_NETDB_H
+        "//gnulib/m4/pathmax",  # Provides HAVE_SYS_PARAM_H
+        "//gnulib/m4/sys_socket_h",  # Provides HAVE_SYS_SOCKET_H
+        "//gnulib/m4/uname",  # Provides HAVE_UNAME
+        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
+    ],
+)

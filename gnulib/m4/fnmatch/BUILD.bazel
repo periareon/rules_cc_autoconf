@@ -1,0 +1,19 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fnmatch.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# HAVE_MBSRTOWCS comes from mbsrtowcs dependency
+
+autoconf(
+    name = "fnmatch",
+    checks = [
+        macros.AC_CHECK_FUNC("fnmatch"),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/fnmatch_h",  # AC_REQUIRE([gl_FNMATCH_H])
+        "//gnulib/m4/mbsrtowcs",  # Provides HAVE_MBSRTOWCS
+        "//gnulib/m4/uchar_h",  # AC_REQUIRE([gl_UCHAR_H])
+    ],
+)

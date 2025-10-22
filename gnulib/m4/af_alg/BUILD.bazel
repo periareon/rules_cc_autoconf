@@ -1,0 +1,33 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/af_alg.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "af_alg",
+    checks = [
+        # Check for linux/if_alg.h with struct sockaddr_alg
+        # Equivalent to gl_AF_ALG macro from af_alg.m4
+        macros.AC_TRY_COMPILE(
+            code = """#include <sys/socket.h>
+#include <linux/if_alg.h>
+
+struct sockaddr_alg salg = {
+    .salg_family = AF_ALG,
+    .salg_type = "hash",
+    .salg_name = "sha1",
+};
+
+int main(void) {
+    return 0;
+}""",
+            define = "HAVE_LINUX_IF_ALG_H",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/sys_socket_h",  # AC_REQUIRE([gl_SYS_SOCKET_H])
+        # Note: AC_REQUIRE([AC_C_INLINE]) is a standard autoconf macro
+    ],
+)

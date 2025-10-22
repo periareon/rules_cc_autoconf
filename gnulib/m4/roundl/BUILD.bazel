@@ -1,0 +1,23 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/roundl.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_ROUNDL macro from roundl.m4
+# The ceill/floorl declarations are checked by the ceill/floorl modules
+
+autoconf(
+    name = "roundl",
+    checks = [
+        macros.AC_CHECK_DECL(
+            "roundl",
+            headers = ["math.h"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/ceill",  # Provides HAVE_DECL_CEILL
+        "//gnulib/m4/floorl",  # Provides HAVE_DECL_FLOORL
+        "//gnulib/m4/round",
+    ],
+)

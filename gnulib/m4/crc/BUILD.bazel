@@ -1,0 +1,13 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/crc.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "crc",
+    checks = [
+        # gl_CRC_SLICE_BY_8 and gl_DISABLE_CRC_SLICE_BY_8 macros from crc.m4
+        # handle configuration options for CRC slice-by-8 algorithm.
+        # These are configure-time options, not compile-time checks.
+    ],
+    visibility = ["//visibility:public"],
+)

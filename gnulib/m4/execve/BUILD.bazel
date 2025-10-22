@@ -1,0 +1,16 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/execve.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "execve",
+    checks = [
+        # gl_FUNC_EXECVE macro from execve.m4 sets REPLACE_EXECVE on Windows.
+        # No direct checks needed.
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
+        # Note: AC_REQUIRE([AC_CANONICAL_HOST]) is a standard autoconf macro
+    ],
+)

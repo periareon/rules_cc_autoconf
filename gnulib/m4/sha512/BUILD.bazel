@@ -1,0 +1,13 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sha512.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "sha512",
+    checks = [
+        # gl_SHA512 macro from sha512.m4 has prerequisites (gl_BIGENDIAN) and
+        # gl_CRYPTO_CHECK which checks for OpenSSL SHA512 support
+        # Note: Crypto checks are complex and may require library linking
+    ],
+    visibility = ["//visibility:public"],
+)

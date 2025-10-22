@@ -1,0 +1,21 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/raise.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "raise",
+    checks = [
+        # Check for raise function
+        # Equivalent to gl_FUNC_RAISE macro from raise.m4
+        macros.AC_CHECK_FUNC(
+            "raise",
+            define = "HAVE_RAISE",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/msvc-inval",  # m4_ifdef([gl_MSVC_INVAL], [AC_REQUIRE([gl_MSVC_INVAL])])
+        "//gnulib/m4/signal_h",  # AC_REQUIRE([gl_SIGNAL_H_DEFAULTS])
+    ],
+)

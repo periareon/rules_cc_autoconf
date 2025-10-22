@@ -1,0 +1,22 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/euidaccess.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_EUIDACCESS from euidaccess.m4
+# HAVE_EACCESS comes from eaccess, HAVE_FACCESSAT from faccessat
+
+autoconf(
+    name = "euidaccess",
+    checks = [
+        macros.AC_CHECK_FUNC("euidaccess"),
+        macros.AC_CHECK_DECL("setregid"),
+        macros.AC_CHECK_HEADER("libgen.h"),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/eaccess",  # Provides HAVE_EACCESS
+        "//gnulib/m4/faccessat",  # Provides HAVE_FACCESSAT
+        "//gnulib/m4/unistd_h",
+    ],
+)

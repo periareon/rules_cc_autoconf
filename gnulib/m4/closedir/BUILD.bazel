@@ -1,0 +1,21 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/closedir.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "closedir",
+    checks = [
+        # Check for closedir function
+        # Equivalent to gl_FUNC_CLOSEDIR macro from closedir.m4
+        macros.AC_CHECK_FUNC(
+            "closedir",
+            define = "HAVE_CLOSEDIR",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/dirent_h",  # AC_REQUIRE([gl_DIRENT_H_DEFAULTS])
+        # Note: AC_REQUIRE([AC_CANONICAL_HOST]) is a standard autoconf macro
+    ],
+)

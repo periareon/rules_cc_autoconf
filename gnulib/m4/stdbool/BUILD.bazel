@@ -1,0 +1,67 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/stdbool.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_STDBOOL_H macro from stdbool.m4
+# Checks for stdbool.h that conforms to C99
+autoconf(
+    name = "stdbool",
+    checks = [
+        # AC_CHECK_TYPES([_Bool])
+        macros.AC_CHECK_TYPE("_Bool"),
+        # AC_CHECK_HEADER_STDBOOL - check stdbool.h conforms to C99 or later
+        macros.AC_TRY_COMPILE(
+            code = """\
+#include <stdbool.h>
+
+/* "true" and "false" should be usable in #if expressions and
+   integer constant expressions, and "bool" should be a valid
+   type name. */
+
+#if !true
+  #error "'true' is not true"
+#endif
+#if true != 1
+  #error "'true' is not equal to 1"
+#endif
+char b[true == 1 ? 1 : -1];
+char c[true];
+
+#if false
+  #error "'false' is not false"
+#endif
+#if false != 0
+  #error "'false' is not equal to 0"
+#endif
+char d[false == 0 ? 1 : -1];
+
+enum { e = false, f = true, g = false * true, h = true * 256 };
+
+char i[(bool) 0.5 == true ? 1 : -1];
+char j[(bool) 0.0 == false ? 1 : -1];
+char k[sizeof (bool) > 0 ? 1 : -1];
+
+struct sb { bool s: 1; bool t; } s;
+char l[sizeof s.t > 0 ? 1 : -1];
+
+bool m[h];
+char n[sizeof m == h * sizeof m[0] ? 1 : -1];
+char o[-1 - (bool) 0 < 0 ? 1 : -1];
+
+bool p = true;
+bool *pp = &p;
+
+int main(void) {
+    bool ps = &s;
+    *pp |= p;
+    *pp |= ! p;
+    return (!b + !c + !d + !e + !f + !g + !h + !i + !j + !k
+            + !l + !m + !n + !o + !p + !pp + !ps);
+}
+""",
+            define = "HAVE_STDBOOL_H",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

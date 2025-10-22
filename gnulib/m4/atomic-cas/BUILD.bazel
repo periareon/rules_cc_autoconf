@@ -1,0 +1,26 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/atomic-cas.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "atomic-cas",
+    checks = [
+        # Check for __sync_bool_compare_and_swap builtin
+        # Equivalent to gl_ATOMIC_COMPARE_AND_SWAP macro from atomic-cas.m4
+        macros.AC_TRY_COMPILE(
+            code = """int cmpxchg (int* value, int comp_val, int new_val)
+{
+    return __sync_val_compare_and_swap (value, comp_val, new_val);
+}
+
+int main(void) {
+    int x = 0;
+    return cmpxchg(&x, 0, 1);
+}""",
+            define = "HAVE_ATOMIC_COMPARE_AND_SWAP_GCC41",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

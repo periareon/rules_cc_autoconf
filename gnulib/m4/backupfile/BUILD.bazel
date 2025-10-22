@@ -1,0 +1,21 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/backupfile.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "backupfile",
+    checks = [
+        # Check for pathconf function
+        # Equivalent to gl_BACKUPFILE macro from backupfile.m4
+        macros.AC_CHECK_FUNC(
+            "pathconf",
+            define = "HAVE_PATHCONF",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/d-ino",  # AC_REQUIRE([gl_CHECK_TYPE_STRUCT_DIRENT_D_INO])
+        # Note: AC_REQUIRE([AC_SYS_LONG_FILE_NAMES]) is a standard autoconf macro
+    ],
+)

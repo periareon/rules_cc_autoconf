@@ -1,0 +1,15 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sig_atomic_t.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "sig_atomic_t",
+    checks = [
+        macros.AC_CHECK_TYPE(
+            "sig_atomic_t",
+            define = "HAVE_SIG_ATOMIC_T",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

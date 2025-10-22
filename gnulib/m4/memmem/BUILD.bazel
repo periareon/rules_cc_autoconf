@@ -1,0 +1,24 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/memmem.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "memmem",
+    checks = [
+        # Check for memmem function
+        # Equivalent to gl_FUNC_MEMMEM_SIMPLE macro from memmem.m4
+        # Note: Full gl_FUNC_MEMMEM includes runtime performance checks
+        # that are not easily replicable in Bazel
+        macros.AC_CHECK_FUNC(
+            "memmem",
+            define = "HAVE_MEMMEM",
+        ),
+        macros.AC_CHECK_DECL(
+            "memmem",
+            define = "HAVE_DECL_MEMMEM",
+            headers = ["string.h"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

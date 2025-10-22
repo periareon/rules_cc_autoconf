@@ -1,0 +1,32 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/ffsl.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "ffsl",
+    checks = [
+        # Check for ffsl function
+        # Equivalent to gl_FUNC_FFSL macro from ffsl.m4
+        # Note: Uses AC_LINK_IFELSE instead of AC_CHECK_FUNC because ffsl()
+        # may be a static inline function on Android
+        macros.AC_TRY_COMPILE(
+            code = """\
+#include <string.h>
+#include <strings.h>
+
+int main(void) {
+    long x = 0;
+    int (*func) (long) = ffsl;
+    return func(x);
+}""",
+            define = "HAVE_FFSL",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/string_h",  # AC_REQUIRE([gl_STRING_H_DEFAULTS])
+        # Note: AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
+    ],
+)

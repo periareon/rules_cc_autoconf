@@ -1,0 +1,17 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/libunistring.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "libunistring",
+    checks = [
+        # gl_LIBUNISTRING macro from libunistring.m4 searches for libunistring
+        # library and determines its version. This involves library linking
+        # and version detection that is complex to replicate in Bazel.
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/lib-link",  # AC_LIB_HAVE_LINKFLAGS uses lib-link infrastructure
+        # Note: AM_ICONV is from gettext, not gnulib
+    ],
+)

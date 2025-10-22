@@ -1,0 +1,44 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/locale_h.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "locale_h",
+    checks = [
+        # Check for locale.h header features
+        # Equivalent to gl_LOCALE_H macro from locale_h.m4
+        macros.AC_TRY_COMPILE(
+            code = """#include <locale.h>
+_locale_t x;""",
+            define = "HAVE_WINDOWS_LOCALE_T",
+            language = "c",
+        ),
+        macros.AC_TRY_COMPILE(
+            code = """#include <locale.h>
+int x = LC_MESSAGES;
+int y = sizeof (((struct lconv *) 0)->decimal_point);""",
+            define = "HAVE_LOCALE_H_POSIX2001",
+            language = "c",
+        ),
+        macros.AC_TRY_COMPILE(
+            code = """#include <locale.h>
+struct lconv l;
+int x = sizeof (l.decimal_point);
+int y = sizeof (l.int_p_cs_precedes);""",
+            define = "HAVE_STRUCT_LCONV_OK",
+            language = "c",
+        ),
+        macros.AC_CHECK_HEADER(
+            "xlocale.h",
+            define = "HAVE_XLOCALE_H",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # Note: AC_REQUIRE([gl_LOCALE_H_DEFAULTS]) is defined in this module
+        # Note: AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
+        "//gnulib/m4/stddef_h",  # AC_REQUIRE([gl_STDDEF_H])
+        # Note: gl_LOCALE_T and AC_REQUIRE([AC_CANONICAL_HOST]) are standard
+    ],
+)

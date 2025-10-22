@@ -1,0 +1,20 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/socketlib.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "socketlib",
+    checks = [
+        # gl_SOCKETLIB macro from socketlib.m4 determines library for socket functions
+        # Uses AC_LINK_IFELSE to check for libraries, which is complex to replicate
+        macros.AC_CHECK_FUNC(
+            "setsockopt",
+            define = "HAVE_SETSOCKOPT",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/sys_socket_h",  # AC_REQUIRE([gl_PREREQ_SYS_H_WINSOCK2])
+    ],
+)

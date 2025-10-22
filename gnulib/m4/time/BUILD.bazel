@@ -1,0 +1,16 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/time.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_TIME from time.m4
+# COMPLEX CASE: Uses AC_RUN_IFELSE to test if time() works correctly.
+# Known bugs in glibc >= 2.31, FreeBSD, AIX, native Windows.
+autoconf(
+    name = "time",
+    checks = [
+        # Basic function check
+        macros.AC_CHECK_FUNC("time"),
+    ],
+    visibility = ["//visibility:public"],
+)

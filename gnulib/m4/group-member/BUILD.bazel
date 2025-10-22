@@ -1,0 +1,23 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/group-member.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "group-member",
+    checks = [
+        # Check for group_member function
+        # Equivalent to gl_FUNC_GROUP_MEMBER macro from group-member.m4
+        # Default behavior: HAVE_GROUP_MEMBER=1 if found, undefined if not found
+        macros.AC_CHECK_FUNC(
+            "group_member",
+            define = "HAVE_GROUP_MEMBER",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
+        "//gnulib/m4/getgroups",  # AC_REQUIRE([AC_FUNC_GETGROUPS])
+        # Note: AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
+    ],
+)

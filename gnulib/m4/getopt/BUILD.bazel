@@ -1,0 +1,15 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/getopt.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "getopt",
+    checks = [
+        macros.AC_CHECK_FUNC(
+            "getopt_long_only",
+            define = "HAVE_GETOPT_LONG_ONLY",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

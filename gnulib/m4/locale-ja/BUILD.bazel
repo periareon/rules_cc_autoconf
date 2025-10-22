@@ -1,0 +1,17 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/locale-ja.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "locale-ja",
+    checks = [
+        # gt_LOCALE_JA macro from locale-ja.m4 determines the name of a Japanese
+        # locale with EUC-JP encoding. This involves runtime locale testing
+        # that is complex to replicate in Bazel.
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # Note: AC_REQUIRE([AC_CANONICAL_HOST]) and AC_REQUIRE([AM_LANGINFO_CODESET])
+        # are standard autoconf macros (AM_LANGINFO_CODESET is from gettext)
+    ],
+)

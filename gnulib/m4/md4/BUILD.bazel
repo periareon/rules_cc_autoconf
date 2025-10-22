@@ -1,0 +1,12 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/md4.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "md4",
+    checks = [
+        # gl_MD4 macro from md4.m4 only has prerequisites (gl_BIGENDIAN)
+        # No actual checks needed
+    ],
+    visibility = ["//visibility:public"],
+)

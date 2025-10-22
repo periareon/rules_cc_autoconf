@@ -1,0 +1,154 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:macros.bzl", "macros")
+load("//autoconf:package_info.bzl", "package_info")
+load("//autoconf/private/tests:diff_test.bzl", "diff_test")
+
+package_info(
+    name = "package",
+    package_name = "test_requires",
+    package_version = "1.0.0",
+)
+
+# First autoconf rule with base checks (no package_info to avoid duplicates)
+autoconf(
+    name = "base_autoconf",
+    checks = [
+        macros.AC_CHECK_HEADER("stdio.h"),
+        macros.AC_CHECK_HEADER("stdlib.h"),
+        macros.AC_CHECK_HEADER("nonexistent_header_xyz.h"),
+        # M4 variables for testing value-based requires
+        macros.M4_DEFINE("REPLACE_FEATURE", "1"),  # Value is "1"
+        macros.M4_DEFINE("REPLACE_OTHER", "0"),  # Value is "0"
+    ],
+)
+
+# Second autoconf rule that depends on base_autoconf and uses requires
+autoconf(
+    name = "autoconf",
+    checks = [
+        # This should succeed because HAVE_STDIO_H is successful
+        macros.AC_CHECK_FUNC(
+            "printf",
+            requires = ["HAVE_STDIO_H"],
+        ),
+        # This should succeed because HAVE_STDLIB_H is successful
+        macros.AC_CHECK_FUNC(
+            "malloc",
+            requires = ["HAVE_STDLIB_H"],
+        ),
+        # This should fail because HAVE_NONEXISTENT_HEADER_XYZ_H is not successful
+        macros.AC_CHECK_FUNC(
+            "some_func",
+            requires = ["HAVE_NONEXISTENT_HEADER_XYZ_H"],
+        ),
+        # This should succeed because both requirements are met
+        macros.AC_CHECK_TYPE(
+            "FILE",
+            requires = ["HAVE_STDIO_H"],
+        ),
+        # Multiple requirements - both must succeed
+        macros.AC_CHECK_SYMBOL(
+            "NULL",
+            code = "#include <stdio.h>\n#include <stdlib.h>",
+            requires = [
+                "HAVE_STDIO_H",
+                "HAVE_STDLIB_H",
+            ],
+        ),
+        # Value-based requirement - should succeed because REPLACE_FEATURE=1
+        macros.AC_CHECK_FUNC(
+            "exit",
+            define = "HAVE_EXIT_WITH_FEATURE",
+            requires = ["REPLACE_FEATURE=1"],
+        ),
+        # Value-based requirement - should FAIL because REPLACE_OTHER=0, not 1
+        macros.AC_CHECK_FUNC(
+            "exit",
+            define = "HAVE_EXIT_WITH_OTHER",
+            requires = ["REPLACE_OTHER=1"],
+        ),
+        # Value-based requirement with correct value - should succeed
+        macros.AC_CHECK_FUNC(
+            "exit",
+            define = "HAVE_EXIT_WITH_OTHER_ZERO",
+            requires = ["REPLACE_OTHER=0"],
+        ),
+        # NEW: Test negated require with ! - should succeed because nonexistent header failed
+        macros.AC_DEFINE(
+            "NEGATED_REQUIRE_TEST",
+            "1",
+            requires = ["!HAVE_NONEXISTENT_HEADER_XYZ_H"],
+        ),
+        # NEW: Test negated require with ! - should FAIL because stdio.h exists
+        macros.AC_DEFINE(
+            "NEGATED_REQUIRE_FAIL",
+            "1",
+            requires = ["!HAVE_STDIO_H"],
+        ),
+        # NEW: Test == syntax - should succeed because REPLACE_FEATURE==1
+        macros.AC_DEFINE(
+            "DOUBLE_EQUALS_TEST",
+            "1",
+            requires = ["REPLACE_FEATURE==1"],
+        ),
+        # NEW: Test != syntax - should succeed because REPLACE_OTHER != 1
+        macros.AC_DEFINE(
+            "NOT_EQUALS_TEST",
+            "1",
+            requires = ["REPLACE_OTHER!=1"],
+        ),
+        # NEW: Test != syntax - should FAIL because REPLACE_FEATURE == 1
+        macros.AC_DEFINE(
+            "NOT_EQUALS_FAIL",
+            "1",
+            requires = ["REPLACE_FEATURE!=1"],
+        ),
+        # NEW: Test if_true - nested checks run when parent succeeds
+        macros.AC_CHECK_HEADER(
+            "string.h",
+            if_false = [
+                macros.AC_DEFINE("STRING_H_IF_FALSE", "1"),
+            ],
+            if_true = [
+                macros.AC_DEFINE("STRING_H_IF_TRUE", "1"),
+            ],
+        ),
+        # NEW: Test if_false - nested checks run when parent fails
+        macros.AC_CHECK_HEADER(
+            "another_nonexistent_xyz.h",
+            if_false = [
+                macros.AC_DEFINE("NONEXISTENT2_IF_FALSE", "1"),
+            ],
+            if_true = [
+                macros.AC_DEFINE("NONEXISTENT2_IF_TRUE", "1"),
+            ],
+        ),
+    ],
+    deps = [
+        ":base_autoconf",
+        ":package",
+    ],
+)
+
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    template = "config.h.in",
+    deps = [":autoconf"],
+)
+
+diff_test(
+    name = "diff_test",
+    file1 = "golden_config.h.in",
+    file2 = ":config.h",
+)
+
+cc_test(
+    name = "test_requires",
+    srcs = [
+        "test_requires.c",
+        ":config.h",
+    ],
+)

@@ -1,0 +1,6 @@
+# Git ignore patterns
+
+/bazel-*
+user.bazelrc
+
+/.vscode/

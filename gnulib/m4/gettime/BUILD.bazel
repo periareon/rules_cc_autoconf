@@ -1,0 +1,19 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/gettime.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "gettime",
+    checks = [
+        macros.AC_CHECK_DECL(
+            "timespec_get",
+            define = "HAVE_DECL_TIMESPEC_GET",
+            headers = ["time.h"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/timespec",
+    ],
+)

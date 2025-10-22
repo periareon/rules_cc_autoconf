@@ -1,0 +1,27 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/stddef_h.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_STDDEF_H from stddef_h.m4
+autoconf(
+    name = "stddef_h",
+    checks = [
+        # Check for stddef.h
+        macros.AC_CHECK_HEADER("stddef.h"),
+        # Check for max_align_t type with proper alignment
+        macros.AC_TRY_COMPILE(
+            code = """\
+#include <stddef.h>
+unsigned int s = sizeof (max_align_t);
+#if defined __GNUC__ || defined __clang__ || defined __IBM__ALIGNOF__
+int check1[2 * (__alignof__ (double) <= __alignof__ (max_align_t)) - 1];
+int check2[2 * (__alignof__ (long double) <= __alignof__ (max_align_t)) - 1];
+#endif
+int main(void) { return 0; }
+""",
+            define = "HAVE_MAX_ALIGN_T",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

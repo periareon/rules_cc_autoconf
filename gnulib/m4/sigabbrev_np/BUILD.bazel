@@ -1,0 +1,15 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sigabbrev_np.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "sigabbrev_np",
+    checks = [
+        macros.AC_CHECK_FUNC(
+            "sigabbrev_np",
+            define = "HAVE_SIGABBREV_NP",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

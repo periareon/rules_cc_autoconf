@@ -1,0 +1,54 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/stdio_h.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_STDIO_H from stdio_h.m4
+# COMPLEX CASE: This is a complex header replacement module that checks
+# for many printf/scanf features. Full migration would require many
+# runtime tests.
+autoconf(
+    name = "stdio_h",
+    checks = [
+        # Check for stdio.h header
+        macros.AC_CHECK_HEADER("stdio.h"),
+        # Check for various function declarations
+        macros.AC_CHECK_DECL(
+            "dprintf",
+            headers = ["stdio.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "fseeko",
+            headers = ["stdio.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "getdelim",
+            headers = ["stdio.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "getline",
+            headers = ["stdio.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "snprintf",
+            headers = ["stdio.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "vsnprintf",
+            headers = ["stdio.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "fcloseall",
+            headers = ["stdio.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "getw",
+            headers = ["stdio.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "putw",
+            headers = ["stdio.h"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

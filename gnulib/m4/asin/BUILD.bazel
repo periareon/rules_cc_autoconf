@@ -1,0 +1,20 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/asin.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "asin",
+    checks = [
+        # Check for asin function
+        # Equivalent to gl_FUNC_ASIN macro from asin.m4
+        macros.AC_CHECK_FUNC(
+            "asin",
+            define = "HAVE_ASIN",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/mathfunc",  # Uses gl_COMMON_DOUBLE_MATHFUNC([asin])
+    ],
+)

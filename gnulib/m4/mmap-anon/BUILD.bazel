@@ -1,0 +1,36 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/mmap-anon.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "mmap-anon",
+    checks = [
+        # Check for MAP_ANONYMOUS or MAP_ANON in sys/mman.h
+        # Equivalent to gl_FUNC_MMAP_ANON macro from mmap-anon.m4
+        macros.AC_CHECK_HEADER(
+            "sys/mman.h",
+            define = "HAVE_SYS_MMAN_H",
+        ),
+        macros.AC_TRY_COMPILE(
+            code = """#include <sys/mman.h>
+#ifdef MAP_ANONYMOUS
+int x = MAP_ANONYMOUS;
+#endif""",
+            define = "HAVE_MAP_ANONYMOUS",
+            language = "c",
+        ),
+        macros.AC_TRY_COMPILE(
+            code = """#include <sys/mman.h>
+#ifdef MAP_ANON
+int x = MAP_ANON;
+#endif""",
+            define = "HAVE_MAP_ANON",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # Note: AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
+    ],
+)

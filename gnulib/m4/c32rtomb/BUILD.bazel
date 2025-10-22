@@ -1,0 +1,16 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/c32rtomb.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "c32rtomb",
+    checks = [
+        macros.AC_CHECK_DECL(
+            "c32rtomb",
+            define = "HAVE_DECL_C32RTOMB",
+            headers = ["uchar.h"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

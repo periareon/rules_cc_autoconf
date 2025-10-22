@@ -1,0 +1,37 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Define to 1 if you have the <stdio.h> header file. */
+#define HAVE_STDIO_H 1
+
+/* Define to 1 if you have the <nonexistent_header_abc.h> header file. */
+/* #undef HAVE_NONEXISTENT_HEADER_ABC_H */
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#define HAVE_STDLIB_H 1
+
+/* Define to 1 if you have the <nonexistent_header_def.h> header file. */
+/* #undef HAVE_NONEXISTENT_HEADER_DEF_H */
+
+/* A value that has no autoconf define at all. */
+/* #undef NEVER_MENTIONED */
+
+/* Define to the address where bug reports for this package should be sent. */
+#define PACKAGE_BUGREPORT ""
+
+/* Define to the full name of this package. */
+#define PACKAGE_NAME "test_undefs"
+
+/* Define to the full name and version of this package. */
+#define PACKAGE_STRING "test_undefs 1.0.0"
+
+/* Define to the one symbol short name of this package. */
+#define PACKAGE_TARNAME "test_undefs"
+
+/* Define to the home page for this package. */
+#define PACKAGE_URL ""
+
+/* Define to the version of this package. */
+#define PACKAGE_VERSION "1.0.0"
+
+/* A value that has no autoconf define at all. */
+/* #undef ALSO_NEVER_MENTIONED */

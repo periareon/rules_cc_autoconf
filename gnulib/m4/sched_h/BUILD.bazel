@@ -1,0 +1,18 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sched_h.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_SCHED_H from sched_h.m4
+
+autoconf(
+    name = "sched_h",
+    checks = [
+        macros.AC_CHECK_HEADER("sched.h"),
+        macros.AC_CHECK_TYPE(
+            "struct sched_param",
+            code = "#include <sched.h>",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

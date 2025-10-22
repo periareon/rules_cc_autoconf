@@ -1,0 +1,35 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/open.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_OPEN from open.m4
+# On Windows (mingw/windows/pw), REPLACE_OPEN=1 is unconditionally set.
+# On other platforms, there are additional checks for:
+# - O_DIRECTORY support
+# - O_CLOEXEC support
+# - trailing slash bug
+autoconf(
+    name = "open",
+    checks = [
+        # Check for open function
+        macros.AC_CHECK_FUNC("open"),
+    ] + select({
+        "@platforms//os:windows": [
+            # On Windows, unconditionally set REPLACE_OPEN=1
+            macros.M4_DEFINE("REPLACE_OPEN", "1"),
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        # m4_ifdef([gl_FUNC_FCHDIR], [gl_TEST_FCHDIR])
+        "//gnulib/m4/fchdir",
+        # AC_CHECK_FUNCS_ONCE([lstat]) - provided by lstat dependency
+        "//gnulib/m4/lstat",
+        # AC_REQUIRE([gl_PREPROC_O_CLOEXEC])
+        "//gnulib/m4/open-cloexec",
+        # gl_OPEN_TRAILING_SLASH_BUG
+        "//gnulib/m4/open-slash",
+    ],
+)

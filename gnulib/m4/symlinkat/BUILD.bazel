@@ -1,0 +1,17 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/symlinkat.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_SYMLINKAT from symlinkat.m4
+autoconf(
+    name = "symlinkat",
+    checks = [
+        # Check for symlinkat function
+        macros.AC_CHECK_FUNC("symlinkat"),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/openat",
+    ],
+)

@@ -1,0 +1,30 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/argp.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# HAVE_DECL_PROGRAM_INVOCATION_NAME and HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME
+# come from getprogname dependency
+
+autoconf(
+    name = "argp",
+    checks = [
+        macros.AC_CHECK_FUNC("argp_parse"),
+        macros.AC_TRY_COMPILE(
+            code = """extern char *program_invocation_name;
+int main() { program_invocation_name = "test"; return 0; }""",
+            define = "HAVE_PROGRAM_INVOCATION_NAME",
+            language = "c",
+        ),
+        macros.AC_TRY_COMPILE(
+            code = """extern char *program_invocation_short_name;
+int main() { program_invocation_short_name = "test"; return 0; }""",
+            define = "HAVE_PROGRAM_INVOCATION_SHORT_NAME",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/getprogname",  # Provides HAVE_DECL_PROGRAM_INVOCATION_*
+    ],
+)

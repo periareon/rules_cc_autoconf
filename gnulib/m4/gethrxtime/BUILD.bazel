@@ -1,0 +1,16 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/gethrxtime.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "gethrxtime",
+    checks = [
+        macros.AC_CHECK_DECL(
+            "gethrtime",
+            define = "HAVE_DECL_GETHRTIME",
+            headers = ["sys/time.h"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,49 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/threadlib.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "threadlib",
+    checks = [
+        macros.AC_CHECK_HEADER(
+            "pthread.h",
+            define = "HAVE_PTHREAD_H",
+        ),
+        macros.AC_CHECK_HEADER(
+            "threads.h",
+            define = "HAVE_THREADS_H",
+        ),
+        macros.AC_CHECK_LIB(
+            "pthread",
+            "pthread_kill",
+            define = "HAVE_LIBPTHREAD",
+        ),
+        macros.AC_CHECK_LIB(
+            "thr",
+            "pthread_kill",
+            define = "HAVE_LIBTHR",
+        ),
+        macros.AC_CHECK_LIB(
+            "c_r",
+            "pthread_kill",
+            define = "HAVE_LIBC_R",
+        ),
+        macros.AC_CHECK_LIB(
+            "rt",
+            "sched_yield",
+            define = "HAVE_LIBRT",
+        ),
+        macros.AC_CHECK_LIB(
+            "posix4",
+            "sched_yield",
+            define = "HAVE_LIBPOSIX4",
+        ),
+        macros.AC_CHECK_LIB(
+            "stdthreads",
+            "thrd_create",
+            define = "HAVE_LIBSTDTHREADS",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

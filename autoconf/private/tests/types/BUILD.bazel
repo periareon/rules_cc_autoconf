@@ -1,0 +1,85 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:macros.bzl", "macros")
+load("//autoconf:package_info.bzl", "package_info")
+load("//autoconf/private/tests:diff_test.bzl", "diff_test")
+load("//autoconf/private/tests:gnu_autoconf_diff_test.bzl", "gnu_autoconf_diff_test")
+
+package_info(
+    name = "package",
+    package_name = "test_types",
+    package_version = "1.0.0",
+)
+
+autoconf(
+    name = "autoconf",
+    checks = [
+        # Note: In GNU autoconf, AC_CHECK_TYPES may implicitly define HAVE_* values
+        # for headers it checked. For example, when checking types that require
+        # <stdint.h>, autoconf may also check for <inttypes.h> and define
+        # HAVE_INTTYPES_H. This explicit check ensures compatibility with GNU
+        # autoconf behavior.
+        macros.AC_CHECK_HEADER("inttypes.h"),
+        # Check without header - should fail
+        macros.AC_CHECK_TYPE("size_t"),
+        # Check with headers - should succeed
+        macros.AC_CHECK_TYPE(
+            "int8_t",
+            code = "#include <stdint.h>",
+        ),
+        macros.AC_CHECK_TYPE(
+            "int64_t",
+            code = "#include <stdint.h>",
+        ),
+        # Non-existent type
+        macros.AC_CHECK_TYPE("nonexistent_type_xyz"),
+
+        # AC_PROG_CC implicitly defines a number of additional checks. Because there
+        # is no Bazel equivalent the value is defined on it's own.
+        macros.AC_DEFINE("STDC_HEADERS", "1"),
+    ],
+    deps = [":package"],
+)
+
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    template = "config.h.in",
+    deps = [":autoconf"],
+)
+
+diff_test(
+    name = "diff_test_unix",
+    file1 = "golden_config_unix.h.in",
+    file2 = ":config.h",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
+diff_test(
+    name = "diff_test_windows",
+    file1 = "golden_config_windows.h.in",
+    file2 = ":config.h",
+    target_compatible_with = select({
+        "@platforms//os:windows": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
+
+cc_test(
+    name = "test_types",
+    srcs = [
+        "test_types.c",
+        ":config.h",
+    ],
+)
+
+gnu_autoconf_diff_test(
+    name = "gnu_autoconf_diff_test",
+    configure_ac = "configure.ac",
+    golden_file = "golden_config_unix.h.in",
+    template = "config.h.in",
+)

@@ -1,0 +1,16 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/gc-md5.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "gc-md5",
+    checks = [
+        # gl_GC_MD5 macro from gc-md5.m4 conditionally requires md5
+        # if libgcrypt is not available. No direct checks needed.
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/gc",  # AC_REQUIRE([gl_GC])
+        "//gnulib/m4/md5",  # gl_MD5 - conditional
+    ],
+)

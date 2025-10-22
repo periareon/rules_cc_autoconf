@@ -1,0 +1,19 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/eaccess.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "eaccess",
+    checks = [
+        # If eaccess is not found, define it as 'access'
+        macros.AC_CHECK_FUNC(
+            "eaccess",
+            define = "HAVE_EACCESS",
+            if_false = [
+                macros.AC_DEFINE("eaccess", "access"),
+            ],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

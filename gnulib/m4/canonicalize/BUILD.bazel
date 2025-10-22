@@ -1,0 +1,23 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/canonicalize.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_CANONICALIZE_FILENAME_MODE from canonicalize.m4
+# HAVE_FACCESSAT comes from faccessat dependency
+
+autoconf(
+    name = "canonicalize",
+    checks = [
+        macros.AC_CHECK_FUNC("canonicalize_file_name"),
+        macros.AC_CHECK_FUNC("realpath"),
+        macros.AC_CHECK_FUNC("getcwd"),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/double-slash-root",
+        "//gnulib/m4/faccessat",  # Provides HAVE_FACCESSAT
+        "//gnulib/m4/lstat",
+        "//gnulib/m4/pathmax",  # Provides HAVE_SYS_PARAM_H
+    ],
+)

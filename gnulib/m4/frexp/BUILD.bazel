@@ -1,0 +1,31 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/frexp.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_FREXP macro from frexp.m4
+# HAVE_DECL_ALARM comes from mktime dependency
+# Note: Full implementation includes runtime checks for denormalized numbers,
+# infinite numbers, and negative zero that are not easily replicable in Bazel
+
+autoconf(
+    name = "frexp",
+    checks = [
+        macros.AC_TRY_COMPILE(
+            code = """#include <math.h>
+
+int main(void) {
+    double x = 0.0;
+    int e;
+    return frexp(x, &e) > 0;
+}""",
+            define = "HAVE_FREXP",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+        "//gnulib/m4/mktime",  # Provides HAVE_DECL_ALARM
+    ],
+)

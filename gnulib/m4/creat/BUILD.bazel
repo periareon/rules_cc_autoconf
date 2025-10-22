@@ -1,0 +1,21 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/creat.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_CREAT from creat.m4
+# On Windows (mingw/windows), REPLACE_CREAT=1 is unconditionally set.
+autoconf(
+    name = "creat",
+    checks = select({
+        "@platforms//os:windows": [
+            # On Windows, unconditionally set REPLACE_CREAT=1
+            macros.M4_DEFINE("REPLACE_CREAT", "1"),
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/open-slash",  # Uses gl_OPEN_TRAILING_SLASH_BUG
+    ],
+)

@@ -1,0 +1,13 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/error.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "error",
+    checks = [
+        # gl_ERROR macro from error.m4 is empty
+        # gl_PREREQ_ERROR uses AC_FUNC_STRERROR_R which is a standard autoconf macro
+        # Note: AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
+    ],
+    visibility = ["//visibility:public"],
+)

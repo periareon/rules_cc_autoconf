@@ -1,0 +1,22 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/utime.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "utime",
+    checks = [
+        # Check for utime function
+        # Equivalent to gl_FUNC_UTIME macro from utime.m4
+        # Note: Full implementation includes runtime tests for trailing slash handling
+        macros.AC_CHECK_FUNC(
+            "utime",
+            define = "HAVE_UTIME",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/lstat",  # AC_CHECK_FUNCS_ONCE([lstat])
+        "//gnulib/m4/utime_h",  # AC_REQUIRE([gl_UTIME_H_DEFAULTS])
+    ],
+)

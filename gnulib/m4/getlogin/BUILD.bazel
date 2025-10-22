@@ -1,0 +1,23 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/getlogin.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "getlogin",
+    checks = [
+        # Check for getlogin function and declaration
+        # Equivalent to gl_FUNC_GETLOGIN macro from getlogin.m4
+        # Note: Full implementation includes runtime checks for musl libc behavior
+        macros.AC_CHECK_DECL(
+            "getlogin",
+            define = "HAVE_DECL_GETLOGIN",
+            headers = ["unistd.h"],
+        ),
+        macros.AC_CHECK_FUNC(
+            "getlogin",
+            define = "HAVE_GETLOGIN",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

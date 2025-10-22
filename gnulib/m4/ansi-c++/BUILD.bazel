@@ -1,0 +1,14 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/ansi-c++.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "ansi-c++",
+    checks = [
+        # gl_ANSI_CXX and gl_PROG_ANSI_CXX macros from ansi-c++.m4 handle C++
+        # compiler detection and configuration. These are complex macros that
+        # interact with autoconf's AC_PROG_CXX and are not easily replicable
+        # in Bazel's compile-time check system.
+    ],
+    visibility = ["//visibility:public"],
+)

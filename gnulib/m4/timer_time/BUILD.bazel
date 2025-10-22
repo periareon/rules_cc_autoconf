@@ -1,0 +1,19 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/timer_time.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "timer_time",
+    checks = [
+        macros.AC_CHECK_FUNC(
+            "timer_settime",
+            define = "HAVE_TIMER_SETTIME",
+        ),
+        macros.AC_CHECK_DECL(
+            "timer_settime",
+            define = "HAVE_DECL_TIMER_SETTIME",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

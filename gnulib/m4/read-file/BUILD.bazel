@@ -1,0 +1,11 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/read-file.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "read-file",
+    checks = [
+        # Note: read-file.m4 may not exist in gnulib, or this module may not have checks
+    ],
+    visibility = ["//visibility:public"],
+)

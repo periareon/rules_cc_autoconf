@@ -1,0 +1,34 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* Define to the size of `char', as computed by sizeof. */
+#undef SIZEOF_CHAR
+
+/* Define to the size of `int', as computed by sizeof. */
+#undef SIZEOF_INT
+
+/* Define to the size of `long', as computed by sizeof. */
+#undef SIZEOF_LONG
+
+/* Define to the size of `short', as computed by sizeof. */
+#undef SIZEOF_SHORT
+
+/* Define to the size of `void*', as computed by sizeof. */
+#undef SIZEOF_VOIDP

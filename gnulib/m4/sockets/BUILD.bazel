@@ -1,0 +1,18 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sockets.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "sockets",
+    checks = [
+        # gl_SOCKETS from sockets.m4
+        # AC_REQUIRE([AC_C_INLINE]) - inline checking
+        macros.AC_C_INLINE(),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # AC_REQUIRE([gl_SOCKETLIB])
+        "//gnulib/m4/socketlib",
+    ],
+)

@@ -1,0 +1,14 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/strcasecmp.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+# HAVE_STRCASECMP comes from strings_h dependency
+
+autoconf(
+    name = "strcasecmp",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/strings_h",  # Provides HAVE_STRCASECMP
+    ],
+)

@@ -1,0 +1,29 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fstat.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_FSTAT from fstat.m4
+# On Windows/macOS/Solaris, REPLACE_FSTAT=1 is unconditionally set because:
+# - macOS and Solaris stat can return a negative tv_nsec
+# - MinGW's original stat() returns st_atime, st_mtime, st_ctime values
+#   that are affected by the time zone
+autoconf(
+    name = "fstat",
+    checks = select({
+        "@platforms//os:macos": [
+            # On macOS, set REPLACE_FSTAT=1 (can return negative tv_nsec)
+            macros.M4_DEFINE("REPLACE_FSTAT", "1"),
+        ],
+        "@platforms//os:windows": [
+            # On Windows, unconditionally set REPLACE_FSTAT=1
+            macros.M4_DEFINE("REPLACE_FSTAT", "1"),
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/fchdir",  # Conditional dependency on gl_FUNC_FCHDIR
+        "//gnulib/m4/sys_stat_h",  # AC_REQUIRE([gl_SYS_STAT_H_DEFAULTS]), AC_REQUIRE([gl_SYS_STAT_H])
+    ],
+)

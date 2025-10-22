@@ -1,0 +1,20 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/atan.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "atan",
+    checks = [
+        # Check for atan function
+        # Equivalent to gl_FUNC_ATAN macro from atan.m4
+        macros.AC_CHECK_FUNC(
+            "atan",
+            define = "HAVE_ATAN",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/mathfunc",  # Uses gl_COMMON_DOUBLE_MATHFUNC([atan])
+    ],
+)

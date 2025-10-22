@@ -1,0 +1,7 @@
+/* config.h.in.  Generated from MODULE.bazel.  */
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION

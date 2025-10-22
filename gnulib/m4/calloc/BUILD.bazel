@@ -1,0 +1,23 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/calloc.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "calloc",
+    checks = [
+        # Check for calloc function
+        # Equivalent to gl_FUNC_CALLOC_POSIX and gl_FUNC_CALLOC_GNU macros from calloc.m4
+        # Note: Full implementation includes runtime checks for calloc(0, n) behavior
+        # that are not easily replicable in Bazel
+        macros.AC_CHECK_FUNC(
+            "calloc",
+            define = "HAVE_CALLOC",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/malloc",  # AC_REQUIRE([gl_FUNC_MALLOC_POSIX])
+        "//gnulib/m4/stdlib_h",  # AC_REQUIRE([gl_STDLIB_H_DEFAULTS])
+    ],
+)

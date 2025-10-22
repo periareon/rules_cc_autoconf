@@ -1,0 +1,19 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/vasnprintf-gnu.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "vasnprintf-gnu",
+    checks = [
+        # gl_FUNC_VASNPRINTF_GNU macro from vasnprintf-gnu.m4 checks for GNU
+        # compatibility of vasnprintf. Complex logic that depends on printf
+        # directive checks.
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/vasnprintf-posix",  # AC_REQUIRE([gl_FUNC_VASNPRINTF_IS_POSIX])
+        # Note: gl_PRINTF_DIRECTIVE_UPPERCASE_B is likely in a printf module
+        # Note: gl_PREREQ_VASNPRINTF_WITH_GNU_EXTRAS and gl_REPLACE_VASNPRINTF
+        # are likely in vasnprintf module
+    ],
+)

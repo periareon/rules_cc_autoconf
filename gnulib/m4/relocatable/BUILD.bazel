@@ -1,0 +1,18 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/relocatable.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# HAVE_COPY_FILE_RANGE comes from copy-file-range dependency
+
+autoconf(
+    name = "relocatable",
+    checks = [
+        macros.AC_CHECK_HEADER("mach-o/dyld.h"),
+        macros.AC_CHECK_FUNC("_NSGetExecutablePath"),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/copy-file-range",  # Provides HAVE_COPY_FILE_RANGE
+    ],
+)

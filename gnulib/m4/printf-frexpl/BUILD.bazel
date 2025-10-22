@@ -1,0 +1,16 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/printf-frexpl.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+# HAVE_DECL_FREXPL comes from frexpl dependency
+# HAVE_DECL_LDEXPL comes from ldexpl dependency
+
+autoconf(
+    name = "printf-frexpl",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/frexpl",  # Provides HAVE_DECL_FREXPL
+        "//gnulib/m4/ldexpl",  # Provides HAVE_DECL_LDEXPL
+    ],
+)

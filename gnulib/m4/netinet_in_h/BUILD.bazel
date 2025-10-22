@@ -1,0 +1,16 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/netinet_in_h.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "netinet_in_h",
+    checks = [
+        macros.AC_CHECK_HEADER(
+            "netinet/in.h",
+            define = "HAVE_NETINET_IN_H",
+        ),
+        # Note: netinet_in_h.m4 may not exist in gnulib, or this module may not have checks
+    ],
+    visibility = ["//visibility:public"],
+)

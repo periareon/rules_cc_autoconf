@@ -1,0 +1,47 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fseeko.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_FSEEKO / gl_PREREQ_FSEEKO from fseeko.m4
+#
+# Sets REPLACE_FSEEKO=1 when:
+# - Windows 64-bit off_t
+# - stdin doesn't default to large file offsets (old Cygwin)
+# - fflush doesn't work on stdin
+
+autoconf(
+    name = "fseeko",
+    checks = [
+        # Check for fseeko function via linking
+        macros.AC_TRY_COMPILE(
+            code = """#include <stdio.h>
+int main(void) { fseeko(stdin, 0, 0); return 0; }""",
+            define = "HAVE_FSEEKO",
+            language = "c",
+        ),
+        # HAVE_DECL_FSEEKO comes from stdio_h dependency
+        # Windows-specific _fseeki64
+        macros.AC_CHECK_FUNC("_fseeki64"),
+        macros.AC_CHECK_DECL("_fseeki64"),
+    ] + select({
+        # On platforms where fflush is broken, fseeko also needs replacement
+        "@platforms//os:netbsd": [
+            macros.M4_DEFINE("REPLACE_FSEEKO", "1"),
+        ],
+        "@platforms//os:openbsd": [
+            macros.M4_DEFINE("REPLACE_FSEEKO", "1"),
+        ],
+        # On Windows, need to replace fseeko for 64-bit off_t
+        "@platforms//os:windows": [
+            macros.M4_DEFINE("REPLACE_FSEEKO", "1"),
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/fflush",  # Uses gl_FUNC_FFLUSH_STDIN - conditional
+        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS]) - provides HAVE_DECL_FSEEKO
+        "//gnulib/m4/sys_types_h",  # AC_REQUIRE([gl_SYS_TYPES_H])
+    ],
+)

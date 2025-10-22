@@ -1,0 +1,26 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fstatat.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_FSTATAT from fstatat.m4
+# On darwin and solaris, REPLACE_FSTATAT=1 is unconditionally set.
+autoconf(
+    name = "fstatat",
+    checks = [
+        # Check for fstatat function
+        macros.AC_CHECK_FUNC("fstatat"),
+    ] + select({
+        "@platforms//os:macos": [
+            # On macOS, unconditionally set REPLACE_FSTATAT=1
+            macros.M4_DEFINE("REPLACE_FSTATAT", "1"),
+        ],
+        # Note: Solaris would need a custom constraint
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        # AC_REQUIRE([gl_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK])
+        "//gnulib/m4/lstat",
+    ],
+)

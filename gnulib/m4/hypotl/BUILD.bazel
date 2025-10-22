@@ -1,0 +1,27 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/hypotl.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "hypotl",
+    checks = [
+        macros.AC_CHECK_FUNC(
+            "hypotl",
+            define = "HAVE_HYPOTL",
+        ),
+        macros.AC_CHECK_DECL(
+            "hypotl",
+            define = "HAVE_DECL_HYPOTL",
+            headers = ["math.h"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/fabsl",
+        "//gnulib/m4/frexpl",
+        "//gnulib/m4/hypot",
+        "//gnulib/m4/ldexpl",
+        "//gnulib/m4/sqrtl",
+    ],
+)

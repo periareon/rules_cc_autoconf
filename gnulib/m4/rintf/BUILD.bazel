@@ -1,0 +1,22 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/rintf.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "rintf",
+    checks = [
+        # Check for rintf function
+        # Equivalent to gl_FUNC_RINTF macro from rintf.m4
+        # Note: Full implementation uses gl_MATHFUNC to determine library dependencies
+        # Note: AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
+        macros.AC_CHECK_FUNC(
+            "rintf",
+            define = "HAVE_RINTF",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+    ],
+)

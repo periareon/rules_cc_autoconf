@@ -1,0 +1,75 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:macros.bzl", "macros")
+load("//autoconf:package_info.bzl", "package_info")
+load("//autoconf/private/tests:diff_test.bzl", "diff_test")
+load("//autoconf/private/tests:gnu_autoconf_diff_test.bzl", "gnu_autoconf_diff_test")
+
+package_info(
+    name = "package",
+    package_name = "test_libraries",
+    package_version = "1.0.0",
+)
+
+autoconf(
+    name = "autoconf",
+    checks = [
+        macros.AC_CHECK_LIB("m", "cos"),  # Check for math library
+        macros.AC_CHECK_LIB("pthread", "pthread_create"),  # Check for pthread library
+        macros.AC_CHECK_LIB("kernel32", "GetLastError"),  # Check for Windows kernel library (Windows only)
+        macros.AC_CHECK_LIB("nonexistent", "fake_function"),  # Check for non-existent library
+    ],
+    deps = [":package"],
+)
+
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    template = "config.h.in",
+    deps = [":autoconf"],
+)
+
+diff_test(
+    name = "diff_test_unix",
+    file1 = "golden_config_unix.h.in",
+    file2 = ":config.h",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
+diff_test(
+    name = "diff_test_windows",
+    file1 = "golden_config_windows.h.in",
+    file2 = ":config.h",
+    target_compatible_with = select({
+        "@platforms//os:windows": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
+
+cc_test(
+    name = "test_libraries",
+    srcs = [
+        "test_libraries.c",
+        ":config.h",
+    ],
+    linkopts = select({
+        "@platforms//os:windows": [
+            "-lkernel32",
+        ],
+        "//conditions:default": [
+            "-lm",
+            "-lpthread",
+        ],
+    }),
+)
+
+gnu_autoconf_diff_test(
+    name = "gnu_autoconf_diff_test",
+    configure_ac = "configure.ac",
+    golden_file = "golden_config_unix.h.in",
+    template = "config.h.in",
+)

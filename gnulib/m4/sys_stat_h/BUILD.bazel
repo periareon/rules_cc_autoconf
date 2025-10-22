@@ -1,0 +1,19 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sys_stat_h.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "sys_stat_h",
+    checks = [
+        macros.AC_CHECK_TYPE(
+            "nlink_t",
+            define = "HAVE_NLINK_T",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/largefile",
+        "//gnulib/m4/windows-stat-timespec",
+    ],
+)

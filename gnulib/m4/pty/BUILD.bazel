@@ -1,0 +1,29 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/pty.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "pty",
+    checks = [
+        macros.AC_CHECK_DECL(
+            "forkpty",
+            define = "HAVE_DECL_FORKPTY",
+            headers = [
+                "pty.h",
+                "util.h",
+                "libutil.h",
+            ],
+        ),
+        macros.AC_CHECK_DECL(
+            "openpty",
+            define = "HAVE_DECL_OPENPTY",
+            headers = [
+                "pty.h",
+                "util.h",
+                "libutil.h",
+            ],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

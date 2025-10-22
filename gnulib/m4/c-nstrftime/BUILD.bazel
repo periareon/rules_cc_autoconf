@@ -1,0 +1,35 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/c-nstrftime.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "c-nstrftime",
+    checks = [
+        # Check for strftime_l and strftime_lz functions
+        # Equivalent to gl_C_GNU_STRFTIME macro from c-nstrftime.m4
+        macros.AC_TRY_COMPILE(
+            code = """#include <time.h>
+
+#ifdef __cplusplus
+extern "C"
+#endif
+char strftime_l ();
+
+int main(void) {
+    return strftime_l();
+}""",
+            define = "HAVE_STRFTIME_L",
+            language = "c",
+        ),
+        macros.AC_CHECK_FUNC(
+            "strftime_lz",
+            define = "HAVE_STRFTIME_LZ",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/tm_gmtoff",  # AC_REQUIRE([gl_TM_GMTOFF])
+        # Note: AC_REQUIRE([AC_C_RESTRICT]) is a standard autoconf macro
+    ],
+)

@@ -1,0 +1,20 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fabs.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "fabs",
+    checks = [
+        # Check for fabs function
+        # Equivalent to gl_FUNC_FABS macro from fabs.m4
+        macros.AC_CHECK_FUNC(
+            "fabs",
+            define = "HAVE_FABS",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/mathfunc",  # Uses gl_MATHFUNC([fabs, ...])
+    ],
+)

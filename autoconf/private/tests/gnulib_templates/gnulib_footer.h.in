@@ -1,0 +1,11 @@
+/* Gnulib footer template - static inline content */
+/* This file demonstrates static inline content that is usable as-is */
+
+/* Package string: PACKAGE_NAME version PACKAGE_VERSION */
+
+/* Summary of detected features:
+ * - stdio.h: HAVE_STDIO_H
+ * - stdlib.h: HAVE_STDLIB_H
+ */
+
+/* End of gnulib footer */

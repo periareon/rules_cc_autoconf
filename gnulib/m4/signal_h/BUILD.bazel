@@ -1,0 +1,55 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/signal_h.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "signal_h",
+    checks = [
+        # Check for signal.h types
+        # Equivalent to gl_SIGNAL_H macro from signal_h.m4
+        macros.AC_CHECK_TYPE(
+            "volatile sig_atomic_t",
+            code = """\
+#include <signal.h>
+int main(void) {
+    volatile sig_atomic_t x = 0;
+    return (int)x;
+}
+""",
+            define = "HAVE_TYPE_VOLATILE_SIG_ATOMIC_T",
+        ),
+        macros.AC_CHECK_TYPE(
+            "sighandler_t",
+            code = """\
+#include <signal.h>
+int main(void) {
+    if (sizeof(sighandler_t))
+        return 0;
+    return 1;
+}
+""",
+            define = "HAVE_SIGHANDLER_T",
+        ),
+        macros.AC_CHECK_TYPE(
+            "sigset_t",
+            code = """\
+#include <signal.h>
+#include <sys/types.h>
+int main(void) {
+    if (sizeof(sigset_t))
+        return 0;
+    return 1;
+}
+""",
+            define = "HAVE_SIGSET_T",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # Note: Standard autoconf macros like AC_C_RESTRICT, AC_TYPE_PID_T, etc.
+        # would be handled via the corresponding macros if needed, but those
+        # targets don't exist in this project. These are standard system checks
+        # that are typically available.
+    ],
+)

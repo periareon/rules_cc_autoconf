@@ -1,0 +1,20 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/mode_t.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "mode_t",
+    checks = [
+        # Check for promoted mode_t type
+        # Equivalent to gl_PROMOTED_TYPE_MODE_T macro from mode_t.m4
+        # Note: AC_REQUIRE([AC_TYPE_MODE_T]) is a standard autoconf macro
+        macros.AC_TRY_COMPILE(
+            code = """#include <sys/types.h>
+typedef int array[2 * (sizeof (mode_t) < sizeof (int)) - 1];""",
+            define = "PROMOTED_MODE_T_IS_INT",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

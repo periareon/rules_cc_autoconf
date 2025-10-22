@@ -1,0 +1,26 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sleep.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "sleep",
+    checks = [
+        # Check for sleep function and declaration
+        # Equivalent to gl_FUNC_SLEEP macro from sleep.m4
+        # Note: Full implementation includes runtime test for working sleep
+        macros.AC_CHECK_DECL(
+            "sleep",
+            define = "HAVE_DECL_SLEEP",
+            headers = ["unistd.h"],
+        ),
+        macros.AC_CHECK_FUNC(
+            "sleep",
+            define = "HAVE_SLEEP",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
+    ],
+)

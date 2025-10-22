@@ -1,0 +1,16 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/pthread-rwlock.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "pthread-rwlock",
+    checks = [
+        macros.AC_CHECK_DECL(
+            "pthread_rwlock_timedrdlock",
+            define = "HAVE_DECL_PTHREAD_RWLOCK_TIMEDRDLOCK",
+            headers = ["pthread.h"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

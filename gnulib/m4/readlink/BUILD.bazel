@@ -1,0 +1,29 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/readlink.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "readlink",
+    checks = [
+        # Check for readlink function
+        # Equivalent to gl_FUNC_READLINK macro from readlink.m4
+        # Note: Full implementation includes runtime tests for trailing slash
+        # and truncation behavior that require file system operations
+        macros.AC_TRY_COMPILE(
+            code = """#include <unistd.h>
+ssize_t readlink (const char *, char *, size_t);
+
+int main(void) {
+    char buf[20];
+    return readlink("/", buf, sizeof buf);
+}""",
+            define = "HAVE_READLINK",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
+    ],
+)

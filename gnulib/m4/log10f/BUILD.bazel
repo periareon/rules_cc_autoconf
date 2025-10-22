@@ -1,0 +1,23 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/log10f.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "log10f",
+    checks = [
+        macros.AC_CHECK_FUNC(
+            "log10f",
+            define = "HAVE_LOG10F",
+        ),
+        macros.AC_CHECK_DECL(
+            "log10f",
+            define = "HAVE_DECL_LOG10F",
+            headers = ["math.h"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/log10",
+    ],
+)

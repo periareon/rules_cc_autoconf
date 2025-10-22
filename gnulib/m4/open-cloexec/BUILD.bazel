@@ -1,0 +1,22 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/open-cloexec.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "open-cloexec",
+    checks = [
+        # Check for O_CLOEXEC macro
+        # Equivalent to gl_PREPROC_O_CLOEXEC macro from open-cloexec.m4
+        macros.AC_TRY_COMPILE(
+            code = """#include <fcntl.h>
+#ifndef O_CLOEXEC
+choke me;
+#endif
+int main() { return O_CLOEXEC; }""",
+            define = "HAVE_O_CLOEXEC",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,14 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/openat2.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+# HAVE_SYS_VFS_H comes from sys_vfs_h dependency
+
+autoconf(
+    name = "openat2",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/sys_vfs_h",
+    ],
+)

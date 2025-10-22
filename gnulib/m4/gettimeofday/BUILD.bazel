@@ -1,0 +1,36 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/gettimeofday.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "gettimeofday",
+    checks = [
+        # Check for gettimeofday function
+        # Equivalent to gl_FUNC_GETTIMEOFDAY macro from gettimeofday.m4
+        macros.AC_CHECK_FUNC(
+            "gettimeofday",
+            define = "HAVE_GETTIMEOFDAY",
+        ),
+        macros.AC_TRY_COMPILE(
+            code = """#include <sys/time.h>
+
+struct timeval c;
+int gettimeofday (struct timeval *restrict, void *restrict);
+
+int main(void) {
+    int (*f) (struct timeval *restrict, void *restrict) = gettimeofday;
+    int x = f (&c, 0);
+    return !(x | c.tv_sec | c.tv_usec);
+}""",
+            define = "HAVE_GETTIMEOFDAY_POSIX_SIGNATURE",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/sys_time_h",  # AC_REQUIRE([gl_SYS_TIME_H_DEFAULTS]), AC_REQUIRE([gl_SYS_TIME_H])
+        # Note: AC_REQUIRE([AC_C_RESTRICT]) and AC_REQUIRE([AC_CANONICAL_HOST])
+        # are standard autoconf macros
+    ],
+)

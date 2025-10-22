@@ -1,0 +1,17 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/abort-debug.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "abort-debug",
+    checks = [
+        # gl_ABORT_DEBUG macro from abort-debug.m4 sets REPLACE_ABORT=1
+        # if stack trace printing is available. No direct checks needed.
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/stdlib_h",  # AC_REQUIRE([gl_STDLIB_H_DEFAULTS])
+        "//gnulib/m4/stack-trace",  # AC_REQUIRE([gl_STACK_TRACE_EARLY])
+        # Note: AC_REQUIRE([AC_C_INLINE]) is a standard autoconf macro
+    ],
+)

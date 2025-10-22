@@ -1,0 +1,19 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/endian_h.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "endian_h",
+    checks = [
+        macros.AC_CHECK_HEADER(
+            "endian.h",
+            define = "HAVE_ENDIAN_H",
+        ),
+        macros.AC_CHECK_HEADER(
+            "sys/endian.h",
+            define = "HAVE_SYS_ENDIAN_H",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,14 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/c-bool.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+# HAVE_STDBOOL_H comes from stdbool dependency
+
+autoconf(
+    name = "c-bool",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/stdbool",  # Provides HAVE_STDBOOL_H
+    ],
+)

@@ -1,0 +1,30 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/thrd.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "thrd",
+    checks = [
+        # Check for thrd_create function
+        # Equivalent to gl_FUNC_THRD_CREATE macro from thrd.m4
+        macros.AC_TRY_COMPILE(
+            code = """#include <threads.h>
+
+#ifdef __cplusplus
+extern "C"
+#endif
+char thrd_create ();
+
+int main(void) {
+    return thrd_create();
+}""",
+            define = "HAVE_THRD_CREATE",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/threads_h",  # AC_REQUIRE([gl_THREADS_H])
+    ],
+)

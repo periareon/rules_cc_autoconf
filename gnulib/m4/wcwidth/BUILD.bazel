@@ -1,0 +1,46 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/wcwidth.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_WCWIDTH macro from wcwidth.m4
+# COMPLEX CASE: This M4 file includes AC_RUN_IFELSE to test wcwidth behavior
+# in UTF-8 locales, which is NOT cross-compile friendly. The runtime checks
+# test for bugs in various platforms (macOS, BSD, Solaris).
+#
+# Cross-compile heuristics from the M4:
+# - glibc, musl, AIX 7+: guess yes (wcwidth works)
+# - macOS, NetBSD, OpenBSD, MidnightBSD, Solaris: known buggy
+autoconf(
+    name = "wcwidth",
+    checks = [
+        # AC_CHECK_FUNCS_ONCE([wcwidth])
+        macros.AC_CHECK_FUNC("wcwidth"),
+        # AC_CHECK_DECLS([wcwidth], [], [], [[#include <wchar.h>]])
+        macros.AC_CHECK_DECL(
+            "wcwidth",
+            headers = ["wchar.h"],
+        ),
+    ] + select({
+        # Known buggy platforms where wcwidth doesn't work correctly
+        "@platforms//os:macos": [
+            macros.M4_DEFINE("REPLACE_WCWIDTH", "1"),
+        ],
+        "@platforms//os:netbsd": [
+            macros.M4_DEFINE("REPLACE_WCWIDTH", "1"),
+        ],
+        "@platforms//os:openbsd": [
+            macros.M4_DEFINE("REPLACE_WCWIDTH", "1"),
+        ],
+        # Note: Solaris is buggy but @platforms//os:solaris doesn't exist
+        # Linux (glibc/musl) and others: assume wcwidth works
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        # AC_REQUIRE([gl_WCHAR_H_DEFAULTS]) - provides HAVE_WCHAR_H
+        "//gnulib/m4/wchar_h",
+        # AC_REQUIRE([gt_TYPE_WINT_T])
+        "//gnulib/m4/wint_t",
+    ],
+)

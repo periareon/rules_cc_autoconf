@@ -1,0 +1,43 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/xattr.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_XATTR macro from xattr.m4
+# COMPLEX CASE: This M4 file uses:
+# - AC_ARG_ENABLE (configure option --disable-xattr)
+# - AC_LINK_IFELSE for library detection
+# - Conditional library linking (-lattr)
+#
+# The full M4 behavior cannot be replicated in Bazel as it involves:
+# 1. User-configurable enable/disable option
+# 2. Runtime library detection and linking
+#
+# This simplified version checks if the xattr headers and library are available.
+autoconf(
+    name = "xattr",
+    checks = [
+        # Check for the xattr headers (Linux extended attributes)
+        macros.AC_CHECK_HEADER("attr/error_context.h"),
+        macros.AC_CHECK_HEADER("attr/libattr.h"),
+        # Check for libattr library
+        macros.AC_CHECK_LIB("attr", "attr_copy_fd"),
+        # If all checks pass, define USE_XATTR
+        macros.AC_TRY_COMPILE(
+            code = """\
+#include <attr/error_context.h>
+#include <attr/libattr.h>
+static int
+is_attr_permissions (const char *name, struct error_context *ctx)
+{
+    return attr_copy_action (name, ctx) == ATTR_ACTION_PERMISSIONS;
+}
+int main(void) {
+    return 0;
+}
+""",
+            define = "USE_XATTR",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,24 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/mkfifo.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "mkfifo",
+    checks = [
+        # Check for mkfifo function
+        # Equivalent to gl_FUNC_MKFIFO macro from mkfifo.m4
+        # Note: Full implementation uses AC_LINK_IFELSE and includes runtime
+        # checks for trailing slash handling
+        macros.AC_TRY_COMPILE(
+            code = """#include <sys/stat.h>
+
+int main(void) {
+    return mkfifo("/", 0);
+}""",
+            define = "HAVE_MKFIFO",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

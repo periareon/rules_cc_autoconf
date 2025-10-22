@@ -1,0 +1,20 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/cbrt.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "cbrt",
+    checks = [
+        macros.AC_CHECK_FUNC(
+            "cbrt",
+            define = "HAVE_CBRT",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/fabs",
+        "//gnulib/m4/frexp",
+        "//gnulib/m4/ldexp",
+    ],
+)

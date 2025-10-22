@@ -1,0 +1,15 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/ceil-ieee.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "ceil-ieee",
+    checks = [
+        # gl_FUNC_CEIL_IEEE macro from ceil-ieee.m4 only sets gl_ceil_required=ieee
+        # and requires gl_FUNC_CEIL. No additional checks needed.
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/ceil",  # AC_REQUIRE([gl_FUNC_CEIL])
+    ],
+)

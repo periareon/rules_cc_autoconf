@@ -1,0 +1,19 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/priv-set.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "priv-set",
+    checks = [
+        macros.AC_CHECK_HEADER(
+            "priv.h",
+            define = "HAVE_PRIV_H",
+        ),
+        macros.AC_CHECK_FUNC(
+            "getppriv",
+            define = "HAVE_GETPPRIV",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

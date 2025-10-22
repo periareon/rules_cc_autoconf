@@ -1,0 +1,14 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/build-to-host.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "build-to-host",
+    checks = [
+        # gl_BUILD_TO_HOST macro from build-to-host.m4 handles filename conversion
+        # from build environment to host environment. Note: AC_REQUIRE([AC_CANONICAL_BUILD]),
+        # AC_REQUIRE([AC_CANONICAL_HOST]), and AC_REQUIRE([gl_BUILD_TO_HOST_INIT])
+        # are standard autoconf macros or defined in the same file.
+    ],
+    visibility = ["//visibility:public"],
+)

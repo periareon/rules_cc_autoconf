@@ -1,0 +1,18 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/close.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "close",
+    checks = [
+        # gl_FUNC_CLOSE macro from close.m4 sets REPLACE_CLOSE based on various
+        # conditions. No direct checks needed.
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/msvc-inval",
+        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
+        # Note: Conditional dependencies on gl_MSVC_INVAL, gl_PREREQ_SYS_H_WINSOCK2,
+        # and gl_FUNC_FCHDIR are handled via m4_ifdef
+    ],
+)

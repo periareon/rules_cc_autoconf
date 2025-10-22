@@ -1,0 +1,23 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/expf.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "expf",
+    checks = [
+        macros.AC_CHECK_FUNC(
+            "expf",
+            define = "HAVE_EXPF",
+        ),
+        macros.AC_CHECK_DECL(
+            "expf",
+            define = "HAVE_DECL_EXPF",
+            headers = ["math.h"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/exp",
+    ],
+)

@@ -1,0 +1,32 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/_Exit.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "_Exit",
+    checks = [
+        # Check for _Exit function from stdlib.h
+        # Equivalent to gl_FUNC__EXIT macro from _Exit.m4
+        # Uses gl_CHECK_FUNCS_ANDROID([_Exit], [[#include <stdlib.h>]])
+        # Sets HAVE__EXIT=1 if found, HAVE__EXIT=0 if not found
+        macros.AC_TRY_COMPILE(
+            code = """#include <stdlib.h>
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char _Exit ();
+
+int main(void) {
+    return _Exit();
+}""",
+            define = "HAVE__EXIT",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,17 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/netdb_h.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "netdb_h",
+    checks = [
+        # Check for netdb.h header
+        # Equivalent to gl_NETDB_H macro from netdb_h.m4
+        macros.AC_CHECK_HEADER(
+            "netdb.h",
+            define = "HAVE_NETDB_H",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

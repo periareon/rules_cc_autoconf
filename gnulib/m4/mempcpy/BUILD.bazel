@@ -1,0 +1,32 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/mempcpy.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "mempcpy",
+    checks = [
+        # Check for mempcpy function
+        # Equivalent to gl_FUNC_MEMPCPY macro from mempcpy.m4
+        macros.AC_TRY_COMPILE(
+            code = """#include <string.h>
+
+#ifdef __cplusplus
+extern "C"
+#endif
+void *mempcpy ();
+
+int main(void) {
+    return mempcpy();
+}""",
+            define = "HAVE_MEMPCPY",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/string_h",  # AC_REQUIRE([gl_STRING_H_DEFAULTS])
+        # Note: AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) and
+        # AC_REQUIRE([AC_C_RESTRICT]) are standard autoconf macros
+    ],
+)

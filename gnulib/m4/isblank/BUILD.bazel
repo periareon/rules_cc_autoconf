@@ -1,0 +1,21 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/isblank.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "isblank",
+    checks = [
+        # Check for isblank function
+        # Equivalent to gl_FUNC_ISBLANK macro from isblank.m4
+        macros.AC_CHECK_FUNC(
+            "isblank",
+            define = "HAVE_ISBLANK",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/ctype_h",  # AC_REQUIRE([gl_CTYPE_H_DEFAULTS])
+        # Note: AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
+    ],
+)
