@@ -1,0 +1,12 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+cc_library(
+    name = "json",
+    hdrs = [
+        "json.h",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@nlohmann_json//:json",
+    ],
+)

@@ -1,0 +1,196 @@
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("//autoconf:module_info.bzl", "module_info")
+load("//autoconf/private/tests:diff_test.bzl", "diff_test")
+
+# Test case 1: Basic module definition with standard spacing
+write_file(
+    name = "module_basic",
+    out = "module_basic.bazel",
+    content = [
+        "module(",
+        '    name = "test_module",',
+        '    version = "1.0.0",',
+        ")",
+    ],
+)
+
+module_info(
+    name = "module_info_basic",
+    module_bazel = ":module_basic.bazel",
+)
+
+# Test case 2: Module with no spaces around equals
+write_file(
+    name = "module_no_spaces",
+    out = "module_no_spaces.bazel",
+    content = [
+        "module(",
+        '    name="test_module",',
+        '    version="1.0.0",',
+        ")",
+    ],
+)
+
+module_info(
+    name = "module_info_no_spaces",
+    module_bazel = ":module_no_spaces.bazel",
+)
+
+# Test case 3: Module with extra whitespace
+write_file(
+    name = "module_extra_whitespace",
+    out = "module_extra_whitespace.bazel",
+    content = [
+        "module(  ",
+        '    name  =  "test_module"  ,',
+        '    version  =  "1.0.0"  ,',
+        "  )",
+    ],
+)
+
+module_info(
+    name = "module_info_extra_whitespace",
+    module_bazel = ":module_extra_whitespace.bazel",
+)
+
+# Test case 4: Module with single line format
+write_file(
+    name = "module_single_line",
+    out = "module_single_line.bazel",
+    content = [
+        'module(name = "test_module", version = "1.0.0")',
+    ],
+)
+
+module_info(
+    name = "module_info_single_line",
+    module_bazel = ":module_single_line.bazel",
+)
+
+# Test case 5: Module with comments and other content
+write_file(
+    name = "module_with_comments",
+    out = "module_with_comments.bazel",
+    content = [
+        '"""Test module"""',
+        "",
+        "module(",
+        '    name = "test_module",',
+        '    version = "1.0.0",',
+        ")",
+        "",
+        'bazel_dep(name = "rules_cc", version = "0.2.4")',
+    ],
+)
+
+module_info(
+    name = "module_info_with_comments",
+    module_bazel = ":module_with_comments.bazel",
+)
+
+# Test case 6: Module with version containing special characters (should be escaped in JSON)
+# This test uses a different version to test JSON escaping
+write_file(
+    name = "module_special_chars",
+    out = "module_special_chars.bazel",
+    content = [
+        "module(",
+        '    name = "test_module",',
+        '    version = "1.0.0-beta.1",',
+        ")",
+    ],
+)
+
+module_info(
+    name = "module_info_special_chars",
+    module_bazel = ":module_special_chars.bazel",
+)
+
+# Golden file for special chars test (different version)
+write_file(
+    name = "golden_module_info_special_chars",
+    out = "golden_module_info_special_chars.json",
+    content = [
+        "{",
+        '    "name": "test_module",',
+        '    "version": "1.0.0-beta.1"',
+        "}",
+    ],
+)
+
+# Test case 7: Module with nested parentheses (other bazel_dep calls)
+write_file(
+    name = "module_nested",
+    out = "module_nested.bazel",
+    content = [
+        "module(",
+        '    name = "test_module",',
+        '    version = "1.0.0",',
+        ")",
+        "",
+        'bazel_dep(name = "rules_cc", version = "0.2.4")',
+        'bazel_dep(name = "platforms", version = "1.0.0")',
+    ],
+)
+
+module_info(
+    name = "module_info_nested",
+    module_bazel = ":module_nested.bazel",
+)
+
+# Golden file - all test cases should produce the same output
+# (same name and version, just different syntax)
+write_file(
+    name = "golden_module_info",
+    out = "golden_module_info.json",
+    content = [
+        "{",
+        '    "name": "test_module",',
+        '    "version": "1.0.0"',
+        "}",
+    ],
+)
+
+# Diff tests - all should match the single golden file
+# Note: module_info rules output .json files, so we reference the rule target
+diff_test(
+    name = "diff_test_basic",
+    file1 = ":golden_module_info.json",
+    file2 = ":module_info_basic",
+)
+
+diff_test(
+    name = "diff_test_no_spaces",
+    file1 = ":golden_module_info.json",
+    file2 = ":module_info_no_spaces",
+)
+
+diff_test(
+    name = "diff_test_extra_whitespace",
+    file1 = ":golden_module_info.json",
+    file2 = ":module_info_extra_whitespace",
+)
+
+diff_test(
+    name = "diff_test_single_line",
+    file1 = ":golden_module_info.json",
+    file2 = ":module_info_single_line",
+)
+
+diff_test(
+    name = "diff_test_with_comments",
+    file1 = ":golden_module_info.json",
+    file2 = ":module_info_with_comments",
+)
+
+diff_test(
+    name = "diff_test_special_chars",
+    file1 = ":golden_module_info_special_chars.json",
+    file2 = ":module_info_special_chars",
+)
+
+diff_test(
+    name = "diff_test_nested",
+    file1 = ":golden_module_info.json",
+    file2 = ":module_info_nested",
+)

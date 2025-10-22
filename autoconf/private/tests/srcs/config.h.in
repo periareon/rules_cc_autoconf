@@ -1,0 +1,7 @@
+/* config.h.in for srcs autoconf_srcs test */
+
+/* Always-on good source. */
+#undef HAVE_GOOD_SRC
+
+/* Incompatible / failing source. */
+#undef HAVE_BAD_SRC
