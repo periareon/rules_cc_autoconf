@@ -156,48 +156,47 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="rules_cc_autoconf"><a class="header" href="#rules_cc_autoconf">rules_cc_autoconf</a></h1>
-<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+                        <!-- Generated with Stardoc: http://skydoc.bazel.build -->
+<h1 id="rules_cc_autoconf"><a class="header" href="#rules_cc_autoconf">rules_cc_autoconf</a></h1>
+<p>This module provides a rule to mimic autoconf functionality, allowing you to
+generate config.h files by running compilation checks against a cc_toolchain.</p>
 <h2 id="setup"><a class="header" href="#setup">Setup</a></h2>
 <pre><code class="language-python">bazel_dep(name = "rules_cc_autoconf", version = "{version}")
 </code></pre>
-<div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
-<p>Autoconf-like configuration checks for Bazel.</p>
-<p>This module provides a rule to mimic autoconf functionality, allowing you to
-generate config.h files by running compilation checks against a cc_toolchain.</p>
 <h2 id="rules"><a class="header" href="#rules">Rules</a></h2>
+<h2 id="rules-1"><a class="header" href="#rules-1">Rules</a></h2>
 <ul>
-<li><a href="rules.html#autoconf">autoconf</a></li>
-<li><a href="rules.html#module_info">module_info</a></li>
+<li><a href="index.html#autoconf">autoconf</a></li>
+<li><a href="index.html#module_info">module_info</a></li>
 </ul>
 <h2 id="functions"><a class="header" href="#functions">Functions</a></h2>
 <ul>
-<li><a href="rules.html#macros.AC_CHECK_ALIGNOF">macros.AC_CHECK_ALIGNOF</a></li>
-<li><a href="rules.html#macros.AC_CHECK_CXX_COMPILER_FLAG">macros.AC_CHECK_CXX_COMPILER_FLAG</a></li>
-<li><a href="rules.html#macros.AC_CHECK_C_COMPILER_FLAG">macros.AC_CHECK_C_COMPILER_FLAG</a></li>
-<li><a href="rules.html#macros.AC_CHECK_DECL">macros.AC_CHECK_DECL</a></li>
-<li><a href="rules.html#macros.AC_CHECK_FUNC">macros.AC_CHECK_FUNC</a></li>
-<li><a href="rules.html#macros.AC_CHECK_HEADER">macros.AC_CHECK_HEADER</a></li>
-<li><a href="rules.html#macros.AC_CHECK_MEMBER">macros.AC_CHECK_MEMBER</a></li>
-<li><a href="rules.html#macros.AC_CHECK_SIZEOF">macros.AC_CHECK_SIZEOF</a></li>
-<li><a href="rules.html#macros.AC_CHECK_SYMBOL">macros.AC_CHECK_SYMBOL</a></li>
-<li><a href="rules.html#macros.AC_CHECK_TYPE">macros.AC_CHECK_TYPE</a></li>
-<li><a href="rules.html#macros.AC_COMPUTE_INT">macros.AC_COMPUTE_INT</a></li>
-<li><a href="rules.html#macros.AC_C_BIGENDIAN">macros.AC_C_BIGENDIAN</a></li>
-<li><a href="rules.html#macros.AC_C_INLINE">macros.AC_C_INLINE</a></li>
-<li><a href="rules.html#macros.AC_C_RESTRICT">macros.AC_C_RESTRICT</a></li>
-<li><a href="rules.html#macros.AC_DEFINE">macros.AC_DEFINE</a></li>
-<li><a href="rules.html#macros.AC_PROG_CC">macros.AC_PROG_CC</a></li>
-<li><a href="rules.html#macros.AC_PROG_CC_C_O">macros.AC_PROG_CC_C_O</a></li>
-<li><a href="rules.html#macros.AC_PROG_CXX">macros.AC_PROG_CXX</a></li>
-<li><a href="rules.html#macros.AC_TRY_COMPILE">macros.AC_TRY_COMPILE</a></li>
+<li><a href="index.html#macros.AC_CHECK_ALIGNOF">macros.AC_CHECK_ALIGNOF</a></li>
+<li><a href="index.html#macros.AC_CHECK_CXX_COMPILER_FLAG">macros.AC_CHECK_CXX_COMPILER_FLAG</a></li>
+<li><a href="index.html#macros.AC_CHECK_C_COMPILER_FLAG">macros.AC_CHECK_C_COMPILER_FLAG</a></li>
+<li><a href="index.html#macros.AC_CHECK_DECL">macros.AC_CHECK_DECL</a></li>
+<li><a href="index.html#macros.AC_CHECK_FUNC">macros.AC_CHECK_FUNC</a></li>
+<li><a href="index.html#macros.AC_CHECK_HEADER">macros.AC_CHECK_HEADER</a></li>
+<li><a href="index.html#macros.AC_CHECK_MEMBER">macros.AC_CHECK_MEMBER</a></li>
+<li><a href="index.html#macros.AC_CHECK_SIZEOF">macros.AC_CHECK_SIZEOF</a></li>
+<li><a href="index.html#macros.AC_CHECK_SYMBOL">macros.AC_CHECK_SYMBOL</a></li>
+<li><a href="index.html#macros.AC_CHECK_TYPE">macros.AC_CHECK_TYPE</a></li>
+<li><a href="index.html#macros.AC_COMPUTE_INT">macros.AC_COMPUTE_INT</a></li>
+<li><a href="index.html#macros.AC_C_BIGENDIAN">macros.AC_C_BIGENDIAN</a></li>
+<li><a href="index.html#macros.AC_C_INLINE">macros.AC_C_INLINE</a></li>
+<li><a href="index.html#macros.AC_C_RESTRICT">macros.AC_C_RESTRICT</a></li>
+<li><a href="index.html#macros.AC_DEFINE">macros.AC_DEFINE</a></li>
+<li><a href="index.html#macros.AC_PROG_CC">macros.AC_PROG_CC</a></li>
+<li><a href="index.html#macros.AC_PROG_CC_C_O">macros.AC_PROG_CC_C_O</a></li>
+<li><a href="index.html#macros.AC_PROG_CXX">macros.AC_PROG_CXX</a></li>
+<li><a href="index.html#macros.AC_TRY_COMPILE">macros.AC_TRY_COMPILE</a></li>
 </ul>
 <p><a id="autoconf"></a></p>
 <h2 id="autoconf"><a class="header" href="#autoconf">autoconf</a></h2>
 <pre>
 load("@rules_cc_autoconf//autoconf:defs.bzl", "autoconf")
 
-autoconf(<a href="rules.html#autoconf-name">name</a>, <a href="rules.html#autoconf-data">data</a>, <a href="rules.html#autoconf-out">out</a>, <a href="rules.html#autoconf-checks">checks</a>, <a href="rules.html#autoconf-package_info_file">package_info_file</a>, <a href="rules.html#autoconf-package_name">package_name</a>, <a href="rules.html#autoconf-package_version">package_version</a>, <a href="rules.html#autoconf-template">template</a>)
+autoconf(<a href="index.html#autoconf-name">name</a>, <a href="index.html#autoconf-data">data</a>, <a href="index.html#autoconf-out">out</a>, <a href="index.html#autoconf-checks">checks</a>, <a href="index.html#autoconf-package_info_file">package_info_file</a>, <a href="index.html#autoconf-package_name">package_name</a>, <a href="index.html#autoconf-package_version">package_version</a>, <a href="index.html#autoconf-template">template</a>)
 </pre>
 <p>Generate configuration headers using autoconf-like checks.</p>
 <p>This rule mimics autoconf functionality by running compilation checks
@@ -246,7 +245,7 @@ the results.</p>
 <pre>
 load("@rules_cc_autoconf//autoconf:defs.bzl", "module_info")
 
-module_info(<a href="rules.html#module_info-name">name</a>, <a href="rules.html#module_info-module_bazel">module_bazel</a>)
+module_info(<a href="index.html#module_info-name">name</a>, <a href="index.html#module_info-module_bazel">module_bazel</a>)
 </pre>
 <p>A rule for parsing module info from <code>MODULE.bazel</code> files.</p>
 <p><strong>ATTRIBUTES</strong></p>
@@ -260,7 +259,7 @@ module_info(<a href="rules.html#module_info-name">name</a>, <a href="rules.html#
 <pre>
 load("@rules_cc_autoconf//autoconf:defs.bzl", "macros")
 
-macros.AC_CHECK_ALIGNOF(<a href="rules.html#macros.AC_CHECK_ALIGNOF-type_name">type_name</a>, *, <a href="rules.html#macros.AC_CHECK_ALIGNOF-define">define</a>, <a href="rules.html#macros.AC_CHECK_ALIGNOF-headers">headers</a>, <a href="rules.html#macros.AC_CHECK_ALIGNOF-language">language</a>)
+macros.AC_CHECK_ALIGNOF(<a href="index.html#macros.AC_CHECK_ALIGNOF-type_name">type_name</a>, *, <a href="index.html#macros.AC_CHECK_ALIGNOF-define">define</a>, <a href="index.html#macros.AC_CHECK_ALIGNOF-headers">headers</a>, <a href="index.html#macros.AC_CHECK_ALIGNOF-language">language</a>)
 </pre>
 <p>Check the alignment of a type.</p>
 <p>WARNING: This macro is NOT cross-compile friendly. It requires compiling and
@@ -280,7 +279,7 @@ running code to determine the alignment, which doesn't work when cross-compiling
 <pre>
 load("@rules_cc_autoconf//autoconf:defs.bzl", "macros")
 
-macros.AC_CHECK_CXX_COMPILER_FLAG(<a href="rules.html#macros.AC_CHECK_CXX_COMPILER_FLAG-flag">flag</a>, <a href="rules.html#macros.AC_CHECK_CXX_COMPILER_FLAG-define">define</a>, <a href="rules.html#macros.AC_CHECK_CXX_COMPILER_FLAG-language">language</a>)
+macros.AC_CHECK_CXX_COMPILER_FLAG(<a href="index.html#macros.AC_CHECK_CXX_COMPILER_FLAG-flag">flag</a>, <a href="index.html#macros.AC_CHECK_CXX_COMPILER_FLAG-define">define</a>, <a href="index.html#macros.AC_CHECK_CXX_COMPILER_FLAG-language">language</a>)
 </pre>
 <p>Check if the C++ compiler supports a specific flag.</p>
 <p><strong>PARAMETERS</strong></p>
@@ -297,7 +296,7 @@ macros.AC_CHECK_CXX_COMPILER_FLAG(<a href="rules.html#macros.AC_CHECK_CXX_COMPIL
 <pre>
 load("@rules_cc_autoconf//autoconf:defs.bzl", "macros")
 
-macros.AC_CHECK_C_COMPILER_FLAG(<a href="rules.html#macros.AC_CHECK_C_COMPILER_FLAG-flag">flag</a>, <a href="rules.html#macros.AC_CHECK_C_COMPILER_FLAG-define">define</a>, <a href="rules.html#macros.AC_CHECK_C_COMPILER_FLAG-language">language</a>)
+macros.AC_CHECK_C_COMPILER_FLAG(<a href="index.html#macros.AC_CHECK_C_COMPILER_FLAG-flag">flag</a>, <a href="index.html#macros.AC_CHECK_C_COMPILER_FLAG-define">define</a>, <a href="index.html#macros.AC_CHECK_C_COMPILER_FLAG-language">language</a>)
 </pre>
 <p>Check if the C compiler supports a specific flag.</p>
 <p><strong>PARAMETERS</strong></p>
@@ -314,7 +313,7 @@ macros.AC_CHECK_C_COMPILER_FLAG(<a href="rules.html#macros.AC_CHECK_C_COMPILER_F
 <pre>
 load("@rules_cc_autoconf//autoconf:defs.bzl", "macros")
 
-macros.AC_CHECK_DECL(<a href="rules.html#macros.AC_CHECK_DECL-symbol">symbol</a>, *, <a href="rules.html#macros.AC_CHECK_DECL-define">define</a>, <a href="rules.html#macros.AC_CHECK_DECL-headers">headers</a>, <a href="rules.html#macros.AC_CHECK_DECL-language">language</a>)
+macros.AC_CHECK_DECL(<a href="index.html#macros.AC_CHECK_DECL-symbol">symbol</a>, *, <a href="index.html#macros.AC_CHECK_DECL-define">define</a>, <a href="index.html#macros.AC_CHECK_DECL-headers">headers</a>, <a href="index.html#macros.AC_CHECK_DECL-language">language</a>)
 </pre>
 <p>Check if a symbol is declared.</p>
 <p>This is different from AC_CHECK_SYMBOL - it checks if something is
@@ -338,7 +337,7 @@ AC_CHECK_DECL("stdout", headers = ["stdio.h"])
 <pre>
 load("@rules_cc_autoconf//autoconf:defs.bzl", "macros")
 
-macros.AC_CHECK_FUNC(<a href="rules.html#macros.AC_CHECK_FUNC-function">function</a>, <a href="rules.html#macros.AC_CHECK_FUNC-define">define</a>, <a href="rules.html#macros.AC_CHECK_FUNC-code">code</a>, <a href="rules.html#macros.AC_CHECK_FUNC-file">file</a>, <a href="rules.html#macros.AC_CHECK_FUNC-language">language</a>)
+macros.AC_CHECK_FUNC(<a href="index.html#macros.AC_CHECK_FUNC-function">function</a>, <a href="index.html#macros.AC_CHECK_FUNC-define">define</a>, <a href="index.html#macros.AC_CHECK_FUNC-code">code</a>, <a href="index.html#macros.AC_CHECK_FUNC-file">file</a>, <a href="index.html#macros.AC_CHECK_FUNC-language">language</a>)
 </pre>
 <p>Check for a function.</p>
 <p><strong>PARAMETERS</strong></p>
@@ -357,7 +356,7 @@ macros.AC_CHECK_FUNC(<a href="rules.html#macros.AC_CHECK_FUNC-function">function
 <pre>
 load("@rules_cc_autoconf//autoconf:defs.bzl", "macros")
 
-macros.AC_CHECK_HEADER(<a href="rules.html#macros.AC_CHECK_HEADER-header">header</a>, <a href="rules.html#macros.AC_CHECK_HEADER-define">define</a>, <a href="rules.html#macros.AC_CHECK_HEADER-language">language</a>)
+macros.AC_CHECK_HEADER(<a href="index.html#macros.AC_CHECK_HEADER-header">header</a>, <a href="index.html#macros.AC_CHECK_HEADER-define">define</a>, <a href="index.html#macros.AC_CHECK_HEADER-language">language</a>)
 </pre>
 <p>Check for a header file.</p>
 <p><strong>PARAMETERS</strong></p>
@@ -374,7 +373,7 @@ macros.AC_CHECK_HEADER(<a href="rules.html#macros.AC_CHECK_HEADER-header">header
 <pre>
 load("@rules_cc_autoconf//autoconf:defs.bzl", "macros")
 
-macros.AC_CHECK_MEMBER(<a href="rules.html#macros.AC_CHECK_MEMBER-aggregate">aggregate</a>, <a href="rules.html#macros.AC_CHECK_MEMBER-member">member</a>, *, <a href="rules.html#macros.AC_CHECK_MEMBER-define">define</a>, <a href="rules.html#macros.AC_CHECK_MEMBER-headers">headers</a>, <a href="rules.html#macros.AC_CHECK_MEMBER-language">language</a>)
+macros.AC_CHECK_MEMBER(<a href="index.html#macros.AC_CHECK_MEMBER-aggregate">aggregate</a>, <a href="index.html#macros.AC_CHECK_MEMBER-member">member</a>, *, <a href="index.html#macros.AC_CHECK_MEMBER-define">define</a>, <a href="index.html#macros.AC_CHECK_MEMBER-headers">headers</a>, <a href="index.html#macros.AC_CHECK_MEMBER-language">language</a>)
 </pre>
 <p>Check if a struct or union has a member.</p>
 <p>Example:</p>
@@ -397,7 +396,7 @@ AC_CHECK_MEMBER("struct tm", "tm_zone", headers = ["time.h"])
 <pre>
 load("@rules_cc_autoconf//autoconf:defs.bzl", "macros")
 
-macros.AC_CHECK_SIZEOF(<a href="rules.html#macros.AC_CHECK_SIZEOF-type_name">type_name</a>, *, <a href="rules.html#macros.AC_CHECK_SIZEOF-define">define</a>, <a href="rules.html#macros.AC_CHECK_SIZEOF-headers">headers</a>, <a href="rules.html#macros.AC_CHECK_SIZEOF-language">language</a>)
+macros.AC_CHECK_SIZEOF(<a href="index.html#macros.AC_CHECK_SIZEOF-type_name">type_name</a>, *, <a href="index.html#macros.AC_CHECK_SIZEOF-define">define</a>, <a href="index.html#macros.AC_CHECK_SIZEOF-headers">headers</a>, <a href="index.html#macros.AC_CHECK_SIZEOF-language">language</a>)
 </pre>
 <p>Check the size of a type.</p>
 <p>WARNING: This macro is NOT cross-compile friendly. It requires compiling and
@@ -421,7 +420,7 @@ AC_CHECK_SIZEOF("size_t", headers = ["stddef.h"])
 <pre>
 load("@rules_cc_autoconf//autoconf:defs.bzl", "macros")
 
-macros.AC_CHECK_SYMBOL(<a href="rules.html#macros.AC_CHECK_SYMBOL-symbol">symbol</a>, *, <a href="rules.html#macros.AC_CHECK_SYMBOL-define">define</a>, <a href="rules.html#macros.AC_CHECK_SYMBOL-code">code</a>, <a href="rules.html#macros.AC_CHECK_SYMBOL-file">file</a>, <a href="rules.html#macros.AC_CHECK_SYMBOL-language">language</a>)
+macros.AC_CHECK_SYMBOL(<a href="index.html#macros.AC_CHECK_SYMBOL-symbol">symbol</a>, *, <a href="index.html#macros.AC_CHECK_SYMBOL-define">define</a>, <a href="index.html#macros.AC_CHECK_SYMBOL-code">code</a>, <a href="index.html#macros.AC_CHECK_SYMBOL-file">file</a>, <a href="index.html#macros.AC_CHECK_SYMBOL-language">language</a>)
 </pre>
 <p>Check if a symbol is defined.</p>
 <p><strong>PARAMETERS</strong></p>
@@ -440,7 +439,7 @@ macros.AC_CHECK_SYMBOL(<a href="rules.html#macros.AC_CHECK_SYMBOL-symbol">symbol
 <pre>
 load("@rules_cc_autoconf//autoconf:defs.bzl", "macros")
 
-macros.AC_CHECK_TYPE(<a href="rules.html#macros.AC_CHECK_TYPE-type_name">type_name</a>, *, <a href="rules.html#macros.AC_CHECK_TYPE-define">define</a>, <a href="rules.html#macros.AC_CHECK_TYPE-code">code</a>, <a href="rules.html#macros.AC_CHECK_TYPE-file">file</a>, <a href="rules.html#macros.AC_CHECK_TYPE-language">language</a>)
+macros.AC_CHECK_TYPE(<a href="index.html#macros.AC_CHECK_TYPE-type_name">type_name</a>, *, <a href="index.html#macros.AC_CHECK_TYPE-define">define</a>, <a href="index.html#macros.AC_CHECK_TYPE-code">code</a>, <a href="index.html#macros.AC_CHECK_TYPE-file">file</a>, <a href="index.html#macros.AC_CHECK_TYPE-language">language</a>)
 </pre>
 <p>Check for a type.</p>
 <p><strong>PARAMETERS</strong></p>
@@ -459,7 +458,7 @@ macros.AC_CHECK_TYPE(<a href="rules.html#macros.AC_CHECK_TYPE-type_name">type_na
 <pre>
 load("@rules_cc_autoconf//autoconf:defs.bzl", "macros")
 
-macros.AC_COMPUTE_INT(<a href="rules.html#macros.AC_COMPUTE_INT-define">define</a>, <a href="rules.html#macros.AC_COMPUTE_INT-expression">expression</a>, *, <a href="rules.html#macros.AC_COMPUTE_INT-headers">headers</a>, <a href="rules.html#macros.AC_COMPUTE_INT-language">language</a>)
+macros.AC_COMPUTE_INT(<a href="index.html#macros.AC_COMPUTE_INT-define">define</a>, <a href="index.html#macros.AC_COMPUTE_INT-expression">expression</a>, *, <a href="index.html#macros.AC_COMPUTE_INT-headers">headers</a>, <a href="index.html#macros.AC_COMPUTE_INT-language">language</a>)
 </pre>
 <p>Compute an integer value at compile time.</p>
 <p>WARNING: This macro is NOT cross-compile friendly. It requires compiling and
@@ -488,7 +487,7 @@ AC_COMPUTE_INT("TWO", "1 + 1")
 <pre>
 load("@rules_cc_autoconf//autoconf:defs.bzl", "macros")
 
-macros.AC_C_BIGENDIAN(<a href="rules.html#macros.AC_C_BIGENDIAN-define">define</a>, <a href="rules.html#macros.AC_C_BIGENDIAN-language">language</a>)
+macros.AC_C_BIGENDIAN(<a href="index.html#macros.AC_C_BIGENDIAN-define">define</a>, <a href="index.html#macros.AC_C_BIGENDIAN-language">language</a>)
 </pre>
 <p>Check byte order (endianness) of the system.</p>
 <p>WARNING: This macro is NOT cross-compile friendly. It requires compiling and
@@ -508,7 +507,7 @@ The define is set to 1 for big-endian, 0 for little-endian.</p>
 <pre>
 load("@rules_cc_autoconf//autoconf:defs.bzl", "macros")
 
-macros.AC_C_INLINE(<a href="rules.html#macros.AC_C_INLINE-define">define</a>, <a href="rules.html#macros.AC_C_INLINE-language">language</a>)
+macros.AC_C_INLINE(<a href="index.html#macros.AC_C_INLINE-define">define</a>, <a href="index.html#macros.AC_C_INLINE-language">language</a>)
 </pre>
 <p>Check what inline keyword the compiler supports.</p>
 <p>Tests inline keyword and defines it to the appropriate value.</p>
@@ -525,7 +524,7 @@ macros.AC_C_INLINE(<a href="rules.html#macros.AC_C_INLINE-define">define</a>, <a
 <pre>
 load("@rules_cc_autoconf//autoconf:defs.bzl", "macros")
 
-macros.AC_C_RESTRICT(<a href="rules.html#macros.AC_C_RESTRICT-define">define</a>, <a href="rules.html#macros.AC_C_RESTRICT-language">language</a>)
+macros.AC_C_RESTRICT(<a href="index.html#macros.AC_C_RESTRICT-define">define</a>, <a href="index.html#macros.AC_C_RESTRICT-language">language</a>)
 </pre>
 <p>Check if the compiler supports restrict keyword.</p>
 <p>Note:
@@ -543,7 +542,7 @@ If restrict is not supported, the define is set to empty string.</p>
 <pre>
 load("@rules_cc_autoconf//autoconf:defs.bzl", "macros")
 
-macros.AC_DEFINE(<a href="rules.html#macros.AC_DEFINE-define">define</a>, <a href="rules.html#macros.AC_DEFINE-value">value</a>)
+macros.AC_DEFINE(<a href="index.html#macros.AC_DEFINE-define">define</a>, <a href="index.html#macros.AC_DEFINE-value">value</a>)
 </pre>
 <p>Define a configuration macro unconditionally.</p>
 <p>This is equivalent to GNU Autoconf's AC_DEFINE macro. It creates
@@ -578,7 +577,7 @@ but returns a check that will verify the compiler works.</p>
 <pre>
 load("@rules_cc_autoconf//autoconf:defs.bzl", "macros")
 
-macros.AC_PROG_CC_C_O(<a href="rules.html#macros.AC_PROG_CC_C_O-define">define</a>, <a href="rules.html#macros.AC_PROG_CC_C_O-language">language</a>)
+macros.AC_PROG_CC_C_O(<a href="index.html#macros.AC_PROG_CC_C_O-define">define</a>, <a href="index.html#macros.AC_PROG_CC_C_O-language">language</a>)
 </pre>
 <p>Check if the compiler supports -c and -o flags simultaneously.</p>
 <p>Note:
@@ -608,7 +607,7 @@ but returns a check that will verify the compiler works.</p>
 <pre>
 load("@rules_cc_autoconf//autoconf:defs.bzl", "macros")
 
-macros.AC_TRY_COMPILE(*, <a href="rules.html#macros.AC_TRY_COMPILE-code">code</a>, <a href="rules.html#macros.AC_TRY_COMPILE-file">file</a>, <a href="rules.html#macros.AC_TRY_COMPILE-define">define</a>, <a href="rules.html#macros.AC_TRY_COMPILE-language">language</a>)
+macros.AC_TRY_COMPILE(*, <a href="index.html#macros.AC_TRY_COMPILE-code">code</a>, <a href="index.html#macros.AC_TRY_COMPILE-file">file</a>, <a href="index.html#macros.AC_TRY_COMPILE-define">define</a>, <a href="index.html#macros.AC_TRY_COMPILE-language">language</a>)
 </pre>
 <p>Try to compile custom code.</p>
 <p>Note:
