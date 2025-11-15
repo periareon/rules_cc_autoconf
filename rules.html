@@ -162,6 +162,7 @@ generate config.h files by running compilation checks against a cc_toolchain.</p
 <h2 id="rules"><a class="header" href="#rules">Rules</a></h2>
 <ul>
 <li><a href="#autoconf">autoconf</a></li>
+<li><a href="#module_info">module_info</a></li>
 </ul>
 <h2 id="functions"><a class="header" href="#functions">Functions</a></h2>
 <ul>
@@ -190,7 +191,7 @@ generate config.h files by running compilation checks against a cc_toolchain.</p
 <pre>
 load("@rules_cc_autoconf//autoconf:defs.bzl", "autoconf")
 
-autoconf(<a href="#autoconf-name">name</a>, <a href="#autoconf-data">data</a>, <a href="#autoconf-out">out</a>, <a href="#autoconf-checks">checks</a>, <a href="#autoconf-package_name">package_name</a>, <a href="#autoconf-package_version">package_version</a>, <a href="#autoconf-template">template</a>)
+autoconf(<a href="#autoconf-name">name</a>, <a href="#autoconf-data">data</a>, <a href="#autoconf-out">out</a>, <a href="#autoconf-checks">checks</a>, <a href="#autoconf-package_info_file">package_info_file</a>, <a href="#autoconf-package_name">package_name</a>, <a href="#autoconf-package_version">package_version</a>, <a href="#autoconf-template">template</a>)
 </pre>
 <p>Generate configuration headers using autoconf-like checks.</p>
 <p>This rule mimics autoconf functionality by running compilation checks
@@ -228,9 +229,24 @@ the results.</p>
 <tr><td style="text-align: left"><a id="autoconf-data"></a>data</td><td style="text-align: left">Files referenced by checks (via the file parameter).</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
 <tr><td style="text-align: left"><a id="autoconf-out"></a>out</td><td style="text-align: left">The output config file (typically <code>config.h</code>).</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a>; <a href="https://bazel.build/reference/be/common-definitions#configurable-attributes">nonconfigurable</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
 <tr><td style="text-align: left"><a id="autoconf-checks"></a>checks</td><td style="text-align: left">List of JSON-encoded checks from macros (e.g., <code>macros.AC_CHECK_HEADER('stdio.h')</code>).</td><td style="text-align: left">List of strings</td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf-package_name"></a>package_name</td><td style="text-align: left">Package name for <code>PACKAGE_NAME</code> define.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf-package_version"></a>package_version</td><td style="text-align: left">Package version for <code>PACKAGE_VERSION</code> define.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf-package_info_file"></a>package_info_file</td><td style="text-align: left">A json file containing a map <code>{"name": "{PACKAGE_NAME}", "version": "{PACKAGE_VERSION"}</code>. Note that each field is optional. This attribute is mutually exclusive with <code>package_name</code> and <code>package_version</code>.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf-package_name"></a>package_name</td><td style="text-align: left">Package name for <code>PACKAGE_NAME</code> define. This attribute is mutually exclusive with <code>package_info_file</code>.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf-package_version"></a>package_version</td><td style="text-align: left">Package version for <code>PACKAGE_VERSION</code> define. This attribute is mutually exclusive with <code>package_info_file</code>.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
 <tr><td style="text-align: left"><a id="autoconf-template"></a>template</td><td style="text-align: left">Optional template file (<code>config.h.in</code>) to use as base.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><a id="module_info"></a></p>
+<h2 id="module_info"><a class="header" href="#module_info">module_info</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:defs.bzl", "module_info")
+
+module_info(<a href="#module_info-name">name</a>, <a href="#module_info-module_bazel">module_bazel</a>)
+</pre>
+<p>A rule for parsing module info from <code>MODULE.bazel</code> files.</p>
+<p><strong>ATTRIBUTES</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Type</th><th style="text-align: left">Mandatory</th><th style="text-align: left">Default</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="module_info-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
+<tr><td style="text-align: left"><a id="module_info-module_bazel"></a>module_bazel</td><td style="text-align: left">A <code>MODULE.bazel</code> file to parse module information from.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
 </tbody></table>
 </div>
 <p><a id="macros.AC_CHECK_ALIGNOF"></a></p>
