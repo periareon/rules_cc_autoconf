@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>autoconf - rules_cc_autoconf</title>
+        <title>autoconf_hdr - rules_cc_autoconf</title>
 
 
         <!-- Custom HTML head -->
@@ -156,27 +156,53 @@
                 <div id="content" class="content">
                     <main>
                         <!-- Generated with Stardoc: http://skydoc.bazel.build -->
-<h1 id="autoconf"><a class="header" href="#autoconf">autoconf</a></h1>
+<h1 id="autoconf_hdr"><a class="header" href="#autoconf_hdr">autoconf_hdr</a></h1>
 <h2 id="rules"><a class="header" href="#rules">Rules</a></h2>
 <ul>
-<li><a href="#autoconf">autoconf</a></li>
+<li><a href="#autoconf_hdr">autoconf_hdr</a></li>
 </ul>
-<p><a id="autoconf"></a></p>
-<h2 id="autoconf-1"><a class="header" href="#autoconf-1">autoconf</a></h2>
+<p><a id="autoconf_hdr"></a></p>
+<h2 id="autoconf_hdr-1"><a class="header" href="#autoconf_hdr-1">autoconf_hdr</a></h2>
 <pre>
-load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
+load("@rules_cc_autoconf//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
 
-autoconf(<a href="#autoconf-name">name</a>, <a href="#autoconf-data">data</a>, <a href="#autoconf-checks">checks</a>, <a href="#autoconf-package_info_file">package_info_file</a>, <a href="#autoconf-package_name">package_name</a>, <a href="#autoconf-package_version">package_version</a>)
+autoconf_hdr(<a href="#autoconf_hdr-name">name</a>, <a href="#autoconf_hdr-data">data</a>, <a href="#autoconf_hdr-out">out</a>, <a href="#autoconf_hdr-autoconf">autoconf</a>, <a href="#autoconf_hdr-checks">checks</a>, <a href="#autoconf_hdr-package_info_file">package_info_file</a>, <a href="#autoconf_hdr-package_name">package_name</a>, <a href="#autoconf_hdr-package_version">package_version</a>,
+             <a href="#autoconf_hdr-template">template</a>)
 </pre>
-<p>Run autoconf-like checks and produce results.</p>
-<p>This rule runs compilation checks against the configured cc_toolchain and produces
-a JSON results file containing the check outcomes. Unlike <code>autoconf_hdr</code>, this rule
-does not generate any header files - it only performs checks.</p>
-<p>Example:</p>
-<pre><code class="language-python">load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
+<p>Generate configuration headers, optionally using results from an <code>autoconf</code> target.</p>
+<p>This rule can work in two modes:</p>
+<ol>
+<li><strong>Standalone mode</strong>: When <code>autoconf</code> is not provided, it runs checks from its own
+<code>checks</code> attribute and generates a header file directly.</li>
+<li><strong>Merge mode</strong>: When <code>autoconf</code> is provided, it takes existing check results from
+that target and merges them with additional checks (from <code>checks</code> attribute or
+automatically derived from template defines).</li>
+</ol>
+<p>Examples:</p>
+<p><strong>Standalone mode:</strong></p>
+<pre><code class="language-python">load("@rules_cc_autoconf//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
+
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    template = "config.h.in",
+    package_name = "myproject",
+    package_version = "1.0.0",
+    checks = [
+        macros.AC_CHECK_HEADER("stdio.h"),
+        macros.AC_CHECK_HEADER("stdlib.h"),
+        macros.AC_CHECK_FUNC("printf"),
+    ],
+)
+</code></pre>
+<p><strong>Merge mode:</strong></p>
+<pre><code class="language-python">load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
+load("@rules_cc_autoconf//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
 
 autoconf(
-    name = "config",
+    name = "config_checks",
     checks = [
         macros.AC_CHECK_HEADER("stdio.h"),
         macros.AC_CHECK_HEADER("stdlib.h"),
@@ -185,28 +211,42 @@ autoconf(
     package_name = "myproject",
     package_version = "1.0.0",
 )
+
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    autoconf = ":config_checks",
+    template = "config.h.in",
+    # Optional: run additional checks beyond what's in the template
+    checks = [
+        macros.AC_CHECK_HEADER("unistd.h"),
+    ],
+)
 </code></pre>
-<p>The results can then be used by <code>autoconf_hdr</code> or <code>autoconf_srcs</code> to generate headers
-or wrapped source files.</p>
+<p>This allows you to either run checks and generate headers in one step (standalone mode)
+or run checks once and generate multiple header files from the same results (merge mode).</p>
 <p><strong>ATTRIBUTES</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Type</th><th style="text-align: left">Mandatory</th><th style="text-align: left">Default</th></tr></thead><tbody>
-<tr><td style="text-align: left"><a id="autoconf-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
-<tr><td style="text-align: left"><a id="autoconf-data"></a>data</td><td style="text-align: left">Files referenced by checks (via the file parameter).</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf-checks"></a>checks</td><td style="text-align: left">List of JSON-encoded checks from macros (e.g., <code>macros.AC_CHECK_HEADER('stdio.h')</code>).</td><td style="text-align: left">List of strings</td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf-package_info_file"></a>package_info_file</td><td style="text-align: left">A json file containing a map <code>{"name": "{PACKAGE_NAME}", "version": "{PACKAGE_VERSION"}</code>. Note that each field is optional. This attribute is mutually exclusive with <code>package_name</code> and <code>package_version</code>.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>None</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf-package_name"></a>package_name</td><td style="text-align: left">Package name for <code>PACKAGE_NAME</code> define. This attribute is mutually exclusive with <code>package_info_file</code>.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf-package_version"></a>package_version</td><td style="text-align: left">Package version for <code>PACKAGE_VERSION</code> define. This attribute is mutually exclusive with <code>package_info_file</code>.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_hdr-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_hdr-data"></a>data</td><td style="text-align: left">Files referenced by checks (via the file parameter).</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_hdr-out"></a>out</td><td style="text-align: left">The output config file (typically <code>config.h</code>).</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a>; <a href="https://bazel.build/reference/be/common-definitions#configurable-attributes">nonconfigurable</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_hdr-autoconf"></a>autoconf</td><td style="text-align: left">Optional <code>autoconf</code> target which provides check results. If not provided, <code>autoconf_hdr</code> will run checks independently using its own <code>checks</code> attribute.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_hdr-checks"></a>checks</td><td style="text-align: left">List of JSON-encoded checks from macros (e.g., <code>macros.AC_CHECK_HEADER('stdio.h')</code>). These checks will be merged with existing results from the <code>autoconf</code> target and any checks derived from the template.</td><td style="text-align: left">List of strings</td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_hdr-package_info_file"></a>package_info_file</td><td style="text-align: left">A json file containing a map <code>{"name": "{PACKAGE_NAME}", "version": "{PACKAGE_VERSION"}</code>. Note that each field is optional. This attribute is mutually exclusive with <code>package_name</code> and <code>package_version</code>. If not provided, the package info from the <code>autoconf</code> target will be used.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_hdr-package_name"></a>package_name</td><td style="text-align: left">Package name for <code>PACKAGE_NAME</code> define. This attribute is mutually exclusive with <code>package_info_file</code>. If not provided and <code>autoconf</code> is provided, the package name from the <code>autoconf</code> target will be used. Required if <code>autoconf</code> is not provided.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_hdr-package_version"></a>package_version</td><td style="text-align: left">Package version for <code>PACKAGE_VERSION</code> define. This attribute is mutually exclusive with <code>package_info_file</code>. If not provided and <code>autoconf</code> is provided, the package version from the <code>autoconf</code> target will be used. Required if <code>autoconf</code> is not provided.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_hdr-template"></a>template</td><td style="text-align: left">Optional template file (<code>config.h.in</code>) to use as base. If provided, the runner will automatically generate checks for any defines referenced in the template that don't already have results.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>None</code></td></tr>
 </tbody></table>
 </div>
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="autoconf.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="autoconf_hdr.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="autoconf_hdrs.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -216,11 +256,11 @@ or wrapped source files.</p>
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="autoconf.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="autoconf_hdr.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="autoconf_hdrs.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
