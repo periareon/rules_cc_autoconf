@@ -220,18 +220,17 @@ by Bazel’s C/C++ toolchain configuration.</p>
 <pre>
 load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
 
-autoconf(<a href="autoconf.html#autoconf-name">name</a>, <a href="autoconf.html#autoconf-data">data</a>, <a href="autoconf.html#autoconf-out">out</a>, <a href="autoconf.html#autoconf-checks">checks</a>, <a href="autoconf.html#autoconf-package_info_file">package_info_file</a>, <a href="autoconf.html#autoconf-package_name">package_name</a>, <a href="autoconf.html#autoconf-package_version">package_version</a>, <a href="autoconf.html#autoconf-template">template</a>)
+autoconf(<a href="autoconf.html#autoconf-name">name</a>, <a href="autoconf.html#autoconf-data">data</a>, <a href="autoconf.html#autoconf-checks">checks</a>, <a href="autoconf.html#autoconf-package_info_file">package_info_file</a>, <a href="autoconf.html#autoconf-package_name">package_name</a>, <a href="autoconf.html#autoconf-package_version">package_version</a>)
 </pre>
-<p>Generate configuration headers using autoconf-like checks.</p>
-<p>This rule mimics autoconf functionality by running compilation checks
-against the configured cc_toolchain and generating a config.h file with
-the results.</p>
+<p>Run autoconf-like checks and produce results.</p>
+<p>This rule runs compilation checks against the configured cc_toolchain and produces
+a JSON results file containing the check outcomes. Unlike <code>autoconf_hdr</code>, this rule
+does not generate any header files - it only performs checks.</p>
 <p>Example:</p>
 <pre><code class="language-python">load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "config",
-    out = "config.h",
     checks = [
         macros.AC_CHECK_HEADER("stdio.h"),
         macros.AC_CHECK_HEADER("stdlib.h"),
@@ -241,31 +240,16 @@ autoconf(
     package_version = "1.0.0",
 )
 </code></pre>
-<p>With file-based checks:</p>
-<pre><code class="language-python">load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
-
-autoconf(
-    name = "config",
-    out = "config.h",
-    checks = [
-        macros.AC_TRY_COMPILE(
-            define = "CUSTOM_CHECK",
-            file = ":custom_test.c",
-        ),
-    ],
-    data = [":custom_test.c"],
-)
-</code></pre>
+<p>The results can then be used by <code>autoconf_hdr</code> or <code>autoconf_srcs</code> to generate headers
+or wrapped source files.</p>
 <p><strong>ATTRIBUTES</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Type</th><th style="text-align: left">Mandatory</th><th style="text-align: left">Default</th></tr></thead><tbody>
 <tr><td style="text-align: left"><a id="autoconf-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
 <tr><td style="text-align: left"><a id="autoconf-data"></a>data</td><td style="text-align: left">Files referenced by checks (via the file parameter).</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf-out"></a>out</td><td style="text-align: left">The output config file (typically <code>config.h</code>).</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a>; <a href="https://bazel.build/reference/be/common-definitions#configurable-attributes">nonconfigurable</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
 <tr><td style="text-align: left"><a id="autoconf-checks"></a>checks</td><td style="text-align: left">List of JSON-encoded checks from macros (e.g., <code>macros.AC_CHECK_HEADER('stdio.h')</code>).</td><td style="text-align: left">List of strings</td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
 <tr><td style="text-align: left"><a id="autoconf-package_info_file"></a>package_info_file</td><td style="text-align: left">A json file containing a map <code>{"name": "{PACKAGE_NAME}", "version": "{PACKAGE_VERSION"}</code>. Note that each field is optional. This attribute is mutually exclusive with <code>package_name</code> and <code>package_version</code>.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="autoconf-package_name"></a>package_name</td><td style="text-align: left">Package name for <code>PACKAGE_NAME</code> define. This attribute is mutually exclusive with <code>package_info_file</code>.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
 <tr><td style="text-align: left"><a id="autoconf-package_version"></a>package_version</td><td style="text-align: left">Package version for <code>PACKAGE_VERSION</code> define. This attribute is mutually exclusive with <code>package_info_file</code>.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf-template"></a>template</td><td style="text-align: left">Optional template file (<code>config.h.in</code>) to use as base.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>None</code></td></tr>
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
 <h1 id="macros"><a class="header" href="#macros">macros</a></h1>
