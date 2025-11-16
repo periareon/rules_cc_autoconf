@@ -189,6 +189,26 @@ requested. That gives you:</p>
 </ul>
 <p>The result is the same style of <code>config.h</code> you would expect from GNU Autoconf,
 but integrated cleanly into Bazel builds.</p>
+<h2 id="why-not-just-run-autoconf"><a class="header" href="#why-not-just-run-autoconf">Why not just run Autoconf?</a></h2>
+<p>GNU <a href="https://www.gnu.org/software/autoconf/">Autoconf</a> is excellent at probing
+platform capabilities and generating Make-based build trees. However, dropping
+<code>./configure</code> into a Bazel build has a few downsides:</p>
+<ul>
+<li><strong>Non-hermetic</strong>: traditional Autoconf expects to mutate the source tree
+(creating <code>config.status</code>, <code>config.log</code>, generated headers, etc.), which
+conflicts with Bazel’s sandboxing and caching model.</li>
+<li><strong>Opaque, coarse-grained actions</strong>: a single <code>configure</code> step can do dozens of
+unrelated checks at once, making cache behaviour and debugging harder.</li>
+<li><strong>Environment-sensitive</strong>: running shell scripts and toolchain discovery
+inside a Bazel action is fragile across platforms, remote execution, and
+containerized builds.</li>
+</ul>
+<p>Projects in the
+<a href="https://github.com/bazelbuild/bazel-central-registry">Bazel Central Registry</a>
+often reimplement the <em>build</em> logic in Bazel, but they still miss Autoconf’s
+convenient <code>config.h</code> generation. <code>rules_cc_autoconf</code> focuses on that gap: it
+provides autoconf-like checks in a hermetic, deterministic way, driven entirely
+by Bazel’s C/C++ toolchain configuration.</p>
 <div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
 <h1 id="autoconf-rule-implementation"><a class="header" href="#autoconf-rule-implementation">Autoconf rule implementation.</a></h1>
 <h2 id="rules"><a class="header" href="#rules">Rules</a></h2>
