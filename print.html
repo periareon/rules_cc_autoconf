@@ -767,7 +767,7 @@ Returns:
 <tr><td style="text-align: left"><a id="macros.AC_TRY_COMPILE-language"></a>language</td><td style="text-align: left"><p align="center"> - </p></td><td style="text-align: left"><code>"c"</code></td></tr>
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
-<p>Module info rules</p>
+<h1 id="module-info-rules"><a class="header" href="#module-info-rules">Module info rules</a></h1>
 <h2 id="rules-1"><a class="header" href="#rules-1">Rules</a></h2>
 <ul>
 <li><a href="module_info.html#module_info">module_info</a></li>
@@ -780,6 +780,25 @@ load("@rules_cc_autoconf//autoconf:module_info.bzl", "module_info")
 module_info(<a href="module_info.html#module_info-name">name</a>, <a href="module_info.html#module_info-module_bazel">module_bazel</a>)
 </pre>
 <p>A rule for parsing module info from <code>MODULE.bazel</code> files.</p>
+<p>This rule is most useful when paired with the <code>autoconf</code> rule.</p>
+<p>Example:</p>
+<pre><code class="language-python">load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
+load("@rules_cc_autoconf//autoconf:module_info.bzl", "module_info")
+
+module_info(
+    name = "module_info.json",
+    module_bazel = "//:MODULE.bazel",
+)
+
+autoconf(
+    name = "config_h",
+    out = "config.h",
+    checks = [
+        # ...
+    ],
+    package_info_file = ":module_info.json",
+)
+</code></pre>
 <p><strong>ATTRIBUTES</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Type</th><th style="text-align: left">Mandatory</th><th style="text-align: left">Default</th></tr></thead><tbody>
 <tr><td style="text-align: left"><a id="module_info-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
