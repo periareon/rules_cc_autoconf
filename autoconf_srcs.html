@@ -170,8 +170,7 @@ autoconf_srcs(<a href="#autoconf_srcs-name">name</a>, <a href="#autoconf_srcs-sr
 </pre>
 <p>Generate wrapper sources that are conditionally enabled by autoconf results.</p>
 <p>Typical use case:</p>
-<pre><code>```python
-load("@rules_cc_autoconf//autoconf:autoconf_srcs.bzl", "autoconf_srcs")
+<pre><code class="language-python">load("@rules_cc_autoconf//autoconf:autoconf_srcs.bzl", "autoconf_srcs")
 load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
 load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
@@ -198,17 +197,14 @@ cc_library(
     srcs = [":foo_srcs"],
     hdrs = [":config.h"],
 )
-```
 </code></pre>
 <p>In this setup <code>autoconf_srcs</code> reads the results from <code>:config</code> and generates a
 wrapped copy of <code>foo_impl.c</code> whose contents are effectively:</p>
-<pre><code>```cc
-#define HAVE_FOO 1      // when the check for HAVE_FOO succeeds
+<pre><code class="language-cc">#define HAVE_FOO 1      // when the check for HAVE_FOO succeeds
 /* or: #undef HAVE_FOO  // when the check fails */
 #ifdef HAVE_FOO
 /* original foo_impl.c contents ... */
 #endif
-```
 </code></pre>
 <p>This is useful when you have platform-specific or optional sources that should
 only be compiled when a particular autoconf check passes, without having to
