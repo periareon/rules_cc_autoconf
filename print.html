@@ -333,8 +333,72 @@ or run checks once and generate multiple header files from the same results (mer
 <tr><td style="text-align: left"><a id="autoconf_hdr-package_version"></a>package_version</td><td style="text-align: left">Package version for <code>PACKAGE_VERSION</code> define. This attribute is mutually exclusive with <code>package_info_file</code>. If not provided and <code>autoconf</code> is provided, the package version from the <code>autoconf</code> target will be used. Required if <code>autoconf</code> is not provided.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
 <tr><td style="text-align: left"><a id="autoconf_hdr-template"></a>template</td><td style="text-align: left">Optional template file (<code>config.h.in</code>) to use as base. If provided, the runner will automatically generate checks for any defines referenced in the template that don't already have results.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>None</code></td></tr>
 </tbody></table>
-</div><div style="break-before: page; page-break-before: always;"></div><h1 id="autoconf_srcs"><a class="header" href="#autoconf_srcs">autoconf_srcs</a></h1>
-<div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
+</div><div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
+<h1 id="autoconf_srcs"><a class="header" href="#autoconf_srcs">autoconf_srcs</a></h1>
+<h2 id="rules-2"><a class="header" href="#rules-2">Rules</a></h2>
+<ul>
+<li><a href="autoconf_srcs.html#autoconf_srcs">autoconf_srcs</a></li>
+</ul>
+<p><a id="autoconf_srcs"></a></p>
+<h2 id="autoconf_srcs-1"><a class="header" href="#autoconf_srcs-1">autoconf_srcs</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:autoconf_srcs.bzl", "autoconf_srcs")
+
+autoconf_srcs(<a href="autoconf_srcs.html#autoconf_srcs-name">name</a>, <a href="autoconf_srcs.html#autoconf_srcs-srcs">srcs</a>, <a href="autoconf_srcs.html#autoconf_srcs-autoconf">autoconf</a>, <a href="autoconf_srcs.html#autoconf_srcs-naming">naming</a>)
+</pre>
+<p>Generate wrapper sources that are conditionally enabled by autoconf results.</p>
+<p>Typical use case:</p>
+<pre><code>```python
+load("@rules_cc_autoconf//autoconf:autoconf_srcs.bzl", "autoconf_srcs")
+load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
+load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+autoconf(
+    name = "config",
+    out = "config.h",
+    checks = [
+        # Feature is present on this platform/toolchain.
+        macros.AC_CHECK_HEADER("foo.h", define = "HAVE_FOO"),
+    ],
+)
+
+autoconf_srcs(
+    name = "foo_srcs",
+    autoconf = ":config",
+    srcs = {
+        "uses_foo.c": "HAVE_FOO",
+    },
+)
+
+cc_library(
+    name = "foo",
+    srcs = [":foo_srcs"],
+    hdrs = [":config.h"],
+)
+```
+</code></pre>
+<p>In this setup <code>autoconf_srcs</code> reads the results from <code>:config</code> and generates a
+wrapped copy of <code>foo_impl.c</code> whose contents are effectively:</p>
+<pre><code>```cc
+#define HAVE_FOO 1      // when the check for HAVE_FOO succeeds
+/* or: #undef HAVE_FOO  // when the check fails */
+#ifdef HAVE_FOO
+/* original foo_impl.c contents ... */
+#endif
+```
+</code></pre>
+<p>This is useful when you have platform-specific or optional sources that should
+only be compiled when a particular autoconf check passes, without having to
+manually maintain <code>#ifdef</code> guards in every source file.</p>
+<p><strong>ATTRIBUTES</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Type</th><th style="text-align: left">Mandatory</th><th style="text-align: left">Default</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="autoconf_srcs-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_srcs-srcs"></a>srcs</td><td style="text-align: left">A mapping of source file to define required to compile the file.</td><td style="text-align: left"><a href="https://bazel.build/rules/lib/dict">Dictionary: Label -&gt; String</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_srcs-autoconf"></a>autoconf</td><td style="text-align: left">The <code>autoconf</code> target which provides defines.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_srcs-naming"></a>naming</td><td style="text-align: left">How to name generated sources: <code>package_relative</code> keeps the original package-relative path, <code>ac_suffix</code> inserts <code>.ac.</code> before the final suffix (e.g. <code>foo.cc -&gt; foo.ac.cc</code>), and <code>per_target</code> prefixes outputs with <code>{ctx.label.name}</code> to namespace them per rule.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>"package_relative"</code></td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
 <h1 id="macros"><a class="header" href="#macros">macros</a></h1>
 <h2 id="cross-compilation-warning"><a class="header" href="#cross-compilation-warning">Cross-Compilation Warning</a></h2>
 <p>Some of the macros in this module behave like their GNU Autoconf counterparts
@@ -855,7 +919,7 @@ Returns:
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
 <h1 id="module_info"><a class="header" href="#module_info">module_info</a></h1>
-<h2 id="rules-2"><a class="header" href="#rules-2">Rules</a></h2>
+<h2 id="rules-3"><a class="header" href="#rules-3">Rules</a></h2>
 <ul>
 <li><a href="module_info.html#module_info">module_info</a></li>
 </ul>
