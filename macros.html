@@ -690,40 +690,28 @@ load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
 macros.AC_TRY_COMPILE(*, <a href="#macros.AC_TRY_COMPILE-code">code</a>, <a href="#macros.AC_TRY_COMPILE-file">file</a>, <a href="#macros.AC_TRY_COMPILE-define">define</a>, <a href="#macros.AC_TRY_COMPILE-language">language</a>)
 </pre>
 <p>Try to compile custom code.</p>
-<pre><code>Original m4 example:
-```m4
-AC_TRY_COMPILE([#include &lt;stdio.h&gt;], [printf("test");], [AC_DEFINE([HAVE_PRINTF], [1])])
-```
-
-Example:
-```python
-macros.AC_TRY_COMPILE(code = "#include &lt;stdio.h&gt;
+<p>Original m4 example:</p>
+<pre><code class="language-m4">AC_TRY_COMPILE([#include &lt;stdio.h&gt;], [printf("test");], [AC_DEFINE([HAVE_PRINTF], [1])])
 </code></pre>
-<p>int main() { printf("test"); return 0; }", define = "HAVE_PRINTF")
+<p>Example:</p>
+<pre><code class="language-python">macros.AC_TRY_COMPILE(code = "#include &lt;stdio.h&gt;\nint main() { printf(\"test\"); return 0; }", define = "HAVE_PRINTF")
 macros.AC_TRY_COMPILE(file = ":test.c", define = "CUSTOM_CHECK")
-```</p>
-<pre><code>Note:
-    This is a rules_cc_autoconf extension. While GNU Autoconf has an
-    obsolete AC_TRY_COMPILE macro (replaced by AC_COMPILE_IFELSE), this
-    version adds support for file-based checks which is useful in Bazel.
-
-Args:
-    code: Code to compile (optional if file is provided)
-    define: Define name to set if compilation succeeds
-    file: Label to a file containing code to compile (optional if code is provided)
-    language: Language to use for check (`"c"` or `"cpp"`)
-
-Returns:
-    A JSON-encoded check string for use with the autoconf rule.
 </code></pre>
+<p>Note:
+This is a rules_cc_autoconf extension. While GNU Autoconf has an
+obsolete AC_TRY_COMPILE macro (replaced by AC_COMPILE_IFELSE), this
+version adds support for file-based checks which is useful in Bazel.</p>
 <p><strong>PARAMETERS</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
-<tr><td style="text-align: left"><a id="macros.AC_TRY_COMPILE-code"></a>code</td><td style="text-align: left"><p align="center"> - </p></td><td style="text-align: left"><code>None</code></td></tr>
-<tr><td style="text-align: left"><a id="macros.AC_TRY_COMPILE-file"></a>file</td><td style="text-align: left"><p align="center"> - </p></td><td style="text-align: left"><code>None</code></td></tr>
-<tr><td style="text-align: left"><a id="macros.AC_TRY_COMPILE-define"></a>define</td><td style="text-align: left"><p align="center"> - </p></td><td style="text-align: left"><code>None</code></td></tr>
-<tr><td style="text-align: left"><a id="macros.AC_TRY_COMPILE-language"></a>language</td><td style="text-align: left"><p align="center"> - </p></td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_TRY_COMPILE-code"></a>code</td><td style="text-align: left">Code to compile (optional if file is provided)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_TRY_COMPILE-file"></a>file</td><td style="text-align: left">Label to a file containing code to compile (optional if code is provided)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_TRY_COMPILE-define"></a>define</td><td style="text-align: left">Define name to set if compilation succeeds</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_TRY_COMPILE-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
 </tbody></table>
 </div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
+
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
