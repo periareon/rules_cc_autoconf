@@ -166,7 +166,7 @@
 <pre>
 load("@rules_cc_autoconf//autoconf:autoconf_srcs.bzl", "autoconf_srcs")
 
-autoconf_srcs(<a href="#autoconf_srcs-name">name</a>, <a href="#autoconf_srcs-srcs">srcs</a>, <a href="#autoconf_srcs-autoconf">autoconf</a>, <a href="#autoconf_srcs-naming">naming</a>)
+autoconf_srcs(<a href="#autoconf_srcs-name">name</a>, <a href="#autoconf_srcs-deps">deps</a>, <a href="#autoconf_srcs-srcs">srcs</a>, <a href="#autoconf_srcs-naming">naming</a>)
 </pre>
 <p>Generate wrapper sources that are conditionally enabled by autoconf results.</p>
 <p>Typical use case:</p>
@@ -186,7 +186,7 @@ autoconf(
 
 autoconf_srcs(
     name = "foo_srcs",
-    autoconf = ":config",
+    deps = [":config"],
     srcs = {
         "uses_foo.c": "HAVE_FOO",
     },
@@ -198,12 +198,12 @@ cc_library(
     hdrs = [":config.h"],
 )
 </code></pre>
-<p>In this setup <code>autoconf_srcs</code> reads the results from <code>:config</code> and generates a
-wrapped copy of <code>foo_impl.c</code> whose contents are effectively:</p>
+<p>In this setup <code>autoconf_srcs</code> reads the results from <code>:config</code> (or multiple targets via <code>deps</code>) and generates a
+wrapped copy of <code>uses_foo.c</code> whose contents are effectively:</p>
 <pre><code class="language-cc">#define HAVE_FOO 1      // when the check for HAVE_FOO succeeds
 /* or: #undef HAVE_FOO  // when the check fails */
 #ifdef HAVE_FOO
-/* original foo_impl.c contents ... */
+/* original uses_foo.c contents ... */
 #endif
 </code></pre>
 <p>This is useful when you have platform-specific or optional sources that should
@@ -212,8 +212,8 @@ manually maintain <code>#ifdef</code> guards in every source file.</p>
 <p><strong>ATTRIBUTES</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Type</th><th style="text-align: left">Mandatory</th><th style="text-align: left">Default</th></tr></thead><tbody>
 <tr><td style="text-align: left"><a id="autoconf_srcs-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_srcs-deps"></a>deps</td><td style="text-align: left">List of <code>autoconf</code> targets which provide defines. Results from all deps will be merged together, and duplicate define names will produce an error.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
 <tr><td style="text-align: left"><a id="autoconf_srcs-srcs"></a>srcs</td><td style="text-align: left">A mapping of source file to define required to compile the file.</td><td style="text-align: left"><a href="https://bazel.build/rules/lib/dict">Dictionary: Label -&gt; String</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_srcs-autoconf"></a>autoconf</td><td style="text-align: left">The <code>autoconf</code> target which provides defines.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
 <tr><td style="text-align: left"><a id="autoconf_srcs-naming"></a>naming</td><td style="text-align: left">How to name generated sources: <code>package_relative</code> keeps the original package-relative path, <code>ac_suffix</code> inserts <code>.ac.</code> before the final suffix (e.g. <code>foo.cc -&gt; foo.ac.cc</code>), and <code>per_target</code> prefixes outputs with <code>{ctx.label.name}</code> to namespace them per rule.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>"package_relative"</code></td></tr>
 </tbody></table>
 </div>

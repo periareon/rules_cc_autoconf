@@ -220,7 +220,7 @@ by Bazel’s C/C++ toolchain configuration.</p>
 <pre>
 load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
 
-autoconf(<a href="autoconf.html#autoconf-name">name</a>, <a href="autoconf.html#autoconf-data">data</a>, <a href="autoconf.html#autoconf-checks">checks</a>, <a href="autoconf.html#autoconf-package_info_file">package_info_file</a>, <a href="autoconf.html#autoconf-package_name">package_name</a>, <a href="autoconf.html#autoconf-package_version">package_version</a>)
+autoconf(<a href="autoconf.html#autoconf-name">name</a>, <a href="autoconf.html#autoconf-deps">deps</a>, <a href="autoconf.html#autoconf-data">data</a>, <a href="autoconf.html#autoconf-checks">checks</a>, <a href="autoconf.html#autoconf-package_info_file">package_info_file</a>, <a href="autoconf.html#autoconf-package_name">package_name</a>, <a href="autoconf.html#autoconf-package_version">package_version</a>)
 </pre>
 <p>Run autoconf-like checks and produce results.</p>
 <p>This rule runs compilation checks against the configured cc_toolchain and produces
@@ -245,6 +245,7 @@ or wrapped source files.</p>
 <p><strong>ATTRIBUTES</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Type</th><th style="text-align: left">Mandatory</th><th style="text-align: left">Default</th></tr></thead><tbody>
 <tr><td style="text-align: left"><a id="autoconf-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
+<tr><td style="text-align: left"><a id="autoconf-deps"></a>deps</td><td style="text-align: left">Additional <code>autoconf</code> dependencies.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
 <tr><td style="text-align: left"><a id="autoconf-data"></a>data</td><td style="text-align: left">Files referenced by checks (via the file parameter).</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
 <tr><td style="text-align: left"><a id="autoconf-checks"></a>checks</td><td style="text-align: left">List of JSON-encoded checks from macros (e.g., <code>macros.AC_CHECK_HEADER('stdio.h')</code>).</td><td style="text-align: left">List of strings</td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
 <tr><td style="text-align: left"><a id="autoconf-package_info_file"></a>package_info_file</td><td style="text-align: left">A json file containing a map <code>{"name": "{PACKAGE_NAME}", "version": "{PACKAGE_VERSION"}</code>. Note that each field is optional. This attribute is mutually exclusive with <code>package_name</code> and <code>package_version</code>.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>None</code></td></tr>
@@ -262,37 +263,12 @@ or wrapped source files.</p>
 <pre>
 load("@rules_cc_autoconf//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
 
-autoconf_hdr(<a href="autoconf_hdr.html#autoconf_hdr-name">name</a>, <a href="autoconf_hdr.html#autoconf_hdr-data">data</a>, <a href="autoconf_hdr.html#autoconf_hdr-out">out</a>, <a href="autoconf_hdr.html#autoconf_hdr-autoconf">autoconf</a>, <a href="autoconf_hdr.html#autoconf_hdr-checks">checks</a>, <a href="autoconf_hdr.html#autoconf_hdr-package_info_file">package_info_file</a>, <a href="autoconf_hdr.html#autoconf_hdr-package_name">package_name</a>, <a href="autoconf_hdr.html#autoconf_hdr-package_version">package_version</a>,
-             <a href="autoconf_hdr.html#autoconf_hdr-template">template</a>)
+autoconf_hdr(<a href="autoconf_hdr.html#autoconf_hdr-name">name</a>, <a href="autoconf_hdr.html#autoconf_hdr-deps">deps</a>, <a href="autoconf_hdr.html#autoconf_hdr-out">out</a>, <a href="autoconf_hdr.html#autoconf_hdr-inlines">inlines</a>, <a href="autoconf_hdr.html#autoconf_hdr-package_info_file">package_info_file</a>, <a href="autoconf_hdr.html#autoconf_hdr-package_name">package_name</a>, <a href="autoconf_hdr.html#autoconf_hdr-package_version">package_version</a>, <a href="autoconf_hdr.html#autoconf_hdr-template">template</a>)
 </pre>
-<p>Generate configuration headers, optionally using results from an <code>autoconf</code> target.</p>
-<p>This rule can work in two modes:</p>
-<ol>
-<li><strong>Standalone mode</strong>: When <code>autoconf</code> is not provided, it runs checks from its own
-<code>checks</code> attribute and generates a header file directly.</li>
-<li><strong>Merge mode</strong>: When <code>autoconf</code> is provided, it takes existing check results from
-that target and merges them with additional checks (from <code>checks</code> attribute or
-automatically derived from template defines).</li>
-</ol>
-<p>Examples:</p>
-<p><strong>Standalone mode:</strong></p>
-<pre><code class="language-python">load("@rules_cc_autoconf//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
-load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
-
-autoconf_hdr(
-    name = "config",
-    out = "config.h",
-    template = "config.h.in",
-    package_name = "myproject",
-    package_version = "1.0.0",
-    checks = [
-        macros.AC_CHECK_HEADER("stdio.h"),
-        macros.AC_CHECK_HEADER("stdlib.h"),
-        macros.AC_CHECK_FUNC("printf"),
-    ],
-)
-</code></pre>
-<p><strong>Merge mode:</strong></p>
+<p>Generate configuration headers from results provided by <code>autoconf</code> targets.</p>
+<p>This rule takes check results from <code>autoconf</code> targets (via <code>deps</code>) and generates a header file.
+The template file (if provided) is used to format the output header.</p>
+<p>Example:</p>
 <pre><code class="language-python">load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
 load("@rules_cc_autoconf//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
 load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
@@ -311,27 +287,21 @@ autoconf(
 autoconf_hdr(
     name = "config",
     out = "config.h",
-    autoconf = ":config_checks",
+    deps = [":config_checks"],
     template = "config.h.in",
-    # Optional: run additional checks beyond what's in the template
-    checks = [
-        macros.AC_CHECK_HEADER("unistd.h"),
-    ],
 )
 </code></pre>
-<p>This allows you to either run checks and generate headers in one step (standalone mode)
-or run checks once and generate multiple header files from the same results (merge mode).</p>
+<p>This allows you to run checks once and generate multiple header files from the same results.</p>
 <p><strong>ATTRIBUTES</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Type</th><th style="text-align: left">Mandatory</th><th style="text-align: left">Default</th></tr></thead><tbody>
 <tr><td style="text-align: left"><a id="autoconf_hdr-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_hdr-data"></a>data</td><td style="text-align: left">Files referenced by checks (via the file parameter).</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_hdr-deps"></a>deps</td><td style="text-align: left">List of <code>autoconf</code> targets which provide check results. Results from all deps will be merged together, and duplicate define names will produce an error. If not provided, an empty results file will be created.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
 <tr><td style="text-align: left"><a id="autoconf_hdr-out"></a>out</td><td style="text-align: left">The output config file (typically <code>config.h</code>).</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a>; <a href="https://bazel.build/reference/be/common-definitions#configurable-attributes">nonconfigurable</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_hdr-autoconf"></a>autoconf</td><td style="text-align: left">Optional <code>autoconf</code> target which provides check results. If not provided, <code>autoconf_hdr</code> will run checks independently using its own <code>checks</code> attribute.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>None</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_hdr-checks"></a>checks</td><td style="text-align: left">List of JSON-encoded checks from macros (e.g., <code>macros.AC_CHECK_HEADER('stdio.h')</code>). These checks will be merged with existing results from the <code>autoconf</code> target and any checks derived from the template.</td><td style="text-align: left">List of strings</td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_hdr-package_info_file"></a>package_info_file</td><td style="text-align: left">A json file containing a map <code>{"name": "{PACKAGE_NAME}", "version": "{PACKAGE_VERSION"}</code>. Note that each field is optional. This attribute is mutually exclusive with <code>package_name</code> and <code>package_version</code>. If not provided, the package info from the <code>autoconf</code> target will be used.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>None</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_hdr-package_name"></a>package_name</td><td style="text-align: left">Package name for <code>PACKAGE_NAME</code> define. This attribute is mutually exclusive with <code>package_info_file</code>. If not provided and <code>autoconf</code> is provided, the package name from the <code>autoconf</code> target will be used. Required if <code>autoconf</code> is not provided.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_hdr-package_version"></a>package_version</td><td style="text-align: left">Package version for <code>PACKAGE_VERSION</code> define. This attribute is mutually exclusive with <code>package_info_file</code>. If not provided and <code>autoconf</code> is provided, the package version from the <code>autoconf</code> target will be used. Required if <code>autoconf</code> is not provided.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_hdr-template"></a>template</td><td style="text-align: left">Optional template file (<code>config.h.in</code>) to use as base. If provided, the runner will automatically generate checks for any defines referenced in the template that don't already have results.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_hdr-inlines"></a>inlines</td><td style="text-align: left">A mapping of strings to files for replace within the content of the given <code>template</code> attribute.<br><br>The exact string in the template is replaced with the content of the associated file. Any <code>@VAR@</code> style placeholders in the inline file content will be replaced with their corresponding define values (package info, check results, etc.) after insertion.</td><td style="text-align: left">Dictionary: String -&gt; Label</td><td style="text-align: left">optional</td><td style="text-align: left"><code>{}</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_hdr-package_info_file"></a>package_info_file</td><td style="text-align: left">A json file containing a map <code>{"name": "{PACKAGE_NAME}", "version": "{PACKAGE_VERSION"}</code>. Note that each field is optional. This attribute is mutually exclusive with <code>package_name</code> and <code>package_version</code>. If not provided and <code>deps</code> are provided, the package info from the <code>deps</code> will be used (all deps must have the same package_info).</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_hdr-package_name"></a>package_name</td><td style="text-align: left">Package name for <code>PACKAGE_NAME</code> define. This attribute is mutually exclusive with <code>package_info_file</code>. If not provided and <code>deps</code> are provided, the package name from the <code>deps</code> will be used.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_hdr-package_version"></a>package_version</td><td style="text-align: left">Package version for <code>PACKAGE_VERSION</code> define. This attribute is mutually exclusive with <code>package_info_file</code>. If not provided and <code>deps</code> are provided, the package version from the <code>deps</code> will be used.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_hdr-template"></a>template</td><td style="text-align: left">Optional template file (<code>config.h.in</code>) to use as base for generating the header file. The template is used to format the output header, but does not generate any checks.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>None</code></td></tr>
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
 <h1 id="autoconf_srcs"><a class="header" href="#autoconf_srcs">autoconf_srcs</a></h1>
@@ -344,7 +314,7 @@ or run checks once and generate multiple header files from the same results (mer
 <pre>
 load("@rules_cc_autoconf//autoconf:autoconf_srcs.bzl", "autoconf_srcs")
 
-autoconf_srcs(<a href="autoconf_srcs.html#autoconf_srcs-name">name</a>, <a href="autoconf_srcs.html#autoconf_srcs-srcs">srcs</a>, <a href="autoconf_srcs.html#autoconf_srcs-autoconf">autoconf</a>, <a href="autoconf_srcs.html#autoconf_srcs-naming">naming</a>)
+autoconf_srcs(<a href="autoconf_srcs.html#autoconf_srcs-name">name</a>, <a href="autoconf_srcs.html#autoconf_srcs-deps">deps</a>, <a href="autoconf_srcs.html#autoconf_srcs-srcs">srcs</a>, <a href="autoconf_srcs.html#autoconf_srcs-naming">naming</a>)
 </pre>
 <p>Generate wrapper sources that are conditionally enabled by autoconf results.</p>
 <p>Typical use case:</p>
@@ -364,7 +334,7 @@ autoconf(
 
 autoconf_srcs(
     name = "foo_srcs",
-    autoconf = ":config",
+    deps = [":config"],
     srcs = {
         "uses_foo.c": "HAVE_FOO",
     },
@@ -376,12 +346,12 @@ cc_library(
     hdrs = [":config.h"],
 )
 </code></pre>
-<p>In this setup <code>autoconf_srcs</code> reads the results from <code>:config</code> and generates a
-wrapped copy of <code>foo_impl.c</code> whose contents are effectively:</p>
+<p>In this setup <code>autoconf_srcs</code> reads the results from <code>:config</code> (or multiple targets via <code>deps</code>) and generates a
+wrapped copy of <code>uses_foo.c</code> whose contents are effectively:</p>
 <pre><code class="language-cc">#define HAVE_FOO 1      // when the check for HAVE_FOO succeeds
 /* or: #undef HAVE_FOO  // when the check fails */
 #ifdef HAVE_FOO
-/* original foo_impl.c contents ... */
+/* original uses_foo.c contents ... */
 #endif
 </code></pre>
 <p>This is useful when you have platform-specific or optional sources that should
@@ -390,8 +360,8 @@ manually maintain <code>#ifdef</code> guards in every source file.</p>
 <p><strong>ATTRIBUTES</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Type</th><th style="text-align: left">Mandatory</th><th style="text-align: left">Default</th></tr></thead><tbody>
 <tr><td style="text-align: left"><a id="autoconf_srcs-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_srcs-deps"></a>deps</td><td style="text-align: left">List of <code>autoconf</code> targets which provide defines. Results from all deps will be merged together, and duplicate define names will produce an error.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
 <tr><td style="text-align: left"><a id="autoconf_srcs-srcs"></a>srcs</td><td style="text-align: left">A mapping of source file to define required to compile the file.</td><td style="text-align: left"><a href="https://bazel.build/rules/lib/dict">Dictionary: Label -&gt; String</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_srcs-autoconf"></a>autoconf</td><td style="text-align: left">The <code>autoconf</code> target which provides defines.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
 <tr><td style="text-align: left"><a id="autoconf_srcs-naming"></a>naming</td><td style="text-align: left">How to name generated sources: <code>package_relative</code> keeps the original package-relative path, <code>ac_suffix</code> inserts <code>.ac.</code> before the final suffix (e.g. <code>foo.cc -&gt; foo.ac.cc</code>), and <code>per_target</code> prefixes outputs with <code>{ctx.label.name}</code> to namespace them per rule.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>"package_relative"</code></td></tr>
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
@@ -415,7 +385,7 @@ your deployment target (e.g. local development, non‑cross CI), but you should
 avoid or gate them when doing true cross‑compilation.</p>
 <p>For cross‑compile scenarios prefer <strong>compile‑only</strong> checks such as:</p>
 <ul>
-<li><code>AC_CHECK_HEADER</code>, <code>AC_CHECK_FUNC</code>, <code>AC_CHECK_TYPE</code>, <code>AC_CHECK_SYMBOL</code></li>
+<li><code>AC_CHECK_HEADER</code>, <code>AC_CHECK_FUNC</code>, <code>AC_CHECK_LIB</code>, <code>AC_CHECK_TYPE</code>, <code>AC_CHECK_SYMBOL</code></li>
 <li>the various compiler‑flag checks (<code>AC_CHECK_C_COMPILER_FLAG</code>,
 <code>AC_CHECK_CXX_COMPILER_FLAG</code>)</li>
 <li>unconditional defines via <code>AC_DEFINE</code></li>
@@ -430,6 +400,7 @@ avoid or gate them when doing true cross‑compilation.</p>
 <li><a href="macros.html#macros.AC_CHECK_DECL">macros.AC_CHECK_DECL</a></li>
 <li><a href="macros.html#macros.AC_CHECK_FUNC">macros.AC_CHECK_FUNC</a></li>
 <li><a href="macros.html#macros.AC_CHECK_HEADER">macros.AC_CHECK_HEADER</a></li>
+<li><a href="macros.html#macros.AC_CHECK_LIB">macros.AC_CHECK_LIB</a></li>
 <li><a href="macros.html#macros.AC_CHECK_MEMBER">macros.AC_CHECK_MEMBER</a></li>
 <li><a href="macros.html#macros.AC_CHECK_SIZEOF">macros.AC_CHECK_SIZEOF</a></li>
 <li><a href="macros.html#macros.AC_CHECK_SYMBOL">macros.AC_CHECK_SYMBOL</a></li>
@@ -558,34 +529,24 @@ load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
 macros.AC_CHECK_FUNC(<a href="macros.html#macros.AC_CHECK_FUNC-function">function</a>, <a href="macros.html#macros.AC_CHECK_FUNC-define">define</a>, <a href="macros.html#macros.AC_CHECK_FUNC-code">code</a>, <a href="macros.html#macros.AC_CHECK_FUNC-file">file</a>, <a href="macros.html#macros.AC_CHECK_FUNC-language">language</a>)
 </pre>
 <p>Check for a function.</p>
-<pre><code>Original m4 example:
-</code></pre>
+<p>Original m4 example:</p>
 <pre><code class="language-m4">AC_CHECK_FUNC([malloc])
 </code></pre>
-<pre><code>Example:
-</code></pre>
+<p>Example:</p>
 <pre><code class="language-python">macros.AC_CHECK_FUNC("malloc")
 macros.AC_CHECK_FUNC("printf", define = "HAVE_PRINTF")
 </code></pre>
-<pre><code>Args:
-    function: Name of the function (e.g., `"printf"`)
-    define: Custom define name (defaults to `HAVE_&lt;FUNCTION&gt;`)
-    code: Custom code to compile (optional)
-    file: Label to a file containing custom code (optional)
-    language: Language to use for check (`"c"` or `"cpp"`)
-
-Returns:
-    A JSON-encoded check string for use with the autoconf rule.
-</code></pre>
 <p><strong>PARAMETERS</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
-<tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNC-function"></a>function</td><td style="text-align: left"><p align="center"> - </p></td><td style="text-align: left">none</td></tr>
-<tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNC-define"></a>define</td><td style="text-align: left"><p align="center"> - </p></td><td style="text-align: left"><code>None</code></td></tr>
-<tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNC-code"></a>code</td><td style="text-align: left"><p align="center"> - </p></td><td style="text-align: left"><code>None</code></td></tr>
-<tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNC-file"></a>file</td><td style="text-align: left"><p align="center"> - </p></td><td style="text-align: left"><code>None</code></td></tr>
-<tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNC-language"></a>language</td><td style="text-align: left"><p align="center"> - </p></td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNC-function"></a>function</td><td style="text-align: left">Name of the function (e.g., <code>"printf"</code>)</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNC-define"></a>define</td><td style="text-align: left">Custom define name (defaults to <code>HAVE_&lt;FUNCTION&gt;</code>)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNC-code"></a>code</td><td style="text-align: left">Custom code to compile (optional)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNC-file"></a>file</td><td style="text-align: left">Label to a file containing custom code (optional)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNC-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
 </tbody></table>
 </div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
 <p><a id="macros.AC_CHECK_HEADER"></a></p>
 <h2 id="macrosac_check_header"><a class="header" href="#macrosac_check_header">macros.AC_CHECK_HEADER</a></h2>
 <pre>
@@ -594,30 +555,54 @@ load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
 macros.AC_CHECK_HEADER(<a href="macros.html#macros.AC_CHECK_HEADER-header">header</a>, <a href="macros.html#macros.AC_CHECK_HEADER-define">define</a>, <a href="macros.html#macros.AC_CHECK_HEADER-language">language</a>)
 </pre>
 <p>Check for a header file.</p>
-<pre><code>Original m4 example:
-</code></pre>
+<p>Original m4 example:</p>
 <pre><code class="language-m4">AC_CHECK_HEADER([stdio.h])
 </code></pre>
-<pre><code>Example:
-</code></pre>
+<p>Example:</p>
 <pre><code class="language-python">macros.AC_CHECK_HEADER("stdio.h")
 macros.AC_CHECK_HEADER("sys/stat.h", define = "HAVE_SYS_STAT_H")
 </code></pre>
-<pre><code>Args:
-    header: Name of the header file (e.g., `"stdio.h"`)
-    define: Custom define name (defaults to `HAVE_&lt;HEADER&gt;`)
-    language: Language to use for check (`"c"` or `"cpp"`)
-
-Returns:
-    A JSON-encoded check string for use with the autoconf rule.
-</code></pre>
 <p><strong>PARAMETERS</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
-<tr><td style="text-align: left"><a id="macros.AC_CHECK_HEADER-header"></a>header</td><td style="text-align: left"><p align="center"> - </p></td><td style="text-align: left">none</td></tr>
-<tr><td style="text-align: left"><a id="macros.AC_CHECK_HEADER-define"></a>define</td><td style="text-align: left"><p align="center"> - </p></td><td style="text-align: left"><code>None</code></td></tr>
-<tr><td style="text-align: left"><a id="macros.AC_CHECK_HEADER-language"></a>language</td><td style="text-align: left"><p align="center"> - </p></td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_HEADER-header"></a>header</td><td style="text-align: left">Name of the header file (e.g., <code>"stdio.h"</code>)</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_HEADER-define"></a>define</td><td style="text-align: left">Custom define name (defaults to <code>HAVE_&lt;HEADER&gt;</code>)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_HEADER-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
 </tbody></table>
 </div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
+<p><a id="macros.AC_CHECK_LIB"></a></p>
+<h2 id="macrosac_check_lib"><a class="header" href="#macrosac_check_lib">macros.AC_CHECK_LIB</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
+
+macros.AC_CHECK_LIB(<a href="macros.html#macros.AC_CHECK_LIB-library">library</a>, <a href="macros.html#macros.AC_CHECK_LIB-function">function</a>, *, <a href="macros.html#macros.AC_CHECK_LIB-define">define</a>, <a href="macros.html#macros.AC_CHECK_LIB-code">code</a>, <a href="macros.html#macros.AC_CHECK_LIB-file">file</a>, <a href="macros.html#macros.AC_CHECK_LIB-language">language</a>)
+</pre>
+<p>Check for a function in a library.</p>
+<p>Original m4 example:</p>
+<pre><code class="language-m4">AC_CHECK_LIB([m], [cos])
+AC_CHECK_LIB([pthread], [pthread_create])
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-python">macros.AC_CHECK_LIB("m", "cos")
+macros.AC_CHECK_LIB("pthread", "pthread_create", define = "HAVE_LIBPTHREAD")
+</code></pre>
+<p>Note:
+This checks if the specified function is available in the given library.
+It attempts to link against <code>-l&lt;library&gt;</code> to verify the library provides
+the function.</p>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_LIB-library"></a>library</td><td style="text-align: left">Library name without the <code>-l</code> prefix (e.g., <code>"m"</code>, <code>"pthread"</code>)</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_LIB-function"></a>function</td><td style="text-align: left">Function name to check for in the library (e.g., <code>"cos"</code>, <code>"pthread_create"</code>)</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_LIB-define"></a>define</td><td style="text-align: left">Custom define name (defaults to <code>HAVE_LIB&lt;LIBRARY&gt;</code>)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_LIB-code"></a>code</td><td style="text-align: left">Custom code to compile and link (optional)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_LIB-file"></a>file</td><td style="text-align: left">Label to a file containing custom code (optional)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_LIB-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
 <p><a id="macros.AC_CHECK_MEMBER"></a></p>
 <h2 id="macrosac_check_member"><a class="header" href="#macrosac_check_member">macros.AC_CHECK_MEMBER</a></h2>
 <pre>

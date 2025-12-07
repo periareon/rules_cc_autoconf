@@ -176,7 +176,7 @@ your deployment target (e.g. local development, non‑cross CI), but you should
 avoid or gate them when doing true cross‑compilation.</p>
 <p>For cross‑compile scenarios prefer <strong>compile‑only</strong> checks such as:</p>
 <ul>
-<li><code>AC_CHECK_HEADER</code>, <code>AC_CHECK_FUNC</code>, <code>AC_CHECK_TYPE</code>, <code>AC_CHECK_SYMBOL</code></li>
+<li><code>AC_CHECK_HEADER</code>, <code>AC_CHECK_FUNC</code>, <code>AC_CHECK_LIB</code>, <code>AC_CHECK_TYPE</code>, <code>AC_CHECK_SYMBOL</code></li>
 <li>the various compiler‑flag checks (<code>AC_CHECK_C_COMPILER_FLAG</code>,
 <code>AC_CHECK_CXX_COMPILER_FLAG</code>)</li>
 <li>unconditional defines via <code>AC_DEFINE</code></li>
@@ -191,6 +191,7 @@ avoid or gate them when doing true cross‑compilation.</p>
 <li><a href="#macros.AC_CHECK_DECL">macros.AC_CHECK_DECL</a></li>
 <li><a href="#macros.AC_CHECK_FUNC">macros.AC_CHECK_FUNC</a></li>
 <li><a href="#macros.AC_CHECK_HEADER">macros.AC_CHECK_HEADER</a></li>
+<li><a href="#macros.AC_CHECK_LIB">macros.AC_CHECK_LIB</a></li>
 <li><a href="#macros.AC_CHECK_MEMBER">macros.AC_CHECK_MEMBER</a></li>
 <li><a href="#macros.AC_CHECK_SIZEOF">macros.AC_CHECK_SIZEOF</a></li>
 <li><a href="#macros.AC_CHECK_SYMBOL">macros.AC_CHECK_SYMBOL</a></li>
@@ -319,34 +320,24 @@ load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
 macros.AC_CHECK_FUNC(<a href="#macros.AC_CHECK_FUNC-function">function</a>, <a href="#macros.AC_CHECK_FUNC-define">define</a>, <a href="#macros.AC_CHECK_FUNC-code">code</a>, <a href="#macros.AC_CHECK_FUNC-file">file</a>, <a href="#macros.AC_CHECK_FUNC-language">language</a>)
 </pre>
 <p>Check for a function.</p>
-<pre><code>Original m4 example:
-</code></pre>
+<p>Original m4 example:</p>
 <pre><code class="language-m4">AC_CHECK_FUNC([malloc])
 </code></pre>
-<pre><code>Example:
-</code></pre>
+<p>Example:</p>
 <pre><code class="language-python">macros.AC_CHECK_FUNC("malloc")
 macros.AC_CHECK_FUNC("printf", define = "HAVE_PRINTF")
 </code></pre>
-<pre><code>Args:
-    function: Name of the function (e.g., `"printf"`)
-    define: Custom define name (defaults to `HAVE_&lt;FUNCTION&gt;`)
-    code: Custom code to compile (optional)
-    file: Label to a file containing custom code (optional)
-    language: Language to use for check (`"c"` or `"cpp"`)
-
-Returns:
-    A JSON-encoded check string for use with the autoconf rule.
-</code></pre>
 <p><strong>PARAMETERS</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
-<tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNC-function"></a>function</td><td style="text-align: left"><p align="center"> - </p></td><td style="text-align: left">none</td></tr>
-<tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNC-define"></a>define</td><td style="text-align: left"><p align="center"> - </p></td><td style="text-align: left"><code>None</code></td></tr>
-<tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNC-code"></a>code</td><td style="text-align: left"><p align="center"> - </p></td><td style="text-align: left"><code>None</code></td></tr>
-<tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNC-file"></a>file</td><td style="text-align: left"><p align="center"> - </p></td><td style="text-align: left"><code>None</code></td></tr>
-<tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNC-language"></a>language</td><td style="text-align: left"><p align="center"> - </p></td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNC-function"></a>function</td><td style="text-align: left">Name of the function (e.g., <code>"printf"</code>)</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNC-define"></a>define</td><td style="text-align: left">Custom define name (defaults to <code>HAVE_&lt;FUNCTION&gt;</code>)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNC-code"></a>code</td><td style="text-align: left">Custom code to compile (optional)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNC-file"></a>file</td><td style="text-align: left">Label to a file containing custom code (optional)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNC-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
 </tbody></table>
 </div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
 <p><a id="macros.AC_CHECK_HEADER"></a></p>
 <h2 id="macrosac_check_header"><a class="header" href="#macrosac_check_header">macros.AC_CHECK_HEADER</a></h2>
 <pre>
@@ -355,30 +346,54 @@ load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
 macros.AC_CHECK_HEADER(<a href="#macros.AC_CHECK_HEADER-header">header</a>, <a href="#macros.AC_CHECK_HEADER-define">define</a>, <a href="#macros.AC_CHECK_HEADER-language">language</a>)
 </pre>
 <p>Check for a header file.</p>
-<pre><code>Original m4 example:
-</code></pre>
+<p>Original m4 example:</p>
 <pre><code class="language-m4">AC_CHECK_HEADER([stdio.h])
 </code></pre>
-<pre><code>Example:
-</code></pre>
+<p>Example:</p>
 <pre><code class="language-python">macros.AC_CHECK_HEADER("stdio.h")
 macros.AC_CHECK_HEADER("sys/stat.h", define = "HAVE_SYS_STAT_H")
 </code></pre>
-<pre><code>Args:
-    header: Name of the header file (e.g., `"stdio.h"`)
-    define: Custom define name (defaults to `HAVE_&lt;HEADER&gt;`)
-    language: Language to use for check (`"c"` or `"cpp"`)
-
-Returns:
-    A JSON-encoded check string for use with the autoconf rule.
-</code></pre>
 <p><strong>PARAMETERS</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
-<tr><td style="text-align: left"><a id="macros.AC_CHECK_HEADER-header"></a>header</td><td style="text-align: left"><p align="center"> - </p></td><td style="text-align: left">none</td></tr>
-<tr><td style="text-align: left"><a id="macros.AC_CHECK_HEADER-define"></a>define</td><td style="text-align: left"><p align="center"> - </p></td><td style="text-align: left"><code>None</code></td></tr>
-<tr><td style="text-align: left"><a id="macros.AC_CHECK_HEADER-language"></a>language</td><td style="text-align: left"><p align="center"> - </p></td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_HEADER-header"></a>header</td><td style="text-align: left">Name of the header file (e.g., <code>"stdio.h"</code>)</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_HEADER-define"></a>define</td><td style="text-align: left">Custom define name (defaults to <code>HAVE_&lt;HEADER&gt;</code>)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_HEADER-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
 </tbody></table>
 </div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
+<p><a id="macros.AC_CHECK_LIB"></a></p>
+<h2 id="macrosac_check_lib"><a class="header" href="#macrosac_check_lib">macros.AC_CHECK_LIB</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
+
+macros.AC_CHECK_LIB(<a href="#macros.AC_CHECK_LIB-library">library</a>, <a href="#macros.AC_CHECK_LIB-function">function</a>, *, <a href="#macros.AC_CHECK_LIB-define">define</a>, <a href="#macros.AC_CHECK_LIB-code">code</a>, <a href="#macros.AC_CHECK_LIB-file">file</a>, <a href="#macros.AC_CHECK_LIB-language">language</a>)
+</pre>
+<p>Check for a function in a library.</p>
+<p>Original m4 example:</p>
+<pre><code class="language-m4">AC_CHECK_LIB([m], [cos])
+AC_CHECK_LIB([pthread], [pthread_create])
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-python">macros.AC_CHECK_LIB("m", "cos")
+macros.AC_CHECK_LIB("pthread", "pthread_create", define = "HAVE_LIBPTHREAD")
+</code></pre>
+<p>Note:
+This checks if the specified function is available in the given library.
+It attempts to link against <code>-l&lt;library&gt;</code> to verify the library provides
+the function.</p>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_LIB-library"></a>library</td><td style="text-align: left">Library name without the <code>-l</code> prefix (e.g., <code>"m"</code>, <code>"pthread"</code>)</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_LIB-function"></a>function</td><td style="text-align: left">Function name to check for in the library (e.g., <code>"cos"</code>, <code>"pthread_create"</code>)</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_LIB-define"></a>define</td><td style="text-align: left">Custom define name (defaults to <code>HAVE_LIB&lt;LIBRARY&gt;</code>)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_LIB-code"></a>code</td><td style="text-align: left">Custom code to compile and link (optional)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_LIB-file"></a>file</td><td style="text-align: left">Label to a file containing custom code (optional)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_LIB-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
 <p><a id="macros.AC_CHECK_MEMBER"></a></p>
 <h2 id="macrosac_check_member"><a class="header" href="#macrosac_check_member">macros.AC_CHECK_MEMBER</a></h2>
 <pre>
