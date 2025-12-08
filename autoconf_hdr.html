@@ -166,7 +166,7 @@
 <pre>
 load("@rules_cc_autoconf//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
 
-autoconf_hdr(<a href="#autoconf_hdr-name">name</a>, <a href="#autoconf_hdr-deps">deps</a>, <a href="#autoconf_hdr-out">out</a>, <a href="#autoconf_hdr-inlines">inlines</a>, <a href="#autoconf_hdr-package_info_file">package_info_file</a>, <a href="#autoconf_hdr-package_name">package_name</a>, <a href="#autoconf_hdr-package_version">package_version</a>, <a href="#autoconf_hdr-template">template</a>)
+autoconf_hdr(<a href="#autoconf_hdr-name">name</a>, <a href="#autoconf_hdr-deps">deps</a>, <a href="#autoconf_hdr-out">out</a>, <a href="#autoconf_hdr-inlines">inlines</a>, <a href="#autoconf_hdr-template">template</a>)
 </pre>
 <p>Generate configuration headers from results provided by <code>autoconf</code> targets.</p>
 <p>This rule takes check results from <code>autoconf</code> targets (via <code>deps</code>) and generates a header file.
@@ -183,8 +183,6 @@ autoconf(
         macros.AC_CHECK_HEADER("stdlib.h"),
         macros.AC_CHECK_FUNC("printf"),
     ],
-    package_name = "myproject",
-    package_version = "1.0.0",
 )
 
 autoconf_hdr(
@@ -201,9 +199,6 @@ autoconf_hdr(
 <tr><td style="text-align: left"><a id="autoconf_hdr-deps"></a>deps</td><td style="text-align: left">List of <code>autoconf</code> targets which provide check results. Results from all deps will be merged together, and duplicate define names will produce an error. If not provided, an empty results file will be created.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
 <tr><td style="text-align: left"><a id="autoconf_hdr-out"></a>out</td><td style="text-align: left">The output config file (typically <code>config.h</code>).</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a>; <a href="https://bazel.build/reference/be/common-definitions#configurable-attributes">nonconfigurable</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
 <tr><td style="text-align: left"><a id="autoconf_hdr-inlines"></a>inlines</td><td style="text-align: left">A mapping of strings to files for replace within the content of the given <code>template</code> attribute.<br><br>The exact string in the template is replaced with the content of the associated file. Any <code>@VAR@</code> style placeholders in the inline file content will be replaced with their corresponding define values (package info, check results, etc.) after insertion.</td><td style="text-align: left">Dictionary: String -&gt; Label</td><td style="text-align: left">optional</td><td style="text-align: left"><code>{}</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_hdr-package_info_file"></a>package_info_file</td><td style="text-align: left">A json file containing a map <code>{"name": "{PACKAGE_NAME}", "version": "{PACKAGE_VERSION"}</code>. Note that each field is optional. This attribute is mutually exclusive with <code>package_name</code> and <code>package_version</code>. If not provided and <code>deps</code> are provided, the package info from the <code>deps</code> will be used (all deps must have the same package_info).</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>None</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_hdr-package_name"></a>package_name</td><td style="text-align: left">Package name for <code>PACKAGE_NAME</code> define. This attribute is mutually exclusive with <code>package_info_file</code>. If not provided and <code>deps</code> are provided, the package name from the <code>deps</code> will be used.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_hdr-package_version"></a>package_version</td><td style="text-align: left">Package version for <code>PACKAGE_VERSION</code> define. This attribute is mutually exclusive with <code>package_info_file</code>. If not provided and <code>deps</code> are provided, the package version from the <code>deps</code> will be used.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
 <tr><td style="text-align: left"><a id="autoconf_hdr-template"></a>template</td><td style="text-align: left">Optional template file (<code>config.h.in</code>) to use as base for generating the header file. The template is used to format the output header, but does not generate any checks.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>None</code></td></tr>
 </tbody></table>
 </div>

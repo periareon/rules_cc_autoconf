@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>module_info - rules_cc_autoconf</title>
+        <title>package_info - rules_cc_autoconf</title>
 
 
         <!-- Custom HTML head -->
@@ -156,26 +156,26 @@
                 <div id="content" class="content">
                     <main>
                         <!-- Generated with Stardoc: http://skydoc.bazel.build -->
-<h1 id="module_info"><a class="header" href="#module_info">module_info</a></h1>
+<h1 id="package_info"><a class="header" href="#package_info">package_info</a></h1>
 <h2 id="rules"><a class="header" href="#rules">Rules</a></h2>
 <ul>
-<li><a href="#module_info">module_info</a></li>
+<li><a href="#package_info">package_info</a></li>
 </ul>
-<p><a id="module_info"></a></p>
-<h2 id="module_info-1"><a class="header" href="#module_info-1">module_info</a></h2>
+<p><a id="package_info"></a></p>
+<h2 id="package_info-1"><a class="header" href="#package_info-1">package_info</a></h2>
 <pre>
-load("@rules_cc_autoconf//autoconf:module_info.bzl", "module_info")
+load("@rules_cc_autoconf//autoconf:package_info.bzl", "package_info")
 
-module_info(<a href="#module_info-name">name</a>, <a href="#module_info-module_bazel">module_bazel</a>)
+package_info(<a href="#package_info-name">name</a>, <a href="#package_info-module_bazel">module_bazel</a>, <a href="#package_info-package_bugreport">package_bugreport</a>, <a href="#package_info-package_name">package_name</a>, <a href="#package_info-package_url">package_url</a>, <a href="#package_info-package_version">package_version</a>)
 </pre>
 <p>A rule for parsing module info from <code>MODULE.bazel</code> files.</p>
 <p>This rule is most useful when paired with the <code>autoconf</code> rule.</p>
 <p>Example:</p>
 <pre><code class="language-python">load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
-load("@rules_cc_autoconf//autoconf:module_info.bzl", "module_info")
+load("@rules_cc_autoconf//autoconf:package_info.bzl", "package_info")
 
-module_info(
-    name = "module_info.json",
+package_info(
+    name = "package_info",
     module_bazel = "//:MODULE.bazel",
 )
 
@@ -185,13 +185,19 @@ autoconf(
     checks = [
         # ...
     ],
-    package_info_file = ":module_info.json",
+    deps = [
+        ":package_info",
+    ],
 )
 </code></pre>
 <p><strong>ATTRIBUTES</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Type</th><th style="text-align: left">Mandatory</th><th style="text-align: left">Default</th></tr></thead><tbody>
-<tr><td style="text-align: left"><a id="module_info-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
-<tr><td style="text-align: left"><a id="module_info-module_bazel"></a>module_bazel</td><td style="text-align: left">A <code>MODULE.bazel</code> file to parse module information from.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
+<tr><td style="text-align: left"><a id="package_info-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
+<tr><td style="text-align: left"><a id="package_info-module_bazel"></a>module_bazel</td><td style="text-align: left">A <code>MODULE.bazel</code> file to parse module information from. Mutually exclusive with <code>package_name</code> and <code>package_version</code>.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="package_info-package_bugreport"></a>package_bugreport</td><td style="text-align: left">The package bug report email/URL. Used to populate <code>PACKAGE_BUGREPORT</code> define.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
+<tr><td style="text-align: left"><a id="package_info-package_name"></a>package_name</td><td style="text-align: left">The package name. Must be provided together with <code>package_version</code> if <code>module_bazel</code> is not provided.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
+<tr><td style="text-align: left"><a id="package_info-package_url"></a>package_url</td><td style="text-align: left">The package home page URL. Used to populate <code>PACKAGE_URL</code> define.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
+<tr><td style="text-align: left"><a id="package_info-package_version"></a>package_version</td><td style="text-align: left">The package version. Must be provided together with <code>package_name</code> if <code>module_bazel</code> is not provided.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
 </tbody></table>
 </div>
                     </main>
