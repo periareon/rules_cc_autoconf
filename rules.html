@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>autoconf - rules_cc_autoconf</title>
+        <title>Rules - rules_cc_autoconf</title>
 
 
         <!-- Custom HTML head -->
@@ -155,54 +155,22 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- Generated with Stardoc: http://skydoc.bazel.build -->
-<h1 id="autoconf"><a class="header" href="#autoconf">autoconf</a></h1>
-<h2 id="rules"><a class="header" href="#rules">Rules</a></h2>
+                        <h1 id="rules"><a class="header" href="#rules">Rules</a></h1>
 <ul>
-<li><a href="#autoconf">autoconf</a></li>
+<li><a href="./autoconf.html#autoconf">autoconf</a></li>
+<li><a href="./autoconf_hdr.html#autoconf_hdr">autoconf_hdr</a></li>
+<li><a href="./package_info.html#package_info">package_info</a></li>
 </ul>
-<p><a id="autoconf"></a></p>
-<h2 id="autoconf-1"><a class="header" href="#autoconf-1">autoconf</a></h2>
-<pre>
-load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
 
-autoconf(<a href="#autoconf-name">name</a>, <a href="#autoconf-deps">deps</a>, <a href="#autoconf-data">data</a>, <a href="#autoconf-checks">checks</a>)
-</pre>
-<p>Run autoconf-like checks and produce results.</p>
-<p>This rule runs compilation checks against the configured cc_toolchain and produces
-a JSON results file containing the check outcomes. Unlike <code>autoconf_hdr</code>, this rule
-does not generate any header files - it only performs checks.</p>
-<p>Example:</p>
-<pre><code class="language-python">load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
-
-autoconf(
-    name = "config",
-    checks = [
-        macros.AC_CHECK_HEADER("stdio.h"),
-        macros.AC_CHECK_HEADER("stdlib.h"),
-        macros.AC_CHECK_FUNC("printf"),
-    ],
-)
-</code></pre>
-<p>The results can then be used by <code>autoconf_hdr</code> or <code>autoconf_srcs</code> to generate headers
-or wrapped source files.</p>
-<p><strong>ATTRIBUTES</strong></p>
-<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Type</th><th style="text-align: left">Mandatory</th><th style="text-align: left">Default</th></tr></thead><tbody>
-<tr><td style="text-align: left"><a id="autoconf-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
-<tr><td style="text-align: left"><a id="autoconf-deps"></a>deps</td><td style="text-align: left">Additional <code>autoconf</code> or <code>package_info</code> dependencies.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf-data"></a>data</td><td style="text-align: left">Files referenced by checks (via the file parameter).</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf-checks"></a>checks</td><td style="text-align: left">List of JSON-encoded checks from macros (e.g., <code>macros.AC_CHECK_HEADER('stdio.h')</code>).</td><td style="text-align: left">List of strings</td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
-</tbody></table>
-</div>
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="rules.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="autoconf_hdr.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="autoconf.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -212,11 +180,11 @@ or wrapped source files.</p>
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="rules.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="autoconf_hdr.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="autoconf.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
