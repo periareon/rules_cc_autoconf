@@ -211,7 +211,7 @@ avoid or gate them when doing true cross‑compilation.</p>
 <pre>
 load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
 
-macros.AC_CHECK_ALIGNOF(<a href="#macros.AC_CHECK_ALIGNOF-type_name">type_name</a>, *, <a href="#macros.AC_CHECK_ALIGNOF-define">define</a>, <a href="#macros.AC_CHECK_ALIGNOF-headers">headers</a>, <a href="#macros.AC_CHECK_ALIGNOF-language">language</a>)
+macros.AC_CHECK_ALIGNOF(<a href="#macros.AC_CHECK_ALIGNOF-type_name">type_name</a>, *, <a href="#macros.AC_CHECK_ALIGNOF-define">define</a>, <a href="#macros.AC_CHECK_ALIGNOF-headers">headers</a>, <a href="#macros.AC_CHECK_ALIGNOF-language">language</a>, <a href="#macros.AC_CHECK_ALIGNOF-requires">requires</a>)
 </pre>
 <p>Check the alignment of a type.</p>
 <p>Original m4 example:</p>
@@ -221,6 +221,7 @@ AC_CHECK_ALIGNOF([double], [[#include &lt;stddef.h&gt;]])
 <p>Example:</p>
 <pre><code class="language-python">macros.AC_CHECK_ALIGNOF("int")
 macros.AC_CHECK_ALIGNOF("double", headers = ["stddef.h"])
+macros.AC_CHECK_ALIGNOF("FILE", requires = ["HAVE_STDIO_H"])
 </code></pre>
 <p>Cross-Compile Warning:
 This macro is NOT cross-compile friendly. It requires compiling and
@@ -231,6 +232,7 @@ running code to determine the alignment, which doesn't work when cross-compiling
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_ALIGNOF-define"></a>define</td><td style="text-align: left">Custom define name (defaults to <code>ALIGNOF_&lt;TYPE&gt;</code>)</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_ALIGNOF-headers"></a>headers</td><td style="text-align: left">Optional list of headers to include</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_ALIGNOF-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_ALIGNOF-requires"></a>requires</td><td style="text-align: left">List of define names that must be successful before this check runs</td><td style="text-align: left"><code>None</code></td></tr>
 </tbody></table>
 </div>
 <p><strong>RETURNS</strong></p>
@@ -240,7 +242,7 @@ running code to determine the alignment, which doesn't work when cross-compiling
 <pre>
 load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
 
-macros.AC_CHECK_CXX_COMPILER_FLAG(<a href="#macros.AC_CHECK_CXX_COMPILER_FLAG-flag">flag</a>, <a href="#macros.AC_CHECK_CXX_COMPILER_FLAG-define">define</a>, <a href="#macros.AC_CHECK_CXX_COMPILER_FLAG-language">language</a>)
+macros.AC_CHECK_CXX_COMPILER_FLAG(<a href="#macros.AC_CHECK_CXX_COMPILER_FLAG-flag">flag</a>, <a href="#macros.AC_CHECK_CXX_COMPILER_FLAG-define">define</a>, <a href="#macros.AC_CHECK_CXX_COMPILER_FLAG-language">language</a>, <a href="#macros.AC_CHECK_CXX_COMPILER_FLAG-requires">requires</a>)
 </pre>
 <p>Check if the C++ compiler supports a specific flag.</p>
 <p>Original m4 example:</p>
@@ -249,12 +251,14 @@ macros.AC_CHECK_CXX_COMPILER_FLAG(<a href="#macros.AC_CHECK_CXX_COMPILER_FLAG-fl
 <p>Example:</p>
 <pre><code class="language-python">macros.AC_CHECK_CXX_COMPILER_FLAG("-std=c++17")
 macros.AC_CHECK_CXX_COMPILER_FLAG("-Wall", define = "HAVE_WALL_FLAG")
+macros.AC_CHECK_CXX_COMPILER_FLAG("-Werror", requires = ["HAVE_CXX_COMPILER"])
 </code></pre>
 <p><strong>PARAMETERS</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_CXX_COMPILER_FLAG-flag"></a>flag</td><td style="text-align: left">Compiler flag to test (e.g., <code>"-Wall"</code>, <code>"-std=c++17"</code>)</td><td style="text-align: left">none</td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_CXX_COMPILER_FLAG-define"></a>define</td><td style="text-align: left">Custom define name (defaults to <code>HAVE_FLAG_&lt;FLAG&gt;</code>)</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_CXX_COMPILER_FLAG-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"cpp"</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_CXX_COMPILER_FLAG-requires"></a>requires</td><td style="text-align: left">List of define names that must be successful before this check runs</td><td style="text-align: left"><code>None</code></td></tr>
 </tbody></table>
 </div>
 <p><strong>RETURNS</strong></p>
@@ -264,7 +268,7 @@ macros.AC_CHECK_CXX_COMPILER_FLAG("-Wall", define = "HAVE_WALL_FLAG")
 <pre>
 load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
 
-macros.AC_CHECK_C_COMPILER_FLAG(<a href="#macros.AC_CHECK_C_COMPILER_FLAG-flag">flag</a>, <a href="#macros.AC_CHECK_C_COMPILER_FLAG-define">define</a>, <a href="#macros.AC_CHECK_C_COMPILER_FLAG-language">language</a>)
+macros.AC_CHECK_C_COMPILER_FLAG(<a href="#macros.AC_CHECK_C_COMPILER_FLAG-flag">flag</a>, <a href="#macros.AC_CHECK_C_COMPILER_FLAG-define">define</a>, <a href="#macros.AC_CHECK_C_COMPILER_FLAG-language">language</a>, <a href="#macros.AC_CHECK_C_COMPILER_FLAG-requires">requires</a>)
 </pre>
 <p>Check if the C compiler supports a specific flag.</p>
 <p>Original m4 example:</p>
@@ -273,12 +277,14 @@ macros.AC_CHECK_C_COMPILER_FLAG(<a href="#macros.AC_CHECK_C_COMPILER_FLAG-flag">
 <p>Example:</p>
 <pre><code class="language-python">macros.AC_CHECK_C_COMPILER_FLAG("-Wall")
 macros.AC_CHECK_C_COMPILER_FLAG("-std=c99", define = "HAVE_STD_C99")
+macros.AC_CHECK_C_COMPILER_FLAG("-Werror", requires = ["HAVE_C_COMPILER"])
 </code></pre>
 <p><strong>PARAMETERS</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_C_COMPILER_FLAG-flag"></a>flag</td><td style="text-align: left">Compiler flag to test (e.g., <code>"-Wall"</code>, <code>"-std=c99"</code>)</td><td style="text-align: left">none</td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_C_COMPILER_FLAG-define"></a>define</td><td style="text-align: left">Custom define name (defaults to <code>HAVE_FLAG_&lt;FLAG&gt;</code>)</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_C_COMPILER_FLAG-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_C_COMPILER_FLAG-requires"></a>requires</td><td style="text-align: left">List of define names that must be successful before this check runs</td><td style="text-align: left"><code>None</code></td></tr>
 </tbody></table>
 </div>
 <p><strong>RETURNS</strong></p>
@@ -288,7 +294,7 @@ macros.AC_CHECK_C_COMPILER_FLAG("-std=c99", define = "HAVE_STD_C99")
 <pre>
 load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
 
-macros.AC_CHECK_DECL(<a href="#macros.AC_CHECK_DECL-symbol">symbol</a>, *, <a href="#macros.AC_CHECK_DECL-define">define</a>, <a href="#macros.AC_CHECK_DECL-headers">headers</a>, <a href="#macros.AC_CHECK_DECL-language">language</a>)
+macros.AC_CHECK_DECL(<a href="#macros.AC_CHECK_DECL-symbol">symbol</a>, *, <a href="#macros.AC_CHECK_DECL-define">define</a>, <a href="#macros.AC_CHECK_DECL-headers">headers</a>, <a href="#macros.AC_CHECK_DECL-language">language</a>, <a href="#macros.AC_CHECK_DECL-requires">requires</a>)
 </pre>
 <p>Check if a symbol is declared.</p>
 <p>Original m4 example:</p>
@@ -298,6 +304,7 @@ AC_CHECK_DECL([stdout], [AC_DEFINE([HAVE_DECL_STDOUT], [1])], [], [[#include &lt
 <p>Example:</p>
 <pre><code class="language-python">macros.AC_CHECK_DECL("NULL", headers = ["stddef.h"])
 macros.AC_CHECK_DECL("stdout", headers = ["stdio.h"])
+macros.AC_CHECK_DECL("EOF", requires = ["HAVE_STDIO_H"])
 </code></pre>
 <p>Note:
 This is different from <code>AC_CHECK_SYMBOL</code> - it checks if something is
@@ -308,6 +315,7 @@ declared (not just <code>#defined</code>).</p>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_DECL-define"></a>define</td><td style="text-align: left">Custom define name (defaults to <code>HAVE_DECL_&lt;SYMBOL&gt;</code>)</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_DECL-headers"></a>headers</td><td style="text-align: left">Optional list of headers to include</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_DECL-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_DECL-requires"></a>requires</td><td style="text-align: left">List of define names that must be successful before this check runs</td><td style="text-align: left"><code>None</code></td></tr>
 </tbody></table>
 </div>
 <p><strong>RETURNS</strong></p>
@@ -317,7 +325,7 @@ declared (not just <code>#defined</code>).</p>
 <pre>
 load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
 
-macros.AC_CHECK_FUNC(<a href="#macros.AC_CHECK_FUNC-function">function</a>, <a href="#macros.AC_CHECK_FUNC-define">define</a>, <a href="#macros.AC_CHECK_FUNC-code">code</a>, <a href="#macros.AC_CHECK_FUNC-file">file</a>, <a href="#macros.AC_CHECK_FUNC-language">language</a>)
+macros.AC_CHECK_FUNC(<a href="#macros.AC_CHECK_FUNC-function">function</a>, <a href="#macros.AC_CHECK_FUNC-define">define</a>, <a href="#macros.AC_CHECK_FUNC-code">code</a>, <a href="#macros.AC_CHECK_FUNC-file">file</a>, <a href="#macros.AC_CHECK_FUNC-language">language</a>, <a href="#macros.AC_CHECK_FUNC-requires">requires</a>)
 </pre>
 <p>Check for a function.</p>
 <p>Original m4 example:</p>
@@ -326,6 +334,7 @@ macros.AC_CHECK_FUNC(<a href="#macros.AC_CHECK_FUNC-function">function</a>, <a h
 <p>Example:</p>
 <pre><code class="language-python">macros.AC_CHECK_FUNC("malloc")
 macros.AC_CHECK_FUNC("printf", define = "HAVE_PRINTF")
+macros.AC_CHECK_FUNC("fopen", requires = ["HAVE_STDIO_H"])
 </code></pre>
 <p><strong>PARAMETERS</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
@@ -334,6 +343,7 @@ macros.AC_CHECK_FUNC("printf", define = "HAVE_PRINTF")
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNC-code"></a>code</td><td style="text-align: left">Custom code to compile (optional)</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNC-file"></a>file</td><td style="text-align: left">Label to a file containing custom code (optional)</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNC-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNC-requires"></a>requires</td><td style="text-align: left">List of define names that must be successful before this check runs</td><td style="text-align: left"><code>None</code></td></tr>
 </tbody></table>
 </div>
 <p><strong>RETURNS</strong></p>
@@ -343,7 +353,7 @@ macros.AC_CHECK_FUNC("printf", define = "HAVE_PRINTF")
 <pre>
 load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
 
-macros.AC_CHECK_HEADER(<a href="#macros.AC_CHECK_HEADER-header">header</a>, <a href="#macros.AC_CHECK_HEADER-define">define</a>, <a href="#macros.AC_CHECK_HEADER-language">language</a>)
+macros.AC_CHECK_HEADER(<a href="#macros.AC_CHECK_HEADER-header">header</a>, <a href="#macros.AC_CHECK_HEADER-define">define</a>, <a href="#macros.AC_CHECK_HEADER-language">language</a>, <a href="#macros.AC_CHECK_HEADER-requires">requires</a>)
 </pre>
 <p>Check for a header file.</p>
 <p>Original m4 example:</p>
@@ -352,12 +362,14 @@ macros.AC_CHECK_HEADER(<a href="#macros.AC_CHECK_HEADER-header">header</a>, <a h
 <p>Example:</p>
 <pre><code class="language-python">macros.AC_CHECK_HEADER("stdio.h")
 macros.AC_CHECK_HEADER("sys/stat.h", define = "HAVE_SYS_STAT_H")
+macros.AC_CHECK_HEADER("sys/types.h", requires = ["HAVE_STDIO_H"])
 </code></pre>
 <p><strong>PARAMETERS</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_HEADER-header"></a>header</td><td style="text-align: left">Name of the header file (e.g., <code>"stdio.h"</code>)</td><td style="text-align: left">none</td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_HEADER-define"></a>define</td><td style="text-align: left">Custom define name (defaults to <code>HAVE_&lt;HEADER&gt;</code>)</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_HEADER-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_HEADER-requires"></a>requires</td><td style="text-align: left">List of define names that must be successful before this check runs</td><td style="text-align: left"><code>None</code></td></tr>
 </tbody></table>
 </div>
 <p><strong>RETURNS</strong></p>
@@ -367,7 +379,7 @@ macros.AC_CHECK_HEADER("sys/stat.h", define = "HAVE_SYS_STAT_H")
 <pre>
 load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
 
-macros.AC_CHECK_LIB(<a href="#macros.AC_CHECK_LIB-library">library</a>, <a href="#macros.AC_CHECK_LIB-function">function</a>, *, <a href="#macros.AC_CHECK_LIB-define">define</a>, <a href="#macros.AC_CHECK_LIB-code">code</a>, <a href="#macros.AC_CHECK_LIB-file">file</a>, <a href="#macros.AC_CHECK_LIB-language">language</a>)
+macros.AC_CHECK_LIB(<a href="#macros.AC_CHECK_LIB-library">library</a>, <a href="#macros.AC_CHECK_LIB-function">function</a>, *, <a href="#macros.AC_CHECK_LIB-define">define</a>, <a href="#macros.AC_CHECK_LIB-code">code</a>, <a href="#macros.AC_CHECK_LIB-file">file</a>, <a href="#macros.AC_CHECK_LIB-language">language</a>, <a href="#macros.AC_CHECK_LIB-requires">requires</a>)
 </pre>
 <p>Check for a function in a library.</p>
 <p>Original m4 example:</p>
@@ -377,6 +389,7 @@ AC_CHECK_LIB([pthread], [pthread_create])
 <p>Example:</p>
 <pre><code class="language-python">macros.AC_CHECK_LIB("m", "cos")
 macros.AC_CHECK_LIB("pthread", "pthread_create", define = "HAVE_LIBPTHREAD")
+macros.AC_CHECK_LIB("m", "sqrt", requires = ["HAVE_MATH_H"])
 </code></pre>
 <p>Note:
 This checks if the specified function is available in the given library.
@@ -390,6 +403,7 @@ the function.</p>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_LIB-code"></a>code</td><td style="text-align: left">Custom code to compile and link (optional)</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_LIB-file"></a>file</td><td style="text-align: left">Label to a file containing custom code (optional)</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_LIB-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_LIB-requires"></a>requires</td><td style="text-align: left">List of define names that must be successful before this check runs</td><td style="text-align: left"><code>None</code></td></tr>
 </tbody></table>
 </div>
 <p><strong>RETURNS</strong></p>
@@ -399,7 +413,7 @@ the function.</p>
 <pre>
 load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
 
-macros.AC_CHECK_MEMBER(<a href="#macros.AC_CHECK_MEMBER-aggregate">aggregate</a>, <a href="#macros.AC_CHECK_MEMBER-member">member</a>, *, <a href="#macros.AC_CHECK_MEMBER-define">define</a>, <a href="#macros.AC_CHECK_MEMBER-headers">headers</a>, <a href="#macros.AC_CHECK_MEMBER-language">language</a>)
+macros.AC_CHECK_MEMBER(<a href="#macros.AC_CHECK_MEMBER-aggregate">aggregate</a>, <a href="#macros.AC_CHECK_MEMBER-member">member</a>, *, <a href="#macros.AC_CHECK_MEMBER-define">define</a>, <a href="#macros.AC_CHECK_MEMBER-headers">headers</a>, <a href="#macros.AC_CHECK_MEMBER-language">language</a>, <a href="#macros.AC_CHECK_MEMBER-requires">requires</a>)
 </pre>
 <p>Check if a struct or union has a member.</p>
 <p>Original m4 example:</p>
@@ -409,6 +423,7 @@ AC_CHECK_MEMBER([struct tm.tm_zone], [AC_DEFINE([HAVE_STRUCT_TM_TM_ZONE], [1])],
 <p>Example:</p>
 <pre><code class="language-python">macros.AC_CHECK_MEMBER("struct stat", "st_rdev", headers = ["sys/stat.h"])
 macros.AC_CHECK_MEMBER("struct tm", "tm_zone", headers = ["time.h"])
+macros.AC_CHECK_MEMBER("struct stat", "st_size", requires = ["HAVE_SYS_STAT_H"])
 </code></pre>
 <p><strong>PARAMETERS</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
@@ -417,6 +432,7 @@ macros.AC_CHECK_MEMBER("struct tm", "tm_zone", headers = ["time.h"])
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_MEMBER-define"></a>define</td><td style="text-align: left">Custom define name (defaults to <code>HAVE_&lt;AGGREGATE&gt;_&lt;MEMBER&gt;</code>)</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_MEMBER-headers"></a>headers</td><td style="text-align: left">Optional list of headers to include</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_MEMBER-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_MEMBER-requires"></a>requires</td><td style="text-align: left">List of define names that must be successful before this check runs</td><td style="text-align: left"><code>None</code></td></tr>
 </tbody></table>
 </div>
 <p><strong>RETURNS</strong></p>
@@ -426,7 +442,7 @@ macros.AC_CHECK_MEMBER("struct tm", "tm_zone", headers = ["time.h"])
 <pre>
 load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
 
-macros.AC_CHECK_SIZEOF(<a href="#macros.AC_CHECK_SIZEOF-type_name">type_name</a>, *, <a href="#macros.AC_CHECK_SIZEOF-define">define</a>, <a href="#macros.AC_CHECK_SIZEOF-headers">headers</a>, <a href="#macros.AC_CHECK_SIZEOF-language">language</a>)
+macros.AC_CHECK_SIZEOF(<a href="#macros.AC_CHECK_SIZEOF-type_name">type_name</a>, *, <a href="#macros.AC_CHECK_SIZEOF-define">define</a>, <a href="#macros.AC_CHECK_SIZEOF-headers">headers</a>, <a href="#macros.AC_CHECK_SIZEOF-language">language</a>, <a href="#macros.AC_CHECK_SIZEOF-requires">requires</a>)
 </pre>
 <p>Check the size of a type.</p>
 <p>Original m4 example:</p>
@@ -436,6 +452,7 @@ AC_CHECK_SIZEOF([size_t], [], [[#include &lt;stddef.h&gt;]])
 <p>Example:</p>
 <pre><code class="language-python">macros.AC_CHECK_SIZEOF("int")
 macros.AC_CHECK_SIZEOF("size_t", headers = ["stddef.h"])
+macros.AC_CHECK_SIZEOF("FILE", requires = ["HAVE_STDIO_H"])
 </code></pre>
 <p>Cross-Compile Warning:
 This macro is NOT cross-compile friendly. It requires compiling and
@@ -446,6 +463,7 @@ running code to determine the size, which doesn't work when cross-compiling.</p>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_SIZEOF-define"></a>define</td><td style="text-align: left">Custom define name (defaults to <code>SIZEOF_&lt;TYPE&gt;</code>)</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_SIZEOF-headers"></a>headers</td><td style="text-align: left">Optional list of headers to include</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_SIZEOF-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_SIZEOF-requires"></a>requires</td><td style="text-align: left">List of define names that must be successful before this check runs</td><td style="text-align: left"><code>None</code></td></tr>
 </tbody></table>
 </div>
 <p><strong>RETURNS</strong></p>
@@ -455,7 +473,7 @@ running code to determine the size, which doesn't work when cross-compiling.</p>
 <pre>
 load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
 
-macros.AC_CHECK_SYMBOL(<a href="#macros.AC_CHECK_SYMBOL-symbol">symbol</a>, *, <a href="#macros.AC_CHECK_SYMBOL-define">define</a>, <a href="#macros.AC_CHECK_SYMBOL-code">code</a>, <a href="#macros.AC_CHECK_SYMBOL-file">file</a>, <a href="#macros.AC_CHECK_SYMBOL-language">language</a>)
+macros.AC_CHECK_SYMBOL(<a href="#macros.AC_CHECK_SYMBOL-symbol">symbol</a>, *, <a href="#macros.AC_CHECK_SYMBOL-define">define</a>, <a href="#macros.AC_CHECK_SYMBOL-code">code</a>, <a href="#macros.AC_CHECK_SYMBOL-file">file</a>, <a href="#macros.AC_CHECK_SYMBOL-language">language</a>, <a href="#macros.AC_CHECK_SYMBOL-requires">requires</a>)
 </pre>
 <p>Check if a symbol is defined.</p>
 <p>Original m4 example:</p>
@@ -463,6 +481,7 @@ macros.AC_CHECK_SYMBOL(<a href="#macros.AC_CHECK_SYMBOL-symbol">symbol</a>, *, <
 </code></pre>
 <p>Example:</p>
 <pre><code class="language-python">macros.AC_CHECK_SYMBOL("NULL", define = "HAVE_NULL", code = "#include &lt;stddef.h&gt;")
+macros.AC_CHECK_SYMBOL("EOF", requires = ["HAVE_STDIO_H"])
 </code></pre>
 <p><strong>PARAMETERS</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
@@ -471,6 +490,7 @@ macros.AC_CHECK_SYMBOL(<a href="#macros.AC_CHECK_SYMBOL-symbol">symbol</a>, *, <
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_SYMBOL-code"></a>code</td><td style="text-align: left">Custom code that includes necessary headers (optional)</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_SYMBOL-file"></a>file</td><td style="text-align: left">Label to a file containing custom code (optional)</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_SYMBOL-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_SYMBOL-requires"></a>requires</td><td style="text-align: left">List of define names that must be successful before this check runs</td><td style="text-align: left"><code>None</code></td></tr>
 </tbody></table>
 </div>
 <p><strong>RETURNS</strong></p>
@@ -480,7 +500,7 @@ macros.AC_CHECK_SYMBOL(<a href="#macros.AC_CHECK_SYMBOL-symbol">symbol</a>, *, <
 <pre>
 load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
 
-macros.AC_CHECK_TYPE(<a href="#macros.AC_CHECK_TYPE-type_name">type_name</a>, *, <a href="#macros.AC_CHECK_TYPE-define">define</a>, <a href="#macros.AC_CHECK_TYPE-code">code</a>, <a href="#macros.AC_CHECK_TYPE-file">file</a>, <a href="#macros.AC_CHECK_TYPE-language">language</a>)
+macros.AC_CHECK_TYPE(<a href="#macros.AC_CHECK_TYPE-type_name">type_name</a>, *, <a href="#macros.AC_CHECK_TYPE-define">define</a>, <a href="#macros.AC_CHECK_TYPE-code">code</a>, <a href="#macros.AC_CHECK_TYPE-file">file</a>, <a href="#macros.AC_CHECK_TYPE-language">language</a>, <a href="#macros.AC_CHECK_TYPE-requires">requires</a>)
 </pre>
 <p>Check for a type.</p>
 <p>Original m4 example:</p>
@@ -489,6 +509,7 @@ macros.AC_CHECK_TYPE(<a href="#macros.AC_CHECK_TYPE-type_name">type_name</a>, *,
 <p>Example:</p>
 <pre><code class="language-python">macros.AC_CHECK_TYPE("size_t")
 macros.AC_CHECK_TYPE("int64_t", define = "HAVE_INT64_T", code = "#include &lt;stdint.h&gt;")
+macros.AC_CHECK_TYPE("FILE", requires = ["HAVE_STDIO_H"])
 </code></pre>
 <p><strong>PARAMETERS</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
@@ -497,6 +518,7 @@ macros.AC_CHECK_TYPE("int64_t", define = "HAVE_INT64_T", code = "#include &lt;st
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_TYPE-code"></a>code</td><td style="text-align: left">Custom code that includes necessary headers (optional, defaults to standard headers)</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_TYPE-file"></a>file</td><td style="text-align: left">Label to a file containing custom code (optional)</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_TYPE-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_TYPE-requires"></a>requires</td><td style="text-align: left">List of define names that must be successful before this check runs</td><td style="text-align: left"><code>None</code></td></tr>
 </tbody></table>
 </div>
 <p><strong>RETURNS</strong></p>
@@ -506,7 +528,7 @@ macros.AC_CHECK_TYPE("int64_t", define = "HAVE_INT64_T", code = "#include &lt;st
 <pre>
 load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
 
-macros.AC_COMPUTE_INT(<a href="#macros.AC_COMPUTE_INT-define">define</a>, <a href="#macros.AC_COMPUTE_INT-expression">expression</a>, *, <a href="#macros.AC_COMPUTE_INT-headers">headers</a>, <a href="#macros.AC_COMPUTE_INT-language">language</a>)
+macros.AC_COMPUTE_INT(<a href="#macros.AC_COMPUTE_INT-define">define</a>, <a href="#macros.AC_COMPUTE_INT-expression">expression</a>, *, <a href="#macros.AC_COMPUTE_INT-headers">headers</a>, <a href="#macros.AC_COMPUTE_INT-language">language</a>, <a href="#macros.AC_COMPUTE_INT-requires">requires</a>)
 </pre>
 <p>Compute an integer value at compile time.</p>
 <p>Original m4 example:</p>
@@ -516,6 +538,7 @@ AC_COMPUTE_INT([MAX_VALUE], [1 &lt;&lt; 16])
 <p>Example:</p>
 <pre><code class="language-python">macros.AC_COMPUTE_INT("SIZEOF_INT", "sizeof(int)")
 macros.AC_COMPUTE_INT("MAX_VALUE", "1 &lt;&lt; 16")
+macros.AC_COMPUTE_INT("FILE_SIZE", "sizeof(FILE)", requires = ["HAVE_STDIO_H"])
 </code></pre>
 <p>Cross-Compile Warning:
 This macro is NOT cross-compile friendly. It requires compiling and
@@ -526,6 +549,7 @@ running code to compute the value, which doesn't work when cross-compiling.</p>
 <tr><td style="text-align: left"><a id="macros.AC_COMPUTE_INT-expression"></a>expression</td><td style="text-align: left">C expression that evaluates to an integer (second arg)</td><td style="text-align: left">none</td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_COMPUTE_INT-headers"></a>headers</td><td style="text-align: left">Optional list of headers to include</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_COMPUTE_INT-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_COMPUTE_INT-requires"></a>requires</td><td style="text-align: left">List of define names that must be successful before this check runs</td><td style="text-align: left"><code>None</code></td></tr>
 </tbody></table>
 </div>
 <p><strong>RETURNS</strong></p>
@@ -535,7 +559,7 @@ running code to compute the value, which doesn't work when cross-compiling.</p>
 <pre>
 load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
 
-macros.AC_C_BIGENDIAN(<a href="#macros.AC_C_BIGENDIAN-define">define</a>, <a href="#macros.AC_C_BIGENDIAN-language">language</a>)
+macros.AC_C_BIGENDIAN(<a href="#macros.AC_C_BIGENDIAN-define">define</a>, <a href="#macros.AC_C_BIGENDIAN-language">language</a>, <a href="#macros.AC_C_BIGENDIAN-requires">requires</a>)
 </pre>
 <p>Check byte order (endianness) of the system.</p>
 <p>Original m4 example:</p>
@@ -553,6 +577,7 @@ running code to determine endianness, which doesn't work when cross-compiling.</
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
 <tr><td style="text-align: left"><a id="macros.AC_C_BIGENDIAN-define"></a>define</td><td style="text-align: left">Define name (defaults to <code>WORDS_BIGENDIAN</code>)</td><td style="text-align: left"><code>"WORDS_BIGENDIAN"</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_C_BIGENDIAN-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_C_BIGENDIAN-requires"></a>requires</td><td style="text-align: left">List of define names that must be successful before this check runs</td><td style="text-align: left"><code>None</code></td></tr>
 </tbody></table>
 </div>
 <p><strong>RETURNS</strong></p>
@@ -562,7 +587,7 @@ running code to determine endianness, which doesn't work when cross-compiling.</
 <pre>
 load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
 
-macros.AC_C_INLINE(<a href="#macros.AC_C_INLINE-define">define</a>, <a href="#macros.AC_C_INLINE-language">language</a>)
+macros.AC_C_INLINE(<a href="#macros.AC_C_INLINE-define">define</a>, <a href="#macros.AC_C_INLINE-language">language</a>, <a href="#macros.AC_C_INLINE-requires">requires</a>)
 </pre>
 <p>Check what inline keyword the compiler supports.</p>
 <p>Original m4 example:</p>
@@ -576,6 +601,7 @@ macros.AC_C_INLINE(<a href="#macros.AC_C_INLINE-define">define</a>, <a href="#ma
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
 <tr><td style="text-align: left"><a id="macros.AC_C_INLINE-define"></a>define</td><td style="text-align: left">Define name (defaults to <code>inline</code>)</td><td style="text-align: left"><code>"inline"</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_C_INLINE-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_C_INLINE-requires"></a>requires</td><td style="text-align: left">List of define names that must be successful before this check runs</td><td style="text-align: left"><code>None</code></td></tr>
 </tbody></table>
 </div>
 <p><strong>RETURNS</strong></p>
@@ -585,7 +611,7 @@ macros.AC_C_INLINE(<a href="#macros.AC_C_INLINE-define">define</a>, <a href="#ma
 <pre>
 load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
 
-macros.AC_C_RESTRICT(<a href="#macros.AC_C_RESTRICT-define">define</a>, <a href="#macros.AC_C_RESTRICT-language">language</a>)
+macros.AC_C_RESTRICT(<a href="#macros.AC_C_RESTRICT-define">define</a>, <a href="#macros.AC_C_RESTRICT-language">language</a>, <a href="#macros.AC_C_RESTRICT-requires">requires</a>)
 </pre>
 <p>Check if the compiler supports restrict keyword.</p>
 <p>Original m4 example:</p>
@@ -600,6 +626,7 @@ If restrict is not supported, the define is set to empty string.</p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
 <tr><td style="text-align: left"><a id="macros.AC_C_RESTRICT-define"></a>define</td><td style="text-align: left">Define name (defaults to <code>restrict</code>)</td><td style="text-align: left"><code>"restrict"</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_C_RESTRICT-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_C_RESTRICT-requires"></a>requires</td><td style="text-align: left">List of define names that must be successful before this check runs</td><td style="text-align: left"><code>None</code></td></tr>
 </tbody></table>
 </div>
 <p><strong>RETURNS</strong></p>
@@ -609,7 +636,7 @@ If restrict is not supported, the define is set to empty string.</p>
 <pre>
 load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
 
-macros.AC_DEFINE(<a href="#macros.AC_DEFINE-define">define</a>, <a href="#macros.AC_DEFINE-value">value</a>)
+macros.AC_DEFINE(<a href="#macros.AC_DEFINE-define">define</a>, <a href="#macros.AC_DEFINE-value">value</a>, <a href="#macros.AC_DEFINE-requires">requires</a>)
 </pre>
 <p>Define a configuration macro unconditionally.</p>
 <p>Original m4 example:</p>
@@ -621,6 +648,7 @@ AC_DEFINE([PROJECT_NAME], ["MyProject"])
 <pre><code class="language-python">macros.AC_DEFINE("CUSTOM_VALUE", "42")
 macros.AC_DEFINE("ENABLE_FEATURE", "1")
 macros.AC_DEFINE("PROJECT_NAME", '"MyProject"')
+macros.AC_DEFINE("FEATURE_ENABLED", "1", requires = ["HAVE_STDIO_H"])
 </code></pre>
 <p>Note:
 This is equivalent to GNU Autoconf's AC_DEFINE macro. It creates
@@ -629,6 +657,7 @@ a define that will always be set in the generated config.h file.</p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
 <tr><td style="text-align: left"><a id="macros.AC_DEFINE-define"></a>define</td><td style="text-align: left">Define name (e.g., <code>"CUSTOM_VALUE"</code>)</td><td style="text-align: left">none</td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_DEFINE-value"></a>value</td><td style="text-align: left">Value to assign (defaults to <code>"1"</code>)</td><td style="text-align: left"><code>"1"</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_DEFINE-requires"></a>requires</td><td style="text-align: left">List of define names that must be successful before this check runs</td><td style="text-align: left"><code>None</code></td></tr>
 </tbody></table>
 </div>
 <p><strong>RETURNS</strong></p>
@@ -638,7 +667,7 @@ a define that will always be set in the generated config.h file.</p>
 <pre>
 load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
 
-macros.AC_PROG_CC()
+macros.AC_PROG_CC(<a href="#macros.AC_PROG_CC-requires">requires</a>)
 </pre>
 <p>Check that a C compiler is available.</p>
 <p>Original m4 example:</p>
@@ -651,6 +680,11 @@ AC_PROG_CC([gcc clang])
 <p>Note:
 This is mostly a no-op in Bazel since the toolchain must be configured,
 but returns a check that will verify the compiler works.</p>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="macros.AC_PROG_CC-requires"></a>requires</td><td style="text-align: left">List of define names that must be successful before this check runs</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
 <p><strong>RETURNS</strong></p>
 <p>A JSON-encoded check string for use with the autoconf rule.</p>
 <p><a id="macros.AC_PROG_CC_C_O"></a></p>
@@ -658,7 +692,7 @@ but returns a check that will verify the compiler works.</p>
 <pre>
 load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
 
-macros.AC_PROG_CC_C_O(<a href="#macros.AC_PROG_CC_C_O-define">define</a>, <a href="#macros.AC_PROG_CC_C_O-language">language</a>)
+macros.AC_PROG_CC_C_O(<a href="#macros.AC_PROG_CC_C_O-define">define</a>, <a href="#macros.AC_PROG_CC_C_O-language">language</a>, <a href="#macros.AC_PROG_CC_C_O-requires">requires</a>)
 </pre>
 <p>Check if the compiler supports -c and -o flags simultaneously.</p>
 <p>Original m4 example:</p>
@@ -673,6 +707,7 @@ If the compiler does NOT support both flags together, the define is set.</p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
 <tr><td style="text-align: left"><a id="macros.AC_PROG_CC_C_O-define"></a>define</td><td style="text-align: left">Define name (defaults to <code>"NO_MINUS_C_MINUS_O"</code>)</td><td style="text-align: left"><code>"NO_MINUS_C_MINUS_O"</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_PROG_CC_C_O-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_PROG_CC_C_O-requires"></a>requires</td><td style="text-align: left">List of define names that must be successful before this check runs</td><td style="text-align: left"><code>None</code></td></tr>
 </tbody></table>
 </div>
 <p><strong>RETURNS</strong></p>
@@ -682,7 +717,7 @@ If the compiler does NOT support both flags together, the define is set.</p>
 <pre>
 load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
 
-macros.AC_PROG_CXX()
+macros.AC_PROG_CXX(<a href="#macros.AC_PROG_CXX-requires">requires</a>)
 </pre>
 <p>Check that a C++ compiler is available.</p>
 <p>Original m4 example:</p>
@@ -695,6 +730,11 @@ AC_PROG_CXX([g++ clang++])
 <p>Note:
 This is mostly a no-op in Bazel since the toolchain must be configured,
 but returns a check that will verify the compiler works.</p>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="macros.AC_PROG_CXX-requires"></a>requires</td><td style="text-align: left">List of define names that must be successful before this check runs</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
 <p><strong>RETURNS</strong></p>
 <p>A JSON-encoded check string for use with the autoconf rule.</p>
 <p><a id="macros.AC_TRY_COMPILE"></a></p>
@@ -702,7 +742,7 @@ but returns a check that will verify the compiler works.</p>
 <pre>
 load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
 
-macros.AC_TRY_COMPILE(*, <a href="#macros.AC_TRY_COMPILE-code">code</a>, <a href="#macros.AC_TRY_COMPILE-file">file</a>, <a href="#macros.AC_TRY_COMPILE-define">define</a>, <a href="#macros.AC_TRY_COMPILE-language">language</a>)
+macros.AC_TRY_COMPILE(*, <a href="#macros.AC_TRY_COMPILE-code">code</a>, <a href="#macros.AC_TRY_COMPILE-file">file</a>, <a href="#macros.AC_TRY_COMPILE-define">define</a>, <a href="#macros.AC_TRY_COMPILE-language">language</a>, <a href="#macros.AC_TRY_COMPILE-requires">requires</a>)
 </pre>
 <p>Try to compile custom code.</p>
 <p>Original m4 example:</p>
@@ -711,6 +751,7 @@ macros.AC_TRY_COMPILE(*, <a href="#macros.AC_TRY_COMPILE-code">code</a>, <a href
 <p>Example:</p>
 <pre><code class="language-python">macros.AC_TRY_COMPILE(code = "#include &lt;stdio.h&gt;\nint main() { printf(\"test\"); return 0; }", define = "HAVE_PRINTF")
 macros.AC_TRY_COMPILE(file = ":test.c", define = "CUSTOM_CHECK")
+macros.AC_TRY_COMPILE(code = "#include &lt;stdlib.h&gt;", define = "HAVE_STDLIB", requires = ["HAVE_STDIO_H"])
 </code></pre>
 <p>Note:
 This is a rules_cc_autoconf extension. While GNU Autoconf has an
@@ -722,6 +763,7 @@ version adds support for file-based checks which is useful in Bazel.</p>
 <tr><td style="text-align: left"><a id="macros.AC_TRY_COMPILE-file"></a>file</td><td style="text-align: left">Label to a file containing code to compile (optional if code is provided)</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_TRY_COMPILE-define"></a>define</td><td style="text-align: left">Define name to set if compilation succeeds</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_TRY_COMPILE-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_TRY_COMPILE-requires"></a>requires</td><td style="text-align: left">List of define names that must be successful before this check runs</td><td style="text-align: left"><code>None</code></td></tr>
 </tbody></table>
 </div>
 <p><strong>RETURNS</strong></p>
