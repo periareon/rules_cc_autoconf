@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Macros - rules_cc_autoconf</title>
+        <title>macros - rules_cc_autoconf</title>
 
 
         <!-- Custom HTML head -->
@@ -157,33 +157,6 @@
                     <main>
                         <!-- Generated with Stardoc: http://skydoc.bazel.build -->
 <h1 id="macros"><a class="header" href="#macros">macros</a></h1>
-<h2 id="migrating-from-m4-macros"><a class="header" href="#migrating-from-m4-macros">Migrating from M4 macros</a></h2>
-<h2 id="cross-compilation-warning"><a class="header" href="#cross-compilation-warning">Cross-Compilation Warning</a></h2>
-<p>Some of the macros in this module behave like their GNU Autoconf counterparts
-and are <strong>not cross‑compile friendly</strong>. In particular, any macro that needs to
-<em>run</em> a compiled test binary will not behave well when the Bazel execution
-platform differs from the target platform.</p>
-<p>Macros that <strong>run</strong> test programs (and therefore are not safe for
-cross‑compilation) include:</p>
-<ul>
-<li><code>AC_CHECK_SIZEOF</code> / <code>ac_check_sizeof</code> (computes <code>sizeof(...)</code> by running code)</li>
-<li><code>AC_CHECK_ALIGNOF</code> / <code>ac_check_alignof</code> (computes alignment by running code)</li>
-<li><code>AC_COMPUTE_INT</code> / <code>ac_compute_int</code> (evaluates an expression by running code)</li>
-<li><code>AC_C_BIGENDIAN</code> / <code>ac_c_bigendian</code> (detects endianness at runtime)</li>
-<li><code>AC_PROG_CC_C_O</code> / <code>ac_prog_cc_c_o</code> (probes compiler behaviour)</li>
-</ul>
-<p>These are still useful when you build and test on the <strong>same</strong> architecture as
-your deployment target (e.g. local development, non‑cross CI), but you should
-avoid or gate them when doing true cross‑compilation.</p>
-<p>For cross‑compile scenarios prefer <strong>compile‑only</strong> checks such as:</p>
-<ul>
-<li><code>AC_CHECK_HEADER</code>, <code>AC_CHECK_FUNC</code>, <code>AC_CHECK_LIB</code>, <code>AC_CHECK_TYPE</code>, <code>AC_CHECK_SYMBOL</code></li>
-<li>the various compiler‑flag checks (<code>AC_CHECK_C_COMPILER_FLAG</code>,
-<code>AC_CHECK_CXX_COMPILER_FLAG</code>)</li>
-<li>unconditional defines via <code>AC_DEFINE</code></li>
-</ul>
-<p>You can also conditionally enable the runtime‑based macros using Bazel
-<code>select()</code>s, platforms, or build flags so they only run where they are safe.</p>
 <h2 id="functions"><a class="header" href="#functions">Functions</a></h2>
 <ul>
 <li><a href="#macros.AC_CHECK_ALIGNOF">macros.AC_CHECK_ALIGNOF</a></li>
@@ -774,10 +747,13 @@ version adds support for file-based checks which is useful in Bazel.</p>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="package_info.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="autoconf_srcs.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
+                            <a rel="next prefetch" href="package_info.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
 
                         <div style="clear: both"></div>
                     </nav>
@@ -785,10 +761,13 @@ version adds support for file-based checks which is useful in Bazel.</p>
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="package_info.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="autoconf_srcs.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
+                    <a rel="next prefetch" href="package_info.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
             </nav>
 
         </div>

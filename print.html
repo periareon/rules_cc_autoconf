@@ -214,6 +214,7 @@ by Bazel’s C/C++ toolchain configuration.</p>
 <li><a href="./autoconf.html#autoconf">autoconf</a></li>
 <li><a href="./autoconf_hdr.html#autoconf_hdr">autoconf_hdr</a></li>
 <li><a href="./package_info.html#package_info">package_info</a></li>
+<li><a href="./macros.html#macros">macros</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
 <h1 id="autoconf"><a class="header" href="#autoconf">autoconf</a></h1>
@@ -361,78 +362,7 @@ manually maintain <code>#ifdef</code> guards in every source file.</p>
 <tr><td style="text-align: left"><a id="autoconf_srcs-naming"></a>naming</td><td style="text-align: left">How to name generated sources: <code>package_relative</code> keeps the original package-relative path, <code>ac_suffix</code> inserts <code>.ac.</code> before the final suffix (e.g. <code>foo.cc -&gt; foo.ac.cc</code>), and <code>per_target</code> prefixes outputs with <code>{ctx.label.name}</code> to namespace them per rule.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>"package_relative"</code></td></tr>
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
-<h1 id="package_info"><a class="header" href="#package_info">package_info</a></h1>
-<h2 id="rules-4"><a class="header" href="#rules-4">Rules</a></h2>
-<ul>
-<li><a href="package_info.html#package_info">package_info</a></li>
-</ul>
-<p><a id="package_info"></a></p>
-<h2 id="package_info-1"><a class="header" href="#package_info-1">package_info</a></h2>
-<pre>
-load("@rules_cc_autoconf//autoconf:package_info.bzl", "package_info")
-
-package_info(<a href="package_info.html#package_info-name">name</a>, <a href="package_info.html#package_info-module_bazel">module_bazel</a>, <a href="package_info.html#package_info-package_bugreport">package_bugreport</a>, <a href="package_info.html#package_info-package_name">package_name</a>, <a href="package_info.html#package_info-package_url">package_url</a>, <a href="package_info.html#package_info-package_version">package_version</a>)
-</pre>
-<p>A rule for parsing module info from <code>MODULE.bazel</code> files.</p>
-<p>This rule is most useful when paired with the <code>autoconf</code> rule.</p>
-<p>Example:</p>
-<pre><code class="language-python">load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
-load("@rules_cc_autoconf//autoconf:package_info.bzl", "package_info")
-
-package_info(
-    name = "package_info",
-    module_bazel = "//:MODULE.bazel",
-)
-
-autoconf(
-    name = "config_h",
-    out = "config.h",
-    checks = [
-        # ...
-    ],
-    deps = [
-        ":package_info",
-    ],
-)
-</code></pre>
-<p><strong>ATTRIBUTES</strong></p>
-<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Type</th><th style="text-align: left">Mandatory</th><th style="text-align: left">Default</th></tr></thead><tbody>
-<tr><td style="text-align: left"><a id="package_info-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
-<tr><td style="text-align: left"><a id="package_info-module_bazel"></a>module_bazel</td><td style="text-align: left">A <code>MODULE.bazel</code> file to parse module information from. Mutually exclusive with <code>package_name</code> and <code>package_version</code>.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>None</code></td></tr>
-<tr><td style="text-align: left"><a id="package_info-package_bugreport"></a>package_bugreport</td><td style="text-align: left">The package bug report email/URL. Used to populate <code>PACKAGE_BUGREPORT</code> define.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
-<tr><td style="text-align: left"><a id="package_info-package_name"></a>package_name</td><td style="text-align: left">The package name. Must be provided together with <code>package_version</code> if <code>module_bazel</code> is not provided.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
-<tr><td style="text-align: left"><a id="package_info-package_url"></a>package_url</td><td style="text-align: left">The package home page URL. Used to populate <code>PACKAGE_URL</code> define.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
-<tr><td style="text-align: left"><a id="package_info-package_version"></a>package_version</td><td style="text-align: left">The package version. Must be provided together with <code>package_name</code> if <code>module_bazel</code> is not provided.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
-</tbody></table>
-</div><div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
 <h1 id="macros"><a class="header" href="#macros">macros</a></h1>
-<h2 id="migrating-from-m4-macros"><a class="header" href="#migrating-from-m4-macros">Migrating from M4 macros</a></h2>
-<h2 id="cross-compilation-warning"><a class="header" href="#cross-compilation-warning">Cross-Compilation Warning</a></h2>
-<p>Some of the macros in this module behave like their GNU Autoconf counterparts
-and are <strong>not cross‑compile friendly</strong>. In particular, any macro that needs to
-<em>run</em> a compiled test binary will not behave well when the Bazel execution
-platform differs from the target platform.</p>
-<p>Macros that <strong>run</strong> test programs (and therefore are not safe for
-cross‑compilation) include:</p>
-<ul>
-<li><code>AC_CHECK_SIZEOF</code> / <code>ac_check_sizeof</code> (computes <code>sizeof(...)</code> by running code)</li>
-<li><code>AC_CHECK_ALIGNOF</code> / <code>ac_check_alignof</code> (computes alignment by running code)</li>
-<li><code>AC_COMPUTE_INT</code> / <code>ac_compute_int</code> (evaluates an expression by running code)</li>
-<li><code>AC_C_BIGENDIAN</code> / <code>ac_c_bigendian</code> (detects endianness at runtime)</li>
-<li><code>AC_PROG_CC_C_O</code> / <code>ac_prog_cc_c_o</code> (probes compiler behaviour)</li>
-</ul>
-<p>These are still useful when you build and test on the <strong>same</strong> architecture as
-your deployment target (e.g. local development, non‑cross CI), but you should
-avoid or gate them when doing true cross‑compilation.</p>
-<p>For cross‑compile scenarios prefer <strong>compile‑only</strong> checks such as:</p>
-<ul>
-<li><code>AC_CHECK_HEADER</code>, <code>AC_CHECK_FUNC</code>, <code>AC_CHECK_LIB</code>, <code>AC_CHECK_TYPE</code>, <code>AC_CHECK_SYMBOL</code></li>
-<li>the various compiler‑flag checks (<code>AC_CHECK_C_COMPILER_FLAG</code>,
-<code>AC_CHECK_CXX_COMPILER_FLAG</code>)</li>
-<li>unconditional defines via <code>AC_DEFINE</code></li>
-</ul>
-<p>You can also conditionally enable the runtime‑based macros using Bazel
-<code>select()</code>s, platforms, or build flags so they only run where they are safe.</p>
 <h2 id="functions"><a class="header" href="#functions">Functions</a></h2>
 <ul>
 <li><a href="macros.html#macros.AC_CHECK_ALIGNOF">macros.AC_CHECK_ALIGNOF</a></li>
@@ -1018,6 +948,437 @@ version adds support for file-based checks which is useful in Bazel.</p>
 </div>
 <p><strong>RETURNS</strong></p>
 <p>A JSON-encoded check string for use with the autoconf rule.</p>
+<div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
+<h1 id="package_info"><a class="header" href="#package_info">package_info</a></h1>
+<h2 id="rules-4"><a class="header" href="#rules-4">Rules</a></h2>
+<ul>
+<li><a href="package_info.html#package_info">package_info</a></li>
+</ul>
+<p><a id="package_info"></a></p>
+<h2 id="package_info-1"><a class="header" href="#package_info-1">package_info</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:package_info.bzl", "package_info")
+
+package_info(<a href="package_info.html#package_info-name">name</a>, <a href="package_info.html#package_info-module_bazel">module_bazel</a>, <a href="package_info.html#package_info-package_bugreport">package_bugreport</a>, <a href="package_info.html#package_info-package_name">package_name</a>, <a href="package_info.html#package_info-package_url">package_url</a>, <a href="package_info.html#package_info-package_version">package_version</a>)
+</pre>
+<p>A rule for parsing module info from <code>MODULE.bazel</code> files.</p>
+<p>This rule is most useful when paired with the <code>autoconf</code> rule.</p>
+<p>Example:</p>
+<pre><code class="language-python">load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
+load("@rules_cc_autoconf//autoconf:package_info.bzl", "package_info")
+
+package_info(
+    name = "package_info",
+    module_bazel = "//:MODULE.bazel",
+)
+
+autoconf(
+    name = "config_h",
+    out = "config.h",
+    checks = [
+        # ...
+    ],
+    deps = [
+        ":package_info",
+    ],
+)
+</code></pre>
+<p><strong>ATTRIBUTES</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Type</th><th style="text-align: left">Mandatory</th><th style="text-align: left">Default</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="package_info-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
+<tr><td style="text-align: left"><a id="package_info-module_bazel"></a>module_bazel</td><td style="text-align: left">A <code>MODULE.bazel</code> file to parse module information from. Mutually exclusive with <code>package_name</code> and <code>package_version</code>.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="package_info-package_bugreport"></a>package_bugreport</td><td style="text-align: left">The package bug report email/URL. Used to populate <code>PACKAGE_BUGREPORT</code> define.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
+<tr><td style="text-align: left"><a id="package_info-package_name"></a>package_name</td><td style="text-align: left">The package name. Must be provided together with <code>package_version</code> if <code>module_bazel</code> is not provided.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
+<tr><td style="text-align: left"><a id="package_info-package_url"></a>package_url</td><td style="text-align: left">The package home page URL. Used to populate <code>PACKAGE_URL</code> define.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
+<tr><td style="text-align: left"><a id="package_info-package_version"></a>package_version</td><td style="text-align: left">The package version. Must be provided together with <code>package_name</code> if <code>module_bazel</code> is not provided.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="migrating-from-m4-macros"><a class="header" href="#migrating-from-m4-macros">Migrating from M4 macros</a></h1>
+<p>GNU Autoconf uses M4 macros in <code>configure.ac</code> files to generate configuration
+checks. This module provides equivalent Starlark functions that produce the same
+results but are integrated with Bazel's build system.</p>
+<h2 id="key-differences"><a class="header" href="#key-differences">Key Differences</a></h2>
+<ol>
+<li><strong>Syntax</strong>: M4 uses square brackets <code>[]</code> for arguments; Starlark uses parentheses <code>()</code> and quotes <code>""</code></li>
+<li><strong>Multiple items</strong>: M4 macros like <code>AC_CHECK_HEADERS([h1 h2 h3])</code> become multiple separate calls</li>
+<li><strong>Action blocks</strong>: M4 uses action blocks <code>[action-if-found]</code> and <code>[action-if-not-found]</code>; Bazel auto-generates defines</li>
+<li><strong>Language selection</strong>: M4 uses <code>AC_LANG_PUSH([C++])</code>; Bazel uses <code>language = "cpp"</code> parameter</li>
+<li><strong>Custom code</strong>: M4 uses <code>AC_LANG_PROGRAM([includes], [body])</code>; Bazel uses <code>code</code> or <code>file</code> parameters</li>
+<li><strong>Dependencies</strong>: M4 uses nested macro calls; Bazel uses explicit <code>requires</code> parameter</li>
+</ol>
+<h2 id="migration-patterns"><a class="header" href="#migration-patterns">Migration Patterns</a></h2>
+<h3 id="pattern-1-simple-headerfunctiontype-checks"><a class="header" href="#pattern-1-simple-headerfunctiontype-checks">Pattern 1: Simple Header/Function/Type Checks</a></h3>
+<p><strong>M4:</strong></p>
+<pre><code class="language-m4">AC_CHECK_HEADER([stdio.h])
+AC_CHECK_FUNC([malloc])
+AC_CHECK_TYPE([size_t])
+</code></pre>
+<p><strong>Bazel:</strong></p>
+<pre><code class="language-python">macros.AC_CHECK_HEADER("stdio.h")
+macros.AC_CHECK_FUNC("malloc")
+macros.AC_CHECK_TYPE("size_t")
+</code></pre>
+<p><strong>Rules:</strong></p>
+<ul>
+<li>Remove square brackets, add quotes</li>
+<li>Convert to function call: <code>macros.MACRO_NAME("argument")</code></li>
+<li>Define names are auto-generated (e.g., <code>HAVE_STDIO_H</code>, <code>HAVE_MALLOC</code>, <code>HAVE_SIZE_T</code>)</li>
+</ul>
+<h3 id="pattern-2-multiple-items-in-one-call"><a class="header" href="#pattern-2-multiple-items-in-one-call">Pattern 2: Multiple Items in One Call</a></h3>
+<p><strong>M4:</strong></p>
+<pre><code class="language-m4">AC_CHECK_HEADERS([stdio.h stdlib.h string.h])
+AC_CHECK_FUNCS([malloc free printf])
+AC_CHECK_TYPES([int8_t int64_t])
+</code></pre>
+<p><strong>Bazel:</strong></p>
+<pre><code class="language-python">macros.AC_CHECK_HEADER("stdio.h")
+macros.AC_CHECK_HEADER("stdlib.h")
+macros.AC_CHECK_HEADER("string.h")
+macros.AC_CHECK_FUNC("malloc")
+macros.AC_CHECK_FUNC("free")
+macros.AC_CHECK_FUNC("printf")
+macros.AC_CHECK_TYPE("int8_t")
+macros.AC_CHECK_TYPE("int64_t")
+</code></pre>
+<p><strong>Rules:</strong></p>
+<ul>
+<li>Split space-separated lists into individual macro calls</li>
+<li>Each item becomes a separate function call</li>
+</ul>
+<h3 id="pattern-3-custom-define-names"><a class="header" href="#pattern-3-custom-define-names">Pattern 3: Custom Define Names</a></h3>
+<p><strong>M4:</strong></p>
+<pre><code class="language-m4">AC_CHECK_HEADER([sys/stat.h], [AC_DEFINE([HAVE_SYS_STAT_H], [1])])
+AC_CHECK_FUNC([printf], [AC_DEFINE([HAVE_PRINTF], [1])])
+</code></pre>
+<p><strong>Bazel:</strong></p>
+<pre><code class="language-python">macros.AC_CHECK_HEADER("sys/stat.h", define = "HAVE_SYS_STAT_H")
+macros.AC_CHECK_FUNC("printf", define = "HAVE_PRINTF")
+</code></pre>
+<p><strong>Rules:</strong></p>
+<ul>
+<li>Extract define name from <code>AC_DEFINE</code> in action block</li>
+<li>Use <code>define</code> parameter to override auto-generated name</li>
+<li>If no custom define, omit the parameter (auto-generation handles it)</li>
+</ul>
+<h3 id="pattern-4-headers-for-typesymbol-checks"><a class="header" href="#pattern-4-headers-for-typesymbol-checks">Pattern 4: Headers for Type/Symbol Checks</a></h3>
+<p><strong>M4:</strong></p>
+<pre><code class="language-m4">AC_CHECK_TYPE([int64_t], [], [], [[#include &lt;stdint.h&gt;]])
+AC_CHECK_SYMBOL([NULL], [], [], [[#include &lt;stddef.h&gt;]])
+AC_CHECK_TYPES([int8_t, int64_t], [], [], [[#include &lt;stdint.h&gt;]])
+</code></pre>
+<p><strong>Bazel:</strong></p>
+<pre><code class="language-python">macros.AC_CHECK_TYPE("int64_t", code = "#include &lt;stdint.h&gt;")
+macros.AC_CHECK_SYMBOL("NULL", code = "#include &lt;stddef.h&gt;")
+macros.AC_CHECK_TYPE("int8_t", code = "#include &lt;stdint.h&gt;")
+macros.AC_CHECK_TYPE("int64_t", code = "#include &lt;stdint.h&gt;")
+</code></pre>
+<p><strong>Rules:</strong></p>
+<ul>
+<li>Extract include directives from the 4th argument (includes parameter)</li>
+<li>Use <code>code</code> parameter with the include statement</li>
+<li>For <code>AC_CHECK_TYPES</code> with multiple types, split and repeat the code for each</li>
+</ul>
+<h3 id="pattern-5-custom-compilation-tests"><a class="header" href="#pattern-5-custom-compilation-tests">Pattern 5: Custom Compilation Tests</a></h3>
+<p><strong>M4:</strong></p>
+<pre><code class="language-m4">AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include &lt;stdatomic.h&gt;
+]], [[
+atomic_int x = 0;
+(void)x;
+return 0;
+]])], [AC_DEFINE([HAVE_STDATOMIC], [1])], [])
+</code></pre>
+<p><strong>Bazel:</strong></p>
+<pre><code class="language-python">macros.AC_TRY_COMPILE(
+    code = """\
+#include &lt;stdatomic.h&gt;
+int main(void) { atomic_int x = 0; (void)x; return 0; }
+""",
+    define = "HAVE_STDATOMIC",
+)
+</code></pre>
+<p><strong>Rules:</strong></p>
+<ul>
+<li><code>AC_COMPILE_IFELSE</code> → <code>macros.AC_TRY_COMPILE</code></li>
+<li>Combine <code>AC_LANG_PROGRAM</code> includes and body into single <code>code</code> string</li>
+<li>Extract define from action block</li>
+<li>Add <code>int main(void) { ... }</code> wrapper if not present</li>
+<li>Use <code>\n</code> for line breaks in code string</li>
+</ul>
+<h3 id="pattern-6-language-selection"><a class="header" href="#pattern-6-language-selection">Pattern 6: Language Selection</a></h3>
+<p><strong>M4:</strong></p>
+<pre><code class="language-m4">AC_LANG_PUSH([C++])
+AC_CHECK_HEADER([iostream])
+AC_LANG_POP([C++])
+</code></pre>
+<p><strong>Bazel:</strong></p>
+<pre><code class="language-python">macros.AC_CHECK_HEADER("iostream", language = "cpp")
+</code></pre>
+<p><strong>Rules:</strong></p>
+<ul>
+<li><code>AC_LANG_PUSH([C++])</code> / <code>AC_LANG_POP([C++])</code> → add <code>language = "cpp"</code> to all macros in between</li>
+<li><code>AC_LANG_PUSH([C])</code> is the default, so usually no parameter needed</li>
+<li>Apply <code>language = "cpp"</code> to all macros between <code>AC_LANG_PUSH([C++])</code> and <code>AC_LANG_POP([C++])</code></li>
+</ul>
+<h3 id="pattern-7-library-checks"><a class="header" href="#pattern-7-library-checks">Pattern 7: Library Checks</a></h3>
+<p><strong>M4:</strong></p>
+<pre><code class="language-m4">AC_CHECK_LIB([m], [cos])
+AC_CHECK_LIB([pthread], [pthread_create])
+</code></pre>
+<p><strong>Bazel:</strong></p>
+<pre><code class="language-python">macros.AC_CHECK_LIB("m", "cos")
+macros.AC_CHECK_LIB("pthread", "pthread_create")
+</code></pre>
+<p><strong>Rules:</strong></p>
+<ul>
+<li>First argument is library name (without <code>-l</code> prefix)</li>
+<li>Second argument is function name to check</li>
+<li>Define auto-generated as <code>HAVE_LIB&lt;LIBRARY&gt;</code> (e.g., <code>HAVE_LIBM</code>)</li>
+</ul>
+<h3 id="pattern-8-compiler-flag-checks"><a class="header" href="#pattern-8-compiler-flag-checks">Pattern 8: Compiler Flag Checks</a></h3>
+<p><strong>M4:</strong></p>
+<pre><code class="language-m4">AC_MSG_CHECKING([whether $CC accepts -Wall])
+save_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -Wall"
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
+  [AC_MSG_RESULT([yes])
+   AC_DEFINE([HAVE_FLAG_WALL], [1])],
+  [AC_MSG_RESULT([no])])
+CFLAGS="$save_CFLAGS"
+</code></pre>
+<p><strong>Bazel:</strong></p>
+<pre><code class="language-python">macros.AC_CHECK_C_COMPILER_FLAG("-Wall", define = "HAVE_FLAG_WALL")
+</code></pre>
+<p><strong>Rules:</strong></p>
+<ul>
+<li>Pattern of <code>AC_MSG_CHECKING</code> + flag manipulation + <code>AC_COMPILE_IFELSE</code> → <code>AC_CHECK_C_COMPILER_FLAG</code></li>
+<li>Extract flag from <code>CFLAGS</code> or <code>CXXFLAGS</code> assignment</li>
+<li>Extract define from action block</li>
+<li>Use <code>AC_CHECK_C_COMPILER_FLAG</code> for C, <code>AC_CHECK_CXX_COMPILER_FLAG</code> for C++</li>
+</ul>
+<h3 id="pattern-9-size-and-alignment-checks"><a class="header" href="#pattern-9-size-and-alignment-checks">Pattern 9: Size and Alignment Checks</a></h3>
+<p><strong>M4:</strong></p>
+<pre><code class="language-m4">AC_CHECK_SIZEOF([int])
+AC_CHECK_SIZEOF([size_t], [], [[#include &lt;stddef.h&gt;]])
+AC_CHECK_ALIGNOF([double])
+</code></pre>
+<p><strong>Bazel:</strong></p>
+<pre><code class="language-python">macros.AC_CHECK_SIZEOF("int")
+macros.AC_CHECK_SIZEOF("size_t", headers = ["stddef.h"])
+macros.AC_CHECK_ALIGNOF("double")
+</code></pre>
+<p><strong>Rules:</strong></p>
+<ul>
+<li>Direct translation with type name</li>
+<li>If includes provided, use <code>headers</code> parameter (list of header names without <code>&lt;&gt;</code> or quotes)</li>
+<li>Define auto-generated as <code>SIZEOF_&lt;TYPE&gt;</code> or <code>ALIGNOF_&lt;TYPE&gt;</code></li>
+</ul>
+<h3 id="pattern-10-unconditional-defines"><a class="header" href="#pattern-10-unconditional-defines">Pattern 10: Unconditional Defines</a></h3>
+<p><strong>M4:</strong></p>
+<pre><code class="language-m4">AC_DEFINE([CUSTOM_VALUE], [42])
+AC_DEFINE([ENABLE_FEATURE], [1])
+AC_DEFINE([PROJECT_NAME], ["MyProject"])
+</code></pre>
+<p><strong>Bazel:</strong></p>
+<pre><code class="language-python">macros.AC_DEFINE("CUSTOM_VALUE", "42")
+macros.AC_DEFINE("ENABLE_FEATURE", "1")
+macros.AC_DEFINE("PROJECT_NAME", '"MyProject"')
+</code></pre>
+<p><strong>Rules:</strong></p>
+<ul>
+<li>Direct translation</li>
+<li>Second argument becomes <code>value</code> parameter</li>
+<li>Preserve quotes in string values (use <code>'"string"'</code> for string literals)</li>
+</ul>
+<h3 id="pattern-11-conditional-dependencies"><a class="header" href="#pattern-11-conditional-dependencies">Pattern 11: Conditional Dependencies</a></h3>
+<p><strong>M4:</strong></p>
+<pre><code class="language-m4">AC_CHECK_HEADER([stdio.h])
+AC_CHECK_FUNC([fopen], [], [], [[#include &lt;stdio.h&gt;]])
+</code></pre>
+<p><strong>Bazel:</strong></p>
+<pre><code class="language-python">macros.AC_CHECK_HEADER("stdio.h")
+macros.AC_CHECK_FUNC("fopen", requires = ["HAVE_STDIO_H"])
+</code></pre>
+<p><strong>Rules:</strong></p>
+<ul>
+<li>If a check includes a header that was previously checked, add <code>requires</code> parameter</li>
+<li>Use the auto-generated define name from the previous check</li>
+<li>Extract include dependencies and map to corresponding <code>HAVE_*</code> defines</li>
+</ul>
+<h3 id="pattern-12-member-checks"><a class="header" href="#pattern-12-member-checks">Pattern 12: Member Checks</a></h3>
+<p><strong>M4:</strong></p>
+<pre><code class="language-m4">AC_CHECK_MEMBER([struct stat.st_rdev], [AC_DEFINE([HAVE_STRUCT_STAT_ST_RDEV], [1])], [], [[#include &lt;sys/stat.h&gt;]])
+</code></pre>
+<p><strong>Bazel:</strong></p>
+<pre><code class="language-python">macros.AC_CHECK_MEMBER("struct stat", "st_rdev", headers = ["sys/stat.h"])
+</code></pre>
+<p><strong>Rules:</strong></p>
+<ul>
+<li>Split <code>struct/union.member</code> into two arguments: aggregate and member</li>
+<li>Extract includes to <code>headers</code> parameter</li>
+<li>Define auto-generated as <code>HAVE_&lt;AGGREGATE&gt;_&lt;MEMBER&gt;</code></li>
+</ul>
+<h3 id="pattern-13-declaration-checks"><a class="header" href="#pattern-13-declaration-checks">Pattern 13: Declaration Checks</a></h3>
+<p><strong>M4:</strong></p>
+<pre><code class="language-m4">AC_CHECK_DECL([NULL], [AC_DEFINE([HAVE_DECL_NULL], [1])], [], [[#include &lt;stddef.h&gt;]])
+</code></pre>
+<p><strong>Bazel:</strong></p>
+<pre><code class="language-python">macros.AC_CHECK_DECL("NULL", headers = ["stddef.h"])
+</code></pre>
+<p><strong>Rules:</strong></p>
+<ul>
+<li>Similar to <code>AC_CHECK_SYMBOL</code> but checks for declarations (not just definitions)</li>
+<li>Use <code>headers</code> parameter for includes</li>
+<li>Define auto-generated as <code>HAVE_DECL_&lt;SYMBOL&gt;</code></li>
+</ul>
+<h2 id="special-cases"><a class="header" href="#special-cases">Special Cases</a></h2>
+<h3 id="ac_init-and-ac_config_headers"><a class="header" href="#ac_init-and-ac_config_headers">AC_INIT and AC_CONFIG_HEADERS</a></h3>
+<p><strong>M4:</strong></p>
+<pre><code class="language-m4">AC_INIT([package_name], [1.0.0])
+AC_CONFIG_HEADERS([config.h])
+</code></pre>
+<p><strong>Bazel:</strong></p>
+<pre><code class="language-python">package_info(
+    name = "package",
+    package_name = "package_name",
+    package_version = "1.0.0",
+)
+
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    template = "config.h.in",
+    deps = [":autoconf"],
+)
+</code></pre>
+<p><strong>Rules:</strong></p>
+<ul>
+<li><code>AC_INIT</code> → <code>package_info</code> rule (separate from macros)</li>
+<li><code>AC_CONFIG_HEADERS</code> → <code>autoconf_hdr</code> rule (separate from macros)</li>
+</ul>
+<h3 id="ac_output"><a class="header" href="#ac_output">AC_OUTPUT</a></h3>
+<p><strong>M4:</strong></p>
+<pre><code class="language-m4">AC_OUTPUT
+</code></pre>
+<p><strong>Bazel:</strong></p>
+<ul>
+<li>No equivalent - handled by Bazel build system automatically</li>
+</ul>
+<h3 id="ac_msg_checking--ac_msg_result"><a class="header" href="#ac_msg_checking--ac_msg_result">AC_MSG_CHECKING / AC_MSG_RESULT</a></h3>
+<p><strong>M4:</strong></p>
+<pre><code class="language-m4">AC_MSG_CHECKING([for something])
+AC_MSG_RESULT([yes])
+</code></pre>
+<p><strong>Bazel:</strong></p>
+<ul>
+<li>No equivalent - informational only, not needed in Bazel</li>
+</ul>
+<h2 id="complete-example-migration"><a class="header" href="#complete-example-migration">Complete Example Migration</a></h2>
+<p><strong>M4 (configure.ac):</strong></p>
+<pre><code class="language-m4">AC_INIT([myproject], [1.0.0])
+AC_CONFIG_HEADERS([config.h])
+
+AC_PROG_CC
+AC_CHECK_HEADERS([stdio.h stdlib.h])
+AC_CHECK_FUNCS([malloc printf])
+AC_CHECK_TYPE([int64_t], [], [], [[#include &lt;stdint.h&gt;]])
+AC_CHECK_LIB([m], [cos])
+AC_DEFINE([MY_FEATURE], [1])
+AC_OUTPUT
+</code></pre>
+<p><strong>Bazel (BUILD.bazel):</strong></p>
+<pre><code class="language-python">load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
+load("@rules_cc_autoconf//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
+load("@rules_cc_autoconf//autoconf:package_info.bzl", "package_info")
+
+package_info(
+    name = "package",
+    package_name = "myproject",
+    package_version = "1.0.0",
+)
+
+autoconf(
+    name = "autoconf",
+    checks = [
+        macros.AC_PROG_CC(),
+        macros.AC_CHECK_HEADER("stdio.h"),
+        macros.AC_CHECK_HEADER("stdlib.h"),
+        macros.AC_CHECK_FUNC("malloc"),
+        macros.AC_CHECK_FUNC("printf"),
+        macros.AC_CHECK_TYPE("int64_t", code = "#include &lt;stdint.h&gt;"),
+        macros.AC_CHECK_LIB("m", "cos"),
+        macros.AC_DEFINE("MY_FEATURE", "1"),
+    ],
+    deps = [":package"],
+)
+
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    template = "config.h.in",
+    deps = [":autoconf"],
+)
+</code></pre>
+<h2 id="migration-checklist"><a class="header" href="#migration-checklist">Migration Checklist</a></h2>
+<p>When migrating, follow these steps:</p>
+<ol>
+<li>Identify all M4 macro calls in <code>configure.ac</code></li>
+<li>Map each macro to its Bazel equivalent (see function docstrings)</li>
+<li>Convert argument syntax (brackets → quotes, lists → multiple calls)</li>
+<li>Extract define names from action blocks</li>
+<li>Convert include directives to <code>code</code> or <code>headers</code> parameters</li>
+<li>Handle language selection (<code>AC_LANG_PUSH/POP</code> → <code>language</code> parameter)</li>
+<li>Identify dependencies and add <code>requires</code> parameters</li>
+<li>Split multi-item macros into individual calls</li>
+<li>Create <code>package_info</code> from <code>AC_INIT</code></li>
+<li>Create <code>autoconf_hdr</code> from <code>AC_CONFIG_HEADERS</code></li>
+<li>Wrap all checks in <code>autoconf()</code> rule with <code>checks</code> list</li>
+<li>Preserve comments and structure where possible</li>
+</ol>
+<h2 id="common-pitfalls"><a class="header" href="#common-pitfalls">Common Pitfalls</a></h2>
+<ul>
+<li><strong>Forgetting to split lists</strong>: <code>AC_CHECK_HEADERS([a b c])</code> needs 3 separate calls</li>
+<li><strong>Missing main() wrapper</strong>: Custom code in <code>AC_TRY_COMPILE</code> needs <code>int main(void) { ... }</code></li>
+<li><strong>Wrong define names</strong>: Auto-generated names follow patterns (see each macro's docstring)</li>
+<li><strong>Language context</strong>: Remember to propagate <code>language = "cpp"</code> from <code>AC_LANG_PUSH([C++])</code></li>
+<li><strong>Dependencies</strong>: Check if includes in code correspond to previous header checks</li>
+<li><strong>String values</strong>: Use <code>'"string"'</code> for string literals in <code>AC_DEFINE</code> values</li>
+</ul>
+<h2 id="macro-reference"><a class="header" href="#macro-reference">Macro Reference</a></h2>
+<p>For detailed information about each macro's parameters, default behavior, and examples,
+see the <a href="./macros.html">macros documentation</a>. Each function includes:</p>
+<ul>
+<li>Original M4 example</li>
+<li>Bazel usage example</li>
+<li>Parameter descriptions</li>
+<li>Default define name generation rules</li>
+</ul>
+<h2 id="cross-compilation-warning"><a class="header" href="#cross-compilation-warning">Cross-Compilation Warning</a></h2>
+<p>Some of the macros in this module behave like their GNU Autoconf counterparts
+and are <strong>not cross‑compile friendly</strong>. In particular, any macro that needs to
+<em>run</em> a compiled test binary will not behave well when the Bazel execution
+platform differs from the target platform.</p>
+<p>Macros that <strong>run</strong> test programs (and therefore are not safe for
+cross‑compilation) include:</p>
+<ul>
+<li><code>AC_CHECK_SIZEOF</code> / <code>ac_check_sizeof</code> (computes <code>sizeof(...)</code> by running code)</li>
+<li><code>AC_CHECK_ALIGNOF</code> / <code>ac_check_alignof</code> (computes alignment by running code)</li>
+<li><code>AC_COMPUTE_INT</code> / <code>ac_compute_int</code> (evaluates an expression by running code)</li>
+<li><code>AC_C_BIGENDIAN</code> / <code>ac_c_bigendian</code> (detects endianness at runtime)</li>
+<li><code>AC_PROG_CC_C_O</code> / <code>ac_prog_cc_c_o</code> (probes compiler behaviour)</li>
+</ul>
+<p>These are still useful when you build and test on the <strong>same</strong> architecture as
+your deployment target (e.g. local development, non‑cross CI), but you should
+avoid or gate them when doing true cross‑compilation.</p>
+<p>For cross‑compile scenarios prefer <strong>compile‑only</strong> checks such as:</p>
+<ul>
+<li><code>AC_CHECK_HEADER</code>, <code>AC_CHECK_FUNC</code>, <code>AC_CHECK_LIB</code>, <code>AC_CHECK_TYPE</code>, <code>AC_CHECK_SYMBOL</code></li>
+<li>the various compiler‑flag checks (<code>AC_CHECK_C_COMPILER_FLAG</code>,
+<code>AC_CHECK_CXX_COMPILER_FLAG</code>)</li>
+<li>unconditional defines via <code>AC_DEFINE</code></li>
+</ul>
+<p>You can also conditionally enable the runtime‑based macros using Bazel
+<code>select()</code>s, platforms, or build flags so they only run where they are safe.</p>
 
                     </main>
 
