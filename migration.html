@@ -335,7 +335,7 @@ macros.AC_CHECK_ALIGNOF("double")
 <li>If includes provided, use <code>headers</code> parameter (list of header names without <code>&lt;&gt;</code> or quotes)</li>
 <li>Define auto-generated as <code>SIZEOF_&lt;TYPE&gt;</code> or <code>ALIGNOF_&lt;TYPE&gt;</code></li>
 </ul>
-<h3 id="pattern-10-unconditional-defines"><a class="header" href="#pattern-10-unconditional-defines">Pattern 10: Unconditional Defines</a></h3>
+<h3 id="pattern-10-unconditional-defines-ac_define"><a class="header" href="#pattern-10-unconditional-defines-ac_define">Pattern 10: Unconditional Defines (AC_DEFINE)</a></h3>
 <p><strong>M4:</strong></p>
 <pre><code class="language-m4">AC_DEFINE([CUSTOM_VALUE], [42])
 AC_DEFINE([ENABLE_FEATURE], [1])
@@ -352,6 +352,25 @@ macros.AC_DEFINE("PROJECT_NAME", '"MyProject"')
 <li>Second argument becomes <code>value</code> parameter</li>
 <li>Preserve quotes in string values (use <code>'"string"'</code> for string literals)</li>
 </ul>
+<h3 id="pattern-10b-m4-shell-variables-m4_define"><a class="header" href="#pattern-10b-m4-shell-variables-m4_define">Pattern 10b: M4 Shell Variables (M4_DEFINE)</a></h3>
+<p>Many M4 macros use shell variables like <code>REPLACE_*</code> or <code>HAVE_*</code> that are set via
+assignment (not <code>AC_DEFINE</code>). These are tracked separately using <code>M4_DEFINE</code>.</p>
+<p><strong>M4:</strong></p>
+<pre><code class="language-m4"># These are shell variable assignments, NOT AC_DEFINE calls
+REPLACE_FSTAT=1
+HAVE_WORKING_MKTIME=0
+</code></pre>
+<p><strong>Bazel:</strong></p>
+<pre><code class="language-python"># Use M4_DEFINE for shell variables
+macros.M4_DEFINE("REPLACE_FSTAT", "1")
+macros.M4_DEFINE("HAVE_WORKING_MKTIME", "0")
+</code></pre>
+<p><strong>Rules:</strong></p>
+<ul>
+<li>Use <code>macros.M4_DEFINE</code> for M4 shell variable assignments (e.g., <code>REPLACE_*=1</code>)</li>
+<li>Use <code>macros.AC_DEFINE</code> only for actual <code>AC_DEFINE()</code> calls in the M4 source</li>
+<li>Both produce the same result, but <code>M4_DEFINE</code> helps track the semantic difference</li>
+</ul>
 <h3 id="pattern-11-conditional-dependencies"><a class="header" href="#pattern-11-conditional-dependencies">Pattern 11: Conditional Dependencies</a></h3>
 <p><strong>M4:</strong></p>
 <pre><code class="language-m4">AC_CHECK_HEADER([stdio.h])
@@ -366,6 +385,27 @@ macros.AC_CHECK_FUNC("fopen", requires = ["HAVE_STDIO_H"])
 <li>If a check includes a header that was previously checked, add <code>requires</code> parameter</li>
 <li>Use the auto-generated define name from the previous check</li>
 <li>Extract include dependencies and map to corresponding <code>HAVE_*</code> defines</li>
+</ul>
+<h3 id="pattern-11b-value-based-requirements"><a class="header" href="#pattern-11b-value-based-requirements">Pattern 11b: Value-Based Requirements</a></h3>
+<p>Sometimes a check should only run if a previous check resulted in a specific value.
+Use <code>"DEFINE=value"</code> syntax in the <code>requires</code> list.</p>
+<p><strong>M4:</strong></p>
+<pre><code class="language-m4">if test $REPLACE_FSTAT = 1; then
+  # Only run this check if fstat needs replacement
+  AC_CHECK_FUNC([fstat64])
+fi
+</code></pre>
+<p><strong>Bazel:</strong></p>
+<pre><code class="language-python">macros.AC_CHECK_FUNC(
+    "fstat64",
+    requires = ["REPLACE_FSTAT=1"],  # Only if REPLACE_FSTAT equals "1"
+)
+</code></pre>
+<p><strong>Rules:</strong></p>
+<ul>
+<li><code>requires = ["FOO"]</code> - check succeeds if FOO succeeded (any value)</li>
+<li><code>requires = ["FOO=1"]</code> - check succeeds if FOO succeeded AND has value "1"</li>
+<li>Useful for conditional checks based on platform detection results</li>
 </ul>
 <h3 id="pattern-12-member-checks"><a class="header" href="#pattern-12-member-checks">Pattern 12: Member Checks</a></h3>
 <p><strong>M4:</strong></p>
@@ -393,6 +433,98 @@ macros.AC_CHECK_FUNC("fopen", requires = ["HAVE_STDIO_H"])
 <li>Use <code>headers</code> parameter for includes</li>
 <li>Define auto-generated as <code>HAVE_DECL_&lt;SYMBOL&gt;</code></li>
 </ul>
+<h3 id="pattern-14-platform-specific-conditionals"><a class="header" href="#pattern-14-platform-specific-conditionals">Pattern 14: Platform-Specific Conditionals</a></h3>
+<p>Many M4 files use <code>case "$host_os"</code> to conditionally set variables based on the
+target platform. In Bazel, these should be translated to <code>select()</code> statements.</p>
+<p><strong>M4:</strong></p>
+<pre><code class="language-m4">AC_REQUIRE([AC_CANONICAL_HOST])
+case "$host_os" in
+  mingw* | windows*)
+    REPLACE_ACCESS=1
+    ;;
+  *)
+    # Other platform checks...
+    ;;
+esac
+</code></pre>
+<p><strong>Bazel:</strong></p>
+<pre><code class="language-python">autoconf(
+    name = "access",
+    checks = select({
+        "@platforms//os:windows": [
+            # On Windows, unconditionally set REPLACE_ACCESS=1
+            # Use M4_DEFINE for M4 shell variables (not AC_DEFINE values)
+            macros.M4_DEFINE("REPLACE_ACCESS", "1"),
+        ],
+        "//conditions:default": [
+            # Non-Windows checks
+            macros.AC_CHECK_FUNC("access"),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [...],
+)
+</code></pre>
+<p><strong>Rules:</strong></p>
+<ul>
+<li>Use <code>macros.M4_DEFINE</code> for M4 shell variables (e.g., <code>REPLACE_*</code>, <code>HAVE_*</code> set via assignment)</li>
+<li>Use <code>macros.AC_DEFINE</code> only for actual <code>AC_DEFINE()</code> calls in the M4 source</li>
+<li><code>case "$host_os" in mingw* | windows*)</code> → <code>select({"@platforms//os:windows": [...]})</code></li>
+<li><code>case "$host_os" in darwin*)</code> → <code>select({"@platforms//os:macos": [...]})</code></li>
+<li><code>case "$host_os" in linux*)</code> → <code>select({"@platforms//os:linux": [...]})</code></li>
+<li>Default case (<code>*</code>) → <code>"//conditions:default": [...]</code></li>
+<li>Multiple platform conditions can be combined in a single <code>select()</code></li>
+<li>Checks inside the <code>select()</code> must be lists that can be concatenated with <code>+</code></li>
+</ul>
+<p><strong>Common Platform Constraint Labels:</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>M4 Pattern</th><th>Bazel Constraint</th></tr></thead><tbody>
+<tr><td><code>mingw*</code>, <code>windows*</code></td><td><code>@platforms//os:windows</code></td></tr>
+<tr><td><code>darwin*</code></td><td><code>@platforms//os:macos</code></td></tr>
+<tr><td><code>linux*</code>, <code>linux-*</code></td><td><code>@platforms//os:linux</code></td></tr>
+<tr><td><code>freebsd*</code></td><td><code>@platforms//os:freebsd</code></td></tr>
+<tr><td><code>openbsd*</code></td><td><code>@platforms//os:openbsd</code></td></tr>
+<tr><td><code>netbsd*</code></td><td><code>@platforms//os:netbsd</code></td></tr>
+<tr><td><code>solaris*</code></td><td>(use custom constraint or <code>//conditions:default</code>)</td></tr>
+<tr><td><code>cygwin*</code></td><td>(use custom constraint or <code>//conditions:default</code>)</td></tr>
+</tbody></table>
+</div>
+<p><strong>Example with Multiple Platforms:</strong></p>
+<pre><code class="language-python">autoconf(
+    name = "fstat",
+    checks = select({
+        "@platforms//os:windows": [
+            # Windows: stat returns timezone-affected timestamps
+            macros.M4_DEFINE("REPLACE_FSTAT", "1"),
+        ],
+        "@platforms//os:macos": [
+            # macOS: stat can return negative tv_nsec
+            macros.M4_DEFINE("REPLACE_FSTAT", "1"),
+        ],
+        "//conditions:default": [
+            # Other platforms: no replacement needed
+        ],
+    }),
+    visibility = ["//visibility:public"],
+)
+</code></pre>
+<p><strong>Combining Platform Checks with Common Checks:</strong></p>
+<p>When you need both platform-specific and common checks, concatenate them with <code>+</code>:</p>
+<pre><code class="language-python">autoconf(
+    name = "open",
+    checks = [
+        # Common checks for all platforms
+        macros.AC_CHECK_FUNC("open"),
+    ] + select({
+        "@platforms//os:windows": [
+            # Windows-specific: unconditionally replace open()
+            macros.M4_DEFINE("REPLACE_OPEN", "1"),
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [...],
+)
+</code></pre>
 <h2 id="special-cases"><a class="header" href="#special-cases">Special Cases</a></h2>
 <h3 id="ac_init-and-ac_config_headers"><a class="header" href="#ac_init-and-ac_config_headers">AC_INIT and AC_CONFIG_HEADERS</a></h3>
 <p><strong>M4:</strong></p>
@@ -493,9 +625,11 @@ autoconf_hdr(
 <li>Handle language selection (<code>AC_LANG_PUSH/POP</code> → <code>language</code> parameter)</li>
 <li>Identify dependencies and add <code>requires</code> parameters</li>
 <li>Split multi-item macros into individual calls</li>
+<li><strong>Handle platform-specific conditionals</strong> (<code>case "$host_os"</code> → <code>select()</code>)</li>
 <li>Create <code>package_info</code> from <code>AC_INIT</code></li>
 <li>Create <code>autoconf_hdr</code> from <code>AC_CONFIG_HEADERS</code></li>
 <li>Wrap all checks in <code>autoconf()</code> rule with <code>checks</code> list</li>
+<li>Verify no duplicate checks between direct checks and dependencies</li>
 <li>Preserve comments and structure where possible</li>
 </ol>
 <h2 id="common-pitfalls"><a class="header" href="#common-pitfalls">Common Pitfalls</a></h2>
@@ -506,6 +640,8 @@ autoconf_hdr(
 <li><strong>Language context</strong>: Remember to propagate <code>language = "cpp"</code> from <code>AC_LANG_PUSH([C++])</code></li>
 <li><strong>Dependencies</strong>: Check if includes in code correspond to previous header checks</li>
 <li><strong>String values</strong>: Use <code>'"string"'</code> for string literals in <code>AC_DEFINE</code> values</li>
+<li><strong>Platform conditionals</strong>: <code>case "$host_os"</code> patterns require <code>select()</code> with platform constraints</li>
+<li><strong>Duplicate checks</strong>: Don't add a check (e.g., <code>AC_CHECK_FUNC("lstat")</code>) if you already depend on a module that provides it (e.g., <code>//gnulib/m4/lstat</code>). This will cause a "duplicate check" error.</li>
 </ul>
 <h2 id="macro-reference"><a class="header" href="#macro-reference">Macro Reference</a></h2>
 <p>For detailed information about each macro's parameters, default behavior, and examples,
