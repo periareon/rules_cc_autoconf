@@ -1298,6 +1298,47 @@ fi
 <li>Use <code>headers</code> parameter for includes</li>
 <li>Define auto-generated as <code>HAVE_DECL_&lt;SYMBOL&gt;</code></li>
 </ul>
+<h3 id="pattern-13b-conditional-declaration-checks-with-function-pre-checks"><a class="header" href="#pattern-13b-conditional-declaration-checks-with-function-pre-checks">Pattern 13b: Conditional Declaration Checks with Function Pre-checks</a></h3>
+<p>Sometimes you need to check if a function exists first, then check if it's declared in a specific header. The original M4 code uses shell conditionals to chain these checks.</p>
+<p><strong>M4:</strong></p>
+<pre><code class="language-m4">if test "$ac_cv_func_ether_hostton" = yes; then
+    #
+    # OK, we have ether_hostton().  Is it declared in &lt;net/ethernet.h&gt;?
+    #
+    # This test fails if we don't have &lt;net/ethernet.h&gt; or if we do
+    # but it doesn't declare ether_hostton().
+    #
+    AC_CHECK_DECL(ether_hostton,
+        [
+            AC_DEFINE(NET_ETHERNET_H_DECLARES_ETHER_HOSTTON,,
+                [Define to 1 if net/ethernet.h declares `ether_hostton'])
+        ],,
+        [
+#include &lt;net/ethernet.h&gt;
+        ])
+fi
+</code></pre>
+<p><strong>Bazel:</strong></p>
+<pre><code class="language-python">macros.AC_CHECK_FUNC("ether_hostton"),
+macros.AC_CHECK_DECL(
+    "ether_hostton",
+    define = "NET_ETHERNET_H_DECLARES_ETHER_HOSTTON_TEST",
+    headers = ["net/ethernet.h"],
+    requires = ["HAVE_ETHER_HOSTTON=1"],
+),
+macros.AC_DEFINE(
+    "NET_ETHERNET_H_DECLARES_ETHER_HOSTTON",
+    requires = ["NET_ETHERNET_H_DECLARES_ETHER_HOSTTON_TEST=1"],
+),
+</code></pre>
+<p><strong>Rules:</strong></p>
+<ul>
+<li>First check if the function exists with <code>AC_CHECK_FUNC</code></li>
+<li>Then check if it's declared in the header with <code>AC_CHECK_DECL</code>, using a temporary define name (e.g., <code>*_TEST</code>)</li>
+<li>Use <code>requires = ["HAVE_ETHER_HOSTTON=1"]</code> on the <code>AC_CHECK_DECL</code> to ensure it only runs if the function check succeeded</li>
+<li>Finally, use <code>AC_DEFINE</code> with <code>requires = ["*_TEST=1"]</code> to conditionally define the final macro only if the declaration check passed</li>
+<li>The <code>requires</code> chains ensure defines are not created unless they're supposed to, matching the original M4 shell conditional behavior</li>
+</ul>
 <h3 id="pattern-14-platform-specific-conditionals"><a class="header" href="#pattern-14-platform-specific-conditionals">Pattern 14: Platform-Specific Conditionals</a></h3>
 <p>Many M4 files use <code>case "$host_os"</code> to conditionally set variables based on the
 target platform. In Bazel, these should be translated to <code>select()</code> statements.</p>
