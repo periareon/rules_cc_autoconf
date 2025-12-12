@@ -1,0 +1,23 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/__inline.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "__inline",
+    checks = [
+        # Test for __inline keyword support
+        # Equivalent to gl___INLINE macro from __inline.m4
+        macros.AC_TRY_COMPILE(
+            code = """typedef int foo_t;
+static __inline foo_t foo (void) { return 0; }
+
+int main(void) {
+    return foo ();
+}""",
+            define = "HAVE___INLINE",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

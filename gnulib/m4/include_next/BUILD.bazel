@@ -1,0 +1,12 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/include_next.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "include_next",
+    checks = [
+        # Note: include_next.m4 checks for #include_next support
+        # This is a compiler feature check that's complex to replicate
+    ],
+    visibility = ["//visibility:public"],
+)

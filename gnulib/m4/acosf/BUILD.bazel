@@ -1,0 +1,22 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/acosf.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "acosf",
+    checks = [
+        macros.AC_CHECK_FUNC(
+            "acosf",
+            define = "HAVE_ACOSF",
+        ),
+        macros.AC_CHECK_DECL(
+            "acosf",
+            define = "HAVE_DECL_ACOSF",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/acos",
+    ],
+)

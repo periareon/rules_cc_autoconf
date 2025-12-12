@@ -1,0 +1,28 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/net_if_h.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "net_if_h",
+    checks = [
+        # Check if <net/if.h> is self-contained
+        # Equivalent to gl_HEADER_NET_IF macro from net_if_h.m4
+        macros.AC_TRY_COMPILE(
+            code = """#include <net/if.h>
+struct if_nameindex ni;""",
+            define = "HAVE_NET_IF_H_SELFCONTAINED",
+            language = "c",
+        ),
+        # Check if net/if.h works with sys/socket.h included first
+        macros.AC_TRY_COMPILE(
+            code = """\
+#include <sys/socket.h>
+#include <net/if.h>
+int main(void) { return 0; }
+""",
+            define = "HAVE_NET_IF_H",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

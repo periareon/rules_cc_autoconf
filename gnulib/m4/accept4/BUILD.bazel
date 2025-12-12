@@ -1,0 +1,38 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/accept4.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "accept4",
+    checks = [
+        # Check for accept4 declaration
+        # Equivalent to gl_FUNC_ACCEPT4 macro from accept4.m4
+        macros.AC_CHECK_DECL(
+            "accept4",
+            define = "HAVE_DECL_ACCEPT4",
+            headers = [
+                "sys/types.h",
+                "sys/socket.h",
+            ],
+            language = "c",
+        ),
+        # Set HAVE_ACCEPT4=0 if declaration not found
+        macros.AC_TRY_COMPILE(
+            code = """#include <sys/types.h>
+#include <sys/socket.h>
+
+#ifdef __cplusplus
+extern "C"
+#endif
+char accept4 ();
+
+int main(void) {
+    return accept4();
+}""",
+            define = "HAVE_ACCEPT4",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

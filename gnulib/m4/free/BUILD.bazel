@@ -1,0 +1,33 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/free.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "free",
+    checks = [
+        # Check whether free preserves errno
+        # Equivalent to gl_FUNC_FREE macro from free.m4
+        # Note: Uses compile-time checks for glibc, OpenBSD, and Solaris
+        macros.AC_TRY_COMPILE(
+            code = """#include <stdlib.h>
+
+#if 2 < __GLIBC__ + (33 <= __GLIBC_MINOR__)
+#elif defined __OpenBSD__
+#elif defined __sun
+#else
+  #error "'free' is not known to preserve errno"
+#endif
+
+int main(void) {
+    return 0;
+}""",
+            define = "HAVE_FREE_POSIX",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/stdlib_h",  # AC_REQUIRE([gl_STDLIB_H_DEFAULTS])
+    ],
+)

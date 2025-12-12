@@ -1,0 +1,32 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fchmodat.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# HAVE_LCHMOD comes from lchmod dependency
+
+autoconf(
+    name = "fchmodat",
+    checks = [
+        macros.AC_CHECK_FUNC("fchmodat"),
+        macros.AC_TRY_COMPILE(
+            code = """#include <unistd.h>
+
+#ifdef __cplusplus
+extern "C"
+#endif
+char readlinkat ();
+
+int main(void) {
+    return readlinkat();
+}""",
+            define = "HAVE_READLINKAT",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/lchmod",  # Provides HAVE_LCHMOD
+        "//gnulib/m4/sys_stat_h",  # AC_REQUIRE([gl_SYS_STAT_H_DEFAULTS])
+    ],
+)

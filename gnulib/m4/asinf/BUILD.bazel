@@ -1,0 +1,22 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/asinf.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "asinf",
+    checks = [
+        macros.AC_CHECK_FUNC(
+            "asinf",
+            define = "HAVE_ASINF",
+        ),
+        macros.AC_CHECK_DECL(
+            "asinf",
+            define = "HAVE_DECL_ASINF",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/asin",
+    ],
+)

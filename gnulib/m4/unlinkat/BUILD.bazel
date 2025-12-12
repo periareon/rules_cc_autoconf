@@ -1,0 +1,22 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/unlinkat.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_UNLINKAT from unlinkat.m4
+autoconf(
+    name = "unlinkat",
+    checks = [
+        # AC_CHECK_FUNCS_ONCE([unlinkat])
+        macros.AC_CHECK_FUNC("unlinkat"),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # AC_REQUIRE([gl_FUNC_UNLINK])
+        "//gnulib/m4/unlink",
+        # AC_REQUIRE([gl_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK])
+        "//gnulib/m4/lstat",
+        # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
+        "//gnulib/m4/unistd_h",
+    ],
+)

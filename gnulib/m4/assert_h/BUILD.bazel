@@ -1,0 +1,30 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/assert_h.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "assert_h",
+    checks = [
+        # Check for static_assert support
+        # Equivalent to gl_ASSERT_H macro from assert_h.m4
+        macros.AC_TRY_COMPILE(
+            code = """#if defined __clang__ && __STDC_VERSION__ < 202311
+#pragma clang diagnostic error "-Wc2x-extensions"
+#pragma clang diagnostic error "-Wc++1z-extensions"
+#endif
+#include <assert.h>
+static_assert (2 + 2 == 4, "arithmetic does not work");
+static_assert (2 + 2 == 4);
+
+int main(void) {
+    static_assert (sizeof (char) == 1, "sizeof does not work");
+    static_assert (sizeof (char) == 1);
+    return 0;
+}""",
+            define = "HAVE_C_STATIC_ASSERT",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

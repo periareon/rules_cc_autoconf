@@ -1,0 +1,43 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/htonl.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "htonl",
+    checks = [
+        macros.AC_CHECK_DECL(
+            "htons",
+            define = "HAVE_DECL_HTONS",
+            headers = [
+                "arpa/inet.h",
+                "netinet/in.h",
+            ],
+        ),
+        macros.AC_CHECK_DECL(
+            "htonl",
+            define = "HAVE_DECL_HTONL",
+            headers = [
+                "arpa/inet.h",
+                "netinet/in.h",
+            ],
+        ),
+        macros.AC_CHECK_DECL(
+            "ntohs",
+            define = "HAVE_DECL_NTOHS",
+            headers = [
+                "arpa/inet.h",
+                "netinet/in.h",
+            ],
+        ),
+        macros.AC_CHECK_DECL(
+            "ntohl",
+            define = "HAVE_DECL_NTOHL",
+            headers = [
+                "arpa/inet.h",
+                "netinet/in.h",
+            ],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

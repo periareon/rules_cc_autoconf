@@ -1,0 +1,16 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/ftell.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "ftell",
+    checks = [
+        # gl_FUNC_FTELL macro from ftell.m4 sets REPLACE_FTELL based on ftello.
+        # No direct checks needed.
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/ftello",  # AC_REQUIRE([gl_FUNC_FTELLO])
+        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS])
+    ],
+)

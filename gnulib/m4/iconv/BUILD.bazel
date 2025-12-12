@@ -1,0 +1,44 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/iconv.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "iconv",
+    checks = [
+        # Check for iconv function
+        # Equivalent to AM_ICONV macro from iconv.m4
+        # Note: Full implementation includes library linking checks and runtime
+        # tests for various platform bugs that are not easily replicable in Bazel
+        macros.AC_TRY_COMPILE(
+            code = """#include <stdlib.h>
+#include <iconv.h>
+
+int main(void) {
+    iconv_t cd = iconv_open("", "");
+    iconv(cd, NULL, NULL, NULL, NULL);
+    iconv_close(cd);
+    return 0;
+}""",
+            define = "HAVE_ICONV",
+            language = "c",
+        ),
+        macros.AC_TRY_COMPILE(
+            code = """#include <stdlib.h>
+#include <iconv.h>
+
+extern
+#ifdef __cplusplus
+"C"
+#endif
+size_t iconv (iconv_t cd, char * *inbuf, size_t *inbytesleft, char * *outbuf, size_t *outbytesleft);
+
+int main(void) {
+    return 0;
+}""",
+            define = "ICONV_CONST",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

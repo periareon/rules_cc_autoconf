@@ -1,0 +1,38 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/utimens.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_UTIMENS macro from utimens.m4
+# HAVE_FUTIMENS comes from futimens dependency
+# COMPLEX CASE: Uses AC_RUN_IFELSE to test futimesat(fd,NULL,time) behavior
+# on FreeBSD. The runtime test is NOT cross-compile friendly.
+autoconf(
+    name = "utimens",
+    checks = [
+        macros.AC_CHECK_FUNC(
+            "futimes",
+            code = "#include <sys/time.h>",
+        ),
+        macros.AC_CHECK_FUNC(
+            "futimesat",
+            code = "#include <sys/time.h>",
+        ),
+        macros.AC_CHECK_FUNC(
+            "lutimes",
+            code = "#include <sys/time.h>",
+        ),
+        macros.AC_CHECK_FUNC(
+            "utimensat",
+            code = "#include <sys/stat.h>",
+        ),
+        macros.AC_CHECK_FUNC("utimens"),
+        macros.AC_CHECK_FUNC("lutimens"),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/futimens",  # Provides HAVE_FUTIMENS
+        "//gnulib/m4/time_h",  # AC_REQUIRE([gl_CHECK_TYPE_STRUCT_TIMESPEC])
+        "//gnulib/m4/utimes",  # AC_REQUIRE([gl_FUNC_UTIMES])
+    ],
+)

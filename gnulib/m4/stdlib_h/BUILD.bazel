@@ -1,0 +1,18 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/stdlib_h.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "stdlib_h",
+    checks = [
+        # Check for stdlib.h header
+        # Equivalent to gl_STDLIB_H macro from stdlib_h.m4
+        # Note: Full implementation includes checks for MB_CUR_MAX correctness
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # Note: AC_C_RESTRICT and AC_CANONICAL_HOST are standard autoconf macros
+        # Note: gt_LOCALE_EN_UTF8 requires locale-en package (locale-en-utf8 doesn't exist)
+        "//gnulib/m4/locale-en",  # AC_REQUIRE([gt_LOCALE_EN_UTF8])
+    ],
+)

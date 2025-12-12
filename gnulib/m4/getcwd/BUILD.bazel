@@ -1,0 +1,35 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/getcwd.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_GETCWD macro from getcwd.m4
+# Note: Full implementation includes runtime checks for NULL argument handling,
+# POSIX signature, path_max, and abort bugs that are not easily replicable in Bazel
+
+autoconf(
+    name = "getcwd",
+    checks = [
+        # HAVE_UNISTD_H comes from unistd_h dependency
+        macros.AC_TRY_COMPILE(
+            code = """#include <unistd.h>
+
+extern
+#ifdef __cplusplus
+"C"
+#endif
+char *getcwd (char *, size_t);
+
+int main(void) {
+    return 0;
+}""",
+            define = "HAVE_GETCWD_POSIX_SIGNATURE",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/d-ino",  # AC_REQUIRE([gl_CHECK_TYPE_STRUCT_DIRENT_D_INO])
+        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS]) - provides HAVE_UNISTD_H
+    ],
+)

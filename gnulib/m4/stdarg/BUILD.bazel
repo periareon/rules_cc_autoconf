@@ -1,0 +1,24 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/stdarg.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_STDARG_H from stdarg.m4
+# Checks for working va_copy in combination with <stdarg.h>
+autoconf(
+    name = "stdarg",
+    checks = [
+        # Check for va_copy
+        macros.AC_TRY_COMPILE(
+            code = """\
+#include <stdarg.h>
+#ifndef va_copy
+void (*func) (va_list, va_list) = va_copy;
+#endif
+int main(void) { return 0; }
+""",
+            define = "HAVE_VA_COPY",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

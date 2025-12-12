@@ -1,0 +1,21 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/vdprintf.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_VDPRINTF macro from vdprintf.m4
+autoconf(
+    name = "vdprintf",
+    checks = [
+        # gl_CHECK_FUNCS_ANDROID([vdprintf], [[#include <stdio.h>]])
+        macros.AC_CHECK_FUNC(
+            "vdprintf",
+            code = "#include <stdio.h>",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # AC_REQUIRE([gl_STDIO_H_DEFAULTS])
+        "//gnulib/m4/stdio_h",
+    ],
+)

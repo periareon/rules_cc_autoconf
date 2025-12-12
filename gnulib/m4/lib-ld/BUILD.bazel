@@ -1,0 +1,17 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/lib-ld.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "lib-ld",
+    checks = [
+        # AC_LIB_PROG_LD and AC_LIB_PROG_LD_GNU macros from lib-ld.m4
+        # find and test the linker. This involves path searching and version
+        # checking that is complex to replicate in Bazel.
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # Note: AC_REQUIRE([AC_PROG_CC]) and AC_REQUIRE([AC_CANONICAL_HOST])
+        # are standard autoconf macros
+    ],
+)

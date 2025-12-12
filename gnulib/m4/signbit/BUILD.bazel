@@ -1,0 +1,23 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/signbit.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "signbit",
+    checks = [
+        macros.AC_CHECK_DECL(
+            "copysignf",
+            define = "HAVE_DECL_COPYSIGNF",
+        ),
+        macros.AC_CHECK_DECL(
+            "copysign",
+            define = "HAVE_DECL_COPYSIGN",
+        ),
+        macros.AC_CHECK_DECL(
+            "copysignl",
+            define = "HAVE_DECL_COPYSIGNL",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

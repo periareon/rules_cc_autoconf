@@ -1,0 +1,93 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/getaddrinfo.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_GETADDRINFO macro from getaddrinfo.m4
+# Headers HAVE_SYS_SOCKET_H, HAVE_NETDB_H come from dependencies.
+# Note: Full implementation includes runtime checks for AI_NUMERICSERV
+# and library linking checks that are complex
+
+autoconf(
+    name = "getaddrinfo",
+    checks = [
+        # HAVE_NETINET_IN_H comes from netinet_in_h dependency
+        # Check for declarations - require headers from dependencies
+        macros.AC_CHECK_DECL(
+            "getaddrinfo",
+            headers = [
+                "sys/types.h",
+                "sys/socket.h",
+                "netdb.h",
+            ],
+            requires = [
+                "HAVE_SYS_SOCKET_H",
+                "HAVE_NETDB_H",
+            ],
+        ),
+        macros.AC_CHECK_DECL(
+            "freeaddrinfo",
+            headers = [
+                "sys/types.h",
+                "sys/socket.h",
+                "netdb.h",
+            ],
+            requires = [
+                "HAVE_SYS_SOCKET_H",
+                "HAVE_NETDB_H",
+            ],
+        ),
+        macros.AC_CHECK_DECL(
+            "getnameinfo",
+            headers = [
+                "sys/types.h",
+                "sys/socket.h",
+                "netdb.h",
+            ],
+            requires = [
+                "HAVE_SYS_SOCKET_H",
+                "HAVE_NETDB_H",
+            ],
+        ),
+        macros.AC_CHECK_DECL(
+            "gai_strerror",
+            headers = [
+                "sys/types.h",
+                "sys/socket.h",
+                "netdb.h",
+            ],
+            requires = [
+                "HAVE_SYS_SOCKET_H",
+                "HAVE_NETDB_H",
+            ],
+        ),
+        # Check for struct addrinfo
+        macros.AC_CHECK_TYPE(
+            "struct addrinfo",
+            code = """\
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+int main(void) {
+    if (sizeof(struct addrinfo))
+        return 0;
+    return 1;
+}
+""",
+            define = "HAVE_STRUCT_ADDRINFO",
+            requires = [
+                "HAVE_SYS_SOCKET_H",
+                "HAVE_NETDB_H",
+            ],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/hostent",  # AC_REQUIRE([gl_HOSTENT])
+        "//gnulib/m4/inet_ntop",  # AC_REQUIRE([gl_FUNC_INET_NTOP])
+        "//gnulib/m4/netdb_h",  # AC_REQUIRE([gl_NETDB_H]) - provides HAVE_NETDB_H
+        "//gnulib/m4/netinet_in_h",  # Provides HAVE_NETINET_IN_H
+        "//gnulib/m4/servent",  # AC_REQUIRE([gl_SERVENT])
+        "//gnulib/m4/sys_socket_h",  # AC_REQUIRE([gl_SYS_SOCKET_H]) - provides HAVE_SYS_SOCKET_H
+    ],
+)

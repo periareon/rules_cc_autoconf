@@ -1,0 +1,14 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/std-gnu23.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+# PROTOTYPES and __PROTOTYPES come from std-gnu11 dependency
+
+autoconf(
+    name = "std-gnu23",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/std-gnu11",  # Provides PROTOTYPES, __PROTOTYPES
+    ],
+)

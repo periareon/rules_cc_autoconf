@@ -1,0 +1,35 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/setenv.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_SETENV / gl_FUNC_UNSETENV from setenv.m4
+# HAVE_UNISTD_H comes from environ -> unistd_h dependency
+# HAVE_TSEARCH comes from tsearch dependency
+
+autoconf(
+    name = "setenv",
+    checks = [
+        macros.AC_CHECK_DECL(
+            "setenv",
+            headers = ["stdlib.h"],
+        ),
+        macros.AC_CHECK_FUNC("setenv"),
+        macros.AC_CHECK_DECL(
+            "unsetenv",
+            headers = ["stdlib.h"],
+        ),
+        macros.AC_CHECK_FUNC("unsetenv"),
+        macros.AC_CHECK_HEADER("search.h"),
+        macros.AC_CHECK_DECL(
+            "_putenv",
+            headers = ["stdlib.h"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/environ",  # Provides HAVE_UNISTD_H transitively
+        "//gnulib/m4/stdlib_h",  # AC_REQUIRE([gl_STDLIB_H_DEFAULTS])
+        "//gnulib/m4/tsearch",  # Provides HAVE_TSEARCH
+    ],
+)

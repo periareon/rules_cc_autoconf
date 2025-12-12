@@ -1,0 +1,33 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/faccessat.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_FACCESSAT from faccessat.m4
+# HAVE_ACCESS comes from access dependency
+
+autoconf(
+    name = "faccessat",
+    checks = [
+        macros.AC_TRY_COMPILE(
+            code = """#include <unistd.h>
+
+#ifdef __cplusplus
+extern "C"
+#endif
+char faccessat ();
+
+int main(void) {
+    return faccessat();
+}""",
+            define = "HAVE_FACCESSAT",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/access",  # Provides HAVE_ACCESS
+        "//gnulib/m4/lstat",  # AC_REQUIRE([gl_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK])
+        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
+    ],
+)

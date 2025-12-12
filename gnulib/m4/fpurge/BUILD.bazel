@@ -1,0 +1,37 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fpurge.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# HAVE_STDIO_EXT_H comes from stdio_ext_h dependency
+
+autoconf(
+    name = "fpurge",
+    checks = [
+        macros.AC_CHECK_FUNC("fpurge"),
+        macros.AC_TRY_COMPILE(
+            code = """#include <stdio_ext.h>
+
+#ifdef __cplusplus
+extern "C"
+#endif
+void __fpurge ();
+
+int main(void) {
+    return __fpurge();
+}""",
+            define = "HAVE___FPURGE",
+            language = "c",
+            requires = ["HAVE_STDIO_EXT_H"],
+        ),
+        macros.AC_CHECK_DECL(
+            "fpurge",
+            headers = ["stdio.h"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/stdio_ext_h",
+        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS])
+    ],
+)

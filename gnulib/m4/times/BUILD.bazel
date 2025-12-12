@@ -1,0 +1,20 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/times.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "times",
+    checks = [
+        # Check for times function
+        # Equivalent to gl_FUNC_TIMES macro from times.m4
+        macros.AC_CHECK_FUNC(
+            "times",
+            define = "HAVE_TIMES",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/sys_times_h",  # AC_REQUIRE([gl_SYS_TIMES_H_DEFAULTS])
+    ],
+)

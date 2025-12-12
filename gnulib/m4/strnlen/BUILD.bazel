@@ -1,0 +1,20 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/strnlen.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# AC_FUNC_STRNLEN from strnlen.m4
+# COMPLEX CASE: Uses AC_RUN_IFELSE to test for AIX 4.3 bug (strnlen(S,1)==3)
+# and Android 5.0 crash (strnlen("", SIZE_MAX)). Runtime tests are NOT
+# cross-compile friendly.
+autoconf(
+    name = "strnlen",
+    checks = [
+        # Basic function check
+        macros.AC_CHECK_FUNC(
+            "strnlen",
+            code = "#include <string.h>",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

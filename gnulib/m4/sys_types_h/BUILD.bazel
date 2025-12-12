@@ -1,0 +1,35 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sys_types_h.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "sys_types_h",
+    checks = [
+        macros.AC_CHECK_HEADER(
+            "sys/types.h",
+            define = "HAVE_SYS_TYPES_H",
+        ),
+        macros.AC_CHECK_HEADER(
+            "sys/mkdev.h",
+            define = "HAVE_SYS_MKDEV_H",
+        ),
+        macros.AC_CHECK_HEADER(
+            "sys/sysmacros.h",
+            define = "HAVE_SYS_SYSMACROS_H",
+        ),
+        macros.AC_CHECK_TYPE(
+            "blksize_t",
+            define = "HAVE_BLKSIZE_T",
+        ),
+        macros.AC_CHECK_TYPE(
+            "blkcnt_t",
+            define = "HAVE_BLKCNT_T",
+        ),
+        macros.AC_DEFINE("_USE_STD_STAT", "1"),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/windows-stat-inodes",
+    ],
+)

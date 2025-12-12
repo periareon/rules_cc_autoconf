@@ -1,0 +1,37 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/math_h.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "math_h",
+    checks = [
+        # Check for math.h header features
+        # Equivalent to gl_MATH_H macro from math_h.m4
+        macros.AC_TRY_COMPILE(
+            code = """#include <math.h>
+/* Solaris 10 has a broken definition of NAN.  Other platforms
+   fail to provide NAN, or provide it only in C99 mode; this
+   test only needs to fail when NAN is provided but wrong.  */
+float f = 1.0f;
+#ifdef NAN
+f = NAN;
+#endif
+return f == 0;""",
+            define = "HAVE_MATH_NAN_WORKS",
+            language = "c",
+        ),
+        macros.AC_TRY_COMPILE(
+            code = """#include <math.h>
+/* Solaris 10 has a broken definition of HUGE_VAL.  */
+double d = HUGE_VAL;
+return d == 0;""",
+            define = "HAVE_MATH_HUGE_VAL_WORKS",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # Note: AC_REQUIRE([gl_MATH_H_DEFAULTS]) is defined in this module
+    ],
+)

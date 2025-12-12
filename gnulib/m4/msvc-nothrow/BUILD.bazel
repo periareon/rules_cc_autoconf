@@ -1,0 +1,15 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/msvc-nothrow.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "msvc-nothrow",
+    checks = [
+        # gl_MSVC_NOTHROW macro from msvc-nothrow.m4 only has prerequisites
+        # No actual checks needed
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/msvc-inval",  # AC_REQUIRE([gl_MSVC_INVAL])
+    ],
+)

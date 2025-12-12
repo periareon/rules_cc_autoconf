@@ -1,0 +1,20 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/log1p.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "log1p",
+    checks = [
+        macros.AC_CHECK_FUNC(
+            "log1p",
+            define = "HAVE_LOG1P",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/isnand",
+        "//gnulib/m4/log",
+        "//gnulib/m4/round",
+    ],
+)

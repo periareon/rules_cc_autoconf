@@ -1,0 +1,49 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/longlong.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "longlong",
+    checks = [
+        # Check for long long int and unsigned long long int types
+        # Equivalent to AC_TYPE_LONG_LONG_INT and AC_TYPE_UNSIGNED_LONG_LONG_INT
+        # macros from longlong.m4
+        macros.AC_TRY_COMPILE(
+            code = """/* Test literals.  */
+long long int ll = 9223372036854775807ll;
+long long int nll = -9223372036854775807LL;
+unsigned long long int ull = 18446744073709551615ULL;
+/* Test constant expressions.   */
+typedef int a[((-9223372036854775807LL < 0 && 0 < 9223372036854775807ll)
+             ? 1 : -1)];
+typedef int b[(18446744073709551615ULL <= (unsigned long long int) -1
+             ? 1 : -1)];
+int i = 63;""",
+            define = "HAVE_UNSIGNED_LONG_LONG_INT",
+            language = "c",
+        ),
+        macros.AC_TRY_COMPILE(
+            code = """#include <limits.h>
+#ifndef LLONG_MAX
+# define HALF \
+          (1LL << (sizeof (long long int) * CHAR_BIT - 2))
+# define LLONG_MAX (HALF - 1 + HALF)
+#endif
+long long int n = 1;
+int i;
+for (i = 0; ; i++)
+  {
+    long long int m = n << i;
+    if (m >> i != n)
+      return 1;
+    if (LLONG_MAX / 2 < m)
+      break;
+  }
+return 0;""",
+            define = "HAVE_LONG_LONG_INT",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

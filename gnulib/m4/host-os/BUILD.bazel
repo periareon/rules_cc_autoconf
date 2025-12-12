@@ -1,0 +1,12 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/host-os.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "host-os",
+    checks = [
+        # Note: host-os.m4 sets HOST_OPERATING_SYSTEM based on configure-time detection
+        # This is not easily replicable in Bazel compile-time checks
+    ],
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,12 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/cycle-check.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "cycle-check",
+    checks = [
+        # gl_CYCLE_CHECK macro from cycle-check.m4 is just a no-op (contains only ':')
+        # No checks needed
+    ],
+    visibility = ["//visibility:public"],
+)

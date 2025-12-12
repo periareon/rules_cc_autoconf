@@ -1,0 +1,16 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/bison-i18n.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "bison-i18n",
+    checks = [
+        # BISON_I18N macro from bison-i18n.m4 handles bison internationalization
+        # configuration. This is a complex macro that interacts with gettext
+        # and locale settings.
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/build-to-host",  # AC_REQUIRE([gl_BUILD_TO_HOST])
+    ],
+)

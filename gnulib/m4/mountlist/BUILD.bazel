@@ -1,0 +1,30 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/mountlist.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# HAVE_MNTENT_H comes from mntent_h
+# HAVE_STATVFS and HAVE_SYS_FS_TYPES_H come from fsusage
+
+autoconf(
+    name = "mountlist",
+    checks = [
+        macros.AC_CHECK_HEADER("sys/mntent.h"),
+        macros.AC_CHECK_FUNC("listmntent"),
+        macros.AC_CHECK_HEADER("sys/statvfs.h"),
+        macros.AC_CHECK_HEADER("sys/ucred.h"),
+        macros.AC_CHECK_HEADER("sys/mount.h"),
+        macros.AC_CHECK_FUNC("getmntent"),
+        macros.AC_CHECK_FUNC("hasmntopt"),
+        macros.AC_CHECK_FUNC("getmntinfo"),
+        macros.AC_CHECK_FUNC("next_dev"),
+        macros.AC_CHECK_FUNC("fs_stat_dev"),
+        macros.AC_CHECK_HEADER("fs_info.h"),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/fsusage",  # Provides HAVE_STATVFS and HAVE_SYS_FS_TYPES_H
+        "//gnulib/m4/mntent_h",  # Provides HAVE_MNTENT_H
+        "//gnulib/m4/pathmax",  # Provides HAVE_SYS_PARAM_H
+    ],
+)

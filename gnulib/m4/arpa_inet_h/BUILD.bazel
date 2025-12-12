@@ -1,0 +1,19 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/arpa_inet_h.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "arpa_inet_h",
+    checks = [
+        # Check for arpa/inet.h header
+        # Equivalent to gl_ARPA_INET_H macro from arpa_inet_h.m4
+        macros.AC_CHECK_HEADER(
+            "arpa/inet.h",
+            define = "HAVE_ARPA_INET_H",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+    ],
+)

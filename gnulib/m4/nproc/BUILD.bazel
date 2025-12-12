@@ -1,0 +1,17 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/nproc.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# HAVE_PSTAT_GETDYNAMIC and HAVE_SYSCTL come from physmem dependency
+
+autoconf(
+    name = "nproc",
+    checks = [
+        macros.AC_CHECK_FUNC("sched_getaffinity_np"),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/physmem",  # Provides HAVE_PSTAT_GETDYNAMIC, HAVE_SYSCTL
+    ],
+)

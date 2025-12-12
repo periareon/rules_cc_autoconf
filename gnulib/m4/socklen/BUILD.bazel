@@ -1,0 +1,18 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/socklen.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# HAVE_SYS_SOCKET_H comes from sys_socket_h dependency
+
+autoconf(
+    name = "socklen",
+    checks = [
+        macros.AC_CHECK_HEADER("ws2tcpip.h"),
+        macros.AC_CHECK_TYPE("socklen_t"),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/sys_socket_h",  # Provides HAVE_SYS_SOCKET_H
+    ],
+)

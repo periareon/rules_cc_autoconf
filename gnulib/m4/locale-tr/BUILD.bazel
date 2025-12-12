@@ -1,0 +1,17 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/locale-tr.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "locale-tr",
+    checks = [
+        # gt_LOCALE_TR_UTF8 macro from locale-tr.m4 determines the name of a
+        # Turkish locale with UTF-8 encoding. This involves runtime locale testing
+        # that is complex to replicate in Bazel.
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # Note: AC_REQUIRE([AC_CANONICAL_HOST]) and AC_REQUIRE([AM_LANGINFO_CODESET])
+        # are standard autoconf macros (AM_LANGINFO_CODESET is from gettext)
+    ],
+)

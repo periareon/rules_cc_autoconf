@@ -1,0 +1,22 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/expl.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "expl",
+    checks = [
+        macros.AC_CHECK_DECL(
+            "expl",
+            define = "HAVE_DECL_EXPL",
+            headers = ["math.h"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/exp",
+        "//gnulib/m4/isnanl",
+        "//gnulib/m4/ldexpl",
+        "//gnulib/m4/roundl",
+    ],
+)

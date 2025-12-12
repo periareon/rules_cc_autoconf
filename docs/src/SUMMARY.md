@@ -13,3 +13,6 @@
   - [package_info](./package_info.md)
 
 - [Migrating M4 macros](./migration.md)
+
+- [Gnulib](./gnulib.md)
+  - [gnulib_settings](./gnulib_settings.md)

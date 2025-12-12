@@ -1,0 +1,29 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/mbsrtowcs.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "mbsrtowcs",
+    checks = [
+        # Check for mbsrtowcs function and declaration
+        # Equivalent to gl_FUNC_MBSRTOWCS macro from mbsrtowcs.m4
+        # Note: Full implementation includes runtime locale-based checks
+        # that are complex to replicate in Bazel
+        macros.AC_CHECK_FUNC(
+            "mbsrtowcs",
+            define = "HAVE_MBSRTOWCS",
+        ),
+        macros.AC_CHECK_DECL(
+            "mbsrtowcs",
+            define = "HAVE_DECL_MBSRTOWCS",
+            headers = ["wchar.h"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/wchar_h",  # AC_REQUIRE([gl_WCHAR_H_DEFAULTS])
+        # Note: AC_REQUIRE([AC_TYPE_MBSTATE_T]) is a standard autoconf macro
+        # Note: gl_MBRTOWC_C_LOCALE requires locale modules
+    ],
+)

@@ -1,0 +1,13 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/timespec.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+# gl_TIMESPEC from timespec.m4
+# This macro body is just [:] - a no-op
+autoconf(
+    name = "timespec",
+    checks = [
+        # No checks - the macro body is just ':'
+    ],
+    visibility = ["//visibility:public"],
+)

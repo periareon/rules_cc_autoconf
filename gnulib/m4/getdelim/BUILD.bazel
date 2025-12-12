@@ -1,0 +1,37 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/getdelim.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_GETDELIM macro from getdelim.m4
+# HAVE_DECL_GETDELIM comes from stdio_h dependency
+# HAVE_DECL_GETC_UNLOCKED comes from unlocked-io dependency
+# Note: Full implementation includes runtime checks for various bugs
+# that are not easily replicable in Bazel
+
+autoconf(
+    name = "getdelim",
+    checks = [
+        macros.AC_TRY_COMPILE(
+            code = """#include <stdio.h>
+
+#ifdef __cplusplus
+extern "C"
+#endif
+ssize_t getdelim ();
+
+int main(void) {
+    return getdelim();
+}""",
+            define = "HAVE_GETDELIM",
+            language = "c",
+        ),
+        macros.AC_CHECK_FUNC("flockfile"),
+        macros.AC_CHECK_FUNC("funlockfile"),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/stdio_h",  # Provides HAVE_DECL_GETDELIM
+        "//gnulib/m4/unlocked-io",  # Provides HAVE_DECL_GETC_UNLOCKED
+    ],
+)

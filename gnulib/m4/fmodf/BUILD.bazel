@@ -1,0 +1,23 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fmodf.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "fmodf",
+    checks = [
+        macros.AC_CHECK_FUNC(
+            "fmodf",
+            define = "HAVE_FMODF",
+        ),
+        macros.AC_CHECK_DECL(
+            "fmodf",
+            define = "HAVE_DECL_FMODF",
+            headers = ["math.h"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/fmod",
+    ],
+)

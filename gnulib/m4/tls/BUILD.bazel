@@ -1,0 +1,17 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/tls.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+# gl_TLS macro from tls.m4
+# This macro only requires gl_THREADLIB and has no additional checks.
+autoconf(
+    name = "tls",
+    checks = [
+        # No direct checks - only AC_REQUIRE([gl_THREADLIB])
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # AC_REQUIRE([gl_THREADLIB])
+        "//gnulib/m4/threadlib",
+    ],
+)

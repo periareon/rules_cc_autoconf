@@ -1,0 +1,15 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/selinux-selinux-h.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "selinux-selinux-h",
+    checks = [
+        macros.AC_CHECK_HEADER(
+            "selinux/selinux.h",
+            define = "HAVE_SELINUX_SELINUX_H",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

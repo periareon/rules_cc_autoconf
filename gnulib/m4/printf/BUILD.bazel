@@ -1,0 +1,40 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/printf.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+# printf.m4 contains many PRINTF checking macros
+# COMPLEX CASE: This is one of the most complex gnulib M4 files.
+# It contains many runtime tests for printf format specifiers:
+# - gl_PRINTF_SIZES_C99 (j, z, t, L specifiers)
+# - gl_PRINTF_SIZES_C23 (w8, w16, w32, w64, wf8, wf16, wf32, wf64 specifiers)
+# - gl_PRINTF_LONG_DOUBLE (long double printing)
+# - gl_PRINTF_INFINITE (infinite double/long double)
+# - gl_PRINTF_INFINITE_LONG_DOUBLE
+# - gl_PRINTF_DIRECTIVE_A (a and A directives)
+# - gl_PRINTF_DIRECTIVE_B (b and B directives)
+# - gl_PRINTF_DIRECTIVE_F (F directive)
+# - gl_PRINTF_DIRECTIVE_N (n directive)
+# - gl_PRINTF_DIRECTIVE_LS (ls directive)
+# - gl_PRINTF_DIRECTIVE_LC (lc directive)
+# - gl_PRINTF_POSITIONS (positional parameters)
+# - gl_PRINTF_FLAG_GROUPING (grouping flag)
+# - gl_PRINTF_FLAG_LEFTADJUST (left adjust flag)
+# - gl_PRINTF_FLAG_ZERO (zero flag)
+# - gl_PRINTF_PRECISION (large precisions)
+# - gl_PRINTF_ENOMEM (ENOMEM handling)
+#
+# These are ALL runtime tests that cannot be checked at compile time.
+autoconf(
+    name = "printf",
+    checks = [
+        # No direct compile-time checks possible - all require runtime tests
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # AC_REQUIRE([gl_AC_HEADER_INTTYPES_H])
+        "//gnulib/m4/inttypes_h",
+        "//gnulib/m4/multiarch",
+        # AC_REQUIRE([gl_AC_HEADER_STDINT_H])
+        "//gnulib/m4/stdint_h",
+    ],
+)

@@ -1,0 +1,26 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/memrchr.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "memrchr",
+    checks = [
+        # Check for memrchr function and declaration
+        # Equivalent to gl_FUNC_MEMRCHR macro from memrchr.m4
+        macros.AC_CHECK_DECL(
+            "memrchr",
+            define = "HAVE_DECL_MEMRCHR",
+            headers = ["string.h"],
+        ),
+        macros.AC_CHECK_FUNC(
+            "memrchr",
+            define = "HAVE_MEMRCHR",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/string_h",  # AC_REQUIRE([gl_STRING_H_DEFAULTS])
+        # Note: AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
+    ],
+)

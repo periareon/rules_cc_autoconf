@@ -1,0 +1,19 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/poll.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# HAVE_SYS_IOCTL_H comes from sys_ioctl_h dependency
+
+autoconf(
+    name = "poll",
+    checks = [
+        macros.AC_CHECK_HEADER("sys/filio.h"),
+        macros.AC_CHECK_FUNC("poll"),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/sockets",
+        "//gnulib/m4/sys_ioctl_h",  # Provides HAVE_SYS_IOCTL_H
+    ],
+)

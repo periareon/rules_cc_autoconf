@@ -1,0 +1,31 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/mkostemp.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "mkostemp",
+    checks = [
+        # Check for mkostemp function
+        # Equivalent to gl_FUNC_MKOSTEMP macro from mkostemp.m4
+        macros.AC_TRY_COMPILE(
+            code = """#include <stdlib.h>
+
+#ifdef __cplusplus
+extern "C"
+#endif
+int mkostemp ();
+
+int main(void) {
+    return mkostemp();
+}""",
+            define = "HAVE_MKOSTEMP",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/stdlib_h",  # AC_REQUIRE([gl_STDLIB_H_DEFAULTS])
+        # Note: AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
+    ],
+)

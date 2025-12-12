@@ -1,0 +1,27 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/freadahead.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "freadahead",
+    checks = [
+        # Check for __freadahead function
+        # Equivalent to gl_FUNC_FREADAHEAD macro from freadahead.m4
+        macros.AC_TRY_COMPILE(
+            code = """#include <stdio_ext.h>
+
+#ifdef __cplusplus
+extern "C"
+#endif
+size_t __freadahead ();
+
+int main(void) {
+    return __freadahead();
+}""",
+            define = "HAVE___FREADAHEAD",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

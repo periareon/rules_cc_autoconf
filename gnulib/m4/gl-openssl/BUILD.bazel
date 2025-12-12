@@ -1,0 +1,12 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/gl-openssl.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "gl-openssl",
+    checks = [
+        # Note: gl-openssl.m4 checks for OpenSSL library support
+        # AC_CHECK_LIB checks are complex and may require library linking
+    ],
+    visibility = ["//visibility:public"],
+)

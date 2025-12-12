@@ -1,0 +1,39 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/iswblank.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "iswblank",
+    checks = [
+        # Check for iswblank function and declaration
+        # Equivalent to gl_FUNC_ISWBLANK macro from iswblank.m4
+        macros.AC_TRY_COMPILE(
+            code = """#include <wctype.h>
+
+#ifdef __cplusplus
+extern "C"
+#endif
+int iswblank ();
+
+int main(void) {
+    return iswblank();
+}""",
+            define = "HAVE_ISWBLANK",
+            language = "c",
+        ),
+        macros.AC_CHECK_DECL(
+            "iswblank",
+            define = "HAVE_DECL_ISWBLANK",
+            headers = [
+                "wchar.h",
+                "wctype.h",
+            ],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/wctype_h",  # AC_REQUIRE([gl_WCTYPE_H_DEFAULTS]), AC_REQUIRE([gl_WCTYPE_H])
+        # Note: AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
+    ],
+)

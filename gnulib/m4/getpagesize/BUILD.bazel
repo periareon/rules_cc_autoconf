@@ -1,0 +1,38 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/getpagesize.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_GETPAGESIZE from getpagesize.m4
+# HAVE_OS_H comes from readutmp dependency
+# HAVE_SYS_PARAM_H comes from pathmax dependency
+# On Windows (mingw/windows), REPLACE_GETPAGESIZE=1 is unconditionally set.
+
+autoconf(
+    name = "getpagesize",
+    checks = [
+        macros.AC_TRY_COMPILE(
+            code = """\
+#include <unistd.h>
+int main(void) { return getpagesize(); }
+""",
+            define = "HAVE_GETPAGESIZE",
+            language = "c",
+        ),
+        macros.AC_CHECK_DECL(
+            "getpagesize",
+            headers = ["unistd.h"],
+        ),
+    ] + select({
+        "@platforms//os:windows": [
+            macros.M4_DEFINE("REPLACE_GETPAGESIZE", "1"),
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/pathmax",  # Provides HAVE_SYS_PARAM_H
+        "//gnulib/m4/readutmp",  # Provides HAVE_OS_H
+        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
+    ],
+)

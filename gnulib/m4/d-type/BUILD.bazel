@@ -1,0 +1,25 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/d-type.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "d-type",
+    checks = [
+        # Check for d_type member in struct dirent
+        # Equivalent to gl_CHECK_TYPE_STRUCT_DIRENT_D_TYPE macro from d-type.m4
+        macros.AC_TRY_COMPILE(
+            code = """#include <sys/types.h>
+#include <dirent.h>
+
+int main(void) {
+    struct dirent dp;
+    dp.d_type = 0;
+    return 0;
+}""",
+            define = "HAVE_STRUCT_DIRENT_D_TYPE",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

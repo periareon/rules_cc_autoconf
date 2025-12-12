@@ -1,0 +1,27 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sys_socket_h.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "sys_socket_h",
+    checks = [
+        macros.AC_CHECK_HEADER(
+            "winsock2.h",
+            define = "HAVE_WINSOCK2_H",
+        ),
+        macros.AC_CHECK_HEADER(
+            "sys/socket.h",
+            define = "HAVE_SYS_SOCKET_H",
+        ),
+        macros.AC_CHECK_FUNC(
+            "shutdown",
+            define = "HAVE_SHUTDOWN",
+        ),
+        macros.AC_CHECK_TYPE(
+            "struct sockaddr_storage, sa_family_t",
+            define = "HAVE_STRUCT_SOCKADDR_STORAGE,_SA_FAMILY_T",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

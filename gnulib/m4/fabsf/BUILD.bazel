@@ -1,0 +1,23 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fabsf.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "fabsf",
+    checks = [
+        # Check for fabsf function
+        # Equivalent to gl_FUNC_FABSF macro from fabsf.m4
+        macros.AC_CHECK_FUNC(
+            "fabsf",
+            define = "HAVE_FABSF",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+        "//gnulib/m4/fabs",  # AC_REQUIRE([gl_FUNC_FABS])
+        "//gnulib/m4/mathfunc",  # Uses gl_MATHFUNC([fabsf, ...])
+        # Note: AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
+    ],
+)

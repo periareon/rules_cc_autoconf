@@ -1,0 +1,21 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/memcmp.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "memcmp",
+    checks = [
+        # Check for working memcmp function
+        # Equivalent to gl_FUNC_MEMCMP macro from memcmp.m4
+        # Note: Full implementation includes runtime checks for 8-bit cleanliness
+        # and alignment issues that are complex to replicate in Bazel
+        macros.AC_TRY_COMPILE(
+            code = """#include <string.h>
+int ret = memcmp ("foo", "bar", 0);""",
+            define = "HAVE_MEMCMP",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

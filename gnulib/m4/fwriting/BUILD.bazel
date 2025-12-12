@@ -1,0 +1,14 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fwriting.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+# HAVE_STDIO_EXT_H comes from stdio_ext_h dependency
+
+autoconf(
+    name = "fwriting",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/stdio_ext_h",
+    ],
+)

@@ -1,0 +1,11 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/absolute-header.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "absolute-header",
+    checks = [
+        # Note: absolute-header.m4 is a utility macro, not a check module
+    ],
+    visibility = ["//visibility:public"],
+)

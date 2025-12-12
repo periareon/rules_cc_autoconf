@@ -1,0 +1,24 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/tm_gmtoff.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_TM_GMTOFF from tm_gmtoff.m4
+# Checks for tm_gmtoff and tm_zone in struct tm
+autoconf(
+    name = "tm_gmtoff",
+    checks = [
+        # AC_CHECK_MEMBERS([struct tm.tm_gmtoff, struct tm.tm_zone])
+        macros.AC_CHECK_MEMBER(
+            "struct tm",
+            "tm_gmtoff",
+            headers = ["time.h"],
+        ),
+        macros.AC_CHECK_MEMBER(
+            "struct tm",
+            "tm_zone",
+            headers = ["time.h"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

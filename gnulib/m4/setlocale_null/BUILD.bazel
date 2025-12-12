@@ -1,0 +1,15 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/setlocale_null.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+# gl_FUNC_SETLOCALE_NULL macro from setlocale_null.m4
+# HAVE_THREADS_H comes from threadlib dependency
+
+autoconf(
+    name = "setlocale_null",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/threadlib",  # Provides HAVE_THREADS_H
+    ],
+)

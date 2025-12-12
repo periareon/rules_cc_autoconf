@@ -1,0 +1,15 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/c-stack.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "c-stack",
+    checks = [
+        # gl_C_STACK macro from c-stack.m4 sets LIBCSTACK based on sigsegv module
+        # No direct checks needed
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/sigsegv",  # AC_REQUIRE([gl_SIGSEGV])
+    ],
+)

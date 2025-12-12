@@ -1,0 +1,35 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/nanosleep.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "nanosleep",
+    checks = [
+        # Check for nanosleep function
+        # Equivalent to gl_FUNC_NANOSLEEP macro from nanosleep.m4
+        # Note: Full implementation includes AC_SEARCH_LIBS and runtime tests
+        # for handling large arguments and negative tv_nsec values
+        macros.AC_TRY_COMPILE(
+            code = """#include <time.h>
+#include <errno.h>
+
+#ifdef __cplusplus
+extern "C"
+#endif
+char nanosleep ();
+
+int main(void) {
+    struct timespec ts;
+    return nanosleep(&ts, NULL);
+}""",
+            define = "HAVE_NANOSLEEP",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/multiarch",  # AC_REQUIRE([gl_MULTIARCH])
+        "//gnulib/m4/time_h",  # AC_REQUIRE([gl_TIME_H_DEFAULTS])
+    ],
+)

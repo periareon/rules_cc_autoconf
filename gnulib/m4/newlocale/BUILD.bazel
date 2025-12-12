@@ -1,0 +1,31 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/newlocale.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "newlocale",
+    checks = [
+        # Check for newlocale function
+        # Equivalent to gl_FUNC_NEWLOCALE macro from newlocale.m4
+        # Note: Full implementation includes runtime tests for NULL base argument handling
+        macros.AC_TRY_COMPILE(
+            code = """#include <locale.h>
+
+#ifdef __cplusplus
+extern "C"
+#endif
+locale_t newlocale (int, const char *, locale_t);
+
+int main(void) {
+    return newlocale(0, "C", NULL) != NULL ? 0 : 1;
+}""",
+            define = "HAVE_NEWLOCALE",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/locale_h",  # AC_REQUIRE([gl_LOCALE_H_DEFAULTS])
+    ],
+)

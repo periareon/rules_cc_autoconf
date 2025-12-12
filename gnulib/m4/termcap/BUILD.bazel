@@ -1,0 +1,17 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/termcap.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "termcap",
+    checks = [
+        macros.AC_DEFINE("HAVE_TERMCAP", "1"),
+        macros.AC_DEFINE("HAVE_TERMINFO", "1"),
+        macros.AC_DEFINE("HAVE_TPARAM", "1"),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/curses",
+    ],
+)

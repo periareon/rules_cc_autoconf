@@ -1,0 +1,24 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/snprintf.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_SNPRINTF macro from snprintf.m4
+# COMPLEX CASE: The full M4 macro tests snprintf behavior for:
+# - SIZE1 (proper truncation)
+# - RETVAL_C99 (returns would-be length)
+# - POSITIONS (supports %n$ format)
+# These runtime tests determine if the system snprintf is "usable".
+# This simplified version only checks for function existence and declaration.
+autoconf(
+    name = "snprintf",
+    checks = [
+        # AC_CHECK_FUNCS([snprintf])
+        macros.AC_CHECK_FUNC("snprintf"),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # AC_REQUIRE([gl_STDIO_H_DEFAULTS])
+        "//gnulib/m4/stdio_h",
+    ],
+)

@@ -1,0 +1,31 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/cosl.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "cosl",
+    checks = [
+        # Check for cosl function and declaration
+        # Equivalent to gl_FUNC_COSL macro from cosl.m4
+        # Note: Full implementation includes library dependency checks
+        macros.AC_CHECK_FUNC(
+            "cosl",
+            define = "HAVE_COSL",
+        ),
+        macros.AC_CHECK_DECL(
+            "cosl",
+            define = "HAVE_DECL_COSL",
+            headers = ["math.h"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS]), AC_REQUIRE([gl_LONG_DOUBLE_VS_DOUBLE])
+        "//gnulib/m4/cos",  # AC_REQUIRE([gl_FUNC_COS]) - conditional
+        "//gnulib/m4/isnanl",  # AC_REQUIRE([gl_FUNC_ISNANL]) - conditional
+        "//gnulib/m4/floor",  # AC_REQUIRE([gl_FUNC_FLOOR]) - conditional
+        "//gnulib/m4/floorl",  # AC_REQUIRE([gl_FUNC_FLOORL]) - conditional
+        # Note: AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
+    ],
+)

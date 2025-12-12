@@ -1,0 +1,15 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/wait-process.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "wait-process",
+    checks = [
+        macros.AC_CHECK_FUNC(
+            "waitid",
+            define = "HAVE_WAITID",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

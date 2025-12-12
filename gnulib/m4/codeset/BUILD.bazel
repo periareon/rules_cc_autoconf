@@ -1,0 +1,23 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/codeset.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "codeset",
+    checks = [
+        # Check for nl_langinfo and CODESET
+        # Equivalent to AM_LANGINFO_CODESET macro from codeset.m4
+        macros.AC_TRY_COMPILE(
+            code = """#include <langinfo.h>
+
+int main(void) {
+    char* cs = nl_langinfo(CODESET);
+    return !cs;
+}""",
+            define = "HAVE_LANGINFO_CODESET",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

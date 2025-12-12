@@ -1,0 +1,14 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/uchar_h.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_UCHAR_H from uchar_h.m4
+autoconf(
+    name = "uchar_h",
+    checks = [
+        # Check for uchar.h header
+        macros.AC_CHECK_HEADER("uchar.h"),
+    ],
+    visibility = ["//visibility:public"],
+)

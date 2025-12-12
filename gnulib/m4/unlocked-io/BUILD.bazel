@@ -1,0 +1,70 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/unlocked-io.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_GLIBC_UNLOCKED_IO from unlocked-io.m4
+# Checks for glibc *_unlocked I/O macros or functions
+autoconf(
+    name = "unlocked-io",
+    checks = [
+        # AC_CHECK_DECLS_ONCE for unlocked IO functions
+        macros.AC_CHECK_DECL(
+            "clearerr_unlocked",
+            headers = ["stdio.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "feof_unlocked",
+            headers = ["stdio.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "ferror_unlocked",
+            headers = ["stdio.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "fflush_unlocked",
+            headers = ["stdio.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "fgets_unlocked",
+            headers = ["stdio.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "fileno_unlocked",
+            headers = ["stdio.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "fputc_unlocked",
+            headers = ["stdio.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "fputs_unlocked",
+            headers = ["stdio.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "fread_unlocked",
+            headers = ["stdio.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "fwrite_unlocked",
+            headers = ["stdio.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "getc_unlocked",
+            headers = ["stdio.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "getchar_unlocked",
+            headers = ["stdio.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "putc_unlocked",
+            headers = ["stdio.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "putchar_unlocked",
+            headers = ["stdio.h"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

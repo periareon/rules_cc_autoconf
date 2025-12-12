@@ -1,0 +1,16 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fseek.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "fseek",
+    checks = [
+        # gl_FUNC_FSEEK macro from fseek.m4 sets REPLACE_FSEEK based on fseeko.
+        # No direct checks needed.
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/fseeko",  # AC_REQUIRE([gl_FUNC_FSEEKO])
+        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS])
+    ],
+)

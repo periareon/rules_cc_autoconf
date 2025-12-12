@@ -1,0 +1,30 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/visibility.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_VISIBILITY macro from visibility.m4
+# Tests if compiler supports -fvisibility=hidden and visibility attributes
+autoconf(
+    name = "visibility",
+    checks = [
+        # Check if compiler supports visibility attribute declarations
+        macros.AC_TRY_COMPILE(
+            code = """\
+extern __attribute__((__visibility__("hidden"))) int hiddenvar;
+extern __attribute__((__visibility__("default"))) int exportedvar;
+extern __attribute__((__visibility__("hidden"))) int hiddenfunc (void);
+extern __attribute__((__visibility__("default"))) int exportedfunc (void);
+void dummyfunc (void);
+int hiddenvar;
+int exportedvar;
+int hiddenfunc (void) { return 51; }
+int exportedfunc (void) { return 1225736919; }
+void dummyfunc (void) {}
+int main(void) { return 0; }
+""",
+            define = "HAVE_VISIBILITY",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

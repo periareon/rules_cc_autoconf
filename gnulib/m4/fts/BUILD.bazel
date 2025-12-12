@@ -1,0 +1,29 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fts.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# HAVE_SYS_VFS_H comes from sys_vfs_h dependency
+
+autoconf(
+    name = "fts",
+    checks = [
+        macros.AC_CHECK_TYPE(
+            "__fsword_t",
+            code = """\
+#include <sys/vfs.h>
+int main(void) {
+    if (sizeof(__fsword_t))
+        return 0;
+    return 1;
+}
+""",
+            requires = ["HAVE_SYS_VFS_H"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/pathmax",  # Provides HAVE_SYS_PARAM_H
+        "//gnulib/m4/sys_vfs_h",
+    ],
+)

@@ -1,0 +1,27 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/wmemchr.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_WMEMCHR macro from wmemchr.m4
+# Uses AC_LINK_IFELSE because MSVC 9 provides wmemchr as inline function
+autoconf(
+    name = "wmemchr",
+    checks = [
+        # AC_LINK_IFELSE to check for wmemchr
+        macros.AC_TRY_COMPILE(
+            code = """\
+#include <wchar.h>
+int main(void) {
+    return ! wmemchr ((const wchar_t *) 0, (wchar_t) ' ', 0);
+}
+""",
+            define = "HAVE_WMEMCHR",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # AC_REQUIRE([gl_WCHAR_H_DEFAULTS])
+        "//gnulib/m4/wchar_h",
+    ],
+)

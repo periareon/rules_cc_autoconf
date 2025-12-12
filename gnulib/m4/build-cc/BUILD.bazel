@@ -1,0 +1,13 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/build-cc.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "build-cc",
+    checks = [
+        # gl_BUILD_CC macro from build-cc.m4 handles native compiler detection
+        # for cross-compilation. Note: AC_REQUIRE([AC_PROG_CC]) is a standard
+        # autoconf macro.
+    ],
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,37 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/mkfifoat.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "mkfifoat",
+    checks = [
+        # Check for mkfifoat and mknodat functions
+        # Equivalent to gl_FUNC_MKFIFOAT macro from mkfifoat.m4
+        # Note: Full implementation includes runtime checks for trailing slash
+        # handling that require file system operations
+        macros.AC_TRY_COMPILE(
+            code = """#include <sys/stat.h>
+#include <fcntl.h>
+
+#ifdef __cplusplus
+extern "C"
+#endif
+int mkfifoat ();
+int mknodat ();
+
+int main(void) {
+    return mkfifoat() || mknodat();
+}""",
+            define = "HAVE_MKFIFOAT",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/sys_stat_h",  # AC_REQUIRE([gl_SYS_STAT_H_DEFAULTS])
+        "//gnulib/m4/openat",  # AC_REQUIRE([gl_FUNC_OPENAT])
+        # Note: AC_REQUIRE([AC_CANONICAL_HOST]) and
+        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) are standard autoconf macros
+    ],
+)

@@ -1,0 +1,11 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/modechange.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "modechange",
+    checks = [
+        # gl_MODECHANGE macro from modechange.m4 has no checks
+    ],
+    visibility = ["//visibility:public"],
+)

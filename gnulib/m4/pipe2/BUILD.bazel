@@ -1,0 +1,27 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/pipe2.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "pipe2",
+    checks = [
+        # Check for pipe2 function
+        # Equivalent to gl_FUNC_PIPE2 macro from pipe2.m4
+        macros.AC_TRY_COMPILE(
+            code = """#include <unistd.h>
+
+#ifdef __cplusplus
+extern "C"
+#endif
+char pipe2 ();
+
+int main(void) {
+    return pipe2();
+}""",
+            define = "HAVE_PIPE2",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

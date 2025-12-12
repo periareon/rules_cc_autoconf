@@ -1,0 +1,15 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/asm-underscore.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "asm-underscore",
+    checks = [
+        # gl_ASM_SYMBOL_PREFIX macro from asm-underscore.m4 checks for underscore
+        # prefix in assembly symbols. This requires examining assembly output
+        # which is complex to replicate in Bazel's compile-time check system.
+        # Note: AC_REQUIRE([AC_PROG_EGREP]) and AC_REQUIRE([gl_C_ASM]) are
+        # standard autoconf macros or defined in the same file
+    ],
+    visibility = ["//visibility:public"],
+)

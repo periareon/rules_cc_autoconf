@@ -1,0 +1,36 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/argz.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "argz",
+    checks = [
+        # Check for argz functions and types
+        # Equivalent to gl_FUNC_ARGZ macro from argz.m4
+        macros.AC_CHECK_HEADER(
+            "argz.h",
+            define = "HAVE_ARGZ_H",
+        ),
+        macros.AC_CHECK_TYPE(
+            "error_t",
+            code = """\
+#include <argz.h>
+int main(void) {
+    if (sizeof(error_t))
+        return 0;
+    return 1;
+}
+""",
+            define = "HAVE_ERROR_T",
+        ),
+        macros.AC_CHECK_FUNC(
+            "argz_replace",
+            define = "HAVE_ARGZ_REPLACE",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # Note: AC_C_RESTRICT and AC_CANONICAL_HOST are standard autoconf macros
+    ],
+)

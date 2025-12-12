@@ -1,0 +1,14 @@
+"""Common module for termios.h header check"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# Provides HAVE_TERMIOS_H for modules that need termios.h
+
+autoconf(
+    name = "termios_h",
+    checks = [
+        macros.AC_CHECK_HEADER("termios.h"),
+    ],
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,22 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/strdup.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "strdup",
+    checks = [
+        # Check for strdup declaration
+        # Equivalent to gl_FUNC_STRDUP macro from strdup.m4
+        macros.AC_CHECK_DECL(
+            "strdup",
+            define = "HAVE_DECL_STRDUP",
+            headers = ["string.h"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/malloc",  # AC_REQUIRE([gl_CHECK_MALLOC_POSIX]) for strdup-posix
+        "//gnulib/m4/string_h",  # AC_REQUIRE([gl_STRING_H_DEFAULTS])
+    ],
+)

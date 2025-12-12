@@ -1,0 +1,32 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/dup3.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_DUP3 from dup3.m4
+# HAVE_SETDTABLESIZE comes from dup2 dependency
+
+autoconf(
+    name = "dup3",
+    checks = [
+        macros.AC_TRY_COMPILE(
+            code = """#include <unistd.h>
+
+#ifdef __cplusplus
+extern "C"
+#endif
+char dup3 ();
+
+int main(void) {
+    return dup3();
+}""",
+            define = "HAVE_DUP3",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/dup2",  # Provides HAVE_SETDTABLESIZE
+        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
+    ],
+)

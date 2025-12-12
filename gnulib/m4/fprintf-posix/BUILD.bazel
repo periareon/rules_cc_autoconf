@@ -1,0 +1,17 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fprintf-posix.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "fprintf-posix",
+    checks = [
+        # gl_FUNC_FPRINTF_POSIX macro from fprintf-posix.m4 checks for POSIX compliance
+        # of fprintf. This involves many printf feature checks that are complex.
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/printf",  # Multiple gl_PRINTF_* macros
+        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS])
+        "//gnulib/m4/vasnprintf",  # gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS, gl_REPLACE_VASNPRINTF
+    ],
+)

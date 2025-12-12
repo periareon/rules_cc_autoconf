@@ -1,0 +1,15 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/localcharset.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "localcharset",
+    checks = [
+        # gl_LOCALCHARSET macro from localcharset.m4 only has prerequisites
+        # No actual checks needed
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # Note: AC_REQUIRE([AM_LANGINFO_CODESET]) is from gettext, not gnulib
+    ],
+)

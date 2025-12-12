@@ -1,0 +1,35 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/physmem.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "physmem",
+    checks = [
+        macros.AC_CHECK_FUNC(
+            "pstat_getstatic",
+            define = "HAVE_PSTAT_GETSTATIC",
+        ),
+        macros.AC_CHECK_FUNC(
+            "pstat_getdynamic",
+            define = "HAVE_PSTAT_GETDYNAMIC",
+        ),
+        macros.AC_CHECK_FUNC(
+            "getsysinfo",
+            define = "HAVE_GETSYSINFO",
+        ),
+        macros.AC_CHECK_FUNC(
+            "sysctl",
+            define = "HAVE_SYSCTL",
+        ),
+        macros.AC_CHECK_FUNC(
+            "table",
+            define = "HAVE_TABLE",
+        ),
+        macros.AC_CHECK_FUNC(
+            "sysinfo",
+            define = "HAVE_SYSINFO",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

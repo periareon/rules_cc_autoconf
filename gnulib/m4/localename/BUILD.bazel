@@ -1,0 +1,17 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/localename.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "localename",
+    checks = [
+        # gl_LOCALENAME_UNSAFE, gl_LOCALENAME_UNSAFE_LIMITED, gl_LOCALENAME_ENVIRON
+        # macros from localename.m4 only have prerequisites
+        # No actual checks needed
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # Note: AC_REQUIRE([gt_LC_MESSAGES]) and AC_REQUIRE([gt_INTL_MACOSX])
+        # are from gettext, not gnulib
+    ],
+)

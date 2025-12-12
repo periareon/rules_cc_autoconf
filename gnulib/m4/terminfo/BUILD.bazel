@@ -1,0 +1,14 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/terminfo.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+# HAVE_TERMINFO, HAVE_TERMCAP, HAVE_TPARAM come from termcap dependency
+
+autoconf(
+    name = "terminfo",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/termcap",  # Provides HAVE_TERMINFO, HAVE_TERMCAP, HAVE_TPARAM
+    ],
+)

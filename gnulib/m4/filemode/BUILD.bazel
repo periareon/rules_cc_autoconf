@@ -1,0 +1,18 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/filemode.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "filemode",
+    checks = [
+        # Check for strmode declaration
+        # Equivalent to gl_FILEMODE macro from filemode.m4
+        macros.AC_CHECK_DECL(
+            "strmode",
+            define = "HAVE_DECL_STRMODE",
+            headers = ["string.h"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,15 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/stat-time.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+# gl_STAT_TIME macro from stat-time.m4
+# HAVE_SYS_TIME_H comes from sys_time_h dependency
+
+autoconf(
+    name = "stat-time",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/sys_time_h",  # Provides HAVE_SYS_TIME_H
+    ],
+)

@@ -1,0 +1,27 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/d-ino.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "d-ino",
+    checks = [
+        # Check for d_ino member in struct dirent
+        # Equivalent to gl_CHECK_TYPE_STRUCT_DIRENT_D_INO macro from d-ino.m4
+        # Note: Full implementation includes runtime checks that verify d_ino
+        # actually works, which are not easily replicable in Bazel
+        macros.AC_TRY_COMPILE(
+            code = """#include <sys/types.h>
+#include <dirent.h>
+
+int main(void) {
+    struct dirent dp;
+    (void) dp.d_ino;
+    return 0;
+}""",
+            define = "D_INO_IN_DIRENT",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

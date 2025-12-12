@@ -1,0 +1,66 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/glob.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "glob",
+    checks = [
+        # Check for glob function and related functions
+        # Equivalent to gl_GLOB macro from glob.m4
+        # Note: Full implementation includes runtime checks for stack overflow,
+        # symlink handling that are not easily replicable in Bazel
+        macros.AC_CHECK_FUNC(
+            "glob_pattern_p",
+            define = "HAVE_GLOB_PATTERN_P",
+        ),
+        macros.AC_TRY_COMPILE(
+            code = """#include <glob.h>
+
+#ifdef __cplusplus
+extern "C"
+#endif
+int glob ();
+
+int main(void) {
+    return glob();
+}""",
+            define = "HAVE_GLOB",
+            language = "c",
+        ),
+        macros.AC_TRY_COMPILE(
+            code = """#include <unistd.h>
+
+#ifdef __cplusplus
+extern "C"
+#endif
+int getlogin_r ();
+
+int main(void) {
+    return getlogin_r();
+}""",
+            define = "HAVE_GETLOGIN_R",
+            language = "c",
+        ),
+        macros.AC_TRY_COMPILE(
+            code = """#include <pwd.h>
+
+#ifdef __cplusplus
+extern "C"
+#endif
+int getpwnam_r ();
+
+int main(void) {
+    return getpwnam_r();
+}""",
+            define = "HAVE_GETPWNAM_R",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/d-type",  # AC_REQUIRE([gl_CHECK_TYPE_STRUCT_DIRENT_D_TYPE])
+        "//gnulib/m4/glob_h",  # AC_REQUIRE([gl_GLOB_H])
+        "//gnulib/m4/unistd_h",  # Provides HAVE_UNISTD_H
+    ],
+)

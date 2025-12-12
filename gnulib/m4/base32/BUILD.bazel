@@ -1,0 +1,12 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/base32.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "base32",
+    checks = [
+        # gl_FUNC_BASE32 macro from base32.m4 only has prerequisites
+        # Note: AC_REQUIRE([AC_C_RESTRICT]) is a standard autoconf macro
+    ],
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,21 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/stpcpy.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_STPCPY from stpcpy.m4
+autoconf(
+    name = "stpcpy",
+    checks = [
+        # gl_CHECK_FUNCS_ANDROID([stpcpy], [[#include <string.h>]])
+        macros.AC_CHECK_FUNC(
+            "stpcpy",
+            code = "#include <string.h>",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # AC_REQUIRE([gl_STRING_H_DEFAULTS])
+        "//gnulib/m4/string_h",
+    ],
+)

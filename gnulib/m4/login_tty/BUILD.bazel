@@ -1,0 +1,18 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/login_tty.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+# HAVE_UTMP_H comes from readutmp dependency
+# HAVE_UTIL_H, HAVE_LIBUTIL_H come from pty_h dependency
+# HAVE_TERMIOS_H comes from termios_h dependency
+
+autoconf(
+    name = "login_tty",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/pty_h",  # Provides HAVE_UTIL_H, HAVE_LIBUTIL_H
+        "//gnulib/m4/readutmp",  # Provides HAVE_UTMP_H
+        "//gnulib/m4/termios_h",
+    ],
+)

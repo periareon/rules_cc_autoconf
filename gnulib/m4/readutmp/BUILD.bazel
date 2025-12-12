@@ -1,0 +1,29 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/readutmp.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# HAVE_SYSCTL comes from physmem dependency
+
+autoconf(
+    name = "readutmp",
+    checks = [
+        macros.AC_CHECK_HEADER("systemd/sd-login.h"),
+        macros.AC_CHECK_HEADER("utmp.h"),
+        macros.AC_CHECK_HEADER("utmpx.h"),
+        macros.AC_CHECK_HEADER("OS.h"),
+        macros.AC_CHECK_DECL(
+            "endutent",
+            headers = ["utmp.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "sysinfo",
+            headers = ["sys/sysinfo.h"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/pathmax",  # Provides HAVE_SYS_PARAM_H
+        "//gnulib/m4/physmem",  # Provides HAVE_SYSCTL
+    ],
+)

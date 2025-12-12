@@ -1,0 +1,22 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/openat.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "openat",
+    checks = [
+        # Check for openat function
+        # Equivalent to gl_FUNC_OPENAT macro from openat.m4
+        macros.AC_CHECK_FUNC(
+            "openat",
+            define = "HAVE_OPENAT",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/fcntl_h",  # AC_REQUIRE([gl_FCNTL_H_DEFAULTS])
+        "//gnulib/m4/lstat",  # AC_REQUIRE([gl_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK])
+        "//gnulib/m4/open-cloexec",  # AC_REQUIRE([gl_PREPROC_O_CLOEXEC])
+    ],
+)

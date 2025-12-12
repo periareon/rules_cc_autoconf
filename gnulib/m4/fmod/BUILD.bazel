@@ -1,0 +1,18 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fmod.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "fmod",
+    checks = [
+        # Note: fmod.m4 may not exist in gnulib, or this module may not have checks
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/fabs",
+        "//gnulib/m4/frexp",
+        "//gnulib/m4/isnand",
+        "//gnulib/m4/ldexp",
+        "//gnulib/m4/trunc",
+    ],
+)

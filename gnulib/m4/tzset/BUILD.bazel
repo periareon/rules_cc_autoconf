@@ -1,0 +1,25 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/tzset.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_TZSET from tzset.m4
+# On Windows (mingw/windows), REPLACE_TZSET=1 is unconditionally set
+autoconf(
+    name = "tzset",
+    checks = [
+        # Check for tzset function
+        macros.AC_CHECK_FUNC("tzset"),
+    ] + select({
+        "@platforms//os:windows": [
+            # On Windows, unconditionally set REPLACE_TZSET=1
+            macros.M4_DEFINE("REPLACE_TZSET", "1"),
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        # AC_REQUIRE([gl_TIME_H_DEFAULTS])
+        "//gnulib/m4/time_h",
+    ],
+)

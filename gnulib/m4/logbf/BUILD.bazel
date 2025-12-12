@@ -1,0 +1,24 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/logbf.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "logbf",
+    checks = [
+        # Check for logbf function
+        # Equivalent to gl_FUNC_LOGBF macro from logbf.m4
+        # Note: Full implementation uses gl_MATHFUNC and includes runtime checks
+        # Note: AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
+        macros.AC_CHECK_FUNC(
+            "logbf",
+            define = "HAVE_LOGBF",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/frexpf",  # AC_REQUIRE([gl_FUNC_FREXPF])
+        "//gnulib/m4/isnanf",  # AC_REQUIRE([gl_FUNC_ISNANF])
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+    ],
+)

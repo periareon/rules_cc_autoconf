@@ -1,0 +1,15 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fpe-trapping.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "fpe-trapping",
+    checks = [
+        # Note: fpe-trapping.m4 may not exist in gnulib, or this module may not have checks
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/fenv-exceptions-tracking",
+        "//gnulib/m4/fenv-exceptions-trapping",
+    ],
+)

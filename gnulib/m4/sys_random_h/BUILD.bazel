@@ -1,0 +1,20 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sys_random_h.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_SYS_RANDOM_H from sys_random_h.m4
+autoconf(
+    name = "sys_random_h",
+    checks = [
+        # Check for sys/random.h header
+        macros.AC_CHECK_HEADER("sys/random.h"),
+        # Check for getrandom declaration
+        macros.AC_CHECK_DECL(
+            "getrandom",
+            headers = ["sys/random.h"],
+            requires = ["HAVE_SYS_RANDOM_H"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

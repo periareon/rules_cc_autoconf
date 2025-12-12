@@ -1,0 +1,13 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/autobuild.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "autobuild",
+    checks = [
+        # AB_INIT macro from autobuild.m4 handles autobuild project initialization
+        # Note: AC_REQUIRE([AC_CANONICAL_BUILD]) and AC_REQUIRE([AC_CANONICAL_HOST])
+        # are standard autoconf macros
+    ],
+    visibility = ["//visibility:public"],
+)

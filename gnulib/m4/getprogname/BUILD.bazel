@@ -1,0 +1,59 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/getprogname.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "getprogname",
+    checks = [
+        # Check for getprogname function and related declarations
+        # Equivalent to gl_FUNC_GETPROGNAME macro from getprogname.m4
+        macros.AC_TRY_COMPILE(
+            code = """#include <stdlib.h>
+
+#ifdef __cplusplus
+extern "C"
+#endif
+const char *getprogname ();
+
+int main(void) {
+    return getprogname() != 0;
+}""",
+            define = "HAVE_GETPROGNAME",
+            language = "c",
+        ),
+        macros.AC_CHECK_DECL(
+            "program_invocation_name",
+            define = "HAVE_DECL_PROGRAM_INVOCATION_NAME",
+            headers = ["errno.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "program_invocation_short_name",
+            define = "HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME",
+            headers = ["errno.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "__argv",
+            define = "HAVE_DECL___ARGV",
+            headers = ["stdlib.h"],
+        ),
+        macros.AC_CHECK_FUNC(
+            "getexecname",
+            define = "HAVE_GETEXECNAME",
+        ),
+        macros.AC_TRY_COMPILE(
+            code = """extern char *__progname;
+
+int main(void) {
+    return *__progname;
+}""",
+            define = "HAVE_VAR___PROGNAME",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/stdlib_h",  # AC_REQUIRE([gl_STDLIB_H_DEFAULTS])
+        # Note: AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
+    ],
+)

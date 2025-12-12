@@ -1,0 +1,32 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/warnings.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# warnings.m4 macros: gl_COMPILER_OPTION_IF, gl_WARN_ADD, gl_CC_INHIBIT_WARNINGS
+# COMPLEX CASE: This M4 file provides utility macros for testing compiler
+# warning options. These are meta-macros used by other modules rather than
+# direct configuration checks. The behavior involves:
+# - Testing if compiler supports -Werror
+# - Testing if compiler supports -Wunknown-warning-option
+# - Dynamically adding warning flags
+#
+# This cannot be fully translated to Bazel as it's meant to modify CFLAGS/CXXFLAGS
+# at configure time. In Bazel, warning flags are typically set in the toolchain
+# or build rules directly.
+autoconf(
+    name = "warnings",
+    checks = [
+        # Check if -Werror is usable
+        macros.AC_CHECK_C_COMPILER_FLAG(
+            "-Werror",
+            define = "HAVE_WERROR",
+        ),
+        # Check if -w (inhibit warnings) is usable
+        macros.AC_CHECK_C_COMPILER_FLAG(
+            "-w",
+            define = "HAVE_W_INHIBIT",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

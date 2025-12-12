@@ -1,0 +1,14 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/bison.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "bison",
+    checks = [
+        # gl_PROG_BISON and gl_BISON macros from bison.m4 handle bison program
+        # detection and configuration. These are complex macros that interact
+        # with autoconf's AC_CHECK_PROGS and are not easily replicable
+        # in Bazel's compile-time check system.
+    ],
+    visibility = ["//visibility:public"],
+)

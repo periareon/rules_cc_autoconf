@@ -1,0 +1,22 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/roundf.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_ROUNDF from roundf.m4
+# HAVE_DECL_CEILF comes from ceilf, HAVE_DECL_FLOORF from floorf
+
+autoconf(
+    name = "roundf",
+    checks = [
+        macros.AC_CHECK_DECL(
+            "roundf",
+            headers = ["math.h"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/ceilf",  # Provides HAVE_DECL_CEILF
+        "//gnulib/m4/floorf",  # Provides HAVE_DECL_FLOORF
+    ],
+)

@@ -1,0 +1,16 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sys_un_h.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "sys_un_h",
+    checks = [
+        macros.AC_CHECK_HEADER(
+            "sys/un.h",
+            define = "HAVE_SYS_UN_H",
+        ),
+        # TODO: Add checks based on .m4 file
+    ],
+    visibility = ["//visibility:public"],
+)

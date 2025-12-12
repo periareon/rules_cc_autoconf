@@ -1,0 +1,14 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/unlinkdir.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+# HAVE_PRIV_H comes from priv-set dependency
+
+autoconf(
+    name = "unlinkdir",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/priv-set",  # Provides HAVE_PRIV_H
+    ],
+)

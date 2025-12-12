@@ -1,0 +1,22 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/lchown.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "lchown",
+    checks = [
+        # Check for lchown function
+        # Equivalent to gl_FUNC_LCHOWN macro from lchown.m4
+        # Note: REPLACE_LCHOWN logic depends on chown checks which are complex
+        macros.AC_CHECK_FUNC(
+            "lchown",
+            define = "HAVE_LCHOWN",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/chown",  # AC_REQUIRE([gl_FUNC_CHOWN])
+        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
+    ],
+)

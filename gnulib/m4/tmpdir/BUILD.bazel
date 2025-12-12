@@ -1,0 +1,13 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/tmpdir.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+# gt_TMPDIR macro from tmpdir.m4
+# This macro only defines prerequisites for lib/tmpdir.c and has no checks.
+autoconf(
+    name = "tmpdir",
+    checks = [
+        # No checks - the macro body is just `:` (no-op)
+    ],
+    visibility = ["//visibility:public"],
+)

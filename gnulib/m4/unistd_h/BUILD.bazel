@@ -1,0 +1,26 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/unistd_h.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "unistd_h",
+    checks = [
+        # Check for unistd.h header
+        # Equivalent to gl_UNISTD_H macro from unistd_h.m4
+        macros.AC_CHECK_HEADER(
+            "unistd.h",
+            define = "HAVE_UNISTD_H",
+        ),
+        macros.AC_CHECK_DECL(
+            "execvpe",
+            define = "HAVE_DECL_EXECVPE",
+            headers = ["unistd.h"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # Note: AC_C_RESTRICT and AC_TYPE_PID_T are standard autoconf macros
+        "//gnulib/m4/off_t",  # AC_REQUIRE([gl_TYPE_OFF_T])
+    ],
+)

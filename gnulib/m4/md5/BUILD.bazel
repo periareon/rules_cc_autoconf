@@ -1,0 +1,13 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/md5.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "md5",
+    checks = [
+        # gl_MD5 macro from md5.m4 has prerequisites (gl_BIGENDIAN) and
+        # gl_CRYPTO_CHECK which checks for OpenSSL MD5 support
+        # Note: Crypto checks are complex and may require library linking
+    ],
+    visibility = ["//visibility:public"],
+)

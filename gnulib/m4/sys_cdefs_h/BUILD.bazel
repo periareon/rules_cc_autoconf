@@ -1,0 +1,22 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sys_cdefs_h.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_CHECK_HEADER_SYS_CDEFS_H from sys_cdefs_h.m4
+# Checks for glibc-compatible sys/cdefs.h
+autoconf(
+    name = "sys_cdefs_h",
+    checks = [
+        # Check for glibc-compatible sys/cdefs.h with __GNUC_PREREQ
+        macros.AC_TRY_COMPILE(
+            code = """\
+#include <sys/cdefs.h>
+enum { foo = __GNUC_PREREQ (14, 1) } bar;
+int main(void) { return bar; }
+""",
+            define = "HAVE_SYS_CDEFS_H",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

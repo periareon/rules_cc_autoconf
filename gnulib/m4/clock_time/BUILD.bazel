@@ -1,0 +1,23 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/clock_time.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "clock_time",
+    checks = [
+        macros.AC_CHECK_FUNC(
+            "clock_getres",
+            define = "HAVE_CLOCK_GETRES",
+        ),
+        macros.AC_CHECK_FUNC(
+            "clock_gettime",
+            define = "HAVE_CLOCK_GETTIME",
+        ),
+        macros.AC_CHECK_FUNC(
+            "clock_settime",
+            define = "HAVE_CLOCK_SETTIME",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

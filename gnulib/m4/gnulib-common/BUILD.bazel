@@ -1,0 +1,19 @@
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/gnulib-common.m4"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gnulib-common.m4 contains utility macros and common definitions.
+# The only actual AC_CHECK is gl_FEATURES_H which checks for features.h
+
+autoconf(
+    name = "gnulib-common",
+    checks = [
+        macros.AC_CHECK_HEADER("features.h"),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/00gnulib",
+        "//gnulib/m4/zzgnulib",
+    ],
+)
