@@ -269,7 +269,7 @@ macros.AC_CHECK_C_COMPILER_FLAG("-Werror", requires = ["HAVE_C_COMPILER"])
 <pre>
 load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
 
-macros.AC_CHECK_DECL(<a href="#macros.AC_CHECK_DECL-symbol">symbol</a>, *, <a href="#macros.AC_CHECK_DECL-define">define</a>, <a href="#macros.AC_CHECK_DECL-headers">headers</a>, <a href="#macros.AC_CHECK_DECL-language">language</a>, <a href="#macros.AC_CHECK_DECL-requires">requires</a>)
+macros.AC_CHECK_DECL(<a href="#macros.AC_CHECK_DECL-symbol">symbol</a>, *, <a href="#macros.AC_CHECK_DECL-define">define</a>, <a href="#macros.AC_CHECK_DECL-headers">headers</a>, <a href="#macros.AC_CHECK_DECL-value">value</a>, <a href="#macros.AC_CHECK_DECL-language">language</a>, <a href="#macros.AC_CHECK_DECL-requires">requires</a>)
 </pre>
 <p>Check if a symbol is declared.</p>
 <p>Original m4 example:</p>
@@ -289,6 +289,7 @@ declared (not just <code>#defined</code>).</p>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_DECL-symbol"></a>symbol</td><td style="text-align: left">Name of the symbol to check</td><td style="text-align: left">none</td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_DECL-define"></a>define</td><td style="text-align: left">Custom define name (defaults to <code>HAVE_DECL_&lt;SYMBOL&gt;</code>)</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_DECL-headers"></a>headers</td><td style="text-align: left">Optional list of headers to include</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_DECL-value"></a>value</td><td style="text-align: left">Optional value to assign when the check is True.</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_DECL-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_DECL-requires"></a>requires</td><td style="text-align: left">List of requirements that must be met before this check runs. Can be simple define names (e.g., <code>"HAVE_FOO"</code>) or value-based requirements (e.g., <code>"REPLACE_FSTAT=1"</code> to require specific value)</td><td style="text-align: left"><code>None</code></td></tr>
 </tbody></table>

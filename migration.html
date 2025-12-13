@@ -240,6 +240,20 @@ macros.AC_CHECK_TYPE("int64_t", code = "#include &lt;stdint.h&gt;")
 <li>Use <code>code</code> parameter with the include statement</li>
 <li>For <code>AC_CHECK_TYPES</code> with multiple types, split and repeat the code for each</li>
 </ul>
+<p><strong>Note on Implicit Defines:</strong></p>
+<p>In GNU autoconf, <code>AC_CHECK_TYPES</code> may implicitly define <code>HAVE_*</code> values for headers
+it checks. For example, when checking types that require <code>&lt;stdint.h&gt;</code>, autoconf may
+also check for <code>&lt;inttypes.h&gt;</code> and define <code>HAVE_INTTYPES_H</code>. Similarly, <code>STDC_HEADERS</code>
+is typically defined by <code>AC_HEADER_STDC</code> which checks for standard C89 headers.</p>
+<p>In rules_cc_autoconf, these implicit checks are not performed automatically. If your
+template file (e.g., <code>config.h.in</code>) contains <code>#undef</code> statements for these defines,
+you must explicitly add the corresponding checks to your BUILD file:</p>
+<pre><code class="language-python"># If checking types that require stdint.h, also check for inttypes.h
+macros.AC_CHECK_HEADER("inttypes.h")
+
+# If STDC_HEADERS is in your template, define it explicitly
+macros.AC_DEFINE("STDC_HEADERS", "1")
+</code></pre>
 <h3 id="pattern-5-custom-compilation-tests"><a class="header" href="#pattern-5-custom-compilation-tests">Pattern 5: Custom Compilation Tests</a></h3>
 <p><strong>M4:</strong></p>
 <pre><code class="language-m4">AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
@@ -728,6 +742,9 @@ avoid or gate them when doing true cross‑compilation.</p>
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
+                            <a rel="next prefetch" href="gnulib.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
 
                         <div style="clear: both"></div>
                     </nav>
@@ -739,6 +756,9 @@ avoid or gate them when doing true cross‑compilation.</p>
                         <i class="fa fa-angle-left"></i>
                     </a>
 
+                    <a rel="next prefetch" href="gnulib.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
             </nav>
 
         </div>
