@@ -1354,6 +1354,95 @@ macros.AC_DEFINE(
 <li>Finally, use <code>AC_DEFINE</code> with <code>requires = ["*_TEST=1"]</code> to conditionally define the final macro only if the declaration check passed</li>
 <li>The <code>requires</code> chains ensure defines are not created unless they're supposed to, matching the original M4 shell conditional behavior</li>
 </ul>
+<h3 id="pattern-13c-reusing-common-checks-from-rules_cc_autoconfgnulibm4"><a class="header" href="#pattern-13c-reusing-common-checks-from-rules_cc_autoconfgnulibm4">Pattern 13c: Reusing Common Checks from <code>@rules_cc_autoconf//gnulib/m4</code></a></h3>
+<p>Many common autoconf checks are already implemented as reusable targets in <code>@rules_cc_autoconf//gnulib/m4</code>.
+Instead of manually writing checks for standard functions, headers, or types, you should
+use these pre-built targets whenever possible. This ensures consistency, reduces duplication,
+and avoids "duplicate check" errors.</p>
+<p><strong>Before (Manual Checks):</strong></p>
+<pre><code class="language-python">autoconf(
+    name = "autoconf",
+    checks = [
+        macros.AC_CHECK_FUNC("lstat"),
+        macros.AC_CHECK_HEADER("sys/stat.h"),
+        macros.AC_CHECK_FUNC("access"),
+        macros.AC_CHECK_HEADER("unistd.h"),
+    ],
+    deps = [":package"],
+)
+</code></pre>
+<p><strong>After (Using <code>//gnulib/m4</code> Targets):</strong></p>
+<pre><code class="language-python">autoconf(
+    name = "autoconf",
+    checks = [
+        # Only add checks that aren't available in gnulib
+        macros.AC_DEFINE("CUSTOM_FEATURE", "1"),
+    ],
+    deps = [
+        ":package",
+        "@rules_cc_autoconf//gnulib/m4/lstat",      # Provides AC_CHECK_FUNC("lstat") and related checks
+        "//gnulib/m4/sys_stat_h",  # Provides AC_CHECK_HEADER("sys/stat.h")
+        "@rules_cc_autoconf//gnulib/m4/access",      # Provides AC_CHECK_FUNC("access") and platform-specific logic
+        "@rules_cc_autoconf//gnulib/m4/unistd_h",    # Provides AC_CHECK_HEADER("unistd.h")
+    ],
+)
+</code></pre>
+<p><strong>Rules:</strong></p>
+<ul>
+<li><strong>Check for existing targets first</strong>: Before writing a check, look in <code>@rules_cc_autoconf//gnulib/m4/</code> for a target
+that provides the same functionality (e.g., <code>@rules_cc_autoconf//gnulib/m4/lstat</code> for <code>lstat</code> checks)</li>
+<li><strong>Use as dependencies</strong>: Add <code>@rules_cc_autoconf//gnulib/m4/&lt;name&gt;</code> targets to the <code>deps</code> list of your <code>autoconf</code> rule</li>
+<li><strong>Don't duplicate checks</strong>: If a <code>//gnulib/m4</code> target already performs a check, don't add the same
+check manually - this will cause a "duplicate check" error</li>
+<li><strong>Benefits</strong>:
+<ul>
+<li>Common checks are tested and maintained centrally</li>
+<li>Platform-specific logic is already handled (e.g., Windows/macOS special cases)</li>
+<li>Reduces code duplication across projects</li>
+<li>Ensures consistent define names and behavior</li>
+</ul>
+</li>
+</ul>
+<p><strong>Finding Available Targets:</strong></p>
+<ul>
+<li>Browse the <code>@rules_cc_autoconf//gnulib/m4/</code> directory to see available targets</li>
+<li>Common patterns:
+<ul>
+<li>Function checks: <code>@rules_cc_autoconf//gnulib/m4/&lt;function_name&gt;</code> (e.g., <code>@rules_cc_autoconf//gnulib/m4/lstat</code>, <code>@rules_cc_autoconf//gnulib/m4/access</code>)</li>
+<li>Header checks: <code>@rules_cc_autoconf//gnulib/m4/&lt;header_name&gt;</code> (e.g., <code>@rules_cc_autoconf//gnulib/m4/sys_stat_h</code>, <code>@rules_cc_autoconf//gnulib/m4/unistd_h</code>)</li>
+<li>Type checks: <code>@rules_cc_autoconf//gnulib/m4/&lt;type_name&gt;</code> (e.g., <code>@rules_cc_autoconf//gnulib/m4/off_t</code>, <code>@rules_cc_autoconf//gnulib/m4/mode_t</code>)</li>
+</ul>
+</li>
+</ul>
+<p><strong>Example with Platform-Specific Logic:</strong></p>
+<p>The <code>//gnulib/m4</code> targets often include platform-specific conditionals that you'd otherwise
+need to implement manually:</p>
+<pre><code class="language-python"># Instead of manually implementing:
+autoconf(
+    name = "autoconf",
+    checks = select({
+        "@platforms//os:windows": [
+            macros.M4_DEFINE("REPLACE_ACCESS", "1"),
+        ],
+        "//conditions:default": [
+            macros.AC_CHECK_FUNC("access"),
+        ],
+    }),
+    deps = [":package"],
+)
+
+# Use the pre-built target:
+autoconf(
+    name = "autoconf",
+    checks = [
+        # Your custom checks here
+    ],
+    deps = [
+        ":package",
+        "//gnulib/m4/access",  # Handles Windows and other platform logic automatically
+    ],
+)
+</code></pre>
 <h3 id="pattern-14-platform-specific-conditionals"><a class="header" href="#pattern-14-platform-specific-conditionals">Pattern 14: Platform-Specific Conditionals</a></h3>
 <p>Many M4 files use <code>case "$host_os"</code> to conditionally set variables based on the
 target platform. In Bazel, these should be translated to <code>select()</code> statements.</p>
@@ -1501,7 +1590,7 @@ AC_CHECK_LIB([m], [cos])
 AC_DEFINE([MY_FEATURE], [1])
 AC_OUTPUT
 </code></pre>
-<p><strong>Bazel (BUILD.bazel):</strong></p>
+<p><strong>Bazel (BUILD.bazel) - Using <code>//gnulib/m4</code> targets where possible:</strong></p>
 <pre><code class="language-python">load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
 load("@rules_cc_autoconf//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
 load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
@@ -1517,15 +1606,24 @@ autoconf(
     name = "autoconf",
     checks = [
         macros.AC_PROG_CC(),
+        # Note: stdio.h and stdlib.h checks may be provided by gnulib targets
+        # if you depend on them, but we'll keep them explicit here for clarity
         macros.AC_CHECK_HEADER("stdio.h"),
         macros.AC_CHECK_HEADER("stdlib.h"),
+        # Use gnulib targets for common function checks when available
+        # (malloc and printf are standard, so we keep them explicit)
         macros.AC_CHECK_FUNC("malloc"),
         macros.AC_CHECK_FUNC("printf"),
         macros.AC_CHECK_TYPE("int64_t", code = "#include &lt;stdint.h&gt;"),
         macros.AC_CHECK_LIB("m", "cos"),
         macros.AC_DEFINE("MY_FEATURE", "1"),
     ],
-    deps = [":package"],
+    deps = [
+        ":package",
+        # Add gnulib targets for any common checks you need
+        # Example: if you also needed lstat, you'd add:
+        # "//gnulib/m4/lstat",
+    ],
 )
 
 autoconf_hdr(
@@ -1535,9 +1633,15 @@ autoconf_hdr(
     deps = [":autoconf"],
 )
 </code></pre>
+<p><strong>Note:</strong> In practice, if your project uses functions like <code>lstat</code>, <code>access</code>, or other common POSIX
+functions, check <code>//gnulib/m4/</code> first and add those targets to <code>deps</code> instead of writing the checks
+manually. This example shows the basic migration pattern, but always prefer <code>//gnulib/m4</code> targets
+for common checks to ensure consistency and avoid duplication.</p>
 <h2 id="migration-checklist"><a class="header" href="#migration-checklist">Migration Checklist</a></h2>
 <p>When migrating, follow these steps:</p>
 <ol>
+<li><strong>Check for existing <code>//gnulib/m4</code> targets</strong> - Before writing checks, look for reusable targets
+in <code>//gnulib/m4/</code> that provide the same functionality</li>
 <li>Identify all M4 macro calls in <code>configure.ac</code></li>
 <li>Map each macro to its Bazel equivalent (see function docstrings)</li>
 <li>Convert argument syntax (brackets → quotes, lists → multiple calls)</li>
@@ -1550,6 +1654,7 @@ autoconf_hdr(
 <li>Create <code>package_info</code> from <code>AC_INIT</code></li>
 <li>Create <code>autoconf_hdr</code> from <code>AC_CONFIG_HEADERS</code></li>
 <li>Wrap all checks in <code>autoconf()</code> rule with <code>checks</code> list</li>
+<li><strong>Add <code>//gnulib/m4</code> targets to <code>deps</code></strong> - Use pre-built targets for common checks</li>
 <li>Verify no duplicate checks between direct checks and dependencies</li>
 <li>Preserve comments and structure where possible</li>
 </ol>
@@ -1563,6 +1668,7 @@ autoconf_hdr(
 <li><strong>String values</strong>: Use <code>'"string"'</code> for string literals in <code>AC_DEFINE</code> values</li>
 <li><strong>Platform conditionals</strong>: <code>case "$host_os"</code> patterns require <code>select()</code> with platform constraints</li>
 <li><strong>Duplicate checks</strong>: Don't add a check (e.g., <code>AC_CHECK_FUNC("lstat")</code>) if you already depend on a module that provides it (e.g., <code>//gnulib/m4/lstat</code>). This will cause a "duplicate check" error.</li>
+<li><strong>Not using <code>//gnulib/m4</code> targets</strong>: Before writing manual checks for common functions, headers, or types, check if a <code>//gnulib/m4/&lt;name&gt;</code> target already exists. These targets provide tested, platform-aware implementations and should be preferred over manual checks. Add them to your <code>deps</code> list instead of duplicating the checks.</li>
 </ul>
 <h2 id="macro-reference"><a class="header" href="#macro-reference">Macro Reference</a></h2>
 <p>For detailed information about each macro's parameters, default behavior, and examples,
@@ -1599,7 +1705,6 @@ avoid or gate them when doing true cross‑compilation.</p>
 </ul>
 <p>You can also conditionally enable the runtime‑based macros using Bazel
 <code>select()</code>s, platforms, or build flags so they only run where they are safe.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="gnulib"><a class="header" href="#gnulib">Gnulib</a></h1>
 
                     </main>
 
