@@ -196,7 +196,6 @@ AC_CHECK_ALIGNOF([double], [[#include &lt;stddef.h&gt;]])
 <p>Example:</p>
 <pre><code class="language-python">macros.AC_CHECK_ALIGNOF("int")
 macros.AC_CHECK_ALIGNOF("double", headers = ["stddef.h"])
-macros.AC_CHECK_ALIGNOF("FILE", requires = ["HAVE_STDIO_H"])
 </code></pre>
 <p>Cross-Compile Warning:
 This macro is NOT cross-compile friendly. It requires compiling and
@@ -225,8 +224,7 @@ macros.AC_CHECK_CXX_COMPILER_FLAG(<a href="#macros.AC_CHECK_CXX_COMPILER_FLAG-fl
 </code></pre>
 <p>Example:</p>
 <pre><code class="language-python">macros.AC_CHECK_CXX_COMPILER_FLAG("-std=c++17")
-macros.AC_CHECK_CXX_COMPILER_FLAG("-Wall", define = "HAVE_WALL_FLAG")
-macros.AC_CHECK_CXX_COMPILER_FLAG("-Werror", requires = ["HAVE_CXX_COMPILER"])
+macros.AC_CHECK_CXX_COMPILER_FLAG("-Wall")
 </code></pre>
 <p><strong>PARAMETERS</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
@@ -251,8 +249,7 @@ macros.AC_CHECK_C_COMPILER_FLAG(<a href="#macros.AC_CHECK_C_COMPILER_FLAG-flag">
 </code></pre>
 <p>Example:</p>
 <pre><code class="language-python">macros.AC_CHECK_C_COMPILER_FLAG("-Wall")
-macros.AC_CHECK_C_COMPILER_FLAG("-std=c99", define = "HAVE_STD_C99")
-macros.AC_CHECK_C_COMPILER_FLAG("-Werror", requires = ["HAVE_C_COMPILER"])
+macros.AC_CHECK_C_COMPILER_FLAG("-std=c99")
 </code></pre>
 <p><strong>PARAMETERS</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
@@ -279,7 +276,6 @@ AC_CHECK_DECL([stdout], [AC_DEFINE([HAVE_DECL_STDOUT], [1])], [], [[#include &lt
 <p>Example:</p>
 <pre><code class="language-python">macros.AC_CHECK_DECL("NULL", headers = ["stddef.h"])
 macros.AC_CHECK_DECL("stdout", headers = ["stdio.h"])
-macros.AC_CHECK_DECL("EOF", requires = ["HAVE_STDIO_H"])
 </code></pre>
 <p>Note:
 This is different from <code>AC_CHECK_SYMBOL</code> - it checks if something is
@@ -312,8 +308,6 @@ AC_CHECK_FUNC([mmap], [AC_DEFINE([HAVE_MMAP_FEATURE], [1])])
 </code></pre>
 <p>Example:</p>
 <pre><code class="language-python">macros.AC_CHECK_FUNC("malloc")
-macros.AC_CHECK_FUNC("printf", define = "HAVE_PRINTF")
-macros.AC_CHECK_FUNC("fopen", requires = ["HAVE_STDIO_H"])
 macros.AC_CHECK_FUNC(
     "mmap",
     if_true = [macros.AC_DEFINE("HAVE_MMAP_FEATURE", "1")],
@@ -347,12 +341,9 @@ AC_CHECK_HEADER([pthread.h], [AC_CHECK_FUNC([pthread_create])])
 </code></pre>
 <p>Example:</p>
 <pre><code class="language-python">macros.AC_CHECK_HEADER("stdio.h")
-macros.AC_CHECK_HEADER("sys/stat.h", define = "HAVE_SYS_STAT_H")
-macros.AC_CHECK_HEADER("sys/types.h", requires = ["HAVE_STDIO_H"])
 macros.AC_CHECK_HEADER(
     "pthread.h",
     if_true = [macros.AC_CHECK_FUNC("pthread_create")],
-    if_false = [macros.AC_DEFINE("NO_PTHREADS", "1")],
 )
 </code></pre>
 <p><strong>PARAMETERS</strong></p>
@@ -381,8 +372,7 @@ AC_CHECK_LIB([pthread], [pthread_create])
 </code></pre>
 <p>Example:</p>
 <pre><code class="language-python">macros.AC_CHECK_LIB("m", "cos")
-macros.AC_CHECK_LIB("pthread", "pthread_create", define = "HAVE_LIBPTHREAD")
-macros.AC_CHECK_LIB("m", "sqrt", requires = ["HAVE_MATH_H"])
+macros.AC_CHECK_LIB("pthread", "pthread_create")
 </code></pre>
 <p>Note:
 This checks if the specified function is available in the given library.
@@ -418,7 +408,6 @@ AC_CHECK_MEMBER([struct tm.tm_zone], [AC_DEFINE([HAVE_STRUCT_TM_TM_ZONE], [1])],
 <p>Example:</p>
 <pre><code class="language-python">macros.AC_CHECK_MEMBER("struct stat", "st_rdev", headers = ["sys/stat.h"])
 macros.AC_CHECK_MEMBER("struct tm", "tm_zone", headers = ["time.h"])
-macros.AC_CHECK_MEMBER("struct stat", "st_size", requires = ["HAVE_SYS_STAT_H"])
 </code></pre>
 <p><strong>PARAMETERS</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
@@ -449,7 +438,6 @@ AC_CHECK_SIZEOF([size_t], [], [[#include &lt;stddef.h&gt;]])
 <p>Example:</p>
 <pre><code class="language-python">macros.AC_CHECK_SIZEOF("int")
 macros.AC_CHECK_SIZEOF("size_t", headers = ["stddef.h"])
-macros.AC_CHECK_SIZEOF("FILE", requires = ["HAVE_STDIO_H"])
 </code></pre>
 <p>Cross-Compile Warning:
 This macro is NOT cross-compile friendly. It requires compiling and
@@ -479,8 +467,7 @@ macros.AC_CHECK_SYMBOL(<a href="#macros.AC_CHECK_SYMBOL-symbol">symbol</a>, *, <
 <pre><code class="language-m4">AC_CHECK_SYMBOL([NULL], [AC_DEFINE([HAVE_NULL], [1])], [], [[#include &lt;stddef.h&gt;]])
 </code></pre>
 <p>Example:</p>
-<pre><code class="language-python">macros.AC_CHECK_SYMBOL("NULL", define = "HAVE_NULL", code = "#include &lt;stddef.h&gt;")
-macros.AC_CHECK_SYMBOL("EOF", requires = ["HAVE_STDIO_H"])
+<pre><code class="language-python">macros.AC_CHECK_SYMBOL("NULL", code = "#include &lt;stddef.h&gt;")
 </code></pre>
 <p><strong>PARAMETERS</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
@@ -509,8 +496,7 @@ macros.AC_CHECK_TYPE(<a href="#macros.AC_CHECK_TYPE-type_name">type_name</a>, *,
 </code></pre>
 <p>Example:</p>
 <pre><code class="language-python">macros.AC_CHECK_TYPE("size_t")
-macros.AC_CHECK_TYPE("int64_t", define = "HAVE_INT64_T", code = "#include &lt;stdint.h&gt;")
-macros.AC_CHECK_TYPE("FILE", requires = ["HAVE_STDIO_H"])
+macros.AC_CHECK_TYPE("int64_t", code = "#include &lt;stdint.h&gt;")
 </code></pre>
 <p><strong>PARAMETERS</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
@@ -541,7 +527,6 @@ AC_COMPUTE_INT([MAX_VALUE], [1 &lt;&lt; 16])
 <p>Example:</p>
 <pre><code class="language-python">macros.AC_COMPUTE_INT("SIZEOF_INT", "sizeof(int)")
 macros.AC_COMPUTE_INT("MAX_VALUE", "1 &lt;&lt; 16")
-macros.AC_COMPUTE_INT("FILE_SIZE", "sizeof(FILE)", requires = ["HAVE_STDIO_H"])
 </code></pre>
 <p>Cross-Compile Warning:
 This macro is NOT cross-compile friendly. It requires compiling and
@@ -651,7 +636,6 @@ AC_DEFINE([PROJECT_NAME], ["MyProject"])
 <pre><code class="language-python">macros.AC_DEFINE("CUSTOM_VALUE", "42")
 macros.AC_DEFINE("ENABLE_FEATURE", "1")
 macros.AC_DEFINE("PROJECT_NAME", '"MyProject"')
-macros.AC_DEFINE("FEATURE_ENABLED", "1", requires = ["HAVE_STDIO_H"])
 </code></pre>
 <p>Note:
 This is equivalent to GNU Autoconf's AC_DEFINE macro. It creates
@@ -754,9 +738,11 @@ macros.AC_TRY_COMPILE(*, <a href="#macros.AC_TRY_COMPILE-code">code</a>, <a href
 <pre><code class="language-m4">AC_TRY_COMPILE([#include &lt;stdio.h&gt;], [printf("test");], [AC_DEFINE([HAVE_PRINTF], [1])])
 </code></pre>
 <p>Example:</p>
-<pre><code class="language-python">macros.AC_TRY_COMPILE(code = "#include &lt;stdio.h&gt;\nint main() { printf(\"test\"); return 0; }", define = "HAVE_PRINTF")
+<pre><code class="language-python">macros.AC_TRY_COMPILE(
+    code = "#include &lt;stdio.h&gt;\nint main() { printf(\"test\"); return 0; }",
+    define = "HAVE_PRINTF",
+)
 macros.AC_TRY_COMPILE(file = ":test.c", define = "CUSTOM_CHECK")
-macros.AC_TRY_COMPILE(code = "#include &lt;stdlib.h&gt;", define = "HAVE_STDLIB", requires = ["HAVE_STDIO_H"])
 </code></pre>
 <p>Note:
 This is a rules_cc_autoconf extension. While GNU Autoconf has an
