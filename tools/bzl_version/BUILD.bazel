@@ -1,0 +1,13 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//:version.bzl", "VERSION")
+
+cc_test(
+    name = "bzl_version_test",
+    srcs = ["bzl_version_test.cc"],
+    data = ["//:MODULE.bazel"],
+    env = {
+        "MODULE_BAZEL": "$(rlocationpath //:MODULE.bazel)",
+        "VERSION": VERSION,
+    },
+    deps = ["@rules_cc//cc/runfiles"],
+)

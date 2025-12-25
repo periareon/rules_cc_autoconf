@@ -1,63 +1,63 @@
-# ---
-# name: Release
-# on:
-#   workflow_dispatch:
-#   push:
-#     branches:
-#       - main
-#     paths:
-#       # Only trigger for new releases
-#       - "version.bzl"
+---
+name: Release
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      # Only trigger for new releases
+      - "version.bzl"
 
-# defaults:
-#   run:
-#     shell: bash
+defaults:
+  run:
+    shell: bash
 
-# env:
-#   BAZEL_STARTUP_FLAGS: --bazelrc=${{ github.workspace }}/.github/github.bazelrc
+env:
+  BAZEL_STARTUP_FLAGS: --bazelrc=${{ github.workspace }}/.github/github.bazelrc
 
-# jobs:
-#   release:
-#     if: ${{ github.repository_owner == 'periareon' }}
-#     permissions:
-#       contents: write
-#       actions: write
-#       attestations: write
-#     runs-on: ubuntu-latest
-#     steps:
-#       - uses: actions/checkout@v2
-#         with:
-#           ref: main
-#       - name: Detect the current version
-#         run: |
-#           version="$(grep 'VERSION =' ./version.bzl | sed 's/VERSION = "//' | sed 's/"//')"
-#           echo "RELEASE_VERSION=${version}" >> $GITHUB_ENV
-#       # Ensure this does not exclude the module used for the .bcr presubmit job.
-#       - name: Create release artifact
-#         run: |
-#           tar -czf ${{ github.workspace }}/.github/rules_cc_autoconf.tar.gz --exclude=".git" --exclude=".github" -C ${{ github.workspace }} .
-#           sha256_base64="$(shasum --algorithm 256 ${{ github.workspace }}/.github/rules_cc_autoconf.tar.gz | awk '{ print $1 }' | xxd -r -p | base64)"
-#           echo "ARCHIVE_SHA256_BASE64=${sha256_base64}" >> "${GITHUB_ENV}"
-#       - name: Generate release notes
-#         run: |
-#           # Generate the release notes
-#           sed 's/{version}/${{env.RELEASE_VERSION}}/g' ${{ github.workspace }}/.github/release_notes.template \
-#           | sed 's#{sha256_base64}#${{ env.ARCHIVE_SHA256_BASE64 }}#g' \
-#           > ${{ github.workspace }}/.github/release_notes.txt
-#       - name: Release
-#         uses: softprops/action-gh-release@v1
-#         id: rules_release
-#         with:
-#           generate_release_notes: true
-#           tag_name: ${{ env.RELEASE_VERSION }}
-#           body_path: ${{ github.workspace }}/.github/release_notes.txt
-#           target_commitish: ${{ github.base_ref }}
-#       - name: "Upload the rules archive"
-#         uses: actions/upload-release-asset@v1
-#         env:
-#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#         with:
-#           upload_url: ${{ steps.rules_release.outputs.upload_url }}
-#           asset_name: rules_cc_autoconf-${{ env.RELEASE_VERSION }}.tar.gz
-#           asset_path: ${{ github.workspace }}/.github/rules_cc_autoconf.tar.gz
-#           asset_content_type: application/gzip
+jobs:
+  release:
+    if: ${{ github.repository_owner == 'periareon' }}
+    permissions:
+      contents: write
+      actions: write
+      attestations: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: main
+      - name: Detect the current version
+        run: |
+          version="$(grep 'VERSION =' ./version.bzl | sed 's/VERSION = "//' | sed 's/"//')"
+          echo "RELEASE_VERSION=${version}" >> $GITHUB_ENV
+      # Ensure this does not exclude the module used for the .bcr presubmit job.
+      - name: Create release artifact
+        run: |
+          tar -czf ${{ github.workspace }}/.github/rules_cc_autoconf.tar.gz --exclude=".git" --exclude=".github" -C ${{ github.workspace }} .
+          sha256_base64="$(shasum --algorithm 256 ${{ github.workspace }}/.github/rules_cc_autoconf.tar.gz | awk '{ print $1 }' | xxd -r -p | base64)"
+          echo "ARCHIVE_SHA256_BASE64=${sha256_base64}" >> "${GITHUB_ENV}"
+      - name: Generate release notes
+        run: |
+          # Generate the release notes
+          sed 's/{version}/${{env.RELEASE_VERSION}}/g' ${{ github.workspace }}/.github/release_notes.template \
+          | sed 's#{sha256_base64}#${{ env.ARCHIVE_SHA256_BASE64 }}#g' \
+          > ${{ github.workspace }}/.github/release_notes.txt
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        id: rules_release
+        with:
+          generate_release_notes: true
+          tag_name: ${{ env.RELEASE_VERSION }}
+          body_path: ${{ github.workspace }}/.github/release_notes.txt
+          target_commitish: ${{ github.base_ref }}
+      - name: "Upload the rules archive"
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.rules_release.outputs.upload_url }}
+          asset_name: rules_cc_autoconf-${{ env.RELEASE_VERSION }}.tar.gz
+          asset_path: ${{ github.workspace }}/.github/rules_cc_autoconf.tar.gz
+          asset_content_type: application/gzip
