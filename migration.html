@@ -163,10 +163,10 @@ results but are integrated with Bazel's build system.</p>
 <ol>
 <li><strong>Syntax</strong>: M4 uses square brackets <code>[]</code> for arguments; Starlark uses parentheses <code>()</code> and quotes <code>""</code></li>
 <li><strong>Multiple items</strong>: M4 macros like <code>AC_CHECK_HEADERS([h1 h2 h3])</code> become multiple separate calls</li>
-<li><strong>Action blocks</strong>: M4 uses action blocks <code>[action-if-found]</code> and <code>[action-if-not-found]</code>; Bazel auto-generates defines</li>
+<li><strong>Action blocks</strong>: M4 uses action blocks <code>[action-if-found]</code> and <code>[action-if-not-found]</code>; Bazel uses <code>if_true</code>/<code>if_found</code> and <code>if_false</code>/<code>if_not_found</code> parameters (see Pattern 11c)</li>
 <li><strong>Language selection</strong>: M4 uses <code>AC_LANG_PUSH([C++])</code>; Bazel uses <code>language = "cpp"</code> parameter</li>
 <li><strong>Custom code</strong>: M4 uses <code>AC_LANG_PROGRAM([includes], [body])</code>; Bazel uses <code>code</code> or <code>file</code> parameters</li>
-<li><strong>Dependencies</strong>: M4 uses nested macro calls; Bazel uses explicit <code>requires</code> parameter</li>
+<li><strong>Dependencies</strong>: M4 uses nested macro calls; Bazel uses explicit <code>requires</code> parameter or <code>if_true</code>/<code>if_false</code> for conditional execution</li>
 </ol>
 <h2 id="migration-patterns"><a class="header" href="#migration-patterns">Migration Patterns</a></h2>
 <h3 id="pattern-1-simple-headerfunctiontype-checks"><a class="header" href="#pattern-1-simple-headerfunctiontype-checks">Pattern 1: Simple Header/Function/Type Checks</a></h3>
@@ -421,6 +421,102 @@ fi
 <li><code>requires = ["FOO=1"]</code> - check succeeds if FOO succeeded AND has value "1"</li>
 <li>Useful for conditional checks based on platform detection results</li>
 </ul>
+<h3 id="pattern-11c-conditional-action-blocks-if_trueif_found"><a class="header" href="#pattern-11c-conditional-action-blocks-if_trueif_found">Pattern 11c: Conditional Action Blocks (<code>if_true</code>/<code>if_found</code>)</a></h3>
+<p>Many M4 macros support action blocks that run conditionally based on whether a check succeeds or fails. The <code>[action-if-found]</code> or <code>[action-if-true]</code> block runs when the check succeeds, and <code>[action-if-not-found]</code> or <code>[action-if-false]</code> runs when it fails.</p>
+<p><strong>M4:</strong></p>
+<pre><code class="language-m4">AC_CHECK_HEADER([stdio.h],
+    [
+        # Action if found: run additional checks
+        AC_CHECK_FUNC([printf])
+        AC_CHECK_FUNC([fprintf])
+    ],
+    [
+        # Action if not found: define fallback
+        AC_DEFINE([NO_STDIO], [1])
+    ]
+)
+
+AC_CHECK_FUNCS([ffs],
+    [
+        # If ffs() exists, check if it's declared in strings.h
+        AC_CHECK_DECL([ffs], 
+            [AC_DEFINE([STRINGS_H_DECLARES_FFS], [1])],
+            [],
+            [[#include &lt;strings.h&gt;]]
+        )
+    ]
+)
+</code></pre>
+<p><strong>Bazel:</strong></p>
+<pre><code class="language-python">macros.AC_CHECK_HEADER(
+    "stdio.h",
+    if_true = [
+        # These checks run only if stdio.h exists
+        macros.AC_CHECK_FUNC("printf"),
+        macros.AC_CHECK_FUNC("fprintf"),
+    ],
+    if_false = [
+        # This runs only if stdio.h doesn't exist
+        macros.AC_DEFINE("NO_STDIO", "1"),
+    ],
+)
+
+macros.AC_CHECK_FUNC(
+    "ffs",
+    if_true = [
+        # This runs only if ffs() exists
+        macros.AC_CHECK_DECL(
+            "ffs",
+            define = "STRINGS_H_DECLARES_FFS",
+            headers = ["strings.h"],
+        ),
+    ],
+)
+</code></pre>
+<p><strong>Rules:</strong></p>
+<ul>
+<li><code>if_true</code> and <code>if_found</code> are aliases - use either one (they're equivalent)</li>
+<li><code>if_false</code> and <code>if_not_found</code> are aliases - use either one (they're equivalent)</li>
+<li>You cannot provide both <code>if_true</code> and <code>if_found</code> (same for <code>if_false</code>/<code>if_not_found</code>)</li>
+<li>Action blocks become lists of macro calls passed to <code>if_true</code>/<code>if_false</code> parameters</li>
+<li>Nested checks in <code>if_true</code> automatically receive a <code>requires</code> dependency on the parent check's define</li>
+<li>Nested checks in <code>if_false</code> automatically receive a <code>requires</code> dependency on <code>!PARENT_DEFINE</code> (negated)</li>
+<li>The flattening process ensures nested checks are executed as separate Bazel actions with proper dependencies</li>
+<li>Use this pattern instead of manually adding <code>requires</code> when you want conditional execution based on a check result</li>
+</ul>
+<p><strong>Relationship to <code>requires</code>:</strong></p>
+<p>The <code>if_true</code>/<code>if_false</code> parameters are syntactic sugar that automatically generate <code>requires</code> dependencies. The following are equivalent:</p>
+<pre><code class="language-python"># Using if_true (preferred for conditional checks)
+macros.AC_CHECK_HEADER(
+    "stdio.h",
+    if_true = [
+        macros.AC_CHECK_FUNC("printf"),
+    ],
+)
+
+# Equivalent manual requires
+macros.AC_CHECK_HEADER("stdio.h")
+macros.AC_CHECK_FUNC(
+    "printf",
+    requires = ["HAVE_STDIO_H"],
+)
+</code></pre>
+<p>However, <code>if_true</code>/<code>if_false</code> is cleaner when you have conditional action blocks because it clearly shows the intent and keeps related checks together.</p>
+<p><strong>Advanced: Nested Conditionals:</strong></p>
+<p>You can nest conditional checks to create complex dependency chains:</p>
+<pre><code class="language-python">macros.AC_CHECK_HEADER(
+    "stdio.h",
+    if_true = [
+        macros.AC_CHECK_FUNC(
+            "printf",
+            if_true = [
+                # This runs only if both stdio.h exists AND printf exists
+                macros.AC_DEFINE("HAVE_PRINTF_IN_STDIO", "1"),
+            ],
+        ),
+    ],
+)
+</code></pre>
 <h3 id="pattern-12-member-checks"><a class="header" href="#pattern-12-member-checks">Pattern 12: Member Checks</a></h3>
 <p><strong>M4:</strong></p>
 <pre><code class="language-m4">AC_CHECK_MEMBER([struct stat.st_rdev], [AC_DEFINE([HAVE_STRUCT_STAT_ST_RDEV], [1])], [], [[#include &lt;sys/stat.h&gt;]])
@@ -782,7 +878,8 @@ in <code>//gnulib/m4/</code> that provide the same functionality</li>
 <li>Extract define names from action blocks</li>
 <li>Convert include directives to <code>code</code> or <code>headers</code> parameters</li>
 <li>Handle language selection (<code>AC_LANG_PUSH/POP</code> → <code>language</code> parameter)</li>
-<li>Identify dependencies and add <code>requires</code> parameters</li>
+<li>Identify dependencies and add <code>requires</code> parameters, or use <code>if_true</code>/<code>if_false</code> for conditional action blocks</li>
+<li>Convert action blocks (<code>[action-if-found]</code>/<code>[action-if-not-found]</code>) to <code>if_true</code>/<code>if_false</code> parameters (see Pattern 11c)</li>
 <li>Split multi-item macros into individual calls</li>
 <li><strong>Handle platform-specific conditionals</strong> (<code>case "$host_os"</code> → <code>select()</code>)</li>
 <li>Create <code>package_info</code> from <code>AC_INIT</code></li>
@@ -799,6 +896,7 @@ in <code>//gnulib/m4/</code> that provide the same functionality</li>
 <li><strong>Wrong define names</strong>: Auto-generated names follow patterns (see each macro's docstring)</li>
 <li><strong>Language context</strong>: Remember to propagate <code>language = "cpp"</code> from <code>AC_LANG_PUSH([C++])</code></li>
 <li><strong>Dependencies</strong>: Check if includes in code correspond to previous header checks</li>
+<li><strong>Conditional action blocks</strong>: Use <code>if_true</code>/<code>if_false</code> parameters instead of manually managing <code>requires</code> when you have <code>[action-if-found]</code>/<code>[action-if-not-found]</code> blocks - this is cleaner and shows intent more clearly (see Pattern 11c)</li>
 <li><strong>String values</strong>: Use <code>'"string"'</code> for string literals in <code>AC_DEFINE</code> values</li>
 <li><strong>Platform conditionals</strong>: <code>case "$host_os"</code> patterns require <code>select()</code> with platform constraints</li>
 <li><strong>Duplicate checks</strong>: Don't add a check (e.g., <code>AC_CHECK_FUNC("lstat")</code>) if you already depend on a module that provides it (e.g., <code>//gnulib/m4/lstat</code>). This will cause a "duplicate check" error.</li>
