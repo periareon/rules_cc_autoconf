@@ -384,6 +384,7 @@ manually maintain <code>#ifdef</code> guards in every source file.</p>
 <li><a href="macros.html#macros.AC_PROG_CC">macros.AC_PROG_CC</a></li>
 <li><a href="macros.html#macros.AC_PROG_CC_C_O">macros.AC_PROG_CC_C_O</a></li>
 <li><a href="macros.html#macros.AC_PROG_CXX">macros.AC_PROG_CXX</a></li>
+<li><a href="macros.html#macros.AC_SUBST">macros.AC_SUBST</a></li>
 <li><a href="macros.html#macros.AC_TRY_COMPILE">macros.AC_TRY_COMPILE</a></li>
 <li><a href="macros.html#macros.M4_DEFINE">macros.M4_DEFINE</a></li>
 </ul>
@@ -928,6 +929,40 @@ but returns a check that will verify the compiler works.</p>
 <p><strong>PARAMETERS</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
 <tr><td style="text-align: left"><a id="macros.AC_PROG_CXX-requires"></a>requires</td><td style="text-align: left">List of requirements that must be met before this check runs. Can be simple define names (e.g., <code>"HAVE_FOO"</code>) or value-based requirements (e.g., <code>"REPLACE_FSTAT=1"</code> to require specific value)</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
+<p><a id="macros.AC_SUBST"></a></p>
+<h2 id="macrosac_subst"><a class="header" href="#macrosac_subst">macros.AC_SUBST</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
+
+macros.AC_SUBST(<a href="macros.html#macros.AC_SUBST-variable">variable</a>, <a href="macros.html#macros.AC_SUBST-value">value</a>, <a href="macros.html#macros.AC_SUBST-requires">requires</a>, <a href="macros.html#macros.AC_SUBST-if_true">if_true</a>, <a href="macros.html#macros.AC_SUBST-if_false">if_false</a>)
+</pre>
+<p>Substitute a variable value (equivalent to AC_SUBST in GNU Autoconf).</p>
+<p>Original m4 example:</p>
+<pre><code class="language-m4">HAVE_DECL_WCSDUP=1;   AC_SUBST([HAVE_DECL_WCSDUP])
+HAVE_DECL_WCWIDTH=1;  AC_SUBST([HAVE_DECL_WCWIDTH])
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-python">macros.AC_SUBST("HAVE_DECL_WCSDUP", 1)
+macros.AC_SUBST("HAVE_DECL_WCWIDTH", 1)
+</code></pre>
+<p>Note:
+In GNU Autoconf, <code>AC_SUBST</code> is used to substitute shell variables into
+Makefiles. In <code>rules_cc_autoconf</code>, all variables are automatically
+available for substitution in <code>requires</code> clauses and other contexts.
+This macro is functionally equivalent to <code>AC_DEFINE</code> but serves as
+documentation that the variable is intended for substitution rather than
+as a C preprocessor define.</p>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="macros.AC_SUBST-variable"></a>variable</td><td style="text-align: left">Variable name (e.g., <code>"LIBRARY_PATH"</code>)</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_SUBST-value"></a>value</td><td style="text-align: left">Value to assign (defaults to <code>"1"</code>)</td><td style="text-align: left"><code>"1"</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_SUBST-requires"></a>requires</td><td style="text-align: left">List of requirements that must be met before this check runs. Can be simple define names (e.g., <code>"HAVE_FOO"</code>), negated checks (e.g., <code>"!HAVE_FOO"</code>), or value-based requirements (e.g., <code>"REPLACE_FSTAT==1"</code>, <code>"REPLACE_FSTAT!=0"</code>).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_SUBST-if_true"></a>if_true</td><td style="text-align: left">List of checks to run if this check succeeds.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_SUBST-if_false"></a>if_false</td><td style="text-align: left">List of checks to run if this check fails.</td><td style="text-align: left"><code>None</code></td></tr>
 </tbody></table>
 </div>
 <p><strong>RETURNS</strong></p>
