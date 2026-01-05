@@ -44,14 +44,14 @@ jobs:
         run: |
           echo "common --keep_going" >> ./user.bazelrc
 
-      - name: Install Autoconf (MacOS)
+      - name: Install Autoconf (Unix)
         run: |
-          brew install autoconf
-        if: startswith(runner.os, 'Mac')
-      - name: Install Autoconf (Linux)
+          ./tools/test_deps/install_test_deps.sh
+        if: startswith(runner.os, 'Windows') != true
+      - name: Install Autoconf (Windows)
         run: |
-          apt install autoconf -y
-        if: startswith(runner.os, 'Ubuntu')
+          echo NOOP
+        if: startswith(runner.os, 'Windows')
 
       # Build and Test the code
       - name: Test (Unix)
