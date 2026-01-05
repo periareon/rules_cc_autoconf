@@ -1,0 +1,40 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
+load("@rules_cc_autoconf//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
+load("@rules_cc_autoconf//autoconf:package_info.bzl", "package_info")
+
+package_info(
+    name = "package",
+    module_bazel = "//:MODULE.bazel",
+)
+
+autoconf(
+    name = "autoconf",
+    checks = [
+        # Check for common standard library functions
+        macros.AC_CHECK_FUNC("malloc"),
+        macros.AC_CHECK_FUNC("free"),
+        macros.AC_CHECK_FUNC("printf"),
+        # Check for standard headers
+        macros.AC_CHECK_HEADER("stdio.h"),
+        macros.AC_CHECK_HEADER("stdlib.h"),
+        macros.AC_CHECK_HEADER("string.h"),
+    ],
+    deps = [":package"],
+)
+
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    template = "config.h.in",
+    deps = [":autoconf"],
+)
+
+cc_test(
+    name = "simple_test",
+    srcs = [
+        "simple_test.c",
+        ":config.h",
+    ],
+)
