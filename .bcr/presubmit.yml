@@ -1,21 +1,7 @@
-bcr_test_module_unix:
-  module_path: ""
+bcr_test_module:
+  module_path: "examples/simple"
   matrix:
-    platform: ["macos_arm64", "ubuntu2004", "ubuntu2004_arm64"]
-    bazel: [7.x, 8.x]
-  tasks:
-    run_tests:
-      name: "Run test module"
-      platform: ${{ platform }}
-      bazel: ${{ bazel }}
-      run_targets:
-        - "//tools/test_deps:install_test_deps"
-      test_targets:
-        - "//..."
-bcr_test_module_windows:
-  module_path: ""
-  matrix:
-    platform: ["windows"]
+    platform: ["macos_arm64", "ubuntu2004", "ubuntu2004_arm64", "windows"]
     bazel: [7.x, 8.x]
   tasks:
     run_tests:
