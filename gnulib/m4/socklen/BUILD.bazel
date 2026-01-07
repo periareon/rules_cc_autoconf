@@ -3,16 +3,14 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# HAVE_SYS_SOCKET_H comes from sys_socket_h dependency
-
 autoconf(
     name = "socklen",
     checks = [
-        macros.AC_CHECK_HEADER("ws2tcpip.h"),
+        # Note: HAVE_WS2TCPIP_H is provided by sys_socket_h
         macros.AC_CHECK_TYPE("socklen_t"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/sys_socket_h",  # Provides HAVE_SYS_SOCKET_H
+        "//gnulib/m4/sys_socket_h",  # Provides HAVE_SYS_SOCKET_H, HAVE_WS2TCPIP_H
     ],
 )

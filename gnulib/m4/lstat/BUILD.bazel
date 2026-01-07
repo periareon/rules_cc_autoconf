@@ -3,23 +3,13 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# gl_FUNC_LSTAT from lstat.m4
-# On darwin and solaris (or when symlink trailing slash test fails), REPLACE_LSTAT=1.
 autoconf(
     name = "lstat",
     checks = [
-        # Check for lstat function
         macros.AC_CHECK_FUNC("lstat"),
-    ] + select({
-        "@platforms//os:macos": [
-            # On macOS, unconditionally set REPLACE_LSTAT=1
-            macros.M4_DEFINE("REPLACE_LSTAT", "1"),
-        ],
-        # Note: Solaris would need a custom constraint
-        "//conditions:default": [],
-    }),
+    ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/sys_stat_h",  # AC_REQUIRE([gl_SYS_STAT_H_DEFAULTS])
+        "//gnulib/m4/sys_stat_h",  # Provides REPLACE_LSTAT default
     ],
 )

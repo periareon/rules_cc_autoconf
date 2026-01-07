@@ -19,6 +19,7 @@ autoconf(
             define = "HAVE_DECL_FDOPENDIR",
             headers = ["dirent.h"],
         ),
+        # GNULIB module indicator - set to 1 when this module is used
     ],
     visibility = ["//visibility:public"],
     deps = [

@@ -8,7 +8,7 @@ autoconf(
     checks = [
         macros.AC_CHECK_DECL(
             "sqrtl",
-            define = "HAVE_DECL_SQRTL",
+            headers = ["math.h"],
         ),
     ],
     visibility = ["//visibility:public"],
@@ -16,6 +16,7 @@ autoconf(
         "//gnulib/m4/frexpl",
         "//gnulib/m4/isnanl",
         "//gnulib/m4/ldexpl",
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
         "//gnulib/m4/sqrt",
     ],
 )

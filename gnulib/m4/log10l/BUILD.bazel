@@ -6,19 +6,16 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "log10l",
     checks = [
-        macros.AC_CHECK_FUNC(
-            "log10l",
-            define = "HAVE_LOG10L",
-        ),
         macros.AC_CHECK_DECL(
             "log10l",
-            define = "HAVE_DECL_LOG10L",
             headers = ["math.h"],
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//gnulib/m4/isnanl",
         "//gnulib/m4/log10",
         "//gnulib/m4/logl",
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
     ],
 )

@@ -6,22 +6,11 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "cosf",
     checks = [
-        # Check for cosf function and declaration
-        # Equivalent to gl_FUNC_COSF macro from cosf.m4
-        macros.AC_CHECK_FUNC(
-            "cosf",
-            define = "HAVE_COSF",
-        ),
-        macros.AC_CHECK_DECL(
-            "cosf",
-            define = "HAVE_DECL_COSF",
-            headers = ["math.h"],
-        ),
+        macros.AC_CHECK_FUNC("cosf"),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//gnulib/m4/cos",
         "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
-        "//gnulib/m4/cos",  # AC_REQUIRE([gl_FUNC_COS])
-        # Note: AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
     ],
 )

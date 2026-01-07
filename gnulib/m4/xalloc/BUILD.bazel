@@ -1,12 +1,13 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/xalloc.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "xalloc",
     checks = [
-        # gl_XALLOC macro from xalloc.m4 only has prerequisites
-        # No actual checks needed
+        # gl_MODULE_INDICATOR([xalloc]) sets GNULIB_XALLOC=1
+        macros.AC_DEFINE("GNULIB_XALLOC", "1"),
     ],
     visibility = ["//visibility:public"],
 )

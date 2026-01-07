@@ -8,12 +8,13 @@ autoconf(
     checks = [
         macros.AC_CHECK_DECL(
             "asinl",
-            define = "HAVE_DECL_ASINL",
+            headers = ["math.h"],
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/asin",
-        "//gnulib/m4/sqrtl",
+        "//gnulib/m4/isnanl",
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
     ],
 )

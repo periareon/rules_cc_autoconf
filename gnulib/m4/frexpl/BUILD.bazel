@@ -6,13 +6,8 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "frexpl",
     checks = [
-        # Check for frexpl function and declaration
-        # Equivalent to gl_FUNC_FREXPL macro from frexpl.m4
-        # Note: Full implementation includes runtime checks for finite numbers,
-        # denormalized numbers, and infinite numbers that are not easily replicable in Bazel
         macros.AC_CHECK_DECL(
             "frexpl",
-            define = "HAVE_DECL_FREXPL",
             headers = ["math.h"],
         ),
         macros.AC_TRY_COMPILE(
@@ -29,9 +24,8 @@ int main(void) {
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS]), AC_REQUIRE([gl_LONG_DOUBLE_VS_DOUBLE])
-        "//gnulib/m4/frexp",  # AC_REQUIRE([gl_FUNC_FREXP]) - conditional
-        # Note: AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]), AC_REQUIRE([AC_PROG_CC]),
-        # and AC_REQUIRE([AC_CANONICAL_HOST]) are standard autoconf macros
+        "//gnulib/m4/frexp",
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+        "//gnulib/m4/mathfunc",
     ],
 )

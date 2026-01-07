@@ -1,14 +1,55 @@
-"""Common module for termios.h header check"""
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/termios_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# Provides HAVE_TERMIOS_H for modules that need termios.h
+# =============================================================================
+# gl_TERMIOS_H - Header check and GNULIB module indicators
+# =============================================================================
 
 autoconf(
     name = "termios_h",
     checks = [
-        macros.AC_CHECK_HEADER("termios.h"),
+        macros.AC_CHECK_HEADER(
+            "termios.h",
+            define = "HAVE_TERMIOS_H",
+        ),
+
+        # gl_MODULE_INDICATOR_INIT_VARIABLE calls (from gl_TERMIOS_H)
+        macros.AC_SUBST("GNULIB_TCGETSID", "0"),
+
+        # struct winsize checks (from gl_TERMIOS_H)
+        macros.AC_TRY_COMPILE(
+            code = "static struct winsize x; x.ws_row = x.ws_col;",
+            define = "TERMIOS_H_DEFINES_STRUCT_WINSIZE",
+            includes = ["termios.h"],
+        ),
+        macros.AC_TRY_COMPILE(
+            code = "static struct winsize x; x.ws_row = x.ws_col;",
+            define = "SYS_IOCTL_H_DEFINES_STRUCT_WINSIZE",
+            includes = ["sys/ioctl.h"],
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",
+    ],
+)
+
+# =============================================================================
+# gl_TERMIOS_H_DEFAULTS - exact match of AC_SUBST from the m4 *_DEFAULTS macro
+# =============================================================================
+
+_GL_TERMIOS_H_DEFAULTS = [
+    macros.AC_SUBST("HAVE_DECL_TCGETSID", "1"),
+    # Note: HAVE_TERMIOS_H is set by AC_CHECK_HEADER in main target, not here
+]
+
+autoconf(
+    name = "with_defaults",
+    checks = _GL_TERMIOS_H_DEFAULTS,
+    visibility = ["//visibility:public"],
+    deps = [
+        ":termios_h",
+    ],
 )

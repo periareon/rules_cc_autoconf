@@ -3,12 +3,17 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# gl_SYS_UIO_H from sys_uio_h.m4
 autoconf(
     name = "sys_uio_h",
     checks = [
-        # Check for sys/uio.h header
-        macros.AC_CHECK_HEADER("sys/uio.h"),
+        # Header check
+        macros.AC_CHECK_HEADER(
+            "sys/uio.h",
+            define = "HAVE_SYS_UIO_H",
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",
+    ],
 )

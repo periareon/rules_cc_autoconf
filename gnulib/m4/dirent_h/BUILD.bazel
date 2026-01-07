@@ -1,11 +1,63 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/dirent_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# =============================================================================
+# gl_DIRENT_H - Header check and GNULIB module indicators
+# =============================================================================
 
 autoconf(
     name = "dirent_h",
     checks = [
-        # Note: dirent_h.m4 may not exist in gnulib, or this module may not have checks
+        macros.AC_CHECK_HEADER(
+            "dirent.h",
+            define = "HAVE_DIRENT_H",
+        ),
+
+        # gl_MODULE_INDICATOR_INIT_VARIABLE calls (from gl_DIRENT_H)
+        macros.AC_SUBST("GNULIB_OPENDIR", "0"),
+        macros.AC_SUBST("GNULIB_READDIR", "0"),
+        macros.AC_SUBST("GNULIB_REWINDDIR", "0"),
+        macros.AC_SUBST("GNULIB_CLOSEDIR", "0"),
+        macros.AC_SUBST("GNULIB_DIRFD", "0"),
+        macros.AC_SUBST("GNULIB_FDOPENDIR", "0"),
+        macros.AC_SUBST("GNULIB_SCANDIR", "0"),
+        macros.AC_SUBST("GNULIB_ALPHASORT", "0"),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",  # For NEXT_DIRENT_H
+    ],
+)
+
+# =============================================================================
+# gl_DIRENT_H_DEFAULTS - exact match of AC_SUBST from the m4 *_DEFAULTS macro
+# =============================================================================
+
+_GL_DIRENT_H_DEFAULTS = [
+    macros.AC_SUBST("HAVE_OPENDIR", "1"),
+    macros.AC_SUBST("HAVE_READDIR", "1"),
+    macros.AC_SUBST("HAVE_REWINDDIR", "1"),
+    macros.AC_SUBST("HAVE_CLOSEDIR", "1"),
+    macros.AC_SUBST("HAVE_DECL_DIRFD", "1"),
+    macros.AC_SUBST("HAVE_DECL_FDOPENDIR", "1"),
+    macros.AC_SUBST("HAVE_FDOPENDIR", "1"),
+    macros.AC_SUBST("HAVE_SCANDIR", "1"),
+    macros.AC_SUBST("HAVE_ALPHASORT", "1"),
+    macros.AC_SUBST("REPLACE_OPENDIR", "0"),
+    macros.AC_SUBST("REPLACE_READDIR", "0"),
+    macros.AC_SUBST("REPLACE_REWINDDIR", "0"),
+    macros.AC_SUBST("REPLACE_CLOSEDIR", "0"),
+    macros.AC_SUBST("REPLACE_DIRFD", "0"),
+    macros.AC_SUBST("REPLACE_FDOPENDIR", "0"),
+]
+
+autoconf(
+    name = "with_defaults",
+    checks = _GL_DIRENT_H_DEFAULTS,
+    visibility = ["//visibility:public"],
+    deps = [
+        ":dirent_h",
+    ],
 )

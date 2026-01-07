@@ -6,11 +6,55 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "netinet_in_h",
     checks = [
+        # Header check
         macros.AC_CHECK_HEADER(
             "netinet/in.h",
             define = "HAVE_NETINET_IN_H",
         ),
-        # Note: netinet_in_h.m4 may not exist in gnulib, or this module may not have checks
+
+        # Check if header is self-contained
+        macros.AC_TRY_COMPILE(
+            code = "struct sockaddr_in sa; (void)sa;",
+            define = "HAVE_NETINET_IN_H_SELFCONTAINED",
+            includes = ["netinet/in.h"],
+        ),
+
+        # Type checks
+        macros.AC_CHECK_TYPE(
+            "struct sockaddr_in",
+            define = "HAVE_STRUCT_SOCKADDR_IN",
+            includes = ["netinet/in.h"],
+        ),
+        macros.AC_CHECK_TYPE(
+            "struct sockaddr_in6",
+            define = "HAVE_STRUCT_SOCKADDR_IN6",
+            includes = ["netinet/in.h"],
+        ),
+        macros.AC_CHECK_TYPE(
+            "in_addr_t",
+            define = "HAVE_IN_ADDR_T",
+            includes = ["netinet/in.h"],
+        ),
+        macros.AC_CHECK_TYPE(
+            "in_port_t",
+            define = "HAVE_IN_PORT_T",
+            includes = ["netinet/in.h"],
+        ),
+
+        # Constants check
+        macros.AC_TRY_COMPILE(
+            code = "int x = INET_ADDRSTRLEN; (void)x;",
+            define = "HAVE_INET_ADDRSTRLEN",
+            includes = ["netinet/in.h"],
+        ),
+        macros.AC_TRY_COMPILE(
+            code = "int x = INET6_ADDRSTRLEN; (void)x;",
+            define = "HAVE_INET6_ADDRSTRLEN",
+            includes = ["netinet/in.h"],
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",
+    ],
 )

@@ -6,15 +6,10 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "cbrt",
     checks = [
-        macros.AC_CHECK_FUNC(
-            "cbrt",
-            define = "HAVE_CBRT",
-        ),
+        macros.AC_CHECK_FUNC("cbrt"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/fabs",
-        "//gnulib/m4/frexp",
-        "//gnulib/m4/ldexp",
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
     ],
 )

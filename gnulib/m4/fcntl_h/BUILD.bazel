@@ -1,11 +1,53 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fcntl_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# =============================================================================
+# gl_FCNTL_H - Header check and GNULIB module indicators
+# =============================================================================
 
 autoconf(
     name = "fcntl_h",
     checks = [
-        # Note: fcntl_h.m4 may not exist in gnulib, or this module may not have checks
+        macros.AC_CHECK_HEADER("fcntl.h"),
+
+        # gl_MODULE_INDICATOR_INIT_VARIABLE calls (from gl_FCNTL_H)
+        macros.AC_SUBST("GNULIB_CREAT", "0"),
+        macros.AC_SUBST("GNULIB_FCNTL", "0"),
+        macros.AC_SUBST("GNULIB_NONBLOCKING", "0"),
+        macros.AC_SUBST("GNULIB_OPEN", "0"),
+        macros.AC_SUBST("GNULIB_OPENAT", "0"),
+        macros.AC_SUBST("GNULIB_OPENAT2", "0"),
+        # Microsoft deprecated alias function names - default to 1
+        macros.AC_SUBST("GNULIB_MDA_CREAT", "1"),
+        macros.AC_SUBST("GNULIB_MDA_OPEN", "1"),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",  # gl_NEXT_HEADERS([fcntl.h])
+    ],
+)
+
+# =============================================================================
+# gl_FCNTL_H_DEFAULTS - exact match of AC_SUBST from the m4 *_DEFAULTS macro
+# =============================================================================
+
+_GL_FCNTL_H_DEFAULTS = [
+    macros.AC_SUBST("HAVE_FCNTL", "1"),
+    macros.AC_SUBST("HAVE_OPENAT", "1"),
+    macros.AC_SUBST("HAVE_OPENAT2", "0"),
+    macros.AC_SUBST("REPLACE_CREAT", "0"),
+    macros.AC_SUBST("REPLACE_FCNTL", "0"),
+    macros.AC_SUBST("REPLACE_OPEN", "0"),
+    macros.AC_SUBST("REPLACE_OPENAT", "0"),
+]
+
+autoconf(
+    name = "with_defaults",
+    checks = _GL_FCNTL_H_DEFAULTS,
+    visibility = ["//visibility:public"],
+    deps = [
+        ":fcntl_h",
+    ],
 )

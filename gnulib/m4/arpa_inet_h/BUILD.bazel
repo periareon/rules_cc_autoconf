@@ -3,17 +3,49 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# =============================================================================
+# gl_ARPA_INET_H - Header check and GNULIB module indicators
+# =============================================================================
+
 autoconf(
     name = "arpa_inet_h",
     checks = [
-        # Check for arpa/inet.h header
-        # Equivalent to gl_ARPA_INET_H macro from arpa_inet_h.m4
         macros.AC_CHECK_HEADER(
             "arpa/inet.h",
             define = "HAVE_ARPA_INET_H",
         ),
+
+        # gl_MODULE_INDICATOR_INIT_VARIABLE calls (from gl_ARPA_INET_H)
+        macros.AC_SUBST("GNULIB_INET_NTOP", "0"),
+        macros.AC_SUBST("GNULIB_INET_PTON", "0"),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//gnulib/m4/include_next",
+        "//gnulib/m4/sys_socket_h",
+    ],
+)
+
+# =============================================================================
+# gl_ARPA_INET_H_DEFAULTS - exact match of AC_SUBST from the m4 *_DEFAULTS macro
+# =============================================================================
+
+_GL_ARPA_INET_H_DEFAULTS = [
+    macros.AC_SUBST("HAVE_DECL_HTONL", "1"),
+    macros.AC_SUBST("HAVE_DECL_HTONS", "1"),
+    macros.AC_SUBST("HAVE_DECL_INET_NTOP", "1"),
+    macros.AC_SUBST("HAVE_DECL_INET_PTON", "1"),
+    macros.AC_SUBST("HAVE_DECL_NTOHL", "1"),
+    macros.AC_SUBST("HAVE_DECL_NTOHS", "1"),
+    macros.AC_SUBST("REPLACE_INET_NTOP", "0"),
+    macros.AC_SUBST("REPLACE_INET_PTON", "0"),
+]
+
+autoconf(
+    name = "with_defaults",
+    checks = _GL_ARPA_INET_H_DEFAULTS,
+    visibility = ["//visibility:public"],
+    deps = [
+        ":arpa_inet_h",
     ],
 )

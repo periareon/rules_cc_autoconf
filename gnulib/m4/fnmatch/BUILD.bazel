@@ -3,17 +3,38 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# HAVE_MBSRTOWCS comes from mbsrtowcs dependency
-
 autoconf(
     name = "fnmatch",
     checks = [
+
+        # Check if fnmatch function exists
         macros.AC_CHECK_FUNC("fnmatch"),
+
+        # REPLACE_FNMATCH logic from gnulib:
+        # The original macro does runtime tests to detect broken fnmatch implementations.
+        # Known issues:
+        # - glibc < 2.22: various bugs
+        # - Solaris 11.4: locale issues
+        # - FreeBSD 13.2, NetBSD 10.0, Cygwin < 3.5: character class issues
+        # - Systems with 16-bit wchar_t (AIX 32-bit, etc.): Unicode BMP issues
+        #
+        # For Bazel cross-compilation, we use select() for known-broken platforms.
+        # On most modern Linux systems, fnmatch works correctly.
+        macros.AC_SUBST(
+            "REPLACE_FNMATCH",
+            select({
+                # Known broken platforms - need replacement
+                "@platforms//os:windows": "1",  # No fnmatch on Windows
+                # Default to 0 on modern POSIX systems
+                "//conditions:default": "0",
+            }),
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/fnmatch_h",  # AC_REQUIRE([gl_FNMATCH_H])
-        "//gnulib/m4/mbsrtowcs",  # Provides HAVE_MBSRTOWCS
-        "//gnulib/m4/uchar_h",  # AC_REQUIRE([gl_UCHAR_H])
+        # Get header but NOT with_defaults (we define GNULIB_FNMATCH ourselves)
+        "//gnulib/m4/fnmatch_h",
+        "//gnulib/m4/mbsrtowcs",  # Provides HAVE_MBSRTOWCS for lib/fnmatch.c
+        "//gnulib/m4/uchar_h",  # AC_REQUIRE([gl_UCHAR_H]) for SMALL_WCHAR_T
     ],
 )

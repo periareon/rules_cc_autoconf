@@ -3,22 +3,54 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# gl_SYS_SELECT_H from sys_select_h.m4
+# =============================================================================
+# gl_SYS_SELECT_H - Header check and GNULIB module indicators
+# =============================================================================
+
 autoconf(
     name = "sys_select_h",
     checks = [
-        # Check if sys/select.h is self-contained
+        macros.AC_CHECK_HEADER(
+            "sys/select.h",
+            define = "HAVE_SYS_SELECT_H",
+        ),
+
+        # gl_MODULE_INDICATOR_INIT_VARIABLE calls (from gl_SYS_SELECT_H)
+        macros.AC_SUBST("GNULIB_PSELECT", "0"),
+        macros.AC_SUBST("GNULIB_SELECT", "0"),
+
+        # Check if sys/select.h is self-contained (from gl_SYS_SELECT_H)
         macros.AC_TRY_COMPILE(
             code = """\
 #include <sys/select.h>
 int main(void) { return 0; }
 """,
             define = "HAVE_SYS_SELECT_H_SELFCONTAINED",
+            language = "c",
         ),
-        # Also check for select function
-        macros.AC_CHECK_FUNC("select"),
-        # Check for pselect function
-        macros.AC_CHECK_FUNC("pselect"),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",  # For NEXT_SYS_SELECT_H
+        "//gnulib/m4/sys_time_h",  # Often needed alongside sys/select.h
+    ],
+)
+
+# =============================================================================
+# gl_SYS_SELECT_H_DEFAULTS - exact match of AC_SUBST from the m4 *_DEFAULTS macro
+# =============================================================================
+
+_GL_SYS_SELECT_H_DEFAULTS = [
+    macros.AC_SUBST("HAVE_PSELECT", "1"),
+    macros.AC_SUBST("REPLACE_PSELECT", "0"),
+    macros.AC_SUBST("REPLACE_SELECT", "0"),
+]
+
+autoconf(
+    name = "with_defaults",
+    checks = _GL_SYS_SELECT_H_DEFAULTS,
+    visibility = ["//visibility:public"],
+    deps = [
+        ":sys_select_h",
+    ],
 )

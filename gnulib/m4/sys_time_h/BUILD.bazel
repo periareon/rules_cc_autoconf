@@ -3,13 +3,42 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# =============================================================================
+# gl_SYS_TIME_H - Header check and GNULIB module indicators
+# =============================================================================
+
 autoconf(
     name = "sys_time_h",
     checks = [
-        macros.AC_CHECK_HEADER(
-            "sys/time.h",
-            define = "HAVE_SYS_TIME_H",
-        ),
+        # Header check - this sets HAVE_SYS_TIME_H
+        macros.AC_CHECK_HEADER("sys/time.h"),
+
+        # gl_MODULE_INDICATOR_INIT_VARIABLE calls (from gl_SYS_TIME_H)
+        macros.AC_SUBST("GNULIB_GETTIMEOFDAY", "0"),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",  # For NEXT_SYS_TIME_H
+    ],
+)
+
+# =============================================================================
+# gl_SYS_TIME_H_DEFAULTS - exact match of AC_SUBST from the m4 *_DEFAULTS macro
+# =============================================================================
+
+_GL_SYS_TIME_H_DEFAULTS = [
+    macros.AC_SUBST("HAVE_GETTIMEOFDAY", "1"),
+    macros.AC_SUBST("HAVE_STRUCT_TIMEVAL", "1"),
+    # Note: HAVE_SYS_TIME_H is set by AC_CHECK_HEADER in main target, not here
+    macros.AC_SUBST("REPLACE_GETTIMEOFDAY", "0"),
+    macros.AC_SUBST("REPLACE_STRUCT_TIMEVAL", "0"),
+]
+
+autoconf(
+    name = "with_defaults",
+    checks = _GL_SYS_TIME_H_DEFAULTS,
+    visibility = ["//visibility:public"],
+    deps = [
+        ":sys_time_h",
+    ],
 )

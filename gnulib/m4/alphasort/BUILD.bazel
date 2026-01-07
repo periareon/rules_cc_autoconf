@@ -6,12 +6,7 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "alphasort",
     checks = [
-        # Check for alphasort function
-        # Equivalent to gl_FUNC_ALPHASORT macro from alphasort.m4
-        macros.AC_CHECK_FUNC(
-            "alphasort",
-            define = "HAVE_ALPHASORT",
-        ),
+        macros.AC_CHECK_FUNC("alphasort"),
     ],
     visibility = ["//visibility:public"],
     deps = [

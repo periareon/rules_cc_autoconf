@@ -3,6 +3,10 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# =============================================================================
+# gl_POLL_H - Header check and GNULIB module indicators
+# =============================================================================
+
 autoconf(
     name = "poll_h",
     checks = [
@@ -10,6 +14,30 @@ autoconf(
             "poll.h",
             define = "HAVE_POLL_H",
         ),
+
+        # gl_MODULE_INDICATOR_INIT_VARIABLE calls (from gl_POLL_H)
+        macros.AC_SUBST("GNULIB_POLL", "0"),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",
+    ],
+)
+
+# =============================================================================
+# gl_POLL_H_DEFAULTS - exact match of AC_SUBST from the m4 *_DEFAULTS macro
+# =============================================================================
+
+_GL_POLL_H_DEFAULTS = [
+    macros.AC_SUBST("HAVE_POLL", "1"),
+    macros.AC_SUBST("REPLACE_POLL", "0"),
+]
+
+autoconf(
+    name = "with_defaults",
+    checks = _GL_POLL_H_DEFAULTS,
+    visibility = ["//visibility:public"],
+    deps = [
+        ":poll_h",
+    ],
 )

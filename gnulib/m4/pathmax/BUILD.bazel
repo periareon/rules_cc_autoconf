@@ -6,12 +6,7 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "pathmax",
     checks = [
-        # Check for sys/param.h header
-        # Equivalent to gl_PATHMAX macro from pathmax.m4
-        macros.AC_CHECK_HEADER(
-            "sys/param.h",
-            define = "HAVE_SYS_PARAM_H",
-        ),
+        macros.AC_CHECK_HEADER("sys/param.h"),
     ],
     visibility = ["//visibility:public"],
 )

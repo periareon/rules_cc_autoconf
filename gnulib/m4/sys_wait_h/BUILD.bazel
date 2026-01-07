@@ -3,18 +3,39 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# gl_SYS_WAIT_H from sys_wait_h.m4
 autoconf(
     name = "sys_wait_h",
     checks = [
+        # ============================================================
+        # GNULIB module indicator variables (AC_SUBST, default 0)
+        # These are set to 1 by specific gnulib modules when enabled
+        # ============================================================
+        macros.AC_SUBST("GNULIB_WAITPID", "0"),
+
+        # ============================================================
+        # HAVE_* variables - use compile-time checks
+        # ============================================================
         # Check for sys/wait.h header
-        macros.AC_CHECK_HEADER("sys/wait.h"),
+        macros.AC_CHECK_HEADER(
+            "sys/wait.h",
+            define = "HAVE_SYS_WAIT_H",
+        ),
+
+        # Check for waitpid function
+        macros.AC_CHECK_FUNC(
+            "waitpid",
+            define = "HAVE_WAITPID",
+        ),
+
         # Check for waitpid declaration
         macros.AC_CHECK_DECL(
             "waitpid",
+            define = "HAVE_DECL_WAITPID",
             headers = ["sys/wait.h"],
-            requires = ["HAVE_SYS_WAIT_H"],
         ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",  # For NEXT_SYS_WAIT_H
+    ],
 )

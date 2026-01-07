@@ -8,12 +8,13 @@ autoconf(
     checks = [
         macros.AC_CHECK_DECL(
             "ceill",
-            define = "HAVE_DECL_CEILL",
             headers = ["math.h"],
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/ceil",
+        "//gnulib/m4/isnanl",
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
     ],
 )

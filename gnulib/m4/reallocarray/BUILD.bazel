@@ -1,11 +1,31 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/reallocarray.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "reallocarray",
     checks = [
-        # Note: reallocarray.m4 may not exist in gnulib, or this module may not have checks
+        # Check if reallocarray exists
+        macros.AC_CHECK_FUNC("reallocarray"),
+
+        # REPLACE_REALLOCARRAY logic:
+        # - On Windows: no reallocarray, need replacement
+        # - On Android: may be "future" function, need replacement
+        # - On most modern Linux/macOS: reallocarray exists and works
+        macros.AC_SUBST(
+            "REPLACE_REALLOCARRAY",
+            select({
+                "@platforms//os:android": "1",  # May be "future" function
+                "@platforms//os:windows": "1",  # No reallocarray on Windows
+                "//conditions:default": "0",  # Modern POSIX systems have working reallocarray
+            }),
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/stdlib_h",  # AC_REQUIRE([gl_STDLIB_H_DEFAULTS])
+        # Note: Full gnulib also requires gl_CHECK_MALLOC_PTRDIFF and
+        # gl_FUNC_REALLOC_0_NONNULL but those aren't implemented yet
+    ],
 )

@@ -6,10 +6,7 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "threadlib",
     checks = [
-        macros.AC_CHECK_HEADER(
-            "pthread.h",
-            define = "HAVE_PTHREAD_H",
-        ),
+        # Note: HAVE_PTHREAD_H is provided by pthread_h dependency
         macros.AC_CHECK_HEADER(
             "threads.h",
             define = "HAVE_THREADS_H",
@@ -46,4 +43,7 @@ autoconf(
         ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/pthread_h",  # Provides HAVE_PTHREAD_H
+    ],
 )

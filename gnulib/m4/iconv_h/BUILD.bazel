@@ -1,11 +1,45 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/iconv_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# =============================================================================
+# gl_ICONV_H - Header check and GNULIB module indicators
+# =============================================================================
 
 autoconf(
     name = "iconv_h",
     checks = [
-        # Note: iconv_h.m4 may not exist in gnulib, or this module may not have checks
+        macros.AC_CHECK_HEADER(
+            "iconv.h",
+            define = "HAVE_ICONV_H",
+        ),
+
+        # gl_MODULE_INDICATOR_INIT_VARIABLE calls (from gl_ICONV_H)
+        macros.AC_SUBST("GNULIB_ICONV", "0"),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",  # For NEXT_ICONV_H
+    ],
+)
+
+# =============================================================================
+# gl_ICONV_H_DEFAULTS - exact match of AC_SUBST from the m4 *_DEFAULTS macro
+# =============================================================================
+
+_GL_ICONV_H_DEFAULTS = [
+    macros.AC_SUBST("ICONV_CONST", ""),
+    macros.AC_SUBST("REPLACE_ICONV", "0"),
+    macros.AC_SUBST("REPLACE_ICONV_OPEN", "0"),
+    macros.AC_SUBST("REPLACE_ICONV_UTF", "0"),
+]
+
+autoconf(
+    name = "with_defaults",
+    checks = _GL_ICONV_H_DEFAULTS,
+    visibility = ["//visibility:public"],
+    deps = [
+        ":iconv_h",
+    ],
 )

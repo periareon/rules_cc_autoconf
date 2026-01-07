@@ -6,21 +6,92 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "inttypes",
     checks = [
+        # ============================================================
+        # GNULIB module indicator variables (AC_SUBST, default 0)
+        # These are set to 1 by specific gnulib modules when enabled
+        # ============================================================
+        macros.AC_SUBST("GNULIB_IMAXABS", "0"),
+        macros.AC_SUBST("GNULIB_IMAXDIV", "0"),
+        macros.AC_SUBST("GNULIB_STRTOIMAX", "0"),
+        macros.AC_SUBST("GNULIB_STRTOUMAX", "0"),
+
+        # ============================================================
+        # HAVE_* variables - use compile-time checks
+        # ============================================================
         # Check for inttypes.h header
-        # Equivalent to gl_INTTYPES_H macro from inttypes.m4
-        # Note: Full implementation includes PRI* and SCN* macro checks
-        # that are complex to replicate in Bazel
         macros.AC_CHECK_HEADER(
             "inttypes.h",
             define = "HAVE_INTTYPES_H",
         ),
+
+        # Check for functions
+        macros.AC_CHECK_FUNC(
+            "imaxabs",
+            define = "HAVE_IMAXABS",
+        ),
+        macros.AC_CHECK_FUNC(
+            "imaxdiv",
+            define = "HAVE_IMAXDIV",
+        ),
+
+        # Check for declarations
+        macros.AC_CHECK_DECL(
+            "imaxabs",
+            define = "HAVE_DECL_IMAXABS",
+            headers = ["inttypes.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "imaxdiv",
+            define = "HAVE_DECL_IMAXDIV",
+            headers = ["inttypes.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "strtoimax",
+            define = "HAVE_DECL_STRTOIMAX",
+            headers = ["inttypes.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "strtoumax",
+            define = "HAVE_DECL_STRTOUMAX",
+            headers = ["inttypes.h"],
+        ),
+
+        # Check for imaxdiv_t type
+        macros.AC_CHECK_TYPE(
+            "imaxdiv_t",
+            code = """\
+#include <inttypes.h>
+int main(void) {
+    imaxdiv_t x;
+    (void)x;
+    return 0;
+}
+""",
+            define = "HAVE_IMAXDIV_T",
+        ),
+
+        # ============================================================
+        # REPLACE_* variables (AC_SUBST, default 0)
+        # These are set to 1 when gnulib needs to replace a function
+        # ============================================================
+        macros.AC_SUBST("REPLACE_IMAXABS", "0"),
+        macros.AC_SUBST("REPLACE_IMAXDIV", "0"),
+        macros.AC_SUBST("REPLACE_STRTOIMAX", "0"),
+        macros.AC_SUBST("REPLACE_STRTOUMAX", "0"),
+
+        # ============================================================
+        # PRI/SCN format macros configuration
+        # ============================================================
+        macros.AC_SUBST("INT32_MAX_LT_INTMAX_MAX", "1"),
+        macros.AC_SUBST("INT64_MAX_EQ_LONG_MAX", "defined _LP64"),
+        macros.AC_SUBST("PRIPTR_PREFIX", "__PRIPTR_PREFIX"),
+        macros.AC_SUBST("UINT32_MAX_LT_UINTMAX_MAX", "1"),
+        macros.AC_SUBST("UINT64_MAX_EQ_ULONG_MAX", "defined _LP64"),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//gnulib/m4/include_next",  # For NEXT_INTTYPES_H
         "//gnulib/m4/multiarch",  # AC_REQUIRE([gl_MULTIARCH])
         "//gnulib/m4/stdint_h",  # AC_REQUIRE([gl_STDINT_H])
-        "//gnulib/m4/inttypes_h",  # AC_REQUIRE([gl_INTTYPES_H_DEFAULTS])
-        # Note: AC_REQUIRE([gl_MULTIARCH]) and AC_REQUIRE([AC_C_RESTRICT])
-        # are standard autoconf macros
     ],
 )

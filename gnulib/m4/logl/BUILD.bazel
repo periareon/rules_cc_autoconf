@@ -8,15 +8,14 @@ autoconf(
     checks = [
         macros.AC_CHECK_DECL(
             "logl",
-            define = "HAVE_DECL_LOGL",
             headers = ["math.h"],
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/floorl",
         "//gnulib/m4/frexpl",
         "//gnulib/m4/isnanl",
         "//gnulib/m4/log",
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
     ],
 )

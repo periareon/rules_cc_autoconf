@@ -1,18 +1,183 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/stdlib_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# =============================================================================
+# gl_STDLIB_H - Header check + GNULIB module indicators
+# =============================================================================
 
 autoconf(
     name = "stdlib_h",
     checks = [
-        # Check for stdlib.h header
-        # Equivalent to gl_STDLIB_H macro from stdlib_h.m4
-        # Note: Full implementation includes checks for MB_CUR_MAX correctness
+        macros.AC_CHECK_HEADER("stdlib.h"),
+
+        # gl_MODULE_INDICATOR_INIT_VARIABLE calls (from gl_STDLIB_H, not gl_STDLIB_H_DEFAULTS)
+        macros.AC_SUBST("GNULIB__EXIT", "0"),
+        macros.AC_SUBST("GNULIB_ABORT_DEBUG", "0"),
+        macros.AC_SUBST("GNULIB_ALIGNED_ALLOC", "0"),
+        macros.AC_SUBST("GNULIB_ATOLL", "0"),
+        macros.AC_SUBST("GNULIB_CALLOC_GNU", "0"),
+        macros.AC_SUBST("GNULIB_CALLOC_POSIX", "0"),
+        macros.AC_SUBST("GNULIB_CANONICALIZE_FILE_NAME", "0"),
+        macros.AC_SUBST("GNULIB_FREE_POSIX", "0"),
+        macros.AC_SUBST("GNULIB_GETLOADAVG", "0"),
+        macros.AC_SUBST("GNULIB_GETPROGNAME", "0"),
+        macros.AC_SUBST("GNULIB_GETSUBOPT", "0"),
+        macros.AC_SUBST("GNULIB_GRANTPT", "0"),
+        macros.AC_SUBST("GNULIB_MALLOC_GNU", "0"),
+        macros.AC_SUBST("GNULIB_MALLOC_POSIX", "0"),
+        macros.AC_SUBST("GNULIB_MBSTOWCS", "0"),
+        macros.AC_SUBST("GNULIB_MBTOWC", "0"),
+        macros.AC_SUBST("GNULIB_MKDTEMP", "0"),
+        macros.AC_SUBST("GNULIB_MKOSTEMP", "0"),
+        macros.AC_SUBST("GNULIB_MKOSTEMPS", "0"),
+        macros.AC_SUBST("GNULIB_MKSTEMP", "0"),
+        macros.AC_SUBST("GNULIB_MKSTEMPS", "0"),
+        macros.AC_SUBST("GNULIB_POSIX_MEMALIGN", "0"),
+        macros.AC_SUBST("GNULIB_POSIX_OPENPT", "0"),
+        macros.AC_SUBST("GNULIB_PTSNAME", "0"),
+        macros.AC_SUBST("GNULIB_PTSNAME_R", "0"),
+        macros.AC_SUBST("GNULIB_PUTENV", "0"),
+        macros.AC_SUBST("GNULIB_QSORT_R", "0"),
+        macros.AC_SUBST("GNULIB_RAND", "0"),
+        macros.AC_SUBST("GNULIB_RANDOM", "0"),
+        macros.AC_SUBST("GNULIB_RANDOM_R", "0"),
+        macros.AC_SUBST("GNULIB_REALLOCARRAY", "0"),
+        macros.AC_SUBST("GNULIB_REALLOC_POSIX", "0"),
+        macros.AC_SUBST("GNULIB_REALPATH", "0"),
+        macros.AC_SUBST("GNULIB_RPMATCH", "0"),
+        macros.AC_SUBST("GNULIB_SECURE_GETENV", "0"),
+        macros.AC_SUBST("GNULIB_SETENV", "0"),
+        macros.AC_SUBST("GNULIB_STACK_TRACE", "0"),
+        macros.AC_SUBST("GNULIB_STRTOD", "0"),
+        macros.AC_SUBST("GNULIB_STRTOF", "0"),
+        macros.AC_SUBST("GNULIB_STRTOL", "0"),
+        macros.AC_SUBST("GNULIB_STRTOLD", "0"),
+        macros.AC_SUBST("GNULIB_STRTOLL", "0"),
+        macros.AC_SUBST("GNULIB_STRTOUL", "0"),
+        macros.AC_SUBST("GNULIB_STRTOULL", "0"),
+        macros.AC_SUBST("GNULIB_SYSTEM_POSIX", "0"),
+        macros.AC_SUBST("GNULIB_UNLOCKPT", "0"),
+        macros.AC_SUBST("GNULIB_UNSETENV", "0"),
+        macros.AC_SUBST("GNULIB_WCTOMB", "0"),
+        # Microsoft deprecated alias function names - default to 1
+        macros.AC_SUBST("GNULIB_MDA_ECVT", "1"),
+        macros.AC_SUBST("GNULIB_MDA_FCVT", "1"),
+        macros.AC_SUBST("GNULIB_MDA_GCVT", "1"),
+        macros.AC_SUBST("GNULIB_MDA_MKTEMP", "1"),
+        macros.AC_SUBST("GNULIB_MDA_PUTENV", "1"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # Note: AC_C_RESTRICT and AC_CANONICAL_HOST are standard autoconf macros
-        # Note: gt_LOCALE_EN_UTF8 requires locale-en package (locale-en-utf8 doesn't exist)
-        "//gnulib/m4/locale-en",  # AC_REQUIRE([gt_LOCALE_EN_UTF8])
+        "//gnulib/m4/include_next",  # gl_NEXT_HEADERS([stdlib.h])
+    ],
+)
+
+# =============================================================================
+# gl_STDLIB_H_DEFAULTS - exact match of AC_SUBST from the m4 *_DEFAULTS macro
+# =============================================================================
+
+_GL_STDLIB_H_DEFAULTS = [
+    # HAVE_* defaults (all =1 except HAVE_SYS_LOADAVG_H)
+    macros.AC_SUBST("HAVE__EXIT", "1"),
+    macros.AC_SUBST("HAVE_ALIGNED_ALLOC", "1"),
+    macros.AC_SUBST("HAVE_ATOLL", "1"),
+    macros.AC_SUBST("HAVE_CANONICALIZE_FILE_NAME", "1"),
+    macros.AC_SUBST("HAVE_DECL_ECVT", "1"),
+    macros.AC_SUBST("HAVE_DECL_FCVT", "1"),
+    macros.AC_SUBST("HAVE_DECL_GCVT", "1"),
+    macros.AC_SUBST("HAVE_DECL_GETLOADAVG", "1"),
+    macros.AC_SUBST("HAVE_DECL_PROGRAM_INVOCATION_NAME", "1"),
+    macros.AC_SUBST("HAVE_GETPROGNAME", "1"),
+    macros.AC_SUBST("HAVE_GETSUBOPT", "1"),
+    macros.AC_SUBST("HAVE_GRANTPT", "1"),
+    macros.AC_SUBST("HAVE_INITSTATE", "1"),
+    macros.AC_SUBST("HAVE_DECL_INITSTATE", "1"),
+    macros.AC_SUBST("HAVE_MBTOWC", "1"),
+    macros.AC_SUBST("HAVE_MKDTEMP", "1"),
+    macros.AC_SUBST("HAVE_MKOSTEMP", "1"),
+    macros.AC_SUBST("HAVE_MKOSTEMPS", "1"),
+    macros.AC_SUBST("HAVE_MKSTEMP", "1"),
+    macros.AC_SUBST("HAVE_MKSTEMPS", "1"),
+    macros.AC_SUBST("HAVE_POSIX_MEMALIGN", "1"),
+    macros.AC_SUBST("HAVE_POSIX_OPENPT", "1"),
+    macros.AC_SUBST("HAVE_PTSNAME", "1"),
+    macros.AC_SUBST("HAVE_PTSNAME_R", "1"),
+    macros.AC_SUBST("HAVE_QSORT_R", "1"),
+    macros.AC_SUBST("HAVE_RANDOM", "1"),
+    macros.AC_SUBST("HAVE_RANDOM_R", "1"),
+    macros.AC_SUBST("HAVE_REALLOCARRAY", "1"),
+    macros.AC_SUBST("HAVE_REALPATH", "1"),
+    macros.AC_SUBST("HAVE_RPMATCH", "1"),
+    macros.AC_SUBST("HAVE_SECURE_GETENV", "1"),
+    macros.AC_SUBST("HAVE_SETENV", "1"),
+    macros.AC_SUBST("HAVE_DECL_SETENV", "1"),
+    macros.AC_SUBST("HAVE_SETSTATE", "1"),
+    macros.AC_SUBST("HAVE_DECL_SETSTATE", "1"),
+    macros.AC_SUBST("HAVE_STRTOD", "1"),
+    macros.AC_SUBST("HAVE_STRTOF", "1"),
+    macros.AC_SUBST("HAVE_STRTOL", "1"),
+    macros.AC_SUBST("HAVE_STRTOLD", "1"),
+    macros.AC_SUBST("HAVE_STRTOLL", "1"),
+    macros.AC_SUBST("HAVE_STRTOUL", "1"),
+    macros.AC_SUBST("HAVE_STRTOULL", "1"),
+    macros.AC_SUBST("HAVE_STRUCT_RANDOM_DATA", "1"),
+    macros.AC_SUBST("HAVE_SYS_LOADAVG_H", "0"),
+    macros.AC_SUBST("HAVE_UNLOCKPT", "1"),
+    macros.AC_SUBST("HAVE_DECL_UNSETENV", "1"),
+    # REPLACE_* defaults (all =0)
+    macros.AC_SUBST("REPLACE__EXIT", "0"),
+    macros.AC_SUBST("REPLACE_ABORT", "0"),
+    macros.AC_SUBST("REPLACE_ALIGNED_ALLOC", "0"),
+    macros.AC_SUBST("REPLACE_CALLOC_FOR_CALLOC_GNU", "0"),
+    macros.AC_SUBST("REPLACE_CALLOC_FOR_CALLOC_POSIX", "0"),
+    macros.AC_SUBST("REPLACE_CANONICALIZE_FILE_NAME", "0"),
+    macros.AC_SUBST("REPLACE_FREE", "0"),
+    macros.AC_SUBST("REPLACE_GETLOADAVG", "0"),
+    macros.AC_SUBST("REPLACE_GETPROGNAME", "0"),
+    macros.AC_SUBST("REPLACE_GETSUBOPT", "0"),
+    macros.AC_SUBST("REPLACE_INITSTATE", "0"),
+    macros.AC_SUBST("REPLACE_MALLOC_FOR_MALLOC_GNU", "0"),
+    macros.AC_SUBST("REPLACE_MALLOC_FOR_MALLOC_POSIX", "0"),
+    macros.AC_SUBST("REPLACE_MB_CUR_MAX", "0"),
+    macros.AC_SUBST("REPLACE_MBSTOWCS", "0"),
+    macros.AC_SUBST("REPLACE_MBTOWC", "0"),
+    macros.AC_SUBST("REPLACE_MKOSTEMP", "0"),
+    macros.AC_SUBST("REPLACE_MKOSTEMPS", "0"),
+    macros.AC_SUBST("REPLACE_MKSTEMP", "0"),
+    macros.AC_SUBST("REPLACE_POSIX_MEMALIGN", "0"),
+    macros.AC_SUBST("REPLACE_POSIX_OPENPT", "0"),
+    macros.AC_SUBST("REPLACE_PTSNAME", "0"),
+    macros.AC_SUBST("REPLACE_PTSNAME_R", "0"),
+    macros.AC_SUBST("REPLACE_PUTENV", "0"),
+    macros.AC_SUBST("REPLACE_QSORT_R", "0"),
+    macros.AC_SUBST("REPLACE_RAND", "0"),
+    macros.AC_SUBST("REPLACE_RANDOM", "0"),
+    macros.AC_SUBST("REPLACE_RANDOM_R", "0"),
+    macros.AC_SUBST("REPLACE_REALLOC_FOR_REALLOC_POSIX", "0"),
+    macros.AC_SUBST("REPLACE_REALLOCARRAY", "0"),
+    macros.AC_SUBST("REPLACE_REALPATH", "0"),
+    macros.AC_SUBST("REPLACE_SETENV", "0"),
+    macros.AC_SUBST("REPLACE_SETSTATE", "0"),
+    macros.AC_SUBST("REPLACE_STRTOD", "0"),
+    macros.AC_SUBST("REPLACE_STRTOF", "0"),
+    macros.AC_SUBST("REPLACE_STRTOL", "0"),
+    macros.AC_SUBST("REPLACE_STRTOLD", "0"),
+    macros.AC_SUBST("REPLACE_STRTOLL", "0"),
+    macros.AC_SUBST("REPLACE_STRTOUL", "0"),
+    macros.AC_SUBST("REPLACE_STRTOULL", "0"),
+    macros.AC_SUBST("REPLACE_UNSETENV", "0"),
+    macros.AC_SUBST("REPLACE_WCTOMB", "0"),
+    # Other
+    macros.AC_SUBST("CAN_PRINT_STACK_TRACE", "0"),
+]
+
+autoconf(
+    name = "with_defaults",
+    checks = _GL_STDLIB_H_DEFAULTS,
+    visibility = ["//visibility:public"],
+    deps = [
+        ":stdlib_h",
     ],
 )

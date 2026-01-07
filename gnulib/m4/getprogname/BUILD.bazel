@@ -6,8 +6,6 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "getprogname",
     checks = [
-        # Check for getprogname function and related declarations
-        # Equivalent to gl_FUNC_GETPROGNAME macro from getprogname.m4
         macros.AC_TRY_COMPILE(
             code = """#include <stdlib.h>
 
@@ -24,23 +22,17 @@ int main(void) {
         ),
         macros.AC_CHECK_DECL(
             "program_invocation_name",
-            define = "HAVE_DECL_PROGRAM_INVOCATION_NAME",
             headers = ["errno.h"],
         ),
         macros.AC_CHECK_DECL(
             "program_invocation_short_name",
-            define = "HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME",
             headers = ["errno.h"],
         ),
         macros.AC_CHECK_DECL(
             "__argv",
-            define = "HAVE_DECL___ARGV",
             headers = ["stdlib.h"],
         ),
-        macros.AC_CHECK_FUNC(
-            "getexecname",
-            define = "HAVE_GETEXECNAME",
-        ),
+        macros.AC_CHECK_FUNC("getexecname"),
         macros.AC_TRY_COMPILE(
             code = """extern char *__progname;
 
@@ -54,6 +46,5 @@ int main(void) {
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/stdlib_h",  # AC_REQUIRE([gl_STDLIB_H_DEFAULTS])
-        # Note: AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
     ],
 )

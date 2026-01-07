@@ -8,7 +8,6 @@ autoconf(
     checks = [
         macros.AC_CHECK_DECL(
             "expl",
-            define = "HAVE_DECL_EXPL",
             headers = ["math.h"],
         ),
     ],
@@ -17,6 +16,6 @@ autoconf(
         "//gnulib/m4/exp",
         "//gnulib/m4/isnanl",
         "//gnulib/m4/ldexpl",
-        "//gnulib/m4/roundl",
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
     ],
 )
