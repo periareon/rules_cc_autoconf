@@ -260,3 +260,198 @@ diff_test(
     file1 = "golden_config.h.in",
     file2 = ":config_nested.h",
 )
+
+# Test case 8: Module with explicit name override
+write_file(
+    name = "module_with_forced_name",
+    out = "module_with_forced_name.bazel",
+    content = [
+        "module(",
+        '    name = "original_module",',
+        '    version = "2.0.0",',
+        ")",
+    ],
+)
+
+package_info(
+    name = "module_info_with_forced_name",
+    package_name = "forced_module_name",
+    module_bazel = ":module_with_forced_name.bazel",
+)
+
+autoconf_hdr(
+    name = "config_with_forced_name",
+    out = "config_with_forced_name.h",
+    template = "config.h.in",
+    deps = [":module_info_with_forced_name"],
+)
+
+# Golden header file for forced name test (should use forced name, original version)
+write_file(
+    name = "golden_config_with_forced_name",
+    out = "golden_config_with_forced_name.h.in",
+    content = [
+        "/* config.h.in.  Generated from MODULE.bazel.  */",
+        "",
+        "/* Define to the full name of this package. */",
+        '#define PACKAGE_NAME "forced_module_name"',
+        "",
+        "/* Define to the version of this package. */",
+        '#define PACKAGE_VERSION "2.0.0"',
+        "",
+    ],
+    newline = "unix",
+)
+
+# Test case 9: Module with explicit version override
+write_file(
+    name = "module_with_forced_version",
+    out = "module_with_forced_version.bazel",
+    content = [
+        "module(",
+        '    name = "original_module",',
+        '    version = "1.0.0",',
+        ")",
+    ],
+)
+
+package_info(
+    name = "module_info_with_forced_version",
+    module_bazel = ":module_with_forced_version.bazel",
+    package_version = "9.9.9",
+)
+
+autoconf_hdr(
+    name = "config_with_forced_version",
+    out = "config_with_forced_version.h",
+    template = "config.h.in",
+    deps = [":module_info_with_forced_version"],
+)
+
+# Golden header file for forced version test (should use original name, forced version)
+write_file(
+    name = "golden_config_with_forced_version",
+    out = "golden_config_with_forced_version.h.in",
+    content = [
+        "/* config.h.in.  Generated from MODULE.bazel.  */",
+        "",
+        "/* Define to the full name of this package. */",
+        '#define PACKAGE_NAME "original_module"',
+        "",
+        "/* Define to the version of this package. */",
+        '#define PACKAGE_VERSION "9.9.9"',
+        "",
+    ],
+    newline = "unix",
+)
+
+# Test case 10: Module with both explicit name and version override
+write_file(
+    name = "module_with_forced_name_and_version",
+    out = "module_with_forced_name_and_version.bazel",
+    content = [
+        "module(",
+        '    name = "original_module",',
+        '    version = "1.0.0",',
+        ")",
+    ],
+)
+
+package_info(
+    name = "module_info_with_forced_name_and_version",
+    package_name = "custom_package",
+    module_bazel = ":module_with_forced_name_and_version.bazel",
+    package_version = "3.14.0",
+)
+
+autoconf_hdr(
+    name = "config_with_forced_name_and_version",
+    out = "config_with_forced_name_and_version.h",
+    template = "config.h.in",
+    deps = [":module_info_with_forced_name_and_version"],
+)
+
+# Golden header file for forced name and version test (should use both forced values)
+write_file(
+    name = "golden_config_with_forced_name_and_version",
+    out = "golden_config_with_forced_name_and_version.h.in",
+    content = [
+        "/* config.h.in.  Generated from MODULE.bazel.  */",
+        "",
+        "/* Define to the full name of this package. */",
+        '#define PACKAGE_NAME "custom_package"',
+        "",
+        "/* Define to the version of this package. */",
+        '#define PACKAGE_VERSION "3.14.0"',
+        "",
+    ],
+    newline = "unix",
+)
+
+# Test case 11: Module with forced name and version where forced values differ significantly
+write_file(
+    name = "module_with_different_forced_values",
+    out = "module_with_different_forced_values.bazel",
+    content = [
+        "module(",
+        '    name = "test_module",',
+        '    version = "1.0.0",',
+        ")",
+    ],
+)
+
+package_info(
+    name = "module_info_with_different_forced_values",
+    package_name = "overridden_name",
+    module_bazel = ":module_with_different_forced_values.bazel",
+    package_version = "999.888.777",
+)
+
+autoconf_hdr(
+    name = "config_with_different_forced_values",
+    out = "config_with_different_forced_values.h",
+    template = "config.h.in",
+    deps = [":module_info_with_different_forced_values"],
+)
+
+# Golden header file for different forced values test
+write_file(
+    name = "golden_config_with_different_forced_values",
+    out = "golden_config_with_different_forced_values.h.in",
+    content = [
+        "/* config.h.in.  Generated from MODULE.bazel.  */",
+        "",
+        "/* Define to the full name of this package. */",
+        '#define PACKAGE_NAME "overridden_name"',
+        "",
+        "/* Define to the version of this package. */",
+        '#define PACKAGE_VERSION "999.888.777"',
+        "",
+    ],
+    newline = "unix",
+)
+
+# Diff tests for forced value test cases
+diff_test(
+    name = "diff_test_header_with_forced_name",
+    file1 = ":golden_config_with_forced_name.h.in",
+    file2 = ":config_with_forced_name.h",
+)
+
+diff_test(
+    name = "diff_test_header_with_forced_version",
+    file1 = ":golden_config_with_forced_version.h.in",
+    file2 = ":config_with_forced_version.h",
+)
+
+diff_test(
+    name = "diff_test_header_with_forced_name_and_version",
+    file1 = ":golden_config_with_forced_name_and_version.h.in",
+    file2 = ":config_with_forced_name_and_version.h",
+)
+
+diff_test(
+    name = "diff_test_header_with_different_forced_values",
+    file1 = ":golden_config_with_different_forced_values.h.in",
+    file2 = ":config_with_different_forced_values.h",
+)

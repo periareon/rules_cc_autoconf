@@ -19,10 +19,10 @@ def _package_info_impl(ctx):
         args.add("--module-bazel", ctx.file.module_bazel)
 
         if ctx.attr.package_name:
-            args.add("--forced-name", ctx.attr.package_name)
+            args.add("--force-name", ctx.attr.package_name)
 
         if ctx.attr.package_version:
-            args.add("--forced-name", ctx.attr.package_version)
+            args.add("--force-version", ctx.attr.package_version)
 
         ctx.actions.run(
             mnemonic = "ModuleBazelParse",
