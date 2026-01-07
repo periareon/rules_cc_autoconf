@@ -3,53 +3,54 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# =============================================================================
+# gl_SIGNAL_H - Header check and GNULIB module indicators
+# =============================================================================
+
 autoconf(
     name = "signal_h",
     checks = [
-        # Check for signal.h types
-        # Equivalent to gl_SIGNAL_H macro from signal_h.m4
-        macros.AC_CHECK_TYPE(
-            "volatile sig_atomic_t",
-            code = """\
-#include <signal.h>
-int main(void) {
-    volatile sig_atomic_t x = 0;
-    return (int)x;
-}
-""",
-            define = "HAVE_TYPE_VOLATILE_SIG_ATOMIC_T",
-        ),
-        macros.AC_CHECK_TYPE(
-            "sighandler_t",
-            code = """\
-#include <signal.h>
-int main(void) {
-    if (sizeof(sighandler_t))
-        return 0;
-    return 1;
-}
-""",
-            define = "HAVE_SIGHANDLER_T",
-        ),
-        macros.AC_CHECK_TYPE(
-            "sigset_t",
-            code = """\
-#include <signal.h>
-#include <sys/types.h>
-int main(void) {
-    if (sizeof(sigset_t))
-        return 0;
-    return 1;
-}
-""",
-            define = "HAVE_SIGSET_T",
-        ),
+        macros.AC_CHECK_HEADER("signal.h"),
+
+        # gl_MODULE_INDICATOR_INIT_VARIABLE calls (from gl_SIGNAL_H)
+        macros.AC_SUBST("GNULIB_PTHREAD_SIGMASK", "0"),
+        macros.AC_SUBST("GNULIB_RAISE", "0"),
+        macros.AC_SUBST("GNULIB_SIG2STR", "0"),
+        macros.AC_SUBST("GNULIB_SIGNAL_H_SIGPIPE", "0"),
+        macros.AC_SUBST("GNULIB_SIGPROCMASK", "0"),
+        macros.AC_SUBST("GNULIB_SIGACTION", "0"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # Note: Standard autoconf macros like AC_C_RESTRICT, AC_TYPE_PID_T, etc.
-        # would be handled via the corresponding macros if needed, but those
-        # targets don't exist in this project. These are standard system checks
-        # that are typically available.
+        "//gnulib/m4/include_next",  # For NEXT_SIGNAL_H
+    ],
+)
+
+# =============================================================================
+# gl_SIGNAL_H_DEFAULTS - exact match of AC_SUBST from the m4 *_DEFAULTS macro
+# =============================================================================
+
+_GL_SIGNAL_H_DEFAULTS = [
+    macros.AC_SUBST("HAVE_POSIX_SIGNALBLOCKING", "1"),
+    macros.AC_SUBST("HAVE_PTHREAD_SIGMASK", "1"),
+    macros.AC_SUBST("HAVE_RAISE", "1"),
+    macros.AC_SUBST("HAVE_SIG2STR", "1"),
+    macros.AC_SUBST("HAVE_SIGSET_T", "1"),
+    macros.AC_SUBST("HAVE_SIGINFO_T", "1"),
+    macros.AC_SUBST("HAVE_SIGACTION", "1"),
+    macros.AC_SUBST("HAVE_STR2SIG", "1"),
+    macros.AC_SUBST("HAVE_STRUCT_SIGACTION_SA_SIGACTION", "1"),
+    macros.AC_SUBST("HAVE_TYPE_VOLATILE_SIG_ATOMIC_T", "1"),
+    macros.AC_SUBST("HAVE_SIGHANDLER_T", "1"),
+    macros.AC_SUBST("REPLACE_PTHREAD_SIGMASK", "0"),
+    macros.AC_SUBST("REPLACE_RAISE", "0"),
+]
+
+autoconf(
+    name = "with_defaults",
+    checks = _GL_SIGNAL_H_DEFAULTS,
+    visibility = ["//visibility:public"],
+    deps = [
+        ":signal_h",
     ],
 )

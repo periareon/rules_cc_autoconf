@@ -1,11 +1,112 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/errno_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "errno_h",
     checks = [
-        # Note: errno_h.m4 may not exist in gnulib, or this module may not have checks
+        # Header check
+        macros.AC_CHECK_HEADER(
+            "errno.h",
+            define = "HAVE_ERRNO_H",
+        ),
+
+        # Check for specific errno values via AC_TRY_COMPILE
+        # These are POSIX error codes that may be missing on some platforms
+        macros.AC_TRY_COMPILE(
+            code = "int x = ETXTBSY; (void)x;",
+            define = "HAVE_ETXTBSY",
+            includes = ["errno.h"],
+        ),
+        macros.AC_TRY_COMPILE(
+            code = "int x = ENOMSG; (void)x;",
+            define = "HAVE_ENOMSG",
+            includes = ["errno.h"],
+        ),
+        macros.AC_TRY_COMPILE(
+            code = "int x = EIDRM; (void)x;",
+            define = "HAVE_EIDRM",
+            includes = ["errno.h"],
+        ),
+        macros.AC_TRY_COMPILE(
+            code = "int x = ENOLINK; (void)x;",
+            define = "HAVE_ENOLINK",
+            includes = ["errno.h"],
+        ),
+        macros.AC_TRY_COMPILE(
+            code = "int x = EPROTO; (void)x;",
+            define = "HAVE_EPROTO",
+            includes = ["errno.h"],
+        ),
+        macros.AC_TRY_COMPILE(
+            code = "int x = EMULTIHOP; (void)x;",
+            define = "HAVE_EMULTIHOP",
+            includes = ["errno.h"],
+        ),
+        macros.AC_TRY_COMPILE(
+            code = "int x = EBADMSG; (void)x;",
+            define = "HAVE_EBADMSG",
+            includes = ["errno.h"],
+        ),
+        macros.AC_TRY_COMPILE(
+            code = "int x = EOVERFLOW; (void)x;",
+            define = "HAVE_EOVERFLOW",
+            includes = ["errno.h"],
+        ),
+        macros.AC_TRY_COMPILE(
+            code = "int x = ENOTSUP; (void)x;",
+            define = "HAVE_ENOTSUP",
+            includes = ["errno.h"],
+        ),
+        macros.AC_TRY_COMPILE(
+            code = "int x = ENETRESET; (void)x;",
+            define = "HAVE_ENETRESET",
+            includes = ["errno.h"],
+        ),
+        macros.AC_TRY_COMPILE(
+            code = "int x = ECONNABORTED; (void)x;",
+            define = "HAVE_ECONNABORTED",
+            includes = ["errno.h"],
+        ),
+        macros.AC_TRY_COMPILE(
+            code = "int x = ESTALE; (void)x;",
+            define = "HAVE_ESTALE",
+            includes = ["errno.h"],
+        ),
+        macros.AC_TRY_COMPILE(
+            code = "int x = EDQUOT; (void)x;",
+            define = "HAVE_EDQUOT",
+            includes = ["errno.h"],
+        ),
+        macros.AC_TRY_COMPILE(
+            code = "int x = ECANCELED; (void)x;",
+            define = "HAVE_ECANCELED",
+            includes = ["errno.h"],
+        ),
+        macros.AC_TRY_COMPILE(
+            code = "int x = EOWNERDEAD; (void)x;",
+            define = "HAVE_EOWNERDEAD",
+            includes = ["errno.h"],
+        ),
+        macros.AC_TRY_COMPILE(
+            code = "int x = ENOTRECOVERABLE; (void)x;",
+            define = "HAVE_ENOTRECOVERABLE",
+            includes = ["errno.h"],
+        ),
+        macros.AC_TRY_COMPILE(
+            code = "int x = EILSEQ; (void)x;",
+            define = "HAVE_EILSEQ",
+            includes = ["errno.h"],
+        ),
+        macros.AC_TRY_COMPILE(
+            code = "int x = ESOCKTNOSUPPORT; (void)x;",
+            define = "HAVE_ESOCKTNOSUPPORT",
+            includes = ["errno.h"],
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",
+    ],
 )

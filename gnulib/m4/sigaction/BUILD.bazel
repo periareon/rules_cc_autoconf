@@ -6,26 +6,14 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "sigaction",
     checks = [
-        # Check for sigaction function
-        # Equivalent to gl_SIGACTION macro from sigaction.m4
-        macros.AC_CHECK_FUNC(
-            "sigaction",
-            define = "HAVE_SIGACTION",
-        ),
-        # AC_CHECK_MEMBER equivalent for struct sigaction.sa_sigaction
+        macros.AC_CHECK_FUNC("sigaction"),
         macros.AC_CHECK_MEMBER(
             "struct sigaction",
             "sa_sigaction",
             headers = ["signal.h"],
         ),
-        macros.AC_CHECK_FUNC(
-            "sigaltstack",
-            define = "HAVE_SIGALTSTACK",
-        ),
-        macros.AC_CHECK_FUNC(
-            "siginterrupt",
-            define = "HAVE_SIGINTERRUPT",
-        ),
+        macros.AC_CHECK_FUNC("sigaltstack"),
+        macros.AC_CHECK_FUNC("siginterrupt"),
         macros.AC_CHECK_TYPE(
             "siginfo_t",
             code = """\
@@ -36,12 +24,10 @@ int main(void) {
     return 1;
 }
 """,
-            define = "HAVE_SIGINFO_T",
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # Note: AC_C_RESTRICT and AC_TYPE_UID_T are standard autoconf macros
         "//gnulib/m4/signal_h",  # AC_REQUIRE([gl_SIGNAL_H_DEFAULTS])
     ],
 )

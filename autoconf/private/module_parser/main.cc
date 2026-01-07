@@ -279,7 +279,7 @@ int main(int argc, char* argv[]) {
         name = args.forced_name;
     }
     if (!args.forced_version.empty()) {
-        name = args.forced_version;
+        version = args.forced_version;
     }
 
     // Write PACKAGE_NAME JSON file in check result format

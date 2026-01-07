@@ -6,10 +6,60 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "getopt",
     checks = [
-        macros.AC_CHECK_FUNC(
-            "getopt_long_only",
-            define = "HAVE_GETOPT_LONG_ONLY",
+        # Check for getopt.h header
+        macros.AC_CHECK_HEADER(
+            "getopt.h",
+            define = "HAVE_GETOPT_H",
         ),
-    ],
+
+        # Check for getopt functions
+        macros.AC_CHECK_FUNC("getopt_long"),
+        macros.AC_CHECK_FUNC("getopt_long_only"),
+
+        # Check for getopt-related declarations
+        macros.AC_CHECK_DECL(
+            "optarg",
+            define = "HAVE_DECL_OPTARG",
+            headers = [
+                "unistd.h",
+                "getopt.h",
+            ],
+        ),
+        macros.AC_CHECK_DECL(
+            "optind",
+            define = "HAVE_DECL_OPTIND",
+            headers = [
+                "unistd.h",
+                "getopt.h",
+            ],
+        ),
+        macros.AC_CHECK_DECL(
+            "opterr",
+            define = "HAVE_DECL_OPTERR",
+            headers = [
+                "unistd.h",
+                "getopt.h",
+            ],
+        ),
+        macros.AC_CHECK_DECL(
+            "optopt",
+            define = "HAVE_DECL_OPTOPT",
+            headers = [
+                "unistd.h",
+                "getopt.h",
+            ],
+        ),
+    ] + select(
+        # REPLACE_GETOPT logic from gnulib:
+        # The original macro does extensive runtime tests.
+        # Known broken on: Mac OS X, AIX, mingw, older glibc, OpenBSD
+        {
+            "@platforms//os:macos": [macros.AC_SUBST("REPLACE_GETOPT", "1")],  # Mac OS X getopt has issusetopt
+            "@platforms//os:windows": [macros.AC_SUBST("REPLACE_GETOPT", "1")],  # No POSIX getopt on Windows
+        },
+    ),
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
+    ],
 )

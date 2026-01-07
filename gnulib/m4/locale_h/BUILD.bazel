@@ -3,42 +3,106 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# =============================================================================
+# gl_LOCALE_H - Header checks, feature detection, and GNULIB module indicators
+# =============================================================================
+
 autoconf(
     name = "locale_h",
     checks = [
-        # Check for locale.h header features
-        # Equivalent to gl_LOCALE_H macro from locale_h.m4
+        # Header checks
+        macros.AC_CHECK_HEADER("locale.h"),
+        macros.AC_CHECK_HEADER("xlocale.h"),
+
+        # gl_LOCALE_T: Check whether locale.h defines locale_t
+        macros.AC_CHECK_TYPE(
+            "locale_t",
+            code = """\
+#include <locale.h>
+int main(void) {
+    locale_t x;
+    (void)x;
+    return 0;
+}
+""",
+            define = "HAVE_LOCALE_T",
+        ),
+
+        # Check for _locale_t (Windows)
         macros.AC_TRY_COMPILE(
-            code = """#include <locale.h>
-_locale_t x;""",
+            code = """\
+#include <locale.h>
+_locale_t x;
+""",
             define = "HAVE_WINDOWS_LOCALE_T",
             language = "c",
         ),
+
+        # Check if locale.h conforms to POSIX:2001
         macros.AC_TRY_COMPILE(
-            code = """#include <locale.h>
+            code = """\
+#include <locale.h>
 int x = LC_MESSAGES;
-int y = sizeof (((struct lconv *) 0)->decimal_point);""",
+int y = sizeof (((struct lconv *) 0)->decimal_point);
+""",
             define = "HAVE_LOCALE_H_POSIX2001",
             language = "c",
         ),
+
+        # Check if struct lconv is properly defined
         macros.AC_TRY_COMPILE(
-            code = """#include <locale.h>
+            code = """\
+#include <locale.h>
 struct lconv l;
 int x = sizeof (l.decimal_point);
-int y = sizeof (l.int_p_cs_precedes);""",
+int y = sizeof (l.int_p_cs_precedes);
+""",
             define = "HAVE_STRUCT_LCONV_OK",
             language = "c",
         ),
-        macros.AC_CHECK_HEADER(
-            "xlocale.h",
-            define = "HAVE_XLOCALE_H",
-        ),
+
+        # gl_MODULE_INDICATOR_INIT_VARIABLE calls (from gl_LOCALE_H)
+        macros.AC_SUBST("GNULIB_LOCALECONV", "0"),
+        macros.AC_SUBST("GNULIB_SETLOCALE", "0"),
+        macros.AC_SUBST("GNULIB_SETLOCALE_NULL", "0"),
+        macros.AC_SUBST("GNULIB_NEWLOCALE", "0"),
+        macros.AC_SUBST("GNULIB_DUPLOCALE", "0"),
+        macros.AC_SUBST("GNULIB_FREELOCALE", "0"),
+        macros.AC_SUBST("GNULIB_GETLOCALENAME_L", "0"),
+        macros.AC_SUBST("GNULIB_GETLOCALENAME_L_UNSAFE", "0"),
+        macros.AC_SUBST("GNULIB_LOCALENAME_UNSAFE", "0"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # Note: AC_REQUIRE([gl_LOCALE_H_DEFAULTS]) is defined in this module
-        # Note: AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
+        "//gnulib/m4/include_next",  # For NEXT_LOCALE_H
         "//gnulib/m4/stddef_h",  # AC_REQUIRE([gl_STDDEF_H])
-        # Note: gl_LOCALE_T and AC_REQUIRE([AC_CANONICAL_HOST]) are standard
+    ],
+)
+
+# =============================================================================
+# gl_LOCALE_H_DEFAULTS - exact match of AC_SUBST from the m4 *_DEFAULTS macro
+# =============================================================================
+
+_GL_LOCALE_H_DEFAULTS = [
+    macros.AC_SUBST("HAVE_NEWLOCALE", "1"),
+    macros.AC_SUBST("HAVE_DUPLOCALE", "1"),
+    macros.AC_SUBST("HAVE_FREELOCALE", "1"),
+    macros.AC_SUBST("HAVE_GETLOCALENAME_L", "1"),
+    macros.AC_SUBST("REPLACE_LOCALECONV", "0"),
+    macros.AC_SUBST("REPLACE_SETLOCALE", "0"),
+    macros.AC_SUBST("REPLACE_NEWLOCALE", "0"),
+    macros.AC_SUBST("REPLACE_DUPLOCALE", "0"),
+    macros.AC_SUBST("REPLACE_FREELOCALE", "0"),
+    macros.AC_SUBST("REPLACE_GETLOCALENAME_L", "0"),
+    macros.AC_SUBST("REPLACE_STRUCT_LCONV", "0"),
+    macros.AC_SUBST("LOCALENAME_ENHANCE_LOCALE_FUNCS", "0"),
+]
+
+autoconf(
+    name = "with_defaults",
+    checks = _GL_LOCALE_H_DEFAULTS,
+    visibility = ["//visibility:public"],
+    deps = [
+        ":locale_h",
     ],
 )

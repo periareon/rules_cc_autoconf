@@ -3,30 +3,23 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# gl_FUNC_DUP3 from dup3.m4
-# HAVE_SETDTABLESIZE comes from dup2 dependency
-
 autoconf(
     name = "dup3",
     checks = [
-        macros.AC_TRY_COMPILE(
-            code = """#include <unistd.h>
+        # GNULIB module indicator - set to 1 when this module is used
 
-#ifdef __cplusplus
-extern "C"
-#endif
-char dup3 ();
+        # Check if dup3 exists
+        macros.AC_CHECK_FUNC("dup3"),
 
-int main(void) {
-    return dup3();
-}""",
-            define = "HAVE_DUP3",
-            language = "c",
-        ),
+        # Note: HAVE_SETDTABLESIZE is provided by dup2 if needed
+
+        # REPLACE_DUP3: gnulib unconditionally replaces dup3 when it exists
+        # When dup3 doesn't exist, it's set to 0 unless it's a "future" function
+        # For simplicity, default to 1 (gnulib's behavior when dup3 exists)
+        macros.AC_SUBST("REPLACE_DUP3", "1"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/dup2",  # Provides HAVE_SETDTABLESIZE
-        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
+        "//gnulib/m4/unistd_h",
     ],
 )

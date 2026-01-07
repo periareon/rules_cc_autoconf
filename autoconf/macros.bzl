@@ -1,5 +1,30 @@
 """# macros"""
 
+# Default includes used by AC_CHECK_DECL, AC_CHECK_TYPE, etc. when no includes are specified.
+#
+# GNU Autoconf's AC_INCLUDES_DEFAULT uses #ifdef HAVE_* guards, but that relies on
+# AC_CHECK_HEADERS_ONCE being called earlier to define those macros. In Bazel, each
+# compile test runs independently without access to results from other checks, so we
+# use unconditional includes instead. This matches what would happen on a modern
+# POSIX system where all the standard headers exist.
+#
+# See: https://www.gnu.org/savannah-checkouts/gnu/autoconf/manual/autoconf-2.72/autoconf.html#Default-Includes
+_AC_INCLUDES_DEFAULT = """\
+#include <stdio.h>
+#include <stdlib.h>
+#include <stddef.h>
+#include <string.h>
+#include <inttypes.h>
+#include <stdint.h>
+#ifdef _WIN32
+/* Windows doesn't have POSIX headers */
+#else
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#endif
+"""
+
 def _into_label(value):
     if type(value) == "Label":
         return str(value)
@@ -151,23 +176,7 @@ def _ac_check_func(
     _add_conditionals(check, if_true, if_false)
     return json.encode(check)
 
-_AC_TEST_TYPE_CODE_TEMPLATE = """\
-#include <stdio.h>
-#ifdef _WIN32
-/* Windows doesn't have POSIX headers */
-#else
-#include <sys/types.h>
-#include <sys/stat.h>
-#endif
-#include <stdlib.h>
-#include <stddef.h>
-#include <string.h>
-#include <inttypes.h>
-#include <stdint.h>
-#ifndef _WIN32
-#include <unistd.h>
-#endif
-
+_AC_TEST_TYPE_CODE_TEMPLATE = _AC_INCLUDES_DEFAULT + """
 int main(void) {{
     if (sizeof({type_name}))
         return 0;
@@ -181,6 +190,7 @@ def _ac_check_type(
         define = None,
         code = None,
         file = None,
+        includes = None,
         language = "c",
         requires = None,
         if_true = None,
@@ -190,12 +200,14 @@ def _ac_check_type(
     Original m4 example:
     ```m4
     AC_CHECK_TYPE([size_t])
+    AC_CHECK_TYPE([pthread_t], [], [], [[#include <pthread.h>]])
     ```
 
     Example:
     ```python
     macros.AC_CHECK_TYPE("size_t")
-    macros.AC_CHECK_TYPE("int64_t", code = "#include <stdint.h>")
+    macros.AC_CHECK_TYPE("int64_t", includes = ["stdint.h"])
+    macros.AC_CHECK_TYPE("pthread_t", includes = ["pthread.h"])
     ```
 
     Args:
@@ -203,6 +215,8 @@ def _ac_check_type(
         define: Custom define name (defaults to `HAVE_<TYPE>`)
         code: Custom code that includes necessary headers (optional, defaults to standard headers)
         file: Label to a file containing custom code (optional)
+        includes: Optional list of headers to include. If not specified and
+            `code` is not specified, uses AC_INCLUDES_DEFAULT.
         language: Language to use for check (`"c"` or `"cpp"`)
         requires: List of requirements that must be met before this check runs.
             Can be simple define names (e.g., `"HAVE_FOO"`), negated checks
@@ -224,13 +238,24 @@ def _ac_check_type(
         "type": "type",
     }
 
-    # If no code or file provided, use default headers like GNU Autoconf's AC_INCLUDES_DEFAULT
-    if not code and not file:
-        check["code"] = _AC_TEST_TYPE_CODE_TEMPLATE.format(type_name = type_name)
-    elif code:
+    # Priority: code > file > includes > default
+    if code:
         check["code"] = code
     elif file:
         check["file"] = _into_label(file)
+    elif includes:
+        header_code = "\n".join(["#include <{}>".format(h) for h in includes])
+        check["code"] = header_code + """
+int main(void) {{
+    if (sizeof({type_name}))
+        return 0;
+    return 1;
+}}
+""".format(type_name = type_name)
+    else:
+        # Use default headers like GNU Autoconf's AC_INCLUDES_DEFAULT
+        check["code"] = _AC_TEST_TYPE_CODE_TEMPLATE.format(type_name = type_name)
+
     if requires:
         check["requires"] = requires
 
@@ -295,11 +320,21 @@ def _ac_check_symbol(
     _add_conditionals(check, if_true, if_false)
     return json.encode(check)
 
+_AC_TRY_COMPILE_TEMPLATE = """\
+{}
+
+int main(void) {{
+    {}
+    return 0;
+}}
+"""
+
 def _ac_try_compile(
         *,
         code = None,
         file = None,
         define = None,
+        includes = None,
         language = "c",
         requires = None,
         if_true = None,
@@ -318,6 +353,11 @@ def _ac_try_compile(
         define = "HAVE_PRINTF",
     )
     macros.AC_TRY_COMPILE(file = ":test.c", define = "CUSTOM_CHECK")
+    macros.AC_TRY_COMPILE(
+        includes = ["pthread.h"],
+        code = "int x = PTHREAD_CREATE_DETACHED; (void)x;",
+        define = "HAVE_PTHREAD_CREATE_DETACHED",
+    )
     ```
 
     Note:
@@ -325,10 +365,16 @@ def _ac_try_compile(
         obsolete AC_TRY_COMPILE macro (replaced by AC_COMPILE_IFELSE), this
         version adds support for file-based checks which is useful in Bazel.
 
+        When `includes` is provided along with `code`, the code is treated as
+        the body of main() and the includes are prepended.
+
     Args:
-        code: Code to compile (optional if file is provided)
+        code: Code to compile. If `includes` is also provided, this is treated
+            as the body of main(). Otherwise, it should be complete C code.
         define: Define name to set if compilation succeeds
         file: Label to a file containing code to compile (optional if code is provided)
+        includes: Optional list of headers to include. When provided, `code` is
+            treated as the body of main() function.
         language: Language to use for check (`"c"` or `"cpp"`)
         requires: List of requirements that must be met before this check runs.
             Can be simple define names (e.g., `"HAVE_FOO"`), negated checks
@@ -340,10 +386,10 @@ def _ac_try_compile(
     Returns:
         A JSON-encoded check string for use with the autoconf rule.
     """
-    if not code and not file:
-        fail("Either 'code' or 'file' must be provided")
-    if code and file:
-        fail("Cannot provide both 'code' and 'file'")
+    if not code and not file and not includes:
+        fail("Either 'code', 'file', or 'includes' with 'code' must be provided")
+    if file and includes:
+        fail("Cannot provide both 'file' and 'includes'")
 
     check = {
         "define": define,
@@ -352,10 +398,16 @@ def _ac_try_compile(
         "type": "compile",
     }
 
-    if code:
-        check["code"] = code
     if file:
         check["file"] = _into_label(file)
+    elif includes:
+        # When includes is provided, code is the body of main()
+        header_code = "\n".join(["#include <{}>".format(h) for h in includes])
+        body_code = code if code else ""
+        check["code"] = _AC_TRY_COMPILE_TEMPLATE.format(header_code, body_code)
+    elif code:
+        check["code"] = code
+
     if requires:
         check["requires"] = requires
 
@@ -594,6 +646,7 @@ def _ac_check_decl(
         *,
         define = None,
         headers = None,
+        includes = None,
         value = None,
         language = "c",
         requires = None,
@@ -610,17 +663,23 @@ def _ac_check_decl(
     Example:
     ```python
     macros.AC_CHECK_DECL("NULL", headers = ["stddef.h"])
-    macros.AC_CHECK_DECL("stdout", headers = ["stdio.h"])
+    macros.AC_CHECK_DECL("stdout", includes = ["stdio.h"])
+    macros.AC_CHECK_DECL("getopt", includes = ["unistd.h", "getopt.h"])
     ```
 
     Note:
         This is different from `AC_CHECK_SYMBOL` - it checks if something is
         declared (not just `#defined`).
 
+        When no headers or includes are specified, the standard default includes
+        are used (AC_INCLUDES_DEFAULT from GNU Autoconf).
+
     Args:
         symbol: Name of the symbol to check
         define: Custom define name (defaults to `HAVE_DECL_<SYMBOL>`)
-        headers: Optional list of headers to include
+        headers: Optional list of headers to include (alias for `includes`)
+        includes: Optional list of headers to include. If not specified and
+            `headers` is not specified, uses AC_INCLUDES_DEFAULT.
         value: Optional value to assign when the check is True.
         language: Language to use for check (`"c"` or `"cpp"`)
         requires: List of requirements that must be met before this check runs.
@@ -636,9 +695,14 @@ def _ac_check_decl(
     if not define:
         define = "HAVE_DECL_" + symbol.upper().replace("-", "_")
 
-    header_code = ""
-    if headers:
-        header_code = "\n".join(["#include <{}>".format(h) for h in headers])
+    # Merge headers and includes (includes takes precedence if both specified)
+    effective_headers = includes if includes else headers
+
+    if effective_headers:
+        header_code = "\n".join(["#include <{}>".format(h) for h in effective_headers])
+    else:
+        # Use default includes when no headers specified
+        header_code = _AC_INCLUDES_DEFAULT
 
     code = _AC_CHECK_DECL_TEMPLATE.format(header_code, symbol)
 

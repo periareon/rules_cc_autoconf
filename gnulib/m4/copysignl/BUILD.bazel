@@ -6,18 +6,12 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "copysignl",
     checks = [
-        # Check for copysignl function
-        # Equivalent to gl_FUNC_COPYSIGNL macro from copysignl.m4
-        macros.AC_CHECK_FUNC(
-            "copysignl",
-            define = "HAVE_COPYSIGNL",
-        ),
+        macros.AC_CHECK_FUNC("copysignl"),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//gnulib/m4/copysign",
+        "//gnulib/m4/isnanl",
         "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
-        "//gnulib/m4/mathfunc",  # Uses gl_MATHFUNC([copysignl, ...])
-        "//gnulib/m4/copysign",  # AC_REQUIRE([gl_FUNC_COPYSIGN]) - conditional
-        # Note: AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
     ],
 )

@@ -3,25 +3,144 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# =============================================================================
+# gl_WCHAR_H - Header check and GNULIB module indicators
+# =============================================================================
+
 autoconf(
     name = "wchar_h",
     checks = [
-        # Check for wchar.h header
-        # Equivalent to gl_WCHAR_H macro from wchar_h.m4
         macros.AC_CHECK_HEADER(
             "wchar.h",
             define = "HAVE_WCHAR_H",
         ),
-        macros.AC_CHECK_DECL(
-            "wcsdup",
-            define = "HAVE_DECL_WCSDUP",
-            headers = ["wchar.h"],
-        ),
+
+        # gl_MODULE_INDICATOR_INIT_VARIABLE calls (from gl_WCHAR_H)
+        macros.AC_SUBST("GNULIB_BTOWC", "0"),
+        macros.AC_SUBST("GNULIB_WCTOB", "0"),
+        macros.AC_SUBST("GNULIB_MBSINIT", "0"),
+        macros.AC_SUBST("GNULIB_MBSZERO", "0"),
+        macros.AC_SUBST("GNULIB_MBRTOWC", "0"),
+        macros.AC_SUBST("GNULIB_MBRLEN", "0"),
+        macros.AC_SUBST("GNULIB_MBSRTOWCS", "0"),
+        macros.AC_SUBST("GNULIB_MBSNRTOWCS", "0"),
+        macros.AC_SUBST("GNULIB_WCRTOMB", "0"),
+        macros.AC_SUBST("GNULIB_WCSRTOMBS", "0"),
+        macros.AC_SUBST("GNULIB_WCSNRTOMBS", "0"),
+        macros.AC_SUBST("GNULIB_WCWIDTH", "0"),
+        macros.AC_SUBST("GNULIB_WMEMCHR", "0"),
+        macros.AC_SUBST("GNULIB_WMEMCMP", "0"),
+        macros.AC_SUBST("GNULIB_WMEMCPY", "0"),
+        macros.AC_SUBST("GNULIB_WMEMMOVE", "0"),
+        macros.AC_SUBST("GNULIB_WMEMPCPY", "0"),
+        macros.AC_SUBST("GNULIB_WMEMSET", "0"),
+        macros.AC_SUBST("GNULIB_WCSLEN", "0"),
+        macros.AC_SUBST("GNULIB_WCSNLEN", "0"),
+        macros.AC_SUBST("GNULIB_WCSCPY", "0"),
+        macros.AC_SUBST("GNULIB_WCPCPY", "0"),
+        macros.AC_SUBST("GNULIB_WCSNCPY", "0"),
+        macros.AC_SUBST("GNULIB_WCPNCPY", "0"),
+        macros.AC_SUBST("GNULIB_WCSCAT", "0"),
+        macros.AC_SUBST("GNULIB_WCSNCAT", "0"),
+        macros.AC_SUBST("GNULIB_WCSCMP", "0"),
+        macros.AC_SUBST("GNULIB_WCSNCMP", "0"),
+        macros.AC_SUBST("GNULIB_WCSCASECMP", "0"),
+        macros.AC_SUBST("GNULIB_WCSNCASECMP", "0"),
+        macros.AC_SUBST("GNULIB_WCSCOLL", "0"),
+        macros.AC_SUBST("GNULIB_WCSXFRM", "0"),
+        macros.AC_SUBST("GNULIB_WCSDUP", "0"),
+        macros.AC_SUBST("GNULIB_WCSCHR", "0"),
+        macros.AC_SUBST("GNULIB_WCSRCHR", "0"),
+        macros.AC_SUBST("GNULIB_WCSCSPN", "0"),
+        macros.AC_SUBST("GNULIB_WCSSPN", "0"),
+        macros.AC_SUBST("GNULIB_WCSPBRK", "0"),
+        macros.AC_SUBST("GNULIB_WCSSTR", "0"),
+        macros.AC_SUBST("GNULIB_WCSTOK", "0"),
+        macros.AC_SUBST("GNULIB_WCSWIDTH", "0"),
+        macros.AC_SUBST("GNULIB_WCSFTIME", "0"),
+        macros.AC_SUBST("GNULIB_WGETCWD", "0"),
+        macros.AC_SUBST("GNULIB_MDA_WCSDUP", "1"),  # Microsoft deprecated alias
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # Note: AC_C_RESTRICT and AC_CANONICAL_HOST are standard autoconf macros
-        # Self-dependency removed (was: "//gnulib/m4/wchar_h")
+        "//gnulib/m4/include_next",  # gl_CHECK_NEXT_HEADERS([wchar.h])
         "//gnulib/m4/wint_t",  # AC_REQUIRE([gt_TYPE_WINT_T])
+    ],
+)
+
+# =============================================================================
+# gl_WCHAR_H_DEFAULTS - exact match of AC_SUBST from the m4 *_DEFAULTS macro
+# =============================================================================
+
+_GL_WCHAR_H_DEFAULTS = [
+    macros.AC_SUBST("HAVE_BTOWC", "1"),
+    macros.AC_SUBST("HAVE_MBSINIT", "1"),
+    macros.AC_SUBST("HAVE_MBRTOWC", "1"),
+    macros.AC_SUBST("HAVE_MBRLEN", "1"),
+    macros.AC_SUBST("HAVE_MBSRTOWCS", "1"),
+    macros.AC_SUBST("HAVE_MBSNRTOWCS", "1"),
+    macros.AC_SUBST("HAVE_WCRTOMB", "1"),
+    macros.AC_SUBST("HAVE_WCSRTOMBS", "1"),
+    macros.AC_SUBST("HAVE_WCSNRTOMBS", "1"),
+    macros.AC_SUBST("HAVE_WMEMCHR", "1"),
+    macros.AC_SUBST("HAVE_WMEMCMP", "1"),
+    macros.AC_SUBST("HAVE_WMEMCPY", "1"),
+    macros.AC_SUBST("HAVE_WMEMMOVE", "1"),
+    macros.AC_SUBST("HAVE_WMEMPCPY", "1"),
+    macros.AC_SUBST("HAVE_WMEMSET", "1"),
+    macros.AC_SUBST("HAVE_WCSLEN", "1"),
+    macros.AC_SUBST("HAVE_WCSNLEN", "1"),
+    macros.AC_SUBST("HAVE_WCSCPY", "1"),
+    macros.AC_SUBST("HAVE_WCPCPY", "1"),
+    macros.AC_SUBST("HAVE_WCSNCPY", "1"),
+    macros.AC_SUBST("HAVE_WCPNCPY", "1"),
+    macros.AC_SUBST("HAVE_WCSCAT", "1"),
+    macros.AC_SUBST("HAVE_WCSNCAT", "1"),
+    macros.AC_SUBST("HAVE_WCSCMP", "1"),
+    macros.AC_SUBST("HAVE_WCSNCMP", "1"),
+    macros.AC_SUBST("HAVE_WCSCASECMP", "1"),
+    macros.AC_SUBST("HAVE_WCSNCASECMP", "1"),
+    macros.AC_SUBST("HAVE_WCSCOLL", "1"),
+    macros.AC_SUBST("HAVE_WCSXFRM", "1"),
+    macros.AC_SUBST("HAVE_WCSDUP", "1"),
+    macros.AC_SUBST("HAVE_WCSCHR", "1"),
+    macros.AC_SUBST("HAVE_WCSRCHR", "1"),
+    macros.AC_SUBST("HAVE_WCSCSPN", "1"),
+    macros.AC_SUBST("HAVE_WCSSPN", "1"),
+    macros.AC_SUBST("HAVE_WCSPBRK", "1"),
+    macros.AC_SUBST("HAVE_WCSSTR", "1"),
+    macros.AC_SUBST("HAVE_WCSTOK", "1"),
+    macros.AC_SUBST("HAVE_WCSWIDTH", "1"),
+    macros.AC_SUBST("HAVE_WCSFTIME", "1"),
+    macros.AC_SUBST("HAVE_WCTOB", "1"),
+    macros.AC_SUBST("REPLACE_MBSTATE_T", "0"),
+    macros.AC_SUBST("REPLACE_BTOWC", "0"),
+    macros.AC_SUBST("REPLACE_WCTOB", "0"),
+    macros.AC_SUBST("REPLACE_MBSINIT", "0"),
+    macros.AC_SUBST("REPLACE_MBRTOWC", "0"),
+    macros.AC_SUBST("REPLACE_MBRLEN", "0"),
+    macros.AC_SUBST("REPLACE_MBSRTOWCS", "0"),
+    macros.AC_SUBST("REPLACE_MBSNRTOWCS", "0"),
+    macros.AC_SUBST("REPLACE_WCRTOMB", "0"),
+    macros.AC_SUBST("REPLACE_WCSRTOMBS", "0"),
+    macros.AC_SUBST("REPLACE_WCSNRTOMBS", "0"),
+    macros.AC_SUBST("REPLACE_WCWIDTH", "0"),
+    macros.AC_SUBST("REPLACE_WCSWIDTH", "0"),
+    macros.AC_SUBST("REPLACE_WCSFTIME", "0"),
+    macros.AC_SUBST("REPLACE_WCSCMP", "0"),
+    macros.AC_SUBST("REPLACE_WCSNCAT", "0"),
+    macros.AC_SUBST("REPLACE_WCSNCMP", "0"),
+    macros.AC_SUBST("REPLACE_WCSSTR", "0"),
+    macros.AC_SUBST("REPLACE_WCSTOK", "0"),
+    macros.AC_SUBST("REPLACE_WMEMCMP", "0"),
+    macros.AC_SUBST("REPLACE_WMEMPCPY", "0"),
+]
+
+autoconf(
+    name = "with_defaults",
+    checks = _GL_WCHAR_H_DEFAULTS,
+    visibility = ["//visibility:public"],
+    deps = [
+        ":wchar_h",
     ],
 )

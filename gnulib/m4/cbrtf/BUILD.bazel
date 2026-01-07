@@ -6,10 +6,7 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "cbrtf",
     checks = [
-        macros.AC_CHECK_FUNC(
-            "cbrtf",
-            define = "HAVE_CBRTF",
-        ),
+        macros.AC_CHECK_FUNC("cbrtf"),
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -17,5 +14,6 @@ autoconf(
         "//gnulib/m4/fabsf",
         "//gnulib/m4/frexpf",
         "//gnulib/m4/ldexpf",
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
     ],
 )

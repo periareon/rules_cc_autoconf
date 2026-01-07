@@ -3,27 +3,93 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# gl_TIME_H macro from time_h.m4
-# HAVE_SYS_TIME_H comes from sys_time_h dependency
+# =============================================================================
+# gl_TIME_H - Header check and GNULIB module indicators
+# =============================================================================
 
 autoconf(
     name = "time_h",
     checks = [
+        macros.AC_CHECK_HEADER("time.h"),
+
+        # gl_MODULE_INDICATOR_INIT_VARIABLE calls (from gl_TIME_H)
+        macros.AC_SUBST("GNULIB_CTIME", "0"),
+        macros.AC_SUBST("GNULIB_MKTIME", "0"),
+        macros.AC_SUBST("GNULIB_LOCALTIME", "0"),
+        macros.AC_SUBST("GNULIB_NANOSLEEP", "0"),
+        macros.AC_SUBST("GNULIB_STRFTIME", "0"),
+        macros.AC_SUBST("GNULIB_STRPTIME", "0"),
+        macros.AC_SUBST("GNULIB_TIME", "0"),
+        macros.AC_SUBST("GNULIB_TIMEGM", "0"),
+        macros.AC_SUBST("GNULIB_TIMESPEC_GET", "0"),
+        macros.AC_SUBST("GNULIB_TIMESPEC_GETRES", "0"),
+        macros.AC_SUBST("GNULIB_TIME_R", "0"),
+        macros.AC_SUBST("GNULIB_TIME_RZ", "0"),
+        macros.AC_SUBST("GNULIB_TZNAME", "0"),
+        macros.AC_SUBST("GNULIB_TZSET", "0"),
+        macros.AC_SUBST("GNULIB_MDA_TZSET", "1"),  # Microsoft deprecated alias
+
+        # Check for TIME_UTC macro (from gl_TIME_H)
         macros.AC_TRY_COMPILE(
-            code = """#include <time.h>
-static int x = TIME_UTC; x++;""",
+            code = """\
+#include <time.h>
+static int x = TIME_UTC; x++;
+""",
             define = "TIME_H_DEFINES_TIME_UTC",
             language = "c",
         ),
+
+        # Check for struct timespec in time.h (from gl_TIME_H)
         macros.AC_TRY_COMPILE(
-            code = """#include <time.h>
-static struct timespec x; x.tv_sec = x.tv_nsec;""",
+            code = """\
+#include <time.h>
+static struct timespec x; x.tv_sec = x.tv_nsec;
+""",
             define = "TIME_H_DEFINES_STRUCT_TIMESPEC",
             language = "c",
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//gnulib/m4/include_next",  # For NEXT_TIME_H
         "//gnulib/m4/sys_time_h",  # Provides HAVE_SYS_TIME_H
+    ],
+)
+
+# =============================================================================
+# gl_TIME_H_DEFAULTS - exact match of AC_SUBST from the m4 *_DEFAULTS macro
+# =============================================================================
+
+_GL_TIME_H_DEFAULTS = [
+    macros.AC_SUBST("HAVE_DECL_LOCALTIME_R", "1"),
+    macros.AC_SUBST("HAVE_NANOSLEEP", "1"),
+    macros.AC_SUBST("HAVE_STRPTIME", "1"),
+    macros.AC_SUBST("HAVE_TIMEGM", "1"),
+    macros.AC_SUBST("HAVE_TIMESPEC_GET", "1"),
+    macros.AC_SUBST("HAVE_TIMESPEC_GETRES", "1"),
+    macros.AC_SUBST("HAVE_TIMEZONE_T", "0"),
+    macros.AC_SUBST("HAVE_TZALLOC", "0"),
+    macros.AC_SUBST("REPLACE_CTIME", "0"),
+    macros.AC_SUBST("REPLACE_GMTIME", "0"),
+    macros.AC_SUBST("REPLACE_LOCALTIME", "0"),
+    macros.AC_SUBST("REPLACE_LOCALTIME_R", "0"),
+    macros.AC_SUBST("REPLACE_LOCALTIME_RZ", "0"),
+    macros.AC_SUBST("REPLACE_MKTIME", "0"),
+    macros.AC_SUBST("REPLACE_MKTIME_Z", "0"),
+    macros.AC_SUBST("REPLACE_NANOSLEEP", "0"),
+    macros.AC_SUBST("REPLACE_STRFTIME", "0"),
+    macros.AC_SUBST("REPLACE_TIME", "0"),
+    macros.AC_SUBST("REPLACE_TIMEGM", "0"),
+    macros.AC_SUBST("REPLACE_TIMESPEC_GET", "0"),
+    macros.AC_SUBST("REPLACE_TIMESPEC_GETRES", "0"),
+    macros.AC_SUBST("REPLACE_TZSET", "0"),
+]
+
+autoconf(
+    name = "with_defaults",
+    checks = _GL_TIME_H_DEFAULTS,
+    visibility = ["//visibility:public"],
+    deps = [
+        ":time_h",
     ],
 )

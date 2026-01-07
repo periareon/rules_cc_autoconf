@@ -6,24 +6,28 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "mbrtowc",
     checks = [
-        # Check for mbrtowc function and declaration
-        # Equivalent to gl_FUNC_MBRTOWC macro from mbrtowc.m4
-        # Note: Full implementation includes runtime checks for various bugs
-        # that are complex to replicate in Bazel
-        macros.AC_CHECK_FUNC(
-            "mbrtowc",
-            define = "HAVE_MBRTOWC",
-        ),
+        # GNULIB module indicator - set to 1 when this module is used
+
+        # Check if mbrtowc function exists
+        macros.AC_CHECK_FUNC("mbrtowc"),
+
+        # Check for mbrtowc declaration (for Minix 3.1.8 which declares but doesn't have it)
         macros.AC_CHECK_DECL(
             "mbrtowc",
-            define = "HAVE_DECL_MBRTOWC",
             headers = ["wchar.h"],
         ),
+
+        # REPLACE_MBRTOWC: set to 1 when gnulib needs to replace the function
+        # In gnulib, this is set based on various bug checks
+        # Default to 0 for most modern systems
+        macros.AC_SUBST("REPLACE_MBRTOWC", "0"),
+
+        # REPLACE_MBSTATE_T: for broken mbstate_t implementations
+        macros.AC_SUBST("REPLACE_MBSTATE_T", "0"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/wchar_h",  # AC_REQUIRE([gl_WCHAR_H_DEFAULTS])
-        "//gnulib/m4/threadlib",  # AC_REQUIRE([gl_PTHREADLIB])
-        # Note: AC_REQUIRE([AC_TYPE_MBSTATE_T]) is a standard autoconf macro
+        "//gnulib/m4/threadlib",
+        "//gnulib/m4/wchar_h",
     ],
 )

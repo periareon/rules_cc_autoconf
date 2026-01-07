@@ -6,18 +6,12 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "fabsf",
     checks = [
-        # Check for fabsf function
-        # Equivalent to gl_FUNC_FABSF macro from fabsf.m4
-        macros.AC_CHECK_FUNC(
-            "fabsf",
-            define = "HAVE_FABSF",
-        ),
+        macros.AC_CHECK_FUNC("fabsf"),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//gnulib/m4/fabs",
         "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
-        "//gnulib/m4/fabs",  # AC_REQUIRE([gl_FUNC_FABS])
-        "//gnulib/m4/mathfunc",  # Uses gl_MATHFUNC([fabsf, ...])
-        # Note: AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
+        "//gnulib/m4/mathfunc",
     ],
 )

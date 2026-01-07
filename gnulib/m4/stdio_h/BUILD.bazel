@@ -3,52 +3,160 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# gl_STDIO_H from stdio_h.m4
-# COMPLEX CASE: This is a complex header replacement module that checks
-# for many printf/scanf features. Full migration would require many
-# runtime tests.
+# =============================================================================
+# gl_STDIO_H - Header check and GNULIB module indicators
+# =============================================================================
+
 autoconf(
     name = "stdio_h",
     checks = [
-        # Check for stdio.h header
         macros.AC_CHECK_HEADER("stdio.h"),
-        # Check for various function declarations
-        macros.AC_CHECK_DECL(
-            "dprintf",
-            headers = ["stdio.h"],
-        ),
-        macros.AC_CHECK_DECL(
-            "fseeko",
-            headers = ["stdio.h"],
-        ),
-        macros.AC_CHECK_DECL(
-            "getdelim",
-            headers = ["stdio.h"],
-        ),
-        macros.AC_CHECK_DECL(
-            "getline",
-            headers = ["stdio.h"],
-        ),
-        macros.AC_CHECK_DECL(
-            "snprintf",
-            headers = ["stdio.h"],
-        ),
-        macros.AC_CHECK_DECL(
-            "vsnprintf",
-            headers = ["stdio.h"],
-        ),
-        macros.AC_CHECK_DECL(
-            "fcloseall",
-            headers = ["stdio.h"],
-        ),
-        macros.AC_CHECK_DECL(
-            "getw",
-            headers = ["stdio.h"],
-        ),
-        macros.AC_CHECK_DECL(
-            "putw",
-            headers = ["stdio.h"],
-        ),
+
+        # gl_MODULE_INDICATOR_INIT_VARIABLE calls (from gl_STDIO_H)
+        macros.AC_SUBST("GNULIB_DPRINTF", "0"),
+        macros.AC_SUBST("GNULIB_DZPRINTF", "0"),
+        macros.AC_SUBST("GNULIB_FCLOSE", "0"),
+        macros.AC_SUBST("GNULIB_FDOPEN", "0"),
+        macros.AC_SUBST("GNULIB_FFLUSH", "0"),
+        macros.AC_SUBST("GNULIB_FGETC", "0"),
+        macros.AC_SUBST("GNULIB_FGETS", "0"),
+        macros.AC_SUBST("GNULIB_FOPEN", "0"),
+        macros.AC_SUBST("GNULIB_FOPEN_GNU", "0"),
+        macros.AC_SUBST("GNULIB_FPRINTF", "0"),
+        macros.AC_SUBST("GNULIB_FPRINTF_POSIX", "0"),
+        macros.AC_SUBST("GNULIB_FPURGE", "0"),
+        macros.AC_SUBST("GNULIB_FPUTC", "0"),
+        macros.AC_SUBST("GNULIB_FPUTS", "0"),
+        macros.AC_SUBST("GNULIB_FREAD", "0"),
+        macros.AC_SUBST("GNULIB_FREOPEN", "0"),
+        macros.AC_SUBST("GNULIB_FSCANF", "0"),
+        macros.AC_SUBST("GNULIB_FSEEK", "0"),
+        macros.AC_SUBST("GNULIB_FSEEKO", "0"),
+        macros.AC_SUBST("GNULIB_FTELL", "0"),
+        macros.AC_SUBST("GNULIB_FTELLO", "0"),
+        macros.AC_SUBST("GNULIB_FWRITE", "0"),
+        macros.AC_SUBST("GNULIB_FZPRINTF", "0"),
+        macros.AC_SUBST("GNULIB_GETC", "0"),
+        macros.AC_SUBST("GNULIB_GETCHAR", "0"),
+        macros.AC_SUBST("GNULIB_GETDELIM", "0"),
+        macros.AC_SUBST("GNULIB_GETLINE", "0"),
+        macros.AC_SUBST("GNULIB_OBSTACK_PRINTF", "0"),
+        macros.AC_SUBST("GNULIB_OBSTACK_PRINTF_POSIX", "0"),
+        macros.AC_SUBST("GNULIB_OBSTACK_ZPRINTF", "0"),
+        macros.AC_SUBST("GNULIB_PCLOSE", "0"),
+        macros.AC_SUBST("GNULIB_PERROR", "0"),
+        macros.AC_SUBST("GNULIB_POPEN", "0"),
+        macros.AC_SUBST("GNULIB_PRINTF", "0"),
+        macros.AC_SUBST("GNULIB_PRINTF_POSIX", "0"),
+        macros.AC_SUBST("GNULIB_PUTC", "0"),
+        macros.AC_SUBST("GNULIB_PUTCHAR", "0"),
+        macros.AC_SUBST("GNULIB_PUTS", "0"),
+        macros.AC_SUBST("GNULIB_REMOVE", "0"),
+        macros.AC_SUBST("GNULIB_RENAME", "0"),
+        macros.AC_SUBST("GNULIB_RENAMEAT", "0"),
+        macros.AC_SUBST("GNULIB_SCANF", "0"),
+        macros.AC_SUBST("GNULIB_SNPRINTF", "0"),
+        macros.AC_SUBST("GNULIB_SNZPRINTF", "0"),
+        macros.AC_SUBST("GNULIB_SPRINTF_POSIX", "0"),
+        macros.AC_SUBST("GNULIB_STDIO_H_NONBLOCKING", "0"),
+        macros.AC_SUBST("GNULIB_STDIO_H_SIGPIPE", "0"),
+        macros.AC_SUBST("GNULIB_SZPRINTF", "0"),
+        macros.AC_SUBST("GNULIB_TMPFILE", "0"),
+        macros.AC_SUBST("GNULIB_VASPRINTF", "0"),
+        macros.AC_SUBST("GNULIB_VASZPRINTF", "0"),
+        macros.AC_SUBST("GNULIB_VFSCANF", "0"),
+        macros.AC_SUBST("GNULIB_VSCANF", "0"),
+        macros.AC_SUBST("GNULIB_VDPRINTF", "0"),
+        macros.AC_SUBST("GNULIB_VDZPRINTF", "0"),
+        macros.AC_SUBST("GNULIB_VFPRINTF", "0"),
+        macros.AC_SUBST("GNULIB_VFPRINTF_POSIX", "0"),
+        macros.AC_SUBST("GNULIB_VFZPRINTF", "0"),
+        macros.AC_SUBST("GNULIB_VPRINTF", "0"),
+        macros.AC_SUBST("GNULIB_VPRINTF_POSIX", "0"),
+        macros.AC_SUBST("GNULIB_VSNPRINTF", "0"),
+        macros.AC_SUBST("GNULIB_VSNZPRINTF", "0"),
+        macros.AC_SUBST("GNULIB_VSPRINTF_POSIX", "0"),
+        macros.AC_SUBST("GNULIB_VSZPRINTF", "0"),
+        macros.AC_SUBST("GNULIB_VZPRINTF", "0"),
+        macros.AC_SUBST("GNULIB_ZPRINTF", "0"),
+        # Microsoft deprecated alias function names - default to 1
+        macros.AC_SUBST("GNULIB_MDA_FCLOSEALL", "1"),
+        macros.AC_SUBST("GNULIB_MDA_FDOPEN", "1"),
+        macros.AC_SUBST("GNULIB_MDA_FILENO", "1"),
+        macros.AC_SUBST("GNULIB_MDA_GETW", "1"),
+        macros.AC_SUBST("GNULIB_MDA_PUTW", "1"),
+        macros.AC_SUBST("GNULIB_MDA_TEMPNAM", "1"),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",  # gl_NEXT_HEADERS([stdio.h])
+    ],
+)
+
+# =============================================================================
+# gl_STDIO_H_DEFAULTS - exact match of AC_SUBST from the m4 *_DEFAULTS macro
+# =============================================================================
+
+_GL_STDIO_H_DEFAULTS = [
+    macros.AC_SUBST("HAVE_DECL_FCLOSEALL", "1"),
+    macros.AC_SUBST("HAVE_DECL_FPURGE", "1"),
+    macros.AC_SUBST("HAVE_DECL_FSEEKO", "1"),
+    macros.AC_SUBST("HAVE_DECL_FTELLO", "1"),
+    macros.AC_SUBST("HAVE_DECL_GETDELIM", "1"),
+    macros.AC_SUBST("HAVE_DECL_GETLINE", "1"),
+    macros.AC_SUBST("HAVE_DECL_GETW", "1"),
+    macros.AC_SUBST("HAVE_DECL_OBSTACK_PRINTF", "1"),
+    macros.AC_SUBST("HAVE_DECL_PUTW", "1"),
+    macros.AC_SUBST("HAVE_DECL_SNPRINTF", "1"),
+    macros.AC_SUBST("HAVE_DECL_VSNPRINTF", "1"),
+    macros.AC_SUBST("HAVE_DPRINTF", "1"),
+    macros.AC_SUBST("HAVE_FSEEKO", "1"),
+    macros.AC_SUBST("HAVE_FTELLO", "1"),
+    macros.AC_SUBST("HAVE_PCLOSE", "1"),
+    macros.AC_SUBST("HAVE_POPEN", "1"),
+    macros.AC_SUBST("HAVE_RENAMEAT", "1"),
+    macros.AC_SUBST("HAVE_VASPRINTF", "1"),
+    macros.AC_SUBST("HAVE_VDPRINTF", "1"),
+    macros.AC_SUBST("REPLACE_DPRINTF", "0"),
+    macros.AC_SUBST("REPLACE_FCLOSE", "0"),
+    macros.AC_SUBST("REPLACE_FDOPEN", "0"),
+    macros.AC_SUBST("REPLACE_FFLUSH", "0"),
+    macros.AC_SUBST("REPLACE_FOPEN", "0"),
+    macros.AC_SUBST("REPLACE_FOPEN_FOR_FOPEN_GNU", "0"),
+    macros.AC_SUBST("REPLACE_FPRINTF", "0"),
+    macros.AC_SUBST("REPLACE_FPURGE", "0"),
+    macros.AC_SUBST("REPLACE_FREOPEN", "0"),
+    macros.AC_SUBST("REPLACE_FSEEK", "0"),
+    macros.AC_SUBST("REPLACE_FSEEKO", "0"),
+    macros.AC_SUBST("REPLACE_FTELL", "0"),
+    macros.AC_SUBST("REPLACE_FTELLO", "0"),
+    macros.AC_SUBST("REPLACE_GETDELIM", "0"),
+    macros.AC_SUBST("REPLACE_GETLINE", "0"),
+    macros.AC_SUBST("REPLACE_OBSTACK_PRINTF", "0"),
+    macros.AC_SUBST("REPLACE_PERROR", "0"),
+    macros.AC_SUBST("REPLACE_POPEN", "0"),
+    macros.AC_SUBST("REPLACE_PRINTF", "0"),
+    macros.AC_SUBST("REPLACE_REMOVE", "0"),
+    macros.AC_SUBST("REPLACE_RENAME", "0"),
+    macros.AC_SUBST("REPLACE_RENAMEAT", "0"),
+    macros.AC_SUBST("REPLACE_SNPRINTF", "0"),
+    macros.AC_SUBST("REPLACE_SPRINTF", "0"),
+    macros.AC_SUBST("REPLACE_STDIO_READ_FUNCS", "0"),
+    macros.AC_SUBST("REPLACE_STDIO_WRITE_FUNCS", "0"),
+    macros.AC_SUBST("REPLACE_TMPFILE", "0"),
+    macros.AC_SUBST("REPLACE_VASPRINTF", "0"),
+    macros.AC_SUBST("REPLACE_VDPRINTF", "0"),
+    macros.AC_SUBST("REPLACE_VFPRINTF", "0"),
+    macros.AC_SUBST("REPLACE_VPRINTF", "0"),
+    macros.AC_SUBST("REPLACE_VSNPRINTF", "0"),
+    macros.AC_SUBST("REPLACE_VSPRINTF", "0"),
+]
+
+autoconf(
+    name = "with_defaults",
+    checks = _GL_STDIO_H_DEFAULTS,
+    visibility = ["//visibility:public"],
+    deps = [
+        ":stdio_h",
+    ],
 )

@@ -3,6 +3,10 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# =============================================================================
+# gl_GLOB_H - Header check and GNULIB module indicators
+# =============================================================================
+
 autoconf(
     name = "glob_h",
     checks = [
@@ -10,6 +14,32 @@ autoconf(
             "glob.h",
             define = "HAVE_GLOB_H",
         ),
+
+        # gl_MODULE_INDICATOR_INIT_VARIABLE calls (from gl_GLOB_H)
+        macros.AC_SUBST("GNULIB_GLOB", "0"),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",
+    ],
+)
+
+# =============================================================================
+# gl_GLOB_H_DEFAULTS - exact match of AC_SUBST from the m4 *_DEFAULTS macro
+# =============================================================================
+
+_GL_GLOB_H_DEFAULTS = [
+    macros.AC_SUBST("HAVE_GLOB", "1"),
+    macros.AC_SUBST("HAVE_GLOB_PATTERN_P", "1"),
+    macros.AC_SUBST("REPLACE_GLOB", "0"),
+    macros.AC_SUBST("REPLACE_GLOB_PATTERN_P", "0"),
+]
+
+autoconf(
+    name = "with_defaults",
+    checks = _GL_GLOB_H_DEFAULTS,
+    visibility = ["//visibility:public"],
+    deps = [
+        ":glob_h",
+    ],
 )

@@ -1,12 +1,114 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/include_next.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# =============================================================================
+# gl_INCLUDE_NEXT - Compiler Feature Settings
+# Modern compilers support #include_next, so default to enabled.
+# These are static AC_SUBST values (not compile-time detected).
+# =============================================================================
+
+_GL_INCLUDE_NEXT_DEFAULTS = [
+    macros.AC_SUBST("INCLUDE_NEXT", "include_next"),
+    macros.AC_SUBST("INCLUDE_NEXT_AS_FIRST_DIRECTIVE", "include_next"),
+    macros.AC_SUBST("PRAGMA_SYSTEM_HEADER", "#pragma GCC system_header"),
+    macros.AC_SUBST("PRAGMA_COLUMNS", ""),
+]
+
+# =============================================================================
+# gl_NEXT_HEADERS - System Header Paths
+# These define NEXT_<HEADER> variables for replacement header templates.
+# With include_next support, these are simple '<header.h>' paths.
+# These are static AC_SUBST values.
+# =============================================================================
+
+_GL_NEXT_HEADER_DEFAULTS = [
+    # Standard C headers
+    macros.AC_SUBST("NEXT_ASSERT_H", "<assert.h>"),
+    macros.AC_SUBST("NEXT_CTYPE_H", "<ctype.h>"),
+    macros.AC_SUBST("NEXT_ERRNO_H", "<errno.h>"),
+    macros.AC_SUBST("NEXT_FLOAT_H", "<float.h>"),
+    macros.AC_SUBST("NEXT_LIMITS_H", "<limits.h>"),
+    macros.AC_SUBST("NEXT_LOCALE_H", "<locale.h>"),
+    macros.AC_SUBST("NEXT_MATH_H", "<math.h>"),
+    macros.AC_SUBST("NEXT_SETJMP_H", "<setjmp.h>"),
+    macros.AC_SUBST("NEXT_SIGNAL_H", "<signal.h>"),
+    macros.AC_SUBST("NEXT_STDARG_H", "<stdarg.h>"),
+    macros.AC_SUBST("NEXT_STDDEF_H", "<stddef.h>"),
+    macros.AC_SUBST("NEXT_STDIO_H", "<stdio.h>"),
+    macros.AC_SUBST("NEXT_STDLIB_H", "<stdlib.h>"),
+    macros.AC_SUBST("NEXT_STRING_H", "<string.h>"),
+    macros.AC_SUBST("NEXT_TIME_H", "<time.h>"),
+    # C99/C11 headers
+    macros.AC_SUBST("NEXT_COMPLEX_H", "<complex.h>"),
+    macros.AC_SUBST("NEXT_FENV_H", "<fenv.h>"),
+    macros.AC_SUBST("NEXT_INTTYPES_H", "<inttypes.h>"),
+    macros.AC_SUBST("NEXT_STDBOOL_H", "<stdbool.h>"),
+    macros.AC_SUBST("NEXT_STDINT_H", "<stdint.h>"),
+    macros.AC_SUBST("NEXT_TGMATH_H", "<tgmath.h>"),
+    macros.AC_SUBST("NEXT_WCHAR_H", "<wchar.h>"),
+    macros.AC_SUBST("NEXT_WCTYPE_H", "<wctype.h>"),
+    # POSIX headers
+    macros.AC_SUBST("NEXT_DIRENT_H", "<dirent.h>"),
+    macros.AC_SUBST("NEXT_FCNTL_H", "<fcntl.h>"),
+    macros.AC_SUBST("NEXT_GETOPT_H", "<getopt.h>"),
+    macros.AC_SUBST("NEXT_ICONV_H", "<iconv.h>"),
+    macros.AC_SUBST("NEXT_LANGINFO_H", "<langinfo.h>"),
+    macros.AC_SUBST("NEXT_MONETARY_H", "<monetary.h>"),
+    macros.AC_SUBST("NEXT_NETDB_H", "<netdb.h>"),
+    macros.AC_SUBST("NEXT_POLL_H", "<poll.h>"),
+    macros.AC_SUBST("NEXT_PTHREAD_H", "<pthread.h>"),
+    macros.AC_SUBST("NEXT_SCHED_H", "<sched.h>"),
+    macros.AC_SUBST("NEXT_SEARCH_H", "<search.h>"),
+    macros.AC_SUBST("NEXT_SPAWN_H", "<spawn.h>"),
+    macros.AC_SUBST("NEXT_STRINGS_H", "<strings.h>"),
+    macros.AC_SUBST("NEXT_TERMIOS_H", "<termios.h>"),
+    macros.AC_SUBST("NEXT_UNISTD_H", "<unistd.h>"),
+    # sys/ headers
+    macros.AC_SUBST("NEXT_SYS_FILE_H", "<sys/file.h>"),
+    macros.AC_SUBST("NEXT_SYS_IOCTL_H", "<sys/ioctl.h>"),
+    macros.AC_SUBST("NEXT_SYS_MMAN_H", "<sys/mman.h>"),
+    macros.AC_SUBST("NEXT_SYS_RANDOM_H", "<sys/random.h>"),
+    macros.AC_SUBST("NEXT_SYS_RESOURCE_H", "<sys/resource.h>"),
+    macros.AC_SUBST("NEXT_SYS_SELECT_H", "<sys/select.h>"),
+    macros.AC_SUBST("NEXT_SYS_SOCKET_H", "<sys/socket.h>"),
+    macros.AC_SUBST("NEXT_SYS_STAT_H", "<sys/stat.h>"),
+    macros.AC_SUBST("NEXT_SYS_TIME_H", "<sys/time.h>"),
+    macros.AC_SUBST("NEXT_SYS_TIMES_H", "<sys/times.h>"),
+    macros.AC_SUBST("NEXT_SYS_TYPES_H", "<sys/types.h>"),
+    macros.AC_SUBST("NEXT_SYS_UIO_H", "<sys/uio.h>"),
+    macros.AC_SUBST("NEXT_SYS_WAIT_H", "<sys/wait.h>"),
+    # Network headers
+    macros.AC_SUBST("NEXT_ARPA_INET_H", "<arpa/inet.h>"),
+    macros.AC_SUBST("NEXT_NETINET_IN_H", "<netinet/in.h>"),
+    macros.AC_SUBST("NEXT_NET_IF_H", "<net/if.h>"),
+    # AS_FIRST_DIRECTIVE variants (same as above when include_next works)
+    macros.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_ASSERT_H", "<assert.h>"),
+    macros.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_CTYPE_H", "<ctype.h>"),
+    macros.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_ERRNO_H", "<errno.h>"),
+    macros.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_FLOAT_H", "<float.h>"),
+    macros.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_LIMITS_H", "<limits.h>"),
+    macros.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_LOCALE_H", "<locale.h>"),
+    macros.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_MATH_H", "<math.h>"),
+    macros.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_SETJMP_H", "<setjmp.h>"),
+    macros.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_SIGNAL_H", "<signal.h>"),
+    macros.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_STDARG_H", "<stdarg.h>"),
+    macros.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_STDDEF_H", "<stddef.h>"),
+    macros.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_STDIO_H", "<stdio.h>"),
+    macros.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_STDLIB_H", "<stdlib.h>"),
+    macros.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_STRING_H", "<string.h>"),
+    macros.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_TIME_H", "<time.h>"),
+    macros.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_WCHAR_H", "<wchar.h>"),
+    macros.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_WCTYPE_H", "<wctype.h>"),
+]
+
+# =============================================================================
+# Main autoconf target
+# =============================================================================
 
 autoconf(
     name = "include_next",
-    checks = [
-        # Note: include_next.m4 checks for #include_next support
-        # This is a compiler feature check that's complex to replicate
-    ],
+    checks = _GL_INCLUDE_NEXT_DEFAULTS + _GL_NEXT_HEADER_DEFAULTS,
     visibility = ["//visibility:public"],
 )

@@ -3,17 +3,83 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# =============================================================================
+# gl_SYS_STAT_H - Header check and GNULIB module indicators
+# =============================================================================
+
 autoconf(
     name = "sys_stat_h",
     checks = [
-        macros.AC_CHECK_TYPE(
-            "nlink_t",
-            define = "HAVE_NLINK_T",
-        ),
+        macros.AC_CHECK_HEADER("sys/stat.h"),
+
+        # gl_MODULE_INDICATOR_INIT_VARIABLE calls (from gl_SYS_STAT_H)
+        macros.AC_SUBST("GNULIB_CHMOD", "0"),
+        macros.AC_SUBST("GNULIB_FCHMODAT", "0"),
+        macros.AC_SUBST("GNULIB_FSTAT", "0"),
+        macros.AC_SUBST("GNULIB_FSTATAT", "0"),
+        macros.AC_SUBST("GNULIB_FUTIMENS", "0"),
+        macros.AC_SUBST("GNULIB_GETUMASK", "0"),
+        macros.AC_SUBST("GNULIB_LCHMOD", "0"),
+        macros.AC_SUBST("GNULIB_LSTAT", "0"),
+        macros.AC_SUBST("GNULIB_MKDIR", "0"),
+        macros.AC_SUBST("GNULIB_MKDIRAT", "0"),
+        macros.AC_SUBST("GNULIB_MKFIFO", "0"),
+        macros.AC_SUBST("GNULIB_MKFIFOAT", "0"),
+        macros.AC_SUBST("GNULIB_MKNOD", "0"),
+        macros.AC_SUBST("GNULIB_MKNODAT", "0"),
+        macros.AC_SUBST("GNULIB_STAT", "0"),
+        macros.AC_SUBST("GNULIB_UTIMENSAT", "0"),
+        macros.AC_SUBST("GNULIB_OVERRIDES_STRUCT_STAT", "0"),
+        # Microsoft deprecated alias function names - default to 1
+        macros.AC_SUBST("GNULIB_MDA_CHMOD", "1"),
+        macros.AC_SUBST("GNULIB_MDA_MKDIR", "1"),
+        macros.AC_SUBST("GNULIB_MDA_UMASK", "1"),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//gnulib/m4/include_next",  # For NEXT_SYS_STAT_H
         "//gnulib/m4/largefile",
         "//gnulib/m4/windows-stat-timespec",
+    ],
+)
+
+# =============================================================================
+# gl_SYS_STAT_H_DEFAULTS - exact match of AC_SUBST from the m4 *_DEFAULTS macro
+# =============================================================================
+
+_GL_SYS_STAT_H_DEFAULTS = [
+    macros.AC_SUBST("HAVE_FCHMODAT", "1"),
+    macros.AC_SUBST("HAVE_FSTATAT", "1"),
+    macros.AC_SUBST("HAVE_FUTIMENS", "1"),
+    macros.AC_SUBST("HAVE_GETUMASK", "1"),
+    macros.AC_SUBST("HAVE_LCHMOD", "1"),
+    macros.AC_SUBST("HAVE_LSTAT", "1"),
+    macros.AC_SUBST("HAVE_MKDIRAT", "1"),
+    macros.AC_SUBST("HAVE_MKFIFO", "1"),
+    macros.AC_SUBST("HAVE_MKFIFOAT", "1"),
+    macros.AC_SUBST("HAVE_MKNOD", "1"),
+    macros.AC_SUBST("HAVE_MKNODAT", "1"),
+    macros.AC_SUBST("HAVE_UTIMENSAT", "1"),
+    macros.AC_SUBST("REPLACE_CHMOD", "0"),
+    macros.AC_SUBST("REPLACE_FCHMODAT", "0"),
+    macros.AC_SUBST("REPLACE_FSTAT", "0"),
+    macros.AC_SUBST("REPLACE_FSTATAT", "0"),
+    macros.AC_SUBST("REPLACE_FUTIMENS", "0"),
+    macros.AC_SUBST("REPLACE_LSTAT", "0"),
+    macros.AC_SUBST("REPLACE_MKDIR", "0"),
+    macros.AC_SUBST("REPLACE_MKFIFO", "0"),
+    macros.AC_SUBST("REPLACE_MKFIFOAT", "0"),
+    macros.AC_SUBST("REPLACE_MKNOD", "0"),
+    macros.AC_SUBST("REPLACE_MKNODAT", "0"),
+    macros.AC_SUBST("REPLACE_STAT", "0"),
+    macros.AC_SUBST("REPLACE_UTIMENSAT", "0"),
+]
+
+autoconf(
+    name = "with_defaults",
+    checks = _GL_SYS_STAT_H_DEFAULTS,
+    visibility = ["//visibility:public"],
+    deps = [
+        ":sys_stat_h",
     ],
 )

@@ -6,24 +6,11 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "chown",
     checks = [
-        # Check for chown and fchown functions
-        # Equivalent to gl_FUNC_CHOWN macro from chown.m4
-        # Note: Full implementation includes runtime checks for chown behavior
-        # with -1 IDs, trailing slashes, and ctime updates that are not easily
-        # replicable in Bazel
-        macros.AC_CHECK_FUNC(
-            "chown",
-            define = "HAVE_CHOWN",
-        ),
-        macros.AC_CHECK_FUNC(
-            "fchown",
-            define = "HAVE_FCHOWN",
-        ),
+        macros.AC_CHECK_FUNC("chown"),
+        macros.AC_CHECK_FUNC("fchown"),
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
-        # Note: AC_REQUIRE([AC_TYPE_UID_T]) and AC_REQUIRE([AC_CANONICAL_HOST])
-        # are standard autoconf macros
     ],
 )

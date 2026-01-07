@@ -6,57 +6,31 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "glob",
     checks = [
-        # Check for glob function and related functions
-        # Equivalent to gl_GLOB macro from glob.m4
-        # Note: Full implementation includes runtime checks for stack overflow,
-        # symlink handling that are not easily replicable in Bazel
-        macros.AC_CHECK_FUNC(
-            "glob_pattern_p",
-            define = "HAVE_GLOB_PATTERN_P",
-        ),
-        macros.AC_TRY_COMPILE(
-            code = """#include <glob.h>
+        # Check for glob function
+        macros.AC_CHECK_FUNC("glob"),
 
-#ifdef __cplusplus
-extern "C"
-#endif
-int glob ();
+        # Check for glob_pattern_p function
+        macros.AC_CHECK_FUNC("glob_pattern_p"),
 
-int main(void) {
-    return glob();
-}""",
-            define = "HAVE_GLOB",
-            language = "c",
-        ),
-        macros.AC_TRY_COMPILE(
-            code = """#include <unistd.h>
+        # Related functions needed by lib/glob.c
+        macros.AC_CHECK_FUNC("getlogin_r"),
+        macros.AC_CHECK_FUNC("getpwnam_r"),
 
-#ifdef __cplusplus
-extern "C"
-#endif
-int getlogin_r ();
-
-int main(void) {
-    return getlogin_r();
-}""",
-            define = "HAVE_GETLOGIN_R",
-            language = "c",
-        ),
-        macros.AC_TRY_COMPILE(
-            code = """#include <pwd.h>
-
-#ifdef __cplusplus
-extern "C"
-#endif
-int getpwnam_r ();
-
-int main(void) {
-    return getpwnam_r();
-}""",
-            define = "HAVE_GETPWNAM_R",
-            language = "c",
-        ),
-    ],
+        # REPLACE_GLOB_PATTERN_P defaults to 0
+        macros.AC_SUBST("REPLACE_GLOB_PATTERN_P", "0"),
+    ] + select(
+        # REPLACE_GLOB logic from gnulib:
+        # The original macro does extensive runtime tests for:
+        # - Stack overflow with recursive calls (glibc <= 2.42, Cygwin, Android)
+        # - Broken symlinks handling (AIX, HP-UX)
+        # - GLOB_TILDE functionality
+        {
+            "@platforms//os:android": [macros.AC_SUBST("REPLACE_GLOB", "1")],  # Known stack overflow issues
+            "@platforms//os:windows": [macros.AC_SUBST("REPLACE_GLOB", "1")],  # No glob on Windows
+            # Note: glibc <= 2.42, Cygwin also have issues but hard to detect at build time
+            "//conditions:default": [macros.AC_SUBST("REPLACE_GLOB", "0")],  # Most modern systems have working glob
+        },
+    ),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/d-type",  # AC_REQUIRE([gl_CHECK_TYPE_STRUCT_DIRENT_D_TYPE])

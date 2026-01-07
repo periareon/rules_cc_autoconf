@@ -3,6 +3,10 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# =============================================================================
+# gl_FNMATCH_H - Header check and GNULIB module indicators
+# =============================================================================
+
 autoconf(
     name = "fnmatch_h",
     checks = [
@@ -10,6 +14,52 @@ autoconf(
             "fnmatch.h",
             define = "HAVE_FNMATCH_H",
         ),
+
+        # gl_MODULE_INDICATOR_INIT_VARIABLE calls (from gl_FNMATCH_H)
+        macros.AC_SUBST("GNULIB_FNMATCH", "0"),
+
+        # GNU extension checks (from gl_FNMATCH_H)
+        macros.AC_TRY_COMPILE(
+            code = "int x = FNM_CASEFOLD; (void)x;",
+            define = "HAVE_FNM_CASEFOLD",
+            includes = ["fnmatch.h"],
+        ),
+        macros.AC_TRY_COMPILE(
+            code = "int x = FNM_EXTMATCH; (void)x;",
+            define = "HAVE_FNM_EXTMATCH",
+            includes = ["fnmatch.h"],
+        ),
+        macros.AC_TRY_COMPILE(
+            code = "int x = FNM_FILE_NAME; (void)x;",
+            define = "HAVE_FNM_FILE_NAME",
+            includes = ["fnmatch.h"],
+        ),
+        macros.AC_TRY_COMPILE(
+            code = "int x = FNM_LEADING_DIR; (void)x;",
+            define = "HAVE_FNM_LEADING_DIR",
+            includes = ["fnmatch.h"],
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",
+    ],
+)
+
+# =============================================================================
+# gl_FNMATCH_H_DEFAULTS - exact match of AC_SUBST from the m4 *_DEFAULTS macro
+# =============================================================================
+
+_GL_FNMATCH_H_DEFAULTS = [
+    macros.AC_SUBST("HAVE_FNMATCH", "1"),
+    macros.AC_SUBST("REPLACE_FNMATCH", "0"),
+]
+
+autoconf(
+    name = "with_defaults",
+    checks = _GL_FNMATCH_H_DEFAULTS,
+    visibility = ["//visibility:public"],
+    deps = [
+        ":fnmatch_h",
+    ],
 )

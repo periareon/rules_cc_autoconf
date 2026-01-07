@@ -6,32 +6,171 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "math_h",
     checks = [
-        # Check for math.h header features
-        # Equivalent to gl_MATH_H macro from math_h.m4
+        # ============================================================
+        # GNULIB module indicator variables (AC_SUBST, default 0)
+        # These are set to 1 by specific gnulib modules when enabled
+        # ============================================================
+        macros.AC_SUBST("GNULIB_ACOSF", "0"),
+        macros.AC_SUBST("GNULIB_ACOSL", "0"),
+        macros.AC_SUBST("GNULIB_ASINF", "0"),
+        macros.AC_SUBST("GNULIB_ASINL", "0"),
+        macros.AC_SUBST("GNULIB_ATANF", "0"),
+        macros.AC_SUBST("GNULIB_ATANL", "0"),
+        macros.AC_SUBST("GNULIB_ATAN2F", "0"),
+        macros.AC_SUBST("GNULIB_CBRT", "0"),
+        macros.AC_SUBST("GNULIB_CBRTF", "0"),
+        macros.AC_SUBST("GNULIB_CBRTL", "0"),
+        macros.AC_SUBST("GNULIB_CEIL", "0"),
+        macros.AC_SUBST("GNULIB_CEILF", "0"),
+        macros.AC_SUBST("GNULIB_CEILL", "0"),
+        macros.AC_SUBST("GNULIB_COPYSIGN", "0"),
+        macros.AC_SUBST("GNULIB_COPYSIGNF", "0"),
+        macros.AC_SUBST("GNULIB_COPYSIGNL", "0"),
+        macros.AC_SUBST("GNULIB_COSF", "0"),
+        macros.AC_SUBST("GNULIB_COSL", "0"),
+        macros.AC_SUBST("GNULIB_COSHF", "0"),
+        macros.AC_SUBST("GNULIB_EXPF", "0"),
+        macros.AC_SUBST("GNULIB_EXPL", "0"),
+        macros.AC_SUBST("GNULIB_EXP2", "0"),
+        macros.AC_SUBST("GNULIB_EXP2F", "0"),
+        macros.AC_SUBST("GNULIB_EXP2L", "0"),
+        macros.AC_SUBST("GNULIB_EXPM1", "0"),
+        macros.AC_SUBST("GNULIB_EXPM1F", "0"),
+        macros.AC_SUBST("GNULIB_EXPM1L", "0"),
+        macros.AC_SUBST("GNULIB_FABSF", "0"),
+        macros.AC_SUBST("GNULIB_FABSL", "0"),
+        macros.AC_SUBST("GNULIB_FLOOR", "0"),
+        macros.AC_SUBST("GNULIB_FLOORF", "0"),
+        macros.AC_SUBST("GNULIB_FLOORL", "0"),
+        macros.AC_SUBST("GNULIB_FMA", "0"),
+        macros.AC_SUBST("GNULIB_FMAF", "0"),
+        macros.AC_SUBST("GNULIB_FMAL", "0"),
+        macros.AC_SUBST("GNULIB_FMOD", "0"),
+        macros.AC_SUBST("GNULIB_FMODF", "0"),
+        macros.AC_SUBST("GNULIB_FMODL", "0"),
+        macros.AC_SUBST("GNULIB_FREXPF", "0"),
+        macros.AC_SUBST("GNULIB_FREXP", "0"),
+        macros.AC_SUBST("GNULIB_FREXPL", "0"),
+        macros.AC_SUBST("GNULIB_HYPOT", "0"),
+        macros.AC_SUBST("GNULIB_HYPOTF", "0"),
+        macros.AC_SUBST("GNULIB_HYPOTL", "0"),
+        macros.AC_SUBST("GNULIB_ILOGB", "0"),
+        macros.AC_SUBST("GNULIB_ILOGBF", "0"),
+        macros.AC_SUBST("GNULIB_ILOGBL", "0"),
+        macros.AC_SUBST("GNULIB_ISFINITE", "0"),
+        macros.AC_SUBST("GNULIB_ISINF", "0"),
+        macros.AC_SUBST("GNULIB_ISNAN", "0"),
+        macros.AC_SUBST("GNULIB_ISNANF", "0"),
+        macros.AC_SUBST("GNULIB_ISNAND", "0"),
+        macros.AC_SUBST("GNULIB_ISNANL", "0"),
+        macros.AC_SUBST("GNULIB_LDEXP", "0"),
+        macros.AC_SUBST("GNULIB_LDEXPF", "0"),
+        macros.AC_SUBST("GNULIB_LDEXPL", "0"),
+        macros.AC_SUBST("GNULIB_LOG", "0"),
+        macros.AC_SUBST("GNULIB_LOGF", "0"),
+        macros.AC_SUBST("GNULIB_LOGL", "0"),
+        macros.AC_SUBST("GNULIB_LOG10", "0"),
+        macros.AC_SUBST("GNULIB_LOG10F", "0"),
+        macros.AC_SUBST("GNULIB_LOG10L", "0"),
+        macros.AC_SUBST("GNULIB_LOG1P", "0"),
+        macros.AC_SUBST("GNULIB_LOG1PF", "0"),
+        macros.AC_SUBST("GNULIB_LOG1PL", "0"),
+        macros.AC_SUBST("GNULIB_LOG2", "0"),
+        macros.AC_SUBST("GNULIB_LOG2F", "0"),
+        macros.AC_SUBST("GNULIB_LOG2L", "0"),
+        macros.AC_SUBST("GNULIB_LOGB", "0"),
+        macros.AC_SUBST("GNULIB_LOGBF", "0"),
+        macros.AC_SUBST("GNULIB_LOGBL", "0"),
+        macros.AC_SUBST("GNULIB_MODF", "0"),
+        macros.AC_SUBST("GNULIB_MODFF", "0"),
+        macros.AC_SUBST("GNULIB_MODFL", "0"),
+        macros.AC_SUBST("GNULIB_POWF", "0"),
+        macros.AC_SUBST("GNULIB_REMAINDER", "0"),
+        macros.AC_SUBST("GNULIB_REMAINDERF", "0"),
+        macros.AC_SUBST("GNULIB_REMAINDERL", "0"),
+        macros.AC_SUBST("GNULIB_ROUND", "0"),
+        macros.AC_SUBST("GNULIB_ROUNDF", "0"),
+        macros.AC_SUBST("GNULIB_ROUNDL", "0"),
+        macros.AC_SUBST("GNULIB_SIGNBIT", "0"),
+        macros.AC_SUBST("GNULIB_SINF", "0"),
+        macros.AC_SUBST("GNULIB_SINL", "0"),
+        macros.AC_SUBST("GNULIB_SINHF", "0"),
+        macros.AC_SUBST("GNULIB_SQRTF", "0"),
+        macros.AC_SUBST("GNULIB_SQRTL", "0"),
+        macros.AC_SUBST("GNULIB_TANF", "0"),
+        macros.AC_SUBST("GNULIB_TANL", "0"),
+        macros.AC_SUBST("GNULIB_TANHF", "0"),
+        macros.AC_SUBST("GNULIB_TRUNC", "0"),
+        macros.AC_SUBST("GNULIB_TRUNCF", "0"),
+        macros.AC_SUBST("GNULIB_TRUNCL", "0"),
+        # Microsoft deprecated alias support
+        macros.AC_SUBST("GNULIB_MDA_J0", "1"),
+        macros.AC_SUBST("GNULIB_MDA_J1", "1"),
+        macros.AC_SUBST("GNULIB_MDA_JN", "1"),
+        macros.AC_SUBST("GNULIB_MDA_Y0", "1"),
+        macros.AC_SUBST("GNULIB_MDA_Y1", "1"),
+        macros.AC_SUBST("GNULIB_MDA_YN", "1"),
+
+        # ============================================================
+        # Basic math.h capability checks
+        # ============================================================
+        macros.AC_CHECK_HEADER("math.h"),
         macros.AC_TRY_COMPILE(
-            code = """#include <math.h>
-/* Solaris 10 has a broken definition of NAN.  Other platforms
-   fail to provide NAN, or provide it only in C99 mode; this
-   test only needs to fail when NAN is provided but wrong.  */
+            code = """\
+#include <math.h>
 float f = 1.0f;
 #ifdef NAN
 f = NAN;
 #endif
-return f == 0;""",
+return f == 0;
+""",
             define = "HAVE_MATH_NAN_WORKS",
             language = "c",
         ),
         macros.AC_TRY_COMPILE(
-            code = """#include <math.h>
-/* Solaris 10 has a broken definition of HUGE_VAL.  */
+            code = """\
+#include <math.h>
 double d = HUGE_VAL;
-return d == 0;""",
+return d == 0;
+""",
             define = "HAVE_MATH_HUGE_VAL_WORKS",
             language = "c",
         ),
+
+        # ============================================================
+        # REPLACE_* variables (AC_SUBST, default 0)
+        # These are set to 1 when gnulib needs to replace a function
+        # ============================================================
+        macros.AC_SUBST("REPLACE_CEIL", "0"),
+        macros.AC_SUBST("REPLACE_CEILF", "0"),
+        macros.AC_SUBST("REPLACE_CEILL", "0"),
+        macros.AC_SUBST("REPLACE_FLOOR", "0"),
+        macros.AC_SUBST("REPLACE_FLOORF", "0"),
+        macros.AC_SUBST("REPLACE_FLOORL", "0"),
+        macros.AC_SUBST("REPLACE_FREXP", "0"),
+        macros.AC_SUBST("REPLACE_FREXPF", "0"),
+        macros.AC_SUBST("REPLACE_FREXPL", "0"),
+        macros.AC_SUBST("REPLACE_HUGE_VAL", "0"),
+        macros.AC_SUBST("REPLACE_ISFINITE", "0"),
+        macros.AC_SUBST("REPLACE_ISINF", "0"),
+        macros.AC_SUBST("REPLACE_ISNAN", "0"),
+        macros.AC_SUBST("REPLACE_LDEXP", "0"),
+        macros.AC_SUBST("REPLACE_LDEXPL", "0"),
+        macros.AC_SUBST("REPLACE_LOG", "0"),
+        macros.AC_SUBST("REPLACE_LOGF", "0"),
+        macros.AC_SUBST("REPLACE_LOGL", "0"),
+        macros.AC_SUBST("REPLACE_NAN", "0"),
+        macros.AC_SUBST("REPLACE_ROUND", "0"),
+        macros.AC_SUBST("REPLACE_ROUNDF", "0"),
+        macros.AC_SUBST("REPLACE_ROUNDL", "0"),
+        macros.AC_SUBST("REPLACE_SIGNBIT", "0"),
+        macros.AC_SUBST("REPLACE_SIGNBIT_USING_BUILTINS", "0"),
+        macros.AC_SUBST("REPLACE_TRUNC", "0"),
+        macros.AC_SUBST("REPLACE_TRUNCF", "0"),
+        macros.AC_SUBST("REPLACE_TRUNCL", "0"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # Note: AC_REQUIRE([gl_MATH_H_DEFAULTS]) is defined in this module
+        "//gnulib/m4/include_next",  # For NEXT_MATH_H
     ],
 )

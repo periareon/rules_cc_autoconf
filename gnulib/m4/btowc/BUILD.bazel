@@ -6,20 +6,13 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "btowc",
     checks = [
-        # Check for btowc function
-        # Equivalent to gl_FUNC_BTOWC macro from btowc.m4
-        # Note: Full implementation includes runtime checks for btowc(0) correctness
-        # and consistency with mbrtowc that are not easily replicable in Bazel
-        macros.AC_CHECK_FUNC(
-            "btowc",
-            define = "HAVE_BTOWC",
-        ),
+        macros.AC_CHECK_FUNC("btowc"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/locale-fr",  # AC_REQUIRE([gt_LOCALE_FR])
-        "//gnulib/m4/mbrtowc",  # AC_REQUIRE([gl_MBRTOWC_C_LOCALE])
-        "//gnulib/m4/wchar_h",  # AC_REQUIRE([gl_WCHAR_H_DEFAULTS]), AC_REQUIRE([gl_WCHAR_H_INLINE_OK])
-        "//gnulib/m4/wint_t",  # AC_REQUIRE([gt_TYPE_WINT_T])
+        "//gnulib/m4/locale-fr",
+        "//gnulib/m4/mbrtowc",
+        "//gnulib/m4/wchar_h",  # AC_REQUIRE([gl_WCHAR_H_DEFAULTS])
+        "//gnulib/m4/wint_t",
     ],
 )

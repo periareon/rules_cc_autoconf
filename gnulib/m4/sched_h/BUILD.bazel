@@ -3,16 +3,41 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# gl_SCHED_H from sched_h.m4
+# =============================================================================
+# gl_SCHED_H - Header check and GNULIB module indicators
+# =============================================================================
 
 autoconf(
     name = "sched_h",
     checks = [
-        macros.AC_CHECK_HEADER("sched.h"),
-        macros.AC_CHECK_TYPE(
-            "struct sched_param",
-            code = "#include <sched.h>",
+        macros.AC_CHECK_HEADER(
+            "sched.h",
+            define = "HAVE_SCHED_H",
         ),
+
+        # gl_MODULE_INDICATOR_INIT_VARIABLE calls (from gl_SCHED_H)
+        macros.AC_SUBST("GNULIB_SCHED_YIELD", "0"),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",
+    ],
+)
+
+# =============================================================================
+# gl_SCHED_H_DEFAULTS - exact match of AC_SUBST from the m4 *_DEFAULTS macro
+# =============================================================================
+
+_GL_SCHED_H_DEFAULTS = [
+    macros.AC_SUBST("HAVE_SCHED_YIELD", "1"),
+    macros.AC_SUBST("REPLACE_SCHED_YIELD", "0"),
+]
+
+autoconf(
+    name = "with_defaults",
+    checks = _GL_SCHED_H_DEFAULTS,
+    visibility = ["//visibility:public"],
+    deps = [
+        ":sched_h",
+    ],
 )

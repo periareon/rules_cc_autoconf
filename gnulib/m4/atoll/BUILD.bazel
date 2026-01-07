@@ -6,12 +6,7 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "atoll",
     checks = [
-        # Check for atoll function
-        # Equivalent to gl_FUNC_ATOLL macro from atoll.m4
-        macros.AC_CHECK_FUNC(
-            "atoll",
-            define = "HAVE_ATOLL",
-        ),
+        macros.AC_CHECK_FUNC("atoll"),
     ],
     visibility = ["//visibility:public"],
     deps = [

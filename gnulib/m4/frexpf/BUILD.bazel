@@ -6,21 +6,12 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "frexpf",
     checks = [
-        # Check for frexpf function
-        # Equivalent to gl_FUNC_FREXPF macro from frexpf.m4
-        # Note: Full implementation includes runtime checks for infinite numbers
-        # and negative zero that are not easily replicable in Bazel
-        macros.AC_CHECK_FUNC(
-            "frexpf",
-            define = "HAVE_FREXPF",
-        ),
+        macros.AC_CHECK_FUNC("frexpf"),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//gnulib/m4/frexp",
         "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
-        "//gnulib/m4/frexp",  # AC_REQUIRE([gl_FUNC_FREXP])
-        "//gnulib/m4/mathfunc",  # Uses gl_MATHFUNC([frexpf, ...])
-        # Note: AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]), AC_REQUIRE([AC_PROG_CC]),
-        # and AC_REQUIRE([AC_CANONICAL_HOST]) are standard autoconf macros
+        "//gnulib/m4/mathfunc",
     ],
 )
