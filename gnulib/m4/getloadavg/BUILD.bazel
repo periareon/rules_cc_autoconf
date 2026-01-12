@@ -18,7 +18,13 @@ autoconf(
             "getloadavg",
             headers = ["stdlib.h"],
         ),
-    ],
+    ] + select({
+        "@platforms//os:macos": [
+            # On macOS/BSD, nlist.n_un.n_name is a pointer
+            macros.AC_DEFINE("N_NAME_POINTER", "1"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/pathmax",  # Provides HAVE_SYS_PARAM_H

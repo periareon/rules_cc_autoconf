@@ -10,6 +10,12 @@ autoconf(
             "explicit_memset",
             define = "HAVE_EXPLICIT_MEMSET",
         ),
-    ],
+    ] + select({
+        "@platforms//os:macos": [
+            # macOS has memset_s which supports zero-size buffers
+            macros.AC_DEFINE("HAVE_MEMSET_S_SUPPORTS_ZERO", "1"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
 )

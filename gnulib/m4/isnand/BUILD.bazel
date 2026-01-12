@@ -27,6 +27,9 @@ int main(void) {
             define = "HAVE_ISNAND",
             language = "c",
         ),
+        # HAVE_ISNAND_IN_LIBC: isnan(double) is available in libc without -lm
+        # This is true on modern systems (macOS, Linux glibc)
+        macros.AC_DEFINE("HAVE_ISNAND_IN_LIBC", "1"),
     ],
     visibility = ["//visibility:public"],
     deps = [

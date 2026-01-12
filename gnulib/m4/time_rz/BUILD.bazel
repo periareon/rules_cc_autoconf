@@ -10,7 +10,13 @@ autoconf(
             "timezone_t",
             define = "HAVE_TIMEZONE_T",
         ),
-        macros.AC_DEFINE("HAVE_LOCALTIME_INFLOOP_BUG", "1"),
-    ],
+    ] + select({
+        # On macOS, localtime doesn't have the infinite loop bug
+        "@platforms//os:macos": [],
+        # On some older systems, localtime may have an infinite loop bug
+        "//conditions:default": [
+            macros.AC_DEFINE("HAVE_LOCALTIME_INFLOOP_BUG", "1"),
+        ],
+    }),
     visibility = ["//visibility:public"],
 )

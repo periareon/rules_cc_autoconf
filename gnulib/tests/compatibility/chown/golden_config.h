@@ -1,0 +1,6 @@
+/* config.h.in - AC_DEFINE placeholders */
+/* #undef CHOWN_CHANGE_TIME_BUG */
+/* #undef CHOWN_FAILS_TO_HONOR_ID_OF_NEGATIVE_ONE */
+/* #undef CHOWN_MODIFIES_SYMLINK */
+#define CHOWN_TRAILING_SLASH_BUG 1
+#define HAVE_CHOWN 1

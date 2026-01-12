@@ -4,13 +4,72 @@ load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
 # gl_FUNC_STRERROR from strerror.m4
-# COMPLEX CASE: Uses AC_RUN_IFELSE to test if strerror(-2) returns non-empty
-# string. Runtime test is NOT cross-compile friendly.
+# COMPLEX CASE: Uses AC_RUN_IFELSE to test various strerror behaviors.
+#
+# REPLACE_STRERROR_0 is set when strerror(0) doesn't return a message
+# implying success. Known platforms with this issue:
+#   - macOS: returns "Undefined error: 0"
+#   - FreeBSD < 13: returns "Unknown error: 0"
+#   - Haiku: returns "No error"
+#   - HP-UX: returns "Error 0"
+#   - IRIX: returns "Error 0"
+#   - Solaris: returns "Error 0"
 autoconf(
     name = "strerror",
     checks = [
         # Basic function check
         macros.AC_CHECK_FUNC("strerror"),
+        # Platform detection for strerror(0) behavior
+        # Uses AC_RUN_IFELSE in upstream, we use compile-time platform heuristics
+        macros.AC_TRY_COMPILE(
+            code = """\
+/* Platform detection for strerror(0) behavior.
+ * Based on gnulib m4/strerror.m4 runtime tests.
+ *
+ * Platforms where strerror(0) doesn't return "success":
+ *   - macOS: returns "Undefined error: 0"
+ *   - FreeBSD < 13: returns "Unknown error: 0"
+ *   - Haiku: returns "No error"
+ *   - HP-UX: returns "Error 0"
+ *   - IRIX: returns "Error 0"
+ *   - Solaris: returns "Error 0"
+ *
+ * Platforms with correct strerror(0):
+ *   - Linux with glibc: returns "Success"
+ *   - FreeBSD 13+: returns "No error: 0" (acceptable)
+ */
+#if defined(__APPLE__) && defined(__MACH__)
+  /* macOS returns "Undefined error: 0" */
+  #error "macOS strerror needs REPLACE_STRERROR_0"
+#elif defined(__FreeBSD__)
+  /* FreeBSD < 13 has issues, but 13+ is OK */
+  #if __FreeBSD__ < 13
+    #error "FreeBSD < 13 strerror needs REPLACE_STRERROR_0"
+  #endif
+#elif defined(__HAIKU__)
+  /* Haiku returns "No error" */
+  #error "Haiku strerror needs REPLACE_STRERROR_0"
+#elif defined(__hpux)
+  /* HP-UX returns "Error 0" */
+  #error "HP-UX strerror needs REPLACE_STRERROR_0"
+#elif defined(__sgi)
+  /* IRIX returns "Error 0" */
+  #error "IRIX strerror needs REPLACE_STRERROR_0"
+#elif defined(__sun) && defined(__SVR4)
+  /* Solaris returns "Error 0" */
+  #error "Solaris strerror needs REPLACE_STRERROR_0"
+#endif
+int main(void) { return 0; }
+""",
+            define = "_gl_cv_func_strerror_0_works",
+            language = "c",
+        ),
+        macros.AC_SUBST(
+            "REPLACE_STRERROR_0",
+            condition = "_gl_cv_func_strerror_0_works",
+            if_false = "1",
+            if_true = "0",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [

@@ -1,0 +1,3 @@
+/* config.h.in - AC_DEFINE placeholders */
+/* #undef HAVE_FORKPTY */
+/* #undef HAVE_OPENPTY */

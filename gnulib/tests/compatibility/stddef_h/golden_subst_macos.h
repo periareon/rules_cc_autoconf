@@ -1,0 +1,6 @@
+/* gnulib_stddef_h.h.in - AC_SUBST placeholders */
+#define SUBST_HAVE_C_UNREACHABLE 0
+#define SUBST_HAVE_MAX_ALIGN_T 1
+#define SUBST_NULLPTR_T_NEEDS_STDDEF 1
+#define SUBST_REPLACE_NULL 0
+#define SUBST_STDDEF_NOT_IDEMPOTENT 0

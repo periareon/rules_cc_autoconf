@@ -3,10 +3,6 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# =============================================================================
-# gl_NETDB_H - Header check and GNULIB module indicators
-# =============================================================================
-
 autoconf(
     name = "netdb_h",
     checks = [
@@ -14,9 +10,6 @@ autoconf(
             "netdb.h",
             define = "HAVE_NETDB_H",
         ),
-
-        # gl_MODULE_INDICATOR_INIT_VARIABLE calls (from gl_NETDB_H)
-        macros.AC_SUBST("GNULIB_GETADDRINFO", "0"),
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -24,25 +17,30 @@ autoconf(
     ],
 )
 
-# =============================================================================
-# gl_NETDB_H_DEFAULTS - exact match of AC_SUBST from the m4 *_DEFAULTS macro
-# =============================================================================
-
-_GL_NETDB_H_DEFAULTS = [
-    macros.AC_SUBST("HAVE_STRUCT_ADDRINFO", "1"),
-    macros.AC_SUBST("HAVE_DECL_FREEADDRINFO", "1"),
-    macros.AC_SUBST("HAVE_DECL_GAI_STRERROR", "1"),
-    macros.AC_SUBST("HAVE_DECL_GETADDRINFO", "1"),
-    macros.AC_SUBST("HAVE_DECL_GETNAMEINFO", "1"),
-    macros.AC_SUBST("REPLACE_GAI_STRERROR", "0"),
-    macros.AC_SUBST("REPLACE_GETADDRINFO", "0"),
-]
+autoconf(
+    name = "defaults",
+    checks = [
+        # Module indicators
+        macros.AC_SUBST("GNULIB_GETADDRINFO", "0"),
+        # HAVE_* defaults
+        macros.AC_SUBST("HAVE_STRUCT_ADDRINFO", "1"),
+        macros.AC_SUBST("HAVE_DECL_FREEADDRINFO", "1"),
+        macros.AC_SUBST("HAVE_DECL_GAI_STRERROR", "1"),
+        macros.AC_SUBST("HAVE_DECL_GETADDRINFO", "1"),
+        macros.AC_SUBST("HAVE_DECL_GETNAMEINFO", "1"),
+        # REPLACE_* defaults
+        macros.AC_SUBST("REPLACE_GAI_STRERROR", "0"),
+        macros.AC_SUBST("REPLACE_GETADDRINFO", "0"),
+    ],
+    visibility = ["//visibility:public"],
+)
 
 autoconf(
     name = "with_defaults",
-    checks = _GL_NETDB_H_DEFAULTS,
+    checks = [],
     visibility = ["//visibility:public"],
     deps = [
+        ":defaults",
         ":netdb_h",
     ],
 )

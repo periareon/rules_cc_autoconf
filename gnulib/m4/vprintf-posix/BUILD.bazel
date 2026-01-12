@@ -1,11 +1,24 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/vprintf-posix.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_VPRINTF_POSIX replaces the system vprintf with gnulib's POSIX-compliant version
 
 autoconf(
     name = "vprintf-posix",
     checks = [
-        # TODO: Add checks based on .m4 file
+        # REPLACE_VPRINTF: Use platform printf compliance check.
+        macros.AC_SUBST(
+            "REPLACE_VPRINTF",
+            condition = "_gl_cv_func_printf_posix",
+            if_false = "1",
+            if_true = "0",
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/printf:printf_posix_compliance",  # Platform printf compliance check
+        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS])
+    ],
 )

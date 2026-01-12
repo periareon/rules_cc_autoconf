@@ -10,7 +10,18 @@ autoconf(
             "ieee754.h",
             define = "HAVE_IEEE754_H",
         ),
-        # Note: _GL_REPLACE_IEEE754_H is set based on whether header exists
-    ],
+    ] + select({
+        "@platforms//os:linux": [
+            # Linux glibc has ieee754.h
+        ],
+        "@platforms//os:macos": [
+            # macOS doesn't have ieee754.h, use gnulib replacement
+            macros.AC_DEFINE("_GL_REPLACE_IEEE754_H", "1"),
+        ],
+        "//conditions:default": [
+            # Assume need replacement for others
+            macros.AC_DEFINE("_GL_REPLACE_IEEE754_H", "1"),
+        ],
+    }),
     visibility = ["//visibility:public"],
 )

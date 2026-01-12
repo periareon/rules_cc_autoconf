@@ -22,6 +22,9 @@ py_binary(
     name = "diff_tester",
     srcs = ["diff_tester.py"],
     main = "diff_tester.py",
-    visibility = ["//autoconf/private/tests:__subpackages__"],
+    visibility = [
+        "//autoconf/private/tests:__subpackages__",
+        "//gnulib/tests:__subpackages__",
+    ],
     deps = ["@rules_venv//python/runfiles"],
 )

@@ -26,6 +26,9 @@ int main(void) {
             define = "HAVE_GETTIMEOFDAY_POSIX_SIGNATURE",
             language = "c",
         ),
+        # GETTIMEOFDAY_TIMEZONE: The type of the second argument to gettimeofday
+        # On POSIX systems it's 'void', on some older systems it's 'struct timezone'
+        macros.AC_DEFINE("GETTIMEOFDAY_TIMEZONE", "void"),
     ],
     visibility = ["//visibility:public"],
     deps = [

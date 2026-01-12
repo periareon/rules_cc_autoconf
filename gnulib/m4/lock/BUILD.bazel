@@ -28,8 +28,10 @@ error "No, in FreeBSD 4.0 recursive mutexes actually don't work."
        && __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1070)
 error "No, in Mac OS X < 10.7 recursive mutexes actually don't work."
 #else
-int x = (int)PTHREAD_MUTEX_RECURSIVE;
-return !x;
+int main(void) {
+    int x = (int)PTHREAD_MUTEX_RECURSIVE;
+    return !x;
+}
 #endif""",
             define = "HAVE_PTHREAD_MUTEX_RECURSIVE",
             language = "c",

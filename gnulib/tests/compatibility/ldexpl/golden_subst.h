@@ -1,0 +1,2 @@
+/* gnulib_ldexpl.h.in - AC_SUBST placeholders */
+#define SUBST_LDEXPL_LIBM @LDEXPL_LIBM@

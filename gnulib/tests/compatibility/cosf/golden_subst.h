@@ -1,0 +1,2 @@
+/* gnulib_cosf.h.in - AC_SUBST placeholders */
+#define SUBST_COSF_LIBM @COSF_LIBM@

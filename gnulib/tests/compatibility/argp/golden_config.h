@@ -1,0 +1,6 @@
+/* config.h.in - AC_DEFINE placeholders */
+#define GNULIB_PROGRAM_INVOCATION_NAME 1
+#define GNULIB_PROGRAM_INVOCATION_SHORT_NAME 1
+/* #undef HAVE_PROGRAM_INVOCATION_NAME */
+/* #undef HAVE_PROGRAM_INVOCATION_SHORT_NAME */
+/* #undef argp_parse */

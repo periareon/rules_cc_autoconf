@@ -23,6 +23,7 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-    return Resolver::resolve_and_generate(
-        args.results_paths, args.template_path, args.output_path, args.inlines);
+    return Resolver::resolve_and_generate(args.results_paths,
+                                          args.template_path, args.output_path,
+                                          args.inlines, args.substitutions);
 }

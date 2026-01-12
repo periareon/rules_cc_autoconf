@@ -1,11 +1,23 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sprintf-posix.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "sprintf-posix",
     checks = [
-        # TODO: Add checks based on .m4 file
+        # REPLACE_SPRINTF: Use platform printf compliance check.
+        # The upstream m4 checks 20+ printf features via runtime tests.
+        macros.AC_SUBST(
+            "REPLACE_SPRINTF",
+            condition = "_gl_cv_func_printf_posix",
+            if_false = "1",
+            if_true = "0",
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/printf:printf_posix_compliance",  # Platform printf compliance check
+        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS])
+    ],
 )

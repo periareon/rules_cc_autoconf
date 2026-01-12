@@ -1,0 +1,2 @@
+/* gnulib_netinet_in_h.h.in - AC_SUBST placeholders */
+#define SUBST_HAVE_NETINET_IN_H 1

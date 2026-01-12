@@ -10,6 +10,20 @@ autoconf(
             "ldexpl",
             headers = ["math.h"],
         ),
+        # Check if ldexpl function actually works
+        macros.AC_TRY_COMPILE(
+            code = """#include <math.h>
+
+int main(void) {
+    long double x = ldexpl(1.0L, 0);
+    return x > 0;
+}""",
+            define = "HAVE_LDEXPL",
+            language = "c",
+        ),
+        # HAVE_LDEXPL_IN_LIBC: ldexpl() is available in libc without -lm
+        # This is true on modern systems (macOS, Linux glibc)
+        macros.AC_DEFINE("HAVE_LDEXPL_IN_LIBC", "1"),
     ],
     visibility = ["//visibility:public"],
     deps = [

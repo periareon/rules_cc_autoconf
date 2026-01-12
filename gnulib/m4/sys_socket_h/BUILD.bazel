@@ -3,10 +3,6 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# =============================================================================
-# gl_SYS_SOCKET_H - Header check and GNULIB module indicators
-# =============================================================================
-
 autoconf(
     name = "sys_socket_h",
     checks = [
@@ -22,8 +18,17 @@ autoconf(
             "ws2tcpip.h",
             define = "HAVE_WS2TCPIP_H",
         ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",
+    ],
+)
 
-        # gl_MODULE_INDICATOR_INIT_VARIABLE calls (from gl_SYS_SOCKET_H)
+autoconf(
+    name = "defaults",
+    checks = [
+        # Module indicators
         macros.AC_SUBST("GNULIB_SOCKET", "0"),
         macros.AC_SUBST("GNULIB_CONNECT", "0"),
         macros.AC_SUBST("GNULIB_ACCEPT", "0"),
@@ -39,28 +44,20 @@ autoconf(
         macros.AC_SUBST("GNULIB_SETSOCKOPT", "0"),
         macros.AC_SUBST("GNULIB_SHUTDOWN", "0"),
         macros.AC_SUBST("GNULIB_ACCEPT4", "0"),
+        # HAVE_* defaults
+        macros.AC_SUBST("HAVE_STRUCT_SOCKADDR_STORAGE", "1"),
+        macros.AC_SUBST("HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY", "1"),
+        macros.AC_SUBST("HAVE_ACCEPT4", "1"),
     ],
     visibility = ["//visibility:public"],
-    deps = [
-        "//gnulib/m4/include_next",  # For NEXT_SYS_SOCKET_H
-    ],
 )
-
-# =============================================================================
-# gl_SYS_SOCKET_H_DEFAULTS - exact match of AC_SUBST from the m4 *_DEFAULTS macro
-# =============================================================================
-
-_GL_SYS_SOCKET_H_DEFAULTS = [
-    macros.AC_SUBST("HAVE_STRUCT_SOCKADDR_STORAGE", "1"),
-    macros.AC_SUBST("HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY", "1"),
-    macros.AC_SUBST("HAVE_ACCEPT4", "1"),
-]
 
 autoconf(
     name = "with_defaults",
-    checks = _GL_SYS_SOCKET_H_DEFAULTS,
+    checks = [],
     visibility = ["//visibility:public"],
     deps = [
+        ":defaults",
         ":sys_socket_h",
     ],
 )

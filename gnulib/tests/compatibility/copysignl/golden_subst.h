@@ -1,0 +1,2 @@
+/* gnulib_copysignl.h.in - AC_SUBST placeholders */
+#define SUBST_COPYSIGNL_LIBM @COPYSIGNL_LIBM@

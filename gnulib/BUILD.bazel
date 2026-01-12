@@ -1,0 +1,48 @@
+load("//autoconf:autoconf_toolchain.bzl", "autoconf_toolchain")
+
+autoconf_toolchain(
+    name = "gnulib_toolchain",
+    visibility = ["//visibility:public"],
+    deps = [
+        # wint_t:wint_t_prereq provides HAVE_CRTDEFS_H needed by many headers
+        "//gnulib/m4/wint_t:wint_t_prereq",
+        "//gnulib/m4/arpa_inet_h:defaults",
+        "//gnulib/m4/ctype_h:defaults",
+        "//gnulib/m4/dirent_h:defaults",
+        "//gnulib/m4/fcntl_h:defaults",
+        "//gnulib/m4/fnmatch_h:defaults",
+        "//gnulib/m4/glob_h:defaults",
+        "//gnulib/m4/iconv_h:defaults",
+        "//gnulib/m4/langinfo_h:defaults",
+        "//gnulib/m4/locale_h:defaults",
+        "//gnulib/m4/math_h:defaults",
+        "//gnulib/m4/netdb_h:defaults",
+        "//gnulib/m4/poll_h:defaults",
+        "//gnulib/m4/pthread_h:defaults",
+        "//gnulib/m4/sched_h:defaults",
+        "//gnulib/m4/signal_h:defaults",
+        "//gnulib/m4/spawn_h:defaults",
+        "//gnulib/m4/stdint:defaults",
+        "//gnulib/m4/stdio_h:defaults",
+        "//gnulib/m4/stdlib_h:defaults",
+        "//gnulib/m4/string_h:defaults",
+        "//gnulib/m4/sys_ioctl_h:defaults",
+        "//gnulib/m4/sys_resource_h:defaults",
+        "//gnulib/m4/sys_select_h:defaults",
+        "//gnulib/m4/sys_socket_h:defaults",
+        "//gnulib/m4/sys_stat_h:defaults",
+        "//gnulib/m4/sys_time_h:defaults",
+        "//gnulib/m4/termios_h:defaults",
+        "//gnulib/m4/time_h:defaults",
+        "//gnulib/m4/unistd_h:defaults",
+        "//gnulib/m4/wchar_h:defaults",
+        "//gnulib/m4/wctype_h:defaults",
+    ],
+)
+
+toolchain(
+    name = "toolchain",
+    toolchain = ":gnulib_toolchain",
+    toolchain_type = "//autoconf:toolchain_type",
+    visibility = ["//visibility:public"],
+)

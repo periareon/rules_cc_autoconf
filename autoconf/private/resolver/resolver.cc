@@ -55,7 +55,13 @@ std::vector<CheckResult> load_results_from_file(
             success = success_it->get<bool>();
         }
 
-        loaded_results.emplace_back(define, value, success);
+        std::string type;
+        nlohmann::json::const_iterator type_it = val.find("type");
+        if (type_it != val.end() && !type_it->is_null()) {
+            type = type_it->get<std::string>();
+        }
+
+        loaded_results.emplace_back(define, value, success, type);
     }
 
     return loaded_results;
@@ -67,7 +73,8 @@ int Resolver::resolve_and_generate(
     const std::vector<std::filesystem::path>& results_paths,
     const std::optional<std::filesystem::path>& template_path,
     const std::filesystem::path& output_path,
-    const std::map<std::string, std::filesystem::path>& inlines) {
+    const std::map<std::string, std::filesystem::path>& inlines,
+    const std::map<std::string, std::string>& substitutions) {
     try {
         // Load and merge all results (preserve order while deduplicating by
         // define name, keeping first occurrence to preserve autoconf results
@@ -152,8 +159,8 @@ int Resolver::resolve_and_generate(
         template_content = buffer.str();
         template_file.close();
 
-        generator.generate_config_header(output_path, template_content,
-                                         inlines);
+        generator.generate_config_header(output_path, template_content, inlines,
+                                         substitutions);
 
         return 0;
     } catch (const std::exception& ex) {

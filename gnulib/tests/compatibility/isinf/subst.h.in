@@ -1,0 +1,2 @@
+/* gnulib_isinf.h.in - AC_SUBST placeholders */
+#define SUBST_ISINF_LIBM @ISINF_LIBM@

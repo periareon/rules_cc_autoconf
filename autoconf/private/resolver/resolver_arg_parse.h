@@ -24,6 +24,9 @@ struct ResolverArgs {
     /** Inline replacements: map from search string to file path */
     std::map<std::string, std::filesystem::path> inlines{};
 
+    /** Direct substitutions: map from placeholder name to value */
+    std::map<std::string, std::string> substitutions{};
+
     /** Whether to show help */
     bool show_help = false;
 };

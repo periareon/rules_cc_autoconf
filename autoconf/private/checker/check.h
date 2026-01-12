@@ -17,6 +17,7 @@ enum class CheckType {
     kType,        ///< Check for type
     kCompile,     ///< Check if code compiles
     kDefine,      ///< Directly apply the define with the given value
+    kSubst,       ///< AC_SUBST - substitution variable (may be conditional)
     kSizeof,      ///< Determine size of type
     kAlignof,     ///< Determine alignment of type
     kComputeInt,  ///< Compute integer value
@@ -24,6 +25,13 @@ enum class CheckType {
     kDecl,        ///< Check for declaration
     kMember,      ///< Check for struct/union member
 };
+
+/**
+ * @brief Convert CheckType to string representation.
+ * @param type The CheckType enum value.
+ * @return String representation of the type (e.g., "subst", "header").
+ */
+std::string check_type_to_string(CheckType type);
 
 /**
  * @brief Configuration check specification.
@@ -112,6 +120,13 @@ class Check {
         return requires_;
     }
 
+    /**
+     * @brief Get the optional condition for conditional defines/substs.
+     * @return Optional string containing the name of the define to check,
+     * or std::nullopt if not a conditional check.
+     */
+    const std::optional<std::string>& condition() const { return condition_; }
+
    private:
     std::string name_{};                 /// Name (e.g., header/function name)
     std::string define_{};               /// Preprocessor define name
@@ -122,7 +137,9 @@ class Check {
     std::optional<std::string> define_value_fail_{};  /// Value if check fails
     std::optional<std::string> library_{};  /// Library name for lib checks
     std::optional<std::vector<std::string>> requires_{};  /// Required defines
-    CheckType type_{};                                    /// Type of check
+    std::optional<std::string>
+        condition_{};   /// Condition for conditional checks
+    CheckType type_{};  /// Type of check
 
     /**
      * @brief Private constructor (use from_json to create).

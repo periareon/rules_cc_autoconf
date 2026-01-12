@@ -1,0 +1,2 @@
+/* gnulib_isnand.h.in - AC_SUBST placeholders */
+#define SUBST_ISNAND_LIBM @ISNAND_LIBM@

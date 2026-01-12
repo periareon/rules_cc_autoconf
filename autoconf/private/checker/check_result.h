@@ -20,15 +20,19 @@ struct CheckResult {
     /** Whether the check succeeded */
     bool success = false;
 
+    /** Check type (e.g., "define", "subst", "header", "function") */
+    std::string type{};
+
     /**
      * @brief Construct a CheckResult.
      * @param define The preprocessor define name.
      * @param value The define value.
      * @param success Whether the check succeeded.
+     * @param type The check type (default: empty string for backward compat).
      */
     CheckResult(const std::string& define, const std::string& value,
-                bool success)
-        : define(define), value(value), success(success) {}
+                bool success, const std::string& type = "")
+        : define(define), value(value), success(success), type(type) {}
 };
 
 }  // namespace rules_cc_autoconf

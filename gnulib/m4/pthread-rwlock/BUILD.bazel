@@ -11,6 +11,12 @@ autoconf(
             define = "HAVE_DECL_PTHREAD_RWLOCK_TIMEDRDLOCK",
             headers = ["pthread.h"],
         ),
-    ],
+    ] + select({
+        "@platforms//os:macos": [
+            # macOS lacks timed rwlock functions
+            macros.AC_DEFINE("PTHREAD_RWLOCK_LACKS_TIMEOUT", "1"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
 )

@@ -2,13 +2,26 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 
+# =============================================================================
+# gl_TYPE_OFF_T - Check whether to override the 'off_t' type
+#
+# From gl_TYPE_OFF_T:
+#   - AC_REQUIRE([gl_LARGEFILE]) if gl_LARGEFILE is defined
+#   - Otherwise WINDOWS_64_BIT_OFF_T=0
+#   - AC_SUBST([WINDOWS_64_BIT_OFF_T])
+#
+# The WINDOWS_64_BIT_OFF_T variable is set by gl_LARGEFILE (in largefile.m4).
+# This module just depends on largefile to ensure it's set.
+# =============================================================================
+
 autoconf(
     name = "off_t",
     checks = [
-        # Note: off_t.m4 may not exist in gnulib, or this module may not have checks
+        # WINDOWS_64_BIT_OFF_T is set by the largefile dependency
+        # This target exists to provide the gl_TYPE_OFF_T entry point
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/largefile",
+        "//gnulib/m4/largefile",  # AC_REQUIRE([gl_LARGEFILE]) - sets WINDOWS_64_BIT_OFF_T
     ],
 )

@@ -1,0 +1,2 @@
+/* gnulib_htonl.h.in - AC_SUBST placeholders */
+#define SUBST_HTONL_LIB @HTONL_LIB@

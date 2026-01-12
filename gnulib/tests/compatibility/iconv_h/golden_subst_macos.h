@@ -1,0 +1,5 @@
+/* gnulib_iconv_h.h.in - AC_SUBST placeholders */
+#define SUBST_ICONV_CONST
+#define SUBST_REPLACE_ICONV 0
+#define SUBST_REPLACE_ICONV_OPEN 0
+#define SUBST_REPLACE_ICONV_UTF 0

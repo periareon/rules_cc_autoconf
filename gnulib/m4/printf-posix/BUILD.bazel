@@ -1,11 +1,36 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/printf-posix.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_PRINTF_POSIX replaces the system printf with gnulib's POSIX-compliant version
 
 autoconf(
     name = "printf-posix",
     checks = [
-        # Note: printf-posix.m4 may not exist in gnulib, or this module may not have checks
+        # REPLACE_PRINTF_POSIX indicates gnulib's printf replacement is being used.
+        # Set to 1 when the platform's printf is not POSIX compliant.
+        # This is also used by bison's printf-posix-rpl.m4 which is project-specific.
+        macros.AC_SUBST(
+            "REPLACE_PRINTF_POSIX",
+            condition = "_gl_cv_func_printf_posix",
+            if_false = "1",
+            if_true = "0",
+        ),
+
+        # REPLACE_PRINTF: Use platform printf compliance check.
+        macros.AC_SUBST(
+            "REPLACE_PRINTF",
+            condition = "_gl_cv_func_printf_posix",
+            if_false = "1",
+            if_true = "0",
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/printf",  # Multiple gl_PRINTF_* macros
+        "//gnulib/m4/printf:printf_posix_compliance",  # Platform printf compliance check
+        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS])
+        "//gnulib/m4/vasnprintf",  # gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS
+    ],
 )

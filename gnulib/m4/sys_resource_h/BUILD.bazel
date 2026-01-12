@@ -1,11 +1,39 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sys_resource_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "sys_resource_h",
     checks = [
-        # TODO: Add checks based on .m4 file
+        macros.AC_CHECK_HEADER(
+            "sys/resource.h",
+            define = "HAVE_SYS_RESOURCE_H",
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",
+    ],
+)
+
+autoconf(
+    name = "defaults",
+    checks = [
+        # Module indicators
+        macros.AC_SUBST("GNULIB_GETRUSAGE", "0"),
+        # HAVE_* defaults
+        macros.AC_SUBST("HAVE_GETRUSAGE", "1"),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "with_defaults",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":defaults",
+        ":sys_resource_h",
+    ],
 )

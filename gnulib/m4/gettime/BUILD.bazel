@@ -6,10 +6,10 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "gettime",
     checks = [
-        macros.AC_CHECK_DECL(
+        # Check for timespec_get function (C11)
+        macros.AC_CHECK_FUNC(
             "timespec_get",
-            define = "HAVE_DECL_TIMESPEC_GET",
-            headers = ["time.h"],
+            define = "HAVE_TIMESPEC_GET",
         ),
     ],
     visibility = ["//visibility:public"],

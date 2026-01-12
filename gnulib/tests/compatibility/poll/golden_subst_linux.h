@@ -1,0 +1,3 @@
+/* gnulib_poll.h.in - AC_SUBST placeholders */
+#define SUBST_LIB_POLL @LIB_POLL@
+#define SUBST_POLL_LIB @POLL_LIB@

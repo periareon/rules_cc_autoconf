@@ -1,0 +1,2 @@
+/* gnulib_nl_langinfo.h.in - AC_SUBST placeholders */
+#define SUBST_LIB_NL_LANGINFO @LIB_NL_LANGINFO@

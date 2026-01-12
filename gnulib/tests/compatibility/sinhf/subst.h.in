@@ -1,0 +1,2 @@
+/* gnulib_sinhf.h.in - AC_SUBST placeholders */
+#define SUBST_SINHF_LIBM @SINHF_LIBM@

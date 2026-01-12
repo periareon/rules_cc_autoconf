@@ -3,38 +3,88 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# From argz.m4:
+# AC_CHECK_TYPES([error_t],
+#   [],
+#   [AC_DEFINE([error_t], [int], [...])
+#    AC_DEFINE([__error_t_defined], [1], [...])],
+#   [#include <argz.h>])
+#
+# This means: if error_t is NOT found, define error_t=int and __error_t_defined=1
+
 autoconf(
     name = "argz",
-    checks = [
-        # Check for argz functions and types
-        # Equivalent to gl_FUNC_ARGZ macro from argz.m4
-        macros.AC_CHECK_HEADER(
-            "argz.h",
-            define = "HAVE_ARGZ_H",
-        ),
-        macros.AC_CHECK_TYPE(
-            "error_t",
-            code = """\
+    checks = select({
+        "@platforms//os:linux": [
+            macros.AC_CHECK_HEADER(
+                "argz.h",
+                define = "HAVE_ARGZ_H",
+            ),
+            macros.AC_CHECK_TYPE(
+                "error_t",
+                code = """\
+#ifdef HAVE_ARGZ_H
 #include <argz.h>
+#endif
 int main(void) {
     if (sizeof(error_t))
         return 0;
     return 1;
 }
 """,
-            define = "HAVE_ERROR_T",
-        ),
-        # If argz_replace is not found, we need to generate argz.h
-        # Note: GL_GENERATE_ARGZ_H is handled as a shell variable in M4,
-        # but here we define a make variable or handle it via defines
-        macros.AC_CHECK_FUNC(
-            "argz_replace",
-            define = "HAVE_ARGZ_REPLACE",
-            if_false = [
-                macros.AC_DEFINE("GL_GENERATE_ARGZ_H", "1"),
-            ],
-        ),
-    ],
+                define = "HAVE_ERROR_T",
+                if_false = [
+                    macros.AC_DEFINE("error_t", "int"),
+                    macros.AC_DEFINE("__error_t_defined", "1"),
+                ],
+            ),
+            macros.AC_CHECK_FUNC(
+                "argz_replace",
+                define = "HAVE_ARGZ_REPLACE",
+                if_false = [
+                    macros.AC_DEFINE("GL_GENERATE_ARGZ_H", "1"),
+                ],
+            ),
+        ],
+        "@platforms//os:macos": [
+            # macOS doesn't have argz.h
+            # error_t is not available, so define it as int
+            macros.AC_DEFINE("error_t", "int"),
+            macros.AC_DEFINE("__error_t_defined", "1"),
+            macros.AC_DEFINE("GL_GENERATE_ARGZ_H", "1"),
+        ],
+        "//conditions:default": [
+            macros.AC_CHECK_HEADER(
+                "argz.h",
+                define = "HAVE_ARGZ_H",
+            ),
+            macros.AC_CHECK_TYPE(
+                "error_t",
+                code = """\
+#ifdef HAVE_ARGZ_H
+#include <argz.h>
+#endif
+int main(void) {
+    if (sizeof(error_t))
+        return 0;
+    return 1;
+}
+""",
+                define = "HAVE_ERROR_T",
+                if_false = [
+                    macros.AC_DEFINE("error_t", "int"),
+                    macros.AC_DEFINE("__error_t_defined", "1"),
+                ],
+            ),
+            macros.AC_CHECK_FUNC(
+                "argz_replace",
+                define = "HAVE_ARGZ_REPLACE",
+                if_false = [
+                    macros.AC_DEFINE("GL_GENERATE_ARGZ_H", "1"),
+                ],
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         # Note: AC_C_RESTRICT and AC_CANONICAL_HOST are standard autoconf macros

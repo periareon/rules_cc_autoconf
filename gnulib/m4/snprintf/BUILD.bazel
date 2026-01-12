@@ -9,16 +9,37 @@ load("//autoconf:macros.bzl", "macros")
 # - RETVAL_C99 (returns would-be length)
 # - POSITIONS (supports %n$ format)
 # These runtime tests determine if the system snprintf is "usable".
-# This simplified version only checks for function existence and declaration.
 autoconf(
     name = "snprintf",
     checks = [
         # AC_CHECK_FUNCS([snprintf])
         macros.AC_CHECK_FUNC("snprintf"),
+
+        # HAVE_SNPRINTF_RETVAL_C99: snprintf returns the would-be length
+        # This is true on modern POSIX systems (macOS, Linux glibc)
+        macros.AC_DEFINE("HAVE_SNPRINTF_RETVAL_C99", "1"),
+
+        # HAVE_SNPRINTF_TRUNCATION_C99: snprintf properly truncates and NUL-terminates
+        # This is true on modern POSIX systems (macOS, Linux glibc)
+        macros.AC_DEFINE("HAVE_SNPRINTF_TRUNCATION_C99", "1"),
+
+        # HAVE_DECL_SNPRINTF: snprintf is declared in <stdio.h>
+        macros.AC_CHECK_DECL(
+            "snprintf",
+            headers = ["stdio.h"],
+        ),
+
+        # REPLACE_SNPRINTF: Use platform printf compliance check.
+        macros.AC_SUBST(
+            "REPLACE_SNPRINTF",
+            condition = "_gl_cv_func_printf_posix",
+            if_false = "1",
+            if_true = "0",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_STDIO_H_DEFAULTS])
-        "//gnulib/m4/stdio_h",
+        "//gnulib/m4/printf:printf_posix_compliance",  # Platform printf compliance check
+        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS])
     ],
 )

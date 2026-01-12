@@ -3,10 +3,6 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# =============================================================================
-# gl_WCTYPE_H - Header check and GNULIB module indicators
-# =============================================================================
-
 autoconf(
     name = "wctype_h",
     checks = [
@@ -14,8 +10,22 @@ autoconf(
             "wctype.h",
             define = "HAVE_WCTYPE_H",
         ),
+        macros.AC_CHECK_FUNC(
+            "iswcntrl",
+            define = "HAVE_ISWCNTRL",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",
+        "//gnulib/m4/wint_t",
+    ],
+)
 
-        # gl_MODULE_INDICATOR_INIT_VARIABLE calls (from gl_WCTYPE_H)
+autoconf(
+    name = "defaults",
+    checks = [
+        # Module indicators
         macros.AC_SUBST("GNULIB_ISWBLANK", "0"),
         macros.AC_SUBST("GNULIB_ISWDIGIT", "0"),
         macros.AC_SUBST("GNULIB_ISWPUNCT", "0"),
@@ -24,35 +34,30 @@ autoconf(
         macros.AC_SUBST("GNULIB_ISWCTYPE", "0"),
         macros.AC_SUBST("GNULIB_WCTRANS", "0"),
         macros.AC_SUBST("GNULIB_TOWCTRANS", "0"),
+        # HAVE_* defaults
+        macros.AC_SUBST("HAVE_ISWBLANK", "1"),
+        macros.AC_SUBST("HAVE_WCTYPE_T", "1"),
+        macros.AC_SUBST("HAVE_WCTRANS_T", "1"),
+        # REPLACE_* defaults
+        macros.AC_SUBST("REPLACE_ISWBLANK", "0"),
+        macros.AC_SUBST("REPLACE_ISWCNTRL", "0"),
+        macros.AC_SUBST("REPLACE_ISWDIGIT", "0"),
+        macros.AC_SUBST("REPLACE_ISWPUNCT", "0"),
+        macros.AC_SUBST("REPLACE_ISWXDIGIT", "0"),
+        macros.AC_SUBST("REPLACE_TOWLOWER", "0"),
+        macros.AC_SUBST("REPLACE_WCTRANS", "0"),
+        macros.AC_SUBST("REPLACE_WCTYPE", "0"),
     ],
     visibility = ["//visibility:public"],
-    deps = [
-        "//gnulib/m4/include_next",  # For NEXT_WCTYPE_H
-        "//gnulib/m4/wint_t",  # AC_REQUIRE([gt_TYPE_WINT_T])
-    ],
 )
-
-# =============================================================================
-# gl_WCTYPE_H_DEFAULTS - exact match of AC_SUBST from the m4 *_DEFAULTS macro
-# =============================================================================
-
-_GL_WCTYPE_H_DEFAULTS = [
-    macros.AC_SUBST("HAVE_ISWBLANK", "1"),
-    macros.AC_SUBST("HAVE_WCTYPE_T", "1"),
-    macros.AC_SUBST("HAVE_WCTRANS_T", "1"),
-    macros.AC_SUBST("REPLACE_ISWBLANK", "0"),
-    macros.AC_SUBST("REPLACE_ISWDIGIT", "0"),
-    macros.AC_SUBST("REPLACE_ISWPUNCT", "0"),
-    macros.AC_SUBST("REPLACE_ISWXDIGIT", "0"),
-    macros.AC_SUBST("REPLACE_WCTRANS", "0"),
-    macros.AC_SUBST("REPLACE_WCTYPE", "0"),
-]
 
 autoconf(
     name = "with_defaults",
-    checks = _GL_WCTYPE_H_DEFAULTS,
+    checks = [],
     visibility = ["//visibility:public"],
     deps = [
+        ":defaults",
         ":wctype_h",
+        "//gnulib/m4/wint_t:with_defaults",
     ],
 )

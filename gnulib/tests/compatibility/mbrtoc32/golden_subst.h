@@ -1,0 +1,2 @@
+/* gnulib_mbrtoc32.h.in - AC_SUBST placeholders */
+#define SUBST_HAVE_WORKING_MBRTOC32 @HAVE_WORKING_MBRTOC32@

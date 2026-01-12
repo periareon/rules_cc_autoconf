@@ -3,26 +3,66 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# HAVE_DECL_PROGRAM_INVOCATION_NAME and HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME
-# come from getprogname dependency
+# From argp.m4:
+# - AC_CHECK_DECLS([program_invocation_name], [], [AC_DEFINE([GNULIB_PROGRAM_INVOCATION_NAME], [1])])
+#   This means: if NOT declared, define GNULIB_PROGRAM_INVOCATION_NAME=1
+# - On Linux: program_invocation_name is declared in errno.h
+# - On macOS: program_invocation_name is NOT declared
 
 autoconf(
     name = "argp",
-    checks = [
-        macros.AC_CHECK_FUNC("argp_parse"),
-        macros.AC_TRY_COMPILE(
-            code = """extern char *program_invocation_name;
+    checks = select({
+        "@platforms//os:linux": [
+            macros.AC_CHECK_FUNC("argp_parse"),
+            # On Linux, program_invocation_name IS declared, so GNULIB_ remains undefined
+            # Check if the symbol is linkable
+            macros.AC_TRY_COMPILE(
+                code = """extern char *program_invocation_name;
 int main() { program_invocation_name = "test"; return 0; }""",
-            define = "HAVE_PROGRAM_INVOCATION_NAME",
-            language = "c",
-        ),
-        macros.AC_TRY_COMPILE(
-            code = """extern char *program_invocation_short_name;
+                define = "HAVE_PROGRAM_INVOCATION_NAME",
+                language = "c",
+            ),
+            macros.AC_TRY_COMPILE(
+                code = """extern char *program_invocation_short_name;
 int main() { program_invocation_short_name = "test"; return 0; }""",
-            define = "HAVE_PROGRAM_INVOCATION_SHORT_NAME",
-            language = "c",
-        ),
-    ],
+                define = "HAVE_PROGRAM_INVOCATION_SHORT_NAME",
+                language = "c",
+            ),
+        ],
+        "@platforms//os:macos": [
+            macros.AC_CHECK_FUNC("argp_parse"),
+            # On macOS, program_invocation_name is NOT declared, so set GNULIB_ defines
+            macros.AC_DEFINE("GNULIB_PROGRAM_INVOCATION_NAME", "1"),
+            macros.AC_DEFINE("GNULIB_PROGRAM_INVOCATION_SHORT_NAME", "1"),
+            # On macOS, the symbols are also not linkable, so HAVE_* remain undefined
+        ],
+        "//conditions:default": [
+            macros.AC_CHECK_FUNC("argp_parse"),
+            # Check for declaration
+            macros.AC_CHECK_DECL(
+                "program_invocation_name",
+                define = "HAVE_DECL_PROGRAM_INVOCATION_NAME",
+                headers = ["errno.h"],
+            ),
+            macros.AC_CHECK_DECL(
+                "program_invocation_short_name",
+                define = "HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME",
+                headers = ["errno.h"],
+            ),
+            macros.AC_TRY_COMPILE(
+                code = """extern char *program_invocation_name;
+int main() { program_invocation_name = "test"; return 0; }""",
+                define = "HAVE_PROGRAM_INVOCATION_NAME",
+                language = "c",
+            ),
+            macros.AC_TRY_COMPILE(
+                code = """extern char *program_invocation_short_name;
+int main() { program_invocation_short_name = "test"; return 0; }""",
+                define = "HAVE_PROGRAM_INVOCATION_SHORT_NAME",
+                language = "c",
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/getprogname",  # Provides HAVE_DECL_PROGRAM_INVOCATION_*

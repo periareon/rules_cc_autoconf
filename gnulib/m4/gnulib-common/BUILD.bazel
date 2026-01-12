@@ -9,7 +9,20 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "gnulib-common",
     checks = [
-        macros.AC_CHECK_HEADER("features.h"),
+        # gl_FEATURES_H from gnulib-common.m4
+        # Check for <features.h> and set HAVE_FEATURES_H for AC_SUBST
+        macros.AC_CHECK_HEADER(
+            "features.h",
+            define = "_gl_have_features_h",
+        ),
+
+        # AC_SUBST([HAVE_FEATURES_H]) - set to 1 if exists, 0 otherwise
+        macros.AC_SUBST(
+            "HAVE_FEATURES_H",
+            condition = "_gl_have_features_h",
+            if_false = "0",
+            if_true = "1",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [

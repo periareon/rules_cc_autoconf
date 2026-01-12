@@ -44,7 +44,13 @@ int main(void) {
             define = "HAVE_TCSETATTR",
             language = "c",
         ),
-    ],
+    ] + select({
+        "@platforms//os:macos": [
+            # macOS getpass has issues, use non-inline version
+            macros.AC_DEFINE("NO_INLINE_GETPASS", "1"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/stdio_ext_h",

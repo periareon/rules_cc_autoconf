@@ -9,7 +9,16 @@ autoconf(
         # Check for getopt.h header
         macros.AC_CHECK_HEADER(
             "getopt.h",
-            define = "HAVE_GETOPT_H",
+            define = "_gl_have_getopt_h",
+        ),
+
+        # AC_SUBST([HAVE_GETOPT_H]) - set to 1 if exists, 0 otherwise
+        # This is needed for template substitution (@HAVE_GETOPT_H@)
+        macros.AC_SUBST(
+            "HAVE_GETOPT_H",
+            condition = "_gl_have_getopt_h",
+            if_false = "0",
+            if_true = "1",
         ),
 
         # Check for getopt functions
@@ -49,15 +58,16 @@ autoconf(
                 "getopt.h",
             ],
         ),
-    ] + select(
-        # REPLACE_GETOPT logic from gnulib:
-        # The original macro does extensive runtime tests.
-        # Known broken on: Mac OS X, AIX, mingw, older glibc, OpenBSD
-        {
-            "@platforms//os:macos": [macros.AC_SUBST("REPLACE_GETOPT", "1")],  # Mac OS X getopt has issusetopt
-            "@platforms//os:windows": [macros.AC_SUBST("REPLACE_GETOPT", "1")],  # No POSIX getopt on Windows
-        },
-    ),
+
+        # REPLACE_GETOPT: default to 0, specific modules may override
+        macros.AC_SUBST("REPLACE_GETOPT", "0"),
+    ] + select({
+        "@platforms//os:macos": [
+            # macOS getopt has quirks, gnulib uses replacement prefix
+            macros.AC_DEFINE("__GETOPT_PREFIX", "rpl_"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])

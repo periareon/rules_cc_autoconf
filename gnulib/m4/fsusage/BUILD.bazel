@@ -4,6 +4,8 @@ load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
 # HAVE_SYS_VFS_H comes from sys_vfs_h dependency
+# On macOS/BSD, the statfs with f_bsize member is used (STAT_STATFS2_BSIZE)
+# On Linux with glibc, statvfs is preferred
 
 autoconf(
     name = "fsusage",
@@ -12,7 +14,17 @@ autoconf(
         macros.AC_CHECK_HEADER("sys/fs/s5param.h"),
         macros.AC_CHECK_HEADER("sys/fs_types.h"),
         macros.AC_CHECK_FUNC("statvfs"),
-    ],
+    ] + select({
+        "@platforms//os:linux": [
+            # Linux with glibc uses statvfs
+            macros.AC_DEFINE("STAT_STATVFS", "1"),
+        ],
+        "@platforms//os:macos": [
+            # macOS uses BSD-style statfs with f_bsize member
+            macros.AC_DEFINE("STAT_STATFS2_BSIZE", "1"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/pathmax",  # Provides HAVE_SYS_PARAM_H

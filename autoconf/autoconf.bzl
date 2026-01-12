@@ -251,6 +251,7 @@ def _autoconf_impl(ctx):
             inputs = inputs,
             outputs = [check_result_file],
             mnemonic = "CcAutoconfCheck",
+            progress_message = "CcAutoconfCheck %{label} - " + define_name,
             env = env | ctx.configuration.default_shell_env,
             tools = toolchain_info.cc_toolchain.all_files,
         )

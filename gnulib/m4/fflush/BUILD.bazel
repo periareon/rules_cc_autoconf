@@ -7,8 +7,8 @@ load("//autoconf:macros.bzl", "macros")
 #
 # This macro uses AC_RUN_IFELSE to test if fflush works on input streams.
 # Since Bazel can't run test binaries, we use the cross-compile heuristics:
-# - NetBSD, OpenBSD, mingw, windows: fflush is known broken (FUNC_FFLUSH_STDIN=0)
-# - Linux, macOS, etc.: assume fflush works (FUNC_FFLUSH_STDIN=1)
+# - NetBSD, OpenBSD, mingw, windows, macOS: fflush is known broken (FUNC_FFLUSH_STDIN=0)
+# - Linux: fflush works on input streams (FUNC_FFLUSH_STDIN=1)
 #
 # REPLACE_FFLUSH=1 is set when fflush needs replacement (broken platforms).
 # FUNC_FFLUSH_STDIN: 1=works, 0=broken, -1=unknown
@@ -16,6 +16,11 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "fflush",
     checks = select({
+        # macOS/BSD: fflush on input streams is broken
+        "@platforms//os:macos": [
+            macros.M4_DEFINE("REPLACE_FFLUSH", "1"),
+            macros.AC_DEFINE("FUNC_FFLUSH_STDIN", "0"),
+        ],
         "@platforms//os:netbsd": [
             macros.M4_DEFINE("REPLACE_FFLUSH", "1"),
             macros.AC_DEFINE("FUNC_FFLUSH_STDIN", "0"),
@@ -29,7 +34,7 @@ autoconf(
             macros.M4_DEFINE("REPLACE_FFLUSH", "1"),
             macros.AC_DEFINE("FUNC_FFLUSH_STDIN", "0"),
         ],
-        # Linux and other platforms: assume fflush works
+        # Linux and glibc platforms: fflush works on input streams
         "//conditions:default": [
             macros.AC_DEFINE("FUNC_FFLUSH_STDIN", "1"),
         ],

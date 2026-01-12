@@ -28,6 +28,9 @@ int main(void) {
             define = "HAVE_ISNANL",
             language = "c",
         ),
+        # HAVE_ISNANL_IN_LIBC: isnan(long double) is available in libc without -lm
+        # This is true on modern systems (macOS, Linux glibc)
+        macros.AC_DEFINE("HAVE_ISNANL_IN_LIBC", "1"),
     ],
     visibility = ["//visibility:public"],
     deps = [

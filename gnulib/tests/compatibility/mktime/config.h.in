@@ -1,0 +1,6 @@
+/* config.h.in - AC_DEFINE placeholders */
+#undef NEED_MKTIME_INTERNAL
+#undef NEED_MKTIME_WINDOWS
+#undef NEED_MKTIME_WORKING
+#undef TIME_T_IS_SIGNED
+#undef mktime_internal

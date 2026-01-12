@@ -3,10 +3,6 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# =============================================================================
-# gl_LANGINFO_H - Header check and module indicator
-# =============================================================================
-
 autoconf(
     name = "langinfo_h",
     checks = [
@@ -14,30 +10,32 @@ autoconf(
             "langinfo.h",
             define = "HAVE_LANGINFO_H",
         ),
-
-        # gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_NL_LANGINFO])
-        macros.AC_SUBST("GNULIB_NL_LANGINFO", "0"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/include_next",  # For NEXT_LANGINFO_H
+        "//gnulib/m4/include_next",
     ],
 )
 
-# =============================================================================
-# gl_LANGINFO_H_DEFAULTS - exact match of AC_SUBST from the m4 *_DEFAULTS macro
-# =============================================================================
-
-_GL_LANGINFO_H_DEFAULTS = [
-    macros.AC_SUBST("HAVE_NL_LANGINFO", "1"),
-    macros.AC_SUBST("REPLACE_NL_LANGINFO", "0"),
-]
+autoconf(
+    name = "defaults",
+    checks = [
+        # Module indicators
+        macros.AC_SUBST("GNULIB_NL_LANGINFO", "0"),
+        # HAVE_* defaults
+        macros.AC_SUBST("HAVE_NL_LANGINFO", "1"),
+        # REPLACE_* defaults
+        macros.AC_SUBST("REPLACE_NL_LANGINFO", "0"),
+    ],
+    visibility = ["//visibility:public"],
+)
 
 autoconf(
     name = "with_defaults",
-    checks = _GL_LANGINFO_H_DEFAULTS,
+    checks = [],
     visibility = ["//visibility:public"],
     deps = [
+        ":defaults",
         ":langinfo_h",
     ],
 )

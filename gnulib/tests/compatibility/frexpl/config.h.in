@@ -1,0 +1,3 @@
+/* config.h.in - AC_DEFINE placeholders */
+#undef HAVE_FREXPL
+#undef HAVE_FREXPL_IN_LIBC

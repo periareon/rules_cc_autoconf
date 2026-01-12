@@ -1,0 +1,10 @@
+AC_INIT([test_time_h], [1.0])
+AC_CONFIG_HEADERS([config.h])
+
+# Invoke macros from time_h.m4
+gl_TIME_H
+gl_CHECK_TYPE_STRUCT_TIMESPEC
+gl_TIME_MODULE_INDICATOR
+
+AC_CONFIG_FILES([gnulib_time_h.h:gnulib_time_h.h.in])
+AC_OUTPUT

@@ -20,6 +20,8 @@ void ResolverArgParse::print_usage(const char* program_name) {
                  "(required)\n";
     std::cout << "  --inline <string> <file> Replace exact string in template "
                  "with file content (can be specified multiple times)\n";
+    std::cout << "  --subst <name> <value> Replace @name@ placeholder with "
+                 "value (can be specified multiple times)\n";
     std::cout << "  --help                 Show this help message\n";
 }
 
@@ -142,6 +144,16 @@ std::optional<ResolverArgs> ResolverArgParse::parse(int argc, char* argv[]) {
                     << std::endl;
                 return std::nullopt;
             }
+        } else if (arg == "--subst") {
+            if (i + 2 < expanded_argc) {
+                std::string name = std::string(expanded_argv_ptr[++i]);
+                std::string value = std::string(expanded_argv_ptr[++i]);
+                args.substitutions[name] = value;
+            } else {
+                std::cerr << "Error: --subst requires a name and value"
+                          << std::endl;
+                return std::nullopt;
+            }
         } else {
             std::cerr << "Error: Unknown argument: " << arg << std::endl;
             return std::nullopt;
@@ -149,10 +161,8 @@ std::optional<ResolverArgs> ResolverArgParse::parse(int argc, char* argv[]) {
     }
 
     // Validate required arguments
-    if (args.results_paths.empty()) {
-        std::cerr << "Error: At least one --results is required" << std::endl;
-        return std::nullopt;
-    }
+    // Note: results_paths can be empty - the resolver will just process the
+    // template without any check results
 
     if (args.output_path.empty()) {
         std::cerr << "Error: --output is required" << std::endl;

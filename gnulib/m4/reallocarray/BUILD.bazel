@@ -10,16 +10,13 @@ autoconf(
         macros.AC_CHECK_FUNC("reallocarray"),
 
         # REPLACE_REALLOCARRAY logic:
-        # - On Windows: no reallocarray, need replacement
-        # - On Android: may be "future" function, need replacement
-        # - On most modern Linux/macOS: reallocarray exists and works
+        # Set based on whether reallocarray was found
+        # If HAVE_REALLOCARRAY is false, we need to provide a replacement
         macros.AC_SUBST(
             "REPLACE_REALLOCARRAY",
-            select({
-                "@platforms//os:android": "1",  # May be "future" function
-                "@platforms//os:windows": "1",  # No reallocarray on Windows
-                "//conditions:default": "0",  # Modern POSIX systems have working reallocarray
-            }),
+            condition = "HAVE_REALLOCARRAY",
+            if_false = "1",  # Don't have it, need replacement
+            if_true = "0",  # Have it, no replacement needed
         ),
     ],
     visibility = ["//visibility:public"],

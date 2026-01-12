@@ -3,39 +3,58 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# From malloc.m4:
+# - HAVE_MALLOC_0_NONNULL: malloc(0) returns nonnull (most platforms)
+# - HAVE_MALLOC_POSIX: malloc/calloc set errno on failure (most Unix platforms)
+# - HAVE_MALLOC_PTRDIFF: malloc refuses to allocate objects > PTRDIFF_MAX
+
 autoconf(
     name = "malloc",
-    checks = [
-        # Check for malloc features
-        # Equivalent to gl_FUNC_MALLOC_POSIX, gl_FUNC_MALLOC_GNU, etc. macros
-        # from malloc.m4
-        # Note: Full implementation includes runtime checks for malloc(0) behavior
-        # and ptrdiff_t safety that are complex
-        macros.AC_TRY_COMPILE(
-            code = """#include <stdint.h>
-/* 64-bit ptrdiff_t is so wide that no practical platform
-   can exceed it.  */
+    checks = select({
+        "@platforms//os:linux": [
+            # Linux: use compile check for ptrdiff safety
+            macros.AC_TRY_COMPILE(
+                code = """#include <stdint.h>
 #define WIDE_PTRDIFF (PTRDIFF_MAX >> 31 >> 31 != 0)
-
-/* On rare machines where size_t fits in ptrdiff_t there
-   is no problem.  */
 #define NARROW_SIZE (SIZE_MAX <= PTRDIFF_MAX)
-
-/* glibc 2.30 and later malloc refuses to exceed ptrdiff_t
-   bounds even on 32-bit platforms.  We don't know which
-   non-glibc systems are safe.  */
 #define KNOWN_SAFE (2 < __GLIBC__ + (30 <= __GLIBC_MINOR__))
-
 #if WIDE_PTRDIFF || NARROW_SIZE || KNOWN_SAFE
   return 0;
 #else
   #error "malloc might not be ptrdiff_t safe"
   syntax error
 #endif""",
-            define = "HAVE_MALLOC_PTRDIFF",
-            language = "c",
-        ),
-    ],
+                define = "HAVE_MALLOC_PTRDIFF",
+                language = "c",
+            ),
+            # Assume Linux/glibc has these features
+            macros.AC_DEFINE("HAVE_MALLOC_0_NONNULL", "1"),
+            macros.AC_DEFINE("HAVE_MALLOC_POSIX", "1"),
+        ],
+        "@platforms//os:macos": [
+            # macOS: malloc(0) returns nonnull, sets errno on failure,
+            # and is ptrdiff_t safe (64-bit ptrdiff_t)
+            macros.AC_DEFINE("HAVE_MALLOC_0_NONNULL", "1"),
+            macros.AC_DEFINE("HAVE_MALLOC_POSIX", "1"),
+            macros.AC_DEFINE("HAVE_MALLOC_PTRDIFF", "1"),
+        ],
+        "//conditions:default": [
+            macros.AC_TRY_COMPILE(
+                code = """#include <stdint.h>
+#define WIDE_PTRDIFF (PTRDIFF_MAX >> 31 >> 31 != 0)
+#define NARROW_SIZE (SIZE_MAX <= PTRDIFF_MAX)
+#define KNOWN_SAFE (2 < __GLIBC__ + (30 <= __GLIBC_MINOR__))
+#if WIDE_PTRDIFF || NARROW_SIZE || KNOWN_SAFE
+  return 0;
+#else
+  #error "malloc might not be ptrdiff_t safe"
+  syntax error
+#endif""",
+                define = "HAVE_MALLOC_PTRDIFF",
+                language = "c",
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/stdlib_h",  # AC_REQUIRE([gl_STDLIB_H_DEFAULTS])

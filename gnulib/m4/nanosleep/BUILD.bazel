@@ -26,7 +26,13 @@ int main(void) {
             define = "HAVE_NANOSLEEP",
             language = "c",
         ),
-    ],
+    ] + select({
+        "@platforms//os:macos": [
+            # macOS has a bug with large nanosleep values
+            macros.AC_DEFINE("HAVE_BUG_BIG_NANOSLEEP", "1"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/multiarch",  # AC_REQUIRE([gl_MULTIARCH])

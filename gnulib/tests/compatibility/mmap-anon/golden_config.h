@@ -1,0 +1,2 @@
+/* config.h.in - AC_DEFINE placeholders */
+/* #undef MAP_ANONYMOUS */

@@ -1,6 +1,7 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/printf.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
 
 # printf.m4 contains many PRINTF checking macros
 # COMPLEX CASE: This is one of the most complex gnulib M4 files.
@@ -26,15 +27,114 @@ load("//autoconf:autoconf.bzl", "autoconf")
 # These are ALL runtime tests that cannot be checked at compile time.
 autoconf(
     name = "printf",
-    checks = [
-        # No direct compile-time checks possible - all require runtime tests
-    ],
+    checks = select({
+        "@platforms//os:macos": [],  # On macOS, CHECK_PRINTF_SAFE is not defined by default
+        "//conditions:default": [
+            # CHECK_PRINTF_SAFE: Enable safe handling of non-IEEE-754 'long double' values
+            # This is set when gl_printf_safe is defined, which bison does by default
+            macros.AC_DEFINE("CHECK_PRINTF_SAFE", "1"),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         # AC_REQUIRE([gl_AC_HEADER_INTTYPES_H])
         "//gnulib/m4/inttypes_h",
+        # AC_REQUIRE([gl_LONG_DOUBLE_VS_DOUBLE])
+        "//gnulib/m4/long-double-vs-double",
         "//gnulib/m4/multiarch",
         # AC_REQUIRE([gl_AC_HEADER_STDINT_H])
         "//gnulib/m4/stdint_h",
     ],
+)
+
+# =============================================================================
+# printf_posix_compliance - Platform-based heuristic for printf POSIX compliance
+# =============================================================================
+# The upstream gl_FUNC_*_POSIX macros run 20+ runtime tests that cannot be
+# replicated at compile time. This target provides platform-based heuristics
+# based on known printf bugs documented in gnulib.
+#
+# Platforms with known printf bugs (need replacement):
+#   - macOS: %a rounding bugs, %0a flag bugs, various issues through macOS 14
+#   - FreeBSD: %a bugs, infinite handling issues
+#   - NetBSD: %a rounding bugs
+#   - OpenBSD: %a rounding bugs
+#   - Solaris: %a bugs, directive issues
+#   - AIX: %a rounding bugs
+#   - Windows/mingw: Various directive issues
+#   - Haiku: Limited testing, assume needs replacement
+#
+# Platforms that typically pass all checks:
+#   - Linux with glibc 2.17+
+#
+autoconf(
+    name = "printf_posix_compliance",
+    checks = [
+        # Check if the platform's printf is known to be POSIX compliant.
+        # Only Linux with glibc is known to pass all gnulib printf tests.
+        # All other platforms have documented bugs and need replacement.
+        macros.AC_TRY_COMPILE(
+            code = """\
+/* Platform detection for printf POSIX compliance.
+ * Based on known bugs documented in gnulib m4/printf.m4
+ *
+ * Platforms that need printf replacement:
+ * - macOS (Darwin): %a rounding bugs through macOS 14+
+ * - FreeBSD: %a bugs, infinite handling issues
+ * - NetBSD: %a rounding bugs
+ * - OpenBSD: %a rounding bugs
+ * - Solaris: %a bugs, directive issues
+ * - AIX: %a rounding bugs
+ * - Windows/mingw: Various directive issues
+ * - Cygwin: Various issues
+ * - Haiku: Untested, assume needs replacement
+ *
+ * Linux with glibc 2.17+ is the only platform known to pass all tests.
+ */
+
+#if defined(__APPLE__) && defined(__MACH__)
+  /* macOS has printf bugs through at least macOS 14 (Darwin 23) */
+  #error "macOS printf needs replacement"
+#elif defined(__FreeBSD__)
+  /* FreeBSD has %a bugs through at least FreeBSD 14.0 */
+  #error "FreeBSD printf needs replacement"
+#elif defined(__NetBSD__)
+  /* NetBSD has %a rounding bugs through at least NetBSD 10.0 */
+  #error "NetBSD printf needs replacement"
+#elif defined(__OpenBSD__)
+  /* OpenBSD has %a rounding bugs through at least OpenBSD 7.5 */
+  #error "OpenBSD printf needs replacement"
+#elif defined(__sun) && defined(__SVR4)
+  /* Solaris has %a bugs through at least Solaris 11.4 */
+  #error "Solaris printf needs replacement"
+#elif defined(_AIX)
+  /* AIX has %a rounding bugs through at least AIX 7.3 */
+  #error "AIX printf needs replacement"
+#elif defined(_WIN32) || defined(__CYGWIN__)
+  /* Windows and Cygwin have various printf directive issues */
+  #error "Windows/Cygwin printf needs replacement"
+#elif defined(__HAIKU__)
+  /* Haiku is untested, assume needs replacement */
+  #error "Haiku printf needs replacement"
+#elif defined(__ANDROID__)
+  /* Android bionic has various printf limitations */
+  #error "Android printf needs replacement"
+#elif defined(__GLIBC__) && (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 17))
+  /* Linux with glibc 2.17+ passes all gnulib printf tests */
+  /* OK - this platform's printf is POSIX compliant */
+#elif defined(__linux__) && !defined(__GLIBC__)
+  /* Linux with musl or other libc - may have issues */
+  #error "Non-glibc Linux printf may need replacement"
+#else
+  /* Unknown platform - assume needs replacement for safety */
+  #error "Unknown platform printf needs replacement"
+#endif
+
+int main(void) { return 0; }
+""",
+            define = "_gl_cv_func_printf_posix",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
 )

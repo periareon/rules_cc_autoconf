@@ -4,14 +4,34 @@ load(
     "//autoconf/private:autoconf_config.bzl",
     "collect_deps",
     "collect_transitive_results",
+    "filter_defaults",
+    "get_autoconf_toolchain_defaults_by_label",
+    "merge_with_defaults",
 )
 load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
 
 def _autoconf_hdr_impl(ctx):
     """Implementation of the autoconf_hdr rule."""
 
+    # Validate that defaults_include and defaults_exclude are mutually exclusive
+    if ctx.attr.defaults_include and ctx.attr.defaults_exclude:
+        fail("defaults_include and defaults_exclude are mutually exclusive")
+
+    # Get toolchain defaults based on the defaults attribute
+    defaults = {}
+    if ctx.attr.defaults:
+        defaults_by_label = get_autoconf_toolchain_defaults_by_label(ctx)
+        if defaults_by_label:
+            # Convert label targets to Labels for comparison
+            include_labels = [dep.label for dep in ctx.attr.defaults_include] if ctx.attr.defaults_include else []
+            exclude_labels = [dep.label for dep in ctx.attr.defaults_exclude] if ctx.attr.defaults_exclude else []
+            defaults = filter_defaults(defaults_by_label, include_labels, exclude_labels)
+
     deps = collect_deps(ctx.attr.deps)
     transitive_checks = collect_transitive_results(ctx.label, deps.to_list())
+
+    # Merge defaults with actual results - results override defaults
+    transitive_checks = merge_with_defaults(defaults, transitive_checks)
 
     # Use resolver to generate header from individual results files
     # The resolver will merge them internally and write the merged results to output_results_json
@@ -45,6 +65,12 @@ def _autoconf_hdr_impl(ctx):
         args.add("--inline")
         args.add(search_string)
         args.add(file_path)
+
+    # Add substitutions: --subst <name> <value>
+    for name, value in ctx.attr.substitutions.items():
+        args.add("--subst")
+        args.add(name)
+        args.add(value)
 
     ctx.actions.run(
         executable = ctx.executable._resolver,
@@ -99,6 +125,31 @@ autoconf_hdr(
 This allows you to run checks once and generate multiple header files from the same results.
 """,
     attrs = {
+        "defaults": attr.bool(
+            doc = """Whether to include toolchain defaults.
+
+            When False (the default), no toolchain defaults are included and only
+            the explicit deps provide check results. When True, defaults from the
+            autoconf toolchain are included, subject to filtering by defaults_include
+            or defaults_exclude.""",
+            default = False,
+        ),
+        "defaults_exclude": attr.label_list(
+            doc = """Labels to exclude from toolchain defaults.
+
+            Only effective when defaults=True. If specified, defaults from these
+            labels are excluded. Labels not found in the toolchain are silently
+            ignored. Mutually exclusive with defaults_include.""",
+            providers = [CcAutoconfInfo],
+        ),
+        "defaults_include": attr.label_list(
+            doc = """Labels to include from toolchain defaults.
+
+            Only effective when defaults=True. If specified, only defaults from
+            these labels are included. An error is raised if a specified label
+            is not found in the toolchain. Mutually exclusive with defaults_exclude.""",
+            providers = [CcAutoconfInfo],
+        ),
         "deps": attr.label_list(
             doc = "List of `autoconf` targets which provide check results. Results from all deps will be merged together, and duplicate define names will produce an error. If not provided, an empty results file will be created.",
             providers = [CcAutoconfInfo],
@@ -115,6 +166,32 @@ This allows you to run checks once and generate multiple header files from the s
             doc = "The output config file (typically `config.h`).",
             mandatory = True,
         ),
+        "substitutions": attr.string_dict(
+            doc = """A mapping of exact strings to replacement values.
+
+            Each entry performs an exact text replacement in the template - the key
+            string is replaced with the value string. No special patterns or wrappers
+            are added.
+
+            Example:
+            ```python
+            autoconf_hdr(
+                name = "config",
+                out = "config.h",
+                template = "config.h.in",
+                substitutions = {
+                    "@MY_VERSION@": "1.2.3",
+                    "@BUILD_TYPE@": "release",
+                    "PLACEHOLDER_TEXT": "actual_value",
+                },
+                deps = [":checks"],
+            )
+            ```
+
+            This would replace the exact string `@MY_VERSION@` with `1.2.3`,
+            `@BUILD_TYPE@` with `release`, and `PLACEHOLDER_TEXT` with `actual_value`.""",
+            default = {},
+        ),
         "template": attr.label(
             doc = "Template file (`config.h.in`) to use as base for generating the header file. The template is used to format the output header, but does not generate any checks.",
             allow_single_file = True,
@@ -126,4 +203,7 @@ This allows you to run checks once and generate multiple header files from the s
             default = Label("//autoconf/private/resolver:resolver_bin"),
         ),
     },
+    toolchains = [
+        config_common.toolchain_type("@rules_cc_autoconf//autoconf:toolchain_type", mandatory = False),
+    ],
 )

@@ -3,18 +3,13 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# =============================================================================
-# gl_LOCALE_H - Header checks, feature detection, and GNULIB module indicators
-# =============================================================================
-
 autoconf(
     name = "locale_h",
     checks = [
-        # Header checks
         macros.AC_CHECK_HEADER("locale.h"),
         macros.AC_CHECK_HEADER("xlocale.h"),
 
-        # gl_LOCALE_T: Check whether locale.h defines locale_t
+        # Check for locale_t type
         macros.AC_CHECK_TYPE(
             "locale_t",
             code = """\
@@ -56,12 +51,29 @@ int y = sizeof (((struct lconv *) 0)->decimal_point);
 struct lconv l;
 int x = sizeof (l.decimal_point);
 int y = sizeof (l.int_p_cs_precedes);
+int main(void) { return 0; }
 """,
-            define = "HAVE_STRUCT_LCONV_OK",
+            define = "_gl_cv_sys_struct_lconv_ok",
             language = "c",
         ),
+        macros.AC_SUBST(
+            "REPLACE_STRUCT_LCONV",
+            condition = "_gl_cv_sys_struct_lconv_ok",
+            if_false = "1",
+            if_true = "0",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",
+        "//gnulib/m4/stddef_h",
+    ],
+)
 
-        # gl_MODULE_INDICATOR_INIT_VARIABLE calls (from gl_LOCALE_H)
+autoconf(
+    name = "defaults",
+    checks = [
+        # Module indicators
         macros.AC_SUBST("GNULIB_LOCALECONV", "0"),
         macros.AC_SUBST("GNULIB_SETLOCALE", "0"),
         macros.AC_SUBST("GNULIB_SETLOCALE_NULL", "0"),
@@ -71,38 +83,30 @@ int y = sizeof (l.int_p_cs_precedes);
         macros.AC_SUBST("GNULIB_GETLOCALENAME_L", "0"),
         macros.AC_SUBST("GNULIB_GETLOCALENAME_L_UNSAFE", "0"),
         macros.AC_SUBST("GNULIB_LOCALENAME_UNSAFE", "0"),
+        macros.AC_SUBST("GNULIB_LOCALENAME", "0"),
+        # HAVE_* defaults
+        macros.AC_SUBST("HAVE_NEWLOCALE", "1"),
+        macros.AC_SUBST("HAVE_DUPLOCALE", "1"),
+        macros.AC_SUBST("HAVE_FREELOCALE", "1"),
+        macros.AC_SUBST("HAVE_GETLOCALENAME_L", "1"),
+        # REPLACE_* defaults
+        macros.AC_SUBST("REPLACE_LOCALECONV", "0"),
+        macros.AC_SUBST("REPLACE_SETLOCALE", "0"),
+        macros.AC_SUBST("REPLACE_NEWLOCALE", "0"),
+        macros.AC_SUBST("REPLACE_DUPLOCALE", "0"),
+        macros.AC_SUBST("REPLACE_FREELOCALE", "0"),
+        macros.AC_SUBST("REPLACE_GETLOCALENAME_L", "0"),
+        macros.AC_SUBST("LOCALENAME_ENHANCE_LOCALE_FUNCS", "0"),
     ],
     visibility = ["//visibility:public"],
-    deps = [
-        "//gnulib/m4/include_next",  # For NEXT_LOCALE_H
-        "//gnulib/m4/stddef_h",  # AC_REQUIRE([gl_STDDEF_H])
-    ],
 )
-
-# =============================================================================
-# gl_LOCALE_H_DEFAULTS - exact match of AC_SUBST from the m4 *_DEFAULTS macro
-# =============================================================================
-
-_GL_LOCALE_H_DEFAULTS = [
-    macros.AC_SUBST("HAVE_NEWLOCALE", "1"),
-    macros.AC_SUBST("HAVE_DUPLOCALE", "1"),
-    macros.AC_SUBST("HAVE_FREELOCALE", "1"),
-    macros.AC_SUBST("HAVE_GETLOCALENAME_L", "1"),
-    macros.AC_SUBST("REPLACE_LOCALECONV", "0"),
-    macros.AC_SUBST("REPLACE_SETLOCALE", "0"),
-    macros.AC_SUBST("REPLACE_NEWLOCALE", "0"),
-    macros.AC_SUBST("REPLACE_DUPLOCALE", "0"),
-    macros.AC_SUBST("REPLACE_FREELOCALE", "0"),
-    macros.AC_SUBST("REPLACE_GETLOCALENAME_L", "0"),
-    macros.AC_SUBST("REPLACE_STRUCT_LCONV", "0"),
-    macros.AC_SUBST("LOCALENAME_ENHANCE_LOCALE_FUNCS", "0"),
-]
 
 autoconf(
     name = "with_defaults",
-    checks = _GL_LOCALE_H_DEFAULTS,
+    checks = [],
     visibility = ["//visibility:public"],
     deps = [
+        ":defaults",
         ":locale_h",
     ],
 )

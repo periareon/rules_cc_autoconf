@@ -20,7 +20,13 @@ autoconf(
         macros.AC_CHECK_FUNC("next_dev"),
         macros.AC_CHECK_FUNC("fs_stat_dev"),
         macros.AC_CHECK_HEADER("fs_info.h"),
-    ],
+    ] + select({
+        "@platforms//os:macos": [
+            # macOS uses BSD-style getmntinfo() for mount list
+            macros.AC_DEFINE("MOUNTED_GETMNTINFO", "1"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/fsusage",  # Provides HAVE_STATVFS and HAVE_SYS_FS_TYPES_H

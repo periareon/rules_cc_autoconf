@@ -19,6 +19,12 @@ int main(void) {
             define = "HAVE_MKFIFO",
             language = "c",
         ),
-    ],
+    ] + select({
+        "@platforms//os:macos": [
+            # macOS has a trailing slash bug in mkfifo
+            macros.AC_DEFINE("MKFIFO_TRAILING_SLASH_BUG", "1"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
 )

@@ -5,6 +5,7 @@
 #include <map>
 #include <stdexcept>
 
+#include "autoconf/private/checker/check.h"
 #include "autoconf/private/checker/config.h"
 #include "autoconf/private/checker/debug_logger.h"
 #include "autoconf/private/json/json.h"
@@ -87,7 +88,19 @@ int Checker::run_checks_by_define(
             //   - "DEFINE_NAME!=value" - check that DEFINE_NAME succeeded AND
             //     does NOT have the specified value
             //   - "DEFINE_NAME=value" - legacy syntax, same as ==
+            //
+            // Special case: For conditional checks (with condition field),
+            // the condition itself is in requires just to ensure ordering,
+            // but we don't require it to succeed - we just need its result
+            // to pick the right value.
             bool requirements_met = true;
+
+            // Get the condition name if this is a conditional check
+            std::string condition_name;
+            if (check.condition().has_value()) {
+                condition_name = *check.condition();
+            }
+
             if (check.required_defines().has_value()) {
                 for (const std::string& req : *check.required_defines()) {
                     std::string req_define = req;
@@ -136,6 +149,18 @@ int Checker::run_checks_by_define(
                                           req_define +
                                           "' which was not found, skipping");
                         break;
+                    }
+
+                    // For conditional checks, if this requirement is the
+                    // condition itself, we only need it to exist (already
+                    // checked above), not succeed. The condition's
+                    // success/failure determines which value to use.
+                    if (!condition_name.empty() &&
+                        req_define == condition_name && !negated &&
+                        !has_value_requirement) {
+                        // This is the condition for a conditional check -
+                        // skip the success requirement
+                        continue;
                     }
 
                     // Handle negated success check (e.g., "!FOO")
@@ -193,12 +218,55 @@ int Checker::run_checks_by_define(
 
             CheckResult result(check.define(), "0", false);
             if (requirements_met) {
-                result = runner.run_check(check);
+                // Handle conditional subst/define checks
+                if (check.condition().has_value() &&
+                    (check.type() == CheckType::kSubst ||
+                     check.type() == CheckType::kDefine)) {
+                    // Look up the condition's result
+                    const std::string& cond_name = *check.condition();
+                    std::map<std::string, CheckResultInfo>::const_iterator
+                        cond_it = other_results.find(cond_name);
+
+                    if (cond_it != other_results.end()) {
+                        // Condition found - use appropriate value
+                        // Condition is "true" if the check succeeded with a
+                        // truthy value (non-empty, non-zero)
+                        bool cond_true = cond_it->second.success &&
+                                         !cond_it->second.value.empty() &&
+                                         cond_it->second.value != "0";
+
+                        std::string value;
+                        if (cond_true) {
+                            // Use if_true value (define_value)
+                            value = check.define_value().value_or("");
+                        } else {
+                            // Use if_false value (define_value_fail)
+                            value = check.define_value_fail().value_or("");
+                        }
+
+                        // If value is empty, don't define (for AC_DEFINE with
+                        // if_false=None)
+                        if (!value.empty()) {
+                            result = CheckResult(check.define(), value, true);
+                        } else {
+                            // Mark as not successful so it won't be output
+                            result = CheckResult(check.define(), "", false);
+                        }
+                    } else {
+                        DebugLogger::warn("Conditional check '" + define +
+                                          "' references '" + cond_name +
+                                          "' which was not found");
+                        result = CheckResult(check.define(), "", false);
+                    }
+                } else {
+                    result = runner.run_check(check);
+                }
             }
 
             j[result.define] = {
                 {"value", result.value},
                 {"success", result.success},
+                {"type", check_type_to_string(check.type())},
             };
         }
 

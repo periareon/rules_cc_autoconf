@@ -5,6 +5,41 @@
 
 namespace rules_cc_autoconf {
 
+std::string check_type_to_string(CheckType type) {
+    switch (type) {
+        case CheckType::kHeader:
+            return "header";
+        case CheckType::kFunction:
+            return "function";
+        case CheckType::kLib:
+            return "lib";
+        case CheckType::kSymbol:
+            return "symbol";
+        case CheckType::kType:
+            return "type";
+        case CheckType::kCompile:
+            return "compile";
+        case CheckType::kDefine:
+            return "define";
+        case CheckType::kSubst:
+            return "subst";
+        case CheckType::kSizeof:
+            return "sizeof";
+        case CheckType::kAlignof:
+            return "alignof";
+        case CheckType::kComputeInt:
+            return "compute_int";
+        case CheckType::kEndian:
+            return "endian";
+        case CheckType::kDecl:
+            return "decl";
+        case CheckType::kMember:
+            return "member";
+        default:
+            return "unknown";
+    }
+}
+
 std::optional<Check> Check::from_json(const void* json_data) {
     const nlohmann::json& json = *static_cast<const nlohmann::json*>(json_data);
 
@@ -54,6 +89,8 @@ std::optional<Check> Check::from_json(const void* json_data) {
         type = CheckType::kMember;
     } else if (type_str == "define") {
         type = CheckType::kDefine;
+    } else if (type_str == "subst") {
+        type = CheckType::kSubst;
     } else {
         DebugLogger::warn("Unknown check type: " + type_str);
         return std::nullopt;
@@ -98,6 +135,10 @@ std::optional<Check> Check::from_json(const void* json_data) {
         if (!requires_list.empty()) {
             check.requires_ = requires_list;
         }
+    }
+
+    if (json.contains("condition") && json["condition"].is_string()) {
+        check.condition_ = json["condition"].get<std::string>();
     }
 
     return check;

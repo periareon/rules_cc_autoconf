@@ -61,10 +61,17 @@ _GL_CTYPE_H_DEFAULTS = [
 ]
 
 autoconf(
-    name = "with_defaults",
+    name = "defaults",
     checks = _GL_CTYPE_H_DEFAULTS,
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "with_defaults",
+    checks = [],
     visibility = ["//visibility:public"],
     deps = [
         ":ctype_h",
+        ":defaults",
     ],
 )

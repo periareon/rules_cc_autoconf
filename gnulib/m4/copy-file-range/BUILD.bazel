@@ -3,13 +3,17 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# copy_file_range is a Linux-specific syscall, not available on macOS
 autoconf(
     name = "copy-file-range",
-    checks = [
-        macros.AC_CHECK_FUNC(
-            "copy_file_range",
-            define = "HAVE_COPY_FILE_RANGE",
-        ),
-    ],
+    checks = select({
+        "@platforms//os:macos": [],  # macOS doesn't have copy_file_range
+        "//conditions:default": [
+            macros.AC_CHECK_FUNC(
+                "copy_file_range",
+                define = "HAVE_COPY_FILE_RANGE",
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
 )

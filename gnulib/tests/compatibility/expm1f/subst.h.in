@@ -1,0 +1,2 @@
+/* gnulib_expm1f.h.in - AC_SUBST placeholders */
+#define SUBST_EXPM1F_LIBM @EXPM1F_LIBM@

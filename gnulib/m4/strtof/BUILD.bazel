@@ -10,6 +10,12 @@ autoconf(
             "strtof",
             define = "HAVE_STRTOF",
         ),
-    ],
+    ] + select({
+        "@platforms//os:macos": [
+            # ldexpf is in libc on macOS
+            macros.AC_DEFINE("HAVE_LDEXPF_IN_LIBC", "1"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
 )

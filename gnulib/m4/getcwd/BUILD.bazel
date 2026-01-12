@@ -26,7 +26,17 @@ int main(void) {
             define = "HAVE_GETCWD_POSIX_SIGNATURE",
             language = "c",
         ),
-    ],
+    ] + select({
+        "@platforms//os:linux": [
+            # Linux glibc getcwd works properly
+            macros.AC_DEFINE("HAVE_MINIMALLY_WORKING_GETCWD", "1"),
+        ],
+        "@platforms//os:macos": [
+            # macOS getcwd works properly
+            macros.AC_DEFINE("HAVE_MINIMALLY_WORKING_GETCWD", "1"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/d-ino",  # AC_REQUIRE([gl_CHECK_TYPE_STRUCT_DIRENT_D_INO])

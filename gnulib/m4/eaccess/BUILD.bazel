@@ -5,15 +5,21 @@ load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "eaccess",
-    checks = [
-        # If eaccess is not found, define it as 'access'
-        macros.AC_CHECK_FUNC(
-            "eaccess",
-            define = "HAVE_EACCESS",
-            if_false = [
-                macros.AC_DEFINE("eaccess", "access"),
-            ],
-        ),
-    ],
+    checks = select({
+        "@platforms//os:macos": [
+            # macOS doesn't have eaccess, define it as 'access'
+            macros.AC_DEFINE("eaccess", "access"),
+        ],
+        "//conditions:default": [
+            # If eaccess is not found, define it as 'access'
+            macros.AC_CHECK_FUNC(
+                "eaccess",
+                define = "HAVE_EACCESS",
+                if_false = [
+                    macros.AC_DEFINE("eaccess", "access"),
+                ],
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
 )

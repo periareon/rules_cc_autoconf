@@ -1,0 +1,3 @@
+/* gnulib_euidaccess.h.in - AC_SUBST placeholders */
+#define SUBST_EUIDACCESS_LIBGEN @EUIDACCESS_LIBGEN@
+#define SUBST_LIB_EACCESS @LIB_EACCESS@

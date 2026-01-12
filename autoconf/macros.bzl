@@ -57,6 +57,30 @@ def _add_conditionals(
         check["if_false"] = [json.decode(c) for c in if_false]
     return check
 
+def _validate_not_select(value, param_name, macro_name):
+    """Validate that a value is not a select().
+
+    Bazel's select() cannot be used with AC_DEFINE, AC_SUBST, or M4_DEFINE
+    because these macros are evaluated at loading time to produce JSON,
+    but select() is only resolved at analysis time.
+
+    For platform-specific values, use the `condition` parameter with
+    platform detection checks instead.
+
+    Args:
+        value: The value to check.
+        param_name: Name of the parameter for error message.
+        macro_name: Name of the macro for error message.
+    """
+    if type(value) == "select":
+        fail((
+            "{}() does not support select() for the '{}' parameter. " +
+            "select() is resolved at analysis time, but macro checks are " +
+            "evaluated at loading time. For platform-specific values, use " +
+            "the 'condition' parameter with a platform detection check, or " +
+            "create separate targets for different platforms."
+        ).format(macro_name, param_name))
+
 def _ac_check_header(
         header,
         define = None,
@@ -1259,9 +1283,10 @@ def _ac_define(
         define,
         value = "1",
         requires = None,
+        condition = None,
         if_true = None,
         if_false = None):
-    """Define a configuration macro unconditionally.
+    """Define a configuration macro.
 
     Original m4 example:
     ```m4
@@ -1270,51 +1295,89 @@ def _ac_define(
     AC_DEFINE([PROJECT_NAME], ["MyProject"])
     ```
 
+    Conditional example (m4):
+    ```m4
+    if test $gl_cv_foo = yes; then
+      AC_DEFINE([FOO_WORKS], [1])
+    fi
+    ```
+
     Example:
     ```python
+    # Simple (always define)
     macros.AC_DEFINE("CUSTOM_VALUE", "42")
-    macros.AC_DEFINE("ENABLE_FEATURE", "1")
-    macros.AC_DEFINE("PROJECT_NAME", '"MyProject"')
+
+    # Conditional (define based on another check's result)
+    macros.AC_DEFINE(
+        "FOO_WORKS",
+        condition = "HAVE_FOO",
+        if_true = "1",      # Value when HAVE_FOO is true
+        if_false = None,    # Don't define when HAVE_FOO is false
+    )
     ```
 
     Note:
-        This is equivalent to GNU Autoconf's AC_DEFINE macro. It creates
-        a define that will always be set in the generated config.h file.
+        This is equivalent to GNU Autoconf's AC_DEFINE macro. When used without
+        `condition`, it creates a define that will always be set. When used with
+        `condition`, the define is set based on the condition's result.
 
     Args:
         define: Define name (e.g., `"CUSTOM_VALUE"`)
-        value: Value to assign (defaults to `"1"`)
+        value: Value to assign when no condition is specified (defaults to `"1"`)
         requires: List of requirements that must be met before this check runs.
             Can be simple define names (e.g., `"HAVE_FOO"`), negated checks
             (e.g., `"!HAVE_FOO"`), or value-based requirements
             (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
-        if_true: List of checks to run if this check succeeds.
-        if_false: List of checks to run if this check fails.
+        condition: Optional name of a check/define to evaluate. When specified,
+            `if_true` and `if_false` determine the value based on the condition.
+        if_true: Value to use when condition is true (only used with `condition`).
+        if_false: Value to use when condition is false (only used with `condition`).
+            Use `None` to not define the macro when condition is false.
 
     Returns:
         A JSON-encoded check string for use with the autoconf rule.
     """
 
-    # Create a compile check that always succeeds
+    # Validate that select() is not used
+    _validate_not_select(value, "value", "AC_DEFINE")
+    _validate_not_select(if_true, "if_true", "AC_DEFINE")
+    _validate_not_select(if_false, "if_false", "AC_DEFINE")
+
     check = {
         "code": "",
         "define": define,
-        "define_value": str(value),
-        "define_value_fail": str(value),
         "language": "c",
         "name": define,
         "type": "define",
     }
-    if requires:
-        check["requires"] = requires
 
-    _add_conditionals(check, if_true, if_false)
+    if condition:
+        # Conditional define - value depends on condition result
+        check["condition"] = condition
+        if if_true != None:
+            check["define_value"] = str(if_true)
+        if if_false != None:
+            check["define_value_fail"] = str(if_false)
+
+        # Add condition to requires so it's evaluated first
+        if requires:
+            check["requires"] = requires + [condition]
+        else:
+            check["requires"] = [condition]
+    else:
+        # Simple define - always use value
+        check["define_value"] = str(value)
+        check["define_value_fail"] = str(value)
+        if requires:
+            check["requires"] = requires
+
     return json.encode(check)
 
 def _ac_subst(
         variable,
         value = "1",
         requires = None,
+        condition = None,
         if_true = None,
         if_false = None):
     """Substitute a variable value (equivalent to AC_SUBST in GNU Autoconf).
@@ -1325,95 +1388,175 @@ def _ac_subst(
     HAVE_DECL_WCWIDTH=1;  AC_SUBST([HAVE_DECL_WCWIDTH])
     ```
 
+    Conditional example (m4):
+    ```m4
+    if test $gl_cv_sys_struct_lconv_ok = no; then
+      REPLACE_STRUCT_LCONV=1
+    else
+      REPLACE_STRUCT_LCONV=0
+    fi
+    AC_SUBST([REPLACE_STRUCT_LCONV])
+    ```
+
     Example:
     ```python
-    macros.AC_SUBST("HAVE_DECL_WCSDUP", 1)
-    macros.AC_SUBST("HAVE_DECL_WCWIDTH", 1)
+    # Simple (always set)
+    macros.AC_SUBST("HAVE_DECL_WCSDUP", "1")
+
+    # Conditional (set based on another check's result)
+    macros.AC_SUBST(
+        "REPLACE_STRUCT_LCONV",
+        condition = "HAVE_STRUCT_LCONV_OK",
+        if_true = "0",    # Value when condition is true
+        if_false = "1",   # Value when condition is false
+    )
     ```
 
     Note:
         In GNU Autoconf, `AC_SUBST` is used to substitute shell variables into
-        Makefiles. In `rules_cc_autoconf`, all variables are automatically
-        available for substitution in `requires` clauses and other contexts.
-        This macro is functionally equivalent to `AC_DEFINE` but serves as
-        documentation that the variable is intended for substitution rather than
-        as a C preprocessor define.
+        Makefiles and template files (replacing `@VAR@` patterns). When used
+        without `condition`, it always sets the variable. When used with
+        `condition`, the value depends on the condition's result.
 
     Args:
         variable: Variable name (e.g., `"LIBRARY_PATH"`)
-        value: Value to assign (defaults to `"1"`)
+        value: Value to assign when no condition is specified (defaults to `"1"`)
         requires: List of requirements that must be met before this check runs.
             Can be simple define names (e.g., `"HAVE_FOO"`), negated checks
             (e.g., `"!HAVE_FOO"`), or value-based requirements
             (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
-        if_true: List of checks to run if this check succeeds.
-        if_false: List of checks to run if this check fails.
+        condition: Optional name of a check/define to evaluate. When specified,
+            `if_true` and `if_false` determine the value based on the condition.
+        if_true: Value to use when condition is true (only used with `condition`).
+        if_false: Value to use when condition is false (only used with `condition`).
 
     Returns:
         A JSON-encoded check string for use with the autoconf rule.
     """
 
-    # Create a compile check that always succeeds
-    # Functionally equivalent to AC_DEFINE, but documents that this is
-    # intended for substitution rather than as a C preprocessor define
+    # Validate that select() is not used
+    _validate_not_select(value, "value", "AC_SUBST")
+    _validate_not_select(if_true, "if_true", "AC_SUBST")
+    _validate_not_select(if_false, "if_false", "AC_SUBST")
+
     check = {
         "code": "",
         "define": variable,
-        "define_value": str(value),
-        "define_value_fail": str(value),
         "language": "c",
         "name": variable,
-        "type": "define",
+        "type": "subst",  # Mark as substitution type
     }
-    if requires:
-        check["requires"] = requires
 
-    _add_conditionals(check, if_true, if_false)
+    if condition:
+        # Conditional subst - value depends on condition result
+        check["condition"] = condition
+        if if_true != None:
+            check["define_value"] = str(if_true)
+        if if_false != None:
+            check["define_value_fail"] = str(if_false)
+
+        # Add condition to requires so it's evaluated first
+        if requires:
+            check["requires"] = requires + [condition]
+        else:
+            check["requires"] = [condition]
+    else:
+        # Simple subst - always use value
+        check["define_value"] = str(value)
+        check["define_value_fail"] = str(value)
+        if requires:
+            check["requires"] = requires
+
     return json.encode(check)
 
 def _m4_define(
         define,
         value = "1",
-        requires = None):
-    """Define a configuration M4 variable unconditionally.
+        requires = None,
+        condition = None,
+        if_true = None,
+        if_false = None):
+    """Define a configuration M4 variable.
 
     Original m4 example:
     ```m4
     REPLACE_FOO=1
     ```
 
+    Conditional example (m4):
+    ```m4
+    if test $HAVE_FOO = yes; then
+      REPLACE_FOO=0
+    else
+      REPLACE_FOO=1
+    fi
+    ```
+
     Example:
     ```python
+    # Simple (always set)
     macros.M4_DEFINE("REPLACE_FOO", "1")
+
+    # Conditional (set based on another check's result)
+    macros.M4_DEFINE(
+        "REPLACE_FOO",
+        condition = "HAVE_FOO",
+        if_true = "0",    # Value when HAVE_FOO is true
+        if_false = "1",   # Value when HAVE_FOO is false
+    )
     ```
 
     Note:
-        Currently this is not functionally different than `AC_DEFINE` but is useful in
-        tracking the difference in actual `AC_DEFINE` values and variables used later
-        in the M4 macro.
+        This is similar to `AC_SUBST` but is useful for tracking the difference
+        between actual `AC_DEFINE` values and M4 shell variables used in macros.
 
     Args:
-        define: Define name (e.g., `"CUSTOM_VALUE"`)
-        value: Value to assign (defaults to `"1"`)
+        define: Define name (e.g., `"REPLACE_FOO"`)
+        value: Value to assign when no condition is specified (defaults to `"1"`)
         requires: List of requirements that must be met before this check runs.
             Can be simple define names (e.g., `"HAVE_FOO"`) or value-based
             requirements (e.g., `"REPLACE_FSTAT=1"` to require specific value)
+        condition: Optional name of a check/define to evaluate. When specified,
+            `if_true` and `if_false` determine the value based on the condition.
+        if_true: Value to use when condition is true (only used with `condition`).
+        if_false: Value to use when condition is false (only used with `condition`).
 
     Returns:
         A JSON-encoded check string for use with the m4 rule.
     """
 
+    # Validate that select() is not used
+    _validate_not_select(value, "value", "M4_DEFINE")
+    _validate_not_select(if_true, "if_true", "M4_DEFINE")
+    _validate_not_select(if_false, "if_false", "M4_DEFINE")
+
     check = {
         "code": _AC_SIMPLE_MAIN_TEMPLATE,
         "define": define,
-        "define_value": str(value),
-        "define_value_fail": str(value),
         "language": "c",
         "name": define,
-        "type": "define",
+        "type": "subst",  # Mark as substitution type
     }
-    if requires:
-        check["requires"] = requires
+
+    if condition:
+        # Conditional - value depends on condition result
+        check["condition"] = condition
+        if if_true != None:
+            check["define_value"] = str(if_true)
+        if if_false != None:
+            check["define_value_fail"] = str(if_false)
+
+        # Add condition to requires so it's evaluated first
+        if requires:
+            check["requires"] = requires + [condition]
+        else:
+            check["requires"] = [condition]
+    else:
+        # Simple - always use value
+        check["define_value"] = str(value)
+        check["define_value_fail"] = str(value)
+        if requires:
+            check["requires"] = requires
 
     return json.encode(check)
 

@@ -4,7 +4,7 @@ load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
 # =============================================================================
-# gl_STDIO_H - Header check and GNULIB module indicators
+# gl_STDIO_H + gl_STDIO_H_EARLY - Header checks and feature detection
 # =============================================================================
 
 autoconf(
@@ -12,7 +12,70 @@ autoconf(
     checks = [
         macros.AC_CHECK_HEADER("stdio.h"),
 
-        # gl_MODULE_INDICATOR_INIT_VARIABLE calls (from gl_STDIO_H)
+        # From gl_STDIO_H_EARLY: Define __USE_MINGW_ANSI_STDIO for MinGW
+        # This makes printf/scanf use GNU-style format specifiers
+        macros.AC_DEFINE("__USE_MINGW_ANSI_STDIO", "1"),
+
+        # From gl_STDIO_H: Check which flavor of printf attribute matches inttypes macros
+        # The upstream m4 sets GNULIB_PRINTF_ATTRIBUTE_FLAVOR_GNU=1 when compilation FAILS
+        # (indicating newer MinGW with gnu printf). On non-mingw systems, compilation
+        # always succeeds, so this define is not set (correct behavior).
+        #
+        # We use if_false to define it when the check fails (gnu printf flavor).
+        macros.AC_TRY_COMPILE(
+            code = """\
+#define __STDC_FORMAT_MACROS 1
+#include <stdio.h>
+#include <inttypes.h>
+/* For non-mingw systems, compilation will trivially succeed.
+   For mingw, compilation will succeed for older mingw (system
+   printf, "I64d") and fail for newer mingw (gnu printf, "lld"). */
+#if (defined _WIN32 && ! defined __CYGWIN__) && \
+  (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 4))
+extern char PRIdMAX_probe[sizeof PRIdMAX == sizeof "I64d" ? 1 : -1];
+#endif
+int main(void) { return 0; }
+""",
+            define = "_gl_cv_printf_attribute_flavor_system",
+            if_false = [
+                macros.AC_DEFINE("GNULIB_PRINTF_ATTRIBUTE_FLAVOR_GNU", "1"),
+            ],
+            language = "c",
+        ),
+
+        # From gl_STDIO_H: AC_CHECK_DECLS_ONCE checks
+        # These detect whether the declarations exist in <stdio.h>
+        macros.AC_CHECK_DECL(
+            "fcloseall",
+            define = "HAVE_DECL_FCLOSEALL",
+            includes = ["stdio.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "getw",
+            define = "HAVE_DECL_GETW",
+            includes = ["stdio.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "putw",
+            define = "HAVE_DECL_PUTW",
+            includes = ["stdio.h"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",  # gl_NEXT_HEADERS([stdio.h])
+    ],
+)
+
+# =============================================================================
+# defaults - All default AC_SUBST values from gl_STDIO_H_REQUIRE_DEFAULTS
+# and gl_STDIO_H_DEFAULTS. Added to gnulib_toolchain for global availability.
+# =============================================================================
+
+autoconf(
+    name = "defaults",
+    checks = [
+        # gl_MODULE_INDICATOR_INIT_VARIABLE calls from gl_STDIO_H_REQUIRE_DEFAULTS
         macros.AC_SUBST("GNULIB_DPRINTF", "0"),
         macros.AC_SUBST("GNULIB_DZPRINTF", "0"),
         macros.AC_SUBST("GNULIB_FCLOSE", "0"),
@@ -86,77 +149,76 @@ autoconf(
         macros.AC_SUBST("GNULIB_MDA_GETW", "1"),
         macros.AC_SUBST("GNULIB_MDA_PUTW", "1"),
         macros.AC_SUBST("GNULIB_MDA_TEMPNAM", "1"),
+
+        # HAVE_DECL_* defaults (assume declaration present unless specific module overrides)
+        # Note: HAVE_DECL_FCLOSEALL, HAVE_DECL_GETW, HAVE_DECL_PUTW are checked dynamically in stdio_h
+        macros.AC_SUBST("HAVE_DECL_FPURGE", "1"),
+        macros.AC_SUBST("HAVE_DECL_FSEEKO", "1"),
+        macros.AC_SUBST("HAVE_DECL_FTELLO", "1"),
+        macros.AC_SUBST("HAVE_DECL_GETDELIM", "1"),
+        macros.AC_SUBST("HAVE_DECL_GETLINE", "1"),
+        macros.AC_SUBST("HAVE_DECL_OBSTACK_PRINTF", "1"),
+        macros.AC_SUBST("HAVE_DECL_SNPRINTF", "1"),
+        macros.AC_SUBST("HAVE_DECL_VSNPRINTF", "1"),
+
+        # HAVE_* defaults (assume function present unless specific module overrides)
+        macros.AC_SUBST("HAVE_DPRINTF", "1"),
+        macros.AC_SUBST("HAVE_FSEEKO", "1"),
+        macros.AC_SUBST("HAVE_FTELLO", "1"),
+        macros.AC_SUBST("HAVE_PCLOSE", "1"),
+        macros.AC_SUBST("HAVE_POPEN", "1"),
+        macros.AC_SUBST("HAVE_RENAMEAT", "1"),
+        macros.AC_SUBST("HAVE_VASPRINTF", "1"),
+        macros.AC_SUBST("HAVE_VDPRINTF", "1"),
+
+        # REPLACE_* defaults (assume no replacement needed)
+        macros.AC_SUBST("REPLACE_DPRINTF", "0"),
+        macros.AC_SUBST("REPLACE_FCLOSE", "0"),
+        macros.AC_SUBST("REPLACE_FDOPEN", "0"),
+        macros.AC_SUBST("REPLACE_FFLUSH", "0"),
+        macros.AC_SUBST("REPLACE_FOPEN", "0"),
+        macros.AC_SUBST("REPLACE_FOPEN_FOR_FOPEN_GNU", "0"),
+        macros.AC_SUBST("REPLACE_FPRINTF", "0"),
+        macros.AC_SUBST("REPLACE_FPURGE", "0"),
+        macros.AC_SUBST("REPLACE_FREOPEN", "0"),
+        macros.AC_SUBST("REPLACE_FSEEK", "0"),
+        macros.AC_SUBST("REPLACE_FSEEKO", "0"),
+        macros.AC_SUBST("REPLACE_FTELL", "0"),
+        macros.AC_SUBST("REPLACE_FTELLO", "0"),
+        macros.AC_SUBST("REPLACE_GETDELIM", "0"),
+        macros.AC_SUBST("REPLACE_GETLINE", "0"),
+        macros.AC_SUBST("REPLACE_OBSTACK_PRINTF", "0"),
+        macros.AC_SUBST("REPLACE_PERROR", "0"),
+        macros.AC_SUBST("REPLACE_POPEN", "0"),
+        macros.AC_SUBST("REPLACE_PRINTF", "0"),
+        macros.AC_SUBST("REPLACE_REMOVE", "0"),
+        macros.AC_SUBST("REPLACE_RENAME", "0"),
+        macros.AC_SUBST("REPLACE_RENAMEAT", "0"),
+        macros.AC_SUBST("REPLACE_SNPRINTF", "0"),
+        macros.AC_SUBST("REPLACE_SPRINTF", "0"),
+        macros.AC_SUBST("REPLACE_STDIO_READ_FUNCS", "0"),
+        macros.AC_SUBST("REPLACE_STDIO_WRITE_FUNCS", "0"),
+        macros.AC_SUBST("REPLACE_TMPFILE", "0"),
+        macros.AC_SUBST("REPLACE_VASPRINTF", "0"),
+        macros.AC_SUBST("REPLACE_VDPRINTF", "0"),
+        macros.AC_SUBST("REPLACE_VFPRINTF", "0"),
+        macros.AC_SUBST("REPLACE_VPRINTF", "0"),
+        macros.AC_SUBST("REPLACE_VSNPRINTF", "0"),
+        macros.AC_SUBST("REPLACE_VSPRINTF", "0"),
     ],
     visibility = ["//visibility:public"],
-    deps = [
-        "//gnulib/m4/include_next",  # gl_NEXT_HEADERS([stdio.h])
-    ],
 )
 
 # =============================================================================
-# gl_STDIO_H_DEFAULTS - exact match of AC_SUBST from the m4 *_DEFAULTS macro
+# with_defaults - For external consumers who don't use the toolchain
 # =============================================================================
-
-_GL_STDIO_H_DEFAULTS = [
-    macros.AC_SUBST("HAVE_DECL_FCLOSEALL", "1"),
-    macros.AC_SUBST("HAVE_DECL_FPURGE", "1"),
-    macros.AC_SUBST("HAVE_DECL_FSEEKO", "1"),
-    macros.AC_SUBST("HAVE_DECL_FTELLO", "1"),
-    macros.AC_SUBST("HAVE_DECL_GETDELIM", "1"),
-    macros.AC_SUBST("HAVE_DECL_GETLINE", "1"),
-    macros.AC_SUBST("HAVE_DECL_GETW", "1"),
-    macros.AC_SUBST("HAVE_DECL_OBSTACK_PRINTF", "1"),
-    macros.AC_SUBST("HAVE_DECL_PUTW", "1"),
-    macros.AC_SUBST("HAVE_DECL_SNPRINTF", "1"),
-    macros.AC_SUBST("HAVE_DECL_VSNPRINTF", "1"),
-    macros.AC_SUBST("HAVE_DPRINTF", "1"),
-    macros.AC_SUBST("HAVE_FSEEKO", "1"),
-    macros.AC_SUBST("HAVE_FTELLO", "1"),
-    macros.AC_SUBST("HAVE_PCLOSE", "1"),
-    macros.AC_SUBST("HAVE_POPEN", "1"),
-    macros.AC_SUBST("HAVE_RENAMEAT", "1"),
-    macros.AC_SUBST("HAVE_VASPRINTF", "1"),
-    macros.AC_SUBST("HAVE_VDPRINTF", "1"),
-    macros.AC_SUBST("REPLACE_DPRINTF", "0"),
-    macros.AC_SUBST("REPLACE_FCLOSE", "0"),
-    macros.AC_SUBST("REPLACE_FDOPEN", "0"),
-    macros.AC_SUBST("REPLACE_FFLUSH", "0"),
-    macros.AC_SUBST("REPLACE_FOPEN", "0"),
-    macros.AC_SUBST("REPLACE_FOPEN_FOR_FOPEN_GNU", "0"),
-    macros.AC_SUBST("REPLACE_FPRINTF", "0"),
-    macros.AC_SUBST("REPLACE_FPURGE", "0"),
-    macros.AC_SUBST("REPLACE_FREOPEN", "0"),
-    macros.AC_SUBST("REPLACE_FSEEK", "0"),
-    macros.AC_SUBST("REPLACE_FSEEKO", "0"),
-    macros.AC_SUBST("REPLACE_FTELL", "0"),
-    macros.AC_SUBST("REPLACE_FTELLO", "0"),
-    macros.AC_SUBST("REPLACE_GETDELIM", "0"),
-    macros.AC_SUBST("REPLACE_GETLINE", "0"),
-    macros.AC_SUBST("REPLACE_OBSTACK_PRINTF", "0"),
-    macros.AC_SUBST("REPLACE_PERROR", "0"),
-    macros.AC_SUBST("REPLACE_POPEN", "0"),
-    macros.AC_SUBST("REPLACE_PRINTF", "0"),
-    macros.AC_SUBST("REPLACE_REMOVE", "0"),
-    macros.AC_SUBST("REPLACE_RENAME", "0"),
-    macros.AC_SUBST("REPLACE_RENAMEAT", "0"),
-    macros.AC_SUBST("REPLACE_SNPRINTF", "0"),
-    macros.AC_SUBST("REPLACE_SPRINTF", "0"),
-    macros.AC_SUBST("REPLACE_STDIO_READ_FUNCS", "0"),
-    macros.AC_SUBST("REPLACE_STDIO_WRITE_FUNCS", "0"),
-    macros.AC_SUBST("REPLACE_TMPFILE", "0"),
-    macros.AC_SUBST("REPLACE_VASPRINTF", "0"),
-    macros.AC_SUBST("REPLACE_VDPRINTF", "0"),
-    macros.AC_SUBST("REPLACE_VFPRINTF", "0"),
-    macros.AC_SUBST("REPLACE_VPRINTF", "0"),
-    macros.AC_SUBST("REPLACE_VSNPRINTF", "0"),
-    macros.AC_SUBST("REPLACE_VSPRINTF", "0"),
-]
 
 autoconf(
     name = "with_defaults",
-    checks = _GL_STDIO_H_DEFAULTS,
+    checks = [],
     visibility = ["//visibility:public"],
     deps = [
+        ":defaults",
         ":stdio_h",
     ],
 )

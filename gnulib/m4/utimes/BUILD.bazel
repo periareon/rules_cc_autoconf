@@ -24,7 +24,17 @@ int main(void) {
             define = "HAVE_UTIMES",
             language = "c",
         ),
-    ],
+    ] + select({
+        "@platforms//os:linux": [
+            # Linux utimes works correctly
+            macros.AC_DEFINE("HAVE_WORKING_UTIMES", "1"),
+        ],
+        "@platforms//os:macos": [
+            # macOS utimes works correctly
+            macros.AC_DEFINE("HAVE_WORKING_UTIMES", "1"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
     ],

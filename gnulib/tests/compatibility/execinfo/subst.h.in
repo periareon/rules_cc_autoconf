@@ -1,0 +1,2 @@
+/* gnulib_execinfo.h.in - AC_SUBST placeholders */
+#define SUBST_LIB_EXECINFO @LIB_EXECINFO@

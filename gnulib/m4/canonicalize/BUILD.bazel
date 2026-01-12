@@ -12,6 +12,10 @@ autoconf(
         macros.AC_CHECK_FUNC("canonicalize_file_name"),
         macros.AC_CHECK_FUNC("realpath"),
         macros.AC_CHECK_FUNC("getcwd"),
+
+        # gl_MODULE_INDICATOR([canonicalize]) - indicates module is present
+        # This is distinct from GNULIB_CANONICALIZE_FILE_NAME which is in stdlib_h
+        macros.AC_DEFINE("GNULIB_CANONICALIZE", "1"),
     ],
     visibility = ["//visibility:public"],
     deps = [

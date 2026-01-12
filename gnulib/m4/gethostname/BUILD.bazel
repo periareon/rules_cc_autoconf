@@ -13,7 +13,17 @@ autoconf(
     name = "gethostname",
     checks = [
         macros.AC_CHECK_FUNC("gethostname"),
-    ],
+    ] + select({
+        "@platforms//os:linux": [
+            # Linux HOST_NAME_MAX is defined in limits.h, typically 64
+            macros.AC_DEFINE("HOST_NAME_MAX", "64"),
+        ],
+        "@platforms//os:macos": [
+            # macOS HOST_NAME_MAX is 256 (from sys/param.h)
+            macros.AC_DEFINE("HOST_NAME_MAX", "256"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/netdb_h",  # Provides HAVE_NETDB_H

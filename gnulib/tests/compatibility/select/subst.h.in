@@ -1,0 +1,3 @@
+/* gnulib_select.h.in - AC_SUBST placeholders */
+#define SUBST_LIB_SELECT @LIB_SELECT@
+#define SUBST_SELECT_LIB @SELECT_LIB@

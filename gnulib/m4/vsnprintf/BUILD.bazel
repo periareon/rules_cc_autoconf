@@ -10,6 +10,24 @@ autoconf(
             "vsnprintf",
             define = "HAVE_VSNPRINTF",
         ),
+        macros.AC_CHECK_DECL(
+            "vsnprintf",
+            define = "HAVE_DECL_VSNPRINTF",
+            includes = ["stdio.h"],
+        ),
+        # REPLACE_VSNPRINTF: Use the platform printf compliance check from printf module.
+        # The upstream m4 checks gl_SNPRINTF_SIZE1, gl_SNPRINTF_RETVAL_C99, gl_PRINTF_POSITIONS.
+        # These are runtime tests that we approximate with platform detection.
+        macros.AC_SUBST(
+            "REPLACE_VSNPRINTF",
+            condition = "_gl_cv_func_printf_posix",
+            if_false = "1",
+            if_true = "0",
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/printf:printf_posix_compliance",  # Platform printf compliance check
+        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS])
+    ],
 )

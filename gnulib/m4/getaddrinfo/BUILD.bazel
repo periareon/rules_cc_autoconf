@@ -11,6 +11,11 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "getaddrinfo",
     checks = [
+        # HAVE_GETADDRINFO - function availability
+        macros.AC_CHECK_FUNC(
+            "getaddrinfo",
+            define = "HAVE_GETADDRINFO",
+        ),
         # HAVE_NETINET_IN_H comes from netinet_in_h dependency
         # Check for declarations - require headers from dependencies
         macros.AC_CHECK_DECL(

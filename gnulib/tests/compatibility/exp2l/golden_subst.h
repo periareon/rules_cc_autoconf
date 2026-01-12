@@ -1,0 +1,2 @@
+/* gnulib_exp2l.h.in - AC_SUBST placeholders */
+#define SUBST_EXP2L_LIBM @EXP2L_LIBM@

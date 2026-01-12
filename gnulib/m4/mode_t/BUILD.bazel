@@ -5,16 +5,22 @@ load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "mode_t",
-    checks = [
-        # Check for promoted mode_t type
-        # Equivalent to gl_PROMOTED_TYPE_MODE_T macro from mode_t.m4
-        # Note: AC_REQUIRE([AC_TYPE_MODE_T]) is a standard autoconf macro
-        macros.AC_TRY_COMPILE(
-            code = """#include <sys/types.h>
+    checks = select({
+        "@platforms//os:macos": [
+            # On macOS, mode_t is uint16_t which promotes to int
+            macros.AC_DEFINE("PROMOTED_MODE_T", "int"),
+        ],
+        "//conditions:default": [
+            # Check for promoted mode_t type
+            # Equivalent to gl_PROMOTED_TYPE_MODE_T macro from mode_t.m4
+            # Note: AC_REQUIRE([AC_TYPE_MODE_T]) is a standard autoconf macro
+            macros.AC_TRY_COMPILE(
+                code = """#include <sys/types.h>
 typedef int array[2 * (sizeof (mode_t) < sizeof (int)) - 1];""",
-            define = "PROMOTED_MODE_T_IS_INT",
-            language = "c",
-        ),
-    ],
+                define = "PROMOTED_MODE_T_IS_INT",
+                language = "c",
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
 )

@@ -6,7 +6,6 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "iconv",
     checks = [
-
         # Check for iconv function
         macros.AC_CHECK_FUNC("iconv"),
         macros.AC_CHECK_FUNC("iconv_open"),
@@ -31,25 +30,21 @@ int main(void) { return 0; }
             language = "c",
         ),
 
-        # Set ICONV_CONST: empty if non-const works, "const" otherwise
-        # Most modern systems use const
+        # Set ICONV_CONST based on the compile test
+        # If non-const declaration compiles, ICONV_CONST should be empty
+        # Otherwise, ICONV_CONST should be "const"
         macros.AC_SUBST(
             "ICONV_CONST",
-            select({
-                "@platforms//os:windows": "",  # GNU libiconv style
-                "//conditions:default": "const",
-            }),
+            condition = "ICONV_NONCONST",
+            if_false = "const",  # Const iconv signature (most modern systems)
+            if_true = "",  # Non-const iconv signature
         ),
-    ] + select(
-        # REPLACE_ICONV logic:
+
+        # REPLACE_ICONV: Most modern systems have working iconv
         # Known bugs on: AIX 5.1-7.1, HP-UX 11.11, Solaris 10, macOS 14.4
-        # The replacement is needed when iconv doesn't handle certain conversions correctly
-        {
-            "@platforms//os:macos": [macros.AC_SUBST("REPLACE_ICONV", "0")],  # Usually works with modern macOS
-            "@platforms//os:windows": [macros.AC_SUBST("REPLACE_ICONV", "0")],  # Use GNU libiconv if available
-            "//conditions:default": [macros.AC_SUBST("REPLACE_ICONV", "0")],  # Most systems have working iconv
-        },
-    ),
+        # Default to not replacing since most systems work correctly
+        macros.AC_SUBST("REPLACE_ICONV", "0"),
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/iconv_h",  # AC_REQUIRE([gl_ICONV_H])

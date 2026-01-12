@@ -1,0 +1,3 @@
+/* config.h.in - AC_DEFINE placeholders */
+/* #undef HAVE_WINDOWS_LOCALE_T */
+/* #undef _LCONV_C99 */

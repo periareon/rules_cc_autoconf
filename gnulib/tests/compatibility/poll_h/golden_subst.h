@@ -1,0 +1,4 @@
+/* gnulib_poll_h.h.in - AC_SUBST placeholders */
+#define SUBST_HAVE_POLL 1
+#define SUBST_HAVE_POLL_H 1
+#define SUBST_REPLACE_POLL 0

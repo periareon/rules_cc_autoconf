@@ -1,0 +1,5 @@
+/* gnulib_sys_ioctl_h.h.in - AC_SUBST placeholders */
+#define SUBST_HAVE_SYS_IOCTL_H 1
+#define SUBST_REPLACE_IOCTL 0
+#define SUBST_SYS_IOCTL_H_HAVE_WINSOCK2_H 0
+#define SUBST_SYS_IOCTL_H_HAVE_WINSOCK2_H_AND_USE_SOCKETS 0

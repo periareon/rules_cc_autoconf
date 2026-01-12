@@ -1,0 +1,4 @@
+/* config.h.in - AC_DEFINE placeholders */
+/* #undef PTHREAD_RWLOCK_BAD_WAITQUEUE */
+#define PTHREAD_RWLOCK_LACKS_TIMEOUT 1
+/* #undef PTHREAD_RWLOCK_UNIMPLEMENTED */

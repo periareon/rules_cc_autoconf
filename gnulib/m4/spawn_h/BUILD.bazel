@@ -3,40 +3,13 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# =============================================================================
+# spawn_h - Header checks and feature detection
+# =============================================================================
+
 autoconf(
     name = "spawn_h",
     checks = [
-        # ============================================================
-        # GNULIB module indicator variables (AC_SUBST, default 0)
-        # These are set to 1 by specific gnulib modules when enabled
-        # ============================================================
-        macros.AC_SUBST("GNULIB_POSIX_SPAWN", "0"),
-        macros.AC_SUBST("GNULIB_POSIX_SPAWNP", "0"),
-        macros.AC_SUBST("GNULIB_POSIX_SPAWN_FILE_ACTIONS_INIT", "0"),
-        macros.AC_SUBST("GNULIB_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR", "0"),
-        macros.AC_SUBST("GNULIB_POSIX_SPAWN_FILE_ACTIONS_ADDCLOSE", "0"),
-        macros.AC_SUBST("GNULIB_POSIX_SPAWN_FILE_ACTIONS_ADDDUP2", "0"),
-        macros.AC_SUBST("GNULIB_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR", "0"),
-        macros.AC_SUBST("GNULIB_POSIX_SPAWN_FILE_ACTIONS_ADDOPEN", "0"),
-        macros.AC_SUBST("GNULIB_POSIX_SPAWN_FILE_ACTIONS_DESTROY", "0"),
-        macros.AC_SUBST("GNULIB_POSIX_SPAWNATTR_INIT", "0"),
-        macros.AC_SUBST("GNULIB_POSIX_SPAWNATTR_GETFLAGS", "0"),
-        macros.AC_SUBST("GNULIB_POSIX_SPAWNATTR_SETFLAGS", "0"),
-        macros.AC_SUBST("GNULIB_POSIX_SPAWNATTR_GETPGROUP", "0"),
-        macros.AC_SUBST("GNULIB_POSIX_SPAWNATTR_SETPGROUP", "0"),
-        macros.AC_SUBST("GNULIB_POSIX_SPAWNATTR_GETSCHEDPARAM", "0"),
-        macros.AC_SUBST("GNULIB_POSIX_SPAWNATTR_SETSCHEDPARAM", "0"),
-        macros.AC_SUBST("GNULIB_POSIX_SPAWNATTR_GETSCHEDPOLICY", "0"),
-        macros.AC_SUBST("GNULIB_POSIX_SPAWNATTR_SETSCHEDPOLICY", "0"),
-        macros.AC_SUBST("GNULIB_POSIX_SPAWNATTR_GETSIGDEFAULT", "0"),
-        macros.AC_SUBST("GNULIB_POSIX_SPAWNATTR_SETSIGDEFAULT", "0"),
-        macros.AC_SUBST("GNULIB_POSIX_SPAWNATTR_GETSIGMASK", "0"),
-        macros.AC_SUBST("GNULIB_POSIX_SPAWNATTR_SETSIGMASK", "0"),
-        macros.AC_SUBST("GNULIB_POSIX_SPAWNATTR_DESTROY", "0"),
-
-        # ============================================================
-        # HAVE_* variables - use compile-time checks
-        # ============================================================
         # Check for spawn.h header
         macros.AC_CHECK_HEADER(
             "spawn.h",
@@ -84,11 +57,46 @@ int main(void) {
 """,
             define = "HAVE_POSIX_SPAWN_FILE_ACTIONS_T",
         ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",  # For NEXT_SPAWN_H
+    ],
+)
 
-        # ============================================================
-        # REPLACE_* variables (AC_SUBST, default 0)
-        # These are set to 1 when gnulib needs to replace a function
-        # ============================================================
+# =============================================================================
+# defaults - All default AC_SUBST values. Added to gnulib_toolchain.
+# =============================================================================
+
+autoconf(
+    name = "defaults",
+    checks = [
+        # Module indicators
+        macros.AC_SUBST("GNULIB_POSIX_SPAWN", "0"),
+        macros.AC_SUBST("GNULIB_POSIX_SPAWNP", "0"),
+        macros.AC_SUBST("GNULIB_POSIX_SPAWN_FILE_ACTIONS_INIT", "0"),
+        macros.AC_SUBST("GNULIB_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR", "0"),
+        macros.AC_SUBST("GNULIB_POSIX_SPAWN_FILE_ACTIONS_ADDCLOSE", "0"),
+        macros.AC_SUBST("GNULIB_POSIX_SPAWN_FILE_ACTIONS_ADDDUP2", "0"),
+        macros.AC_SUBST("GNULIB_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR", "0"),
+        macros.AC_SUBST("GNULIB_POSIX_SPAWN_FILE_ACTIONS_ADDOPEN", "0"),
+        macros.AC_SUBST("GNULIB_POSIX_SPAWN_FILE_ACTIONS_DESTROY", "0"),
+        macros.AC_SUBST("GNULIB_POSIX_SPAWNATTR_INIT", "0"),
+        macros.AC_SUBST("GNULIB_POSIX_SPAWNATTR_GETFLAGS", "0"),
+        macros.AC_SUBST("GNULIB_POSIX_SPAWNATTR_SETFLAGS", "0"),
+        macros.AC_SUBST("GNULIB_POSIX_SPAWNATTR_GETPGROUP", "0"),
+        macros.AC_SUBST("GNULIB_POSIX_SPAWNATTR_SETPGROUP", "0"),
+        macros.AC_SUBST("GNULIB_POSIX_SPAWNATTR_GETSCHEDPARAM", "0"),
+        macros.AC_SUBST("GNULIB_POSIX_SPAWNATTR_SETSCHEDPARAM", "0"),
+        macros.AC_SUBST("GNULIB_POSIX_SPAWNATTR_GETSCHEDPOLICY", "0"),
+        macros.AC_SUBST("GNULIB_POSIX_SPAWNATTR_SETSCHEDPOLICY", "0"),
+        macros.AC_SUBST("GNULIB_POSIX_SPAWNATTR_GETSIGDEFAULT", "0"),
+        macros.AC_SUBST("GNULIB_POSIX_SPAWNATTR_SETSIGDEFAULT", "0"),
+        macros.AC_SUBST("GNULIB_POSIX_SPAWNATTR_GETSIGMASK", "0"),
+        macros.AC_SUBST("GNULIB_POSIX_SPAWNATTR_SETSIGMASK", "0"),
+        macros.AC_SUBST("GNULIB_POSIX_SPAWNATTR_DESTROY", "0"),
+
+        # REPLACE_* defaults
         macros.AC_SUBST("REPLACE_POSIX_SPAWN", "0"),
         macros.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR", "0"),
         macros.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDCLOSE", "0"),
@@ -98,10 +106,21 @@ int main(void) {
 
         # Library needed for posix_spawn
         macros.AC_SUBST("POSIX_SPAWN_LIB", ""),
-        macros.AC_SUBST("LIB_POSIX_SPAWN", ""),  # Backward compatibility
+        macros.AC_SUBST("LIB_POSIX_SPAWN", ""),
     ],
     visibility = ["//visibility:public"],
+)
+
+# =============================================================================
+# with_defaults - For external consumers who don't use the toolchain
+# =============================================================================
+
+autoconf(
+    name = "with_defaults",
+    checks = [],
+    visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/include_next",  # For NEXT_SPAWN_H
+        ":defaults",
+        ":spawn_h",
     ],
 )

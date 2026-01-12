@@ -1,0 +1,3 @@
+/* gnulib_iconv.h.in - AC_SUBST placeholders */
+#define SUBST_LIBICONV @LIBICONV@
+#define SUBST_LTLIBICONV @LTLIBICONV@

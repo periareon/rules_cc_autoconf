@@ -3,12 +3,49 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# From chown.m4:
+# - CHOWN_TRAILING_SLASH_BUG: macOS/FreeBSD/AIX have this bug
+# - CHOWN_CHANGE_TIME_BUG: OpenBSD/Cygwin have this bug
+# - CHOWN_MODIFIES_SYMLINK: Some old systems modify symlinks directly
+# - CHOWN_FAILS_TO_HONOR_ID_OF_NEGATIVE_ONE: Some old systems have this
+
 autoconf(
     name = "chown",
-    checks = [
-        macros.AC_CHECK_FUNC("chown"),
-        macros.AC_CHECK_FUNC("fchown"),
-    ],
+    checks = select({
+        "@platforms//os:linux": [
+            macros.AC_CHECK_FUNC(
+                "chown",
+                define = "HAVE_CHOWN",
+            ),
+            macros.AC_CHECK_FUNC(
+                "fchown",
+                define = "HAVE_FCHOWN",
+            ),
+            # Linux with glibc handles trailing slashes correctly
+        ],
+        "@platforms//os:macos": [
+            macros.AC_CHECK_FUNC(
+                "chown",
+                define = "HAVE_CHOWN",
+            ),
+            macros.AC_CHECK_FUNC(
+                "fchown",
+                define = "HAVE_FCHOWN",
+            ),
+            # macOS has the trailing slash bug
+            macros.AC_DEFINE("CHOWN_TRAILING_SLASH_BUG", "1"),
+        ],
+        "//conditions:default": [
+            macros.AC_CHECK_FUNC(
+                "chown",
+                define = "HAVE_CHOWN",
+            ),
+            macros.AC_CHECK_FUNC(
+                "fchown",
+                define = "HAVE_FCHOWN",
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])

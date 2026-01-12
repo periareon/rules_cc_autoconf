@@ -3,54 +3,101 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# =============================================================================
-# gl_SIGNAL_H - Header check and GNULIB module indicators
-# =============================================================================
-
 autoconf(
     name = "signal_h",
     checks = [
         macros.AC_CHECK_HEADER("signal.h"),
 
-        # gl_MODULE_INDICATOR_INIT_VARIABLE calls (from gl_SIGNAL_H)
+        # Check for sigset_t type
+        macros.AC_CHECK_TYPE(
+            "sigset_t",
+            code = """\
+#include <signal.h>
+#include <sys/types.h>
+int main(void) { sigset_t x; (void)x; return 0; }
+""",
+            define = "_gl_have_sigset_t",
+        ),
+        macros.AC_SUBST(
+            "HAVE_SIGSET_T",
+            condition = "_gl_have_sigset_t",
+            if_false = "0",
+            if_true = "1",
+        ),
+
+        # Check for volatile sig_atomic_t
+        macros.AC_TRY_COMPILE(
+            code = """\
+#include <signal.h>
+volatile sig_atomic_t x;
+int main(void) { return 0; }
+""",
+            define = "_gl_have_volatile_sig_atomic_t",
+            language = "c",
+        ),
+        macros.AC_SUBST(
+            "HAVE_TYPE_VOLATILE_SIG_ATOMIC_T",
+            condition = "_gl_have_volatile_sig_atomic_t",
+            if_false = "0",
+            if_true = "1",
+        ),
+
+        # Check for sighandler_t
+        macros.AC_TRY_COMPILE(
+            code = """\
+#define _GNU_SOURCE 1
+#include <signal.h>
+sighandler_t x;
+int main(void) { return 0; }
+""",
+            define = "_gl_have_sighandler_t",
+            language = "c",
+        ),
+        macros.AC_SUBST(
+            "HAVE_SIGHANDLER_T",
+            condition = "_gl_have_sighandler_t",
+            if_false = "0",
+            if_true = "1",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",
+    ],
+)
+
+autoconf(
+    name = "defaults",
+    checks = [
+        # Module indicators
         macros.AC_SUBST("GNULIB_PTHREAD_SIGMASK", "0"),
         macros.AC_SUBST("GNULIB_RAISE", "0"),
         macros.AC_SUBST("GNULIB_SIG2STR", "0"),
         macros.AC_SUBST("GNULIB_SIGNAL_H_SIGPIPE", "0"),
         macros.AC_SUBST("GNULIB_SIGPROCMASK", "0"),
         macros.AC_SUBST("GNULIB_SIGACTION", "0"),
+        # HAVE_* defaults
+        macros.AC_SUBST("HAVE_POSIX_SIGNALBLOCKING", "1"),
+        macros.AC_SUBST("HAVE_PTHREAD_SIGMASK", "1"),
+        macros.AC_SUBST("HAVE_RAISE", "1"),
+        macros.AC_SUBST("HAVE_SIG2STR", "1"),
+        macros.AC_SUBST("HAVE_SIGINFO_T", "1"),
+        macros.AC_SUBST("HAVE_SIGACTION", "1"),
+        macros.AC_SUBST("HAVE_STR2SIG", "1"),
+        macros.AC_SUBST("HAVE_STRUCT_SIGACTION_SA_SIGACTION", "1"),
+        # REPLACE_* defaults
+        macros.AC_SUBST("REPLACE_PTHREAD_SIGMASK", "0"),
+        macros.AC_SUBST("REPLACE_RAISE", "0"),
     ],
     visibility = ["//visibility:public"],
-    deps = [
-        "//gnulib/m4/include_next",  # For NEXT_SIGNAL_H
-    ],
 )
-
-# =============================================================================
-# gl_SIGNAL_H_DEFAULTS - exact match of AC_SUBST from the m4 *_DEFAULTS macro
-# =============================================================================
-
-_GL_SIGNAL_H_DEFAULTS = [
-    macros.AC_SUBST("HAVE_POSIX_SIGNALBLOCKING", "1"),
-    macros.AC_SUBST("HAVE_PTHREAD_SIGMASK", "1"),
-    macros.AC_SUBST("HAVE_RAISE", "1"),
-    macros.AC_SUBST("HAVE_SIG2STR", "1"),
-    macros.AC_SUBST("HAVE_SIGSET_T", "1"),
-    macros.AC_SUBST("HAVE_SIGINFO_T", "1"),
-    macros.AC_SUBST("HAVE_SIGACTION", "1"),
-    macros.AC_SUBST("HAVE_STR2SIG", "1"),
-    macros.AC_SUBST("HAVE_STRUCT_SIGACTION_SA_SIGACTION", "1"),
-    macros.AC_SUBST("HAVE_TYPE_VOLATILE_SIG_ATOMIC_T", "1"),
-    macros.AC_SUBST("HAVE_SIGHANDLER_T", "1"),
-    macros.AC_SUBST("REPLACE_PTHREAD_SIGMASK", "0"),
-    macros.AC_SUBST("REPLACE_RAISE", "0"),
-]
 
 autoconf(
     name = "with_defaults",
-    checks = _GL_SIGNAL_H_DEFAULTS,
+    checks = [],
     visibility = ["//visibility:public"],
     deps = [
+        ":defaults",
         ":signal_h",
     ],
 )

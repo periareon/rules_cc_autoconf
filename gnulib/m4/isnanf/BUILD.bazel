@@ -28,7 +28,17 @@ int main(void) {
             define = "HAVE_ISNANF",
             language = "c",
         ),
-    ],
+    ] + select({
+        "@platforms//os:linux": [
+            # isnanf is available in libc on Linux
+            macros.AC_DEFINE("HAVE_ISNANF_IN_LIBC", "1"),
+        ],
+        "@platforms//os:macos": [
+            # isnanf is available in libc on macOS
+            macros.AC_DEFINE("HAVE_ISNANF_IN_LIBC", "1"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])

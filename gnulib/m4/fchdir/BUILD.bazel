@@ -5,21 +5,35 @@ load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "fchdir",
-    checks = [
-        # Check for fchdir function and declaration
-        # Equivalent to gl_FUNC_FCHDIR macro from fchdir.m4
-        # Note: Full implementation includes runtime checks for open() on directories
-        # that are not easily replicable in Bazel
-        macros.AC_CHECK_FUNC(
-            "fchdir",
-            define = "HAVE_FCHDIR",
-        ),
-        macros.AC_CHECK_DECL(
-            "fchdir",
-            define = "HAVE_DECL_FCHDIR",
-            headers = ["unistd.h"],
-        ),
-    ],
+    checks = select({
+        "@platforms//os:macos": [
+            # On macOS, fchdir works correctly - no need for REPLACE_FCHDIR
+            macros.AC_CHECK_FUNC(
+                "fchdir",
+                define = "HAVE_FCHDIR",
+            ),
+            macros.AC_CHECK_DECL(
+                "fchdir",
+                define = "HAVE_DECL_FCHDIR",
+                headers = ["unistd.h"],
+            ),
+        ],
+        "//conditions:default": [
+            # Check for fchdir function and declaration
+            # Equivalent to gl_FUNC_FCHDIR macro from fchdir.m4
+            # Note: Full implementation includes runtime checks for open() on directories
+            # that are not easily replicable in Bazel
+            macros.AC_CHECK_FUNC(
+                "fchdir",
+                define = "HAVE_FCHDIR",
+            ),
+            macros.AC_CHECK_DECL(
+                "fchdir",
+                define = "HAVE_DECL_FCHDIR",
+                headers = ["unistd.h"],
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])

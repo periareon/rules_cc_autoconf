@@ -10,7 +10,8 @@ autoconf(
             "valgrind/valgrind.h",
             define = "HAVE_VALGRIND_VALGRIND_H",
         ),
-        # TODO: Add checks based on .m4 file
+        # On macOS/Linux, valgrind support is typically not enabled by default
+        macros.AC_DEFINE("ENABLE_VALGRIND_SUPPORT", "0"),
     ],
     visibility = ["//visibility:public"],
 )

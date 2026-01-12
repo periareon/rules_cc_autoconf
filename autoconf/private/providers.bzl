@@ -8,3 +8,11 @@ CcAutoconfInfo = provider(
         "results": "dict[str, File]: A map of define names to JSON files containing the defines produced by `CcAutoconfCheck` actions. Each define name must be unique.",
     },
 )
+
+CcAutoconfToolchainInfo = provider(
+    doc = "A provider containing default autoconf checks that can be overridden by targets.",
+    fields = {
+        "defaults": "dict[str, File]: A map of define names to JSON files containing default values. These can be overridden by autoconf targets.",
+        "defaults_by_label": "dict[Label, dict[str, File]]: A map from source labels to their respective define name -> File mappings. Used for filtering with defaults_include/defaults_exclude.",
+    },
+)

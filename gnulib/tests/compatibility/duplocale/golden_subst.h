@@ -1,0 +1,3 @@
+/* gnulib_duplocale.h.in - AC_SUBST placeholders */
+#define SUBST_DUPLOCALE_LIB @DUPLOCALE_LIB@
+#define SUBST_LIB_DUPLOCALE @LIB_DUPLOCALE@

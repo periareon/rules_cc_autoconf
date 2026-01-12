@@ -9,6 +9,10 @@ autoconf(
     name = "getdomainname",
     checks = [
         macros.AC_CHECK_HEADER("sys/systeminfo.h"),
+        macros.AC_CHECK_FUNC(
+            "getdomainname",
+            define = "HAVE_GETDOMAINNAME",
+        ),
         macros.AC_CHECK_DECL(
             "getdomainname",
             headers = ["unistd.h"],

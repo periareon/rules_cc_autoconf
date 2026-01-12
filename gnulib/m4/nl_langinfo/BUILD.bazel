@@ -23,7 +23,14 @@ int main(void) {
             define = "HAVE_NL_LANGINFO",
             language = "c",
         ),
-    ],
+    ] + select({
+        "@platforms//os:macos": [
+            # macOS nl_langinfo is not thread-safe and needs replacement
+            macros.AC_DEFINE("NL_LANGINFO_MTSAFE", "0"),
+            macros.AC_DEFINE("REPLACE_NL_LANGINFO", "1"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/langinfo_h",  # AC_REQUIRE([gl_LANGINFO_H])

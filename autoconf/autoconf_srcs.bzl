@@ -1,6 +1,12 @@
 """# autoconf_srcs"""
 
 load("@rules_cc//cc:find_cc_toolchain.bzl", "use_cc_toolchain")
+load(
+    "//autoconf/private:autoconf_config.bzl",
+    "filter_defaults",
+    "get_autoconf_toolchain_defaults_by_label",
+    "merge_with_defaults",
+)
 load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
 
 def _package_relative_name(ctx, file):
@@ -69,6 +75,20 @@ def _output_name(ctx, file, naming_mode):
 def _autoconf_srcs_impl(ctx):
     """Implementation of the autoconf_srcs rule."""
 
+    # Validate that defaults_include and defaults_exclude are mutually exclusive
+    if ctx.attr.defaults_include and ctx.attr.defaults_exclude:
+        fail("defaults_include and defaults_exclude are mutually exclusive")
+
+    # Get toolchain defaults based on the defaults attribute
+    defaults = {}
+    if ctx.attr.defaults:
+        defaults_by_label = get_autoconf_toolchain_defaults_by_label(ctx)
+        if defaults_by_label:
+            # Convert label targets to Labels for comparison
+            include_labels = [dep.label for dep in ctx.attr.defaults_include] if ctx.attr.defaults_include else []
+            exclude_labels = [dep.label for dep in ctx.attr.defaults_exclude] if ctx.attr.defaults_exclude else []
+            defaults = filter_defaults(defaults_by_label, include_labels, exclude_labels)
+
     transitive_checks = {}
     for dep in ctx.attr.deps:
         dep_info = dep[CcAutoconfInfo]
@@ -82,6 +102,9 @@ def _autoconf_srcs_impl(ctx):
             ))
 
         transitive_checks = updated
+
+    # Merge defaults with actual results - results override defaults
+    transitive_checks = merge_with_defaults(defaults, transitive_checks)
 
     outputs = []
 
@@ -175,6 +198,31 @@ only be compiled when a particular autoconf check passes, without having to
 manually maintain `#ifdef` guards in every source file.
 """,
     attrs = {
+        "defaults": attr.bool(
+            doc = """Whether to include toolchain defaults.
+
+            When False (the default), no toolchain defaults are included and only
+            the explicit deps provide check results. When True, defaults from the
+            autoconf toolchain are included, subject to filtering by defaults_include
+            or defaults_exclude.""",
+            default = False,
+        ),
+        "defaults_exclude": attr.label_list(
+            doc = """Labels to exclude from toolchain defaults.
+
+            Only effective when defaults=True. If specified, defaults from these
+            labels are excluded. Labels not found in the toolchain are silently
+            ignored. Mutually exclusive with defaults_include.""",
+            providers = [CcAutoconfInfo],
+        ),
+        "defaults_include": attr.label_list(
+            doc = """Labels to include from toolchain defaults.
+
+            Only effective when defaults=True. If specified, only defaults from
+            these labels are included. An error is raised if a specified label
+            is not found in the toolchain. Mutually exclusive with defaults_exclude.""",
+            providers = [CcAutoconfInfo],
+        ),
         "deps": attr.label_list(
             doc = "List of `autoconf` targets which provide defines. Results from all deps will be merged together, and duplicate define names will produce an error.",
             mandatory = True,
@@ -205,5 +253,7 @@ with `{ctx.label.name}` to namespace them per rule.
         ),
     },
     fragments = [],
-    toolchains = use_cc_toolchain(),
+    toolchains = use_cc_toolchain() + [
+        config_common.toolchain_type("@rules_cc_autoconf//autoconf:toolchain_type", mandatory = False),
+    ],
 )

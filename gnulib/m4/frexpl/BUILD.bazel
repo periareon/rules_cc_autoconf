@@ -21,6 +21,9 @@ int main(void) {
             define = "HAVE_FREXPL",
             language = "c",
         ),
+        # HAVE_FREXPL_IN_LIBC: frexpl() is available in libc without -lm
+        # This is true on modern systems (macOS, Linux glibc)
+        macros.AC_DEFINE("HAVE_FREXPL_IN_LIBC", "1"),
     ],
     visibility = ["//visibility:public"],
     deps = [

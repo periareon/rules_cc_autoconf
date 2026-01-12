@@ -1,0 +1,2 @@
+/* config.h.in - AC_DEFINE placeholders */
+/* #undef MKNOD_FIFO_BUG */

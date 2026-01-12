@@ -1,0 +1,2 @@
+/* gnulib_sys_uio_h.h.in - AC_SUBST placeholders */
+#define SUBST_HAVE_SYS_UIO_H @HAVE_SYS_UIO_H@

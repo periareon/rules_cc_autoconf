@@ -6,14 +6,37 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "alloca",
     checks = [
-        # Check for alloca
-        # Equivalent to gl_FUNC_ALLOCA macro from alloca.m4
         macros.AC_CHECK_HEADER(
             "alloca.h",
-            define = "HAVE_ALLOCA_H",
+            define = "_gl_have_alloca_h",
+        ),
+        macros.AC_SUBST(
+            "HAVE_ALLOCA_H",
+            condition = "_gl_have_alloca_h",
+            if_false = "0",
+            if_true = "1",
+        ),
+        macros.AC_DEFINE(
+            "HAVE_ALLOCA",
+            condition = "_gl_have_alloca_h",
+            if_true = "1",
         ),
     ],
     visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "defaults",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "with_defaults",
+    checks = [],
+    visibility = ["//visibility:public"],
     deps = [
+        ":alloca",
+        ":defaults",
     ],
 )

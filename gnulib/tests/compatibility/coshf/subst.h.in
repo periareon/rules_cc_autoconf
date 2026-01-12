@@ -1,0 +1,2 @@
+/* gnulib_coshf.h.in - AC_SUBST placeholders */
+#define SUBST_COSHF_LIBM @COSHF_LIBM@

@@ -1,0 +1,2 @@
+/* gnulib_logbf.h.in - AC_SUBST placeholders */
+#define SUBST_LOGBF_LIBM @LOGBF_LIBM@

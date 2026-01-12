@@ -1,0 +1,2 @@
+/* gnulib_truncl.h.in - AC_SUBST placeholders */
+#define SUBST_TRUNCL_LIBM @TRUNCL_LIBM@

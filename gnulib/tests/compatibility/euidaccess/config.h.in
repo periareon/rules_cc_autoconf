@@ -1,0 +1,2 @@
+/* config.h.in - AC_DEFINE placeholders */
+#undef PREFER_NONREENTRANT_EUIDACCESS

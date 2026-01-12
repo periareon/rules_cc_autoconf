@@ -10,7 +10,13 @@ autoconf(
             "mprotect",
             define = "HAVE_MPROTECT",
         ),
-    ],
+    ] + select({
+        "@platforms//os:macos": [
+            # macOS has a working mprotect implementation
+            macros.AC_DEFINE("HAVE_WORKING_MPROTECT", "1"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/mmap-anon",

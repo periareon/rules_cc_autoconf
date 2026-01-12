@@ -1,0 +1,2 @@
+/* gnulib_fmodl.h.in - AC_SUBST placeholders */
+#define SUBST_FMODL_LIBM @FMODL_LIBM@

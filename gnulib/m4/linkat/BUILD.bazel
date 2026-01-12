@@ -25,7 +25,14 @@ int main(void) {
             define = "HAVE_LINKAT",
             language = "c",
         ),
-    ],
+    ] + select({
+        "@platforms//os:macos": [
+            # macOS linkat has trailing slash bug
+            macros.AC_DEFINE("LINKAT_SYMLINK_NOTSUP", "0"),
+            macros.AC_DEFINE("LINKAT_TRAILING_SLASH_BUG", "1"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/openat",  # AC_REQUIRE([gl_FUNC_OPENAT])

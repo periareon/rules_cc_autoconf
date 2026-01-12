@@ -70,8 +70,10 @@ SourceGenerator::SourceGenerator(const std::vector<CheckResult>& results)
 void SourceGenerator::generate_config_header(
     const std::filesystem::path& output_path,
     const std::string& template_content,
-    const std::map<std::string, std::filesystem::path>& inlines) {
-    std::string content = process_template(template_content, inlines);
+    const std::map<std::string, std::filesystem::path>& inlines,
+    const std::map<std::string, std::string>& substitutions) {
+    std::string content =
+        process_template(template_content, inlines, substitutions);
 
     // Preserve trailing newline behavior from template
     // If template had no trailing newline, remove any trailing newlines we
@@ -97,8 +99,19 @@ void SourceGenerator::generate_config_header(
 
 std::string SourceGenerator::process_template(
     const std::string& template_content,
-    const std::map<std::string, std::filesystem::path>& inlines) {
+    const std::map<std::string, std::filesystem::path>& inlines,
+    const std::map<std::string, std::string>& substitutions) {
     std::string content = template_content;
+
+    // Step 0: Process direct substitutions first (exact text replacement)
+    // This replaces the exact key string with the value string
+    for (const auto& [search_text, replacement] : substitutions) {
+        size_t pos = 0;
+        while ((pos = content.find(search_text, pos)) != std::string::npos) {
+            content.replace(pos, search_text.length(), replacement);
+            pos += replacement.length();
+        }
+    }
 
     // Initialize set of builtins that need to be processed
     std::set<std::string> builtins = {"PACKAGE_NAME",   "PACKAGE_VERSION",
@@ -112,20 +125,23 @@ std::string SourceGenerator::process_template(
     for (const CheckResult& result : results_) {
         builtin_values[result.define] = result.value;
 
-        // Replace @DEFINE@ patterns
+        // Replace @DEFINE@ patterns (for all types including subst)
         std::regex definePattern("@" + result.define + "@");
         content = std::regex_replace(content, definePattern, result.value);
 
-        // Replace #undef DEFINE patterns (preserve all trailing newlines)
-        if (result.success) {
-            std::string replacement_text = "#define " + result.define;
-            if (!result.value.empty()) {
-                replacement_text += " " + result.value;
+        // Replace #undef DEFINE patterns ONLY for non-subst types
+        // AC_SUBST only does @VAR@ substitution, not #undef replacement
+        if (result.type != "subst") {
+            if (result.success) {
+                std::string replacement_text = "#define " + result.define;
+                if (!result.value.empty()) {
+                    replacement_text += " " + result.value;
+                }
+                content = replace_undef(content, result.define, replacement_text,
+                                        false);
+            } else {
+                content = replace_undef(content, result.define, "", true);
             }
-            content =
-                replace_undef(content, result.define, replacement_text, false);
-        } else {
-            content = replace_undef(content, result.define, "", true);
         }
 
         // Drain this builtin from the set if it's a builtin
@@ -241,7 +257,29 @@ std::string SourceGenerator::process_template(
         }
     }
 
-    return content;
+    // Step 5: Strip trailing whitespace from each line
+    // This ensures the output matches what clang-format produces
+    std::string final_content{};
+    std::istringstream stream(content);
+    std::string line{};
+    bool first_line = true;
+    while (std::getline(stream, line)) {
+        // Strip trailing whitespace from the line
+        while (!line.empty() && (line.back() == ' ' || line.back() == '\t')) {
+            line.pop_back();
+        }
+        if (!first_line) {
+            final_content += '\n';
+        }
+        final_content += line;
+        first_line = false;
+    }
+    // If original content ended with a newline, add it back
+    if (!content.empty() && content.back() == '\n') {
+        final_content += '\n';
+    }
+
+    return final_content;
 }
 
 }  // namespace rules_cc_autoconf

@@ -1,0 +1,4 @@
+/* gnulib_fnmatch_h.h.in - AC_SUBST placeholders */
+#define SUBST_HAVE_FNMATCH 1
+#define SUBST_HAVE_FNMATCH_H 1
+#define SUBST_REPLACE_FNMATCH 0

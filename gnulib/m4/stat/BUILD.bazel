@@ -7,12 +7,57 @@ load("//autoconf:macros.bzl", "macros")
 # On Windows (mingw/windows), REPLACE_STAT=1 is unconditionally set because
 # the original stat() returns st_atime, st_mtime, st_ctime values that are
 # affected by the time zone.
+#
+# REPLACE_FUNC_STAT_FILE is set when stat() incorrectly succeeds on files
+# with trailing slashes (e.g., stat("file/", &st) should fail but doesn't).
+# This is a known issue on:
+#   - macOS (through at least macOS 14)
+#   - Solaris
+#   - AIX
 autoconf(
     name = "stat",
     checks = [
         macros.AC_CHECK_HEADER(
             "sdkddkver.h",
             define = "HAVE_SDKDDKVER_H",
+        ),
+        # Platform detection for stat() trailing slash bug
+        # Uses AC_RUN_IFELSE in upstream, we use compile-time platform heuristics
+        macros.AC_TRY_COMPILE(
+            code = """\
+/* Platform detection for stat() trailing slash bug.
+ * Based on gnulib m4/stat.m4 runtime tests.
+ *
+ * Platforms where stat("file/", &st) incorrectly succeeds:
+ *   - macOS (through at least macOS 14)
+ *   - Solaris 9
+ *   - AIX 7.1
+ *
+ * Platforms that correctly fail:
+ *   - Linux with glibc
+ *   - FreeBSD 14.0+
+ *   - OpenBSD 7.5+
+ */
+#if defined(__APPLE__) && defined(__MACH__)
+  /* macOS has this bug */
+  #error "macOS stat needs REPLACE_FUNC_STAT_FILE"
+#elif defined(__sun) && defined(__SVR4)
+  /* Solaris has this bug */
+  #error "Solaris stat needs REPLACE_FUNC_STAT_FILE"
+#elif defined(_AIX)
+  /* AIX has this bug */
+  #error "AIX stat needs REPLACE_FUNC_STAT_FILE"
+#endif
+int main(void) { return 0; }
+""",
+            define = "_gl_cv_func_stat_file_slash",
+            language = "c",
+        ),
+        macros.AC_SUBST(
+            "REPLACE_FUNC_STAT_FILE",
+            condition = "_gl_cv_func_stat_file_slash",
+            if_false = "1",
+            if_true = "0",
         ),
     ] + select({
         "@platforms//os:windows": [

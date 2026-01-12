@@ -1,0 +1,2 @@
+/* gnulib_xattr.h.in - AC_SUBST placeholders */
+#define SUBST_LIB_XATTR @LIB_XATTR@

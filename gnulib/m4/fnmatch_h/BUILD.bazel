@@ -56,10 +56,17 @@ _GL_FNMATCH_H_DEFAULTS = [
 ]
 
 autoconf(
-    name = "with_defaults",
+    name = "defaults",
     checks = _GL_FNMATCH_H_DEFAULTS,
     visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "with_defaults",
+    checks = [],
+    visibility = ["//visibility:public"],
     deps = [
+        ":defaults",
         ":fnmatch_h",
     ],
 )

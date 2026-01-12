@@ -10,6 +10,12 @@ autoconf(
             "strtod",
             define = "HAVE_STRTOD",
         ),
-    ],
+    ] + select({
+        "@platforms//os:macos": [
+            # ldexp is in libc on macOS
+            macros.AC_DEFINE("HAVE_LDEXP_IN_LIBC", "1"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
 )

@@ -63,11 +63,13 @@ class GnuAutoconfTest(unittest.TestCase):
         cls.autoconf = Path(autoconf)
 
     def setUp(self) -> None:
-        outputs_dir = Path(os.environ["TEST_UNDECLARED_OUTPUTS_DIR"])
-        self.work_dir = outputs_dir / self._testMethodName
-
-        if not self.work_dir.exists():
-            self.work_dir.mkdir(exist_ok=True, parents=True)
+        # Prefer TEST_UNDECLARED_OUTPUTS_DIR for Bazel test artifacts (persisted after test),
+        # fall back to TEST_TMPDIR for scratch space
+        outputs_dir = os.environ.get("TEST_UNDECLARED_OUTPUTS_DIR")
+        if outputs_dir:
+            self.work_dir = Path(outputs_dir)
+        else:
+            self.work_dir = Path(os.environ.get("TEST_TMPDIR", "/tmp"))
 
         # Copy configure.ac
         shutil.copy2(

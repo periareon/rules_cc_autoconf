@@ -1,0 +1,2 @@
+/* gnulib_tanf.h.in - AC_SUBST placeholders */
+#define SUBST_TANF_LIBM @TANF_LIBM@

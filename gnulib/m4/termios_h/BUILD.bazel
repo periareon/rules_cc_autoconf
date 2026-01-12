@@ -3,10 +3,6 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# =============================================================================
-# gl_TERMIOS_H - Header check and GNULIB module indicators
-# =============================================================================
-
 autoconf(
     name = "termios_h",
     checks = [
@@ -14,11 +10,6 @@ autoconf(
             "termios.h",
             define = "HAVE_TERMIOS_H",
         ),
-
-        # gl_MODULE_INDICATOR_INIT_VARIABLE calls (from gl_TERMIOS_H)
-        macros.AC_SUBST("GNULIB_TCGETSID", "0"),
-
-        # struct winsize checks (from gl_TERMIOS_H)
         macros.AC_TRY_COMPILE(
             code = "static struct winsize x; x.ws_row = x.ws_col;",
             define = "TERMIOS_H_DEFINES_STRUCT_WINSIZE",
@@ -36,20 +27,23 @@ autoconf(
     ],
 )
 
-# =============================================================================
-# gl_TERMIOS_H_DEFAULTS - exact match of AC_SUBST from the m4 *_DEFAULTS macro
-# =============================================================================
-
-_GL_TERMIOS_H_DEFAULTS = [
-    macros.AC_SUBST("HAVE_DECL_TCGETSID", "1"),
-    # Note: HAVE_TERMIOS_H is set by AC_CHECK_HEADER in main target, not here
-]
+autoconf(
+    name = "defaults",
+    checks = [
+        # Module indicators
+        macros.AC_SUBST("GNULIB_TCGETSID", "0"),
+        # HAVE_* defaults
+        macros.AC_SUBST("HAVE_DECL_TCGETSID", "1"),
+    ],
+    visibility = ["//visibility:public"],
+)
 
 autoconf(
     name = "with_defaults",
-    checks = _GL_TERMIOS_H_DEFAULTS,
+    checks = [],
     visibility = ["//visibility:public"],
     deps = [
+        ":defaults",
         ":termios_h",
     ],
 )

@@ -1,0 +1,13 @@
+AC_INIT([test_stdint], [1.0])
+AC_CONFIG_HEADERS([config.h])
+
+# Invoke macros from stdint.m4
+gl_STDINT_H
+gl_STDINT_BITSIZEOF
+gl_CHECK_TYPES_SIGNED
+gl_INTEGER_TYPE_SUFFIX
+gl_STDINT_INCLUDES
+gl_STDINT_TYPE_PROPERTIES
+
+AC_CONFIG_FILES([gnulib_stdint.h:gnulib_stdint.h.in])
+AC_OUTPUT

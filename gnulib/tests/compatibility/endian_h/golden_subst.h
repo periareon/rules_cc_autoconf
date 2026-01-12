@@ -1,0 +1,4 @@
+/* gnulib_endian_h.h.in - AC_SUBST placeholders */
+#define SUBST_ENDIAN_H_JUST_MISSING_STDINT @ENDIAN_H_JUST_MISSING_STDINT@
+#define SUBST_HAVE_ENDIAN_H 0
+#define SUBST_HAVE_SYS_ENDIAN_H 0

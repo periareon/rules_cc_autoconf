@@ -1,0 +1,4 @@
+/* gnulib_termcap.h.in - AC_SUBST placeholders */
+#define SUBST_INCTERMCAP @INCTERMCAP@
+#define SUBST_LIBTERMCAP @LIBTERMCAP@
+#define SUBST_LTLIBTERMCAP @LTLIBTERMCAP@

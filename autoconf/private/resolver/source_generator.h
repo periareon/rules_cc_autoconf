@@ -31,12 +31,15 @@ class SourceGenerator {
      * markers and #undef statements).
      * @param inlines Map from search strings to file paths for inline
      * replacements.
+     * @param substitutions Map from placeholder names to values for direct
+     * @VAR@ substitution.
      * @throws std::runtime_error if the file cannot be opened for writing.
      */
     void generate_config_header(
         const std::filesystem::path& output_path,
         const std::string& template_content,
-        const std::map<std::string, std::filesystem::path>& inlines = {});
+        const std::map<std::string, std::filesystem::path>& inlines = {},
+        const std::map<std::string, std::string>& substitutions = {});
 
     // Deleted copy and move assignment operators (const reference members)
     SourceGenerator& operator=(const SourceGenerator&) = delete;
@@ -50,11 +53,14 @@ class SourceGenerator {
      * @param template_content Template content with @PLACEHOLDER@ markers.
      * @param inlines Map from search strings to file paths for inline
      * replacements.
+     * @param substitutions Map from placeholder names to values for direct
+     * @VAR@ substitution.
      * @return Processed content with placeholders replaced.
      */
     std::string process_template(
         const std::string& template_content,
-        const std::map<std::string, std::filesystem::path>& inlines = {});
+        const std::map<std::string, std::filesystem::path>& inlines = {},
+        const std::map<std::string, std::string>& substitutions = {});
 };
 
 }  // namespace rules_cc_autoconf

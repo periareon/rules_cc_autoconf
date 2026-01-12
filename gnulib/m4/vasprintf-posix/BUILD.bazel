@@ -1,14 +1,25 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/vasprintf-posix.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
 
 # HAVE_VASPRINTF comes from vasprintf dependency
 
 autoconf(
     name = "vasprintf-posix",
-    checks = [],
+    checks = [
+        # REPLACE_VASPRINTF: Use platform printf compliance check.
+        macros.AC_SUBST(
+            "REPLACE_VASPRINTF",
+            condition = "_gl_cv_func_printf_posix",
+            if_false = "1",
+            if_true = "0",
+        ),
+    ],
     visibility = ["//visibility:public"],
     deps = [
+        "//gnulib/m4/printf:printf_posix_compliance",  # Platform printf compliance check
+        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS])
         "//gnulib/m4/vasprintf",  # Provides HAVE_VASPRINTF
     ],
 )

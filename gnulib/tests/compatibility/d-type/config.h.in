@@ -1,0 +1,2 @@
+/* config.h.in - AC_DEFINE placeholders */
+#undef HAVE_STRUCT_DIRENT_D_TYPE

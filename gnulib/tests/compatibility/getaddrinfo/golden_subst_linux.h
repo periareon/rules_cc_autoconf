@@ -1,0 +1,2 @@
+/* gnulib_getaddrinfo.h.in - AC_SUBST placeholders */
+#define SUBST_GETADDRINFO_LIB @GETADDRINFO_LIB@

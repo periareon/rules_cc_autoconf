@@ -1,0 +1,3 @@
+/* config.h.in - AC_DEFINE placeholders */
+/* #undef HAVE_NEARLY_WORKING_FCHMODAT */
+/* #undef NEED_FCHMODAT_NONSYMLINK_FIX */

@@ -1,11 +1,33 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/vfprintf-posix.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_FUNC_VFPRINTF_POSIX replaces the system vfprintf with gnulib's POSIX-compliant version
 
 autoconf(
     name = "vfprintf-posix",
     checks = [
-        # TODO: Add checks based on .m4 file
+        # REPLACE_VFPRINTF_POSIX indicates gnulib's vfprintf replacement is being used
+        macros.AC_DEFINE("REPLACE_VFPRINTF_POSIX", "1"),
+
+        # gl_STDIO_MODULE_INDICATOR([vfprintf-posix]) and gl_MODULE_INDICATOR([vfprintf-posix])
+        # These indicate the module is present and active
+        macros.AC_DEFINE("GNULIB_VFPRINTF_POSIX", "1"),
+
+        # REPLACE_VFPRINTF: Use platform printf compliance check.
+        macros.AC_SUBST(
+            "REPLACE_VFPRINTF",
+            condition = "_gl_cv_func_printf_posix",
+            if_false = "1",
+            if_true = "0",
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/printf",  # Multiple gl_PRINTF_* macros
+        "//gnulib/m4/printf:printf_posix_compliance",  # Platform printf compliance check
+        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS])
+        "//gnulib/m4/vasnprintf",  # gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS
+    ],
 )

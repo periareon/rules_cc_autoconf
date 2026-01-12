@@ -22,6 +22,9 @@ int main(void) {
             define = "HAVE_FREXP",
             language = "c",
         ),
+        # HAVE_FREXP_IN_LIBC: frexp() is available in libc without -lm
+        # This is true on modern systems (macOS, Linux glibc)
+        macros.AC_DEFINE("HAVE_FREXP_IN_LIBC", "1"),
     ],
     visibility = ["//visibility:public"],
     deps = [

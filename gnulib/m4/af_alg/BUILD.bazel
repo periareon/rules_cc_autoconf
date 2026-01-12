@@ -24,6 +24,10 @@ int main(void) {
             define = "HAVE_LINUX_IF_ALG_H",
             language = "c",
         ),
+        # USE_LINUX_CRYPTO_API defaults to 0 unless --with-linux-crypto is passed
+        # Since we can't replicate the --with-linux-crypto flag behavior,
+        # we default to 0 (disabled)
+        macros.AC_DEFINE("USE_LINUX_CRYPTO_API", "0"),
     ],
     visibility = ["//visibility:public"],
     deps = [

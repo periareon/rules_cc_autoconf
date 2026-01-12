@@ -8,6 +8,111 @@ load("@rules_cc//cc:find_cc_toolchain.bzl", "find_cpp_toolchain")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
 
+_TOOLCHAIN_TYPE = "//autoconf:toolchain_type"
+
+def get_autoconf_toolchain_defaults(ctx):
+    """Get default checks from the autoconf toolchain if available.
+
+    Args:
+        ctx (ctx): The rule context.
+
+    Returns:
+        dict: A mapping of define names to check result files from toolchain defaults,
+              or an empty dict if no toolchain is configured.
+    """
+
+    # Access toolchain - returns None if not registered or mandatory=False
+    toolchain = ctx.toolchains[_TOOLCHAIN_TYPE]
+    if not toolchain:
+        return {}
+
+    autoconf_defaults = getattr(toolchain, "autoconf_defaults", None)
+    if not autoconf_defaults:
+        return {}
+
+    return autoconf_defaults.defaults
+
+def get_autoconf_toolchain_defaults_by_label(ctx):
+    """Get default checks from the autoconf toolchain, organized by source label.
+
+    Args:
+        ctx (ctx): The rule context.
+
+    Returns:
+        dict: A mapping of source labels to dicts of (define name -> check result file),
+              or an empty dict if no toolchain is configured.
+    """
+
+    # Access toolchain - returns None if not registered or mandatory=False
+    toolchain = ctx.toolchains[_TOOLCHAIN_TYPE]
+    if not toolchain:
+        return {}
+
+    autoconf_defaults = getattr(toolchain, "autoconf_defaults", None)
+    if not autoconf_defaults:
+        return {}
+
+    return getattr(autoconf_defaults, "defaults_by_label", {})
+
+def filter_defaults(defaults_by_label, include_labels, exclude_labels):
+    """Filter toolchain defaults based on include/exclude lists.
+
+    Args:
+        defaults_by_label (dict): Mapping of Label -> dict[str, File] from toolchain.
+        include_labels (list[Label]): If non-empty, only include defaults from these labels.
+            An error is raised if a label is specified but not found in the toolchain.
+        exclude_labels (list[Label]): If non-empty, exclude defaults from these labels.
+            Labels not found in the toolchain are silently ignored.
+
+    Returns:
+        dict: A merged dict of define name -> File after filtering.
+    """
+    if include_labels and exclude_labels:
+        fail("defaults_include and defaults_exclude are mutually exclusive")
+
+    if include_labels:
+        # Only include specified labels
+        result = {}
+        for label in include_labels:
+            if label not in defaults_by_label:
+                fail("defaults_include specifies label '{}' but it is not provided by the autoconf toolchain. Available labels: {}".format(
+                    label,
+                    ", ".join([str(l) for l in defaults_by_label.keys()]),
+                ))
+            result = result | defaults_by_label[label]
+        return result
+    elif exclude_labels:
+        # Include all except specified labels
+        result = {}
+        exclude_set = {label: True for label in exclude_labels}
+        for label, defines in defaults_by_label.items():
+            if label not in exclude_set:
+                result = result | defines
+        return result
+    else:
+        # Include all
+        result = {}
+        for defines in defaults_by_label.values():
+            result = result | defines
+        return result
+
+def merge_with_defaults(defaults, results):
+    """Merge check results with toolchain defaults.
+
+    Results from actual targets take precedence over defaults - any define
+    present in both will use the result value, not the default.
+
+    Args:
+        defaults (dict): Default checks from toolchain (define name -> File).
+        results (dict): Check results from targets (define name -> File).
+
+    Returns:
+        dict: Merged results with targets overriding defaults.
+    """
+
+    # Defaults first, then results override
+    return defaults | results
+
 def collect_transitive_results(label, dep_infos):
     """Collect transitive results while failing on duplicates.
 

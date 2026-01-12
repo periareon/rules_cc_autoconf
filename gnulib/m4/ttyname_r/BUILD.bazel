@@ -10,6 +10,16 @@ autoconf(
             "ttyname",
             define = "HAVE_TTYNAME",
         ),
-    ],
+    ] + select({
+        "@platforms//os:linux": [
+            # Linux glibc has POSIX-compliant ttyname_r
+            macros.AC_DEFINE("HAVE_POSIXDECL_TTYNAME_R", "1"),
+        ],
+        "@platforms//os:macos": [
+            # macOS has POSIX-compliant ttyname_r
+            macros.AC_DEFINE("HAVE_POSIXDECL_TTYNAME_R", "1"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
 )

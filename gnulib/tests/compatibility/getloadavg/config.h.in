@@ -1,0 +1,6 @@
+/* config.h.in - AC_DEFINE placeholders */
+#undef DGUX
+#undef N_NAME_POINTER
+#undef SVR4
+#undef UMAX
+#undef UMAX4_3

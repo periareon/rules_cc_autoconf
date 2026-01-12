@@ -28,13 +28,16 @@ class Resolver {
      * @param output_path Path where config.h will be written.
      * @param inlines Map from search strings to file paths for inline
      * replacements.
+     * @param substitutions Map from placeholder names to values for direct
+     * @VAR@ substitution.
      * @return 0 on success, 1 on error.
      */
     static int resolve_and_generate(
         const std::vector<std::filesystem::path>& results_paths,
         const std::optional<std::filesystem::path>& template_path,
         const std::filesystem::path& output_path,
-        const std::map<std::string, std::filesystem::path>& inlines = {});
+        const std::map<std::string, std::filesystem::path>& inlines = {},
+        const std::map<std::string, std::string>& substitutions = {});
 };
 
 }  // namespace rules_cc_autoconf

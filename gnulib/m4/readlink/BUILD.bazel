@@ -21,7 +21,13 @@ int main(void) {
             define = "HAVE_READLINK",
             language = "c",
         ),
-    ],
+    ] + select({
+        "@platforms//os:macos": [
+            # macOS has a trailing slash bug in readlink
+            macros.AC_DEFINE("READLINK_TRAILING_SLASH_BUG", "1"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])

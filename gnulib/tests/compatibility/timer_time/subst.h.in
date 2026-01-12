@@ -1,0 +1,3 @@
+/* gnulib_timer_time.h.in - AC_SUBST placeholders */
+#define SUBST_LIB_TIMER_TIME @LIB_TIMER_TIME@
+#define SUBST_TIMER_TIME_LIB @TIMER_TIME_LIB@

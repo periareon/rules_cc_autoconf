@@ -3,10 +3,6 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# =============================================================================
-# gl_ARPA_INET_H - Header check and GNULIB module indicators
-# =============================================================================
-
 autoconf(
     name = "arpa_inet_h",
     checks = [
@@ -14,10 +10,6 @@ autoconf(
             "arpa/inet.h",
             define = "HAVE_ARPA_INET_H",
         ),
-
-        # gl_MODULE_INDICATOR_INIT_VARIABLE calls (from gl_ARPA_INET_H)
-        macros.AC_SUBST("GNULIB_INET_NTOP", "0"),
-        macros.AC_SUBST("GNULIB_INET_PTON", "0"),
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -26,26 +18,32 @@ autoconf(
     ],
 )
 
-# =============================================================================
-# gl_ARPA_INET_H_DEFAULTS - exact match of AC_SUBST from the m4 *_DEFAULTS macro
-# =============================================================================
-
-_GL_ARPA_INET_H_DEFAULTS = [
-    macros.AC_SUBST("HAVE_DECL_HTONL", "1"),
-    macros.AC_SUBST("HAVE_DECL_HTONS", "1"),
-    macros.AC_SUBST("HAVE_DECL_INET_NTOP", "1"),
-    macros.AC_SUBST("HAVE_DECL_INET_PTON", "1"),
-    macros.AC_SUBST("HAVE_DECL_NTOHL", "1"),
-    macros.AC_SUBST("HAVE_DECL_NTOHS", "1"),
-    macros.AC_SUBST("REPLACE_INET_NTOP", "0"),
-    macros.AC_SUBST("REPLACE_INET_PTON", "0"),
-]
+autoconf(
+    name = "defaults",
+    checks = [
+        # Module indicators
+        macros.AC_SUBST("GNULIB_INET_NTOP", "0"),
+        macros.AC_SUBST("GNULIB_INET_PTON", "0"),
+        # HAVE_* defaults
+        macros.AC_SUBST("HAVE_DECL_HTONL", "1"),
+        macros.AC_SUBST("HAVE_DECL_HTONS", "1"),
+        macros.AC_SUBST("HAVE_DECL_INET_NTOP", "1"),
+        macros.AC_SUBST("HAVE_DECL_INET_PTON", "1"),
+        macros.AC_SUBST("HAVE_DECL_NTOHL", "1"),
+        macros.AC_SUBST("HAVE_DECL_NTOHS", "1"),
+        # REPLACE_* defaults
+        macros.AC_SUBST("REPLACE_INET_NTOP", "0"),
+        macros.AC_SUBST("REPLACE_INET_PTON", "0"),
+    ],
+    visibility = ["//visibility:public"],
+)
 
 autoconf(
     name = "with_defaults",
-    checks = _GL_ARPA_INET_H_DEFAULTS,
+    checks = [],
     visibility = ["//visibility:public"],
     deps = [
         ":arpa_inet_h",
+        ":defaults",
     ],
 )

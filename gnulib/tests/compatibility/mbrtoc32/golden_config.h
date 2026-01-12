@@ -1,0 +1,5 @@
+/* config.h.in - AC_DEFINE placeholders */
+/* #undef HAVE_WORKING_MBRTOC32 */
+/* #undef MBRTOC32_EMPTY_INPUT_BUG */
+/* #undef MBRTOC32_IN_C_LOCALE_MAYBE_EILSEQ */
+/* #undef MBRTOC32_MULTIBYTE_LOCALE_BUG */

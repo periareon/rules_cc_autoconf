@@ -1,0 +1,2 @@
+/* gnulib_fabsf.h.in - AC_SUBST placeholders */
+#define SUBST_FABSF_LIBM @FABSF_LIBM@

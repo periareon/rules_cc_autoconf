@@ -6,7 +6,6 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "fnmatch",
     checks = [
-
         # Check if fnmatch function exists
         macros.AC_CHECK_FUNC("fnmatch"),
 
@@ -18,16 +17,13 @@ autoconf(
         # - FreeBSD 13.2, NetBSD 10.0, Cygwin < 3.5: character class issues
         # - Systems with 16-bit wchar_t (AIX 32-bit, etc.): Unicode BMP issues
         #
-        # For Bazel cross-compilation, we use select() for known-broken platforms.
-        # On most modern Linux systems, fnmatch works correctly.
+        # For Bazel, we set based on whether fnmatch was found.
+        # If HAVE_FNMATCH is false, we need to provide a replacement.
         macros.AC_SUBST(
             "REPLACE_FNMATCH",
-            select({
-                # Known broken platforms - need replacement
-                "@platforms//os:windows": "1",  # No fnmatch on Windows
-                # Default to 0 on modern POSIX systems
-                "//conditions:default": "0",
-            }),
+            condition = "HAVE_FNMATCH",
+            if_false = "1",  # Don't have it (e.g., Windows), need replacement
+            if_true = "0",  # Have it, assume it works on modern systems
         ),
     ],
     visibility = ["//visibility:public"],

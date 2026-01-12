@@ -10,6 +10,15 @@ autoconf(
             "selinux/selinux.h",
             define = "HAVE_SELINUX_SELINUX_H",
         ),
-    ],
+    ] + select({
+        "@platforms//os:macos": [
+            # SELinux is not available on macOS - set to 0 (not undef)
+            macros.AC_DEFINE("USE_SELINUX_SELINUX_H", "0"),
+        ],
+        "//conditions:default": [],
+    }),
+    # Note: USE_SELINUX_SELINUX_H AC_SUBST is intentionally not set here
+    # because the gnulib m4 only sets it when SELinux is detected.
+    # On macOS, it remains unsubstituted (@USE_SELINUX_SELINUX_H@).
     visibility = ["//visibility:public"],
 )

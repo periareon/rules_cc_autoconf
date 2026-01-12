@@ -1,0 +1,2 @@
+/* gnulib_frexpf.h.in - AC_SUBST placeholders */
+#define SUBST_FREXPF_LIBM @FREXPF_LIBM@

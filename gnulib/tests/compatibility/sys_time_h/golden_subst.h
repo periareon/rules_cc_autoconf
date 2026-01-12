@@ -1,0 +1,6 @@
+/* gnulib_sys_time_h.h.in - AC_SUBST placeholders */
+#define SUBST_HAVE_GETTIMEOFDAY 1
+#define SUBST_HAVE_STRUCT_TIMEVAL 1
+#define SUBST_HAVE_SYS_TIME_H 1
+#define SUBST_REPLACE_GETTIMEOFDAY 0
+#define SUBST_REPLACE_STRUCT_TIMEVAL 0

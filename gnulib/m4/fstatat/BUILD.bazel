@@ -5,6 +5,7 @@ load("//autoconf:macros.bzl", "macros")
 
 # gl_FUNC_FSTATAT from fstatat.m4
 # On darwin and solaris, REPLACE_FSTATAT=1 is unconditionally set.
+# When REPLACE_FSTATAT=1 and fstatat(...,0) works, HAVE_WORKING_FSTATAT_ZERO_FLAG=1
 autoconf(
     name = "fstatat",
     checks = [
@@ -14,6 +15,8 @@ autoconf(
         "@platforms//os:macos": [
             # On macOS, unconditionally set REPLACE_FSTATAT=1
             macros.M4_DEFINE("REPLACE_FSTATAT", "1"),
+            # fstatat(..., 0) works on macOS, and since REPLACE_FSTATAT=1
+            macros.AC_DEFINE("HAVE_WORKING_FSTATAT_ZERO_FLAG", "1"),
         ],
         # Note: Solaris would need a custom constraint
         "//conditions:default": [],

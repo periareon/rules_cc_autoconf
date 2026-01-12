@@ -11,6 +11,12 @@ autoconf(
             define = "HAVE_STACK_T",
         ),
         macros.AC_DEFINE("stack_t", "struct sigaltstack"),
-    ],
+    ] + select({
+        "@platforms//os:macos": [
+            # macOS has a working sigaltstack implementation
+            macros.AC_DEFINE("HAVE_WORKING_SIGALTSTACK", "1"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
 )

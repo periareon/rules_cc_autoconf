@@ -1,0 +1,4 @@
+/* config.h.in - AC_DEFINE placeholders */
+#undef HAVE_GETCWD_SHORTER
+#undef HAVE_MINIMALLY_WORKING_GETCWD
+#undef HAVE_PARTLY_WORKING_GETCWD

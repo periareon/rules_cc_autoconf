@@ -24,6 +24,13 @@ autoconf(
                 "libutil.h",
             ],
         ),
-    ],
+    ] + select({
+        "@platforms//os:macos": [
+            # macOS has forkpty and openpty in libutil
+            macros.AC_DEFINE("HAVE_FORKPTY", "1"),
+            macros.AC_DEFINE("HAVE_OPENPTY", "1"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
 )

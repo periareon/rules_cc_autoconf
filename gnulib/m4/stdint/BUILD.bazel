@@ -11,8 +11,31 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "stdint",
     checks = [
-        macros.AC_CHECK_HEADER("sys/bitypes.h"),
-        macros.AC_CHECK_HEADER("sys/inttypes.h"),
+        # Header checks - these set both C defines and AC_SUBST values
+        macros.AC_CHECK_HEADER(
+            "sys/bitypes.h",
+            define = "HAVE_SYS_BITYPES_H",
+        ),
+        macros.AC_CHECK_HEADER(
+            "sys/inttypes.h",
+            define = "HAVE_SYS_INTTYPES_H",
+        ),
+        # Check for a working C99 stdint.h (gl_STDINT_H)
+        macros.AC_TRY_COMPILE(
+            code = """\
+#include <stdint.h>
+intmax_t i = (intmax_t) -1;
+int main(void) { return 0; }
+""",
+            define = "_gl_cv_header_working_stdint_h",
+            language = "c",
+        ),
+        macros.AC_SUBST(
+            "HAVE_C99_STDINT_H",
+            condition = "_gl_cv_header_working_stdint_h",
+            if_false = "0",
+            if_true = "1",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -22,5 +45,44 @@ autoconf(
         "//gnulib/m4/size_max",  # Provides HAVE_STDINT_H
         "//gnulib/m4/sys_types_h",  # Provides HAVE_SYS_TYPES_H
         "//gnulib/m4/wchar_h",  # Provides HAVE_WCHAR_H
+        "//gnulib/m4/wint_t:wint_t_prereq",  # Provides HAVE_CRTDEFS_H
+    ],
+)
+
+# =============================================================================
+# defaults - Type properties from gl_STDINT_TYPE_PROPERTIES
+# These are platform-specific computed values. Defaults are for modern 64-bit Unix.
+# =============================================================================
+
+autoconf(
+    name = "defaults",
+    checks = [
+        # BITSIZEOF_* - bit sizes of various types
+        macros.AC_SUBST("BITSIZEOF_PTRDIFF_T", "64"),
+        macros.AC_SUBST("BITSIZEOF_SIG_ATOMIC_T", "32"),
+        macros.AC_SUBST("BITSIZEOF_SIZE_T", "64"),
+        macros.AC_SUBST("BITSIZEOF_WCHAR_T", "32"),
+        macros.AC_SUBST("BITSIZEOF_WINT_T", "32"),
+        # HAVE_SIGNED_* - whether types are signed
+        macros.AC_SUBST("HAVE_SIGNED_SIG_ATOMIC_T", "1"),
+        macros.AC_SUBST("HAVE_SIGNED_WCHAR_T", "1"),
+        macros.AC_SUBST("HAVE_SIGNED_WINT_T", "0"),
+        # *_SUFFIX - literal suffixes for integer constants
+        macros.AC_SUBST("PTRDIFF_T_SUFFIX", "l"),
+        macros.AC_SUBST("SIG_ATOMIC_T_SUFFIX", ""),
+        macros.AC_SUBST("SIZE_T_SUFFIX", "ul"),
+        macros.AC_SUBST("WCHAR_T_SUFFIX", ""),
+        macros.AC_SUBST("WINT_T_SUFFIX", ""),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "with_defaults",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":defaults",
+        ":stdint",
     ],
 )

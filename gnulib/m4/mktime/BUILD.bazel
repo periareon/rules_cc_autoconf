@@ -23,25 +23,42 @@ int main(void) { return 0; }
             "alarm",
             headers = ["unistd.h"],
         ),
-        # If __mktime_internal is found, define mktime_internal as __mktime_internal
-        # If not found, set WANT_MKTIME_INTERNAL=1 and define NEED_MKTIME_INTERNAL=1
-        macros.AC_CHECK_FUNC(
-            "__mktime_internal",
-            define = "HAVE_MKTIME_INTERNAL",
-            if_false = [
-                macros.AC_DEFINE("WANT_MKTIME_INTERNAL", "1"),
-                macros.AC_DEFINE("NEED_MKTIME_INTERNAL", "1"),
-            ],
-            if_true = [
-                macros.AC_DEFINE("mktime_internal", "__mktime_internal"),
-            ],
-        ),
     ] + select({
+        "@platforms//os:macos": [
+            # macOS mktime has timezone bugs that require gnulib replacement
+            macros.AC_DEFINE("NEED_MKTIME_INTERNAL", "1"),
+            macros.AC_DEFINE("NEED_MKTIME_WORKING", "1"),
+        ],
         "@platforms//os:windows": [
+            macros.AC_CHECK_FUNC(
+                "__mktime_internal",
+                define = "HAVE_MKTIME_INTERNAL",
+                if_false = [
+                    macros.AC_DEFINE("WANT_MKTIME_INTERNAL", "1"),
+                    macros.AC_DEFINE("NEED_MKTIME_INTERNAL", "1"),
+                ],
+                if_true = [
+                    macros.AC_DEFINE("mktime_internal", "__mktime_internal"),
+                ],
+            ),
             macros.M4_DEFINE("REPLACE_MKTIME", "1"),
             macros.M4_DEFINE("NEED_MKTIME_WINDOWS", "1"),
         ],
-        "//conditions:default": [],
+        "//conditions:default": [
+            # If __mktime_internal is found, define mktime_internal as __mktime_internal
+            # If not found, set WANT_MKTIME_INTERNAL=1 and define NEED_MKTIME_INTERNAL=1
+            macros.AC_CHECK_FUNC(
+                "__mktime_internal",
+                define = "HAVE_MKTIME_INTERNAL",
+                if_false = [
+                    macros.AC_DEFINE("WANT_MKTIME_INTERNAL", "1"),
+                    macros.AC_DEFINE("NEED_MKTIME_INTERNAL", "1"),
+                ],
+                if_true = [
+                    macros.AC_DEFINE("mktime_internal", "__mktime_internal"),
+                ],
+            ),
+        ],
     }),
     visibility = ["//visibility:public"],
     deps = [

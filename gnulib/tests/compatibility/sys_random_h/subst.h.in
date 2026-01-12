@@ -1,0 +1,4 @@
+/* gnulib_sys_random_h.h.in - AC_SUBST placeholders */
+#define SUBST_HAVE_GETRANDOM @HAVE_GETRANDOM@
+#define SUBST_HAVE_SYS_RANDOM_H @HAVE_SYS_RANDOM_H@
+#define SUBST_REPLACE_GETRANDOM @REPLACE_GETRANDOM@

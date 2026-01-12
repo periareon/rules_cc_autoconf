@@ -1,0 +1,4 @@
+/* config.h.in - AC_DEFINE placeholders */
+#undef HAVE_MALLOC_0_NONNULL
+#undef HAVE_MALLOC_POSIX
+#undef HAVE_MALLOC_PTRDIFF

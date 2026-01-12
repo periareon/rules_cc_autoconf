@@ -7,10 +7,17 @@ load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "poll",
-    checks = [
-        macros.AC_CHECK_HEADER("sys/filio.h"),
-        macros.AC_CHECK_FUNC("poll"),
-    ],
+    checks = select({
+        "@platforms//os:macos": [
+            # macOS poll() is broken - it doesn't work correctly with devices
+            # and has other bugs. GNU autoconf marks it as unavailable.
+            macros.AC_CHECK_HEADER("sys/filio.h"),
+        ],
+        "//conditions:default": [
+            macros.AC_CHECK_HEADER("sys/filio.h"),
+            macros.AC_CHECK_FUNC("poll"),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/sockets",

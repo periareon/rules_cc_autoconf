@@ -6,10 +6,69 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "wint_t",
     checks = [
-        macros.AC_CHECK_HEADER(
-            "crtdefs.h",
-            define = "HAVE_CRTDEFS_H",
+        # Check for wint_t type
+        macros.AC_TRY_COMPILE(
+            code = """\
+#include <wchar.h>
+wint_t foo = (wchar_t)'\\0';
+int main(void) { return 0; }
+""",
+            define = "HAVE_WINT_T",
+            language = "c",
+        ),
+
+        # Check whether wint_t is large enough
+        macros.AC_TRY_COMPILE(
+            code = """\
+#include <wchar.h>
+int verify[sizeof (wint_t) < sizeof (int) ? -1 : 1];
+int main(void) { return 0; }
+""",
+            define = "_gl_cv_type_wint_t_large_enough",
+            language = "c",
+        ),
+        macros.AC_SUBST(
+            "GNULIBHEADERS_OVERRIDE_WINT_T",
+            condition = "_gl_cv_type_wint_t_large_enough",
+            if_false = "1",
+            if_true = "0",
         ),
     ],
     visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "wint_t_prereq",
+    checks = [
+        macros.AC_CHECK_HEADER(
+            "crtdefs.h",
+            define = "_gl_have_crtdefs_h",
+        ),
+        macros.AC_SUBST(
+            "HAVE_CRTDEFS_H",
+            condition = "_gl_have_crtdefs_h",
+            if_false = "0",
+            if_true = "1",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":wint_t",
+    ],
+)
+
+autoconf(
+    name = "defaults",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "with_defaults",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":defaults",
+        ":wint_t_prereq",
+    ],
 )

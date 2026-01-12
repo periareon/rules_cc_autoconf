@@ -8,20 +8,27 @@ load("//autoconf:macros.bzl", "macros")
 # On Windows (mingw/windows), REPLACE_ACCESS=1 is unconditionally set because
 # access() (= _access) does not support the X_OK mode.
 #
-# On other platforms, there's a runtime test for trailing slash handling bugs
-# (e.g., Mac OS X 10.5 mistakenly allows access("link-to-file/",amode)).
+# On macOS, access() has a trailing slash bug (allows access("link-to-file/",amode)).
+# On Linux and other POSIX systems, access() correctly handles trailing slashes.
 autoconf(
     name = "access",
     checks = select({
+        "@platforms//os:macos": [
+            # On macOS, access() has trailing slash bug
+            macros.AC_CHECK_FUNC(
+                "access",
+                define = "HAVE_ACCESS",
+            ),
+            macros.AC_DEFINE("ACCESS_TRAILING_SLASH_BUG", "1"),
+            macros.M4_DEFINE("REPLACE_ACCESS", "1"),
+        ],
         "@platforms//os:windows": [
             # On Windows, unconditionally set REPLACE_ACCESS=1
             # because access() (= _access) does not support X_OK mode
             macros.M4_DEFINE("REPLACE_ACCESS", "1"),
         ],
         "//conditions:default": [
-            # On non-Windows, check for access function
-            # Note: Full M4 implementation does runtime check for trailing slash bug
-            # which we cannot replicate at compile time
+            # On Linux and other POSIX systems, access() works correctly
             macros.AC_CHECK_FUNC(
                 "access",
                 define = "HAVE_ACCESS",

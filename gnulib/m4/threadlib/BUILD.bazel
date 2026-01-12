@@ -3,45 +3,85 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# From threadlib.m4:
+# - AVOID_ANY_THREADS: Defined when --disable-threads is used
+# - HAVE_PTHREAD_API: Defined when pthread.h exists and POSIX threads work
+# - HAVE_WEAK_SYMBOLS: Defined when the compiler supports weak declarations
+# - PTHREAD_IN_USE_DETECTION_HARD: Defined on Solaris/HP-UX where detection is complex
+
 autoconf(
     name = "threadlib",
-    checks = [
-        # Note: HAVE_PTHREAD_H is provided by pthread_h dependency
-        macros.AC_CHECK_HEADER(
-            "threads.h",
-            define = "HAVE_THREADS_H",
-        ),
-        macros.AC_CHECK_LIB(
-            "pthread",
-            "pthread_kill",
-            define = "HAVE_LIBPTHREAD",
-        ),
-        macros.AC_CHECK_LIB(
-            "thr",
-            "pthread_kill",
-            define = "HAVE_LIBTHR",
-        ),
-        macros.AC_CHECK_LIB(
-            "c_r",
-            "pthread_kill",
-            define = "HAVE_LIBC_R",
-        ),
-        macros.AC_CHECK_LIB(
-            "rt",
-            "sched_yield",
-            define = "HAVE_LIBRT",
-        ),
-        macros.AC_CHECK_LIB(
-            "posix4",
-            "sched_yield",
-            define = "HAVE_LIBPOSIX4",
-        ),
-        macros.AC_CHECK_LIB(
-            "stdthreads",
-            "thrd_create",
-            define = "HAVE_LIBSTDTHREADS",
-        ),
-    ],
+    checks = select({
+        "@platforms//os:linux": [
+            macros.AC_CHECK_HEADER(
+                "threads.h",
+                define = "HAVE_THREADS_H",
+            ),
+            macros.AC_CHECK_LIB(
+                "pthread",
+                "pthread_kill",
+                define = "HAVE_LIBPTHREAD",
+            ),
+            macros.AC_CHECK_LIB(
+                "rt",
+                "sched_yield",
+                define = "HAVE_LIBRT",
+            ),
+            # Linux has pthread API
+            macros.AC_DEFINE("HAVE_PTHREAD_API", "1"),
+        ],
+        "@platforms//os:macos": [
+            macros.AC_CHECK_HEADER(
+                "threads.h",
+                define = "HAVE_THREADS_H",
+            ),
+            macros.AC_CHECK_LIB(
+                "pthread",
+                "pthread_kill",
+                define = "HAVE_LIBPTHREAD",
+            ),
+            # macOS has pthread API
+            macros.AC_DEFINE("HAVE_PTHREAD_API", "1"),
+            # By default, threads are enabled (AVOID_ANY_THREADS is set only when disabled)
+            macros.AC_DEFINE("AVOID_ANY_THREADS", "1"),
+        ],
+        "//conditions:default": [
+            macros.AC_CHECK_HEADER(
+                "threads.h",
+                define = "HAVE_THREADS_H",
+            ),
+            macros.AC_CHECK_LIB(
+                "pthread",
+                "pthread_kill",
+                define = "HAVE_LIBPTHREAD",
+            ),
+            macros.AC_CHECK_LIB(
+                "thr",
+                "pthread_kill",
+                define = "HAVE_LIBTHR",
+            ),
+            macros.AC_CHECK_LIB(
+                "c_r",
+                "pthread_kill",
+                define = "HAVE_LIBC_R",
+            ),
+            macros.AC_CHECK_LIB(
+                "rt",
+                "sched_yield",
+                define = "HAVE_LIBRT",
+            ),
+            macros.AC_CHECK_LIB(
+                "posix4",
+                "sched_yield",
+                define = "HAVE_LIBPOSIX4",
+            ),
+            macros.AC_CHECK_LIB(
+                "stdthreads",
+                "thrd_create",
+                define = "HAVE_LIBSTDTHREADS",
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/pthread_h",  # Provides HAVE_PTHREAD_H

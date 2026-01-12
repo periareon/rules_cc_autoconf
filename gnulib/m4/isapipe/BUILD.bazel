@@ -10,8 +10,17 @@ autoconf(
             "isapipe",
             define = "HAVE_ISAPIPE",
         ),
-        # Note: HAVE_FIFO_PIPES and PIPE_LINK_COUNT_MAX are set based on runtime checks
-        # that are not easily replicable in Bazel
-    ],
+    ] + select({
+        "@platforms//os:linux": [
+            # Linux has FIFO pipes, PIPE_LINK_COUNT_MAX varies
+            macros.AC_DEFINE("HAVE_FIFO_PIPES", "1"),
+        ],
+        "@platforms//os:macos": [
+            # macOS has FIFO-like pipes, PIPE_LINK_COUNT_MAX is 0
+            macros.AC_DEFINE("HAVE_FIFO_PIPES", "1"),
+            macros.AC_DEFINE("PIPE_LINK_COUNT_MAX", "(0)"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
 )

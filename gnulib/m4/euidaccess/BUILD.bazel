@@ -5,6 +5,9 @@ load("//autoconf:macros.bzl", "macros")
 
 # gl_FUNC_EUIDACCESS from euidaccess.m4
 # HAVE_EACCESS comes from eaccess, HAVE_FACCESSAT from faccessat
+#
+# gl_FUNC_NONREENTRANT_EUIDACCESS unconditionally defines PREFER_NONREENTRANT_EUIDACCESS=1
+# This is used when the module depends on nonreentrant-euidaccess
 
 autoconf(
     name = "euidaccess",
@@ -12,6 +15,9 @@ autoconf(
         macros.AC_CHECK_FUNC("euidaccess"),
         macros.AC_CHECK_DECL("setregid"),
         macros.AC_CHECK_HEADER("libgen.h"),
+        # PREFER_NONREENTRANT_EUIDACCESS is set by gl_FUNC_NONREENTRANT_EUIDACCESS
+        # which is called when nonreentrant-euidaccess module is used
+        macros.AC_DEFINE("PREFER_NONREENTRANT_EUIDACCESS", "1"),
     ],
     visibility = ["//visibility:public"],
     deps = [

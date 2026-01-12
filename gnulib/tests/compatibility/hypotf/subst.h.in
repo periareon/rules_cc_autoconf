@@ -1,0 +1,2 @@
+/* gnulib_hypotf.h.in - AC_SUBST placeholders */
+#define SUBST_HYPOTF_LIBM @HYPOTF_LIBM@

@@ -1,0 +1,2 @@
+/* gnulib_logp1f.h.in - AC_SUBST placeholders */
+#define SUBST_LOGP1F_LIBM @LOGP1F_LIBM@

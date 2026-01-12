@@ -1,11 +1,50 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/stack-trace.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "stack-trace",
     checks = [
-        # TODO: Add checks based on .m4 file
+        # Check for libbacktrace header (Ian Lance Taylor's library)
+        # This produces source file names and line numbers if binary has debug info
+        macros.AC_CHECK_HEADER(
+            "backtrace.h",
+            define = "_gl_have_backtrace_h",
+        ),
+
+        # Check if libbacktrace is available and usable
+        macros.AC_TRY_COMPILE(
+            code = """\
+#include <backtrace.h>
+
+int main(void) {
+    struct backtrace_state *state =
+        backtrace_create_state(NULL, 0, NULL, NULL);
+    (void)state;
+    return 0;
+}
+""",
+            define = "_gl_cv_lib_backtrace",
+            language = "c",
+        ),
+
+        # Define HAVE_LIBBACKTRACE if libbacktrace is available
+        macros.AC_DEFINE(
+            "HAVE_LIBBACKTRACE",
+            condition = "_gl_cv_lib_backtrace",
+            if_true = "1",
+        ),
+
+        # CAN_PRINT_STACK_TRACE: Set to 1 if stack trace printing is possible
+        # This is true if we have libbacktrace OR execinfo support
+        # On modern systems (macOS, Linux glibc), execinfo is available
+        macros.AC_DEFINE("CAN_PRINT_STACK_TRACE", "1"),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/execinfo",  # Provides HAVE_EXECINFO_H, backtrace functions
+        "//gnulib/m4/inline",  # AC_REQUIRE([AC_C_INLINE])
+        "//gnulib/m4/stdlib_h",  # AC_REQUIRE([gl_STDLIB_H_DEFAULTS])
+    ],
 )
