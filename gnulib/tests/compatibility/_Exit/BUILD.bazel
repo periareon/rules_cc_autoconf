@@ -6,8 +6,8 @@ gnu_gnulib_diff_test_suite(
     config_h_in = "config.h.in",
     configure_ac = "configure.ac",
     gnulib_h_in = "subst.h.in",
-    golden_config_h = "golden_config.h",
-    golden_gnulib_h = "golden_subst.h",
+    golden_config_h = "golden_config.h.in",
+    golden_gnulib_h = "golden_subst.h.in",
     m4_files = ["@gnulib//:all_m4"],
     test_c = "test__Exit.c",
 )

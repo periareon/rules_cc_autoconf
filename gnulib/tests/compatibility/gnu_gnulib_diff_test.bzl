@@ -93,9 +93,9 @@ def gnu_gnulib_diff_test(
         configure_ac,
         m4_files,
         config_h_in,
-        gnulib_h_in,
+        subst_h_in,
         golden_config_h,
-        golden_gnulib_h,
+        golden_subst_h,
         size = "medium",
         tags = [],
         target_compatible_with = None,
@@ -115,9 +115,9 @@ def gnu_gnulib_diff_test(
         configure_ac (Label): The configure.ac file specific to this m4 module
         m4_files (list[Label]): ALL m4 files needed to run autoconf (including deps)
         config_h_in (Label): Template for AC_DEFINE (#undef patterns)
-        gnulib_h_in (Label): Template for AC_SUBST (@FOO@ patterns)
+        subst_h_in (Label): Template for AC_SUBST (@FOO@ patterns)
         golden_config_h (Label): Expected config.h output
-        golden_gnulib_h (Label): Expected gnulib_*.h output
+        golden_subst_h (Label): Expected gnulib_*.h output
         size (str): Test size (default: "medium")
         tags (list[str]): Test tags
         target_compatible_with: Platform constraint (default: Linux and macOS)
@@ -126,9 +126,9 @@ def gnu_gnulib_diff_test(
     env = {
         "TEST_CONFIGURE_AC": "$(rlocationpath {})".format(configure_ac),
         "TEST_CONFIG_H_IN": "$(rlocationpath {})".format(config_h_in),
-        "TEST_GNULIB_H_IN": "$(rlocationpath {})".format(gnulib_h_in),
+        "TEST_SUBST_H_IN": "$(rlocationpath {})".format(subst_h_in),
         "TEST_GOLDEN_CONFIG_H": "$(rlocationpath {})".format(golden_config_h),
-        "TEST_GOLDEN_GNULIB_H": "$(rlocationpath {})".format(golden_gnulib_h),
+        "TEST_GOLDEN_SUBST_H": "$(rlocationpath {})".format(golden_subst_h),
         "TEST_M4_FILES": " ".join([
             "$(rlocationpaths {})".format(m4)
             for m4 in m4_files
@@ -138,9 +138,9 @@ def gnu_gnulib_diff_test(
     data = [
         configure_ac,
         config_h_in,
-        gnulib_h_in,
+        subst_h_in,
         golden_config_h,
-        golden_gnulib_h,
+        golden_subst_h,
     ] + list(m4_files)
 
     # Platform-specific test selection (no Windows support for autoconf)
@@ -170,9 +170,9 @@ def gnu_gnulib_diff_test_suite(
         configure_ac,
         m4_files,
         config_h_in,
-        gnulib_h_in,
+        subst_h_in,
         golden_config_h,
-        golden_gnulib_h,
+        golden_subst_h,
         bazel_autoconf_target,
         test_c,
         size = "medium",
@@ -189,7 +189,7 @@ def gnu_gnulib_diff_test_suite(
 
     Golden files can be specified as either:
     - A simple Label (same golden for all platforms)
-    - A dict with platform keys: {"linux": "golden_linux.h", "macos": "golden_macos.h", ...}
+    - A dict with platform keys: {"linux": "golden_linux.h.in", "macos": "golden_macos.h.in", ...}
 
     Valid platform keys:
     - "linux": Only runs on Linux
@@ -205,10 +205,10 @@ def gnu_gnulib_diff_test_suite(
         configure_ac (Label): The configure.ac file specific to this m4 module
         m4_files (list[Label]): ALL m4 files needed to run autoconf (including deps)
         config_h_in (Label): Template for AC_DEFINE (#undef patterns)
-        gnulib_h_in (Label): Template for AC_SUBST (@FOO@ patterns)
+        subst_h_in (Label): Template for AC_SUBST (@FOO@ patterns)
         golden_config_h (Label or dict): Expected config.h output.
             Can be a Label or dict with platform keys.
-        golden_gnulib_h (Label or dict): Expected gnulib_*.h output.
+        golden_subst_h (Label or dict): Expected gnulib_*.h output.
             Can be a Label or dict with platform keys.
         bazel_autoconf_target (Label): The autoconf target from //gnulib/m4/{name}
         test_c (Label): C file to compile with golden headers
@@ -216,9 +216,6 @@ def gnu_gnulib_diff_test_suite(
         tags (list[str]): Test tags
         **kwargs: Additional arguments
     """
-
-    # Extract module name from the test name (assumes name ends with _test)
-    module_name = name.replace("_test", "")
 
     # Platform-specific test selection for compile tests
     unix_compatible = select({
@@ -228,7 +225,7 @@ def gnu_gnulib_diff_test_suite(
 
     # Get platform entries for config and gnulib golden files
     config_entries = _get_golden_entries(golden_config_h)
-    gnulib_entries = _get_golden_entries(golden_gnulib_h)
+    gnulib_entries = _get_golden_entries(golden_subst_h)
 
     # Track all test names for the test suite
     all_tests = []
@@ -237,16 +234,16 @@ def gnu_gnulib_diff_test_suite(
     # For gnu_autoconf tests, we need matching config and gnulib goldens
     # If both are simple labels, create one test
     # If either is a dict, create platform-specific tests for matching platforms
-    if not _is_dict(golden_config_h) and not _is_dict(golden_gnulib_h):
+    if not _is_dict(golden_config_h) and not _is_dict(golden_subst_h):
         # Simple case: single golden files for both
         gnu_gnulib_diff_test(
             name = name + "_gnu_autoconf",
             configure_ac = configure_ac,
             m4_files = m4_files,
             config_h_in = config_h_in,
-            gnulib_h_in = gnulib_h_in,
+            subst_h_in = subst_h_in,
             golden_config_h = golden_config_h,
-            golden_gnulib_h = golden_gnulib_h,
+            golden_subst_h = golden_subst_h,
             size = size,
             tags = tags,
             **kwargs
@@ -255,7 +252,7 @@ def gnu_gnulib_diff_test_suite(
     else:
         # Platform-specific: find matching platforms between config and gnulib
         config_dict = golden_config_h if _is_dict(golden_config_h) else {"_default": golden_config_h}
-        gnulib_dict = golden_gnulib_h if _is_dict(golden_gnulib_h) else {"_default": golden_gnulib_h}
+        gnulib_dict = golden_subst_h if _is_dict(golden_subst_h) else {"_default": golden_subst_h}
 
         # Determine which concrete platforms to create tests for
         # We want to create tests for linux, macos (and windows when supported)
@@ -282,9 +279,9 @@ def gnu_gnulib_diff_test_suite(
                     configure_ac = configure_ac,
                     m4_files = m4_files,
                     config_h_in = config_h_in,
-                    gnulib_h_in = gnulib_h_in,
+                    subst_h_in = subst_h_in,
                     golden_config_h = config_golden,
-                    golden_gnulib_h = gnulib_golden,
+                    golden_subst_h = gnulib_golden,
                     size = size,
                     tags = tags,
                     target_compatible_with = _PLATFORM_CONSTRAINTS.get(platform),
@@ -304,8 +301,8 @@ def gnu_gnulib_diff_test_suite(
     )
 
     autoconf_hdr(
-        name = name + "_bazel_gnulib_h",
-        template = gnulib_h_in,
+        name = name + "_bazel_subst_h",
+        template = subst_h_in,
         out = "subst.h",
         deps = [bazel_autoconf_target],
         defaults = False,
@@ -336,7 +333,7 @@ def gnu_gnulib_diff_test_suite(
 
         diff_kwargs = {
             "file1": golden_label,
-            "file2": ":{}_bazel_gnulib_h".format(name),
+            "file2": ":{}_bazel_subst_h".format(name),
             "name": test_name,
             "size": "small",
             "tags": tags,
@@ -358,7 +355,7 @@ def gnu_gnulib_diff_test_suite(
         srcs = [
             test_c,
             ":{}_bazel_config_h".format(name),
-            ":{}_bazel_gnulib_h".format(name),
+            ":{}_bazel_subst_h".format(name),
         ],
         target_compatible_with = unix_compatible,
         tags = tags,

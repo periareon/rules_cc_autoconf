@@ -64,7 +64,7 @@ int main(void) { return 0; }
             define = "_gl_cv_func_strerror_0_works",
             language = "c",
         ),
-        macros.AC_SUBST(
+        macros.AC_DEFINE(
             "REPLACE_STRERROR_0",
             condition = "_gl_cv_func_strerror_0_works",
             if_false = "1",

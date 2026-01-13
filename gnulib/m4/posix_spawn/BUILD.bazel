@@ -97,7 +97,7 @@ int main(void) { return 0; }
             define = "_gl_posix_spawn_works",
             language = "c",
         ),
-        macros.AC_SUBST(
+        macros.AC_DEFINE(
             "REPLACE_POSIX_SPAWN",
             condition = "_gl_posix_spawn_works",
             if_false = "1",  # posix_spawn has bugs, need replacement

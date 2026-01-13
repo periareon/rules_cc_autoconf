@@ -48,16 +48,11 @@ int main(void) {
             if_false = "1",
             if_true = "0",
         ),
-    ] + select({
-        "@platforms//os:macos": [
-            # On macOS (ARM64), long double == double
-            macros.AC_DEFINE("HAVE_SAME_LONG_DOUBLE_AS_DOUBLE", "1"),
-        ],
-        "//conditions:default": [],
-    }),
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/include_next",
+        "//gnulib/m4/long-double-vs-double",
     ],
 )
 

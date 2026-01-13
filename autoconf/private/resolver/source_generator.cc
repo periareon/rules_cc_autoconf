@@ -123,29 +123,43 @@ std::string SourceGenerator::process_template(
 
     // Step 1: Iterate over check results and update defines, draining builtins
     for (const CheckResult& result : results_) {
-        builtin_values[result.define] = result.value;
+        // Handle :subst suffix for combined AC_DEFINE + AC_SUBST cases
+        std::string define_name = result.define;
+        bool is_suffixed_subst = false;
+        if (define_name.size() > 6 &&
+            define_name.substr(define_name.size() - 6) == ":subst") {
+            define_name = define_name.substr(0, define_name.size() - 6);
+            is_suffixed_subst = true;
+        }
 
-        // Replace @DEFINE@ patterns (for all types including subst)
-        std::regex definePattern("@" + result.define + "@");
-        content = std::regex_replace(content, definePattern, result.value);
+        builtin_values[define_name] = result.value;
 
-        // Replace #undef DEFINE patterns ONLY for non-subst types
-        // AC_SUBST only does @VAR@ substitution, not #undef replacement
-        if (result.type != "subst") {
+        // Only subst type checks do @VAR@ substitution
+        // This separates AC_DEFINE (#undef replacement) from AC_SUBST (@VAR@)
+        // Use both macros together when you need both behaviors
+        if ((result.type == "subst" || is_suffixed_subst) && result.success &&
+            !result.value.empty()) {
+            std::regex definePattern("@" + define_name + "@");
+            content = std::regex_replace(content, definePattern, result.value);
+        }
+
+        // Non-subst types (AC_DEFINE, AC_CHECK_*, etc.): Replace #undef
+        // AC_SUBST should NOT replace #undef statements in config.h
+        if (result.type != "subst" && !is_suffixed_subst) {
             if (result.success) {
-                std::string replacement_text = "#define " + result.define;
+                std::string replacement_text = "#define " + define_name;
                 if (!result.value.empty()) {
                     replacement_text += " " + result.value;
                 }
-                content = replace_undef(content, result.define, replacement_text,
+                content = replace_undef(content, define_name, replacement_text,
                                         false);
             } else {
-                content = replace_undef(content, result.define, "", true);
+                content = replace_undef(content, define_name, "", true);
             }
         }
 
         // Drain this builtin from the set if it's a builtin
-        builtins.erase(result.define);
+        builtins.erase(define_name);
     }
 
     // Step 2: For any remaining builtins, do the substitution explicitly

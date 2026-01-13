@@ -45,51 +45,52 @@ autoconf(
     name = "autoconf",
     checks = [
         # =================================================================
-        # AC_SUBST with condition tests
+        # AC_DEFINE with condition tests (for config.h #define values)
+        # These use AC_DEFINE which replaces #undef in config.h
         # =================================================================
 
-        # Test 1: AC_SUBST where condition SUCCEEDS -> use if_true value
-        macros.AC_SUBST(
+        # Test 1: AC_DEFINE where condition SUCCEEDS -> use if_true value
+        macros.AC_DEFINE(
             "SUBST_COND_SUCCESS",
             condition = "CONDITION_SUCCEEDS",
             if_false = "no_it_failed",
             if_true = "yes_it_worked",
         ),
 
-        # Test 2: AC_SUBST where condition FAILS -> use if_false value
-        macros.AC_SUBST(
+        # Test 2: AC_DEFINE where condition FAILS -> use if_false value
+        macros.AC_DEFINE(
             "SUBST_COND_FAILURE",
             condition = "CONDITION_FAILS",
             if_false = "no_it_failed",
             if_true = "yes_it_worked",
         ),
 
-        # Test 3: AC_SUBST with numeric values (common pattern for REPLACE_*)
-        macros.AC_SUBST(
+        # Test 3: AC_DEFINE with numeric values (common pattern for REPLACE_*)
+        macros.AC_DEFINE(
             "REPLACE_WHEN_SUCCESS",
             condition = "CONDITION_SUCCEEDS",
             if_false = "1",  # Replacement needed
             if_true = "0",  # No replacement needed
         ),
 
-        # Test 4: AC_SUBST with numeric values when condition fails
-        macros.AC_SUBST(
+        # Test 4: AC_DEFINE with numeric values when condition fails
+        macros.AC_DEFINE(
             "REPLACE_WHEN_FAILURE",
             condition = "CONDITION_FAILS",
             if_false = "1",  # Replacement needed
             if_true = "0",  # No replacement needed
         ),
 
-        # Test 5: AC_SUBST using header check as condition
-        macros.AC_SUBST(
+        # Test 5: AC_DEFINE using header check as condition
+        macros.AC_DEFINE(
             "SUBST_HEADER_EXISTS",
             condition = "HAVE_STDIO_H",
             if_false = "missing",
             if_true = "found",
         ),
 
-        # Test 6: AC_SUBST using missing header check as condition
-        macros.AC_SUBST(
+        # Test 6: AC_DEFINE using missing header check as condition
+        macros.AC_DEFINE(
             "SUBST_HEADER_MISSING",
             condition = "HAVE_NONEXISTENT_CONDITION_TEST_H",
             if_false = "missing",

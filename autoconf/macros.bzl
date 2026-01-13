@@ -1535,7 +1535,7 @@ def _m4_define(
         "define": define,
         "language": "c",
         "name": define,
-        "type": "subst",  # Mark as substitution type
+        "type": "subst",  # Substitution type - only replaces @VAR@ patterns
     }
 
     if condition:

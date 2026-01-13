@@ -53,7 +53,7 @@ int main(void) { return 0; }
             define = "_gl_cv_func_stat_file_slash",
             language = "c",
         ),
-        macros.AC_SUBST(
+        macros.AC_DEFINE(
             "REPLACE_FUNC_STAT_FILE",
             condition = "_gl_cv_func_stat_file_slash",
             if_false = "1",
