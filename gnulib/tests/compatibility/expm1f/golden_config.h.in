@@ -1,4 +1,5 @@
 /* config.h.in */
+/* #undef EXPM1F_LIBM */
 /* #undef EXPM1_LIBM */
 /* #undef EXP_LIBM */
 /* #undef HAVE_ACOSF */
@@ -234,10 +235,3 @@
 #define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
 #define __STDC_WANT_LIB_EXT2__ 1
 #define __STDC_WANT_MATH_SPEC_FUNCS__ 1
-/* #undef NEXT_AS_FIRST_DIRECTIVE_ENDIAN_H */
-/* #undef NEXT_ENDIAN_H */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_CTYPE_H */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_ERROR_H */
-/* #undef NEXT_CTYPE_H */
-/* #undef NEXT_ERROR_H */
-/* #undef EXPM1F_LIBM */

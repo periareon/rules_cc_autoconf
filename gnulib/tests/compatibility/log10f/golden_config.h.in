@@ -120,6 +120,7 @@
 /* #undef HAVE_TOTALORDERMAGL */
 #define HAVE_UNISTD_H 1
 #define HAVE_WCHAR_H 1
+/* #undef LOG10F_LIBM */
 /* #undef LOG10_LIBM */
 /* #undef POW_LIBM */
 /* #undef REPLACE_ACOSF */
@@ -230,9 +231,3 @@
 #define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
 #define __STDC_WANT_LIB_EXT2__ 1
 #define __STDC_WANT_MATH_SPEC_FUNCS__ 1
-/* #undef NEXT_AS_FIRST_DIRECTIVE_NET_IF_H */
-/* #undef NEXT_NET_IF_H */
-/* #undef GNULIB_TEST_ */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_SPAWN_H */
-/* #undef NEXT_SPAWN_H */
-/* #undef LOG10F_LIBM */

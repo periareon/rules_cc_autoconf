@@ -78,15 +78,3 @@
 #define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
 #define __STDC_WANT_LIB_EXT2__ 1
 #define __STDC_WANT_MATH_SPEC_FUNCS__ 1
-/* #undef GNULIB_TEST_ */
-/* #undef HAVE_SYS_TIME_H */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_TIME_H */
-/* #undef NEXT_TIME_H */
-/* #undef HAVE_SYS_CDEFS_H */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_SCHED_H */
-/* #undef NEXT_SCHED_H */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_SYS_UTSNAME_H */
-/* #undef NEXT_SYS_UTSNAME_H */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_NET_IF_H */
-/* #undef NEXT_NET_IF_H */
-/* #undef HAVE_SIG_ATOMIC_T */

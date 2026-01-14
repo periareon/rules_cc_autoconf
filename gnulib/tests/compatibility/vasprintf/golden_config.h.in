@@ -79,22 +79,3 @@
 #define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
 #define __STDC_WANT_LIB_EXT2__ 1
 #define __STDC_WANT_MATH_SPEC_FUNCS__ 1
-/* #undef GNULIB_TEST_ */
-/* #undef WINDOWS_64_BIT_OFF_T */
-/* #undef AMDEPBACKSLASH */
-/* #undef AMDEP_FALSE */
-/* #undef AMDEP_TRUE */
-/* #undef ANSICXX_FALSE */
-/* #undef ANSICXX_TRUE */
-/* #undef CXXDEPMODE */
-/* #undef CXX_CHOICE */
-/* #undef DEPDIR */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_FNMATCH_H */
-/* #undef NEXT_FNMATCH_H */
-/* #undef am__fastdepCXX_FALSE */
-/* #undef am__fastdepCXX_TRUE */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_GLOB_H */
-/* #undef NEXT_GLOB_H */
-/* #undef HAVE_SYS_TIME_H */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_TIME_H */
-/* #undef NEXT_TIME_H */

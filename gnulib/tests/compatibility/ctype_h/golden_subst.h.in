@@ -1,4 +1,4 @@
-/* gnulib_ctype_h.h.in - AC_SUBST placeholders */
+/* subst.h.in */
 #define SUBST_HAVE_ISALNUM_L "1"
 #define SUBST_HAVE_ISALPHA_L "1"
 #define SUBST_HAVE_ISBLANK "1"
@@ -14,3 +14,5 @@
 #define SUBST_HAVE_ISXDIGIT_L "1"
 #define SUBST_HAVE_TOLOWER_L "1"
 #define SUBST_HAVE_TOUPPER_L "1"
+#define SUBST_NEXT_AS_FIRST_DIRECTIVE_CTYPE_H "<ctype.h>"
+#define SUBST_NEXT_CTYPE_H "<ctype.h>"

@@ -131,28 +131,3 @@
 #define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
 #define __STDC_WANT_LIB_EXT2__ 1
 #define __STDC_WANT_MATH_SPEC_FUNCS__ 1
-/* #undef GNULIB_TEST_ */
-/* #undef HAVE_C_UNREACHABLE */
-/* #undef HAVE_MAX_ALIGN_T */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_LOCALE_H */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_STDDEF_H */
-/* #undef NEXT_LOCALE_H */
-/* #undef NEXT_STDDEF_H */
-/* #undef NULLPTR_T_NEEDS_STDDEF */
-/* #undef REPLACE_NULL */
-/* #undef STDDEF_NOT_IDEMPOTENT */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_SIGNAL_H */
-/* #undef NEXT_SIGNAL_H */
-/* #undef AMDEPBACKSLASH */
-/* #undef AMDEP_FALSE */
-/* #undef AMDEP_TRUE */
-/* #undef ANSICXX_FALSE */
-/* #undef ANSICXX_TRUE */
-/* #undef BITSIZEOF_WCHAR_T */
-/* #undef CXXDEPMODE */
-/* #undef CXX_CHOICE */
-/* #undef DEPDIR */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_UCHAR_H */
-/* #undef NEXT_UCHAR_H */
-/* #undef am__fastdepCXX_FALSE */
-/* #undef am__fastdepCXX_TRUE */

@@ -1,17 +1,4 @@
 /* config.h.in */
-#define HAVE_MALLOC_0_NONNULL 1
-#define HAVE_MALLOC_POSIX 1
-#define HAVE_MALLOC_PTRDIFF 1
-/* #undef HAVE_INTTYPES_H */
-/* #undef HAVE_STDINT_H */
-/* #undef HAVE_STDIO_H */
-/* #undef HAVE_STDLIB_H */
-/* #undef HAVE_STRINGS_H */
-/* #undef HAVE_STRING_H */
-/* #undef HAVE_SYS_STAT_H */
-/* #undef HAVE_SYS_TYPES_H */
-/* #undef HAVE_UNISTD_H */
-/* #undef STDC_HEADERS */
 /* #undef CAN_PRINT_STACK_TRACE */
 /* #undef HAVE_ALIGNED_ALLOC */
 /* #undef HAVE_ATOLL */
@@ -29,6 +16,9 @@
 /* #undef HAVE_GETSUBOPT */
 /* #undef HAVE_GRANTPT */
 /* #undef HAVE_INITSTATE */
+#define HAVE_MALLOC_0_NONNULL 1
+#define HAVE_MALLOC_POSIX 1
+#define HAVE_MALLOC_PTRDIFF 1
 /* #undef HAVE_MBTOWC */
 /* #undef HAVE_MKDTEMP */
 /* #undef HAVE_MKOSTEMP */
@@ -101,11 +91,3 @@
 /* #undef REPLACE_UNSETENV */
 /* #undef REPLACE_WCTOMB */
 /* #undef REPLACE__EXIT */
-/* #undef GNULIB_TEST_ */
-/* #undef HAVE_SYS_CDEFS_H */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_SCHED_H */
-/* #undef NEXT_SCHED_H */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_SYS_UTSNAME_H */
-/* #undef NEXT_SYS_UTSNAME_H */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_NETINET_IN_H */
-/* #undef NEXT_NETINET_IN_H */

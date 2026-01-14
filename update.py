@@ -46,7 +46,9 @@ for entry in sorted(glob.glob("bazel-testlogs/gnulib/tests/compatibility/*")):
     config_in = outputs_dir / "expected_config.h.in"
     if subst_in.exists():
         shutil.copy(subst_in, dest_dir / "subst.h.in")
+        (dest_dir / "subst.h.in").chmod(MODE)
     if config_in.exists():
         shutil.copy(config_in, dest_dir / "config.h.in")
+        (dest_dir / "config.h.in").chmod(MODE)
 
     print(name)

@@ -1,4 +1,4 @@
-/* gnulib_pid_t.h.in - AC_SUBST placeholders */
+/* subst.h.in */
 #define SUBST_HAVE_INTTYPES_H "@HAVE_INTTYPES_H@"
 #define SUBST_HAVE_STDINT_H "@HAVE_STDINT_H@"
 #define SUBST_HAVE_STDIO_H "@HAVE_STDIO_H@"

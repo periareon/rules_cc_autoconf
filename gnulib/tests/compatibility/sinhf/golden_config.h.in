@@ -211,6 +211,7 @@
 /* #undef REPLACE_TRUNC */
 /* #undef REPLACE_TRUNCF */
 /* #undef REPLACE_TRUNCL */
+/* #undef SINHF_LIBM */
 /* #undef SINH_LIBM */
 #define STDC_HEADERS 1
 #define _ALL_SOURCE 1
@@ -230,41 +231,3 @@
 #define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
 #define __STDC_WANT_LIB_EXT2__ 1
 #define __STDC_WANT_MATH_SPEC_FUNCS__ 1
-/* #undef GNULIB_TEST_ */
-/* #undef HAVE_SYS_CDEFS_H */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_NETINET_IN_H */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_SCHED_H */
-/* #undef NEXT_NETINET_IN_H */
-/* #undef NEXT_SCHED_H */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_STDDEF_H */
-/* #undef NEXT_STDDEF_H */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_SIGNAL_H */
-/* #undef NEXT_SIGNAL_H */
-/* #undef CFLAG_VISIBILITY */
-/* #undef HAVE_LANGINFO_ABALTMON */
-/* #undef HAVE_LANGINFO_ALTMON */
-/* #undef HAVE_LANGINFO_CODESET */
-/* #undef HAVE_LANGINFO_ERA */
-/* #undef HAVE_LANGINFO_H */
-/* #undef HAVE_NL_LANGINFO */
-/* #undef HAVE_PTHREAD_API */
-/* #undef HAVE_SYS_SHM_H */
-/* #undef HAVE_VISIBILITY */
-/* #undef LIBPMULTITHREAD */
-/* #undef LIBPTHREAD */
-/* #undef LIB_SCHED_YIELD */
-/* #undef LIB_SETLOCALE_NULL */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_LANGINFO_H */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_SYS_SHM_H */
-/* #undef NEXT_LANGINFO_H */
-/* #undef NEXT_SYS_SHM_H */
-/* #undef NL_LANGINFO_MTSAFE */
-/* #undef REPLACE_NL_LANGINFO */
-/* #undef SCHED_YIELD_LIB */
-/* #undef SETLOCALE_NULL_ALL_MTSAFE */
-/* #undef SETLOCALE_NULL_LIB */
-/* #undef SETLOCALE_NULL_ONE_MTSAFE */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_STDIO_H */
-/* #undef NEXT_STDIO_H */
-/* #undef __USE_MINGW_ANSI_STDIO */
-/* #undef SINHF_LIBM */

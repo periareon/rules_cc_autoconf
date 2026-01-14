@@ -1,24 +1,6 @@
 /* config.h.in */
-#define __EXTENSIONS__ 1
-#define __STDC_WANT_IEC_60559_ATTRIBS_EXT__ 1
-#define __STDC_WANT_IEC_60559_BFP_EXT__ 1
-#define __STDC_WANT_IEC_60559_DFP_EXT__ 1
-#define __STDC_WANT_IEC_60559_EXT__ 1
-#define __STDC_WANT_IEC_60559_FUNCS_EXT__ 1
-#define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
-#define __STDC_WANT_LIB_EXT2__ 1
-#define __STDC_WANT_MATH_SPEC_FUNCS__ 1
-#define _ALL_SOURCE 1
-#define _DARWIN_C_SOURCE 1
-#define _GNU_SOURCE 1
-#define _HPUX_ALT_XOPEN_SOCKET_API 1
-#define _NETBSD_SOURCE 1
-#define _OPENBSD_SOURCE 1
-#define _POSIX_PTHREAD_SEMANTICS 1
-#define _TANDEM_SOURCE 1
-/* #undef COPYSIGN_LIBM */
 /* #undef COPYSIGNL_LIBM */
-/* #undef GNULIB_TEST_ */
+/* #undef COPYSIGN_LIBM */
 /* #undef HAVE_ACOSF */
 /* #undef HAVE_ACOSL */
 /* #undef HAVE_ASINF */
@@ -26,7 +8,6 @@
 /* #undef HAVE_ATAN2F */
 /* #undef HAVE_ATANF */
 /* #undef HAVE_ATANL */
-/* #undef HAVE_C_UNREACHABLE */
 /* #undef HAVE_CBRT */
 /* #undef HAVE_CBRTF */
 /* #undef HAVE_CBRTL */
@@ -47,7 +28,6 @@
 /* #undef HAVE_DECL_FLOORL */
 /* #undef HAVE_DECL_FREXPL */
 /* #undef HAVE_DECL_LDEXPL */
-/* #undef HAVE_DECL_LOCALTIME_R */
 /* #undef HAVE_DECL_LOG10L */
 /* #undef HAVE_DECL_LOGB */
 /* #undef HAVE_DECL_LOGL */
@@ -101,10 +81,8 @@
 /* #undef HAVE_LOGP1 */
 /* #undef HAVE_LOGP1F */
 /* #undef HAVE_LOGP1L */
-/* #undef HAVE_MAX_ALIGN_T */
 /* #undef HAVE_MODFF */
 /* #undef HAVE_MODFL */
-/* #undef HAVE_NANOSLEEP */
 /* #undef HAVE_POWF */
 /* #undef HAVE_REMAINDER */
 /* #undef HAVE_REMAINDERF */
@@ -130,32 +108,21 @@
 #define HAVE_STDINT_H 1
 #define HAVE_STDIO_H 1
 #define HAVE_STDLIB_H 1
-#define HAVE_STRING_H 1
 #define HAVE_STRINGS_H 1
-/* #undef HAVE_STRPTIME */
+#define HAVE_STRING_H 1
 #define HAVE_SYS_STAT_H 1
 #define HAVE_SYS_TYPES_H 1
 /* #undef HAVE_TANF */
 /* #undef HAVE_TANHF */
 /* #undef HAVE_TANL */
-/* #undef HAVE_TIMEGM */
-/* #undef HAVE_TIMESPEC_GET */
-/* #undef HAVE_TIMESPEC_GETRES */
-/* #undef HAVE_TIMEZONE_T */
 /* #undef HAVE_TOTALORDER */
 /* #undef HAVE_TOTALORDERF */
 /* #undef HAVE_TOTALORDERL */
 /* #undef HAVE_TOTALORDERMAG */
 /* #undef HAVE_TOTALORDERMAGF */
 /* #undef HAVE_TOTALORDERMAGL */
-/* #undef HAVE_TZALLOC */
 #define HAVE_UNISTD_H 1
 #define HAVE_WCHAR_H 1
-/* #undef NEXT_AS_FIRST_DIRECTIVE_LOCALE_H */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_STDDEF_H */
-/* #undef NEXT_LOCALE_H */
-/* #undef NEXT_STDDEF_H */
-/* #undef NULLPTR_T_NEEDS_STDDEF */
 /* #undef REPLACE_ACOSF */
 /* #undef REPLACE_ASINF */
 /* #undef REPLACE_ATAN2F */
@@ -167,7 +134,6 @@
 /* #undef REPLACE_CEILL */
 /* #undef REPLACE_COSF */
 /* #undef REPLACE_COSHF */
-/* #undef REPLACE_CTIME */
 /* #undef REPLACE_EXP2 */
 /* #undef REPLACE_EXP2L */
 /* #undef REPLACE_EXPF */
@@ -191,7 +157,6 @@
 /* #undef REPLACE_GETPAYLOAD */
 /* #undef REPLACE_GETPAYLOADF */
 /* #undef REPLACE_GETPAYLOADL */
-/* #undef REPLACE_GMTIME */
 /* #undef REPLACE_HUGE_VAL */
 /* #undef REPLACE_HYPOT */
 /* #undef REPLACE_HYPOTF */
@@ -204,9 +169,6 @@
 /* #undef REPLACE_ISNAN */
 /* #undef REPLACE_LDEXP */
 /* #undef REPLACE_LDEXPL */
-/* #undef REPLACE_LOCALTIME */
-/* #undef REPLACE_LOCALTIME_R */
-/* #undef REPLACE_LOCALTIME_RZ */
 /* #undef REPLACE_LOG */
 /* #undef REPLACE_LOG10 */
 /* #undef REPLACE_LOG10F */
@@ -222,14 +184,10 @@
 /* #undef REPLACE_LOGBL */
 /* #undef REPLACE_LOGF */
 /* #undef REPLACE_LOGL */
-/* #undef REPLACE_MKTIME */
-/* #undef REPLACE_MKTIME_Z */
 /* #undef REPLACE_MODF */
 /* #undef REPLACE_MODFF */
 /* #undef REPLACE_MODFL */
 /* #undef REPLACE_NAN */
-/* #undef REPLACE_NANOSLEEP */
-/* #undef REPLACE_NULL */
 /* #undef REPLACE_REMAINDER */
 /* #undef REPLACE_REMAINDERF */
 /* #undef REPLACE_REMAINDERL */
@@ -244,13 +202,8 @@
 /* #undef REPLACE_SINL */
 /* #undef REPLACE_SQRTF */
 /* #undef REPLACE_SQRTL */
-/* #undef REPLACE_STRFTIME */
 /* #undef REPLACE_TANF */
 /* #undef REPLACE_TANHF */
-/* #undef REPLACE_TIME */
-/* #undef REPLACE_TIMEGM */
-/* #undef REPLACE_TIMESPEC_GET */
-/* #undef REPLACE_TIMESPEC_GETRES */
 /* #undef REPLACE_TOTALORDER */
 /* #undef REPLACE_TOTALORDERF */
 /* #undef REPLACE_TOTALORDERL */
@@ -260,6 +213,21 @@
 /* #undef REPLACE_TRUNC */
 /* #undef REPLACE_TRUNCF */
 /* #undef REPLACE_TRUNCL */
-/* #undef REPLACE_TZSET */
 #define STDC_HEADERS 1
-/* #undef STDDEF_NOT_IDEMPOTENT */
+#define _ALL_SOURCE 1
+#define _DARWIN_C_SOURCE 1
+#define _GNU_SOURCE 1
+#define _HPUX_ALT_XOPEN_SOCKET_API 1
+#define _NETBSD_SOURCE 1
+#define _OPENBSD_SOURCE 1
+#define _POSIX_PTHREAD_SEMANTICS 1
+#define _TANDEM_SOURCE 1
+#define __EXTENSIONS__ 1
+#define __STDC_WANT_IEC_60559_ATTRIBS_EXT__ 1
+#define __STDC_WANT_IEC_60559_BFP_EXT__ 1
+#define __STDC_WANT_IEC_60559_DFP_EXT__ 1
+#define __STDC_WANT_IEC_60559_EXT__ 1
+#define __STDC_WANT_IEC_60559_FUNCS_EXT__ 1
+#define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
+#define __STDC_WANT_LIB_EXT2__ 1
+#define __STDC_WANT_MATH_SPEC_FUNCS__ 1

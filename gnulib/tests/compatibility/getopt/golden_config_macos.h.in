@@ -1,5 +1,4 @@
 /* config.h.in */
-#define __GETOPT_PREFIX rpl_
 /* #undef AWK */
 /* #undef HAVE_CHOWN */
 /* #undef HAVE_COPY_FILE_RANGE */
@@ -29,6 +28,7 @@
 /* #undef HAVE_GETGROUPS */
 /* #undef HAVE_GETHOSTNAME */
 /* #undef HAVE_GETLOGIN */
+#define HAVE_GETOPT_H 1
 #define HAVE_GETOPT_LONG_ONLY 1
 /* #undef HAVE_GETPAGESIZE */
 /* #undef HAVE_GETPASS */
@@ -128,6 +128,7 @@
 #define _POSIX_PTHREAD_SEMANTICS 1
 #define _TANDEM_SOURCE 1
 #define __EXTENSIONS__ 1
+#define __GETOPT_PREFIX rpl_
 #define __STDC_WANT_IEC_60559_ATTRIBS_EXT__ 1
 #define __STDC_WANT_IEC_60559_BFP_EXT__ 1
 #define __STDC_WANT_IEC_60559_DFP_EXT__ 1
@@ -136,113 +137,3 @@
 #define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
 #define __STDC_WANT_LIB_EXT2__ 1
 #define __STDC_WANT_MATH_SPEC_FUNCS__ 1
-/* #undef CFLAG_VISIBILITY */
-/* #undef HAVE_LANGINFO_ABALTMON */
-/* #undef HAVE_LANGINFO_ALTMON */
-/* #undef HAVE_LANGINFO_CODESET */
-/* #undef HAVE_LANGINFO_ERA */
-/* #undef HAVE_LANGINFO_H */
-/* #undef HAVE_NL_LANGINFO */
-/* #undef HAVE_PTHREAD_API */
-/* #undef HAVE_VISIBILITY */
-/* #undef LIBPMULTITHREAD */
-/* #undef LIBPTHREAD */
-/* #undef LIB_SCHED_YIELD */
-/* #undef LIB_SETLOCALE_NULL */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_LANGINFO_H */
-/* #undef NEXT_LANGINFO_H */
-/* #undef NL_LANGINFO_MTSAFE */
-/* #undef REPLACE_NL_LANGINFO */
-/* #undef SCHED_YIELD_LIB */
-/* #undef SETLOCALE_NULL_ALL_MTSAFE */
-/* #undef SETLOCALE_NULL_LIB */
-/* #undef SETLOCALE_NULL_ONE_MTSAFE */
-/* #undef HAVE_SCHED_YIELD */
-/* #undef REPLACE_SCHED_YIELD */
-/* #undef HAVE_DECL_LOCALTIME_R */
-/* #undef HAVE_LOCALTIME_R */
-/* #undef HAVE_NANOSLEEP */
-/* #undef HAVE_STRPTIME */
-/* #undef HAVE_TIMEGM */
-/* #undef HAVE_TIMESPEC_GET */
-/* #undef HAVE_TIMESPEC_GETRES */
-/* #undef HAVE_TIMEZONE_T */
-/* #undef HAVE_TZALLOC */
-/* #undef REPLACE_CTIME */
-/* #undef REPLACE_GMTIME */
-/* #undef REPLACE_LOCALTIME */
-/* #undef REPLACE_LOCALTIME_R */
-/* #undef REPLACE_LOCALTIME_RZ */
-/* #undef REPLACE_MKTIME */
-/* #undef REPLACE_MKTIME_Z */
-/* #undef REPLACE_NANOSLEEP */
-/* #undef REPLACE_STRFTIME */
-/* #undef REPLACE_TIME */
-/* #undef REPLACE_TIMEGM */
-/* #undef REPLACE_TIMESPEC_GET */
-/* #undef REPLACE_TIMESPEC_GETRES */
-/* #undef REPLACE_TZSET */
-/* #undef HAVE_OFF64_T */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_SYS_TYPES_H */
-/* #undef NEXT_SYS_TYPES_H */
-/* #undef WINDOWS_64_BIT_OFF_T */
-/* #undef _USE_STD_STAT */
-/* #undef HAVE_DECL_MEMEQ */
-/* #undef HAVE_DECL_MEMMEM */
-/* #undef HAVE_DECL_MEMRCHR */
-/* #undef HAVE_DECL_STRDUP */
-/* #undef HAVE_DECL_STREQ */
-/* #undef HAVE_DECL_STRERROR_R */
-/* #undef HAVE_DECL_STRNDUP */
-/* #undef HAVE_DECL_STRNLEN */
-/* #undef HAVE_DECL_STRSIGNAL */
-/* #undef HAVE_DECL_STRTOK_R */
-/* #undef HAVE_EXPLICIT_BZERO */
-/* #undef HAVE_FFSL */
-/* #undef HAVE_FFSLL */
-/* #undef HAVE_MBSLEN */
-/* #undef HAVE_MEMPCPY */
-/* #undef HAVE_MEMSET_EXPLICIT */
-/* #undef HAVE_RAWMEMCHR */
-/* #undef HAVE_SIGABBREV_NP */
-/* #undef HAVE_SIGDESCR_NP */
-/* #undef HAVE_STPCPY */
-/* #undef HAVE_STPNCPY */
-/* #undef HAVE_STRCASESTR */
-/* #undef HAVE_STRCHRNUL */
-/* #undef HAVE_STRERRORNAME_NP */
-/* #undef HAVE_STRERROR_L */
-/* #undef HAVE_STRPBRK */
-/* #undef HAVE_STRSEP */
-/* #undef HAVE_STRVERSCMP */
-/* #undef REPLACE_FFSLL */
-/* #undef REPLACE_MEMCHR */
-/* #undef REPLACE_MEMMEM */
-/* #undef REPLACE_MEMPCPY */
-/* #undef REPLACE_MEMSET_EXPLICIT */
-/* #undef REPLACE_STPCPY */
-/* #undef REPLACE_STPNCPY */
-/* #undef REPLACE_STRCASESTR */
-/* #undef REPLACE_STRCHRNUL */
-/* #undef REPLACE_STRDUP */
-/* #undef REPLACE_STRERROR */
-/* #undef REPLACE_STRERRORNAME_NP */
-/* #undef REPLACE_STRERROR_L */
-/* #undef REPLACE_STRERROR_R */
-/* #undef REPLACE_STRNCAT */
-/* #undef REPLACE_STRNCPY */
-/* #undef REPLACE_STRNDUP */
-/* #undef REPLACE_STRNLEN */
-/* #undef REPLACE_STRSIGNAL */
-/* #undef REPLACE_STRSTR */
-/* #undef REPLACE_STRTOK_R */
-/* #undef REPLACE_STRVERSCMP */
-/* #undef UNDEFINE_STRTOK_R */
-/* #undef GNULIB_TEST_ */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_SYS_IOCTL_H */
-/* #undef NEXT_SYS_IOCTL_H */
-#define HAVE_GETOPT_H 1
-/* #undef HAVE_SYS_IOCTL_H */
-/* #undef REPLACE_IOCTL */
-/* #undef SYS_IOCTL_H_HAVE_WINSOCK2_H */
-/* #undef SYS_IOCTL_H_HAVE_WINSOCK2_H_AND_USE_SOCKETS */

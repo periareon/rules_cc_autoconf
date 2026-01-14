@@ -1,8 +1,5 @@
 /* config.h.in */
-/* #undef GNULIBHEADERS_OVERRIDE_WINT_T */
-/* #undef GNULIB_TEST_ */
 /* #undef HAVE_BTOWC */
-/* #undef HAVE_CRTDEFS_H */
 /* #undef HAVE_DECL_WCSDUP */
 /* #undef HAVE_DECL_WCWIDTH */
 #define HAVE_INTTYPES_H 1
@@ -18,7 +15,6 @@
 #define HAVE_STRING_H 1
 #define HAVE_SYS_STAT_H 1
 #define HAVE_SYS_TYPES_H 1
-/* #undef HAVE_TOWLOWER */
 #define HAVE_UNISTD_H 1
 #define HAVE_WCHAR_H 1
 /* #undef HAVE_WCPCPY */
@@ -55,8 +51,6 @@
 /* #undef HAVE_WMEMMOVE */
 /* #undef HAVE_WMEMPCPY */
 /* #undef HAVE_WMEMSET */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_WCTYPE_H */
-/* #undef NEXT_WCTYPE_H */
 /* #undef REPLACE_BTOWC */
 /* #undef REPLACE_MBRLEN */
 /* #undef REPLACE_MBRTOWC */
@@ -96,21 +90,3 @@
 #define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
 #define __STDC_WANT_LIB_EXT2__ 1
 #define __STDC_WANT_MATH_SPEC_FUNCS__ 1
-/* #undef HAVE_SYS_TIME_H */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_TIME_H */
-/* #undef NEXT_TIME_H */
-/* #undef AMDEPBACKSLASH */
-/* #undef AMDEP_FALSE */
-/* #undef AMDEP_TRUE */
-/* #undef ANSICXX_FALSE */
-/* #undef ANSICXX_TRUE */
-/* #undef BITSIZEOF_WCHAR_T */
-/* #undef CXXDEPMODE */
-/* #undef CXX_CHOICE */
-/* #undef DEPDIR */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_UCHAR_H */
-/* #undef NEXT_UCHAR_H */
-/* #undef am__fastdepCXX_FALSE */
-/* #undef am__fastdepCXX_TRUE */
-/* #undef NEXT_ASSERT_H */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_ASSERT_H */

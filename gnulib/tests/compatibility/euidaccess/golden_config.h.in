@@ -1,5 +1,5 @@
 /* config.h.in */
-#define PREFER_NONREENTRANT_EUIDACCESS 1
+/* #undef EUIDACCESS_LIBGEN */
 #define GETGROUPS_T gid_t
 /* #undef HAVE_CHOWN */
 /* #undef HAVE_COPY_FILE_RANGE */
@@ -61,6 +61,8 @@
 /* #undef HAVE_UNLINKAT */
 /* #undef HAVE_USLEEP */
 #define HAVE_WCHAR_H 1
+/* #undef LIB_EACCESS */
+#define PREFER_NONREENTRANT_EUIDACCESS 1
 /* #undef REPLACE_ACCESS */
 /* #undef REPLACE_CHOWN */
 /* #undef REPLACE_CLOSE */
@@ -134,43 +136,3 @@
 #define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
 #define __STDC_WANT_LIB_EXT2__ 1
 #define __STDC_WANT_MATH_SPEC_FUNCS__ 1
-/* #undef NEXT_AS_FIRST_DIRECTIVE_ERROR_H */
-/* #undef NEXT_ERROR_H */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_STDDEF_H */
-/* #undef NEXT_STDDEF_H */
-/* #undef GNULIB_TEST_ */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_SPAWN_H */
-/* #undef NEXT_SPAWN_H */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_ERRNO_H */
-/* #undef NEXT_ERRNO_H */
-/* #undef AMDEPBACKSLASH */
-/* #undef AMDEP_FALSE */
-/* #undef AMDEP_TRUE */
-/* #undef ANSICXX_FALSE */
-/* #undef ANSICXX_TRUE */
-/* #undef CXXDEPMODE */
-/* #undef CXX_CHOICE */
-/* #undef DEPDIR */
-/* #undef HAVE_ICONV_H */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_ICONV_H */
-/* #undef NEXT_ICONV_H */
-/* #undef am__fastdepCXX_FALSE */
-/* #undef am__fastdepCXX_TRUE */
-/* #undef HAVE_PTHREAD_API */
-/* #undef HAVE_SYS_IOCTL_H */
-/* #undef LIBMULTITHREAD */
-/* #undef LIBPMULTITHREAD */
-/* #undef LIBPTHREAD */
-/* #undef LIBSTDTHREAD */
-/* #undef LIBTHREAD */
-/* #undef LIB_SCHED_YIELD */
-/* #undef LTLIBMULTITHREAD */
-/* #undef LTLIBTHREAD */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_PTHREAD_H */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_TERMIOS_H */
-/* #undef NEXT_PTHREAD_H */
-/* #undef NEXT_TERMIOS_H */
-/* #undef SCHED_YIELD_LIB */
-/* #undef USE_POSIX_THREADS */
-/* #undef EUIDACCESS_LIBGEN */
-/* #undef LIB_EACCESS */

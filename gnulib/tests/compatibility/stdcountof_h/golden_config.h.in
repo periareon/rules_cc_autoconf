@@ -1,1 +1,25 @@
 /* config.h.in */
+/* #undef AMDEPBACKSLASH */
+/* #undef AMDEP_FALSE */
+/* #undef AMDEP_TRUE */
+/* #undef ANSICXX_FALSE */
+/* #undef ANSICXX_TRUE */
+/* #undef CXXDEPMODE */
+/* #undef CXX_CHOICE */
+/* #undef CXX_HAVE_STDCOUNTOF_H */
+/* #undef DEPDIR */
+#define HAVE_INTTYPES_H 1
+/* #undef HAVE_STDCOUNTOF_H */
+#define HAVE_STDINT_H 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_STRING_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+/* #undef NEXT_AS_FIRST_DIRECTIVE_STDCOUNTOF_H */
+/* #undef NEXT_STDCOUNTOF_H */
+#define STDC_HEADERS 1
+/* #undef am__fastdepCXX_FALSE */
+/* #undef am__fastdepCXX_TRUE */

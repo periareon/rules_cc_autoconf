@@ -212,6 +212,7 @@
 /* #undef REPLACE_TRUNCF */
 /* #undef REPLACE_TRUNCL */
 #define STDC_HEADERS 1
+/* #undef TRUNCL_LIBM */
 /* #undef TRUNC_LIBM */
 #define _ALL_SOURCE 1
 #define _DARWIN_C_SOURCE 1
@@ -230,11 +231,3 @@
 #define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
 #define __STDC_WANT_LIB_EXT2__ 1
 #define __STDC_WANT_MATH_SPEC_FUNCS__ 1
-/* #undef GNULIB_TEST_ */
-/* #undef WINDOWS_64_BIT_OFF_T */
-/* #undef HAVE_SYS_WAIT_H */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_SYS_WAIT_H */
-/* #undef NEXT_SYS_WAIT_H */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_SYS_UIO_H */
-/* #undef NEXT_SYS_UIO_H */
-/* #undef TRUNCL_LIBM */

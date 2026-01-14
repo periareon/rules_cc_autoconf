@@ -1,4 +1,2 @@
 /* config.h.in */
 #define HAVE_MEMMOVE 1
-/* #undef NEXT_AS_FIRST_DIRECTIVE_NET_IF_H */
-/* #undef NEXT_NET_IF_H */

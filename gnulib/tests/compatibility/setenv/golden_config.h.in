@@ -1,5 +1,4 @@
 /* config.h.in */
-/* #undef VOID_UNSETENV */
 /* #undef CAN_PRINT_STACK_TRACE */
 /* #undef HAVE_ALIGNED_ALLOC */
 /* #undef HAVE_ATOLL */
@@ -108,7 +107,6 @@
 #define HAVE_UNSETENV 1
 /* #undef HAVE_USLEEP */
 #define HAVE_WCHAR_H 1
-/* #undef HAVE_WINT_T */
 /* #undef HAVE__EXIT */
 /* #undef REPLACE_ABORT */
 /* #undef REPLACE_ACCESS */
@@ -225,28 +223,3 @@
 #define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
 #define __STDC_WANT_LIB_EXT2__ 1
 #define __STDC_WANT_MATH_SPEC_FUNCS__ 1
-/* #undef GNULIB_TEST_ */
-/* #undef HAVE_SYS_SOCKET_H */
-/* #undef HAVE_WINSOCK2_H */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_SYS_TIME_H */
-/* #undef NEXT_SYS_TIME_H */
-/* #undef REPLACE_IOCTL */
-/* #undef SYS_IOCTL_H_HAVE_WINSOCK2_H */
-/* #undef SYS_IOCTL_H_HAVE_WINSOCK2_H_AND_USE_SOCKETS */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_MNTENT_H */
-/* #undef NEXT_MNTENT_H */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_STRINGS_H */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_STRING_H */
-/* #undef NEXT_STRINGS_H */
-/* #undef NEXT_STRING_H */
-/* #undef HAVE_SIG_ATOMIC_T */
-/* #undef HAVE_SYS_SEM_H */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_SYS_SEM_H */
-/* #undef NEXT_SYS_SEM_H */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_SPAWN_H */
-/* #undef NEXT_SPAWN_H */
-/* #undef NEXT_AS_FIRST_DIRECTIVE_SYS_SELECT_H */
-/* #undef NEXT_SYS_SELECT_H */
-/* #undef HAVE_POSIXDECL_TTYNAME_R */
-/* #undef HAVE_TTYNAME */
-/* #undef HAVE_TTYNAME_R */
