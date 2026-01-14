@@ -5,8 +5,14 @@ gnu_gnulib_diff_test_suite(
     bazel_autoconf_target = "//gnulib/m4/isnanl:isnanl",
     config_h_in = "config.h.in",
     configure_ac = "configure.ac",
-    golden_config_h = "golden_config.h.in",
-    golden_subst_h = "golden_subst.h.in",
+    golden_config_h = {
+        "linux": "golden_config_linux.h.in",
+        "macos": "golden_config_macos.h.in",
+    },
+    golden_subst_h = {
+        "linux": "golden_subst_linux.h.in",
+        "macos": "golden_subst_macos.h.in",
+    },
     m4_files = ["@gnulib//:all_m4"],
     subst_h_in = "subst.h.in",
     test_c = "test_isnanl.c",

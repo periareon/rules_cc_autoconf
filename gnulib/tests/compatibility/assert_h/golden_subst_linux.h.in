@@ -1,0 +1,3 @@
+/* subst.h.in */
+#define SUBST_NEXT_ASSERT_H ""
+#define SUBST_NEXT_AS_FIRST_DIRECTIVE_ASSERT_H ""

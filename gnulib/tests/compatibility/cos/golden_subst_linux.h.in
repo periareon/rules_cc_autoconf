@@ -1,0 +1,3 @@
+/* subst.h.in */
+#define SUBST_COS_LIBM "-lm"
+#define SUBST_POW_LIBM "-lm"

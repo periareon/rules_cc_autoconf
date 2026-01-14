@@ -1,6 +1,5 @@
 /* config.h.in */
-#define CHOWN_TRAILING_SLASH_BUG 1
-#define HAVE_CHOWN 1
+/* #undef HAVE_CHOWN */
 /* #undef HAVE_COPY_FILE_RANGE */
 /* #undef HAVE_DECL_ENVIRON */
 /* #undef HAVE_DECL_EXECVPE */
@@ -11,7 +10,7 @@
 /* #undef HAVE_DECL_GETLOGIN_R */
 /* #undef HAVE_DECL_GETPAGESIZE */
 /* #undef HAVE_DECL_GETUSERSHELL */
-/* #undef HAVE_DECL_SETHOSTNAME */
+#define HAVE_DECL_SETHOSTNAME 1
 /* #undef HAVE_DECL_TRUNCATE */
 /* #undef HAVE_DECL_TTYNAME_R */
 /* #undef HAVE_DUP3 */
@@ -19,7 +18,6 @@
 /* #undef HAVE_EXECVPE */
 /* #undef HAVE_FACCESSAT */
 /* #undef HAVE_FCHDIR */
-#define HAVE_FCHOWN 1
 /* #undef HAVE_FCHOWNAT */
 /* #undef HAVE_FDATASYNC */
 /* #undef HAVE_FSYNC */
@@ -36,6 +34,7 @@
 /* #undef HAVE_LCHOWN */
 /* #undef HAVE_LINK */
 /* #undef HAVE_LINKAT */
+#define HAVE_NETDB_H 1
 /* #undef HAVE_OS_H */
 /* #undef HAVE_PIPE */
 /* #undef HAVE_PIPE2 */
@@ -43,7 +42,7 @@
 /* #undef HAVE_PWRITE */
 /* #undef HAVE_READLINK */
 /* #undef HAVE_READLINKAT */
-/* #undef HAVE_SETHOSTNAME */
+#define HAVE_SETHOSTNAME 1
 /* #undef HAVE_SLEEP */
 #define HAVE_STDINT_H 1
 #define HAVE_STDIO_H 1
@@ -52,12 +51,14 @@
 #define HAVE_STRING_H 1
 /* #undef HAVE_SYMLINK */
 /* #undef HAVE_SYMLINKAT */
-/* #undef HAVE_SYS_PARAM_H */
+#define HAVE_SYS_PARAM_H 1
+#define HAVE_SYS_SOCKET_H 1
 #define HAVE_SYS_STAT_H 1
 #define HAVE_SYS_TYPES_H 1
 #define HAVE_UNISTD_H 1
 /* #undef HAVE_UNLINKAT */
 /* #undef HAVE_USLEEP */
+/* #undef HOST_NAME_MAX */
 /* #undef REPLACE_ACCESS */
 /* #undef REPLACE_CHOWN */
 /* #undef REPLACE_CLOSE */

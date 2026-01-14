@@ -1,2 +1,2 @@
 /* config.h.in */
-#define DEFAULT_POSIX2_VERSION gl_default_posix2_version
+/* #undef DEFAULT_POSIX2_VERSION */

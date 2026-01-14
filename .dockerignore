@@ -1,5 +1,19 @@
-bazel-bin
-bazel-out
-bazel-rules_cc_autoconf
-bazel-testlogs
+# Bazel output directories (symlinks)
+bazel-*
+
+# Git directory
 .git
+
+# IDE settings
+.idea
+.vscode
+*.swp
+*.swo
+
+# Python cache
+__pycache__
+*.pyc
+.pytest_cache
+
+# macOS
+.DS_Store

@@ -1,0 +1,13 @@
+/* config.h.in */
+/* #undef GNULIBHEADERS_OVERRIDE_CHAR32_T */
+/* #undef HAVE_C32RTOMB */
+#define HAVE_LANGINFO_CODESET 1
+/* #undef HAVE_MBRTOC16 */
+/* #undef HAVE_MBRTOC32 */
+#define HAVE_WORKING_C32RTOMB 1
+#define HAVE_WORKING_MBRTOC32 1
+/* #undef LOCALE_FR */
+/* #undef LOCALE_ZH_CN */
+/* #undef REPLACE_C32RTOMB */
+/* #undef REPLACE_MBRTOC16 */
+/* #undef REPLACE_MBRTOC32 */

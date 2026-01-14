@@ -19,9 +19,9 @@ for entry in sorted(glob.glob("bazel-testlogs/gnulib/tests/compatibility/*")):
 
     test_dir = path / f"{name}_test_gnu_autoconf"
     if not test_dir.exists():
-        test_dir = path / f"{name}_test_gnu_autoconf_macos"
-        dest_config = dest_dir / "golden_config_macos.h.in"
-        dest_subst = dest_dir / "golden_subst_macos.h.in"
+        test_dir = path / f"{name}_test_gnu_autoconf_linux"
+        dest_config = dest_dir / "golden_config_linux.h.in"
+        dest_subst = dest_dir / "golden_subst_linux.h.in"
 
     outputs_dir = test_dir / "test.outputs"
     new_config = outputs_dir / "gnu_configure/config.h"
@@ -42,13 +42,13 @@ for entry in sorted(glob.glob("bazel-testlogs/gnulib/tests/compatibility/*")):
     dest_config.chmod(MODE)
     dest_subst.chmod(MODE)
 
-    subst_in = outputs_dir / "expected_subst.h.in"
-    config_in = outputs_dir / "expected_config.h.in"
-    if subst_in.exists():
-        shutil.copy(subst_in, dest_dir / "subst.h.in")
-        (dest_dir / "subst.h.in").chmod(MODE)
-    if config_in.exists():
-        shutil.copy(config_in, dest_dir / "config.h.in")
-        (dest_dir / "config.h.in").chmod(MODE)
+    # subst_in = outputs_dir / "expected_subst.h.in"
+    # config_in = outputs_dir / "expected_config.h.in"
+    # if subst_in.exists():
+    #     shutil.copy(subst_in, dest_dir / "subst.h.in")
+    #     (dest_dir / "subst.h.in").chmod(MODE)
+    # if config_in.exists():
+    #     shutil.copy(config_in, dest_dir / "config.h.in")
+    #     (dest_dir / "config.h.in").chmod(MODE)
 
     print(name)

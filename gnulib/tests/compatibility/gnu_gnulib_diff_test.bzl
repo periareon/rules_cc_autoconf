@@ -9,9 +9,6 @@ load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("@rules_venv//python:py_test.bzl", "py_test")
 load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
 
-# buildifier: disable=bzl-visibility
-load("//autoconf/private/tests:diff_test.bzl", "diff_test")
-
 # Platform constraint mappings
 _PLATFORM_CONSTRAINTS = {
     "linux": select({

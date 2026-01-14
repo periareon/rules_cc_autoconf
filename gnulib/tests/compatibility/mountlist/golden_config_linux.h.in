@@ -1,12 +1,17 @@
 /* config.h.in */
-/* #undef MOUNTED_FREAD_FSTYP */
-/* #undef MOUNTED_FS_STAT_DEV */
-/* #undef MOUNTED_GETEXTMNTENT */
-/* #undef MOUNTED_GETFSSTAT */
-/* #undef MOUNTED_GETMNTENT1 */
-/* #undef MOUNTED_GETMNTENT2 */
+#define HAVE_INTTYPES_H 1
+#define HAVE_STDINT_H 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_STRING_H 1
+/* #undef HAVE_STRUCT_STATFS_F_FSTYPENAME */
+#define HAVE_SYS_MOUNT_H 1
+#define HAVE_SYS_PARAM_H 1
+#define HAVE_SYS_STATVFS_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+/* #undef HAVE_SYS_UCRED_H */
+#define HAVE_UNISTD_H 1
 /* #undef MOUNTED_GETMNTINFO */
-/* #undef MOUNTED_GETMNTINFO2 */
-/* #undef MOUNTED_INTERIX_STATVFS */
-/* #undef MOUNTED_NOT_PORTED */
-/* #undef MOUNTED_VMOUNT */
+#define STDC_HEADERS 1

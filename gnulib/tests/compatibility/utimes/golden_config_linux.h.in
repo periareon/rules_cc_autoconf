@@ -1,2 +1,2 @@
 /* config.h.in */
-/* #undef HAVE_WORKING_UTIMES */
+#define HAVE_WORKING_UTIMES 1

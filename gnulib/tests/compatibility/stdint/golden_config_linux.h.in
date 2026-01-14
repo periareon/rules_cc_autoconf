@@ -1,5 +1,38 @@
 /* config.h.in */
-/* #undef HAVE_LONG_LONG_INT */
-/* #undef HAVE_UNSIGNED_LONG_LONG_INT */
-/* #undef __STDC_CONSTANT_MACROS */
-/* #undef __STDC_LIMIT_MACROS */
+/* #undef APPLE_UNIVERSAL_BUILD */
+#define BITSIZEOF_PTRDIFF_T 64
+#define BITSIZEOF_SIG_ATOMIC_T 32
+#define BITSIZEOF_SIZE_T 64
+#define BITSIZEOF_WCHAR_T 32
+#define BITSIZEOF_WINT_T 32
+/* #undef GNULIBHEADERS_OVERRIDE_WINT_T */
+/* #undef HAVE_C99_STDINT_H */
+#define HAVE_INTTYPES_H 1
+#define HAVE_LIMITS_H 1
+#define HAVE_LONG_LONG_INT 1
+#define HAVE_SIGNED_SIG_ATOMIC_T 1
+#define HAVE_SIGNED_WCHAR_T 1
+/* #undef HAVE_SIGNED_WINT_T */
+#define HAVE_STDINT_H 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_STRING_H 1
+/* #undef HAVE_SYS_BITYPES_H */
+/* #undef HAVE_SYS_INTTYPES_H */
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+#define HAVE_UNSIGNED_LONG_LONG_INT 1
+#define HAVE_WCHAR_H 1
+#define HAVE_WINT_T 1
+/* #undef NEXT_AS_FIRST_DIRECTIVE_LIMITS_H */
+/* #undef NEXT_AS_FIRST_DIRECTIVE_STDINT_H */
+/* #undef NEXT_LIMITS_H */
+/* #undef NEXT_STDINT_H */
+#define PTRDIFF_T_SUFFIX l
+#define SIG_ATOMIC_T_SUFFIX 
+#define SIZE_T_SUFFIX ul
+#define STDC_HEADERS 1
+#define WCHAR_T_SUFFIX 
+#define WINT_T_SUFFIX u
