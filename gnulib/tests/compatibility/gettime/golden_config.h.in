@@ -14,7 +14,6 @@
 #define HAVE_TIMESPEC_GET 1
 #define HAVE_UNISTD_H 1
 #define HAVE_WCHAR_H 1
-/* #undef LIB_CLOCK_GETTIME */
 #define STDC_HEADERS 1
 #define _ALL_SOURCE 1
 #define _DARWIN_C_SOURCE 1

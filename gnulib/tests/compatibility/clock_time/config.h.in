@@ -13,7 +13,6 @@
 #undef HAVE_SYS_TYPES_H
 #undef HAVE_UNISTD_H
 #undef HAVE_WCHAR_H
-#undef LIB_CLOCK_GETTIME
 #undef STDC_HEADERS
 #undef _ALL_SOURCE
 #undef _DARWIN_C_SOURCE
