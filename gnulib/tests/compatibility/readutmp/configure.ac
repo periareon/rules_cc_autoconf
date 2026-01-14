@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_READUTMP
 gl_PREREQ_READUTMP_H
 
-AC_CONFIG_FILES([gnulib_readutmp.h:gnulib_readutmp.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

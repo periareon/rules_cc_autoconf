@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_INET_PTON
 gl_PREREQ_INET_PTON
 
-AC_CONFIG_FILES([gnulib_inet_pton.h:gnulib_inet_pton.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

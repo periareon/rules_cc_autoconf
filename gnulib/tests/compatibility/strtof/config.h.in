@@ -1,4 +1,4 @@
-/* config.h.in - AC_DEFINE placeholders */
+/* config.h.in */
 #undef HAVE_LDEXPF_IN_LIBC
 #undef HAVE_STRTOF
 #undef STRTOF_HAS_GRADUAL_UNDERFLOW_PROBLEM

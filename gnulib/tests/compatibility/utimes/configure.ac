@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from utimes.m4
 gl_FUNC_UTIMES
 
-AC_CONFIG_FILES([gnulib_utimes.h:gnulib_utimes.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

@@ -1,2 +1,2 @@
-/* config.h.in - AC_DEFINE placeholders */
-#define HAVE_MEMSET_S_SUPPORTS_ZERO 1
+/* config.h.in */
+/* #undef HAVE_MEMSET_S_SUPPORTS_ZERO */

@@ -10,8 +10,6 @@ autoconf(
             "arpa/inet.h",
             define = "HAVE_ARPA_INET_H",
         ),
-        # AC_SUBST for @VAR@ substitution in subst.h templates
-        macros.AC_SUBST("HAVE_ARPA_INET_H", "1"),
     ],
     visibility = ["//visibility:public"],
     deps = [

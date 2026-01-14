@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from clock_time.m4
 gl_CLOCK_TIME
 
-AC_CONFIG_FILES([gnulib_clock_time.h:gnulib_clock_time.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

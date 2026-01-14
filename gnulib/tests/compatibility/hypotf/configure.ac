@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_HYPOTF
 gl_FUNC_HYPOTF_WORKS
 
-AC_CONFIG_FILES([gnulib_hypotf.h:gnulib_hypotf.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

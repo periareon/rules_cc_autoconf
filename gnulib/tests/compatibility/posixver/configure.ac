@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_POSIXVER
 gl_DEFAULT_POSIX2_VERSION
 
-AC_CONFIG_FILES([gnulib_posixver.h:gnulib_posixver.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

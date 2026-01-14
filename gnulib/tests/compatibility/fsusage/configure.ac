@@ -7,5 +7,5 @@ gl_FILE_SYSTEM_USAGE
 gl_STATFS_TRUNCATES
 gl_PREREQ_FSUSAGE_EXTRA
 
-AC_CONFIG_FILES([gnulib_fsusage.h:gnulib_fsusage.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

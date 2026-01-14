@@ -6,5 +6,5 @@ AC_FUNC_CHOWN
 gl_FUNC_CHOWN
 gl_FUNC_CHOWN_FOLLOWS_SYMLINK
 
-AC_CONFIG_FILES([gnulib_chown.h:gnulib_chown.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from atanf.m4
 gl_FUNC_ATANF
 
-AC_CONFIG_FILES([gnulib_atanf.h:gnulib_atanf.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from fabs.m4
 gl_FUNC_FABS
 
-AC_CONFIG_FILES([gnulib_fabs.h:gnulib_fabs.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

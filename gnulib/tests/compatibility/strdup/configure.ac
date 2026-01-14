@@ -6,5 +6,5 @@ gl_FUNC_STRDUP
 gl_FUNC_STRDUP_POSIX
 gl_PREREQ_STRDUP
 
-AC_CONFIG_FILES([gnulib_strdup.h:gnulib_strdup.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

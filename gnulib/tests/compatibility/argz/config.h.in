@@ -1,4 +1,4 @@
-/* config.h.in - AC_DEFINE placeholders */
+/* config.h.in */
 #undef HAVE_WORKING_ARGZ
 #undef __error_t_defined
 #undef error_t

@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_SYS_RANDOM_H
 gl_SYS_RANDOM_MODULE_INDICATOR
 
-AC_CONFIG_FILES([gnulib_sys_random_h.h:gnulib_sys_random_h.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

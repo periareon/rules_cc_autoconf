@@ -13,5 +13,5 @@ gl_DOUBLE_SIGNBIT_CODE
 gl_LONG_DOUBLE_SIGNBIT_CODE
 gl_FLOATTYPE_SIGNBIT_CODE
 
-AC_CONFIG_FILES([gnulib_signbit.h:gnulib_signbit.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

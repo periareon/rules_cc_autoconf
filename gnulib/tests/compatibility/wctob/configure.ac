@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_WCTOB
 gl_PREREQ_WCTOB
 
-AC_CONFIG_FILES([gnulib_wctob.h:gnulib_wctob.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

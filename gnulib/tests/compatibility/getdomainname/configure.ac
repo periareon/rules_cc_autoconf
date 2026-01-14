@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_GETDOMAINNAME
 gl_PREREQ_GETDOMAINNAME
 
-AC_CONFIG_FILES([gnulib_getdomainname.h:gnulib_getdomainname.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

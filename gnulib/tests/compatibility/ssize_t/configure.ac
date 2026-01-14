@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from ssize_t.m4
 gt_TYPE_SSIZE_T
 
-AC_CONFIG_FILES([gnulib_ssize_t.h:gnulib_ssize_t.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

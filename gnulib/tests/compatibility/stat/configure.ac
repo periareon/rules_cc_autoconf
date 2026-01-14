@@ -6,5 +6,5 @@ gl_FUNC_STAT
 gl_PREREQ_STAT
 gl_PREREQ_STAT_W32
 
-AC_CONFIG_FILES([gnulib_stat.h:gnulib_stat.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

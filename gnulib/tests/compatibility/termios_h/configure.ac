@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_TERMIOS_H
 gl_TERMIOS_MODULE_INDICATOR
 
-AC_CONFIG_FILES([gnulib_termios_h.h:gnulib_termios_h.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

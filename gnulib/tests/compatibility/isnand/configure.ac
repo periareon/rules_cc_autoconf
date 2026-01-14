@@ -8,5 +8,5 @@ gl_PREREQ_ISNAND
 gl_HAVE_ISNAND_IN_LIBM
 gl_HAVE_ISNAND_NO_LIBM
 
-AC_CONFIG_FILES([gnulib_isnand.h:gnulib_isnand.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

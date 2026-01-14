@@ -1,2 +1,2 @@
-/* config.h.in - AC_DEFINE placeholders */
+/* config.h.in */
 #define HAVE_MSVC_INVALID_PARAMETER_HANDLER 1

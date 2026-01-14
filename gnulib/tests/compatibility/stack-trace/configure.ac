@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_STACK_TRACE_EARLY
 gl_STACK_TRACE
 
-AC_CONFIG_FILES([gnulib_stack-trace.h:gnulib_stack-trace.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

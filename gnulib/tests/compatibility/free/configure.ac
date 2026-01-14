@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_FREE
 gl_PREREQ_FREE
 
-AC_CONFIG_FILES([gnulib_free.h:gnulib_free.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

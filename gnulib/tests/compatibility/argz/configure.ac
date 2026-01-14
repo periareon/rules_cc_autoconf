@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_ARGZ
 gl_PREREQ_ARGZ
 
-AC_CONFIG_FILES([gnulib_argz.h:gnulib_argz.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

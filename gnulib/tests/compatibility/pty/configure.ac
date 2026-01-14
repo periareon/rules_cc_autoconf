@@ -6,5 +6,5 @@ gl_PTY_LIB
 gl_FUNC_FORKPTY
 gl_FUNC_OPENPTY
 
-AC_CONFIG_FILES([gnulib_pty.h:gnulib_pty.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

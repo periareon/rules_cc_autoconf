@@ -16,5 +16,5 @@ gl_PREREQ_MBRTOWC
 gl_PREREQ_MBTOWC_LOCK
 AC_FUNC_MBRTOWC
 
-AC_CONFIG_FILES([gnulib_mbrtowc.h:gnulib_mbrtowc.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

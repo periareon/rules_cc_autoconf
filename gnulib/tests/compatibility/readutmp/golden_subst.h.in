@@ -1,2 +1,2 @@
 /* gnulib_readutmp.h.in - AC_SUBST placeholders */
-#define SUBST_READUTMP_LIB @READUTMP_LIB@
+#define SUBST_READUTMP_LIB "@READUTMP_LIB@"

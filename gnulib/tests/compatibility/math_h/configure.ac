@@ -6,5 +6,5 @@ gl_MATH_H
 gl_MATH_MODULE_INDICATOR
 gl_LONG_DOUBLE_VS_DOUBLE
 
-AC_CONFIG_FILES([gnulib_math_h.h:gnulib_math_h.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_GRANTPT
 gl_PREREQ_GRANTPT
 
-AC_CONFIG_FILES([gnulib_grantpt.h:gnulib_grantpt.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

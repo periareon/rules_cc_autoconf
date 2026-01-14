@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_NETDB_H
 gl_NETDB_MODULE_INDICATOR
 
-AC_CONFIG_FILES([gnulib_netdb_h.h:gnulib_netdb_h.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

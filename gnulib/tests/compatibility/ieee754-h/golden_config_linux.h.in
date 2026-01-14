@@ -1,2 +1,2 @@
-/* config.h.in - AC_DEFINE placeholders */
+/* config.h.in */
 /* #undef _GL_REPLACE_IEEE754_H */

@@ -1,3 +1,3 @@
-/* config.h.in - AC_DEFINE placeholders */
-#define READLINK_TRAILING_SLASH_BUG 1
+/* config.h.in */
+/* #undef READLINK_TRAILING_SLASH_BUG */
 /* #undef READLINK_TRUNCATE_BUG */

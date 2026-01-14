@@ -6,5 +6,5 @@ gl_FUNC_STRCASESTR_SIMPLE
 gl_FUNC_STRCASESTR
 gl_PREREQ_STRCASESTR
 
-AC_CONFIG_FILES([gnulib_strcasestr.h:gnulib_strcasestr.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

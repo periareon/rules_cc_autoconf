@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from coshf.m4
 gl_FUNC_COSHF
 
-AC_CONFIG_FILES([gnulib_coshf.h:gnulib_coshf.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

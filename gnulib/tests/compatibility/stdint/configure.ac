@@ -9,5 +9,5 @@ gl_INTEGER_TYPE_SUFFIX
 gl_STDINT_INCLUDES
 gl_STDINT_TYPE_PROPERTIES
 
-AC_CONFIG_FILES([gnulib_stdint.h:gnulib_stdint.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

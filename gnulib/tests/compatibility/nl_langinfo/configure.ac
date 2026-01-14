@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_NL_LANGINFO
 gl_PREREQ_NL_LANGINFO_LOCK
 
-AC_CONFIG_FILES([gnulib_nl_langinfo.h:gnulib_nl_langinfo.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

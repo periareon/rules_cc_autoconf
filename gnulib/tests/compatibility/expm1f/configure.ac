@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from expm1f.m4
 gl_FUNC_EXPM1F
 
-AC_CONFIG_FILES([gnulib_expm1f.h:gnulib_expm1f.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

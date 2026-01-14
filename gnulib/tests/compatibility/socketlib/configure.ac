@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from socketlib.m4
 gl_SOCKETLIB
 
-AC_CONFIG_FILES([gnulib_socketlib.h:gnulib_socketlib.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

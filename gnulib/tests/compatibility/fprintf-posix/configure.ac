@@ -7,5 +7,5 @@ gl_FUNC_FPRINTF_IS_POSIX
 gl_REPLACE_FPRINTF
 gl_PREREQ_FPRINTF
 
-AC_CONFIG_FILES([gnulib_fprintf-posix.h:gnulib_fprintf-posix.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

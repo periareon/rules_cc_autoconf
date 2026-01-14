@@ -6,5 +6,5 @@ gl_FNMATCH_H
 gl_REPLACE_FNMATCH_H
 gl_FNMATCH_MODULE_INDICATOR
 
-AC_CONFIG_FILES([gnulib_fnmatch_h.h:gnulib_fnmatch_h.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

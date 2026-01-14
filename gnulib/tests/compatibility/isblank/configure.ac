@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from isblank.m4
 gl_FUNC_ISBLANK
 
-AC_CONFIG_FILES([gnulib_isblank.h:gnulib_isblank.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

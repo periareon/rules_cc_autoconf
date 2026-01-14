@@ -6,5 +6,5 @@ gl_FUNC_CALLOC_IF
 gl_FUNC_CALLOC_GNU
 gl_FUNC_CALLOC_POSIX
 
-AC_CONFIG_FILES([gnulib_calloc.h:gnulib_calloc.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

@@ -1,2 +1,2 @@
 /* gnulib_powf.h.in - AC_SUBST placeholders */
-#define SUBST_POWF_LIBM @POWF_LIBM@
+#define SUBST_POWF_LIBM "@POWF_LIBM@"

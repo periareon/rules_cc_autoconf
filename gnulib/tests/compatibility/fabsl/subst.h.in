@@ -1,2 +1,2 @@
 /* gnulib_fabsl.h.in - AC_SUBST placeholders */
-#define SUBST_FABSL_LIBM @FABSL_LIBM@
+#define SUBST_FABSL_LIBM "@FABSL_LIBM@"

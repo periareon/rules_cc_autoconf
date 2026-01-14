@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_MNTENT_H
 gl_MNTENT_MODULE_INDICATOR
 
-AC_CONFIG_FILES([gnulib_mntent_h.h:gnulib_mntent_h.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_NEWLOCALE
 gl_PREREQ_NEWLOCALE
 
-AC_CONFIG_FILES([gnulib_newlocale.h:gnulib_newlocale.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

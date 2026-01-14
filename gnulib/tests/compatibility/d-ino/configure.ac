@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from d-ino.m4
 gl_CHECK_TYPE_STRUCT_DIRENT_D_INO
 
-AC_CONFIG_FILES([gnulib_d-ino.h:gnulib_d-ino.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

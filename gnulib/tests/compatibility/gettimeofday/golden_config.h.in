@@ -1,2 +1,2 @@
-/* config.h.in - AC_DEFINE placeholders */
-#define GETTIMEOFDAY_TIMEZONE void
+/* config.h.in */
+/* #undef GETTIMEOFDAY_TIMEZONE */

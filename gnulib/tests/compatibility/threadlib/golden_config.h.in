@@ -1,6 +1,6 @@
-/* config.h.in - AC_DEFINE placeholders */
-#define AVOID_ANY_THREADS 1
-#define HAVE_PTHREAD_API 1
+/* config.h.in */
+/* #undef AVOID_ANY_THREADS */
+/* #undef HAVE_PTHREAD_API */
 /* #undef HAVE_WEAK_SYMBOLS */
 /* #undef PTHREAD_IN_USE_DETECTION_HARD */
 /* #undef USE_ISOC_AND_POSIX_THREADS */

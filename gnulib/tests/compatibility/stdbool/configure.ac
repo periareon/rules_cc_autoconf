@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_STDBOOL_H
 AC_CHECK_HEADER_STDBOOL
 
-AC_CONFIG_FILES([gnulib_stdbool.h:gnulib_stdbool.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

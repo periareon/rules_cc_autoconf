@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gt_TYPE_WINT_T
 gl_TYPE_WINT_T_PREREQ
 
-AC_CONFIG_FILES([gnulib_wint_t.h:gnulib_wint_t.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

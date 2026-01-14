@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_HYPOTL
 gl_FUNC_HYPOTL_WORKS
 
-AC_CONFIG_FILES([gnulib_hypotl.h:gnulib_hypotl.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

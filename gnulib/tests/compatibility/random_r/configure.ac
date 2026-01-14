@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_RANDOM_R
 gl_PREREQ_RANDOM_R
 
-AC_CONFIG_FILES([gnulib_random_r.h:gnulib_random_r.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

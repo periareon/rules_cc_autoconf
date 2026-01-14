@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_ARGP
 gl_REPLACE_GETOPT_ALWAYS
 
-AC_CONFIG_FILES([gnulib_argp.h:gnulib_argp.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

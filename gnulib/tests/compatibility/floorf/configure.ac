@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_FLOORF
 gl_FUNC_FLOORF_LIBS
 
-AC_CONFIG_FILES([gnulib_floorf.h:gnulib_floorf.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

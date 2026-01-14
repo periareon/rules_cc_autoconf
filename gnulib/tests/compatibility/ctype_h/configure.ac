@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_CTYPE_H
 gl_CTYPE_MODULE_INDICATOR
 
-AC_CONFIG_FILES([gnulib_ctype_h.h:gnulib_ctype_h.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

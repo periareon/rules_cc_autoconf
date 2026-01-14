@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_TCGETSID
 gl_PREREQ_TCGETSID
 
-AC_CONFIG_FILES([gnulib_tcgetsid.h:gnulib_tcgetsid.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from thread.m4
 gl_THREAD
 
-AC_CONFIG_FILES([gnulib_thread.h:gnulib_thread.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

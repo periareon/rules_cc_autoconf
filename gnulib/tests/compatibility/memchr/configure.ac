@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_MEMCHR
 gl_PREREQ_MEMCHR
 
-AC_CONFIG_FILES([gnulib_memchr.h:gnulib_memchr.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

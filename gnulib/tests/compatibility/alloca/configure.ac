@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_ALLOCA
 gl_PREREQ_ALLOCA
 
-AC_CONFIG_FILES([gnulib_alloca.h:gnulib_alloca.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

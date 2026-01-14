@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_SYS_TYPES_H
 AC_HEADER_MAJOR
 
-AC_CONFIG_FILES([gnulib_sys_types_h.h:gnulib_sys_types_h.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

@@ -6,5 +6,5 @@ gl_GLOB_H
 gl_REPLACE_GLOB_H
 gl_GLOB_MODULE_INDICATOR
 
-AC_CONFIG_FILES([gnulib_glob_h.h:gnulib_glob_h.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

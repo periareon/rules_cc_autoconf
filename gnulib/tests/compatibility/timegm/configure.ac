@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_TIMEGM
 gl_PREREQ_TIMEGM
 
-AC_CONFIG_FILES([gnulib_timegm.h:gnulib_timegm.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

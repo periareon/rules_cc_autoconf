@@ -6,5 +6,5 @@ gl_FUNC_SNPRINTF
 gl_REPLACE_SNPRINTF
 gl_PREREQ_SNPRINTF
 
-AC_CONFIG_FILES([gnulib_snprintf.h:gnulib_snprintf.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

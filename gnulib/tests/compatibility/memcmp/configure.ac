@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_MEMCMP
 gl_PREREQ_MEMCMP
 
-AC_CONFIG_FILES([gnulib_memcmp.h:gnulib_memcmp.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

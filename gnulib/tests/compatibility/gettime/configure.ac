@@ -6,5 +6,5 @@ gl_GETTIME
 gl_CHECK_FUNC_TIMESPEC_GET
 gl_GETTIME_RES
 
-AC_CONFIG_FILES([gnulib_gettime.h:gnulib_gettime.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

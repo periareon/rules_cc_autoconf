@@ -1,4 +1,4 @@
-/* config.h.in - AC_DEFINE placeholders */
+/* config.h.in */
 #undef $4
 #undef HAVE_COPYSIGNF_IN_LIBC
 #undef HAVE_COPYSIGNL_IN_LIBC

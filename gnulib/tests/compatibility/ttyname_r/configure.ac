@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_TTYNAME_R
 gl_PREREQ_TTYNAME_R
 
-AC_CONFIG_FILES([gnulib_ttyname_r.h:gnulib_ttyname_r.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

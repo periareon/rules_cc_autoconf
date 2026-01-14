@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_SYS_IOCTL_H
 gl_SYS_IOCTL_MODULE_INDICATOR
 
-AC_CONFIG_FILES([gnulib_sys_ioctl_h.h:gnulib_sys_ioctl_h.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

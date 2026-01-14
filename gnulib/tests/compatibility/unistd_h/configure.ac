@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_UNISTD_H
 gl_UNISTD_MODULE_INDICATOR
 
-AC_CONFIG_FILES([gnulib_unistd_h.h:gnulib_unistd_h.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

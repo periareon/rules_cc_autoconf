@@ -6,5 +6,5 @@ gl_WCHAR_H
 gl_WCHAR_H_INLINE_OK
 gl_WCHAR_MODULE_INDICATOR
 
-AC_CONFIG_FILES([gnulib_wchar_h.h:gnulib_wchar_h.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

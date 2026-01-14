@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_MKDIRAT
 gl_PREREQ_MKDIRAT
 
-AC_CONFIG_FILES([gnulib_mkdirat.h:gnulib_mkdirat.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

@@ -8,5 +8,5 @@ gl_INTTYPES_PRI_SCN
 gl_INTTYPES_CHECK_LONG_LONG_INT_CONDITION
 gl_INTTYPES_MODULE_INDICATOR
 
-AC_CONFIG_FILES([gnulib_inttypes.h:gnulib_inttypes.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

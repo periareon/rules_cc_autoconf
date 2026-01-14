@@ -1,5 +1,4 @@
 /* gnulib_inttypes.h.in - AC_SUBST placeholders */
-#define SUBST_$1 @$1@
 #define SUBST_HAVE_DECL_IMAXABS 1
 #define SUBST_HAVE_DECL_IMAXDIV 1
 #define SUBST_HAVE_DECL_STRTOIMAX 1

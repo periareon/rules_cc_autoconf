@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_RPMATCH
 gl_PREREQ_RPMATCH
 
-AC_CONFIG_FILES([gnulib_rpmatch.h:gnulib_rpmatch.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

@@ -6,5 +6,5 @@ gl_SPAWN_H
 gl_HAVE_POSIX_SPAWN
 gl_SPAWN_MODULE_INDICATOR
 
-AC_CONFIG_FILES([gnulib_spawn_h.h:gnulib_spawn_h.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

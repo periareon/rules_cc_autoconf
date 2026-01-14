@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_FTRUNCATE
 gl_PREREQ_FTRUNCATE
 
-AC_CONFIG_FILES([gnulib_ftruncate.h:gnulib_ftruncate.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from closedir.m4
 gl_FUNC_CLOSEDIR
 
-AC_CONFIG_FILES([gnulib_closedir.h:gnulib_closedir.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

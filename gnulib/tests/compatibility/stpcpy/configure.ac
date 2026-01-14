@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_STPCPY
 gl_PREREQ_STPCPY
 
-AC_CONFIG_FILES([gnulib_stpcpy.h:gnulib_stpcpy.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

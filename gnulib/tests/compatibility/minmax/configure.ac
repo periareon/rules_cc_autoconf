@@ -6,5 +6,5 @@ gl_MINMAX
 gl_PREREQ_MINMAX
 gl_MINMAX_IN_HEADER
 
-AC_CONFIG_FILES([gnulib_minmax.h:gnulib_minmax.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

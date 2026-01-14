@@ -16,9 +16,7 @@ autoconf(
     checks = [
         macros.AC_CHECK_HEADER("stdio.h"),
         macros.AC_CHECK_HEADER("stdlib.h"),
-        # AC_DEFINE for #undef replacement, AC_SUBST for @VAR@ substitution
         macros.AC_DEFINE("SPECIAL_DEFINE"),
-        macros.AC_SUBST("SPECIAL_DEFINE", "1"),
     ],
     deps = [":package_info"],
 )

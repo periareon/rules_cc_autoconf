@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_STRPTIME
 gl_PREREQ_STRPTIME
 
-AC_CONFIG_FILES([gnulib_strptime.h:gnulib_strptime.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

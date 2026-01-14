@@ -6,5 +6,5 @@ gl_SIGNAL_H
 gl_CHECK_TYPE_SIGSET_T
 gl_SIGNAL_MODULE_INDICATOR
 
-AC_CONFIG_FILES([gnulib_signal_h.h:gnulib_signal_h.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

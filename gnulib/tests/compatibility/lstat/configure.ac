@@ -6,5 +6,5 @@ gl_FUNC_LSTAT
 gl_PREREQ_LSTAT
 gl_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK
 
-AC_CONFIG_FILES([gnulib_lstat.h:gnulib_lstat.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

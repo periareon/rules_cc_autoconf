@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from pid_t.m4
 AC_TYPE_PID_T
 
-AC_CONFIG_FILES([gnulib_pid_t.h:gnulib_pid_t.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

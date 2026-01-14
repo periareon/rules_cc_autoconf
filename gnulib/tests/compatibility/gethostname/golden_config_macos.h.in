@@ -1,2 +1,2 @@
-/* config.h.in - AC_DEFINE placeholders */
-#define HOST_NAME_MAX 256
+/* config.h.in */
+/* #undef HOST_NAME_MAX */

@@ -8,5 +8,5 @@ gl_TYPE_CHAR16_T
 gl_TYPE_CHAR32_T
 gl_UCHAR_MODULE_INDICATOR
 
-AC_CONFIG_FILES([gnulib_uchar_h.h:gnulib_uchar_h.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

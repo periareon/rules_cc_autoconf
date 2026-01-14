@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_POLL_H
 gl_POLL_MODULE_INDICATOR
 
-AC_CONFIG_FILES([gnulib_poll_h.h:gnulib_poll_h.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

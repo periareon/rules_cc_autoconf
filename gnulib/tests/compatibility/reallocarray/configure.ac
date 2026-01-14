@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_REALLOCARRAY
 gl_PREREQ_REALLOCARRAY
 
-AC_CONFIG_FILES([gnulib_reallocarray.h:gnulib_reallocarray.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

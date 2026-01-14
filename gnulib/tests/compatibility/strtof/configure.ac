@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_STRTOF
 gl_PREREQ_STRTOF
 
-AC_CONFIG_FILES([gnulib_strtof.h:gnulib_strtof.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

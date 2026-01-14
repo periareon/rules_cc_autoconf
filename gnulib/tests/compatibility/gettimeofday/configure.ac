@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_GETTIMEOFDAY
 gl_PREREQ_GETTIMEOFDAY
 
-AC_CONFIG_FILES([gnulib_gettimeofday.h:gnulib_gettimeofday.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

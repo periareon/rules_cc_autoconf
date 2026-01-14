@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_TRUNCATE
 gl_PREREQ_TRUNCATE
 
-AC_CONFIG_FILES([gnulib_truncate.h:gnulib_truncate.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

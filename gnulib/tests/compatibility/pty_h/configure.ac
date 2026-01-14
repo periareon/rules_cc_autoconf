@@ -6,5 +6,5 @@ gl_PTY_H
 gl_PTY_CHECK_UTIL_H
 gl_PTY_MODULE_INDICATOR
 
-AC_CONFIG_FILES([gnulib_pty_h.h:gnulib_pty_h.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

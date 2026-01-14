@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_GETLOGIN
 gl_LIB_GETLOGIN
 
-AC_CONFIG_FILES([gnulib_getlogin.h:gnulib_getlogin.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from open-cloexec.m4
 gl_PREPROC_O_CLOEXEC
 
-AC_CONFIG_FILES([gnulib_open-cloexec.h:gnulib_open-cloexec.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

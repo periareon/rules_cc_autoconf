@@ -1,4 +1,4 @@
-/* config.h.in - AC_DEFINE placeholders */
+/* config.h.in */
 #undef HAVE_MBRTOWC
 #undef MBRTOWC_EMPTY_INPUT_BUG
 #undef MBRTOWC_IN_C_LOCALE_MAYBE_EILSEQ
@@ -6,3 +6,13 @@
 #undef MBRTOWC_NUL_RETVAL_BUG
 #undef MBRTOWC_RETVAL_BUG
 #undef MBRTOWC_STORES_INCOMPLETE_BUG
+#undef HAVE_INTTYPES_H
+#undef HAVE_STDINT_H
+#undef HAVE_STDIO_H
+#undef HAVE_STDLIB_H
+#undef HAVE_STRINGS_H
+#undef HAVE_STRING_H
+#undef HAVE_SYS_STAT_H
+#undef HAVE_SYS_TYPES_H
+#undef HAVE_UNISTD_H
+#undef STDC_HEADERS

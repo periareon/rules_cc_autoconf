@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_OPENAT
 gl_PREREQ_OPENAT
 
-AC_CONFIG_FILES([gnulib_openat.h:gnulib_openat.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

@@ -6,5 +6,5 @@ gl_FUNC_FSEEKO
 gl_STDIN_LARGE_OFFSET
 gl_PREREQ_FSEEKO
 
-AC_CONFIG_FILES([gnulib_fseeko.h:gnulib_fseeko.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

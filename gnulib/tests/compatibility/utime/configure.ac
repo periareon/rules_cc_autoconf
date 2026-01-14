@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_UTIME
 gl_PREREQ_UTIME
 
-AC_CONFIG_FILES([gnulib_utime.h:gnulib_utime.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

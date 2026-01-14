@@ -1,2 +1,2 @@
-/* config.h.in - AC_DEFINE placeholders */
-#define ENABLE_VALGRIND_SUPPORT 0
+/* config.h.in */
+/* #undef ENABLE_VALGRIND_SUPPORT */

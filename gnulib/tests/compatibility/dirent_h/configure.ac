@@ -6,5 +6,5 @@ gl_DIRENT_H
 gl_DIRENT_DIR
 gl_DIRENT_MODULE_INDICATOR
 
-AC_CONFIG_FILES([gnulib_dirent_h.h:gnulib_dirent_h.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

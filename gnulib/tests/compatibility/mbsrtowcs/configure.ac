@@ -6,5 +6,5 @@ gl_FUNC_MBSRTOWCS
 gl_MBSRTOWCS_WORKS
 gl_PREREQ_MBSRTOWCS
 
-AC_CONFIG_FILES([gnulib_mbsrtowcs.h:gnulib_mbsrtowcs.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

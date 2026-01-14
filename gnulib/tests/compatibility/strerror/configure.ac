@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_STRERROR
 gl_FUNC_STRERROR_0
 
-AC_CONFIG_FILES([gnulib_strerror.h:gnulib_strerror.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

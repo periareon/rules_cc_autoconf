@@ -1,4 +1,4 @@
-/* config.h.in - AC_DEFINE placeholders */
+/* config.h.in */
 /* #undef MOUNTED_FREAD_FSTYP */
 /* #undef MOUNTED_FS_STAT_DEV */
 /* #undef MOUNTED_GETEXTMNTENT */

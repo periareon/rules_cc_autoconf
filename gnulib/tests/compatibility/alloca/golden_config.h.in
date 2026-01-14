@@ -1,2 +1,2 @@
-/* config.h.in - AC_DEFINE placeholders */
-#define HAVE_ALLOCA 1
+/* config.h.in */
+/* #undef HAVE_ALLOCA */

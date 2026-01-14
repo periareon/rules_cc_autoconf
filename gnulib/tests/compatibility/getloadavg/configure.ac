@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_GETLOADAVG
 gl_PREREQ_GETLOADAVG
 
-AC_CONFIG_FILES([gnulib_getloadavg.h:gnulib_getloadavg.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

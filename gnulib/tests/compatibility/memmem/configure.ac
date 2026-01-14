@@ -6,5 +6,5 @@ gl_FUNC_MEMMEM_SIMPLE
 gl_FUNC_MEMMEM
 gl_PREREQ_MEMMEM
 
-AC_CONFIG_FILES([gnulib_memmem.h:gnulib_memmem.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

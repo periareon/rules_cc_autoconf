@@ -1,2 +1,2 @@
-/* config.h.in - AC_DEFINE placeholders */
-#define FUNC_FFLUSH_STDIN 0
+/* config.h.in */
+/* #undef FUNC_FFLUSH_STDIN */

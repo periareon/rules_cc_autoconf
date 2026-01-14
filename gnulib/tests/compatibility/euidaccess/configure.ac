@@ -6,5 +6,5 @@ gl_FUNC_NONREENTRANT_EUIDACCESS
 gl_FUNC_EUIDACCESS
 gl_PREREQ_EUIDACCESS
 
-AC_CONFIG_FILES([gnulib_euidaccess.h:gnulib_euidaccess.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

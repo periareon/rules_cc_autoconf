@@ -1,3 +1,3 @@
-/* config.h.in - AC_DEFINE placeholders */
+/* config.h.in */
 #define HAVE_TCSETATTR 1
 /* #undef NO_INLINE_GETPASS */

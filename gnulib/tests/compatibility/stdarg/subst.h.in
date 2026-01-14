@@ -1,2 +1,2 @@
 /* gnulib_stdarg.h.in - AC_SUBST placeholders */
-#define SUBST_NEXT_STDARG_H @NEXT_STDARG_H@
+#define SUBST_NEXT_STDARG_H "@NEXT_STDARG_H@"

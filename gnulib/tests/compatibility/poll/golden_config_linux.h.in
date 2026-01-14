@@ -1,2 +1,2 @@
-/* config.h.in - AC_DEFINE placeholders */
+/* config.h.in */
 #define HAVE_POLL 1

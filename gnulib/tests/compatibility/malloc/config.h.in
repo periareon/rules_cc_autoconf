@@ -1,4 +1,14 @@
-/* config.h.in - AC_DEFINE placeholders */
+/* config.h.in */
 #undef HAVE_MALLOC_0_NONNULL
 #undef HAVE_MALLOC_POSIX
 #undef HAVE_MALLOC_PTRDIFF
+#undef HAVE_INTTYPES_H
+#undef HAVE_STDINT_H
+#undef HAVE_STDIO_H
+#undef HAVE_STDLIB_H
+#undef HAVE_STRINGS_H
+#undef HAVE_STRING_H
+#undef HAVE_SYS_STAT_H
+#undef HAVE_SYS_TYPES_H
+#undef HAVE_UNISTD_H
+#undef STDC_HEADERS

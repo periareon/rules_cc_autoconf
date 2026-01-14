@@ -6,5 +6,5 @@ gl_GETHRXTIME
 gl_ARITHMETIC_HRTIME_T
 gl_XTIME
 
-AC_CONFIG_FILES([gnulib_gethrxtime.h:gnulib_gethrxtime.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

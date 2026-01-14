@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_ATOLL
 gl_PREREQ_ATOLL
 
-AC_CONFIG_FILES([gnulib_atoll.h:gnulib_atoll.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

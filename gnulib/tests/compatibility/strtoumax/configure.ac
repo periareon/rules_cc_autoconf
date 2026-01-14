@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_STRTOUMAX
 gl_PREREQ_STRTOUMAX
 
-AC_CONFIG_FILES([gnulib_strtoumax.h:gnulib_strtoumax.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

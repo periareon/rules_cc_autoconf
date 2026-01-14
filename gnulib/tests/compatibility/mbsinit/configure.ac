@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_MBSINIT
 gl_PREREQ_MBSINIT
 
-AC_CONFIG_FILES([gnulib_mbsinit.h:gnulib_mbsinit.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_SCANDIR
 gl_PREREQ_SCANDIR
 
-AC_CONFIG_FILES([gnulib_scandir.h:gnulib_scandir.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

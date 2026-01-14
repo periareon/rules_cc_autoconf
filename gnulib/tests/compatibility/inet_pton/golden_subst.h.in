@@ -1,2 +1,2 @@
 /* gnulib_inet_pton.h.in - AC_SUBST placeholders */
-#define SUBST_INET_PTON_LIB @INET_PTON_LIB@
+#define SUBST_INET_PTON_LIB "@INET_PTON_LIB@"

@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_MEMSET
 gl_PREREQ_MEMSET
 
-AC_CONFIG_FILES([gnulib_memset.h:gnulib_memset.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

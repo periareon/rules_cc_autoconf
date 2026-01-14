@@ -1,4 +1,4 @@
 /* gnulib_sys_utsname_h.h.in - AC_SUBST placeholders */
 #define SUBST_HAVE_STRUCT_UTSNAME 0
-#define SUBST_HAVE_SYS_UTSNAME_H @HAVE_SYS_UTSNAME_H@
-#define SUBST_HAVE_UNAME @HAVE_UNAME@
+#define SUBST_HAVE_SYS_UTSNAME_H "@HAVE_SYS_UTSNAME_H@"
+#define SUBST_HAVE_UNAME "@HAVE_UNAME@"

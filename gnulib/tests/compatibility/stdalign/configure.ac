@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_ALIGNASOF
 gl_STDALIGN_H
 
-AC_CONFIG_FILES([gnulib_stdalign.h:gnulib_stdalign.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

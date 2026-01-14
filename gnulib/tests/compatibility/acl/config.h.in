@@ -1,4 +1,4 @@
-/* config.h.in - AC_DEFINE placeholders */
+/* config.h.in */
 #undef HAVE_ACL_ENTRIES
 #undef HAVE_ACL_FIRST_ENTRY
 #undef HAVE_ACL_TYPE_EXTENDED

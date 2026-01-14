@@ -6,5 +6,5 @@ gl_MOUNTLIST
 gl_PREREQ_MOUNTLIST_EXTRA
 AC_FUNC_GETMNTENT
 
-AC_CONFIG_FILES([gnulib_mountlist.h:gnulib_mountlist.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

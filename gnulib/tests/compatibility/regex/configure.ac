@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_REGEX
 gl_PREREQ_REGEX
 
-AC_CONFIG_FILES([gnulib_regex.h:gnulib_regex.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

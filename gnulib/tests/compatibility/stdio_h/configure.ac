@@ -6,5 +6,5 @@ gl_STDIO_H_EARLY
 gl_STDIO_H
 gl_STDIO_MODULE_INDICATOR
 
-AC_CONFIG_FILES([gnulib_stdio_h.h:gnulib_stdio_h.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

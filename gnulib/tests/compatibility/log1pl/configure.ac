@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_LOG1PL
 gl_FUNC_LOG1PL_WORKS
 
-AC_CONFIG_FILES([gnulib_log1pl.h:gnulib_log1pl.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

@@ -1,2 +1,2 @@
-/* config.h.in - AC_DEFINE placeholders */
+/* config.h.in */
 /* #undef va_copy */

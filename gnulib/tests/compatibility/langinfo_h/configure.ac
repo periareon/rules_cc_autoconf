@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_LANGINFO_H
 gl_LANGINFO_MODULE_INDICATOR
 
-AC_CONFIG_FILES([gnulib_langinfo_h.h:gnulib_langinfo_h.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

@@ -6,5 +6,5 @@ gl_FUNC_FCHOWNAT
 gl_FUNC_FCHOWNAT_DEREF_BUG
 gl_FUNC_FCHOWNAT_EMPTY_FILENAME_BUG
 
-AC_CONFIG_FILES([gnulib_fchownat.h:gnulib_fchownat.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

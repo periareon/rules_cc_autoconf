@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from wait-process.m4
 gl_WAIT_PROCESS
 
-AC_CONFIG_FILES([gnulib_wait-process.h:gnulib_wait-process.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

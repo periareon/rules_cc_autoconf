@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_GETPAGESIZE
 gl_CHECK_FUNC_GETPAGESIZE
 
-AC_CONFIG_FILES([gnulib_getpagesize.h:gnulib_getpagesize.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

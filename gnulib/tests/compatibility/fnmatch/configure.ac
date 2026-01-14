@@ -6,5 +6,5 @@ gl_FUNC_FNMATCH_POSIX
 gl_FUNC_FNMATCH_GNU
 gl_PREREQ_FNMATCH
 
-AC_CONFIG_FILES([gnulib_fnmatch.h:gnulib_fnmatch.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

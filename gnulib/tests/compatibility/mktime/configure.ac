@@ -8,5 +8,5 @@ gl_FUNC_MKTIME
 gl_FUNC_MKTIME_INTERNAL
 gl_PREREQ_MKTIME
 
-AC_CONFIG_FILES([gnulib_mktime.h:gnulib_mktime.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

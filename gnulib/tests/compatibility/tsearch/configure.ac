@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_TSEARCH
 gl_PREREQ_TSEARCH
 
-AC_CONFIG_FILES([gnulib_tsearch.h:gnulib_tsearch.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

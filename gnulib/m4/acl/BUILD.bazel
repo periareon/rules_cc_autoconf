@@ -150,7 +150,6 @@ autoconf(
             # macOS has working ACL support
             # AC_DEFINE for config.h, AC_SUBST for subst.h
             macros.AC_DEFINE("USE_ACL", "1"),
-            macros.AC_SUBST("USE_ACL", "1"),
         ],
         "//conditions:default": _COMMON_CHECKS + [
             macros.AC_CHECK_FUNC(

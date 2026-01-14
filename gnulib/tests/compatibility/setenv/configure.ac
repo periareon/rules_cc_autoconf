@@ -8,5 +8,5 @@ gl_FUNC_UNSETENV
 gl_PREREQ_SETENV
 gl_PREREQ_UNSETENV
 
-AC_CONFIG_FILES([gnulib_setenv.h:gnulib_setenv.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

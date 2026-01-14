@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_RAWMEMCHR
 gl_PREREQ_RAWMEMCHR
 
-AC_CONFIG_FILES([gnulib_rawmemchr.h:gnulib_rawmemchr.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

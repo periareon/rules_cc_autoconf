@@ -6,5 +6,5 @@ gl_FUNC_WCSRTOMBS
 gl_WCSRTOMBS_NULL
 gl_PREREQ_WCSRTOMBS
 
-AC_CONFIG_FILES([gnulib_wcsrtombs.h:gnulib_wcsrtombs.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

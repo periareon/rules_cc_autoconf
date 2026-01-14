@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_STRCSPN
 gl_PREREQ_STRCSPN
 
-AC_CONFIG_FILES([gnulib_strcspn.h:gnulib_strcspn.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

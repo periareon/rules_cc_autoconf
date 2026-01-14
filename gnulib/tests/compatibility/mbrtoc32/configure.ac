@@ -10,5 +10,5 @@ gl_MBRTOC32_UTF8_LOCALE
 gl_MBRTOC32_SANITYCHECK
 gl_PREREQ_MBRTOC32
 
-AC_CONFIG_FILES([gnulib_mbrtoc32.h:gnulib_mbrtoc32.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

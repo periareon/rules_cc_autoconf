@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_CEIL
 gl_FUNC_CEIL_LIBS
 
-AC_CONFIG_FILES([gnulib_ceil.h:gnulib_ceil.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

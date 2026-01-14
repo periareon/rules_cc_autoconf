@@ -1,4 +1,4 @@
-/* config.h.in - AC_DEFINE placeholders */
+/* config.h.in */
 #undef NEED_MKTIME_INTERNAL
 #undef NEED_MKTIME_WINDOWS
 #undef NEED_MKTIME_WORKING

@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_ARPA_INET_H
 gl_ARPA_INET_MODULE_INDICATOR
 
-AC_CONFIG_FILES([gnulib_arpa_inet_h.h:gnulib_arpa_inet_h.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

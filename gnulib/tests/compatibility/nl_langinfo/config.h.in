@@ -1,3 +1,3 @@
-/* config.h.in - AC_DEFINE placeholders */
+/* config.h.in */
 #undef NL_LANGINFO_MTSAFE
 #undef REPLACE_NL_LANGINFO

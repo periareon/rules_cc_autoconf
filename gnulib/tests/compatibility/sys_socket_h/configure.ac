@@ -9,5 +9,5 @@ gl_PREREQ_SYS_H_WS2TCPIP
 gl_PREREQ_SYS_SA_FAMILY
 gl_SYS_SOCKET_MODULE_INDICATOR
 
-AC_CONFIG_FILES([gnulib_sys_socket_h.h:gnulib_sys_socket_h.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

@@ -7,5 +7,5 @@ gl_FUNC_VFPRINTF_IS_POSIX
 gl_REPLACE_VFPRINTF
 gl_PREREQ_VFPRINTF
 
-AC_CONFIG_FILES([gnulib_vfprintf-posix.h:gnulib_vfprintf-posix.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_SIGNALBLOCKING
 gl_PREREQ_SIGPROCMASK
 
-AC_CONFIG_FILES([gnulib_signalblocking.h:gnulib_signalblocking.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

@@ -6,5 +6,5 @@ gl_TIME_H
 gl_CHECK_TYPE_STRUCT_TIMESPEC
 gl_TIME_MODULE_INDICATOR
 
-AC_CONFIG_FILES([gnulib_time_h.h:gnulib_time_h.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

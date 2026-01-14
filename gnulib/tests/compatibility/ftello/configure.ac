@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_FTELLO
 gl_PREREQ_FTELLO
 
-AC_CONFIG_FILES([gnulib_ftello.h:gnulib_ftello.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

@@ -1,2 +1,2 @@
 /* gnulib_sysexits.h.in - AC_SUBST placeholders */
-#define SUBST_HAVE_SYSEXITS_H @HAVE_SYSEXITS_H@
+#define SUBST_HAVE_SYSEXITS_H "@HAVE_SYSEXITS_H@"

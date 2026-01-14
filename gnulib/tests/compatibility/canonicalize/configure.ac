@@ -7,5 +7,5 @@ gl_CANONICALIZE_LGPL
 gl_CANONICALIZE_LGPL_SEPARATE
 gl_FUNC_REALPATH_WORKS
 
-AC_CONFIG_FILES([gnulib_canonicalize.h:gnulib_canonicalize.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

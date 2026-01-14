@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_UNLOCKPT
 gl_PREREQ_UNLOCKPT
 
-AC_CONFIG_FILES([gnulib_unlockpt.h:gnulib_unlockpt.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

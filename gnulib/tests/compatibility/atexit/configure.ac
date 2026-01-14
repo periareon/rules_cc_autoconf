@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_ATEXIT
 gl_PREREQ_ATEXIT
 
-AC_CONFIG_FILES([gnulib_atexit.h:gnulib_atexit.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

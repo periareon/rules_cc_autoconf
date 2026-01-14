@@ -1,6 +1,6 @@
-/* config.h.in - AC_DEFINE placeholders */
+/* config.h.in */
 /* #undef HAVE_ACL_ENTRIES */
-#define HAVE_ACL_FIRST_ENTRY 1
-#define HAVE_ACL_TYPE_EXTENDED 1
+/* #undef HAVE_ACL_FIRST_ENTRY */
+/* #undef HAVE_ACL_TYPE_EXTENDED */
 /* #undef HAVE_SMACK */
-#define USE_ACL 1
+/* #undef USE_ACL */

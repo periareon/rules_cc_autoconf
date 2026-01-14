@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_GLOB
 gl_PREREQ_GLOB
 
-AC_CONFIG_FILES([gnulib_glob.h:gnulib_glob.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

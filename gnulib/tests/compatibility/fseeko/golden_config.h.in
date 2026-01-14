@@ -1,2 +1,2 @@
-/* config.h.in - AC_DEFINE placeholders */
-#define HAVE_FSEEKO 1
+/* config.h.in */
+/* #undef HAVE_FSEEKO */

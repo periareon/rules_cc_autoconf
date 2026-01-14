@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from pthread_mutex_timedlock.m4
 gl_FUNC_PTHREAD_MUTEX_TIMEDLOCK
 
-AC_CONFIG_FILES([gnulib_pthread_mutex_timedlock.h:gnulib_pthread_mutex_timedlock.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

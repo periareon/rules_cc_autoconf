@@ -1,2 +1,2 @@
 /* gnulib_gethostname.h.in - AC_SUBST placeholders */
-#define SUBST_GETHOSTNAME_LIB @GETHOSTNAME_LIB@
+#define SUBST_GETHOSTNAME_LIB "@GETHOSTNAME_LIB@"

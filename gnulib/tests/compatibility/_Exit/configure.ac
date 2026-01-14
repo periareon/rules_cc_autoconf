@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC__EXIT
 gl_PREREQ__EXIT
 
-AC_CONFIG_FILES([gnulib__Exit.h:gnulib__Exit.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

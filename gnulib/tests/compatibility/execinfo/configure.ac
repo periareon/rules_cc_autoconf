@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from execinfo.m4
 gl_EXECINFO_H
 
-AC_CONFIG_FILES([gnulib_execinfo.h:gnulib_execinfo.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

@@ -1,2 +1,2 @@
-/* config.h.in - AC_DEFINE placeholders */
-#define eaccess access
+/* config.h.in */
+/* #undef eaccess */

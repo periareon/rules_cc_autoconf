@@ -6,5 +6,5 @@ gl_FUNC_VSNPRINTF
 gl_REPLACE_VSNPRINTF
 gl_PREREQ_VSNPRINTF
 
-AC_CONFIG_FILES([gnulib_vsnprintf.h:gnulib_vsnprintf.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

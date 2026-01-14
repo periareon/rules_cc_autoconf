@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from getugroups.m4
 gl_GETUGROUPS
 
-AC_CONFIG_FILES([gnulib_getugroups.h:gnulib_getugroups.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

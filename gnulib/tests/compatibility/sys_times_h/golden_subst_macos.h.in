@@ -1,4 +1,4 @@
 /* gnulib_sys_times_h.h.in - AC_SUBST placeholders */
-#define SUBST_HAVE_STRUCT_TMS 0
-#define SUBST_HAVE_SYS_TIMES_H @HAVE_SYS_TIMES_H@
-#define SUBST_HAVE_TIMES @HAVE_TIMES@
+#define SUBST_HAVE_STRUCT_TMS "@HAVE_STRUCT_TMS@"
+#define SUBST_HAVE_SYS_TIMES_H "@HAVE_SYS_TIMES_H@"
+#define SUBST_HAVE_TIMES "@HAVE_TIMES@"

@@ -1,4 +1,4 @@
-/* config.h.in - AC_DEFINE placeholders */
+/* config.h.in */
 /* #undef HAVE_LONG_LONG_INT */
 /* #undef HAVE_UNSIGNED_LONG_LONG_INT */
 /* #undef __STDC_CONSTANT_MACROS */

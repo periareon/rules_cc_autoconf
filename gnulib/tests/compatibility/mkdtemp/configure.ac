@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_MKDTEMP
 gl_PREREQ_MKDTEMP
 
-AC_CONFIG_FILES([gnulib_mkdtemp.h:gnulib_mkdtemp.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

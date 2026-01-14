@@ -1,2 +1,2 @@
-/* config.h.in - AC_DEFINE placeholders */
+/* config.h.in */
 #undef PREFER_NONREENTRANT_EUIDACCESS

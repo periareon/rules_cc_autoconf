@@ -6,5 +6,5 @@ gl_FUNC_FFLUSH
 gl_FUNC_FFLUSH_STDIN
 gl_PREREQ_FFLUSH
 
-AC_CONFIG_FILES([gnulib_fflush.h:gnulib_fflush.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

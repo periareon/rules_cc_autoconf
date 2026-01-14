@@ -6,5 +6,5 @@ gl_FUNC_GETHOSTNAME
 gl_PREREQ_HOST_NAME_MAX
 gl_PREREQ_GETHOSTNAME
 
-AC_CONFIG_FILES([gnulib_gethostname.h:gnulib_gethostname.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

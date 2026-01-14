@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_STRVERSCMP
 gl_PREREQ_STRVERSCMP
 
-AC_CONFIG_FILES([gnulib_strverscmp.h:gnulib_strverscmp.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

@@ -1,2 +1,2 @@
-/* config.h.in - AC_DEFINE placeholders */
-#define HAVE___BUILTIN_EXPECT 1
+/* config.h.in */
+/* #undef HAVE___BUILTIN_EXPECT */

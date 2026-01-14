@@ -6,5 +6,5 @@ AC_FUNC_STRNLEN
 gl_FUNC_STRNLEN
 gl_PREREQ_STRNLEN
 
-AC_CONFIG_FILES([gnulib_strnlen.h:gnulib_strnlen.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

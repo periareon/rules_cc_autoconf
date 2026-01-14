@@ -6,5 +6,5 @@ gl_LOCALE_H
 gl_LOCALE_T
 gl_LOCALE_MODULE_INDICATOR
 
-AC_CONFIG_FILES([gnulib_locale_h.h:gnulib_locale_h.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

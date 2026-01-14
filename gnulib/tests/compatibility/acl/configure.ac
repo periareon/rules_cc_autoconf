@@ -8,5 +8,5 @@ gl_ACL_GET_FILE
 gl_FILE_HAS_ACL
 gl_QCOPY_ACL
 
-AC_CONFIG_FILES([gnulib_acl.h:gnulib_acl.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

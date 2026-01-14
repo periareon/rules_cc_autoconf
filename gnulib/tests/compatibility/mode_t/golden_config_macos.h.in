@@ -1,2 +1,2 @@
-/* config.h.in - AC_DEFINE placeholders */
-#define PROMOTED_MODE_T int
+/* config.h.in */
+/* #undef PROMOTED_MODE_T */

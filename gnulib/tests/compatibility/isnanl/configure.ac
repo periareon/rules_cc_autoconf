@@ -9,5 +9,5 @@ gl_HAVE_ISNANL_NO_LIBM
 gl_HAVE_ISNANL_IN_LIBM
 gl_FUNC_ISNANL_WORKS
 
-AC_CONFIG_FILES([gnulib_isnanl.h:gnulib_isnanl.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

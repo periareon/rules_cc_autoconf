@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from cbrt.m4
 gl_FUNC_CBRT
 
-AC_CONFIG_FILES([gnulib_cbrt.h:gnulib_cbrt.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

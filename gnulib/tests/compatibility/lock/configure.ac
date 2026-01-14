@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_LOCK
 gl_PREREQ_LOCK
 
-AC_CONFIG_FILES([gnulib_lock.h:gnulib_lock.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

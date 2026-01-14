@@ -12,6 +12,7 @@ def _autoconf_toolchain_impl(ctx):
     for dep in ctx.attr.deps:
         info = dep[CcAutoconfInfo]
         defaults = defaults | info.results
+
         # Track which label each set of defaults came from
         defaults_by_label[info.owner] = info.results
 

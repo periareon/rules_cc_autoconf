@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_UNAME
 gl_PREREQ_UNAME
 
-AC_CONFIG_FILES([gnulib_uname.h:gnulib_uname.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

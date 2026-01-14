@@ -1,2 +1,2 @@
-/* config.h.in - AC_DEFINE placeholders */
+/* config.h.in */
 #undef WCSRTOMBS_NULL_ARG_BUG

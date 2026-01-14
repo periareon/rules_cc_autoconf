@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_GETADDRINFO
 gl_PREREQ_GETADDRINFO
 
-AC_CONFIG_FILES([gnulib_getaddrinfo.h:gnulib_getaddrinfo.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

@@ -9,5 +9,5 @@ gl_MBRLEN_NUL_RETVAL
 gl_MBRLEN_EMPTY_INPUT
 gl_PREREQ_MBRLEN
 
-AC_CONFIG_FILES([gnulib_mbrlen.h:gnulib_mbrlen.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

@@ -1,4 +1,4 @@
-/* config.h.in - AC_DEFINE placeholders */
+/* config.h.in */
 /* #undef BROKEN_THRD_JOIN */
 /* #undef BROKEN_THRD_JOIN_NULL */
 /* #undef BROKEN_THRD_START_T */

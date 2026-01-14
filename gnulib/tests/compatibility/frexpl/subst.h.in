@@ -1,2 +1,2 @@
 /* gnulib_frexpl.h.in - AC_SUBST placeholders */
-#define SUBST_FREXPL_LIBM @FREXPL_LIBM@
+#define SUBST_FREXPL_LIBM "@FREXPL_LIBM@"

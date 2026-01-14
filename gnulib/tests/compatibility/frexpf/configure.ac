@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_FREXPF
 gl_FUNC_FREXPF_WORKS
 
-AC_CONFIG_FILES([gnulib_frexpf.h:gnulib_frexpf.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

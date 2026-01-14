@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from sigabbrev_np.m4
 gl_FUNC_SIGABBREV_NP
 
-AC_CONFIG_FILES([gnulib_sigabbrev_np.h:gnulib_sigabbrev_np.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from strtol.m4
 gl_FUNC_STRTOL
 
-AC_CONFIG_FILES([gnulib_strtol.h:gnulib_strtol.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

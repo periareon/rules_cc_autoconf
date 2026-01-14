@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from pipe.m4
 gl_FUNC_PIPE
 
-AC_CONFIG_FILES([gnulib_pipe.h:gnulib_pipe.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

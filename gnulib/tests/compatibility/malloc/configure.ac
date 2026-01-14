@@ -2,7 +2,6 @@ AC_INIT([test_malloc], [1.0])
 AC_CONFIG_HEADERS([config.h])
 
 # Invoke macros from malloc.m4
-_AC_FUNC_MALLOC_IF
 gl_FUNC_MALLOC_0_NONNULL
 gl_FUNC_MALLOC_GNU
 gl_FUNC_MALLOC_PTRDIFF
@@ -10,5 +9,5 @@ gl_CHECK_MALLOC_PTRDIFF
 gl_FUNC_MALLOC_POSIX
 gl_CHECK_MALLOC_POSIX
 
-AC_CONFIG_FILES([gnulib_malloc.h:gnulib_malloc.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

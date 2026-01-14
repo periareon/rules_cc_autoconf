@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_FCNTL
 gl_REPLACE_FCNTL
 
-AC_CONFIG_FILES([gnulib_fcntl.h:gnulib_fcntl.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

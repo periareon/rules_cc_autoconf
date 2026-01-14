@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from usleep.m4
 gl_FUNC_USLEEP
 
-AC_CONFIG_FILES([gnulib_usleep.h:gnulib_usleep.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

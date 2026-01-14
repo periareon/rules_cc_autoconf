@@ -1,4 +1,4 @@
-/* config.h.in - AC_DEFINE placeholders */
+/* config.h.in */
 #undef AVOID_ANY_THREADS
 #undef HAVE_PTHREAD_API
 #undef HAVE_WEAK_SYMBOLS

@@ -33,5 +33,5 @@ gl_SWPRINTF_WORKS
 gl_SWPRINTF_DIRECTIVE_LA
 gl_SWPRINTF_DIRECTIVE_LC
 
-AC_CONFIG_FILES([gnulib_printf.h:gnulib_printf.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

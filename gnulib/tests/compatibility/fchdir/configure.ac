@@ -6,5 +6,5 @@ gl_FUNC_FCHDIR
 gl_TEST_FCHDIR
 gl_PREREQ_FCHDIR
 
-AC_CONFIG_FILES([gnulib_fchdir.h:gnulib_fchdir.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

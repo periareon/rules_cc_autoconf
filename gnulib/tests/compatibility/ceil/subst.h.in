@@ -1,2 +1,2 @@
 /* gnulib_ceil.h.in - AC_SUBST placeholders */
-#define SUBST_CEIL_LIBM @CEIL_LIBM@
+#define SUBST_CEIL_LIBM "@CEIL_LIBM@"

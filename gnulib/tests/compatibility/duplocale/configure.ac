@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_DUPLOCALE
 gl_PREREQ_DUPLOCALE
 
-AC_CONFIG_FILES([gnulib_duplocale.h:gnulib_duplocale.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

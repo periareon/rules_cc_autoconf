@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_POLL
 gl_PREREQ_POLL
 
-AC_CONFIG_FILES([gnulib_poll.h:gnulib_poll.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

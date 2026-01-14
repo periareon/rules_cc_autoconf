@@ -6,5 +6,5 @@ gl_FUNC_LDEXP
 gl_CHECK_LDEXP_NO_LIBM
 gl_FUNC_LDEXP_WORKS
 
-AC_CONFIG_FILES([gnulib_ldexp.h:gnulib_ldexp.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

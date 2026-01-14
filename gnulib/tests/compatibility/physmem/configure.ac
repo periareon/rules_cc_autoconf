@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_SYS__SYSTEM_CONFIGURATION
 gl_PHYSMEM
 
-AC_CONFIG_FILES([gnulib_physmem.h:gnulib_physmem.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

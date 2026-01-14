@@ -1,4 +1,4 @@
-/* config.h.in - AC_DEFINE placeholders */
+/* config.h.in */
 /* #undef USE_SELINUX_SELINUX_H */
 /* #undef fgetfilecon */
 /* #undef fgetfilecon_raw */

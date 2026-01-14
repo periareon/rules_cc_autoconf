@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from valgrind-helper.m4
 gl_VALGRIND_HELPER
 
-AC_CONFIG_FILES([gnulib_valgrind-helper.h:gnulib_valgrind-helper.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

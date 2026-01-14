@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_NPROC
 gl_PREREQ_NPROC
 
-AC_CONFIG_FILES([gnulib_nproc.h:gnulib_nproc.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

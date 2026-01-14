@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_SYS_UTSNAME_H
 gl_SYS_UTSNAME_MODULE_INDICATOR
 
-AC_CONFIG_FILES([gnulib_sys_utsname_h.h:gnulib_sys_utsname_h.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

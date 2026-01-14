@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_ALPHASORT
 gl_PREREQ_ALPHASORT
 
-AC_CONFIG_FILES([gnulib_alphasort.h:gnulib_alphasort.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

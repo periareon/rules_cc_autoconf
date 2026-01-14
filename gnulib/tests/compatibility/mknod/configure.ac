@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from mknod.m4
 gl_FUNC_MKNOD
 
-AC_CONFIG_FILES([gnulib_mknod.h:gnulib_mknod.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

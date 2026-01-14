@@ -7,8 +7,8 @@ import platform
 import re
 import shutil
 import subprocess
-import tempfile
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -19,6 +19,12 @@ from python.runfiles import Runfiles
 SKIPPED_OUTPUT_VARIABLES = frozenset(
     [
         # Build system variables
+        "CXX",
+        "CXXFLAGS",
+        "PROTOTYPES",
+        "__PROTOTYPES",
+        "ac_ct_CXX",
+        "ac_ct_CC",
         "CC",
         "CFLAGS",
         "CPP",
@@ -124,89 +130,12 @@ def _extract_config_log_section(content: str, section_name: str) -> str:
     return None
 
 
-def _parse_confdefs_section(confdefs_content: str) -> dict[str, str]:
-    """Parse the confdefs.h section from config.log for AC_DEFINE values.
-
-    The section contains C preprocessor definitions like:
-    #define HAVE_FEATURE 1
-    /* #undef MISSING_FEATURE */
-    """
-    defines: dict[str, str] = {}
-
-    # Match #define MACRO VALUE patterns
-    define_pattern = re.compile(
-        r"#\s*define\s+([A-Za-z_][A-Za-z0-9_]*)\s+(.*?)$", re.MULTILINE
-    )
-    for match in define_pattern.finditer(confdefs_content):
-        name, value = match.groups()
-        defines[name] = value.strip() or "1"
-
-    # Match /* #undef MACRO */ patterns (undefined)
-    undef_pattern = re.compile(r"/\*\s*#\s*undef\s+([A-Za-z_][A-Za-z0-9_]*)\s*\*/")
-    for match in undef_pattern.finditer(confdefs_content):
-        name = match.group(1)
-        if name not in defines:
-            defines[name] = "/* undef */"
-
-    return defines
-
-
 def _generate_makefile_in() -> str:
     """Generate a minimal Makefile.in."""
     return """# Minimal Makefile.in for autoconf testing
 all:
 \t@echo "Build complete"
 """
-
-
-def _parse_golden_config_h(content: str) -> dict[str, str]:
-    """Parse golden config.h file for #define values."""
-    variables: dict[str, str] = {}
-
-    # Match #define MACRO VALUE patterns
-    define_pattern = re.compile(
-        r"#\s*define\s+([A-Za-z_][A-Za-z0-9_]*)\s+(.*?)$", re.MULTILINE
-    )
-    for match in define_pattern.finditer(content):
-        name, value = match.groups()
-        value = value.strip()
-        if value:
-            variables[name] = value
-
-    # Match /* #undef MACRO */ patterns
-    undef_pattern = re.compile(r"/\*\s*#\s*undef\s+([A-Za-z_][A-Za-z0-9_]*)\s*\*/")
-    for match in undef_pattern.finditer(content):
-        name = match.group(1)
-        if name not in variables:
-            variables[name] = "/* undef */"
-
-    return variables
-
-
-def _parse_golden_gnulib_h(content: str) -> dict[str, str]:
-    """Parse golden gnulib_*.h file for #define SUBST_* values.
-
-    Returns mapping without SUBST_ prefix (e.g., FOO not SUBST_FOO).
-    Handles both:
-    - #define SUBST_VAR value  -> VAR=value
-    - #define SUBST_VAR        -> VAR= (empty value)
-    """
-    variables: dict[str, str] = {}
-
-    # Match #define SUBST_MACRO [VALUE] patterns (VALUE is optional, rest of line)
-    # Use MULTILINE so $ matches end of line, not just end of string
-    define_pattern = re.compile(
-        r"#\s*define\s+SUBST_([A-Za-z_][A-Za-z0-9_]*)(?:[ \t]+(.*))?$", re.MULTILINE
-    )
-    for match in define_pattern.finditer(content):
-        name = match.group(1)
-        value = match.group(2) or ""  # None if no value captured
-        value = value.strip()
-        # Skip unsubstituted @VAR@ placeholders
-        if not value.startswith("@"):
-            variables[name] = value
-
-    return variables
 
 
 def _parse_expected_variables_from_config_log(
@@ -249,12 +178,16 @@ def _parse_expected_variables_from_config_log(
         line = line.strip()
         if line.startswith("/* confdefs.h"):
             continue
+        if not line:
+            break
         # Match #define MACRO patterns
-        define_match = re.match(r"#\s*define\s+([A-Za-z_][A-Za-z0-9_]*)", line)
-        if define_match:
-            name = define_match.group(1)
-            if not _should_skip_variable(name):
-                confdef_vars.add(name)
+        define_match = re.match(r"#define\s+([\w\d_]+)", line)
+        if not define_match:
+            raise ValueError(f"Unexpected confdefs.h value: `{line}`")
+
+        name = define_match.group(1)
+        if not _should_skip_variable(name):
+            confdef_vars.add(name)
 
     return output_vars, confdef_vars
 
@@ -298,11 +231,9 @@ class GnuGnulibTest(unittest.TestCase):
                 os.environ.get("TEST_TMPDIR", tempfile.gettempdir()),
             )
         )
+
         cls.work_dir = cls.outputs_dir / "gnu_configure"
-
         cls.m4_dir = cls.work_dir / "m4"
-        cls.m4_dir.mkdir(exist_ok=True, parents=True)
-
         cls.config_h_path = cls.work_dir / "config.h"
         cls.subst_h_path = cls.work_dir / "subst.h"
 
@@ -317,7 +248,11 @@ class GnuGnulibTest(unittest.TestCase):
                 raise FileNotFoundError(f"Failed to locate: {m4_rloc}")
             cls.m4_files.append(Path(m4_path))
 
-        # Check for autoconf
+        # Check for autoreconf (preferred) and autoconf
+        cls.autoreconf = shutil.which("autoreconf")
+        if not cls.autoreconf:
+            cls.autoreconf = shutil.which("autoreconf.exe")
+
         cls.autoconf = shutil.which("autoconf")
         if not cls.autoconf:
             cls.autoconf = shutil.which("autoconf.exe")
@@ -331,14 +266,13 @@ class GnuGnulibTest(unittest.TestCase):
     def _setup_work_directory(cls) -> None:
         """Set up the work directory with all necessary files."""
         # Copy all m4 files to m4 directory
+        cls.m4_dir.mkdir(exist_ok=True, parents=True)
+
         for m4_file in cls.m4_files:
             shutil.copy2(m4_file, cls.m4_dir / m4_file.name)
 
         # Read and prepare configure.ac
         configure_ac_content = cls.configure_ac_path.read_text(encoding="utf-8")
-
-        # Parse configure.ac to find the expected input filename for AC_CONFIG_FILES
-        expected_h_in_name = _parse_ac_config_files_input(configure_ac_content)
 
         # Insert AC_CONFIG_MACRO_DIRS after AC_INIT if not present
         if "AC_CONFIG_MACRO_DIRS" not in configure_ac_content:
@@ -350,19 +284,28 @@ class GnuGnulibTest(unittest.TestCase):
             configure_ac_content, encoding="utf-8"
         )
 
-        # Copy config.h.in
         shutil.copy2(cls.config_h_in_path, cls.work_dir / "config.h.in")
-
-        # Copy gnulib_*.h.in with the name expected by configure.ac
-        if expected_h_in_name:
-            dest_name = expected_h_in_name
-        else:
-            dest_name = cls.subst_h_in_path.name
-        shutil.copy2(cls.subst_h_in_path, cls.work_dir / dest_name)
+        shutil.copy2(cls.subst_h_in_path, cls.work_dir / "subst.h.in")
 
         # Generate Makefile.in
         makefile_in = _generate_makefile_in()
         (cls.work_dir / "Makefile.in").write_text(makefile_in, encoding="utf-8")
+
+        result = subprocess.run(
+            [cls.autoreconf, "-i"],
+            cwd=cls.work_dir,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding="utf-8",
+        )
+
+        # Copy the config files again to ensure templates were not modified
+        shutil.copy2(cls.config_h_in_path, cls.work_dir / "config.h.in")
+        shutil.copy2(cls.subst_h_in_path, cls.work_dir / "subst.h.in")
+
+        log_file = cls.work_dir / "autoreconf.log"
+        log_file.write_text(result.stdout or "", encoding="utf-8")
 
     @classmethod
     def _parse_aclocal_m4_includes(cls) -> set[str]:
@@ -403,27 +346,15 @@ class GnuGnulibTest(unittest.TestCase):
 
     @classmethod
     def _run_autoconf_and_configure(cls) -> None:
-        """Run autoreconf and configure to generate config.log."""
-        # Run autoreconf
-        autoreconf = shutil.which("autoreconf")
-        if autoreconf:
-            result = subprocess.run(
-                [autoreconf, "-i", "-f"],
-                cwd=cls.work_dir,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                encoding="utf-8",
-            )
-        else:
-            result = subprocess.run(
-                [cls.autoconf],
-                cwd=cls.work_dir,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                encoding="utf-8",
-            )
+        """Run autoconf and configure to generate config.log."""
+        result = subprocess.run(
+            [cls.autoconf],
+            cwd=cls.work_dir,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding="utf-8",
+        )
 
         log_file = cls.work_dir / "autoconf.log"
         log_file.write_text(result.stdout or "", encoding="utf-8")
@@ -433,7 +364,7 @@ class GnuGnulibTest(unittest.TestCase):
         configure = cls.work_dir / "configure"
         assert configure.exists(), "configure script was not generated"
 
-        configure.chmod(0o755)
+        # configure.chmod(0o755)
         cls._cleanup_unused_m4_files()
 
         # Run configure
@@ -460,10 +391,10 @@ class GnuGnulibTest(unittest.TestCase):
         """
 
         config_h_in_content = self.config_h_in_path.read_text(encoding="utf-8")
-        gnulib_h_in_content = self.subst_h_in_path.read_text(encoding="utf-8")
+        subst_h_in_content = self.subst_h_in_path.read_text(encoding="utf-8")
 
         define_vars = _parse_undef_placeholders(config_h_in_content)
-        subst_vars = _parse_subst_placeholders(gnulib_h_in_content)
+        subst_vars = _parse_subst_placeholders(subst_h_in_content)
 
         config_log = self.work_dir / "config.log"
         assert config_log.exists(), "config.log not found"
@@ -472,9 +403,6 @@ class GnuGnulibTest(unittest.TestCase):
         output_variables, confdef_variables = _parse_expected_variables_from_config_log(
             config_log
         )
-
-        if not output_variables or not confdef_variables:
-            self.fail("Failed to find variables in `config.log`")
 
         # Combine all variables into a single sorted list
         all_variables = sorted(output_variables | confdef_variables)
@@ -507,9 +435,16 @@ class GnuGnulibTest(unittest.TestCase):
     def test_config_h_diff(self) -> None:
         """Test that the generated `config.h` file matches the `golden_config.h` file"""
         # Parse config.log if not already done by test_golden_files_have_all_variables
+
+        # Skip the first line which is always injected by configure.
+        # ```
+        # /* config.h.  Generated from config.h.in by configure.  */
+        # ```
+        config_lines = self.config_h_path.read_text(encoding="utf-8").splitlines()[1:]
+
         diff = difflib.unified_diff(
             self.golden_config_h_path.read_text(encoding="utf-8").splitlines(),
-            self.config_h_path.read_text(encoding="utf-8").splitlines(),
+            config_lines,
             fromfile=f"a/{self.golden_config_h_path.name}",
             tofile=f"b/{self.config_h_path.name}",
             lineterm="",

@@ -1,3 +1,3 @@
-/* config.h.in - AC_DEFINE placeholders */
+/* config.h.in */
 /* #undef WCRTOMB_C_LOCALE_BUG */
 /* #undef WCRTOMB_RETVAL_BUG */

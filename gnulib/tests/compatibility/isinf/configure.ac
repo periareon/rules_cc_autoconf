@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_ISINF
 gl_ISINFL_WORKS
 
-AC_CONFIG_FILES([gnulib_isinf.h:gnulib_isinf.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

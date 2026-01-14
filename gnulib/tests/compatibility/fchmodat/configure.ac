@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_FCHMODAT
 gl_PREREQ_FCHMODAT
 
-AC_CONFIG_FILES([gnulib_fchmodat.h:gnulib_fchmodat.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

@@ -6,5 +6,5 @@ gl_FUNC_GETPASS
 gl_FUNC_GETPASS_GNU
 gl_PREREQ_GETPASS
 
-AC_CONFIG_FILES([gnulib_getpass.h:gnulib_getpass.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

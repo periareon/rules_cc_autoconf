@@ -1,2 +1,2 @@
 /* gnulib_log1pl.h.in - AC_SUBST placeholders */
-#define SUBST_LOG1PL_LIBM @LOG1PL_LIBM@
+#define SUBST_LOG1PL_LIBM "@LOG1PL_LIBM@"

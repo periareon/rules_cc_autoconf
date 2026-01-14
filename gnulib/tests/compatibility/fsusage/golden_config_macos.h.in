@@ -1,6 +1,6 @@
-/* config.h.in - AC_DEFINE placeholders */
+/* config.h.in */
 /* #undef STATFS_TRUNCATES_BLOCK_COUNTS */
-#define STAT_STATFS2_BSIZE 1
+/* #undef STAT_STATFS2_BSIZE */
 /* #undef STAT_STATFS2_FRSIZE */
 /* #undef STAT_STATFS2_FSIZE */
 /* #undef STAT_STATFS4 */

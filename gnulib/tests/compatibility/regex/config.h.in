@@ -1,4 +1,4 @@
-/* config.h.in - AC_DEFINE placeholders */
+/* config.h.in */
 #undef _REGEX_INCLUDE_LIMITS_H
 #undef _REGEX_LARGE_OFFSETS
 #undef re_comp

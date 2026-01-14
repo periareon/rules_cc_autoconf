@@ -8,5 +8,5 @@ gl_FUNC_GETCWD_LGPL
 gl_FUNC_GETCWD
 gl_PREREQ_GETCWD
 
-AC_CONFIG_FILES([gnulib_getcwd.h:gnulib_getcwd.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

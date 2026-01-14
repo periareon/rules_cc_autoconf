@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from time_rz.m4
 gl_TIME_RZ
 
-AC_CONFIG_FILES([gnulib_time_rz.h:gnulib_time_rz.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

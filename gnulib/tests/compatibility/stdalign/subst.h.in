@@ -1,2 +1,2 @@
 /* gnulib_stdalign.h.in - AC_SUBST placeholders */
-#define SUBST_HAVE_STDALIGN_H @HAVE_STDALIGN_H@
+#define SUBST_HAVE_STDALIGN_H "@HAVE_STDALIGN_H@"

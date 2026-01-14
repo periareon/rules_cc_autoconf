@@ -7,5 +7,5 @@ gl_FUNC_FREXPL_NO_LIBM
 gl_CHECK_FREXPL_NO_LIBM
 gl_FUNC_FREXPL_WORKS
 
-AC_CONFIG_FILES([gnulib_frexpl.h:gnulib_frexpl.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

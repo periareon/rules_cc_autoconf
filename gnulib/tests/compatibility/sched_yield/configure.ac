@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from sched_yield.m4
 gl_FUNC_SCHED_YIELD
 
-AC_CONFIG_FILES([gnulib_sched_yield.h:gnulib_sched_yield.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

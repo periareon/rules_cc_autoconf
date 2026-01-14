@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from mmap-anon.m4
 gl_FUNC_MMAP_ANON
 
-AC_CONFIG_FILES([gnulib_mmap-anon.h:gnulib_mmap-anon.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

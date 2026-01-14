@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_MEMMOVE
 gl_PREREQ_MEMMOVE
 
-AC_CONFIG_FILES([gnulib_memmove.h:gnulib_memmove.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

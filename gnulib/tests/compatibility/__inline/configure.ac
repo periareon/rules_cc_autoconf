@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from __inline.m4
 gl___INLINE
 
-AC_CONFIG_FILES([gnulib___inline.h:gnulib___inline.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

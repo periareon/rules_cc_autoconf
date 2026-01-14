@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_CBRTL
 gl_FUNC_CBRTL_WORKS
 
-AC_CONFIG_FILES([gnulib_cbrtl.h:gnulib_cbrtl.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

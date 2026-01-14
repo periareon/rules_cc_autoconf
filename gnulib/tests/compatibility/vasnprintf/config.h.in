@@ -1,4 +1,4 @@
-/* config.h.in - AC_DEFINE placeholders */
+/* config.h.in */
 #undef HAVE_SNPRINTF_RETVAL_C99
 #undef HAVE_SNPRINTF_TRUNCATION_C99
 #undef HAVE_WORKING_SWPRINTF

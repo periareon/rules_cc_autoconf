@@ -6,5 +6,5 @@ gl_FUNC_C32RTOMB
 gl_CHECK_FUNC_C32RTOMB
 gl_C32RTOMB_SANITYCHECK
 
-AC_CONFIG_FILES([gnulib_c32rtomb.h:gnulib_c32rtomb.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

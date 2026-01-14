@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_STRSIGNAL
 gl_PREREQ_STRSIGNAL
 
-AC_CONFIG_FILES([gnulib_strsignal.h:gnulib_strsignal.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

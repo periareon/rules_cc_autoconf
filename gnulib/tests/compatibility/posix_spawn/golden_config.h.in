@@ -1,2 +1,2 @@
-/* config.h.in - AC_DEFINE placeholders */
-#define REPLACE_POSIX_SPAWN 1
+/* config.h.in */
+/* #undef REPLACE_POSIX_SPAWN */

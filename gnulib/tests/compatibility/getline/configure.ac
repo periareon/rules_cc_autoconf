@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_GETLINE
 gl_PREREQ_GETLINE
 
-AC_CONFIG_FILES([gnulib_getline.h:gnulib_getline.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

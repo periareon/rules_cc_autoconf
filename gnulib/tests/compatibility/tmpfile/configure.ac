@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_TMPFILE
 gl_PREREQ_TMPFILE
 
-AC_CONFIG_FILES([gnulib_tmpfile.h:gnulib_tmpfile.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

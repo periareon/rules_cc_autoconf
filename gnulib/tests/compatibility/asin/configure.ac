@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from asin.m4
 gl_FUNC_ASIN
 
-AC_CONFIG_FILES([gnulib_asin.h:gnulib_asin.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

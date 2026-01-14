@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from tanhf.m4
 gl_FUNC_TANHF
 
-AC_CONFIG_FILES([gnulib_tanhf.h:gnulib_tanhf.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

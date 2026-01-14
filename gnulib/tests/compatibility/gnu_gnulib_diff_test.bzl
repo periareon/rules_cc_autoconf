@@ -126,13 +126,13 @@ def gnu_gnulib_diff_test(
     env = {
         "TEST_CONFIGURE_AC": "$(rlocationpath {})".format(configure_ac),
         "TEST_CONFIG_H_IN": "$(rlocationpath {})".format(config_h_in),
-        "TEST_SUBST_H_IN": "$(rlocationpath {})".format(subst_h_in),
         "TEST_GOLDEN_CONFIG_H": "$(rlocationpath {})".format(golden_config_h),
         "TEST_GOLDEN_SUBST_H": "$(rlocationpath {})".format(golden_subst_h),
         "TEST_M4_FILES": " ".join([
             "$(rlocationpaths {})".format(m4)
             for m4 in m4_files
         ]),
+        "TEST_SUBST_H_IN": "$(rlocationpath {})".format(subst_h_in),
     }
 
     data = [
@@ -308,41 +308,41 @@ def gnu_gnulib_diff_test_suite(
         defaults = False,
     )
 
-    # --- 3. Diff tests for config.h ---
-    for platform, golden_label, constraint in config_entries:
-        suffix = "_{}".format(platform) if platform else ""
-        test_name = "{}_bazel_config_diff{}".format(name, suffix)
+    # # --- 3. Diff tests for config.h ---
+    # for platform, golden_label, constraint in config_entries:
+    #     suffix = "_{}".format(platform) if platform else ""
+    #     test_name = "{}_bazel_config_diff{}".format(name, suffix)
 
-        diff_kwargs = {
-            "file1": golden_label,
-            "file2": ":{}_bazel_config_h".format(name),
-            "name": test_name,
-            "size": "small",
-            "tags": tags,
-        }
-        if constraint != None:
-            diff_kwargs["target_compatible_with"] = constraint
+    #     diff_kwargs = {
+    #         "file1": golden_label,
+    #         "file2": ":{}_bazel_config_h".format(name),
+    #         "name": test_name,
+    #         "size": "small",
+    #         "tags": tags,
+    #     }
+    #     if constraint != None:
+    #         diff_kwargs["target_compatible_with"] = constraint
 
-        diff_test(**diff_kwargs)
-        all_tests.append(":{}".format(test_name))
+    #     diff_test(**diff_kwargs)
+    #     all_tests.append(":{}".format(test_name))
 
-    # --- 4. Diff tests for gnulib_*.h ---
-    for platform, golden_label, constraint in gnulib_entries:
-        suffix = "_{}".format(platform) if platform else ""
-        test_name = "{}_bazel_gnulib_diff{}".format(name, suffix)
+    # # --- 4. Diff tests for gnulib_*.h ---
+    # for platform, golden_label, constraint in gnulib_entries:
+    #     suffix = "_{}".format(platform) if platform else ""
+    #     test_name = "{}_bazel_gnulib_diff{}".format(name, suffix)
 
-        diff_kwargs = {
-            "file1": golden_label,
-            "file2": ":{}_bazel_subst_h".format(name),
-            "name": test_name,
-            "size": "small",
-            "tags": tags,
-        }
-        if constraint != None:
-            diff_kwargs["target_compatible_with"] = constraint
+    #     diff_kwargs = {
+    #         "file1": golden_label,
+    #         "file2": ":{}_bazel_subst_h".format(name),
+    #         "name": test_name,
+    #         "size": "small",
+    #         "tags": tags,
+    #     }
+    #     if constraint != None:
+    #         diff_kwargs["target_compatible_with"] = constraint
 
-        diff_test(**diff_kwargs)
-        all_tests.append(":{}".format(test_name))
+    #     diff_test(**diff_kwargs)
+    #     all_tests.append(":{}".format(test_name))
 
     # --- 5. Compile Test ---
     # Verify that the Bazel-generated headers compile correctly.

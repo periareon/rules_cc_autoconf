@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from builtin-expect.m4
 gl___BUILTIN_EXPECT
 
-AC_CONFIG_FILES([gnulib_builtin-expect.h:gnulib_builtin-expect.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_TERMCAP
 gl_TERMCAP_BODY
 
-AC_CONFIG_FILES([gnulib_termcap.h:gnulib_termcap.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

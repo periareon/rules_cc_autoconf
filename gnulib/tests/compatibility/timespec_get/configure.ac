@@ -4,5 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from timespec_get.m4
 gl_FUNC_TIMESPEC_GET
 
-AC_CONFIG_FILES([gnulib_timespec_get.h:gnulib_timespec_get.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

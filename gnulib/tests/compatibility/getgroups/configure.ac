@@ -5,5 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 AC_FUNC_GETGROUPS
 gl_FUNC_GETGROUPS
 
-AC_CONFIG_FILES([gnulib_getgroups.h:gnulib_getgroups.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

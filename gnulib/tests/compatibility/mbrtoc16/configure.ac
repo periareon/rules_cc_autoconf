@@ -11,5 +11,5 @@ gl_MBRTOC16_C_LOCALE
 gl_MBRTOC16_SANITYCHECK
 gl_PREREQ_MBRTOC16
 
-AC_CONFIG_FILES([gnulib_mbrtoc16.h:gnulib_mbrtoc16.h.in])
+AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT
