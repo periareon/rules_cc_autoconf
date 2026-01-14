@@ -84,7 +84,6 @@ autoconf(
         macros.AC_SUBST("HAVE_NANOSLEEP", "1"),
         macros.AC_SUBST("HAVE_STRPTIME", "1"),
         macros.AC_SUBST("HAVE_TIMEGM", "1"),
-        macros.AC_SUBST("HAVE_TIMESPEC_GET", "1"),
         macros.AC_SUBST("HAVE_TIMESPEC_GETRES", "1"),
         macros.AC_SUBST("HAVE_TIMEZONE_T", "0"),
         macros.AC_SUBST("HAVE_TZALLOC", "0"),

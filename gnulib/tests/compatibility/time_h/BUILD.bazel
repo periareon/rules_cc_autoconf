@@ -2,7 +2,7 @@ load("//gnulib/tests/compatibility:gnu_gnulib_diff_test.bzl", "gnu_gnulib_diff_t
 
 gnu_gnulib_diff_test_suite(
     name = "time_h_test",
-    bazel_autoconf_target = "//gnulib/m4/time_h:with_defaults",
+    bazel_autoconf_target = "//gnulib/m4/time_h",
     config_h_in = "config.h.in",
     configure_ac = "configure.ac",
     golden_config_h = {

@@ -1,3 +1,17 @@
 /* config.h.in */
-#define HAVE_ICONV 1
-/* #undef ICONV_CONST */
+/* #undef AMDEPBACKSLASH */
+/* #undef AMDEP_FALSE */
+/* #undef AMDEP_TRUE */
+/* #undef ANSICXX_FALSE */
+/* #undef ANSICXX_TRUE */
+/* #undef CXXDEPMODE */
+/* #undef CXX_CHOICE */
+/* #undef DEPDIR */
+#define ICONV_CONST 
+/* #undef LIBICONV */
+/* #undef LTLIBICONV */
+/* #undef REPLACE_ICONV */
+/* #undef REPLACE_ICONV_OPEN */
+/* #undef REPLACE_ICONV_UTF */
+/* #undef am__fastdepCXX_FALSE */
+/* #undef am__fastdepCXX_TRUE */

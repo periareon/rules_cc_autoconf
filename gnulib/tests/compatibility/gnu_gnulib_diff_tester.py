@@ -251,6 +251,17 @@ class GnuGnulibTest(unittest.TestCase):
                 raise FileNotFoundError(f"Failed to locate: {m4_rloc}")
             cls.m4_files.append(Path(m4_path))
 
+        # Get auxiliary files (optional, space-separated list from rlocationpaths)
+        aux_files_rloc = os.environ.get("TEST_AUX_FILES", "").split()
+        cls.aux_files = []
+        for aux_rloc in aux_files_rloc:
+            if not aux_rloc:
+                continue
+            aux_path = r.Rlocation(aux_rloc, source_repo)
+            if not aux_path:
+                raise FileNotFoundError(f"Failed to locate aux file: {aux_rloc}")
+            cls.aux_files.append(Path(aux_path))
+
         # Check for autoreconf (preferred) and autoconf
         cls.autoreconf = shutil.which("autoreconf")
         if not cls.autoreconf:
@@ -268,6 +279,13 @@ class GnuGnulibTest(unittest.TestCase):
     @classmethod
     def _setup_work_directory(cls) -> None:
         """Set up the work directory with all necessary files."""
+        # Create work directory
+        cls.work_dir.mkdir(exist_ok=True, parents=True)
+
+        # Copy auxiliary files to work directory root (before autoreconf)
+        for aux_file in cls.aux_files:
+            shutil.copy2(aux_file, cls.work_dir / aux_file.name)
+
         # Copy all m4 files to m4 directory
         cls.m4_dir.mkdir(exist_ok=True, parents=True)
 

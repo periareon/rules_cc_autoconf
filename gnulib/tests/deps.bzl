@@ -10,13 +10,19 @@ filegroup(
     srcs = glob(["m4/*.m4"]),
     visibility = ["//visibility:public"],
 )
+
+filegroup(
+    name = "build-aux-config",
+    srcs = glob(["build-aux/config.*"]),
+    visibility = ["//visibility:public"],
+)
 """
 
 def _gnulib_impl(module_ctx):
     http_archive(
         name = "gnulib",
         urls = ["https://github.com/coreutils/gnulib/archive/635dbdcf501d52d2e42daf6b44261af9ce2dfe38.zip"],
-        integrity = "",
+        integrity = "sha256-jdRTQZBSkiapmoHhQZTlzlKn7DgN+JY6mPJEb1we2cA=",
         strip_prefix = "gnulib-635dbdcf501d52d2e42daf6b44261af9ce2dfe38",
         build_file_content = _BUILD_FILE,
     )

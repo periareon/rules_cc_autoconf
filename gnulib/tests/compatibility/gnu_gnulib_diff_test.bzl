@@ -93,6 +93,7 @@ def gnu_gnulib_diff_test(
         subst_h_in,
         golden_config_h,
         golden_subst_h,
+        aux_files = [],
         size = "medium",
         tags = [],
         target_compatible_with = None,
@@ -101,11 +102,12 @@ def gnu_gnulib_diff_test(
 
     This test:
     1. Copies all m4 files to TEST_TMPDIR
-    2. Runs autoconf to generate configure
-    3. Runs configure to generate config.h
-    4. Parses config.h for AC_DEFINE values
-    5. Parses config.status for AC_SUBST values
-    6. Compares against golden files
+    2. Copies aux files to work directory root
+    3. Runs autoconf to generate configure
+    4. Runs configure to generate config.h
+    5. Parses config.h for AC_DEFINE values
+    6. Parses config.status for AC_SUBST values
+    7. Compares against golden files
 
     Args:
         name (str): Name of the test target
@@ -115,6 +117,7 @@ def gnu_gnulib_diff_test(
         subst_h_in (Label): Template for AC_SUBST (@FOO@ patterns)
         golden_config_h (Label): Expected config.h output
         golden_subst_h (Label): Expected gnulib_*.h output
+        aux_files (list[Label]): Auxiliary files (e.g., config.rpath) to copy to work directory root
         size (str): Test size (default: "medium")
         tags (list[str]): Test tags
         target_compatible_with: Platform constraint (default: Linux and macOS)
@@ -132,13 +135,20 @@ def gnu_gnulib_diff_test(
         "TEST_SUBST_H_IN": "$(rlocationpath {})".format(subst_h_in),
     }
 
+    # Add aux_files to environment if provided
+    if aux_files:
+        env["TEST_AUX_FILES"] = " ".join([
+            "$(rlocationpaths {})".format(aux)
+            for aux in aux_files
+        ])
+
     data = [
         configure_ac,
         config_h_in,
         subst_h_in,
         golden_config_h,
         golden_subst_h,
-    ] + list(m4_files)
+    ] + list(m4_files) + list(aux_files)
 
     # Platform-specific test selection (no Windows support for autoconf)
     if target_compatible_with == None:
@@ -172,6 +182,7 @@ def gnu_gnulib_diff_test_suite(
         golden_subst_h,
         bazel_autoconf_target,
         test_c,
+        aux_files = [],
         size = "medium",
         tags = [],
         **kwargs):
@@ -209,6 +220,7 @@ def gnu_gnulib_diff_test_suite(
             Can be a Label or dict with platform keys.
         bazel_autoconf_target (Label): The autoconf target from //gnulib/m4/{name}
         test_c (Label): C file to compile with golden headers
+        aux_files (list[Label]): Auxiliary files (e.g., config.rpath) to copy to work directory root
         size (str): Test size (default: "medium")
         tags (list[str]): Test tags
         **kwargs: Additional arguments
@@ -241,6 +253,7 @@ def gnu_gnulib_diff_test_suite(
             subst_h_in = subst_h_in,
             golden_config_h = golden_config_h,
             golden_subst_h = golden_subst_h,
+            aux_files = aux_files,
             size = size,
             tags = tags,
             **kwargs
@@ -279,6 +292,7 @@ def gnu_gnulib_diff_test_suite(
                     subst_h_in = subst_h_in,
                     golden_config_h = config_golden,
                     golden_subst_h = gnulib_golden,
+                    aux_files = aux_files,
                     size = size,
                     tags = tags,
                     target_compatible_with = _PLATFORM_CONSTRAINTS.get(platform),

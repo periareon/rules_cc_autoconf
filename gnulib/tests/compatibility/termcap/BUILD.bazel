@@ -2,6 +2,7 @@ load("//gnulib/tests/compatibility:gnu_gnulib_diff_test.bzl", "gnu_gnulib_diff_t
 
 gnu_gnulib_diff_test_suite(
     name = "termcap_test",
+    aux_files = ["@gnulib//:build-aux-config"],
     bazel_autoconf_target = "//gnulib/m4/termcap:termcap",
     config_h_in = "config.h.in",
     configure_ac = "configure.ac",
