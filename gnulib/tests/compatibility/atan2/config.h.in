@@ -1,1 +1,3 @@
 /* config.h.in */
+#undef ATAN2_LIBM
+#undef POW_LIBM

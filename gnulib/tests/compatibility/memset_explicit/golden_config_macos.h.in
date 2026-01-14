@@ -1,2 +1,2 @@
 /* config.h.in */
-/* #undef HAVE_MEMSET_S_SUPPORTS_ZERO */
+#define HAVE_MEMSET_S_SUPPORTS_ZERO 1

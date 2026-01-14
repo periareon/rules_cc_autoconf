@@ -1,1 +1,261 @@
 /* config.h.in */
+#define __EXTENSIONS__ 1
+#define __STDC_WANT_IEC_60559_ATTRIBS_EXT__ 1
+#define __STDC_WANT_IEC_60559_BFP_EXT__ 1
+#define __STDC_WANT_IEC_60559_DFP_EXT__ 1
+#define __STDC_WANT_IEC_60559_EXT__ 1
+#define __STDC_WANT_IEC_60559_FUNCS_EXT__ 1
+#define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
+#define __STDC_WANT_LIB_EXT2__ 1
+#define __STDC_WANT_MATH_SPEC_FUNCS__ 1
+#define _ALL_SOURCE 1
+#define _DARWIN_C_SOURCE 1
+#define _GNU_SOURCE 1
+#define _HPUX_ALT_XOPEN_SOCKET_API 1
+#define _NETBSD_SOURCE 1
+#define _OPENBSD_SOURCE 1
+#define _POSIX_PTHREAD_SEMANTICS 1
+#define _TANDEM_SOURCE 1
+/* #undef am__fastdepCXX_FALSE */
+/* #undef am__fastdepCXX_TRUE */
+/* #undef AMDEP_FALSE */
+/* #undef AMDEP_TRUE */
+/* #undef AMDEPBACKSLASH */
+/* #undef ANSICXX_FALSE */
+/* #undef ANSICXX_TRUE */
+/* #undef CAN_PRINT_STACK_TRACE */
+/* #undef CXX_CHOICE */
+/* #undef CXXDEPMODE */
+/* #undef DEPDIR */
+/* #undef DUPLOCALE_LIB */
+/* #undef GNULIB_TEST_ */
+/* #undef HAVE__EXIT */
+/* #undef HAVE_ALIGNED_ALLOC */
+/* #undef HAVE_ATOLL */
+/* #undef HAVE_C_UNREACHABLE */
+/* #undef HAVE_CANONICALIZE_FILE_NAME */
+/* #undef HAVE_CLOCK_GETRES */
+/* #undef HAVE_CLOCK_GETTIME */
+/* #undef HAVE_CLOCK_SETTIME */
+/* #undef HAVE_DECL_ECVT */
+/* #undef HAVE_DECL_FCVT */
+/* #undef HAVE_DECL_GCVT */
+/* #undef HAVE_DECL_GETLOADAVG */
+/* #undef HAVE_DECL_INITSTATE */
+/* #undef HAVE_DECL_LOCALTIME_R */
+/* #undef HAVE_DECL_MEMEQ */
+/* #undef HAVE_DECL_MEMMEM */
+/* #undef HAVE_DECL_MEMRCHR */
+/* #undef HAVE_DECL_PROGRAM_INVOCATION_NAME */
+/* #undef HAVE_DECL_SETENV */
+/* #undef HAVE_DECL_SETSTATE */
+/* #undef HAVE_DECL_STRDUP */
+/* #undef HAVE_DECL_STREQ */
+/* #undef HAVE_DECL_STRERROR_R */
+/* #undef HAVE_DECL_STRNDUP */
+/* #undef HAVE_DECL_STRNLEN */
+/* #undef HAVE_DECL_STRSIGNAL */
+/* #undef HAVE_DECL_STRTOK_R */
+/* #undef HAVE_DECL_UNSETENV */
+#define HAVE_DUPLOCALE 1
+/* #undef HAVE_EXPLICIT_BZERO */
+/* #undef HAVE_FFSL */
+/* #undef HAVE_FFSLL */
+/* #undef HAVE_FREELOCALE */
+/* #undef HAVE_GETLOCALENAME_L */
+/* #undef HAVE_GETPROGNAME */
+/* #undef HAVE_GETSUBOPT */
+/* #undef HAVE_GRANTPT */
+/* #undef HAVE_INITSTATE */
+#define HAVE_INTTYPES_H 1
+/* #undef HAVE_LOCALE_T */
+/* #undef HAVE_MAX_ALIGN_T */
+/* #undef HAVE_MBSLEN */
+/* #undef HAVE_MBTOWC */
+/* #undef HAVE_MEMPCPY */
+/* #undef HAVE_MEMSET_EXPLICIT */
+/* #undef HAVE_MKDTEMP */
+/* #undef HAVE_MKOSTEMP */
+/* #undef HAVE_MKOSTEMPS */
+/* #undef HAVE_MKSTEMP */
+/* #undef HAVE_MKSTEMPS */
+/* #undef HAVE_NANOSLEEP */
+/* #undef HAVE_NEWLOCALE */
+#define HAVE_NL_LANGINFO_L 1
+/* #undef HAVE_POSIX_MEMALIGN */
+/* #undef HAVE_POSIX_OPENPT */
+#define HAVE_PTHREAD_API 1
+/* #undef HAVE_PTSNAME */
+/* #undef HAVE_PTSNAME_R */
+/* #undef HAVE_QSORT_R */
+/* #undef HAVE_RANDOM */
+/* #undef HAVE_RANDOM_R */
+/* #undef HAVE_RAWMEMCHR */
+/* #undef HAVE_REALLOCARRAY */
+/* #undef HAVE_REALPATH */
+/* #undef HAVE_RPMATCH */
+/* #undef HAVE_SECURE_GETENV */
+/* #undef HAVE_SETENV */
+/* #undef HAVE_SETSTATE */
+/* #undef HAVE_SIGABBREV_NP */
+/* #undef HAVE_SIGDESCR_NP */
+#define HAVE_SNPRINTF_L 1
+#define HAVE_STDINT_H 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+/* #undef HAVE_STPCPY */
+/* #undef HAVE_STPNCPY */
+/* #undef HAVE_STRCASESTR */
+/* #undef HAVE_STRCHRNUL */
+/* #undef HAVE_STRERROR_L */
+/* #undef HAVE_STRERRORNAME_NP */
+#define HAVE_STRING_H 1
+#define HAVE_STRINGS_H 1
+/* #undef HAVE_STRPBRK */
+/* #undef HAVE_STRPTIME */
+/* #undef HAVE_STRSEP */
+/* #undef HAVE_STRTOD */
+/* #undef HAVE_STRTOF */
+/* #undef HAVE_STRTOL */
+/* #undef HAVE_STRTOLD */
+/* #undef HAVE_STRTOLL */
+/* #undef HAVE_STRTOUL */
+/* #undef HAVE_STRTOULL */
+/* #undef HAVE_STRUCT_RANDOM_DATA */
+/* #undef HAVE_STRVERSCMP */
+/* #undef HAVE_SYS_LOADAVG_H */
+#define HAVE_SYS_STAT_H 1
+/* #undef HAVE_SYS_TIME_H */
+#define HAVE_SYS_TYPES_H 1
+/* #undef HAVE_TIMEGM */
+/* #undef HAVE_TIMESPEC_GET */
+/* #undef HAVE_TIMESPEC_GETRES */
+/* #undef HAVE_TIMEZONE_T */
+/* #undef HAVE_TZALLOC */
+#define HAVE_UNISTD_H 1
+/* #undef HAVE_UNLOCKPT */
+#define HAVE_WCHAR_H 1
+/* #undef HAVE_WINDOWS_LOCALE_T */
+#define HAVE_XLOCALE_H 1
+/* #undef LIB_DUPLOCALE */
+/* #undef LIB_SCHED_YIELD */
+/* #undef LIB_SETLOCALE_NULL */
+/* #undef LIBPMULTITHREAD */
+/* #undef LIBPTHREAD */
+/* #undef LOCALENAME_ENHANCE_LOCALE_FUNCS */
+/* #undef NEXT_AS_FIRST_DIRECTIVE_CTYPE_H */
+/* #undef NEXT_AS_FIRST_DIRECTIVE_ENDIAN_H */
+/* #undef NEXT_AS_FIRST_DIRECTIVE_ERRNO_H */
+/* #undef NEXT_AS_FIRST_DIRECTIVE_ERROR_H */
+/* #undef NEXT_AS_FIRST_DIRECTIVE_FNMATCH_H */
+/* #undef NEXT_AS_FIRST_DIRECTIVE_LOCALE_H */
+/* #undef NEXT_AS_FIRST_DIRECTIVE_STDCOUNTOF_H */
+/* #undef NEXT_AS_FIRST_DIRECTIVE_STDDEF_H */
+/* #undef NEXT_AS_FIRST_DIRECTIVE_STRING_H */
+/* #undef NEXT_AS_FIRST_DIRECTIVE_TIME_H */
+/* #undef NEXT_AS_FIRST_DIRECTIVE_UTIME_H */
+/* #undef NEXT_CTYPE_H */
+/* #undef NEXT_ENDIAN_H */
+/* #undef NEXT_ERRNO_H */
+/* #undef NEXT_ERROR_H */
+/* #undef NEXT_FNMATCH_H */
+/* #undef NEXT_LOCALE_H */
+/* #undef NEXT_STDCOUNTOF_H */
+/* #undef NEXT_STDDEF_H */
+/* #undef NEXT_STRING_H */
+/* #undef NEXT_TIME_H */
+/* #undef NEXT_UTIME_H */
+/* #undef NULLPTR_T_NEEDS_STDDEF */
+/* #undef REPLACE__EXIT */
+/* #undef REPLACE_ABORT */
+/* #undef REPLACE_ALIGNED_ALLOC */
+/* #undef REPLACE_CALLOC_FOR_CALLOC_GNU */
+/* #undef REPLACE_CALLOC_FOR_CALLOC_POSIX */
+/* #undef REPLACE_CANONICALIZE_FILE_NAME */
+/* #undef REPLACE_CTIME */
+/* #undef REPLACE_DUPLOCALE */
+/* #undef REPLACE_FFSLL */
+/* #undef REPLACE_FREE */
+/* #undef REPLACE_FREELOCALE */
+/* #undef REPLACE_GETLOADAVG */
+/* #undef REPLACE_GETLOCALENAME_L */
+/* #undef REPLACE_GETPROGNAME */
+/* #undef REPLACE_GETSUBOPT */
+/* #undef REPLACE_GMTIME */
+/* #undef REPLACE_INITSTATE */
+/* #undef REPLACE_LOCALECONV */
+/* #undef REPLACE_LOCALTIME */
+/* #undef REPLACE_LOCALTIME_R */
+/* #undef REPLACE_LOCALTIME_RZ */
+/* #undef REPLACE_MALLOC_FOR_MALLOC_GNU */
+/* #undef REPLACE_MALLOC_FOR_MALLOC_POSIX */
+/* #undef REPLACE_MB_CUR_MAX */
+/* #undef REPLACE_MBSTOWCS */
+/* #undef REPLACE_MBTOWC */
+/* #undef REPLACE_MEMCHR */
+/* #undef REPLACE_MEMMEM */
+/* #undef REPLACE_MEMPCPY */
+/* #undef REPLACE_MEMSET_EXPLICIT */
+/* #undef REPLACE_MKOSTEMP */
+/* #undef REPLACE_MKOSTEMPS */
+/* #undef REPLACE_MKSTEMP */
+/* #undef REPLACE_MKTIME */
+/* #undef REPLACE_MKTIME_Z */
+/* #undef REPLACE_NANOSLEEP */
+/* #undef REPLACE_NEWLOCALE */
+/* #undef REPLACE_NULL */
+/* #undef REPLACE_POSIX_MEMALIGN */
+/* #undef REPLACE_POSIX_OPENPT */
+/* #undef REPLACE_PTSNAME */
+/* #undef REPLACE_PTSNAME_R */
+/* #undef REPLACE_PUTENV */
+/* #undef REPLACE_QSORT_R */
+/* #undef REPLACE_RAND */
+/* #undef REPLACE_RANDOM */
+/* #undef REPLACE_RANDOM_R */
+/* #undef REPLACE_REALLOC_FOR_REALLOC_POSIX */
+/* #undef REPLACE_REALLOCARRAY */
+/* #undef REPLACE_REALPATH */
+/* #undef REPLACE_SETENV */
+/* #undef REPLACE_SETLOCALE */
+/* #undef REPLACE_SETSTATE */
+/* #undef REPLACE_STPCPY */
+/* #undef REPLACE_STPNCPY */
+/* #undef REPLACE_STRCASESTR */
+/* #undef REPLACE_STRCHRNUL */
+/* #undef REPLACE_STRDUP */
+/* #undef REPLACE_STRERROR */
+/* #undef REPLACE_STRERROR_L */
+/* #undef REPLACE_STRERROR_R */
+/* #undef REPLACE_STRERRORNAME_NP */
+/* #undef REPLACE_STRFTIME */
+/* #undef REPLACE_STRNCAT */
+/* #undef REPLACE_STRNCPY */
+/* #undef REPLACE_STRNDUP */
+/* #undef REPLACE_STRNLEN */
+/* #undef REPLACE_STRSIGNAL */
+/* #undef REPLACE_STRSTR */
+/* #undef REPLACE_STRTOD */
+/* #undef REPLACE_STRTOF */
+/* #undef REPLACE_STRTOK_R */
+/* #undef REPLACE_STRTOL */
+/* #undef REPLACE_STRTOLD */
+/* #undef REPLACE_STRTOLL */
+/* #undef REPLACE_STRTOUL */
+/* #undef REPLACE_STRTOULL */
+/* #undef REPLACE_STRUCT_LCONV */
+/* #undef REPLACE_STRVERSCMP */
+/* #undef REPLACE_TIME */
+/* #undef REPLACE_TIMEGM */
+/* #undef REPLACE_TIMESPEC_GET */
+/* #undef REPLACE_TIMESPEC_GETRES */
+/* #undef REPLACE_TZSET */
+/* #undef REPLACE_UNSETENV */
+/* #undef REPLACE_WCTOMB */
+/* #undef SCHED_YIELD_LIB */
+#define SETLOCALE_NULL_ALL_MTSAFE 0
+/* #undef SETLOCALE_NULL_LIB */
+#define SETLOCALE_NULL_ONE_MTSAFE 1
+#define STDC_HEADERS 1
+/* #undef STDDEF_NOT_IDEMPOTENT */
+/* #undef UNDEFINE_STRTOK_R */

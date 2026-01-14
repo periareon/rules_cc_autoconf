@@ -1,2 +1,3 @@
 /* config.h.in */
-#undef HAVE_C_STATIC_ASSERT
+#undef NEXT_ASSERT_H
+#undef NEXT_AS_FIRST_DIRECTIVE_ASSERT_H

@@ -1,2 +1,2 @@
-/* gnulib_msvc-inval.h.in - AC_SUBST placeholders */
+/* subst.h.in */
 #define SUBST_HAVE_MSVC_INVALID_PARAMETER_HANDLER "@HAVE_MSVC_INVALID_PARAMETER_HANDLER@"

@@ -1,2 +1,2 @@
 /* config.h.in */
-/* #undef HAVE_WINT_T */
+#define HAVE_WINT_T 1

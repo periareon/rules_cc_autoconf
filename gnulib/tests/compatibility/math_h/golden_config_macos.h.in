@@ -1,2 +1,2 @@
 /* config.h.in */
-/* #undef HAVE_SAME_LONG_DOUBLE_AS_DOUBLE */
+#define HAVE_SAME_LONG_DOUBLE_AS_DOUBLE 1

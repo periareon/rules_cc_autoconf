@@ -1,4 +1,5 @@
 /* subst.h.in */
+#define SUBST_ASINF_LIBM "@ASINF_LIBM@"
 #define SUBST_ASIN_LIBM "@ASIN_LIBM@"
 #define SUBST_HAVE_ACOSF "@HAVE_ACOSF@"
 #define SUBST_HAVE_ACOSL "@HAVE_ACOSL@"

@@ -1,2 +1,2 @@
 /* config.h.in */
-/* #undef HAVE___INLINE */
+#define HAVE___INLINE 1

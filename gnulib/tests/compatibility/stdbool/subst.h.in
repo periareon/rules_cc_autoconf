@@ -1,5 +1,4 @@
-/* gnulib_stdbool.h.in - AC_SUBST placeholders */
-#define SUBST_HAVE__BOOL "@HAVE__BOOL@"
+/* subst.h.in */
 #define SUBST_HAVE_INTTYPES_H "@HAVE_INTTYPES_H@"
 #define SUBST_HAVE_STDINT_H "@HAVE_STDINT_H@"
 #define SUBST_HAVE_STDIO_H "@HAVE_STDIO_H@"
@@ -9,4 +8,5 @@
 #define SUBST_HAVE_SYS_STAT_H "@HAVE_SYS_STAT_H@"
 #define SUBST_HAVE_SYS_TYPES_H "@HAVE_SYS_TYPES_H@"
 #define SUBST_HAVE_UNISTD_H "@HAVE_UNISTD_H@"
+#define SUBST_HAVE__BOOL "@HAVE__BOOL@"
 #define SUBST_STDC_HEADERS "@STDC_HEADERS@"

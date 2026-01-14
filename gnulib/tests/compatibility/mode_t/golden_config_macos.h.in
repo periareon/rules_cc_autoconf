@@ -1,2 +1,2 @@
 /* config.h.in */
-/* #undef PROMOTED_MODE_T */
+#define PROMOTED_MODE_T int

@@ -1,2 +1,2 @@
 /* config.h.in */
-/* #undef HAVE_POSIXDECL_TTYNAME_R */
+#define HAVE_POSIXDECL_TTYNAME_R 1

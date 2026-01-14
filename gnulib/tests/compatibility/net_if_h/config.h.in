@@ -1,1 +1,4 @@
 /* config.h.in */
+#undef HAVE_NET_IF_H
+#undef NEXT_AS_FIRST_DIRECTIVE_NET_IF_H
+#undef NEXT_NET_IF_H

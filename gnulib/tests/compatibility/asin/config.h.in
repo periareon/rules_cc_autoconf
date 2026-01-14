@@ -1,1 +1,3 @@
 /* config.h.in */
+#undef ASIN_LIBM
+#undef POW_LIBM

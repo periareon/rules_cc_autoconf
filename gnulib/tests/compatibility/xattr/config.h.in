@@ -1,2 +1,2 @@
 /* config.h.in */
-#undef USE_XATTR
+#undef LIB_XATTR

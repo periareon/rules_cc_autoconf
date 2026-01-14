@@ -1,4 +1,5 @@
 /* config.h.in */
+#undef ASINF_LIBM
 #undef ASIN_LIBM
 #undef HAVE_ACOSF
 #undef HAVE_ACOSL

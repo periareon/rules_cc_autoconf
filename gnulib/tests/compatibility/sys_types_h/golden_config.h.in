@@ -1,7 +1,7 @@
 /* config.h.in */
 /* #undef MAJOR_IN_MKDEV */
 /* #undef MAJOR_IN_SYSMACROS */
-/* #undef _USE_STD_STAT */
+#define _USE_STD_STAT 1
 #define HAVE_INTTYPES_H 1
 #define HAVE_STDINT_H 1
 #define HAVE_STDIO_H 1

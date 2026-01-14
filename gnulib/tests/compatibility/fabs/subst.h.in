@@ -1,1 +1,2 @@
 /* subst.h.in */
+#define SUBST_FABS_LIBM "@FABS_LIBM@"

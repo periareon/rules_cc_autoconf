@@ -1,2 +1,3 @@
 /* config.h.in */
-#undef va_copy
+#undef NEXT_AS_FIRST_DIRECTIVE_STDARG_H
+#undef NEXT_STDARG_H

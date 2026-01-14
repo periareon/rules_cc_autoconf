@@ -1,2 +1,2 @@
 /* config.h.in */
-/* #undef REPLACE_POSIX_SPAWN */
+#define REPLACE_POSIX_SPAWN 1

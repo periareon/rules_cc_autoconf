@@ -1,2 +1,2 @@
 /* config.h.in */
-#undef HAVE_MINMAX_IN_
+#undef HAVE_MINMAX_IN_SYS_PARAM_H

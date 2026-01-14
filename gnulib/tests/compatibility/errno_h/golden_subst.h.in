@@ -1,1 +1,3 @@
 /* subst.h.in */
+#define SUBST_NEXT_AS_FIRST_DIRECTIVE_ERRNO_H ""
+#define SUBST_NEXT_ERRNO_H ""

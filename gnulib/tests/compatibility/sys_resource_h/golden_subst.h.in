@@ -1,3 +1,3 @@
 /* gnulib_sys_resource_h.h.in - AC_SUBST placeholders */
-#define SUBST_HAVE_GETRUSAGE "@HAVE_GETRUSAGE@"
-#define SUBST_HAVE_SYS_RESOURCE_H "@HAVE_SYS_RESOURCE_H@"
+#define SUBST_HAVE_GETRUSAGE "1"
+#define SUBST_HAVE_SYS_RESOURCE_H "1"

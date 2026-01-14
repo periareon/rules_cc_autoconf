@@ -1,2 +1,2 @@
 /* config.h.in */
-#undef sig_atomic_t
+#undef HAVE_SIG_ATOMIC_T

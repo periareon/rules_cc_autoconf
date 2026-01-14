@@ -1,5 +1,4 @@
 /* config.h.in */
-#undef HAVE__BOOL
 #undef HAVE_INTTYPES_H
 #undef HAVE_STDINT_H
 #undef HAVE_STDIO_H
@@ -9,4 +8,5 @@
 #undef HAVE_SYS_STAT_H
 #undef HAVE_SYS_TYPES_H
 #undef HAVE_UNISTD_H
+#undef HAVE__BOOL
 #undef STDC_HEADERS

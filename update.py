@@ -42,4 +42,11 @@ for entry in sorted(glob.glob("bazel-testlogs/gnulib/tests/compatibility/*")):
     dest_config.chmod(MODE)
     dest_subst.chmod(MODE)
 
+    subst_in = outputs_dir / "expected_subst.h.in"
+    config_in = outputs_dir / "expected_config.h.in"
+    if subst_in.exists():
+        shutil.copy(subst_in, dest_dir / "subst.h.in")
+    if config_in.exists():
+        shutil.copy(config_in, dest_dir / "config.h.in")
+
     print(name)
