@@ -16,6 +16,7 @@ enum class CheckType {
     kSymbol,      ///< Check for preprocessor symbol
     kType,        ///< Check for type
     kCompile,     ///< Check if code compiles
+    kLink,        ///< Check if code compiles and links
     kDefine,      ///< Directly apply the define with the given value
     kSubst,       ///< AC_SUBST - substitution variable (may be conditional)
     kSizeof,      ///< Determine size of type

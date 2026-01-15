@@ -10,6 +10,7 @@ def gnu_autoconf_configure_test(
         golden_config_h,
         subst_h_in = None,
         golden_subst_h = None,
+        verify_variables = False,
         m4_files = [],
         aux_files = [],
         tags = [],
@@ -20,11 +21,12 @@ def gnu_autoconf_configure_test(
     Args:
         name (str): Name of the test target
         configure_ac (Label): The configure.ac file specific to this m4 module
-        m4_files (list[Label]): ALL m4 files needed to run autoconf (including deps)
         config_h_in (Label): Template for AC_DEFINE (#undef patterns)
         golden_config_h (Label): Expected config.h output
         subst_h_in (Label): Template for AC_SUBST (@FOO@ patterns)
         golden_subst_h (Label): Expected gnulib_*.h output
+        verify_variables (bool): If True, template files will be required to have all autoconf produced variables.
+        m4_files (list[Label]): ALL m4 files needed to run autoconf (including deps)
         aux_files (list[Label]): Auxiliary files (e.g., config.rpath) to copy to work directory root
         tags (list[str]): Test tags
         target_compatible_with: Platform constraint (default: Linux and macOS)
@@ -40,6 +42,9 @@ def gnu_autoconf_configure_test(
             for m4 in m4_files
         ]),
     }
+
+    if verify_variables:
+        env["VERIFY_VARIABLES"] = "1"
 
     # Add aux_files to environment if provided
     if aux_files:

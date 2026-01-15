@@ -438,6 +438,90 @@ def _ac_try_compile(
     _add_conditionals(check, if_true, if_false)
     return json.encode(check)
 
+def _ac_try_link(
+        *,
+        code = None,
+        file = None,
+        define = None,
+        includes = None,
+        language = "c",
+        requires = None,
+        if_true = None,
+        if_false = None):
+    """Try to compile and link custom code.
+
+    Original m4 example:
+    ```m4
+    AC_TRY_LINK([#include <pthread.h>], [pthread_create(NULL, NULL, NULL, NULL);], [AC_DEFINE([HAVE_PTHREAD], [1])])
+    ```
+
+    Example:
+    ```python
+    macros.AC_TRY_LINK(
+        code = "#include <pthread.h>\\nint main() { pthread_create(NULL, NULL, NULL, NULL); return 0; }",
+        define = "HAVE_PTHREAD",
+    )
+    macros.AC_TRY_LINK(file = ":test.c", define = "CUSTOM_CHECK")
+    macros.AC_TRY_LINK(
+        includes = ["langinfo.h"],
+        code = "char* cs = nl_langinfo(CODESET); (void)cs;",
+        define = "HAVE_LANGINFO_CODESET",
+    )
+    ```
+
+    Note:
+        This is similar to AC_TRY_COMPILE but also links the code, which is necessary
+        to verify that functions are available at link time (not just declared).
+
+        When `includes` is provided along with `code`, the code is treated as
+        the body of main() and the includes are prepended.
+
+    Args:
+        code: Code to compile and link. If `includes` is also provided, this is treated
+            as the body of main(). Otherwise, it should be complete C code.
+        define: Define name to set if compilation and linking succeeds
+        file: Label to a file containing code to compile and link (optional if code is provided)
+        includes: Optional list of headers to include. When provided, `code` is
+            treated as the body of main() function.
+        language: Language to use for check (`"c"` or `"cpp"`)
+        requires: List of requirements that must be met before this check runs.
+            Can be simple define names (e.g., `"HAVE_FOO"`), negated checks
+            (e.g., `"!HAVE_FOO"`), or value-based requirements
+            (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
+        if_true: List of checks to run if this check succeeds.
+        if_false: List of checks to run if this check fails.
+
+    Returns:
+        A JSON-encoded check string for use with the autoconf rule.
+    """
+    if not code and not file and not includes:
+        fail("Either 'code', 'file', or 'includes' with 'code' must be provided")
+    if file and includes:
+        fail("Cannot provide both 'file' and 'includes'")
+
+    check = {
+        "define": define,
+        "language": language,
+        "name": define,
+        "type": "link",
+    }
+
+    if file:
+        check["file"] = _into_label(file)
+    elif includes:
+        # When includes is provided, code is the body of main()
+        header_code = "\n".join(["#include <{}>".format(h) for h in includes])
+        body_code = code if code else ""
+        check["code"] = _AC_TRY_COMPILE_TEMPLATE.format(header_code, body_code)
+    elif code:
+        check["code"] = code
+
+    if requires:
+        check["requires"] = requires
+
+    _add_conditionals(check, if_true, if_false)
+    return json.encode(check)
+
 _AC_SIMPLE_MAIN_TEMPLATE = """\
 int main(void) { return 0; }
 """
@@ -1582,5 +1666,6 @@ macros = struct(
     AC_PROG_CXX = _ac_prog_cxx,
     AC_SUBST = _ac_subst,
     AC_TRY_COMPILE = _ac_try_compile,
+    AC_TRY_LINK = _ac_try_link,
     M4_DEFINE = _m4_define,
 )

@@ -67,6 +67,9 @@ class CheckRunner {
     /** @brief Check if code compiles successfully. */
     CheckResult check_compile(const Check& check);
 
+    /** @brief Check if code compiles and links. */
+    CheckResult check_link(const Check& check);
+
     /** @brief Produce the define value for the check unconditionally. */
     CheckResult check_define(const Check& check);
 

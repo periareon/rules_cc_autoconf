@@ -42,6 +42,8 @@ CheckResult CheckRunner::run_check(const Check& check) {
             return check_type_check(check);
         case CheckType::kCompile:
             return check_compile(check);
+        case CheckType::kLink:
+            return check_link(check);
         case CheckType::kDefine:
             return check_compile(check);
         case CheckType::kSubst:
@@ -205,6 +207,47 @@ CheckResult CheckRunner::check_compile(const Check& check) {
     }
 
     bool success = try_compile(code, check.language());
+
+    std::string value;
+    if (check.define_value().has_value()) {
+        value = success ? *check.define_value()
+                        : (check.define_value_fail().has_value()
+                               ? *check.define_value_fail()
+                               : "0");
+    } else {
+        value = success ? "1" : "0";
+    }
+
+    return CheckResult(check.define(), value, success);
+}
+
+CheckResult CheckRunner::check_link(const Check& check) {
+    std::string code{};
+
+    // Check if we have a file_path parameter
+    if (check.file_path().has_value()) {
+        std::string file_path = *check.file_path();
+        std::ifstream file(file_path);
+        if (file.is_open()) {
+            std::stringstream buffer;
+            buffer << file.rdbuf();
+            code = buffer.str();
+            file.close();
+        } else {
+            DebugLogger::warn("Could not open file: " + file_path);
+            return CheckResult(check.define(), "0", false);
+        }
+    } else if (check.code().has_value()) {
+        code = *check.code();
+    } else {
+        // Provide a default code if neither code nor file_path is provided
+        code = "int main(void) { return 0; }";
+    }
+
+    // Use try_compile_and_run approach: compile to object, then link
+    // We don't need to run it, just verify it links
+    std::optional<int> run_result = try_compile_and_run(code, check.language(), check.define());
+    bool success = run_result.has_value();
 
     std::string value;
     if (check.define_value().has_value()) {

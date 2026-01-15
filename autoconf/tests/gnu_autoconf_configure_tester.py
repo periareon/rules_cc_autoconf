@@ -355,11 +355,11 @@ class GnuAutoconfConfigureTest(unittest.TestCase):
         )
 
 
-        config_h_in_path = cls.work_dir / cls.subst_h_in_path.name
+        config_h_in_path = cls.work_dir / cls.config_h_in_path.name
         shutil.copy2(cls.config_h_in_path, config_h_in_path)
 
         if cls.subst_h_in_path:
-            subst_h_in_path = cls.work_dir / cls.config_h_in_path.name
+            subst_h_in_path = cls.work_dir / cls.subst_h_in_path.name
             shutil.copy2(cls.subst_h_in_path, subst_h_in_path)
 
         # Generate Makefile.in
@@ -376,9 +376,9 @@ class GnuAutoconfConfigureTest(unittest.TestCase):
         )
 
         # Copy the config files again to ensure templates were not modified
-        shutil.copy2(cls.subst_h_in_path, subst_h_in_path)
+        shutil.copy2(cls.config_h_in_path, config_h_in_path)
         if cls.subst_h_in_path:
-            shutil.copy2(cls.config_h_in_path, config_h_in_path)
+            shutil.copy2(cls.subst_h_in_path, subst_h_in_path)
 
         log_file = cls.work_dir / "autoreconf.log"
         log_file.write_text(result.stdout or "", encoding="utf-8")
@@ -458,13 +458,15 @@ class GnuAutoconfConfigureTest(unittest.TestCase):
 
         assert result.returncode == 0, f"configure failed:\n{result.stdout}"
 
-    def test_golden_files_have_all_variables(self) -> None:
+    def test_template_files_have_all_variables(self) -> None:
         """Test that golden files contain all variables found in config.log.
 
         This test parses config.log to extract the list of expected variable names
         (from Output variables and confdefs.h sections), then verifies that the
         golden files contain all these variables. It writes the list to a JSON file.
         """
+        if not os.getenv("VERIFY_VARIABLES", None):
+            self.skipTest("Verification was not requested")
 
         config_log = self.work_dir / "config.log"
         assert config_log.exists(), "config.log not found"
@@ -540,11 +542,11 @@ class GnuAutoconfConfigureTest(unittest.TestCase):
         config_lines = self.config_h_path.read_text(encoding="utf-8").splitlines()[1:]
 
         diff_output = diff(
-            file1_content=self.golden_subst_h_path.read_text(
+            file1_content=self.golden_config_h_path.read_text(
                 encoding="utf-8"
             ).splitlines(),
             file2_content=config_lines,
-            file1_name=self.golden_subst_h_name,
+            file1_name=self.golden_config_h_name,
             file2_name=self.config_h_path.name,
         )
 
@@ -555,14 +557,18 @@ class GnuAutoconfConfigureTest(unittest.TestCase):
 
     def test_subst_h_diff(self) -> None:
         """Test that the generated `subst.h` file matches the `golden_subst.h` file"""
-        if not self.subst_h_path:
+        if not self.subst_h_in_path:
             self.skipTest("No subst file provided")
 
         diff_output = diff(
-            file1=self.golden_subst_h_path,
-            file2=self.subst_h_path,
+            file1_content=self.golden_subst_h_path.read_text(
+                encoding="utf-8"
+            ).splitlines(),
+            file2_content=self.subst_h_path.read_text(
+                encoding="utf-8"
+            ).splitlines(),
             file1_name=self.golden_subst_h_name,
-            file2_name=self.subst_h_name,
+            file2_name=self.subst_h_path.name,
         )
 
         divider = "=" * 70

@@ -1,0 +1,66 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:macros.bzl", "macros")
+load("//autoconf:package_info.bzl", "package_info")
+load("//autoconf/tests:diff_test.bzl", "diff_test")
+load("//autoconf/tests:gnu_autoconf_configure_test.bzl", "gnu_autoconf_configure_test")
+
+package_info(
+    name = "package",
+    package_name = "test_link",
+    package_version = "1.0.0",
+)
+
+autoconf(
+    name = "autoconf",
+    checks = [
+        # AC_TRY_LINK checks if code compiles AND links successfully
+        # This is useful for checking functions that are declared but may not
+        # be available at link time (e.g., nl_langinfo(CODESET))
+        macros.AC_TRY_LINK(
+            includes = ["langinfo.h"],
+            code = """char* cs = nl_langinfo(CODESET);
+    (void)cs;""",
+            define = "HAVE_LANGINFO_CODESET",
+        ),
+        # Test with full code (not just includes)
+        macros.AC_TRY_LINK(
+            code = """#include <stdio.h>
+int main(void) {
+    printf("test");
+    return 0;
+}""",
+            define = "HAVE_PRINTF_LINK",
+        ),
+    ],
+    deps = [":package"],
+)
+
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    template = "config.h.in",
+    deps = [":autoconf"],
+)
+
+diff_test(
+    name = "diff_test",
+    file1 = "golden_config.h.in",
+    file2 = ":config.h",
+)
+
+cc_test(
+    name = "test_link",
+    srcs = [
+        "test_link.c",
+        ":config.h",
+    ],
+)
+
+gnu_autoconf_configure_test(
+    name = "gnu_autoconf_configure_test",
+    configure_ac = "configure.ac",
+    golden_config_h = "golden_config.h.in",
+    config_h_in = "config.h.in",
+)

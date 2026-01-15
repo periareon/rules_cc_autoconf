@@ -73,8 +73,8 @@ class DiffTests(unittest.TestCase):
         """Compare two files."""
 
         diff_output = diff(
-            file1=self.file_1.read_text(encoding="utf-8").splitlines(),
-            file2=self.file_2.read_text(encoding="utf-8").splitlines(),
+            file1_content=self.file_1.read_text(encoding="utf-8").splitlines(),
+            file2_content=self.file_2.read_text(encoding="utf-8").splitlines(),
             file1_name=self.file_1_rloc,
             file2_name=self.file_2_rloc,
         )

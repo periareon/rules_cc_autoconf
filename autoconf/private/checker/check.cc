@@ -19,6 +19,8 @@ std::string check_type_to_string(CheckType type) {
             return "type";
         case CheckType::kCompile:
             return "compile";
+        case CheckType::kLink:
+            return "link";
         case CheckType::kDefine:
             return "define";
         case CheckType::kSubst:
@@ -75,6 +77,8 @@ std::optional<Check> Check::from_json(const void* json_data) {
         type = CheckType::kType;
     } else if (type_str == "compile") {
         type = CheckType::kCompile;
+    } else if (type_str == "link") {
+        type = CheckType::kLink;
     } else if (type_str == "sizeof") {
         type = CheckType::kSizeof;
     } else if (type_str == "alignof") {
