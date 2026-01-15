@@ -1,22 +1,9 @@
 load("@rules_venv//python:py_binary.bzl", "py_binary")
 
 exports_files([
-    "gnu_autoconf_diff_tester.py",
+    "gnu_autoconf_configure_tester.py",
     "diff_tester.py",
 ])
-
-py_binary(
-    name = "gnu_autoconf_diff_tester",
-    srcs = ["gnu_autoconf_diff_tester.py"],
-    main = "gnu_autoconf_diff_tester.py",
-    # Autoconf is not readily available on Windows.
-    target_compatible_with = select({
-        "@platforms//os:windows": ["@platforms//:incompatible"],
-        "//conditions:default": [],
-    }),
-    visibility = ["//autoconf/tests:__subpackages__"],
-    deps = ["@rules_venv//python/runfiles"],
-)
 
 py_binary(
     name = "diff_tester",
@@ -27,4 +14,23 @@ py_binary(
         "//gnulib/tests:__subpackages__",
     ],
     deps = ["@rules_venv//python/runfiles"],
+)
+
+py_binary(
+    name = "gnu_autoconf_configure_tester",
+    srcs = ["gnu_autoconf_configure_tester.py"],
+    main = "gnu_autoconf_configure_tester.py",
+    # Autoconf is not readily available on Windows.
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+    visibility = [
+        "//autoconf/tests:__subpackages__",
+        "//gnulib/tests:__subpackages__",
+    ],
+    deps = [
+        "@rules_venv//python/runfiles",
+        ":diff_tester",
+    ],
 )

@@ -1,0 +1,173 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:macros.bzl", "macros")
+load("//autoconf:package_info.bzl", "package_info")
+load("//autoconf/tests:diff_test.bzl", "diff_test")
+load("//autoconf/tests:gnu_autoconf_configure_test.bzl", "gnu_autoconf_configure_test")
+
+package_info(
+    name = "package",
+    package_name = "test_conditions",
+    package_version = "1.0.0",
+)
+
+# Base autoconf rule with condition checks (compile tests that succeed or fail)
+autoconf(
+    name = "base_autoconf",
+    checks = [
+        # Condition that SUCCEEDS - compile check passes
+        macros.AC_TRY_COMPILE(
+            code = """
+int main(void) { return 0; }
+""",
+            define = "CONDITION_SUCCEEDS",
+            language = "c",
+        ),
+        # Condition that FAILS - compile check fails
+        macros.AC_TRY_COMPILE(
+            code = """
+#error "This compile check intentionally fails"
+int main(void) { return 0; }
+""",
+            define = "CONDITION_FAILS",
+            language = "c",
+        ),
+        # A header check that succeeds (stdio.h exists)
+        macros.AC_CHECK_HEADER("stdio.h"),
+        # A header check that fails (nonexistent header)
+        macros.AC_CHECK_HEADER("nonexistent_condition_test.h"),
+    ],
+)
+
+# Second autoconf rule that uses condition parameter
+autoconf(
+    name = "autoconf",
+    checks = [
+        # =================================================================
+        # AC_DEFINE with condition tests (for config.h #define values)
+        # These use AC_DEFINE which replaces #undef in config.h
+        # =================================================================
+
+        # Test 1: AC_DEFINE where condition SUCCEEDS -> use if_true value
+        macros.AC_DEFINE(
+            "SUBST_COND_SUCCESS",
+            condition = "CONDITION_SUCCEEDS",
+            if_false = "no_it_failed",
+            if_true = "yes_it_worked",
+        ),
+
+        # Test 2: AC_DEFINE where condition FAILS -> use if_false value
+        macros.AC_DEFINE(
+            "SUBST_COND_FAILURE",
+            condition = "CONDITION_FAILS",
+            if_false = "no_it_failed",
+            if_true = "yes_it_worked",
+        ),
+
+        # Test 3: AC_DEFINE with numeric values (common pattern for REPLACE_*)
+        macros.AC_DEFINE(
+            "REPLACE_WHEN_SUCCESS",
+            condition = "CONDITION_SUCCEEDS",
+            if_false = "1",  # Replacement needed
+            if_true = "0",  # No replacement needed
+        ),
+
+        # Test 4: AC_DEFINE with numeric values when condition fails
+        macros.AC_DEFINE(
+            "REPLACE_WHEN_FAILURE",
+            condition = "CONDITION_FAILS",
+            if_false = "1",  # Replacement needed
+            if_true = "0",  # No replacement needed
+        ),
+
+        # Test 5: AC_DEFINE using header check as condition
+        macros.AC_DEFINE(
+            "SUBST_HEADER_EXISTS",
+            condition = "HAVE_STDIO_H",
+            if_false = "missing",
+            if_true = "found",
+        ),
+
+        # Test 6: AC_DEFINE using missing header check as condition
+        macros.AC_DEFINE(
+            "SUBST_HEADER_MISSING",
+            condition = "HAVE_NONEXISTENT_CONDITION_TEST_H",
+            if_false = "missing",
+            if_true = "found",
+        ),
+
+        # =================================================================
+        # AC_DEFINE with condition tests
+        # =================================================================
+
+        # Test 7: AC_DEFINE where condition SUCCEEDS -> use if_true value
+        macros.AC_DEFINE(
+            "DEFINE_COND_SUCCESS",
+            condition = "CONDITION_SUCCEEDS",
+            if_false = "FAILURE_VALUE",
+            if_true = "SUCCESS_VALUE",
+        ),
+
+        # Test 8: AC_DEFINE where condition FAILS -> use if_false value
+        macros.AC_DEFINE(
+            "DEFINE_COND_FAILURE",
+            condition = "CONDITION_FAILS",
+            if_false = "FAILURE_VALUE",
+            if_true = "SUCCESS_VALUE",
+        ),
+
+        # Test 9: AC_DEFINE where condition succeeds, if_false is None
+        # (should define with if_true value)
+        macros.AC_DEFINE(
+            "DEFINE_ONLY_IF_TRUE",
+            condition = "CONDITION_SUCCEEDS",
+            if_true = "1",
+        ),
+
+        # Test 10: AC_DEFINE where condition fails, if_false is None
+        # (should NOT be defined at all)
+        macros.AC_DEFINE(
+            "DEFINE_SKIP_IF_FALSE",
+            condition = "CONDITION_FAILS",
+            if_true = "1",
+        ),
+    ],
+    deps = [
+        ":base_autoconf",
+        ":package",
+    ],
+)
+
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    substitutions = {
+        "#undef DIRECT_SUBST_NUMBER": "#define DIRECT_SUBST_NUMBER 42",
+        # Test exact text substitutions (key is replaced with value)
+        "#undef DIRECT_SUBST_VALUE": "#define DIRECT_SUBST_VALUE hello_world",
+    },
+    template = "config.h.in",
+    deps = [":autoconf"],
+)
+
+diff_test(
+    name = "diff_test",
+    file1 = "golden_config.h.in",
+    file2 = ":config.h",
+)
+
+cc_test(
+    name = "test_conditions",
+    srcs = [
+        "test_conditions.c",
+        ":config.h",
+    ],
+)
+
+gnu_autoconf_configure_test(
+    name = "gnu_autoconf_configure_test",
+    configure_ac = "configure.ac",
+    golden_config_h = "golden_config.h.in",
+    config_h_in = "config.h.in",
+)

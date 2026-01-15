@@ -27,8 +27,8 @@ def _package_relative_name(ctx, file):
 
     # Return only the part after the package path
     if pkg:
-        # pkg is something like "autoconf/private/tests/srcs"
-        # short_path is something like "autoconf/private/tests/srcs/bad/bad.c"
+        # pkg is something like "autoconf/tests/srcs"
+        # short_path is something like "autoconf/tests/srcs/bad/bad.c"
         # We want to return "bad/bad.c"
         return short_path[len(pkg) + 1:]  # +1 to skip the '/'
 

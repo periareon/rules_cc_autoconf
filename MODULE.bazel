@@ -16,7 +16,7 @@ bazel_dep(name = "rules_venv", version = "0.7.0", dev_dependency = True)
 bazel_dep(name = "stardoc", version = "0.8.0", dev_dependency = True)
 
 register_toolchains(
-    "//gnulib:toolchain",
+    "//gnulib/toolchain",
 )
 
 gnulib = use_extension("//gnulib/tests:deps.bzl", "gnulib", dev_dependency = True)

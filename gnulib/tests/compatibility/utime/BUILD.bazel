@@ -1,4 +1,4 @@
-load("//gnulib/tests/compatibility:gnu_gnulib_diff_test.bzl", "gnu_gnulib_diff_test_suite")
+load("//gnulib/tests/compatibility:gnu_gnulib_diff_test_suite.bzl", "gnu_gnulib_diff_test_suite")
 
 gnu_gnulib_diff_test_suite(
     name = "utime_test",
