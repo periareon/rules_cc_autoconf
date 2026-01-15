@@ -207,6 +207,7 @@ def gnu_gnulib_diff_test_suite(
                     golden_config_h = config_golden,
                     golden_subst_h = gnulib_golden,
                     aux_files = aux_files,
+                    verify_variables = True,
                     size = size,
                     tags = tags,
                     target_compatible_with = _PLATFORM_CONSTRAINTS.get(platform),
