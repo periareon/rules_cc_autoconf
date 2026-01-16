@@ -1,5 +1,4 @@
 /* config.h.in */
-#undef GNULIB_TEST_
 #undef HAVE_FCNTL
 #undef HAVE_INTTYPES_H
 #undef HAVE_OPENAT

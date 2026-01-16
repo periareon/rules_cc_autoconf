@@ -167,7 +167,7 @@ cc_test(
 
 gnu_autoconf_configure_test(
     name = "gnu_autoconf_configure_test",
+    config_h_in = "config.h.in",
     configure_ac = "configure.ac",
     golden_config_h = "golden_config.h.in",
-    config_h_in = "config.h.in",
 )

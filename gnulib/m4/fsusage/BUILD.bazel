@@ -13,6 +13,14 @@ autoconf(
         macros.AC_CHECK_HEADER("sys/statfs.h"),
         macros.AC_CHECK_HEADER("sys/fs/s5param.h"),
         macros.AC_CHECK_HEADER("sys/fs_types.h"),
+        macros.AC_CHECK_HEADER(
+            "sys/mount.h",
+            define = "HAVE_SYS_MOUNT_H",
+        ),
+        macros.AC_CHECK_HEADER(
+            "sys/param.h",
+            define = "HAVE_SYS_PARAM_H",
+        ),
         macros.AC_CHECK_FUNC("statvfs"),
     ] + select({
         "@platforms//os:linux": [
@@ -27,7 +35,8 @@ autoconf(
     }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/pathmax",  # Provides HAVE_SYS_PARAM_H
-        "//gnulib/m4/sys_vfs_h",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        # (golden files include standard header checks even though not AC_REQUIREd)
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

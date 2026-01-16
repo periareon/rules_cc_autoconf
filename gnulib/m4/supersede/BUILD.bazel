@@ -7,6 +7,5 @@ autoconf(
     checks = [],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/chown",  # Provides HAVE_CHOWN
     ],
 )

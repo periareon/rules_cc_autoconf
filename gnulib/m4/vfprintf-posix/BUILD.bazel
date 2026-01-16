@@ -27,7 +27,10 @@ autoconf(
     deps = [
         "//gnulib/m4/printf",  # Multiple gl_PRINTF_* macros
         "//gnulib/m4/printf:printf_posix_compliance",  # Platform printf compliance check
-        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS])
+        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS,
+
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//gnulib/m4/vasnprintf",  # gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

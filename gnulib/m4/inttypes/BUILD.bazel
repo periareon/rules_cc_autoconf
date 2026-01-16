@@ -86,7 +86,6 @@ int main(void) {
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",  # Provides HAVE_INTTYPES_H
         "//gnulib/m4/include_next",  # For NEXT_INTTYPES_H
         "//gnulib/m4/multiarch",  # AC_REQUIRE([gl_MULTIARCH])
         "//gnulib/m4/stdint_h",  # AC_REQUIRE([gl_STDINT_H])

@@ -10,7 +10,7 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/mprotect",  # AC_REQUIRE([gl_FUNC_MPROTECT_WORKS])
         "//autoconf/macros/AC_C_INLINE",  # AC_REQUIRE([AC_C_INLINE])
+        "//gnulib/m4/mprotect",  # AC_REQUIRE([gl_FUNC_MPROTECT_WORKS])
     ],
 )

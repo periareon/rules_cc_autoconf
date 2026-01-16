@@ -49,20 +49,10 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/exponentd",  # Provides DBL_EXPBIT0_* for printf %a
-        "//gnulib/m4/exponentf",  # Provides FLT_EXPBIT0_* for printf %a
-        "//gnulib/m4/frexp",  # Provides HAVE_FREXP_IN_LIBC
-        "//gnulib/m4/frexpl",  # Provides HAVE_FREXPL
-        "//gnulib/m4/intmax_t",  # AC_REQUIRE([gt_AC_TYPE_INTMAX_T])
-        "//gnulib/m4/isnand",  # Provides HAVE_ISNAND_IN_LIBC
-        "//gnulib/m4/isnanl",  # Provides HAVE_ISNANL_IN_LIBC
-        "//gnulib/m4/ldexp",  # Provides HAVE_LDEXP_IN_LIBC
-        "//gnulib/m4/ldexpl",  # Provides HAVE_LDEXPL
-        "//gnulib/m4/long-double-vs-double",  # Provides HAVE_SAME_LONG_DOUBLE_AS_DOUBLE
-        "//gnulib/m4/printf",  # Provides CHECK_PRINTF_SAFE (duplicated here for safety)
-        "//gnulib/m4/snprintf",  # Provides HAVE_SNPRINTF
-        "//gnulib/m4/strnlen",  # Provides HAVE_STRNLEN
-        "//gnulib/m4/wcslen",  # Provides HAVE_WCSLEN
+        "//gnulib/m4/intmax_t",  # AC_REQUIRE([gt_AC_TYPE_INTMAX_T,
+
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//gnulib/m4/wint_t",  # AC_REQUIRE([gt_TYPE_WINT_T])
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

@@ -36,7 +36,6 @@ def gnu_autoconf_configure_test(
         "TEST_CONFIGURE_AC": "$(rlocationpath {})".format(configure_ac),
         "TEST_CONFIG_H_IN": "$(rlocationpath {})".format(config_h_in),
         "TEST_GOLDEN_CONFIG_H": "$(rlocationpath {})".format(golden_config_h),
-
         "TEST_M4_FILES": " ".join([
             "$(rlocationpaths {})".format(m4)
             for m4 in m4_files

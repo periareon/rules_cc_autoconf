@@ -11,9 +11,6 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",  # Provides HAVE_UNISTD_H
-        "//gnulib/m4/include_next",
-        "//gnulib/m4/off_t",
     ],
 )
 

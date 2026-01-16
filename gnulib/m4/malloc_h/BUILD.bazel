@@ -7,14 +7,22 @@ autoconf(
     name = "malloc_h",
     checks = [
         # Check for malloc.h header - use temporary define to avoid conflicts with AC_SUBST
-        macros.AC_CHECK_HEADER("malloc.h", define = "_gl_cv_header_malloc_h"),
+        macros.AC_CHECK_HEADER(
+            "malloc.h",
+            define = "_gl_cv_header_malloc_h",
+        ),
         # Set HAVE_MALLOC_H as a subst variable based on the header check result
-        macros.AC_SUBST("HAVE_MALLOC_H", condition = "_gl_cv_header_malloc_h", if_true = "1", if_false = "0"),
+        macros.AC_SUBST(
+            "HAVE_MALLOC_H",
+            condition = "_gl_cv_header_malloc_h",
+            if_false = "0",
+            if_true = "1",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/include_next",  # gl_CHECK_NEXT_HEADERS([malloc.h])
-        "//gnulib/m4/stdlib_h",  # gl_STDLIB_H_REQUIRE_DEFAULTS
+        "//gnulib/m4/stdlib_h",  # gl_STDLIB_H_REQUIRE_DEFAULTS (called in gl_MALLOC_H_REQUIRE_DEFAULTS)
     ],
 )
 

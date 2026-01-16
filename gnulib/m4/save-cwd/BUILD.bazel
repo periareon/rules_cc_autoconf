@@ -9,6 +9,5 @@ autoconf(
     checks = [],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/fchdir",  # Provides HAVE_FCHDIR
     ],
 )

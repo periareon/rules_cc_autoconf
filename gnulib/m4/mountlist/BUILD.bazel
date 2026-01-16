@@ -29,8 +29,7 @@ autoconf(
     }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/fsusage",  # Provides HAVE_STATVFS and HAVE_SYS_FS_TYPES_H
-        "//gnulib/m4/mntent_h",  # Provides HAVE_MNTENT_H
-        "//gnulib/m4/pathmax",  # Provides HAVE_SYS_PARAM_H
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

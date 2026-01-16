@@ -7,7 +7,5 @@ autoconf(
     checks = [],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/chown",  # Provides HAVE_CHOWN
-        "//gnulib/m4/unistd_h",  # Provides HAVE_UNISTD_H
     ],
 )

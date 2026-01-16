@@ -12,14 +12,14 @@ autoconf(
         macros.AC_CHECK_MEMBER(
             "struct tm",
             "tm_gmtoff",
-            headers = ["time.h"],
             define = "HAVE_STRUCT_TM_TM_GMTOFF",
+            headers = ["time.h"],
         ),
         macros.AC_CHECK_MEMBER(
             "struct tm",
             "tm_zone",
-            headers = ["time.h"],
             define = "HAVE_STRUCT_TM_TM_ZONE",
+            headers = ["time.h"],
         ),
         # Backward compatibility: define HAVE_TM_GMTOFF if tm_gmtoff member exists
         macros.AC_DEFINE(

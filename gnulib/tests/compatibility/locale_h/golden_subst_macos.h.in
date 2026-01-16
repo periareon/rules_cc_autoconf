@@ -1,5 +1,4 @@
 /* subst.h.in */
-#define SUBST_GNULIB_TEST_ "@GNULIB_TEST_@"
 #define SUBST_HAVE_C_UNREACHABLE "1"
 #define SUBST_HAVE_DUPLOCALE "1"
 #define SUBST_HAVE_FREELOCALE "1"

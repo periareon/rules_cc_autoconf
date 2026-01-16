@@ -7,6 +7,5 @@ autoconf(
     checks = [],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/locale_h",  # Provides HAVE_XLOCALE_H
     ],
 )

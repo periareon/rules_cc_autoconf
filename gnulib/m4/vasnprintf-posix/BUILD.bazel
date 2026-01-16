@@ -10,6 +10,5 @@ autoconf(
     checks = [],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/vasnprintf",  # Provides HAVE_VASNPRINTF
     ],
 )

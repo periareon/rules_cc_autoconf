@@ -27,6 +27,8 @@ int main(void) { return 0; }
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",  # Provides HAVE_STDINT_H
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        # (provides HAVE_STDINT_H which is required by checks)
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

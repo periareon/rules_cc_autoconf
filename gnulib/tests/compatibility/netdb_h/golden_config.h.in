@@ -1,5 +1,4 @@
 /* config.h.in */
-#define GNULIB_TEST_ 1
 /* #undef HAVE_DECL_FREEADDRINFO */
 /* #undef HAVE_DECL_GAI_STRERROR */
 /* #undef HAVE_DECL_GETADDRINFO */

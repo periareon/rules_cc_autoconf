@@ -41,7 +41,10 @@ autoconf(
     }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS])
+        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS,
+
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//gnulib/m4/unistd_h",  # AC_CHECK_HEADERS_ONCE([unistd.h])
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

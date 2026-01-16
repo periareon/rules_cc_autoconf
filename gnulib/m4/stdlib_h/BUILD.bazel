@@ -56,7 +56,6 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",  # Provides HAVE_STDLIB_H
         "//gnulib/m4/include_next",  # gl_NEXT_HEADERS([stdlib.h])
     ],
 )

@@ -7,7 +7,6 @@
 #define SUBST_CXXDEPMODE "depmode=none"
 #define SUBST_CXX_CHOICE "yes"
 #define SUBST_DEPDIR ".deps"
-#define SUBST_GNULIB_TEST_ "@GNULIB_TEST_@"
 #define SUBST_HAVE_GLOB "1"
 #define SUBST_HAVE_GLOB_H "1"
 #define SUBST_HAVE_GLOB_PATTERN_P "1"

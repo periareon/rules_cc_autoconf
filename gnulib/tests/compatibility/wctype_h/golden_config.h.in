@@ -1,6 +1,5 @@
 /* config.h.in */
 /* #undef GNULIBHEADERS_OVERRIDE_WINT_T */
-#define GNULIB_TEST_ 1
 /* #undef HAVE_CRTDEFS_H */
 #define HAVE_INTTYPES_H 1
 /* #undef HAVE_ISWBLANK */

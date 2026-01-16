@@ -12,6 +12,5 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/strings_h",  # Provides HAVE_STRNCASECMP
     ],
 )

@@ -1,5 +1,4 @@
 /* config.h.in */
-#undef GNULIB_TEST_
 #undef HAVE_ACOSF
 #undef HAVE_ACOSL
 #undef HAVE_ASINF

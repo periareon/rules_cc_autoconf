@@ -11,8 +11,6 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",  # Provides HAVE_STRING_H
-        "//gnulib/m4/include_next",
     ],
 )
 

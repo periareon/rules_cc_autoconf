@@ -1,5 +1,4 @@
 /* config.h.in */
-#undef GNULIB_TEST_
 #undef HAVE_INTTYPES_H
 #undef HAVE_POSIX_SPAWN
 #undef HAVE_POSIX_SPAWNATTR_T

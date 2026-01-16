@@ -14,7 +14,9 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # Standard headers are expected by tests (matching GNU autoconf behavior)
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        # (golden files include standard header checks even though not AC_REQUIREd)
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

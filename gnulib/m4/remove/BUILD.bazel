@@ -10,9 +10,9 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS])
-        "//gnulib/m4/rmdir",  # AC_REQUIRE([gl_FUNC_RMDIR])
-        "//gnulib/m4/unlink",  # AC_REQUIRE([gl_FUNC_UNLINK])
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//gnulib/m4/rmdir",  # AC_REQUIRE([gl_FUNC_RMDIR])
+        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS])
+        "//gnulib/m4/unlink",  # AC_REQUIRE([gl_FUNC_UNLINK])
     ],
 )

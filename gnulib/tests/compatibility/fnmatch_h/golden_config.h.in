@@ -7,7 +7,6 @@
 /* #undef CXXDEPMODE */
 /* #undef CXX_CHOICE */
 /* #undef DEPDIR */
-#define GNULIB_TEST_ 1
 /* #undef HAVE_FNMATCH */
 #define HAVE_FNMATCH_H 1
 #define HAVE_INTTYPES_H 1

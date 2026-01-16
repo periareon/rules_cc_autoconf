@@ -17,8 +17,6 @@ autoconf(
     deps = [
         # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
         "//gnulib/m4/extensions",
-        # Standard headers are expected by tests (matching GNU autoconf behavior)
-        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/fcntl_h",  # AC_REQUIRE([gl_FCNTL_H_DEFAULTS])
         "//gnulib/m4/lstat",  # AC_REQUIRE([gl_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK])
         "//gnulib/m4/open-cloexec",  # AC_REQUIRE([gl_PREPROC_O_CLOEXEC])

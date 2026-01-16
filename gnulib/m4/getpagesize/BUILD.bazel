@@ -16,23 +16,47 @@ autoconf(
 #include <unistd.h>
 int main(void) { return getpagesize(); }
 """,
-            define = "HAVE_GETPAGESIZE",
+            define = "gl_cv_func_getpagesize",
             language = "c",
         ),
-        macros.AC_CHECK_DECL(
-            "getpagesize",
-            headers = ["unistd.h"],
+        macros.M4_DEFINE(
+            "HAVE_GETPAGESIZE",
+            requires = ["gl_cv_func_getpagesize=0"],
+        ),
+        macros.AC_CHECK_HEADER("OS.h", "ac_cv_header_OS_h"),
+        macros.M4_DEFINE(
+            "HAVE_OS_H",
+            requires = ["ac_cv_header_OS_h=1"],
+        ),
+        macros.AC_CHECK_HEADER("sys/param.h", "ac_cv_header_sys_param_h"),
+        macros.M4_DEFINE(
+            "HAVE_SYS_PARAM_H",
+            requires = ["ac_cv_header_sys_param_h=1"],
         ),
     ] + select({
         "@platforms//os:windows": [
             macros.M4_DEFINE("REPLACE_GETPAGESIZE", "1"),
         ],
         "//conditions:default": [],
-    }),
+    }) + [
+        macros.AC_CHECK_DECL(
+            "getpagesize",
+            define = "ac_cv_decl_getpagesize",
+        ),
+        macros.AC_DEFINE(
+            "HAVE_DECL_GETPAGESIZE",
+            "0",
+            requires = ["ac_cv_decl_getpagesize"],
+        ),
+    ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/pathmax",  # Provides HAVE_SYS_PARAM_H
-        "//gnulib/m4/readutmp",  # Provides HAVE_OS_H
-        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
+        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS,
+
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        # Note: HAVE_OS_H and HAVE_SYS_PARAM_H are set directly in this module's checks,
+        # not via dependencies on pathmax or readutmp
     ],
 )

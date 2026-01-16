@@ -11,6 +11,5 @@ autoconf(
     checks = [],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/size_max",  # Provides HAVE_STDINT_H
     ],
 )

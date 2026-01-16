@@ -16,7 +16,11 @@ autoconf(
         # Check for major() macro in various headers
         macros.AC_CHECK_DECL(
             "major",
-            headers = ["sys/types.h", "sys/mkdev.h", "sys/sysmacros.h"],
+            headers = [
+                "sys/types.h",
+                "sys/mkdev.h",
+                "sys/sysmacros.h",
+            ],
         ),
     ],
     visibility = ["//visibility:public"],

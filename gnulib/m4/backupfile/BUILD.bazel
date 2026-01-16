@@ -15,7 +15,7 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/d-ino",  # AC_REQUIRE([gl_CHECK_TYPE_STRUCT_DIRENT_D_INO])
         "//autoconf/macros/AC_SYS_LONG_FILE_NAMES",  # AC_REQUIRE([AC_SYS_LONG_FILE_NAMES])
+        "//gnulib/m4/d-ino",  # AC_REQUIRE([gl_CHECK_TYPE_STRUCT_DIRENT_D_INO])
     ],
 )

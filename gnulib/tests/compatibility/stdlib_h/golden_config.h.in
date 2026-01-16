@@ -1,6 +1,5 @@
 /* config.h.in */
 /* #undef CAN_PRINT_STACK_TRACE */
-#define GNULIB_TEST_ 1
 /* #undef HAVE_ALIGNED_ALLOC */
 /* #undef HAVE_ATOLL */
 /* #undef HAVE_CANONICALIZE_FILE_NAME */

@@ -19,10 +19,10 @@ autoconf(
         # This is useful for checking functions that are declared but may not
         # be available at link time (e.g., nl_langinfo(CODESET))
         macros.AC_TRY_LINK(
-            includes = ["langinfo.h"],
             code = """char* cs = nl_langinfo(CODESET);
     (void)cs;""",
             define = "HAVE_LANGINFO_CODESET",
+            includes = ["langinfo.h"],
         ),
         # Test with full code (not just includes)
         macros.AC_TRY_LINK(
@@ -60,7 +60,7 @@ cc_test(
 
 gnu_autoconf_configure_test(
     name = "gnu_autoconf_configure_test",
+    config_h_in = "config.h.in",
     configure_ac = "configure.ac",
     golden_config_h = "golden_config.h.in",
-    config_h_in = "config.h.in",
 )

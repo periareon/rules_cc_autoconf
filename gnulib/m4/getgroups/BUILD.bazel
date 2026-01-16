@@ -17,12 +17,15 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([AC_TYPE_GETGROUPS])
+        # AC_REQUIRE([AC_TYPE_GETGROUPS,
+
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_TYPE_GETGROUPS",
         # AC_REQUIRE([AC_TYPE_SIZE_T])
         "//autoconf/macros/AC_TYPE_SIZE_T",
         # AC_REQUIRE([AC_CANONICAL_HOST])
         "//autoconf/macros/AC_CANONICAL_HOST",
         "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

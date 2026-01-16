@@ -1,5 +1,4 @@
 /* config.h.in */
-#define GNULIB_TEST_ 1
 /* #undef HAVE_DECL_LOCALTIME_R */
 #define HAVE_INTTYPES_H 1
 /* #undef HAVE_NANOSLEEP */

@@ -64,7 +64,6 @@ int main(void) { return 0; }
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",  # Provides HAVE_STDIO_H
         "//gnulib/m4/include_next",  # gl_NEXT_HEADERS([stdio.h])
     ],
 )

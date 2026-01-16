@@ -23,7 +23,5 @@ int main(void) {
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/pathmax",  # Provides HAVE_SYS_PARAM_H
-        "//gnulib/m4/sys_vfs_h",
     ],
 )

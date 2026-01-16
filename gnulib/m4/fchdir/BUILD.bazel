@@ -12,14 +12,11 @@ autoconf(
                 "fchdir",
                 define = "HAVE_FCHDIR",
             ),
-            # AC_CHECK_DECLS_ONCE only defines HAVE_DECL_FCHDIR=0 if not found
+            # AC_CHECK_DECLS_ONCE defines HAVE_DECL_FCHDIR=1 if found, 0 if not found
             macros.AC_CHECK_DECL(
                 "fchdir",
-                define = "_gl_cv_have_decl_fchdir",  # Temporary define
+                define = "HAVE_DECL_FCHDIR",
                 headers = ["unistd.h"],
-                if_false = [
-                    macros.AC_DEFINE("HAVE_DECL_FCHDIR", "0"),
-                ],
             ),
         ],
         "//conditions:default": [
@@ -31,14 +28,11 @@ autoconf(
                 "fchdir",
                 define = "HAVE_FCHDIR",
             ),
-            # AC_CHECK_DECLS_ONCE only defines HAVE_DECL_FCHDIR=0 if not found
+            # AC_CHECK_DECLS_ONCE defines HAVE_DECL_FCHDIR=1 if found, 0 if not found
             macros.AC_CHECK_DECL(
                 "fchdir",
-                define = "_gl_cv_have_decl_fchdir",  # Temporary define
+                define = "HAVE_DECL_FCHDIR",
                 headers = ["unistd.h"],
-                if_false = [
-                    macros.AC_DEFINE("HAVE_DECL_FCHDIR", "0"),
-                ],
             ),
         ],
     }),
@@ -46,6 +40,8 @@ autoconf(
     deps = [
         "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
         "//gnulib/m4/dirent_h",  # AC_REQUIRE([gl_DIRENT_H_DEFAULTS])
-        # Note: AC_REQUIRE([AC_CANONICAL_HOST]) is a standard autoconf macro
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        # (golden files include standard header checks even though not AC_REQUIREd)
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

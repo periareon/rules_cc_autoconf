@@ -23,13 +23,11 @@ autoconf(
     }),
     visibility = ["//visibility:public"],
     deps = [
-        # m4_ifdef([gl_FUNC_FCHDIR], [gl_TEST_FCHDIR])
-        "//gnulib/m4/fchdir",
-        # AC_CHECK_FUNCS_ONCE([lstat]) - provided by lstat dependency
-        "//gnulib/m4/lstat",
-        # AC_REQUIRE([gl_PREPROC_O_CLOEXEC])
-        "//gnulib/m4/open-cloexec",
-        # gl_OPEN_TRAILING_SLASH_BUG
-        "//gnulib/m4/open-slash",
+        "//gnulib/m4/fchdir",  # m4_ifdef([gl_FUNC_FCHDIR], [gl_TEST_FCHDIR])
+        "//gnulib/m4/lstat",  # AC_CHECK_FUNCS_ONCE([lstat])
+        "//gnulib/m4/open-cloexec",  # AC_REQUIRE([gl_PREPROC_O_CLOEXEC])
+        "//gnulib/m4/open-slash",  # gl_OPEN_TRAILING_SLASH_BUG
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

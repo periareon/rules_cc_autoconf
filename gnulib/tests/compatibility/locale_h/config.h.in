@@ -1,5 +1,4 @@
 /* config.h.in */
-#undef GNULIB_TEST_
 #undef HAVE_C_UNREACHABLE
 #undef HAVE_DUPLOCALE
 #undef HAVE_FREELOCALE

@@ -9,6 +9,5 @@ autoconf(
     checks = [],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/stdbool",  # Provides HAVE_STDBOOL_H
     ],
 )

@@ -8,7 +8,7 @@ autoconf(
     checks = [
         # Check for accept4 declaration
         # Equivalent to gl_FUNC_ACCEPT4 macro from accept4.m4:
-        #   AC_CHECK_DECLS([accept4], , , [[#include <sys/types.h>
+        #   AC_CHECK_DECLS([accept4], [[#include <sys/types.h>
         #                                   #include <sys/socket.h>]])
         #
         # Note: The M4 macro also:
@@ -31,9 +31,9 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # Required by AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
-        "//gnulib/m4/extensions",
-        # Standard headers are expected by tests (matching GNU autoconf behavior)
+        "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        # (golden files include standard header checks even though not AC_REQUIREd)
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

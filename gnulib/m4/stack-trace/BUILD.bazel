@@ -43,7 +43,6 @@ int main(void) {
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/execinfo",  # Provides HAVE_EXECINFO_H, backtrace functions
         "//gnulib/m4/inline",  # AC_REQUIRE([AC_C_INLINE])
         "//gnulib/m4/stdlib_h",  # AC_REQUIRE([gl_STDLIB_H_DEFAULTS])
     ],

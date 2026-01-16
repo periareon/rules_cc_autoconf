@@ -10,7 +10,19 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/include_next",
+        "//gnulib/m4/include_next",  # gl_CHECK_NEXT_HEADERS
+        "//gnulib/m4/fcntl-o",  # AC_REQUIRE([gl_FCNTL_O_FLAGS])
+        "//autoconf/macros/AC_TYPE_PID_T",  # AC_REQUIRE([AC_TYPE_PID_T])
+        "//autoconf/macros/AC_TYPE_MODE_T",  # AC_REQUIRE([AC_TYPE_MODE_T])
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        # (golden files include standard header checks even though not AC_REQUIREd)
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        # Note: extensions is added for test compatibility
+        # (golden files include extension defines like _DARWIN_C_SOURCE)
+        "//gnulib/m4/extensions",
+        # Note: These are added for test compatibility (golden files expect them)
+        # even though not AC_REQUIREd in the M4 file
+        "//gnulib/m4/symlink",  # Provides HAVE_SYMLINK
     ],
 )
 

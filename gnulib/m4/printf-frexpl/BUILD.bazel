@@ -10,7 +10,5 @@ autoconf(
     checks = [],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/frexpl",  # Provides HAVE_DECL_FREXPL
-        "//gnulib/m4/ldexpl",  # Provides HAVE_DECL_LDEXPL
     ],
 )

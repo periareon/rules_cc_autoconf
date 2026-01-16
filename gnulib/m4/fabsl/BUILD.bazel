@@ -6,15 +6,18 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "fabsl",
     checks = [
-        macros.AC_CHECK_FUNC("fabsl"),
+        macros.AC_CHECK_FUNC(
+            "fabsl",
+            define = "HAVE_FABSL",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
-        "//gnulib/m4/extensions",
-        # Standard headers are expected by tests (matching GNU autoconf behavior)
-        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
-        "//gnulib/m4/fabs",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS,
+
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+        "//gnulib/m4/long-double-vs-double",  # AC_REQUIRE([gl_LONG_DOUBLE_VS_DOUBLE])
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

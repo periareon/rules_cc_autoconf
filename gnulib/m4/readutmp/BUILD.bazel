@@ -11,7 +11,7 @@ autoconf(
         macros.AC_CHECK_HEADER("systemd/sd-login.h"),
         macros.AC_CHECK_HEADER("utmp.h"),
         macros.AC_CHECK_HEADER("utmpx.h"),
-        macros.AC_CHECK_HEADER("OS.h"),
+        # macros.AC_CHECK_HEADER("OS.h"),
         macros.AC_CHECK_DECL(
             "endutent",
             headers = ["utmp.h"],
@@ -23,7 +23,10 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/pathmax",  # Provides HAVE_SYS_PARAM_H
-        "//gnulib/m4/physmem",  # Provides HAVE_SYSCTL
+        "//gnulib/m4/systemd",  # AC_REQUIRE([gl_SYSTEMD_CHOICE,
+
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

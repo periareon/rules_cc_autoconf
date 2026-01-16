@@ -66,6 +66,24 @@ autoconf(
                 "HAVE_NETDB_H",
             ],
         ),
+        macros.AC_CHECK_DECL(
+            "gai_strerrorA",
+            define = "_gl_cv_have_decl_gai_strerrorA",
+            headers = [
+                "sys/types.h",
+                "sys/socket.h",
+                "netdb.h",
+            ],
+            requires = [
+                "HAVE_SYS_SOCKET_H",
+                "HAVE_NETDB_H",
+            ],
+        ),
+        macros.AC_DEFINE(
+            "HAVE_DECL_GAI_STRERRORA",
+            "0",
+            requires = ["_gl_cv_have_decl_gai_strerrorA=0"],
+        ),
         # Check for struct addrinfo
         macros.AC_CHECK_TYPE(
             "struct addrinfo",
@@ -88,11 +106,13 @@ int main(void) {
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/hostent",  # AC_REQUIRE([gl_HOSTENT])
+        "//gnulib/m4/hostent",  # AC_REQUIRE([gl_HOSTENT,
+
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//gnulib/m4/inet_ntop",  # AC_REQUIRE([gl_FUNC_INET_NTOP])
         "//gnulib/m4/netdb_h",  # AC_REQUIRE([gl_NETDB_H]) - provides HAVE_NETDB_H
-        "//gnulib/m4/netinet_in_h",  # Provides HAVE_NETINET_IN_H
         "//gnulib/m4/servent",  # AC_REQUIRE([gl_SERVENT])
         "//gnulib/m4/sys_socket_h",  # AC_REQUIRE([gl_SYS_SOCKET_H]) - provides HAVE_SYS_SOCKET_H
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

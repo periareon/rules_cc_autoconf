@@ -11,8 +11,5 @@ autoconf(
     checks = [],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/pty_h",  # Provides HAVE_UTIL_H, HAVE_LIBUTIL_H
-        "//gnulib/m4/readutmp",  # Provides HAVE_UTMP_H
-        "//gnulib/m4/termios_h",
     ],
 )

@@ -13,9 +13,8 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # Standard headers are expected by tests (matching GNU autoconf behavior)
-        # Even though byteswap.m4 doesn't explicitly call AC_INCLUDES_DEFAULT,
-        # the test output shows these headers are defined, so we include them
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        # (golden files include standard header checks even though not AC_REQUIREd)
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

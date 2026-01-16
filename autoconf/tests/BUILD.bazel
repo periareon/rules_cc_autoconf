@@ -30,7 +30,7 @@ py_binary(
         "//gnulib/tests:__subpackages__",
     ],
     deps = [
-        "@rules_venv//python/runfiles",
         ":diff_tester",
+        "@rules_venv//python/runfiles",
     ],
 )

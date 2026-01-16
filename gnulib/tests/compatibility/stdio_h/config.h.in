@@ -1,5 +1,4 @@
 /* config.h.in */
-#undef GNULIB_TEST_
 #undef HAVE_DECL_FCLOSEALL
 #undef HAVE_DECL_FPURGE
 #undef HAVE_DECL_FSEEKO

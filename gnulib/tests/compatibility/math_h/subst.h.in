@@ -1,5 +1,4 @@
 /* subst.h.in */
-#define SUBST_GNULIB_TEST_ "@GNULIB_TEST_@"
 #define SUBST_HAVE_ACOSF "@HAVE_ACOSF@"
 #define SUBST_HAVE_ACOSL "@HAVE_ACOSL@"
 #define SUBST_HAVE_ASINF "@HAVE_ASINF@"

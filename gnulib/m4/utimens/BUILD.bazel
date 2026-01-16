@@ -26,13 +26,20 @@ autoconf(
             "utimensat",
             code = "#include <sys/stat.h>",
         ),
+        macros.AC_CHECK_FUNC(
+            "futimens",
+            code = "#include <sys/stat.h>",
+        ),
         macros.AC_CHECK_FUNC("utimens"),
         macros.AC_CHECK_FUNC("lutimens"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/futimens",  # Provides HAVE_FUTIMENS
         "//gnulib/m4/time_h",  # AC_REQUIRE([gl_CHECK_TYPE_STRUCT_TIMESPEC])
         "//gnulib/m4/utimes",  # AC_REQUIRE([gl_FUNC_UTIMES])
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        # (golden files include standard header checks even though not AC_REQUIREd)
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

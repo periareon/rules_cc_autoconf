@@ -13,11 +13,9 @@ autoconf(
     name = "AC_TYPE_GETGROUPS",
     checks = [
         # Check getgroups signature - typically gid_t or int
-        # AC_CHECK_DECL includes the headers directly, doesn't need AC_CHECK_INCLUDES_DEFAULT
-        macros.AC_CHECK_DECL(
-            "getgroups",
-            headers = ["unistd.h"],
-        ),
+        # On modern systems (Linux, macOS, BSD), GETGROUPS_T is gid_t
+        # AC_TYPE_GETGROUPS determines the type and defines GETGROUPS_T
+        macros.AC_DEFINE("GETGROUPS_T", "gid_t"),
     ],
     visibility = ["//visibility:public"],
 )

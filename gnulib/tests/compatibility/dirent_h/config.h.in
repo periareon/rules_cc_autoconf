@@ -1,6 +1,5 @@
 /* config.h.in */
 #undef DIR_HAS_FD_MEMBER
-#undef GNULIB_TEST_
 #undef HAVE_ALPHASORT
 #undef HAVE_CHOWN
 #undef HAVE_CLOSEDIR

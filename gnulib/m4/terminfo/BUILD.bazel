@@ -9,6 +9,5 @@ autoconf(
     checks = [],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/termcap",  # Provides HAVE_TERMINFO, HAVE_TERMCAP, HAVE_TPARAM
     ],
 )

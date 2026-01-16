@@ -1,5 +1,4 @@
 /* config.h.in */
-#undef GNULIB_TEST_
 #undef HAVE_ACCEPT4
 #undef HAVE_CHOWN
 #undef HAVE_COPY_FILE_RANGE

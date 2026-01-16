@@ -16,7 +16,7 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//autoconf/macros/AC_TYPE_GETGROUPS",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//autoconf/macros/AC_TYPE_GETGROUPS",
     ],
 )

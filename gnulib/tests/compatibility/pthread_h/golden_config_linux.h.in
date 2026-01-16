@@ -1,5 +1,4 @@
 /* config.h.in */
-#define GNULIB_TEST_ 1
 #define HAVE_INTTYPES_H 1
 #define HAVE_PTHREAD_API 1
 /* #undef HAVE_PTHREAD_ATTR_DESTROY */

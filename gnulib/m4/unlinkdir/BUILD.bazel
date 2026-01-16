@@ -9,6 +9,5 @@ autoconf(
     checks = [],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/priv-set",  # Provides HAVE_PRIV_H
     ],
 )

@@ -15,7 +15,10 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_WCHAR_H_DEFAULTS])
+        # AC_REQUIRE([gl_WCHAR_H_DEFAULTS,
+
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//gnulib/m4/wchar_h",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

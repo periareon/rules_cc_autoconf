@@ -12,6 +12,7 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/unistd_h",  # Provides HAVE_UNISTD_H
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

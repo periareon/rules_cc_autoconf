@@ -10,8 +10,8 @@ autoconf(
         # Check for posix_spawn_file_actions_addchdir_np (non-portable version)
         macros.AC_CHECK_FUNC(
             "posix_spawn_file_actions_addchdir_np",
-            define = "HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR_NP",
             code = "#include <spawn.h>",
+            define = "HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR_NP",
         ),
         # This function is not yet standardized, so always replace the system's implementation
         # REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR=1 is set by defaults if function exists
@@ -19,7 +19,9 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/spawn_h",  # AC_REQUIRE([gl_SPAWN_H_DEFAULTS]) - provides HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR
-        "//gnulib/m4/posix_spawn",  # AC_REQUIRE([gl_POSIX_SPAWN])
+        "//gnulib/m4/spawn_h",  # AC_REQUIRE([gl_SPAWN_H_DEFAULTS])
+        # Note: gl_POSIX_SPAWN is called (not AC_REQUIRE) but posix_spawn module
+        # is needed for its checks to run. However, per user request, only
+        # AC_REQUIRE dependencies are listed here.
     ],
 )

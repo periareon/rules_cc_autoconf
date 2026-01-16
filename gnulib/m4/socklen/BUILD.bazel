@@ -11,6 +11,5 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/sys_socket_h",  # Provides HAVE_SYS_SOCKET_H, HAVE_WS2TCPIP_H
     ],
 )

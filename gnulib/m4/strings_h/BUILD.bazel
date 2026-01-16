@@ -36,6 +36,8 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",  # Provides HAVE_STRINGS_H
+        # Note: HAVE_STRINGS_H is provided by AC_CHECK_INCLUDES_DEFAULT
+        # (normally from AC_INCLUDES_DEFAULT but not AC_REQUIREd in this module)
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

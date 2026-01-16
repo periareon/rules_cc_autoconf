@@ -8,6 +8,7 @@ load("//autoconf:macros.bzl", "macros")
 #   - If found: HAVE_MSVC_INVALID_PARAMETER_HANDLER=1 (AC_DEFINE + AC_SUBST)
 #   - If not: HAVE_MSVC_INVALID_PARAMETER_HANDLER=0 (AC_SUBST only)
 # - On non-Windows: HAVE_MSVC_INVALID_PARAMETER_HANDLER=0 (AC_SUBST only)
+
 autoconf(
     name = "msvc-inval",
     checks = select({

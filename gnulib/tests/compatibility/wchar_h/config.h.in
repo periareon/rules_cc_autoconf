@@ -1,7 +1,6 @@
 /* config.h.in */
 #undef CAN_PRINT_STACK_TRACE
 #undef GNULIBHEADERS_OVERRIDE_WINT_T
-#undef GNULIB_TEST_
 #undef HAVE_ALIGNED_ALLOC
 #undef HAVE_ATOLL
 #undef HAVE_BTOWC

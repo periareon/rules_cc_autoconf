@@ -49,5 +49,8 @@ autoconf(
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        # (golden files include standard header checks even though not AC_REQUIREd)
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
