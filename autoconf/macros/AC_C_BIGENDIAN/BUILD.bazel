@@ -1,0 +1,20 @@
+"""https://www.gnu.org/savannah-checkouts/gnu/autoconf/manual/autoconf-2.72/autoconf.html#index-AC_005fC_005fBIGENDIAN"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "AC_C_BIGENDIAN",
+    checks = [
+        # Check endianness by examining byte order
+        macros.AC_TRY_COMPILE(
+            code = """#include <stdint.h>
+int main(void) {
+    union { uint32_t i; uint8_t c[4]; } u = { 0x01020304 };
+    return u.c[0] == 1 ? 0 : 1;
+}""",
+            define = "WORDS_BIGENDIAN",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

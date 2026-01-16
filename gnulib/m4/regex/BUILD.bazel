@@ -10,10 +10,7 @@ autoconf(
             "libintl.h",
             define = "HAVE_LIBINTL_H",
         ),
-        macros.AC_CHECK_HEADER(
-            "malloc.h",
-            define = "HAVE_MALLOC_H",
-        ),
+        # HAVE_MALLOC_H is provided by malloc_h
         macros.AC_CHECK_DECL(
             "isblank",
             define = "HAVE_DECL_ISBLANK",
@@ -43,4 +40,7 @@ autoconf(
         "//conditions:default": [],
     }),
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/malloc_h",  # AC_CHECK_HEADERS_ONCE([malloc.h])
+    ],
 )

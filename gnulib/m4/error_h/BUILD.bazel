@@ -13,4 +13,8 @@ autoconf(
         ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # Standard headers are expected by tests (matching GNU autoconf behavior)
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

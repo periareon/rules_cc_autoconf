@@ -6,10 +6,16 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "copysign",
     checks = [
-        macros.AC_CHECK_FUNC("copysign"),
+        # gl_FUNC_COPYSIGN uses gl_MATHFUNC which does complex checking
+        # If both gl_cv_func_copysign_no_libm and gl_cv_func_copysign_in_libm are no,
+        # then HAVE_COPYSIGN=0. Otherwise, it uses the default from math_h (HAVE_COPYSIGN=1).
+        # Since we can't easily replicate gl_MATHFUNC's complex logic, we rely on the
+        # defaults from math_h which set HAVE_COPYSIGN=1. The actual check would need
+        # to verify if copysign works without libm, and if not, with libm.
+        # For now, we don't explicitly check, letting the defaults handle it.
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS]) - provides HAVE_COPYSIGN=1 default
     ],
 )

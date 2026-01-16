@@ -1,0 +1,18 @@
+"""AC_TYPE_MBSTATE_T - Autoconf builtin macro
+
+Checks if mbstate_t type is defined.
+
+Defines:
+  - mbstate_t (if not defined, defined to int)
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "AC_TYPE_MBSTATE_T",
+    checks = [
+        macros.AC_CHECK_TYPE("mbstate_t"),
+    ],
+    visibility = ["//visibility:public"],
+)

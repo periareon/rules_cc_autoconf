@@ -9,17 +9,24 @@ autoconf(
         # GNULIB module indicator - set to 1 when this module is used
 
         # Check if dup3 exists
-        macros.AC_CHECK_FUNC("dup3"),
-
-        # Note: HAVE_SETDTABLESIZE is provided by dup2 if needed
-
-        # REPLACE_DUP3: gnulib unconditionally replaces dup3 when it exists
-        # When dup3 doesn't exist, it's set to 0 unless it's a "future" function
-        # For simplicity, default to 1 (gnulib's behavior when dup3 exists)
-        macros.AC_SUBST("REPLACE_DUP3", "1"),
+        macros.AC_CHECK_FUNC(
+            "dup3",
+            define = "ac_cv_func_dup3",
+        ),
+        macros.M4_DEFINE(
+            "HAVE_DUP3",
+            "0",
+            requires = ["ac_cv_func_dup3==1"],
+        ),
+        macros.AC_SUBST(
+            "REPLACE_DUP3",
+            "1",
+            requires = ["ac_cv_func_dup3==0"],
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/macros/AC_USE_SYSTEM_EXTENSIONS",
         "//gnulib/m4/unistd_h",
     ],
 )

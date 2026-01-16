@@ -1,11 +1,28 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/extensions.m4"""
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/extensions.m4
+
+The gnulib extensions.m4 is a wrapper that:
+  - AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
+  - Adds OpenBSD-specific _ISOC11_SOURCE handling
+  - Adds __STDC_WANT_LIB_EXT1__ handling
+
+This target depends on the autoconf builtin implementation.
+"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "extensions",
-    checks = [
-        # Note: extensions.m4 sets feature test macros, not compile-time checks
-    ],
+    checks = select({
+        # OpenBSD-specific: enable ISO C 11 declarations
+        "@platforms//os:openbsd": [
+            macros.AC_DEFINE("_ISOC11_SOURCE", "1"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
+    deps = [
+        # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
+        "//autoconf/macros/AC_USE_SYSTEM_EXTENSIONS",
+    ],
 )

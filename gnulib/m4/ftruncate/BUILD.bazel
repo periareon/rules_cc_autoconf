@@ -6,27 +6,23 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "ftruncate",
     checks = [
-        # Check for ftruncate function
-        # Equivalent to gl_FUNC_FTRUNCATE macro from ftruncate.m4
-        macros.AC_TRY_COMPILE(
-            code = """#include <unistd.h>
-
-#ifdef __cplusplus
-extern "C"
-#endif
-int ftruncate ();
-
-int main(void) {
-    return ftruncate();
-}""",
-            define = "HAVE_FTRUNCATE",
-            language = "c",
-        ),
-        macros.AC_CHECK_FUNC(
-            "_chsize",
-            define = "HAVE__CHSIZE",
-        ),
-    ],
+        macros.AC_CHECK_FUNC("ftruncate"),
+    ] + select({
+        "@platforms//os:windows": [
+            macros.AC_SUBST(
+                "REPLACE_FTRUNCATE",
+                "1",
+                requires = ["HAVE_FTRUNCATE==1"],
+            ),
+        ],
+        "//conditions:default": [
+            macros.AC_SUBST(
+                "REPLACE_FTRUNCATE",
+                "1",
+                requires = ["HAVE_FTRUNCATE==0"],
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])

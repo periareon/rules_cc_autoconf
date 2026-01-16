@@ -6,17 +6,13 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "codeset",
     checks = [
-        # Check for nl_langinfo and CODESET
-        # Equivalent to AM_LANGINFO_CODESET macro from codeset.m4
-        macros.AC_TRY_COMPILE(
-            code = """#include <langinfo.h>
-
-int main(void) {
-    char* cs = nl_langinfo(CODESET);
-    return !cs;
-}""",
+        # AM_LANGINFO_CODESET uses AC_LINK_IFELSE to check if nl_langinfo(CODESET) links
+        # This requires both the function and the CODESET constant to be available
+        macros.AC_TRY_LINK(
+            includes = ["langinfo.h"],
+            code = """char* cs = nl_langinfo(CODESET);
+    (void)cs;""",
             define = "HAVE_LANGINFO_CODESET",
-            language = "c",
         ),
     ],
     visibility = ["//visibility:public"],

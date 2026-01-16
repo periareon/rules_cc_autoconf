@@ -7,9 +7,17 @@ autoconf(
     name = "cbrt",
     checks = [
         macros.AC_CHECK_FUNC("cbrt"),
+        # HAVE_DECL_ALARM is provided by mktime dependency (used in runtime tests)
     ],
     visibility = ["//visibility:public"],
     deps = [
+        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+        "//gnulib/m4/extensions",
+        # Standard headers are expected by tests (matching GNU autoconf behavior)
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+        "//gnulib/m4/mktime",  # Provides HAVE_DECL_ALARM (AC_CHECK_DECLS_ONCE([alarm]))
+        # AC_REQUIRE([gl_FUNC_FREXP]) - needed for replacement implementation
+        "//gnulib/m4/frexp",
     ],
 )

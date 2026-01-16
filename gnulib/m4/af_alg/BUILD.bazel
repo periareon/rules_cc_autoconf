@@ -33,5 +33,7 @@ int main(void) {
     deps = [
         "//gnulib/m4/sys_socket_h",  # AC_REQUIRE([gl_SYS_SOCKET_H])
         # Note: AC_REQUIRE([AC_C_INLINE]) is a standard autoconf macro
+        # Standard headers are expected by tests (matching GNU autoconf behavior)
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

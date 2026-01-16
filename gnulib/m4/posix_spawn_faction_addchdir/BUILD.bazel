@@ -1,11 +1,25 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/posix_spawn_faction_addchdir.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "posix_spawn_faction_addchdir",
     checks = [
-        # Note: posix_spawn_faction_addchdir.m4 may not exist in gnulib, or this module may not have checks
+        # HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR is provided by spawn_h
+        # Check for posix_spawn_file_actions_addchdir_np (non-portable version)
+        macros.AC_CHECK_FUNC(
+            "posix_spawn_file_actions_addchdir_np",
+            define = "HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR_NP",
+            code = "#include <spawn.h>",
+        ),
+        # This function is not yet standardized, so always replace the system's implementation
+        # REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR=1 is set by defaults if function exists
+        # HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR=0 is set by defaults if function doesn't exist
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/spawn_h",  # AC_REQUIRE([gl_SPAWN_H_DEFAULTS]) - provides HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR
+        "//gnulib/m4/posix_spawn",  # AC_REQUIRE([gl_POSIX_SPAWN])
+    ],
 )

@@ -21,6 +21,7 @@ int main(void) { return 0; }
         ),
         macros.AC_CHECK_DECL(
             "alarm",
+            define = "HAVE_DECL_ALARM",
             headers = ["unistd.h"],
         ),
     ] + select({

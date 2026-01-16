@@ -10,27 +10,53 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "stdlib_h",
     checks = [
-        macros.AC_CHECK_HEADER("stdlib.h"),
+        # HAVE_STDLIB_H is provided by AC_CHECK_INCLUDES_DEFAULT
+        # We only do module-specific checks here
 
         # AC_CHECK_DECLS_ONCE checks from gl_STDLIB_H
+        # These only set shell variables (AC_SUBST) to 0 if NOT found
+        # If found, they are left undefined (not in config.h)
+        # Use temporary define names to avoid conflicts
         macros.AC_CHECK_DECL(
             "ecvt",
-            define = "HAVE_DECL_ECVT",
-            includes = ["stdlib.h"],
+            define = "_gl_cv_have_decl_ecvt",
+            headers = ["stdlib.h"],
+        ),
+        macros.AC_SUBST(
+            "HAVE_DECL_ECVT",
+            "0",
+            condition = "_gl_cv_have_decl_ecvt",
+            if_false = "0",  # Set to 0 if NOT found
+            if_true = None,  # Leave undefined if found
         ),
         macros.AC_CHECK_DECL(
             "fcvt",
-            define = "HAVE_DECL_FCVT",
-            includes = ["stdlib.h"],
+            define = "_gl_cv_have_decl_fcvt",
+            headers = ["stdlib.h"],
+        ),
+        macros.AC_SUBST(
+            "HAVE_DECL_FCVT",
+            "0",
+            condition = "_gl_cv_have_decl_fcvt",
+            if_false = "0",  # Set to 0 if NOT found
+            if_true = None,  # Leave undefined if found
         ),
         macros.AC_CHECK_DECL(
             "gcvt",
-            define = "HAVE_DECL_GCVT",
-            includes = ["stdlib.h"],
+            define = "_gl_cv_have_decl_gcvt",
+            headers = ["stdlib.h"],
+        ),
+        macros.AC_SUBST(
+            "HAVE_DECL_GCVT",
+            "0",
+            condition = "_gl_cv_have_decl_gcvt",
+            if_false = "0",  # Set to 0 if NOT found
+            if_true = None,  # Leave undefined if found
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",  # Provides HAVE_STDLIB_H
         "//gnulib/m4/include_next",  # gl_NEXT_HEADERS([stdlib.h])
     ],
 )

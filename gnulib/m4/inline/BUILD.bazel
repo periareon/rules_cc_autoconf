@@ -5,26 +5,31 @@ load("//autoconf:macros.bzl", "macros")
 
 # gl_INLINE from inline.m4
 # Tests for the 'inline' keyword or equivalent.
-# Modern C99+ compilers always support inline.
+# Requires AC_C_INLINE which already checks for HAVE_INLINE.
 autoconf(
     name = "inline",
     checks = [
-        # Check if compiler supports the inline keyword
-        # This is always true for C99+ compilers (clang, gcc, msvc)
+        # AC_C_INLINE already checks for HAVE_INLINE
+        # We check if the compiler actually respects inline (effective inline)
+        # This checks if __NO_INLINE__ is not defined (meaning inline is effective)
+        # If inline is not effective, we don't override HAVE_INLINE (let AC_C_INLINE's value stand)
         macros.AC_TRY_COMPILE(
             code = """\
-/* Test if compiler supports inline keyword */
-static inline int test_inline(void) { return 0; }
-int main(void) { return test_inline(); }
+/* Test if compiler respects inline (not just if keyword exists) */
+#ifdef __NO_INLINE__
+#error "inline is not effective"
+#endif
+int main(void) { return 0; }
 """,
-            define = "_gl_cv_c_inline",
+            define = "_gl_cv_c_inline_effective",
             language = "c",
         ),
-        macros.AC_DEFINE(
-            "HAVE_INLINE",
-            condition = "_gl_cv_c_inline",
-            if_true = "1",
-        ),
+        # Note: HAVE_INLINE is already provided by AC_C_INLINE
+        # The upstream m4 also sets HAVE_INLINE=1 if inline is effective,
+        # but since AC_C_INLINE already provides it, we don't duplicate it here
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_C_INLINE",  # AC_REQUIRE([AC_C_INLINE])
+    ],
 )

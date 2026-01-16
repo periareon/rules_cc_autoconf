@@ -7,7 +7,18 @@ autoconf(
     name = "accept4",
     checks = [
         # Check for accept4 declaration
-        # Equivalent to gl_FUNC_ACCEPT4 macro from accept4.m4
+        # Equivalent to gl_FUNC_ACCEPT4 macro from accept4.m4:
+        #   AC_CHECK_DECLS([accept4], , , [[#include <sys/types.h>
+        #                                   #include <sys/socket.h>]])
+        #
+        # Note: The M4 macro also:
+        # - AC_REQUIRE([gl_SYS_SOCKET_H_DEFAULTS]) which sets HAVE_ACCEPT4=1 default
+        # - if test $ac_cv_have_decl_accept4 != yes; then HAVE_ACCEPT4=0; fi
+        #
+        # In Bazel, the defaults come from the toolchain, and HAVE_ACCEPT4 is
+        # handled via AC_SUBST (not AC_DEFINE). For the config.h output,
+        # HAVE_ACCEPT4 is not defined by this module - it's left for the
+        # defaults mechanism or subst.h templates.
         macros.AC_CHECK_DECL(
             "accept4",
             define = "HAVE_DECL_ACCEPT4",
@@ -17,22 +28,12 @@ autoconf(
             ],
             language = "c",
         ),
-        # Set HAVE_ACCEPT4=0 if declaration not found
-        macros.AC_TRY_COMPILE(
-            code = """#include <sys/types.h>
-#include <sys/socket.h>
-
-#ifdef __cplusplus
-extern "C"
-#endif
-char accept4 ();
-
-int main(void) {
-    return accept4();
-}""",
-            define = "HAVE_ACCEPT4",
-            language = "c",
-        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # Required by AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
+        "//gnulib/m4/extensions",
+        # Standard headers are expected by tests (matching GNU autoconf behavior)
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

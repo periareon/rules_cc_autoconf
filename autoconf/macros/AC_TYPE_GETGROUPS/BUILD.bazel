@@ -1,0 +1,23 @@
+"""AC_TYPE_GETGROUPS - Autoconf builtin macro
+
+Checks the type of the array argument to getgroups().
+
+Defines:
+  - GETGROUPS_T (type of getgroups array argument)
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "AC_TYPE_GETGROUPS",
+    checks = [
+        # Check getgroups signature - typically gid_t or int
+        # AC_CHECK_DECL includes the headers directly, doesn't need AC_CHECK_INCLUDES_DEFAULT
+        macros.AC_CHECK_DECL(
+            "getgroups",
+            headers = ["unistd.h"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

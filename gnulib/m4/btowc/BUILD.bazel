@@ -10,6 +10,8 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
+        # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//autoconf/macros/AC_CANONICAL_HOST",
         "//gnulib/m4/locale-fr",
         "//gnulib/m4/mbrtowc",
         "//gnulib/m4/wchar_h",  # AC_REQUIRE([gl_WCHAR_H_DEFAULTS])

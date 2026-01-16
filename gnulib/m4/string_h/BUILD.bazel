@@ -6,10 +6,12 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "string_h",
     checks = [
-        macros.AC_CHECK_HEADER("string.h"),
+        # HAVE_STRING_H is provided by AC_CHECK_INCLUDES_DEFAULT
+        # We only do module-specific checks here (none in this case)
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",  # Provides HAVE_STRING_H
         "//gnulib/m4/include_next",
     ],
 )

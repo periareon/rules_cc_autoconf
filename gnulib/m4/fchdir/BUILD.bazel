@@ -12,10 +12,14 @@ autoconf(
                 "fchdir",
                 define = "HAVE_FCHDIR",
             ),
+            # AC_CHECK_DECLS_ONCE only defines HAVE_DECL_FCHDIR=0 if not found
             macros.AC_CHECK_DECL(
                 "fchdir",
-                define = "HAVE_DECL_FCHDIR",
+                define = "_gl_cv_have_decl_fchdir",  # Temporary define
                 headers = ["unistd.h"],
+                if_false = [
+                    macros.AC_DEFINE("HAVE_DECL_FCHDIR", "0"),
+                ],
             ),
         ],
         "//conditions:default": [
@@ -27,10 +31,14 @@ autoconf(
                 "fchdir",
                 define = "HAVE_FCHDIR",
             ),
+            # AC_CHECK_DECLS_ONCE only defines HAVE_DECL_FCHDIR=0 if not found
             macros.AC_CHECK_DECL(
                 "fchdir",
-                define = "HAVE_DECL_FCHDIR",
+                define = "_gl_cv_have_decl_fchdir",  # Temporary define
                 headers = ["unistd.h"],
+                if_false = [
+                    macros.AC_DEFINE("HAVE_DECL_FCHDIR", "0"),
+                ],
             ),
         ],
     }),

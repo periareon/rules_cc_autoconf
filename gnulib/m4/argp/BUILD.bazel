@@ -35,6 +35,7 @@ int main() { program_invocation_short_name = "test"; return 0; }""",
             macros.AC_DEFINE("GNULIB_PROGRAM_INVOCATION_NAME", "1"),
             macros.AC_DEFINE("GNULIB_PROGRAM_INVOCATION_SHORT_NAME", "1"),
             # On macOS, the symbols are also not linkable, so HAVE_* remain undefined
+            # HAVE_DECL_*_UNLOCKED checks are provided by unlocked-io dependency
         ],
         "//conditions:default": [
             macros.AC_CHECK_FUNC("argp_parse"),
@@ -65,6 +66,12 @@ int main() { program_invocation_short_name = "test"; return 0; }""",
     }),
     visibility = ["//visibility:public"],
     deps = [
+        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+        "//gnulib/m4/extensions",
+        # Standard headers are expected by tests (matching GNU autoconf behavior)
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/getprogname",  # Provides HAVE_DECL_PROGRAM_INVOCATION_*
+        "//gnulib/m4/unlocked-io",  # AC_CHECK_DECLS_ONCE for *_unlocked functions
+        "//autoconf/macros/AC_FUNC_STRERROR_R",  # AC_REQUIRE([AC_FUNC_STRERROR_R])
     ],
 )

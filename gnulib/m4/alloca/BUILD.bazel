@@ -1,42 +1,17 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/alloca.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "alloca",
     checks = [
-        macros.AC_CHECK_HEADER(
-            "alloca.h",
-            define = "_gl_have_alloca_h",
-        ),
-        macros.AC_SUBST(
-            "HAVE_ALLOCA_H",
-            condition = "_gl_have_alloca_h",
-            if_false = "0",
-            if_true = "1",
-        ),
-        macros.AC_DEFINE(
-            "HAVE_ALLOCA",
-            condition = "_gl_have_alloca_h",
-            if_true = "1",
-        ),
+        # gl_FUNC_ALLOCA does additional logic after AC_FUNC_ALLOCA
+        # but for now we just depend on AC_FUNC_ALLOCA which provides
+        # HAVE_ALLOCA_H and HAVE_ALLOCA
     ],
     visibility = ["//visibility:public"],
-)
-
-autoconf(
-    name = "defaults",
-    checks = [],
-    visibility = ["//visibility:public"],
-)
-
-autoconf(
-    name = "with_defaults",
-    checks = [],
-    visibility = ["//visibility:public"],
     deps = [
-        ":alloca",
-        ":defaults",
+        # AC_REQUIRE([AC_FUNC_ALLOCA])
+        "//autoconf/macros/AC_FUNC_ALLOCA",
     ],
 )

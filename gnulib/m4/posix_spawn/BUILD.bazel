@@ -34,6 +34,7 @@ autoconf(
             "vfork",
             define = "HAVE_VFORK",
         ),
+        # HAVE_POSIX_SPAWN is provided by spawn_h
         macros.AC_CHECK_DECL(
             "posix_spawn",
             define = "HAVE_DECL_POSIX_SPAWN",
@@ -105,4 +106,8 @@ int main(void) { return 0; }
         ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/spawn_h",  # AC_REQUIRE([gl_SPAWN_H_DEFAULTS])
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+    ],
 )

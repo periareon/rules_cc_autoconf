@@ -1,0 +1,24 @@
+"""https://www.gnu.org/savannah-checkouts/gnu/autoconf/manual/autoconf-2.72/autoconf.html#index-AC_005fC_005fRESTRICT"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "AC_C_RESTRICT",
+    checks = [
+        # Check if restrict keyword is supported
+        macros.AC_TRY_COMPILE(
+            code = """void test(int *restrict p) { (void)p; }
+int main(void) { return 0; }""",
+            define = "_gl_cv_c_restrict",
+        ),
+        # Define restrict to empty string if supported
+        macros.AC_DEFINE(
+            "restrict",
+            "",
+            condition = "_gl_cv_c_restrict",
+            if_true = "",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

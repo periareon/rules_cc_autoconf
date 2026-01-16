@@ -87,6 +87,8 @@ int main(void) {
     }),
     visibility = ["//visibility:public"],
     deps = [
-        # Note: AC_C_RESTRICT and AC_CANONICAL_HOST are standard autoconf macros
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",  # AC_INCLUDES_DEFAULT used in m4
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        # Note: AC_C_RESTRICT is a standard autoconf macro
     ],
 )

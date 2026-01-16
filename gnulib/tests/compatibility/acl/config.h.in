@@ -26,6 +26,9 @@
 #undef HAVE_SYS_STAT_H
 #undef HAVE_SYS_TYPES_H
 #undef HAVE_UNISTD_H
+/* #undef LIB_ACL */
+/* #undef LIB_SELINUX */
+/* #undef LIB_XATTR */
 #undef QCOPY_ACL_LIB
 #undef STDC_HEADERS
 #undef USE_ACL

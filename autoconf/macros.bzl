@@ -139,6 +139,7 @@ def _ac_check_header(
 def _ac_check_func(
         function,
         define = None,
+        *,
         code = None,
         file = None,
         language = "c",

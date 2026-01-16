@@ -1,0 +1,17 @@
+"""AC_CONFIG_AUX_DIR_DEFAULT - Autoconf builtin macro
+
+Sets the default directory for auxiliary files (config.guess, config.sub, etc.).
+
+This macro doesn't produce any defines - it just sets up the search path
+for auxiliary files. In Bazel, this is handled by the build system.
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+
+autoconf(
+    name = "AC_CONFIG_AUX_DIR_DEFAULT",
+    checks = [
+        # No checks needed - this is just a directory setup
+    ],
+    visibility = ["//visibility:public"],
+)

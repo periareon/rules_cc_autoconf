@@ -10,7 +10,8 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "stdio_h",
     checks = [
-        macros.AC_CHECK_HEADER("stdio.h"),
+        # HAVE_STDIO_H is provided by AC_CHECK_INCLUDES_DEFAULT
+        # We only do module-specific checks here
 
         # From gl_STDIO_H_EARLY: Define __USE_MINGW_ANSI_STDIO for MinGW
         # This makes printf/scanf use GNU-style format specifiers
@@ -63,6 +64,7 @@ int main(void) { return 0; }
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",  # Provides HAVE_STDIO_H
         "//gnulib/m4/include_next",  # gl_NEXT_HEADERS([stdio.h])
     ],
 )

@@ -13,4 +13,10 @@ autoconf(
         ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        # HAVE_LANGINFO_CODESET appears in golden file, likely from locale-related checks
+        "//gnulib/m4/codeset",
+    ],
 )

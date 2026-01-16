@@ -7,8 +7,7 @@ autoconf(
     name = "size_max",
     checks = [
         # gl_SIZE_MAX from size_max.m4
-        # Check for stdint.h
-        macros.AC_CHECK_HEADER("stdint.h"),
+        # HAVE_STDINT_H is provided by AC_CHECK_INCLUDES_DEFAULT
         # Check if SIZE_MAX is defined
         macros.AC_TRY_COMPILE(
             code = """\
@@ -27,4 +26,7 @@ int main(void) { return 0; }
         ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",  # Provides HAVE_STDINT_H
+    ],
 )

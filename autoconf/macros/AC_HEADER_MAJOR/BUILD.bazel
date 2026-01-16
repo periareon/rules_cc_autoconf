@@ -1,0 +1,26 @@
+"""AC_HEADER_MAJOR - Autoconf builtin macro
+
+Checks where major() macro is defined (sys/types.h or sys/mkdev.h).
+
+Defines:
+  - MAJOR_IN_MKDEV (if in sys/mkdev.h)
+  - MAJOR_IN_SYSMACROS (if in sys/sysmacros.h)
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "AC_HEADER_MAJOR",
+    checks = [
+        # Check for major() macro in various headers
+        macros.AC_CHECK_DECL(
+            "major",
+            headers = ["sys/types.h", "sys/mkdev.h", "sys/sysmacros.h"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)

@@ -10,10 +10,16 @@ autoconf(
             "dirent.h",
             define = "HAVE_DIRENT_H",
         ),
+        # gl_DIRENT_MODULE_INDICATOR([test]) defines GNULIB_TEST_=1 for tests
+        # This is set by gl_MODULE_INDICATOR_FOR_TESTS
+        macros.AC_DEFINE("GNULIB_TEST_", "1"),
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/include_next",
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST]) in gl_DIRENT_DIR
+        # Standard headers are expected by tests (matching GNU autoconf behavior)
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
 

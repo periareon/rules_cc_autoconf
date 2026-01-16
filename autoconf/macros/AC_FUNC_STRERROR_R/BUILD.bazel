@@ -1,0 +1,26 @@
+"""AC_FUNC_STRERROR_R - Autoconf builtin macro
+
+Checks the signature of strerror_r().
+
+Defines:
+  - HAVE_DECL_STRERROR_R (if declared)
+  - STRERROR_R_CHAR_P (if returns char*)
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "AC_FUNC_STRERROR_R",
+    checks = [
+        macros.AC_CHECK_DECL(
+            "strerror_r",
+            define = "HAVE_DECL_STRERROR_R",
+            headers = ["string.h"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
