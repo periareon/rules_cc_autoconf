@@ -221,7 +221,8 @@ int Checker::run_checks_by_define(
                 // Handle conditional subst/define checks
                 if (check.condition().has_value() &&
                     (check.type() == CheckType::kSubst ||
-                     check.type() == CheckType::kDefine)) {
+                     check.type() == CheckType::kDefine ||
+                     check.type() == CheckType::kM4Define)) {
                     // Look up the condition's result
                     const std::string& cond_name = *check.condition();
                     std::map<std::string, CheckResultInfo>::const_iterator

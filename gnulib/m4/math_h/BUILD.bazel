@@ -3,6 +3,36 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# Known platforms where long double == double:
+# Linux/HPPA, NetBSD/sparc32, Minix 3.1.8, AIX 5, AIX 6 and 7 with xlc, MSVC 9.
+
+autoconf(
+    name = "long-double-vs-double",
+    checks = [
+        # Check whether long double and double are the same
+        # This directly defines HAVE_SAME_LONG_DOUBLE_AS_DOUBLE for config.h
+        # when the check succeeds (long double == double)
+        # On most modern systems (macOS, Linux x86_64), this will NOT be defined
+        # since long double has higher precision than double.
+        macros.AC_TRY_COMPILE(
+            code = """\
+#include <float.h>
+int main(void) {
+    typedef int check[sizeof (long double) == sizeof (double)
+                      && LDBL_MANT_DIG == DBL_MANT_DIG
+                      && LDBL_MAX_EXP == DBL_MAX_EXP
+                      && LDBL_MIN_EXP == DBL_MIN_EXP
+                      ? 1 : -1];
+    return 0;
+}
+""",
+            define = "HAVE_SAME_LONG_DOUBLE_AS_DOUBLE",
+            language = "c",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)
+
 autoconf(
     name = "math_h",
     checks = [
@@ -52,7 +82,7 @@ int main(void) {
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/include_next",
-        "//gnulib/m4/long-double-vs-double",
+        ":long-double-vs-double",
 
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",

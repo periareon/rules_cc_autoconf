@@ -6,55 +6,16 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "sys_time_h",
     checks = [
-        macros.AC_CHECK_HEADER("sys/time.h"),
-
-        # Check for struct timeval
-        # Note: Always include sys/time.h since AC_CHECK_HEADER above verified it exists
-        macros.AC_TRY_COMPILE(
-            code = """\
-#include <sys/time.h>
-#include <time.h>
-int main(void) {
-    static struct timeval x;
-    x.tv_sec = x.tv_usec;
-    return 0;
-}
-""",
-            define = "_gl_have_struct_timeval",
-            language = "c",
-        ),
-        macros.AC_SUBST(
-            "HAVE_STRUCT_TIMEVAL",
-            condition = "_gl_have_struct_timeval",
-            if_false = "0",
-            if_true = "1",
-        ),
-
-        # Check if struct timeval.tv_sec is wide enough
-        macros.AC_TRY_COMPILE(
-            code = """\
-#include <sys/time.h>
-#include <time.h>
-int main(void) {
-    static struct timeval x;
-    typedef int verify_tv_sec_type[sizeof(time_t) <= sizeof(x.tv_sec) ? 1 : -1];
-    return 0;
-}
-""",
-            define = "_gl_struct_timeval_tv_sec_wide_enough",
-            language = "c",
-        ),
-        macros.AC_SUBST(
-            "REPLACE_STRUCT_TIMEVAL",
-            condition = "_gl_struct_timeval_tv_sec_wide_enough",
-            if_false = "1",
-            if_true = "0",
+        macros.AC_CHECK_HEADER(
+            "sys/time.h",
+            define = "HAVE_SYS_TIME_H",
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/include_next",
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//gnulib/m4/include_next",  # gl_CHECK_NEXT_HEADERS
+        "//gnulib/m4/sys_socket_h",  # Provides HAVE_SYS_SOCKET_H (needed for test compatibility)
+        # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
@@ -62,12 +23,6 @@ int main(void) {
 autoconf(
     name = "defaults",
     checks = [
-        # Module indicators
-        macros.AC_SUBST("GNULIB_GETTIMEOFDAY", "0"),
-        # HAVE_* defaults
-        macros.AC_SUBST("HAVE_GETTIMEOFDAY", "1"),
-        # REPLACE_* defaults
-        macros.AC_SUBST("REPLACE_GETTIMEOFDAY", "0"),
     ],
     visibility = ["//visibility:public"],
 )

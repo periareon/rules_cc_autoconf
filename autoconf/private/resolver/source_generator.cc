@@ -137,14 +137,16 @@ std::string SourceGenerator::process_template(
         // ALL check types do @VAR@ substitution when they have values
         // This matches autoconf behavior where all defined variables are
         // available for substitution in output files
-        if (result.success && !result.value.empty()) {
+        // EXCEPT m4_define type which computes but doesn't generate output
+        if (result.success && !result.value.empty() && result.type != "m4_define") {
             std::regex definePattern("@" + define_name + "@");
             content = std::regex_replace(content, definePattern, result.value);
         }
 
         // Non-subst types (AC_DEFINE, AC_CHECK_*, etc.): Also replace #undef
         // AC_SUBST should NOT replace #undef statements in config.h
-        if (result.type != "subst" && !is_suffixed_subst) {
+        // M4_DEFINE should also NOT replace #undef (compute-only)
+        if (result.type != "subst" && result.type != "m4_define" && !is_suffixed_subst) {
             if (result.success) {
                 std::string replacement_text = "#define " + define_name;
                 if (!result.value.empty()) {

@@ -1,0 +1,3 @@
+/* subst.h.in */
+#define SUBST_POW_LIBM "@POW_LIBM@"
+#define SUBST__LIBM "@_LIBM@"

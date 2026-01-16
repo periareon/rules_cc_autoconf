@@ -13,11 +13,14 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS,
+        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS,
+        "//gnulib/m4/extensions",
+
+        # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+        # AC_REQUIRE([gl_LONG_DOUBLE_VS_DOUBLE])
+        "//gnulib/m4/math_h",
 
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
-        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
-        "//gnulib/m4/long-double-vs-double",  # AC_REQUIRE([gl_LONG_DOUBLE_VS_DOUBLE])
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

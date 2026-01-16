@@ -1,11 +1,21 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/windows-stat-inodes.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "windows-stat-inodes",
-    checks = [
-        # TODO: Add checks based on .m4 file
-    ],
+    checks = select({
+        # gl_WINDOWS_STAT_INODES checks if stat() on Windows uses inodes
+        # On Windows, stat() doesn't use traditional inodes, so this is defined
+        # On Unix-like systems (Linux, macOS), stat() uses inodes, so this is undefined
+        "@platforms//os:windows": [
+            macros.AC_DEFINE("WINDOWS_STAT_INODES", "1"),
+        ],
+        "//conditions:default": [
+            # On non-Windows systems, WINDOWS_STAT_INODES remains undefined
+            # (matches golden file expectation)
+        ],
+    }),
     visibility = ["//visibility:public"],
 )

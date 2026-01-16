@@ -3,71 +3,19 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# gl_STDDEF_H macro from stddef_h.m4
+# Check if <stddef.h> exists and is self-contained
 autoconf(
     name = "stddef_h",
     checks = [
-        # ============================================================
-        # HAVE_* variables - use compile-time checks
-        # ============================================================
-        # Check for stddef.h header
-        macros.AC_CHECK_HEADER(
-            "stddef.h",
-            define = "HAVE_STDDEF_H",
-        ),
-
-        # Check for max_align_t type with proper alignment
-        macros.AC_TRY_COMPILE(
-            code = """\
-#if ((defined __GNUC__ && 4 <= __GNUC__) || defined __clang__) && !defined __cplusplus
- #define _Alignof(type) __builtin_offsetof (struct { char __a; type __b; }, __b)
-#endif
-#include <stddef.h>
-unsigned int s = sizeof (max_align_t);
-#if defined __GNUC__ || defined __clang__ || defined __IBM__ALIGNOF__
-int check1[2 * (__alignof__ (double) <= __alignof__ (max_align_t)) - 1];
-int check2[2 * (__alignof__ (long double) <= __alignof__ (max_align_t)) - 1];
-#endif
-int main(void) { return 0; }
-""",
-            define = "HAVE_MAX_ALIGN_T",
-            language = "c",
-        ),
-
-        # Check whether NULL can be used in arbitrary expressions
-        macros.AC_TRY_COMPILE(
-            code = """\
-#include <stddef.h>
-int test[2 * (sizeof NULL == sizeof (void *)) -1];
-int main(void) { return 0; }
-""",
-            define = "HAVE_NULL_WORKS",
-            language = "c",
-        ),
-
-        # Check for unreachable() function in C
-        macros.AC_TRY_COMPILE(
-            code = """\
-#include <stddef.h>
-int main(void) { unreachable (); return 0; }
-""",
-            define = "HAVE_C_UNREACHABLE",
-            language = "c",
-        ),
-
-        # ============================================================
-        # REPLACE_* and other configuration variables (AC_SUBST)
-        # ============================================================
-        macros.AC_SUBST("REPLACE_NULL", "0"),
-        macros.AC_SUBST("NULLPTR_T_NEEDS_STDDEF", "1"),
-        macros.AC_SUBST("STDDEF_NOT_IDEMPOTENT", "0"),
+        # Check that stddef.h can be included
+        macros.AC_CHECK_HEADER("stddef.h"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS,
-
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
-        "//gnulib/m4/extensions",
-        "//gnulib/m4/include_next",  # For NEXT_STDDEF_H
+        "//gnulib/m4/include_next",  # gl_CHECK_NEXT_HEADERS
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - provides extension defines
+        # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

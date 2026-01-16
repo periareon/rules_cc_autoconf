@@ -1,11 +1,24 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/inttypes_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
 
+# gl_AC_HEADER_INTTYPES_H macro from inttypes_h.m4
+# Check if <inttypes.h> exists and declares uintmax_t
 autoconf(
     name = "inttypes_h",
     checks = [
-        # Note: inttypes_h.m4 may not exist in gnulib, or this module may not have checks
+        macros.AC_TRY_COMPILE(
+            code = """\
+#include <inttypes.h>
+int main(void) {
+    uintmax_t i = (uintmax_t) -1;
+    return !i;
+}
+""",
+            define = "HAVE_INTTYPES_H_WITH_UINTMAX",
+            language = "c",
+        ),
     ],
     visibility = ["//visibility:public"],
 )

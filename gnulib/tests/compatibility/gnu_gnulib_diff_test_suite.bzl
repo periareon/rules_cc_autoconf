@@ -165,6 +165,7 @@ def gnu_gnulib_diff_test_suite(
             m4_files = m4_files,
             config_h_in = config_h_in,
             subst_h_in = subst_h_in,
+            verify_variables = True,
             golden_config_h = golden_config_h,
             golden_subst_h = golden_subst_h,
             aux_files = aux_files,

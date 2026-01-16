@@ -25,6 +25,8 @@ std::string check_type_to_string(CheckType type) {
             return "define";
         case CheckType::kSubst:
             return "subst";
+        case CheckType::kM4Define:
+            return "m4_define";
         case CheckType::kSizeof:
             return "sizeof";
         case CheckType::kAlignof:
@@ -95,6 +97,8 @@ std::optional<Check> Check::from_json(const void* json_data) {
         type = CheckType::kDefine;
     } else if (type_str == "subst") {
         type = CheckType::kSubst;
+    } else if (type_str == "m4_define") {
+        type = CheckType::kM4Define;
     } else {
         DebugLogger::warn("Unknown check type: " + type_str);
         return std::nullopt;

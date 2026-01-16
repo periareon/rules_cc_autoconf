@@ -9,14 +9,15 @@ autoconf(
         macros.AC_CHECK_DECL(
             "trunc",
             define = "HAVE_DECL_TRUNC",
+            headers = ["math.h"],
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
         # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS,
+        "//gnulib/m4/extensions",
 
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
-        "//gnulib/m4/extensions",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

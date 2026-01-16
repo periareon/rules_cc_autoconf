@@ -1,0 +1,2 @@
+/* subst.h.in */
+#define SUBST_WINDOWS_STAT_INODES "@WINDOWS_STAT_INODES@"

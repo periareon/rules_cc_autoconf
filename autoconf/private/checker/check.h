@@ -19,6 +19,7 @@ enum class CheckType {
     kLink,        ///< Check if code compiles and links
     kDefine,      ///< Directly apply the define with the given value
     kSubst,       ///< AC_SUBST - substitution variable (may be conditional)
+    kM4Define,    ///< M4_DEFINE - compute value for requires but don't generate output
     kSizeof,      ///< Determine size of type
     kAlignof,     ///< Determine alignment of type
     kComputeInt,  ///< Compute integer value

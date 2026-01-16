@@ -49,6 +49,9 @@ CheckResult CheckRunner::run_check(const Check& check) {
         case CheckType::kSubst:
             // Non-conditional subst - just return the value
             return check_define(check);
+        case CheckType::kM4Define:
+            // M4_DEFINE - compute value for requires but don't generate output
+            return check_define(check);
         case CheckType::kSizeof:
             return check_sizeof(check);
         case CheckType::kAlignof:

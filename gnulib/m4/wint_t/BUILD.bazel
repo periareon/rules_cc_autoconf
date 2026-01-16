@@ -3,24 +3,22 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# Combined gt_TYPE_WINT_T and gl_TYPE_WINT_T_PREREQ
 autoconf(
     name = "wint_t",
     checks = [
         # Check for wint_t type
         macros.AC_TRY_COMPILE(
-            code = """\
-#include <wchar.h>
+            code = """#include <wchar.h>
 wint_t foo = (wchar_t)'\\0';
 int main(void) { return 0; }
 """,
             define = "HAVE_WINT_T",
             language = "c",
         ),
-
         # Check whether wint_t is large enough
         macros.AC_TRY_COMPILE(
-            code = """\
-#include <wchar.h>
+            code = """#include <wchar.h>
 int verify[sizeof (wint_t) < sizeof (int) ? -1 : 1];
 int main(void) { return 0; }
 """,
@@ -33,13 +31,7 @@ int main(void) { return 0; }
             if_false = "1",
             if_true = "0",
         ),
-    ],
-    visibility = ["//visibility:public"],
-)
-
-autoconf(
-    name = "wint_t_prereq",
-    checks = [
+        # Check for crtdefs.h (Windows-specific header)
         macros.AC_CHECK_HEADER(
             "crtdefs.h",
             define = "_gl_have_crtdefs_h",
@@ -53,9 +45,7 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        ":wint_t",
-
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
@@ -72,6 +62,6 @@ autoconf(
     visibility = ["//visibility:public"],
     deps = [
         ":defaults",
-        ":wint_t_prereq",
+        ":wint_t",
     ],
 )

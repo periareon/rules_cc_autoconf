@@ -1,0 +1,3 @@
+/* config.h.in */
+/* #undef EXP_LIBM */
+/* #undef POW_LIBM */

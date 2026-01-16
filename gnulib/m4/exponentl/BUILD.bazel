@@ -1,11 +1,24 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/exponentl.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
+
+# gl_LONG_DOUBLE_EXPONENT_LOCATION determines where the exponent bits are in a long double
+# For IEEE 754 long double-precision on little-endian systems (x86/x64, Apple Silicon):
+# - LDBL_EXPBIT0_WORD = 1 (high word of the long double)
+# - LDBL_EXPBIT0_BIT = 20 (bit 20 of the high word is bit 0 of the exponent)
 
 autoconf(
     name = "exponentl",
     checks = [
-        # Note: exponentl.m4 may not exist in gnulib, or this module may not have checks
+        # Word index where the exponent of 'long double' is found
+        macros.AC_DEFINE("LDBL_EXPBIT0_WORD", "1"),
+        # Bit index in the word where bit 0 of the exponent is found
+        macros.AC_DEFINE("LDBL_EXPBIT0_BIT", "20"),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

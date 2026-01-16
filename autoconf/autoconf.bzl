@@ -98,6 +98,26 @@ def _flatten_checks(raw_checks, label):
             if _checks_equivalent(existing, check):
                 # Identical check - skip (silently merge)
                 pass
+            elif existing.get("type") == "m4_define" or check.get("type") == "m4_define":
+                # m4_define doesn't generate output, so it can coexist with other types
+                # Keep the non-m4_define check as the one that generates output
+                if check.get("type") == "m4_define":
+                    # This m4_define is for computation only, existing check handles output
+                    pass
+                else:
+                    # Replace m4_define with the check that generates output
+                    result[define] = check
+            elif (existing.get("type") == "define" and check.get("type") == "subst") or \
+                 (existing.get("type") == "subst" and check.get("type") == "define"):
+                # AC_DEFINE generates config.h defines, AC_SUBST generates @VAR@ substitutions
+                # AC_DEFINE values are already used for @VAR@ replacement, so skip subst
+                # Keep the define check (it handles both outputs)
+                if check.get("type") == "subst":
+                    # Skip subst - define already provides @VAR@ replacement
+                    pass
+                else:
+                    # Keep define (replaces subst)
+                    result[define] = check
             else:
                 fail(("Conflicting check definitions for '{}' in '{}'. " +
                       "The same define name is used with different parameters. " +

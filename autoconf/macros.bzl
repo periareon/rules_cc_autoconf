@@ -1620,7 +1620,7 @@ def _m4_define(
         "define": define,
         "language": "c",
         "name": define,
-        "type": "subst",  # Substitution type - only replaces @VAR@ patterns
+        "type": "m4_define",  # Compute value for requires but don't generate output
     }
 
     if condition:

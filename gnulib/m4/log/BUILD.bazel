@@ -5,7 +5,6 @@ load("//autoconf:autoconf.bzl", "autoconf")
 autoconf(
     name = "log",
     checks = [
-        # Note: log.m4 may not exist in gnulib, or this module may not have checks
     ],
     visibility = ["//visibility:public"],
 )

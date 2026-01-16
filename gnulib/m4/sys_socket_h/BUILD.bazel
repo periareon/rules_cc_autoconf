@@ -10,29 +10,55 @@ autoconf(
             "sys/socket.h",
             define = "HAVE_SYS_SOCKET_H",
         ),
-        macros.AC_CHECK_HEADER(
-            "winsock2.h",
-            define = "HAVE_WINSOCK2_H",
+        # Check for shutdown function
+        macros.AC_CHECK_FUNC(
+            "shutdown",
+            define = "HAVE_SHUTDOWN",
         ),
-        macros.AC_CHECK_HEADER(
-            "ws2tcpip.h",
-            define = "HAVE_WS2TCPIP_H",
+        # Check for struct sockaddr_storage (gl_PREREQ_SYS_SA_FAMILY)
+        macros.AC_TRY_COMPILE(
+            code = """#include <sys/types.h>
+#include <sys/socket.h>
+
+int main(void) {
+    struct sockaddr_storage ss;
+    (void)ss;
+    return 0;
+}""",
+            define = "HAVE_STRUCT_SOCKADDR_STORAGE",
+            language = "c",
+        ),
+        # Check for ss_family member in struct sockaddr_storage
+        macros.AC_TRY_COMPILE(
+            code = """#include <sys/types.h>
+#include <sys/socket.h>
+
+int main(void) {
+    struct sockaddr_storage ss;
+    (void)ss.ss_family;
+    return 0;
+}""",
+            define = "HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY",
+            language = "c",
         ),
         # Check for sa_family_t type (gl_PREREQ_SYS_SA_FAMILY)
-        macros.AC_CHECK_TYPE(
-            "sa_family_t",
+        macros.AC_TRY_COMPILE(
+            code = """#include <sys/types.h>
+#include <sys/socket.h>
+
+int main(void) {
+    sa_family_t x;
+    (void)x;
+    return 0;
+}""",
             define = "HAVE_SA_FAMILY_T",
-            includes = [
-                "#include <sys/socket.h>",
-                "#include <sys/types.h>",
-            ],
+            language = "c",
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/include_next",
-
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//gnulib/m4/include_next",  # gl_CHECK_NEXT_HEADERS
+        # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
@@ -40,26 +66,139 @@ autoconf(
 autoconf(
     name = "defaults",
     checks = [
-        # Module indicators
-        macros.AC_SUBST("GNULIB_SOCKET", "0"),
-        macros.AC_SUBST("GNULIB_CONNECT", "0"),
+        # Module indicators - gl_SYS_SOCKET_MODULE_INDICATOR
         macros.AC_SUBST("GNULIB_ACCEPT", "0"),
+        macros.AC_SUBST("GNULIB_ACCEPT4", "0"),
         macros.AC_SUBST("GNULIB_BIND", "0"),
+        macros.AC_SUBST("GNULIB_CONNECT", "0"),
         macros.AC_SUBST("GNULIB_GETPEERNAME", "0"),
         macros.AC_SUBST("GNULIB_GETSOCKNAME", "0"),
         macros.AC_SUBST("GNULIB_GETSOCKOPT", "0"),
         macros.AC_SUBST("GNULIB_LISTEN", "0"),
         macros.AC_SUBST("GNULIB_RECV", "0"),
-        macros.AC_SUBST("GNULIB_SEND", "0"),
         macros.AC_SUBST("GNULIB_RECVFROM", "0"),
+        macros.AC_SUBST("GNULIB_SEND", "0"),
         macros.AC_SUBST("GNULIB_SENDTO", "0"),
         macros.AC_SUBST("GNULIB_SETSOCKOPT", "0"),
         macros.AC_SUBST("GNULIB_SHUTDOWN", "0"),
-        macros.AC_SUBST("GNULIB_ACCEPT4", "0"),
-        # HAVE_* defaults
-        macros.AC_SUBST("HAVE_STRUCT_SOCKADDR_STORAGE", "1"),
-        macros.AC_SUBST("HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY", "1"),
+        macros.AC_SUBST("GNULIB_SOCKET", "0"),
+        # HAVE_* defaults from various other modules that provide them
         macros.AC_SUBST("HAVE_ACCEPT4", "1"),
+        macros.AC_SUBST("HAVE_CHOWN", "1"),
+        macros.AC_SUBST("HAVE_COPY_FILE_RANGE", "1"),
+        macros.AC_SUBST("HAVE_DECL_ENVIRON", "1"),
+        macros.AC_SUBST("HAVE_DECL_EXECVPE", "1"),
+        macros.AC_SUBST("HAVE_DECL_FCHDIR", "1"),
+        macros.AC_SUBST("HAVE_DECL_FDATASYNC", "1"),
+        macros.AC_SUBST("HAVE_DECL_GETDOMAINNAME", "1"),
+        macros.AC_SUBST("HAVE_DECL_GETLOGIN", "1"),
+        macros.AC_SUBST("HAVE_DECL_GETLOGIN_R", "1"),
+        macros.AC_SUBST("HAVE_DECL_GETPAGESIZE", "1"),
+        macros.AC_SUBST("HAVE_DECL_GETUSERSHELL", "1"),
+        macros.AC_SUBST("HAVE_DECL_SETHOSTNAME", "1"),
+        macros.AC_SUBST("HAVE_DECL_TRUNCATE", "1"),
+        macros.AC_SUBST("HAVE_DECL_TTYNAME_R", "1"),
+        macros.AC_SUBST("HAVE_DUP3", "1"),
+        macros.AC_SUBST("HAVE_EUIDACCESS", "1"),
+        macros.AC_SUBST("HAVE_EXECVPE", "1"),
+        macros.AC_SUBST("HAVE_FACCESSAT", "1"),
+        macros.AC_SUBST("HAVE_FCHDIR", "1"),
+        macros.AC_SUBST("HAVE_FCHOWNAT", "1"),
+        macros.AC_SUBST("HAVE_FDATASYNC", "1"),
+        macros.AC_SUBST("HAVE_FSYNC", "1"),
+        macros.AC_SUBST("HAVE_FTRUNCATE", "1"),
+        macros.AC_SUBST("HAVE_GETDTABLESIZE", "1"),
+        macros.AC_SUBST("HAVE_GETENTROPY", "1"),
+        macros.AC_SUBST("HAVE_GETGROUPS", "1"),
+        macros.AC_SUBST("HAVE_GETHOSTNAME", "1"),
+        macros.AC_SUBST("HAVE_GETLOGIN", "1"),
+        macros.AC_SUBST("HAVE_GETPAGESIZE", "1"),
+        macros.AC_SUBST("HAVE_GETPASS", "1"),
+        macros.AC_SUBST("HAVE_GROUP_MEMBER", "1"),
+        macros.AC_SUBST("HAVE_LCHOWN", "1"),
+        macros.AC_SUBST("HAVE_LINK", "1"),
+        macros.AC_SUBST("HAVE_LINKAT", "1"),
+        macros.AC_SUBST("HAVE_OS_H", "0"),
+        macros.AC_SUBST("HAVE_PIPE", "1"),
+        macros.AC_SUBST("HAVE_PIPE2", "1"),
+        macros.AC_SUBST("HAVE_PREAD", "1"),
+        macros.AC_SUBST("HAVE_PWRITE", "1"),
+        macros.AC_SUBST("HAVE_READLINK", "1"),
+        macros.AC_SUBST("HAVE_READLINKAT", "1"),
+        # Note: HAVE_SA_FAMILY_T, HAVE_STRUCT_SOCKADDR_STORAGE, HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY,
+        # HAVE_SYS_SOCKET_H are provided by sys_socket_h checks, not defaults
+        macros.AC_SUBST("HAVE_SETHOSTNAME", "1"),
+        macros.AC_SUBST("HAVE_SLEEP", "1"),
+        macros.AC_SUBST("HAVE_SYMLINK", "1"),
+        macros.AC_SUBST("HAVE_SYMLINKAT", "1"),
+        macros.AC_SUBST("HAVE_SYS_PARAM_H", "0"),
+        # Note: HAVE_SHUTDOWN is provided by sys_socket_h check
+        macros.AC_SUBST("HAVE_UNLINKAT", "1"),
+        macros.AC_SUBST("HAVE_USLEEP", "1"),
+        macros.AC_SUBST("HAVE_WINSOCK2_H", "0"),
+        macros.AC_SUBST("HAVE_WS2TCPIP_H", "0"),
+        macros.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_SYS_SOCKET_H", "<sys/socket.h>"),
+        macros.AC_SUBST("NEXT_SYS_SOCKET_H", "<sys/socket.h>"),
+        # REPLACE_* defaults
+        macros.AC_SUBST("REPLACE_ACCESS", "0"),
+        macros.AC_SUBST("REPLACE_CHOWN", "0"),
+        macros.AC_SUBST("REPLACE_CLOSE", "0"),
+        macros.AC_SUBST("REPLACE_COPY_FILE_RANGE", "0"),
+        macros.AC_SUBST("REPLACE_DUP", "0"),
+        macros.AC_SUBST("REPLACE_DUP2", "0"),
+        macros.AC_SUBST("REPLACE_DUP3", "0"),
+        macros.AC_SUBST("REPLACE_EXECL", "0"),
+        macros.AC_SUBST("REPLACE_EXECLE", "0"),
+        macros.AC_SUBST("REPLACE_EXECLP", "0"),
+        macros.AC_SUBST("REPLACE_EXECV", "0"),
+        macros.AC_SUBST("REPLACE_EXECVE", "0"),
+        macros.AC_SUBST("REPLACE_EXECVP", "0"),
+        macros.AC_SUBST("REPLACE_EXECVPE", "0"),
+        macros.AC_SUBST("REPLACE_FACCESSAT", "0"),
+        macros.AC_SUBST("REPLACE_FCHDIR", "0"),
+        macros.AC_SUBST("REPLACE_FCHOWNAT", "0"),
+        macros.AC_SUBST("REPLACE_FDATASYNC", "0"),
+        macros.AC_SUBST("REPLACE_FTRUNCATE", "0"),
+        macros.AC_SUBST("REPLACE_GETCWD", "0"),
+        macros.AC_SUBST("REPLACE_GETDOMAINNAME", "0"),
+        macros.AC_SUBST("REPLACE_GETDTABLESIZE", "0"),
+        macros.AC_SUBST("REPLACE_GETENTROPY", "0"),
+        macros.AC_SUBST("REPLACE_GETGROUPS", "0"),
+        macros.AC_SUBST("REPLACE_GETLOGIN", "0"),
+        macros.AC_SUBST("REPLACE_GETLOGIN_R", "0"),
+        macros.AC_SUBST("REPLACE_GETPAGESIZE", "0"),
+        macros.AC_SUBST("REPLACE_GETPASS", "0"),
+        macros.AC_SUBST("REPLACE_GETPASS_FOR_GETPASS_GNU", "0"),
+        macros.AC_SUBST("REPLACE_GETUSERSHELL", "0"),
+        macros.AC_SUBST("REPLACE_IOCTL", "0"),
+        macros.AC_SUBST("REPLACE_ISATTY", "0"),
+        macros.AC_SUBST("REPLACE_LCHOWN", "0"),
+        macros.AC_SUBST("REPLACE_LINK", "0"),
+        macros.AC_SUBST("REPLACE_LINKAT", "0"),
+        macros.AC_SUBST("REPLACE_LSEEK", "0"),
+        macros.AC_SUBST("REPLACE_MKDIR", "0"),
+        macros.AC_SUBST("REPLACE_MKFIFO", "0"),
+        macros.AC_SUBST("REPLACE_MKNOD", "0"),
+        macros.AC_SUBST("REPLACE_OPEN", "0"),
+        macros.AC_SUBST("REPLACE_OPENAT", "0"),
+        macros.AC_SUBST("REPLACE_PIPE", "0"),
+        macros.AC_SUBST("REPLACE_PIPE2", "0"),
+        macros.AC_SUBST("REPLACE_PREAD", "0"),
+        macros.AC_SUBST("REPLACE_PWRITE", "0"),
+        macros.AC_SUBST("REPLACE_READ", "0"),
+        macros.AC_SUBST("REPLACE_READLINK", "0"),
+        macros.AC_SUBST("REPLACE_READLINKAT", "0"),
+        macros.AC_SUBST("REPLACE_RMDIR", "0"),
+        macros.AC_SUBST("REPLACE_SETHOSTNAME", "0"),
+        macros.AC_SUBST("REPLACE_SLEEP", "0"),
+        macros.AC_SUBST("REPLACE_SYMLINK", "0"),
+        macros.AC_SUBST("REPLACE_SYMLINKAT", "0"),
+        macros.AC_SUBST("REPLACE_TRUNCATE", "0"),
+        macros.AC_SUBST("REPLACE_TTYNAME_R", "0"),
+        macros.AC_SUBST("REPLACE_UNLINK", "0"),
+        macros.AC_SUBST("REPLACE_UNLINKAT", "0"),
+        macros.AC_SUBST("REPLACE_USLEEP", "0"),
+        macros.AC_SUBST("REPLACE_WRITE", "0"),
     ],
     visibility = ["//visibility:public"],
 )

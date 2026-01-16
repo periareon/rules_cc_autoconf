@@ -1,0 +1,2 @@
+/* subst.h.in */
+#define SUBST_APPLE_UNIVERSAL_BUILD "@APPLE_UNIVERSAL_BUILD@"

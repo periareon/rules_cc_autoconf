@@ -1,11 +1,49 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/intmax_t.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "intmax_t",
     checks = [
-        # Note: intmax_t.m4 may not exist in gnulib, or this module may not have checks
+        # gl_AC_TYPE_INTMAX_T checks for intmax_t and uintmax_t types
+        # Check if intmax_t type exists (should be defined in stdint.h or inttypes.h on modern systems)
+        macros.AC_TRY_COMPILE(
+            code = """#include <stdint.h>
+#include <inttypes.h>
+
+int main(void) {
+    intmax_t x;
+    (void)x;
+    return 0;
+}""",
+            define = "HAVE_INTMAX_T",
+            language = "c",
+        ),
+        # Check if inttypes.h defines uintmax_t
+        macros.AC_TRY_COMPILE(
+            code = """#include <inttypes.h>
+
+int main(void) {
+    uintmax_t x;
+    (void)x;
+    return 0;
+}""",
+            define = "HAVE_INTTYPES_H_WITH_UINTMAX",
+            language = "c",
+        ),
+        # Check if stdint.h defines uintmax_t
+        macros.AC_TRY_COMPILE(
+            code = """#include <stdint.h>
+
+int main(void) {
+    uintmax_t x;
+    (void)x;
+    return 0;
+}""",
+            define = "HAVE_STDINT_H_WITH_UINTMAX",
+            language = "c",
+        ),
     ],
     visibility = ["//visibility:public"],
 )

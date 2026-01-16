@@ -6,34 +6,17 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "ldexpl",
     checks = [
-        macros.AC_CHECK_DECL(
+        # gl_FUNC_LDEXPL checks for ldexpl function
+        macros.AC_CHECK_FUNC(
             "ldexpl",
-            headers = ["math.h"],
-        ),
-        # Check if ldexpl function actually works
-        macros.AC_TRY_COMPILE(
-            code = """#include <math.h>
-
-int main(void) {
-    long double x = ldexpl(1.0L, 0);
-    return x > 0;
-}""",
             define = "HAVE_LDEXPL",
-            language = "c",
         ),
-        # HAVE_LDEXPL_IN_LIBC: ldexpl() is available in libc without -lm
-        # This is true on modern systems (macOS, Linux glibc)
-        macros.AC_DEFINE("HAVE_LDEXPL_IN_LIBC", "1"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS,
-
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
-        "//gnulib/m4/extensions",
-        "//gnulib/m4/isnanl",
-        "//gnulib/m4/ldexp",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
         "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+        # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

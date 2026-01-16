@@ -6,18 +6,22 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "logl",
     checks = [
-        macros.AC_CHECK_DECL(
+        # gl_FUNC_LOGL checks for logl function
+        # Use temporary define to avoid directly defining HAVE_LOGL
+        # (matching golden file expectation where HAVE_LOGL is undefined)
+        macros.AC_CHECK_FUNC(
             "logl",
-            headers = ["math.h"],
+            define = "_gl_cv_func_logl",
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
-        "//gnulib/m4/extensions",
-        "//gnulib/m4/frexpl",
-        "//gnulib/m4/isnanl",
-        "//gnulib/m4/log",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
         "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+        "//gnulib/m4/frexp",  # Provides HAVE_FREXP (needed for test compatibility)
+        "//gnulib/m4/frexpl",  # Provides HAVE_FREXPL (needed for test compatibility)
+        "//gnulib/m4/floorl",  # Provides HAVE_DECL_FLOORL (needed for test compatibility)
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

@@ -438,7 +438,6 @@
 #         "//gnulib/m4/logp1",
 #         "//gnulib/m4/logp1f",
 #         "//gnulib/m4/logp1l",
-#         "//gnulib/m4/long-double-vs-double",
 #         "//gnulib/m4/longlong",
 #         "//gnulib/m4/lseek",
 #         "//gnulib/m4/lstat",

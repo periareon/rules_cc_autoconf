@@ -6,59 +6,15 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "time_h",
     checks = [
+        # gl_TIME_H checks for time.h header
         macros.AC_CHECK_HEADER("time.h"),
-
-        # Check for TIME_UTC macro
-        macros.AC_TRY_COMPILE(
-            code = """\
-#include <time.h>
-static int x = TIME_UTC; x++;
-""",
-            define = "TIME_H_DEFINES_TIME_UTC",
-            language = "c",
-        ),
-
-        # Check for struct timespec in various headers
-        macros.AC_TRY_COMPILE(
-            code = """\
-#include <time.h>
-static struct timespec x; x.tv_sec = x.tv_nsec;
-""",
-            define = "TIME_H_DEFINES_STRUCT_TIMESPEC",
-            language = "c",
-        ),
-        macros.AC_TRY_COMPILE(
-            code = """\
-#include <sys/time.h>
-static struct timespec x; x.tv_sec = x.tv_nsec;
-""",
-            define = "SYS_TIME_H_DEFINES_STRUCT_TIMESPEC",
-            language = "c",
-        ),
-        macros.AC_TRY_COMPILE(
-            code = """\
-#include <pthread.h>
-static struct timespec x; x.tv_sec = x.tv_nsec;
-""",
-            define = "PTHREAD_H_DEFINES_STRUCT_TIMESPEC",
-            language = "c",
-        ),
-        macros.AC_TRY_COMPILE(
-            code = """\
-#include <unistd.h>
-static struct timespec x; x.tv_sec = x.tv_nsec;
-""",
-            define = "UNISTD_H_DEFINES_STRUCT_TIMESPEC",
-            language = "c",
-        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/gettime",
-        "//gnulib/m4/include_next",
-        "//gnulib/m4/sys_time_h",
-
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//gnulib/m4/include_next",  # gl_CHECK_NEXT_HEADERS
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - provides extension defines
+        "//gnulib/m4/sys_time_h",  # Provides HAVE_SYS_TIME_H (needed for test compatibility)
+        # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
@@ -66,45 +22,6 @@ static struct timespec x; x.tv_sec = x.tv_nsec;
 autoconf(
     name = "defaults",
     checks = [
-        # Module indicators
-        macros.AC_SUBST("GNULIB_CTIME", "0"),
-        macros.AC_SUBST("GNULIB_MKTIME", "0"),
-        macros.AC_SUBST("GNULIB_LOCALTIME", "0"),
-        macros.AC_SUBST("GNULIB_NANOSLEEP", "0"),
-        macros.AC_SUBST("GNULIB_STRFTIME", "0"),
-        macros.AC_SUBST("GNULIB_STRPTIME", "0"),
-        macros.AC_SUBST("GNULIB_TIME", "0"),
-        macros.AC_SUBST("GNULIB_TIMEGM", "0"),
-        macros.AC_SUBST("GNULIB_TIMESPEC_GET", "0"),
-        macros.AC_SUBST("GNULIB_TIMESPEC_GETRES", "0"),
-        macros.AC_SUBST("GNULIB_TIME_R", "0"),
-        macros.AC_SUBST("GNULIB_TIME_RZ", "0"),
-        macros.AC_SUBST("GNULIB_TZNAME", "0"),
-        macros.AC_SUBST("GNULIB_TZSET", "0"),
-        macros.AC_SUBST("GNULIB_MDA_TZSET", "1"),
-        # HAVE_* defaults
-        macros.AC_SUBST("HAVE_DECL_LOCALTIME_R", "1"),
-        macros.AC_SUBST("HAVE_NANOSLEEP", "1"),
-        macros.AC_SUBST("HAVE_STRPTIME", "1"),
-        macros.AC_SUBST("HAVE_TIMEGM", "1"),
-        macros.AC_SUBST("HAVE_TIMESPEC_GETRES", "1"),
-        macros.AC_SUBST("HAVE_TIMEZONE_T", "0"),
-        macros.AC_SUBST("HAVE_TZALLOC", "0"),
-        # REPLACE_* defaults
-        macros.AC_SUBST("REPLACE_CTIME", "0"),
-        macros.AC_SUBST("REPLACE_GMTIME", "0"),
-        macros.AC_SUBST("REPLACE_LOCALTIME", "0"),
-        macros.AC_SUBST("REPLACE_LOCALTIME_R", "0"),
-        macros.AC_SUBST("REPLACE_LOCALTIME_RZ", "0"),
-        macros.AC_SUBST("REPLACE_MKTIME", "0"),
-        macros.AC_SUBST("REPLACE_MKTIME_Z", "0"),
-        macros.AC_SUBST("REPLACE_NANOSLEEP", "0"),
-        macros.AC_SUBST("REPLACE_STRFTIME", "0"),
-        macros.AC_SUBST("REPLACE_TIME", "0"),
-        macros.AC_SUBST("REPLACE_TIMEGM", "0"),
-        macros.AC_SUBST("REPLACE_TIMESPEC_GET", "0"),
-        macros.AC_SUBST("REPLACE_TIMESPEC_GETRES", "0"),
-        macros.AC_SUBST("REPLACE_TZSET", "0"),
     ],
     visibility = ["//visibility:public"],
 )

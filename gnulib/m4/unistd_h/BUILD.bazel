@@ -6,18 +6,27 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "unistd_h",
     checks = [
-        # HAVE_UNISTD_H is provided by AC_CHECK_INCLUDES_DEFAULT
-        # We only do module-specific checks here (none in this case)
+        # gl_UNISTD_H checks for unistd.h header
+        # Check for execvpe declaration - golden file shows HAVE_DECL_EXECVPE 0 (not found)
+        macros.AC_CHECK_DECL(
+            "execvpe",
+            define = "HAVE_DECL_EXECVPE",
+            headers = ["unistd.h"],
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//gnulib/m4/include_next",  # gl_CHECK_NEXT_HEADERS
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - provides extension defines
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
 
 autoconf(
     name = "defaults",
     checks = [
-        # Module indicators
+        # Module indicators - gl_UNISTD_MODULE_INDICATOR
         macros.AC_SUBST("GNULIB_ACCESS", "0"),
         macros.AC_SUBST("GNULIB_CHDIR", "0"),
         macros.AC_SUBST("GNULIB_CHOWN", "0"),
@@ -138,7 +147,7 @@ autoconf(
         macros.AC_SUBST("HAVE_UNLINKAT", "1"),
         macros.AC_SUBST("HAVE_USLEEP", "1"),
         macros.AC_SUBST("HAVE_DECL_ENVIRON", "1"),
-        macros.AC_SUBST("HAVE_DECL_EXECVPE", "1"),
+        # Note: HAVE_DECL_EXECVPE is provided by unistd_h checks, not defaults
         macros.AC_SUBST("HAVE_DECL_FCHDIR", "1"),
         macros.AC_SUBST("HAVE_DECL_FDATASYNC", "1"),
         macros.AC_SUBST("HAVE_DECL_GETDOMAINNAME", "1"),
