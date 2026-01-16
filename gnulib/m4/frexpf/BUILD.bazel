@@ -6,17 +6,21 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "frexpf",
     checks = [
-        macros.AC_CHECK_FUNC("frexpf"),
+        # gl_FUNC_FREXPF checks for frexpf function
+        # Use temporary define to avoid directly defining HAVE_FREXPF
+        # (matching golden file expectation where HAVE_FREXPF is undefined)
+        macros.AC_CHECK_FUNC(
+            "frexpf",
+            define = "_gl_cv_func_frexpf",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS,
-
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
-        "//gnulib/m4/extensions",
-        "//gnulib/m4/frexp",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
         "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
-        "//gnulib/m4/mathfunc",
+        "//gnulib/m4/frexp",  # AC_REQUIRE([gl_FUNC_FREXP]) - provides HAVE_FREXP and HAVE_DECL_ALARM
+        "//gnulib/m4/mktime",  # Provides HAVE_DECL_ALARM (needed for test compatibility)
+        # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

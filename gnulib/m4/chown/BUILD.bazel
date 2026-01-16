@@ -3,19 +3,39 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# From chown.m4:
-# - CHOWN_TRAILING_SLASH_BUG: macOS/FreeBSD/AIX have this bug
-# - CHOWN_CHANGE_TIME_BUG: OpenBSD/Cygwin have this bug
-# - CHOWN_MODIFIES_SYMLINK: Some old systems modify symlinks directly
-# - CHOWN_FAILS_TO_HONOR_ID_OF_NEGATIVE_ONE: Some old systems have this
-
 autoconf(
     name = "chown",
     checks = select({
-        "@platforms//os:linux": [
+        "@platforms//os:macos": [
+            # AC_FUNC_CHOWN checks for chown function
+            # Use temporary define to avoid conflict with unistd_h:defaults AC_SUBST
             macros.AC_CHECK_FUNC(
                 "chown",
-                define = "HAVE_CHOWN",
+                define = "_gl_cv_func_chown",
+            ),
+            macros.AC_DEFINE(
+                "HAVE_CHOWN",
+                "1",
+                requires = ["_gl_cv_func_chown=1"],
+            ),
+            macros.AC_CHECK_FUNC(
+                "fchown",
+                define = "HAVE_FCHOWN",
+            ),
+            # macOS has the trailing slash bug (gl_FUNC_CHOWN_FOLLOWS_SYMLINK)
+            macros.AC_DEFINE("CHOWN_TRAILING_SLASH_BUG", "1"),
+        ],
+        "@platforms//os:linux": [
+            # AC_FUNC_CHOWN checks for chown function
+            # Use temporary define to avoid conflict with unistd_h:defaults AC_SUBST
+            macros.AC_CHECK_FUNC(
+                "chown",
+                define = "_gl_cv_func_chown",
+            ),
+            macros.AC_DEFINE(
+                "HAVE_CHOWN",
+                "1",
+                requires = ["_gl_cv_func_chown=1"],
             ),
             macros.AC_CHECK_FUNC(
                 "fchown",
@@ -23,22 +43,17 @@ autoconf(
             ),
             # Linux with glibc handles trailing slashes correctly
         ],
-        "@platforms//os:macos": [
-            macros.AC_CHECK_FUNC(
-                "chown",
-                define = "HAVE_CHOWN",
-            ),
-            macros.AC_CHECK_FUNC(
-                "fchown",
-                define = "HAVE_FCHOWN",
-            ),
-            # macOS has the trailing slash bug
-            macros.AC_DEFINE("CHOWN_TRAILING_SLASH_BUG", "1"),
-        ],
         "//conditions:default": [
+            # AC_FUNC_CHOWN checks for chown function
+            # Use temporary define to avoid conflict with unistd_h:defaults AC_SUBST
             macros.AC_CHECK_FUNC(
                 "chown",
-                define = "HAVE_CHOWN",
+                define = "_gl_cv_func_chown",
+            ),
+            macros.AC_DEFINE(
+                "HAVE_CHOWN",
+                "1",
+                requires = ["_gl_cv_func_chown=1"],
             ),
             macros.AC_CHECK_FUNC(
                 "fchown",
@@ -48,9 +63,11 @@ autoconf(
     }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
-        # (golden files include standard header checks even though not AC_REQUIREd)
+        # Note: gl_FUNC_CHOWN requires gl_UNISTD_H_DEFAULTS, but we can't depend on
+        # unistd_h:defaults because it has AC_SUBST("HAVE_CHOWN", "1") which conflicts
+        # with our AC_CHECK_FUNC("chown", define="HAVE_CHOWN"). The flattening logic
+        # treats this as a duplicate. Instead, we check for HAVE_CHOWN directly.
+        # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

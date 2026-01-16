@@ -3,38 +3,50 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# gl_FUNC_INET_NTOP macro from inet_ntop.m4
-# Note: Full implementation includes library search (nsl, resolv, network, ws2_32)
-# that is complex to replicate in Bazel
-
 autoconf(
     name = "inet_ntop",
     checks = [
-        # HAVE_NETDB_H comes from netdb_h dependency
-        macros.AC_CHECK_FUNC("inet_ntop"),
+        # gl_FUNC_INET_NTOP checks for inet_ntop function
+        macros.AC_CHECK_FUNC(
+            "inet_ntop",
+            define = "_gl_cv_func_inet_ntop",
+        ),
+        # gl_FUNC_INET_NTOP checks for inet_ntop declaration
         macros.AC_CHECK_DECL(
             "inet_ntop",
-            headers = [
-                "arpa/inet.h",
-                "netdb.h",
-            ],
+            define = "HAVE_DECL_INET_NTOP",
+            headers = ["arpa/inet.h", "netdb.h"],
         ),
-    ] + select({
-        # Windows uses stdcall which isn't POSIX-compliant
-        "@platforms//os:windows": [
-            macros.M4_DEFINE("REPLACE_INET_NTOP", "1"),
-        ],
-        "//conditions:default": [],
-    }),
+        # IPv4 and IPv6 support checks (from gl_PREREQ_INET_NTOP)
+        macros.AC_TRY_COMPILE(
+            code = """#include <netinet/in.h>
+int main(void) {
+    struct sockaddr_in sa;
+    (void)sa;
+    return 0;
+}""",
+            define = "HAVE_IPV4",
+        ),
+        macros.AC_TRY_COMPILE(
+            code = """#include <netinet/in.h>
+int main(void) {
+    struct sockaddr_in6 sa;
+    (void)sa;
+    return 0;
+}""",
+            define = "HAVE_IPV6",
+        ),
+    ],
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS,
-
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
-        "//gnulib/m4/extensions",
-        "//gnulib/m4/arpa_inet_h",  # AC_REQUIRE([gl_ARPA_INET_H_DEFAULTS])
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
         "//gnulib/m4/netdb_h",  # AC_CHECK_HEADERS_ONCE([netdb.h]) - provides HAVE_NETDB_H
-        "//gnulib/m4/sys_socket_h",  # gl_PREREQ_SYS_H_WINSOCK2
+        "//gnulib/m4/netinet_in_h",  # Provides HAVE_NETINET_IN_H
+        "//gnulib/m4/sys_socket_h",  # gl_PREREQ_SYS_H_WINSOCK2 - provides HAVE_SYS_SOCKET_H, HAVE_SA_FAMILY_T, etc.
+        # Note: gl_FUNC_INET_NTOP requires gl_ARPA_INET_H_DEFAULTS, but we can't depend on
+        # arpa_inet_h:defaults because it has AC_SUBST("HAVE_DECL_INET_NTOP", "1") which conflicts
+        # with our AC_CHECK_DECL("inet_ntop", define="HAVE_DECL_INET_NTOP"). Instead, we check directly.
+        # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

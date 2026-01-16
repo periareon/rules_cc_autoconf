@@ -4,47 +4,30 @@ load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
 # gl_FUNC_FFLUSH / gl_FUNC_FFLUSH_STDIN
-#
 # This macro uses AC_RUN_IFELSE to test if fflush works on input streams.
-# Since Bazel can't run test binaries, we use the cross-compile heuristics:
-# - NetBSD, OpenBSD, mingw, windows, macOS: fflush is known broken (FUNC_FFLUSH_STDIN=0)
+# Since Bazel can't run test binaries, we use platform heuristics:
+# - macOS, NetBSD, OpenBSD, Windows: fflush on input streams is broken (FUNC_FFLUSH_STDIN=0)
 # - Linux: fflush works on input streams (FUNC_FFLUSH_STDIN=1)
-#
-# REPLACE_FFLUSH=1 is set when fflush needs replacement (broken platforms).
-# FUNC_FFLUSH_STDIN: 1=works, 0=broken, -1=unknown
 
 autoconf(
     name = "fflush",
     checks = select({
-        # macOS/BSD: fflush on input streams is broken
         "@platforms//os:macos": [
-            macros.M4_DEFINE("REPLACE_FFLUSH", "1"),
+            # macOS: fflush on input streams is broken
             macros.AC_DEFINE("FUNC_FFLUSH_STDIN", "0"),
         ],
-        "@platforms//os:netbsd": [
-            macros.M4_DEFINE("REPLACE_FFLUSH", "1"),
-            macros.AC_DEFINE("FUNC_FFLUSH_STDIN", "0"),
-        ],
-        "@platforms//os:openbsd": [
-            macros.M4_DEFINE("REPLACE_FFLUSH", "1"),
-            macros.AC_DEFINE("FUNC_FFLUSH_STDIN", "0"),
-        ],
-        # Known broken platforms: fflush doesn't work on input streams
-        "@platforms//os:windows": [
-            macros.M4_DEFINE("REPLACE_FFLUSH", "1"),
-            macros.AC_DEFINE("FUNC_FFLUSH_STDIN", "0"),
-        ],
-        # Linux and glibc platforms: fflush works on input streams
-        "//conditions:default": [
+        "@platforms//os:linux": [
+            # Linux: fflush works on input streams
             macros.AC_DEFINE("FUNC_FFLUSH_STDIN", "1"),
+        ],
+        "//conditions:default": [
+            # Default: assume broken (conservative approach)
+            macros.AC_DEFINE("FUNC_FFLUSH_STDIN", "0"),
         ],
     }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS,
-
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
-        "//gnulib/m4/unistd_h",  # AC_CHECK_HEADERS_ONCE([unistd.h])
+        # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

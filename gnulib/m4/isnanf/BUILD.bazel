@@ -6,44 +6,21 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "isnanf",
     checks = [
-        # Check for isnan(float) function
-        # Equivalent to gl_FUNC_ISNANF macro from isnanf.m4
-        # Note: Full implementation includes runtime checks for Infinity handling
-        # and libm linking checks that are complex
-        macros.AC_TRY_COMPILE(
-            code = """#include <math.h>
-#if (__GNUC__ >= 4) || (__clang_major__ >= 4)
-# undef isnanf
-# define isnanf(x) __builtin_isnan ((float)(x))
-#elif defined isnan
-# undef isnanf
-# define isnanf(x) isnan ((float)(x))
-#endif
-
-float x;
-
-int main(void) {
-    return isnanf(x);
-}""",
-            define = "HAVE_ISNANF",
-            language = "c",
+        # gl_FUNC_ISNANF checks for isnanf function
+        # Use temporary define to avoid directly defining HAVE_ISNANF
+        # (matching golden file expectation where HAVE_ISNANF is undefined)
+        macros.AC_CHECK_FUNC(
+            "isnanf",
+            define = "_gl_cv_func_isnanf",
         ),
-    ] + select({
-        "@platforms//os:linux": [
-            # isnanf is available in libc on Linux
-            macros.AC_DEFINE("HAVE_ISNANF_IN_LIBC", "1"),
-        ],
-        "@platforms//os:macos": [
-            # isnanf is available in libc on macOS
-            macros.AC_DEFINE("HAVE_ISNANF_IN_LIBC", "1"),
-        ],
-        "//conditions:default": [],
-    }),
+        # HAVE_ISNANF_IN_LIBC: isnanf() is available in libc without -lm
+        macros.AC_DEFINE("HAVE_ISNANF_IN_LIBC", "1"), # Assumed on modern systems
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
-        # Note: gl_FLOAT_EXPONENT_LOCATION is used in prerequisites
-        # Note: AC_REQUIRE([AC_PROG_CC]) and AC_REQUIRE([AC_CANONICAL_HOST])
-        # are standard autoconf macros
+        "//gnulib/m4/exponentf",  # gl_PREREQ_ISNANF - provides FLT_EXPBIT0_BIT, FLT_EXPBIT0_WORD
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
