@@ -81,7 +81,7 @@ autoconf(
     ],
     deps = [
         # AC_REQUIRE([gl_FEATURES_H]) - line 85
-        "//gnulib/m4/features_h",
+        "//gnulib/m4/gnulib-common:features_h",
         # AC_REQUIRE([gt_TYPE_WINT_T]) - line 86
         "//gnulib/m4/wint_t",
         # AC_REQUIRE([AC_TYPE_SIZE_T]) - line 87
@@ -105,8 +105,10 @@ autoconf(
         macros.AC_CHECK_FUNC("strnlen"),
         macros.AC_CHECK_FUNC("wcrtomb"),
 
-        # AC_CHECK_TYPE([ptrdiff_t], ...)
-        macros.AC_CHECK_TYPE("ptrdiff_t"),
+        # AC_CHECK_TYPE([ptrdiff_t], ...) - line 105
+        # Note: ptrdiff_t is also checked in gl_PREREQ_PRINTF_PARSE (line 88)
+        # Since both are dependencies of gl_REPLACE_VASNPRINTF, we rely on gl_PREREQ_PRINTF_PARSE
+        # to provide HAVE_PTRDIFF_T to avoid duplicate checks
 
         # AC_CHECK_DECLS([_snprintf], , , [[#include <stdio.h>]])
         macros.AC_CHECK_DECL(

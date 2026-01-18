@@ -3,24 +3,151 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# gl_FUNC_EUIDACCESS from euidaccess.m4
-# HAVE_EACCESS comes from eaccess, HAVE_FACCESSAT from faccessat
-#
-# gl_FUNC_NONREENTRANT_EUIDACCESS unconditionally defines PREFER_NONREENTRANT_EUIDACCESS=1
-# This is used when the module depends on nonreentrant-euidaccess
-
+# gl_FUNC_EUIDACCESS from euidaccess.m4 (lines 21-32)
+# Check for euidaccess function
 autoconf(
-    name = "euidaccess",
+    name = "gl_FUNC_EUIDACCESS",
     checks = [
-        macros.AC_CHECK_FUNC("euidaccess"),
-        macros.AC_CHECK_DECL("setregid"),
-        macros.AC_CHECK_HEADER("libgen.h"),
-        # PREFER_NONREENTRANT_EUIDACCESS is set by gl_FUNC_NONREENTRANT_EUIDACCESS
-        # which is called when nonreentrant-euidaccess module is used
+        # AC_REQUIRE([gl_UNISTD_H_DEFAULTS]) - line 23
+        # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 26
+        # This is provided by extensions dependency
+        
+        # AC_CHECK_FUNCS([euidaccess]) - line 28
+        # AC_CHECK_FUNCS uses AC_TRY_COMPILE which only checks for compilation
+        # On macOS, euidaccess doesn't exist, so it should fail
+        # We need to use AC_TRY_LINK to ensure it's actually linkable
+        macros.AC_TRY_LINK(
+            code = """\
+#include <unistd.h>
+
+#ifdef __cplusplus
+extern "C"
+#endif
+int euidaccess(const char *, int);
+
+int main(void) {
+    return euidaccess("", 0);
+}
+""",
+            define = "_gl_cv_func_euidaccess",
+            language = "c",
+        ),
+        
+        # Create HAVE_EUIDACCESS define if function exists
+        macros.AC_DEFINE(
+            "HAVE_EUIDACCESS",
+            condition = "_gl_cv_func_euidaccess",
+            if_true = "1",
+        ),
+        
+        # Set HAVE_EUIDACCESS as substitution variable (line 29-31)
+        # If euidaccess not found, set HAVE_EUIDACCESS=0
+        # If euidaccess found, set HAVE_EUIDACCESS=1
+        macros.AC_SUBST(
+            "HAVE_EUIDACCESS",
+            condition = "_gl_cv_func_euidaccess",
+            if_false = "0",
+            if_true = "1",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 26
+        "//gnulib/m4/extensions",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_FUNC_NONREENTRANT_EUIDACCESS from euidaccess.m4 (lines 9-19)
+# Defines PREFER_NONREENTRANT_EUIDACCESS=1
+autoconf(
+    name = "gl_FUNC_NONREENTRANT_EUIDACCESS",
+    checks = [
+        # AC_REQUIRE([gl_FUNC_EUIDACCESS]) - line 11
+        # gl_FUNC_EUIDACCESS is included via dependency
+        
+        # AC_CHECK_DECLS([setregid]) - line 12
+        macros.AC_CHECK_DECL("setregid", define = "HAVE_DECL_SETREGID"),
+        
+        # AC_DEFINE([PREFER_NONREENTRANT_EUIDACCESS], [1]) - lines 13-18
         macros.AC_DEFINE("PREFER_NONREENTRANT_EUIDACCESS", "1"),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        ":gl_FUNC_EUIDACCESS",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_PREREQ_EUIDACCESS from euidaccess.m4 (lines 35-57)
+# Prerequisites of lib/euidaccess.c
+autoconf(
+    name = "gl_PREREQ_EUIDACCESS",
+    checks = [
+        # gl_CHECK_FUNCS_ANDROID([faccessat], [[#include <unistd.h>]]) - line 37
+        # Check for faccessat function (includes linking check)
+        macros.AC_TRY_LINK(
+            code = """\
+#include <unistd.h>
+
+#ifdef __cplusplus
+extern "C"
+#endif
+int faccessat(int, const char *, int, int);
+
+int main(void) {
+    return faccessat(0, "", 0, 0);
+}
+""",
+            define = "HAVE_FACCESSAT",
+            language = "c",
+        ),
+        
+        # AC_CHECK_HEADERS([libgen.h]) - line 39
+        macros.AC_CHECK_HEADER("libgen.h", define = "HAVE_LIBGEN_H"),
+        
+        # AC_FUNC_GETGROUPS - line 40
+        # This checks for getgroups and defines GETGROUPS_T
+        # GETGROUPS_T is set to the type of the getgroups argument (gid_t, int, etc.)
+        # On macOS/Linux, it's typically gid_t
+        # GETGROUPS_T is provided by AC_FUNC_GETGROUPS dependency
+        # We need to add the dependency to get GETGROUPS_T and HAVE_GETGROUPS
+        
+        # AC_SEARCH_LIBS([eaccess], [gen], ...) - lines 49-51
+        # Check for eaccess function in libgen library (Solaris)
+        # EUIDACCESS_LIBGEN is set to -lgen if eaccess is found, otherwise empty
+        # Since we can't easily check libraries in Bazel, we default to empty
+        macros.AC_SUBST("EUIDACCESS_LIBGEN", ""),
+        
+        # AC_CHECK_FUNCS([eaccess]) - line 52
+        # Note: eaccess is checked but not used in the main logic
+        # We can skip it or add it if needed
+        
+        # LIB_EACCESS="$EUIDACCESS_LIBGEN" - line 55
+        macros.AC_SUBST("LIB_EACCESS", ""),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # AC_FUNC_GETGROUPS - line 40
+        # This provides GETGROUPS_T and HAVE_GETGROUPS
+        "//autoconf/macros/AC_FUNC_GETGROUPS",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Main euidaccess target - combines all the macros
+autoconf(
+    name = "euidaccess",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_EUIDACCESS",
+        ":gl_FUNC_NONREENTRANT_EUIDACCESS",
+        ":gl_PREREQ_EUIDACCESS",
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],

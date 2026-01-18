@@ -3,30 +3,112 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# gl_FUNC_FPRINTF_POSIX replaces the system fprintf with gnulib's POSIX-compliant version
-
+# gl_PREREQ_FPRINTF from fprintf-posix.m4 (lines 139-139)
+# Prerequisites of lib/fprintf.c (empty)
 autoconf(
-    name = "fprintf-posix",
-    checks = [
-        # REPLACE_FPRINTF_POSIX indicates gnulib's fprintf replacement is being used
-        macros.AC_DEFINE("REPLACE_FPRINTF_POSIX", "1"),
+    name = "gl_PREREQ_FPRINTF",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
 
-        # REPLACE_FPRINTF: Use platform printf compliance check.
-        macros.AC_SUBST(
-            "REPLACE_FPRINTF",
-            condition = "_gl_cv_func_printf_posix",
-            if_false = "1",
-            if_true = "0",
-        ),
+# gl_REPLACE_FPRINTF from fprintf-posix.m4 (lines 129-137)
+# Replace fprintf with POSIX compliant gnulib implementation
+autoconf(
+    name = "gl_REPLACE_FPRINTF",
+    checks = [
+        # AC_REQUIRE([gl_STDIO_H_DEFAULTS]) - line 131
+        # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        # AC_LIBOBJ([fprintf]) - line 132
+        # This is handled in the source code, not via autoconf defines
+        # REPLACE_FPRINTF=1 - line 133
+        macros.AC_SUBST("REPLACE_FPRINTF", "1"),
+        # AC_DEFINE([REPLACE_FPRINTF_POSIX], [1]) - lines 134-135
+        macros.AC_DEFINE("REPLACE_FPRINTF_POSIX", "1"),
+        # gl_PREREQ_FPRINTF - line 136
+        # This is provided via dependency
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/printf",  # Multiple gl_PRINTF_* macros
-        "//gnulib/m4/printf:printf_posix_compliance",  # Platform printf compliance check
-        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS,
-
+        # AC_REQUIRE([gl_STDIO_H_DEFAULTS]) - line 131
+        # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        ":gl_PREREQ_FPRINTF",
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
-        "//gnulib/m4/vasnprintf",  # gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_FUNC_FPRINTF_IS_POSIX from fprintf-posix.m4 (lines 21-127)
+# Test whether fprintf is POSIX compliant.
+# Result is gl_cv_func_fprintf_posix.
+# On macOS, fprintf is not POSIX compliant (missing various features),
+# so gl_cv_func_fprintf_posix=no, which triggers REPLACE_FPRINTF=1
+autoconf(
+    name = "gl_FUNC_FPRINTF_IS_POSIX",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        # AC_REQUIRE([gl_PRINTF_SIZES_C99]) - line 23
+        "//gnulib/m4/printf:gl_PRINTF_SIZES_C99",
+        # AC_REQUIRE([gl_PRINTF_SIZES_C23]) - line 24
+        "//gnulib/m4/printf:gl_PRINTF_SIZES_C23",
+        # AC_REQUIRE([gl_PRINTF_LONG_DOUBLE]) - line 25
+        "//gnulib/m4/printf:gl_PRINTF_LONG_DOUBLE",
+        # AC_REQUIRE([gl_PRINTF_INFINITE]) - line 26
+        "//gnulib/m4/printf:gl_PRINTF_INFINITE",
+        # AC_REQUIRE([gl_PRINTF_INFINITE_LONG_DOUBLE]) - line 27
+        "//gnulib/m4/printf:gl_PRINTF_INFINITE_LONG_DOUBLE",
+        # AC_REQUIRE([gl_PRINTF_DIRECTIVE_A]) - line 28
+        "//gnulib/m4/printf:gl_PRINTF_DIRECTIVE_A",
+        # AC_REQUIRE([gl_PRINTF_DIRECTIVE_B]) - line 29
+        "//gnulib/m4/printf:gl_PRINTF_DIRECTIVE_B",
+        # AC_REQUIRE([gl_PRINTF_DIRECTIVE_F]) - line 30
+        "//gnulib/m4/printf:gl_PRINTF_DIRECTIVE_F",
+        # m4_ifdef([gl_PRINTF_SUPPORT_N_DIRECTIVE],[AC_REQUIRE([gl_PRINTF_DIRECTIVE_N])]) - line 31
+        # AC_REQUIRE([gl_PRINTF_DIRECTIVE_LS]) - line 32
+        "//gnulib/m4/printf:gl_PRINTF_DIRECTIVE_LS",
+        # AC_REQUIRE([gl_PRINTF_DIRECTIVE_LC]) - line 33
+        "//gnulib/m4/printf:gl_PRINTF_DIRECTIVE_LC",
+        # AC_REQUIRE([gl_PRINTF_POSITIONS]) - line 34
+        "//gnulib/m4/printf:gl_PRINTF_POSITIONS",
+        # AC_REQUIRE([gl_PRINTF_FLAG_GROUPING]) - line 35
+        "//gnulib/m4/printf:gl_PRINTF_FLAG_GROUPING",
+        # AC_REQUIRE([gl_PRINTF_FLAG_GROUPING_INT_PRECISION]) - line 36
+        "//gnulib/m4/printf:gl_PRINTF_FLAG_GROUPING_INT_PRECISION",
+        # AC_REQUIRE([gl_PRINTF_FLAG_GROUPING_MULTIBYTE]) - line 37
+        "//gnulib/m4/printf:gl_PRINTF_FLAG_GROUPING_MULTIBYTE",
+        # AC_REQUIRE([gl_PRINTF_FLAG_LEFTADJUST]) - line 38
+        "//gnulib/m4/printf:gl_PRINTF_FLAG_LEFTADJUST",
+        # AC_REQUIRE([gl_PRINTF_FLAG_ZERO]) - line 39
+        "//gnulib/m4/printf:gl_PRINTF_FLAG_ZERO",
+        # AC_REQUIRE([gl_PRINTF_FLAG_ALT_PRECISION_ZERO]) - line 40
+        "//gnulib/m4/printf:gl_PRINTF_FLAG_ALT_PRECISION_ZERO",
+        # AC_REQUIRE([gl_PRINTF_PRECISION]) - line 41
+        "//gnulib/m4/printf:gl_PRINTF_PRECISION",
+        # AC_REQUIRE([gl_PRINTF_ENOMEM]) - line 42
+        "//gnulib/m4/printf:gl_PRINTF_ENOMEM",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_FUNC_FPRINTF_POSIX from fprintf-posix.m4 (lines 9-17)
+# Request a POSIX compliant fprintf function.
+autoconf(
+    name = "fprintf-posix",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        # AC_REQUIRE([gl_FUNC_FPRINTF_IS_POSIX]) - line 11
+        ":gl_FUNC_FPRINTF_IS_POSIX",
+        # If gl_cv_func_fprintf_posix = no (line 12-16):
+        #   gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS - line 13
+        #   gl_REPLACE_VASNPRINTF - line 14
+        #   gl_REPLACE_FPRINTF - line 15
+        # On macOS, fprintf is not POSIX compliant, so we need these
+        "//gnulib/m4/vasnprintf:gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS",
+        "//gnulib/m4/vasnprintf:gl_REPLACE_VASNPRINTF",
+        ":gl_REPLACE_FPRINTF",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

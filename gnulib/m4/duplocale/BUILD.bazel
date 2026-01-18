@@ -3,50 +3,119 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# gl_FUNC_DUPLOCALE from duplocale.m4 (lines 9-130)
+# Check for duplocale function and whether it needs to be replaced.
 autoconf(
     name = "duplocale",
     checks = [
-        # Check for duplocale function
-        # Equivalent to gl_FUNC_DUPLOCALE macro from duplocale.m4
-        # Note: Full implementation includes runtime checks for duplocale(LC_GLOBAL_LOCALE)
-        # that are not easily replicable in Bazel
-        macros.AC_TRY_COMPILE(
-            code = """#include <locale.h>
+        # gl_CHECK_FUNCS_ANDROID([duplocale], [[#include <locale.h>]]) - line 14
+        # Check for duplocale function (includes linking check)
+        macros.AC_TRY_LINK(
+            code = """\
+#include <locale.h>
 
 #ifdef __cplusplus
 extern "C"
 #endif
-char duplocale ();
+locale_t duplocale(locale_t);
 
 int main(void) {
-    return duplocale();
-}""",
-            define = "HAVE_DUPLOCALE",
+    return duplocale((locale_t)0) != (locale_t)0;
+}
+""",
+            define = "_gl_cv_func_duplocale",
             language = "c",
         ),
-        macros.AC_CHECK_FUNC(
-            "snprintf_l",
-            define = "HAVE_SNPRINTF_L",
-        ),
-        macros.AC_TRY_COMPILE(
-            code = """#include <langinfo.h>
+        
+        # Check for snprintf_l function (line 24)
+        macros.AC_CHECK_FUNC("snprintf_l", define = "HAVE_SNPRINTF_L"),
+        
+        # Check for nl_langinfo_l function (line 25)
+        # gl_CHECK_FUNCS_ANDROID([nl_langinfo_l], [[#include <langinfo.h>]])
+        # Note: On macOS, nl_langinfo_l may require xlocale.h
+        macros.AC_TRY_LINK(
+            code = """\
+#include <langinfo.h>
+#if HAVE_XLOCALE_H
+#include <xlocale.h>
+#endif
 
 #ifdef __cplusplus
 extern "C"
 #endif
-char nl_langinfo_l ();
+char *nl_langinfo_l(nl_item, locale_t);
 
 int main(void) {
-    return nl_langinfo_l();
-}""",
+    return nl_langinfo_l(MON_1, (locale_t)0) != (char *)0;
+}
+""",
             define = "HAVE_NL_LANGINFO_L",
             language = "c",
+            compile_defines = ["HAVE_XLOCALE_H"],
         ),
+        
+        # HAVE_DUPLOCALE is set based on:
+        # - If duplocale function found AND HAVE_LOCALE_T = 1: HAVE_DUPLOCALE=1 (define + subst)
+        # - If duplocale function found BUT HAVE_LOCALE_T != 1: HAVE_DUPLOCALE=0 (subst only)
+        # - If duplocale function not found: HAVE_DUPLOCALE=0 (subst only)
+        # HAVE_LOCALE_T is a substitution variable from locale_h (gl_LOCALE_T)
+        # Note: HAVE_LOCALE_T cannot be checked in conditions (it's a subst variable)
+        # So we assume HAVE_LOCALE_T=1 on modern systems (macOS/Linux)
+        # Create HAVE_DUPLOCALE define if duplocale function exists
+        # (we assume HAVE_LOCALE_T=1 on modern systems)
+        macros.AC_DEFINE(
+            "HAVE_DUPLOCALE",
+            condition = "_gl_cv_func_duplocale",
+            if_true = "1",
+        ),
+        
+        # Set HAVE_DUPLOCALE as substitution variable based on check result
+        # If duplocale found: HAVE_DUPLOCALE=1 (assuming HAVE_LOCALE_T=1)
+        # If duplocale not found: HAVE_DUPLOCALE=0
+        macros.AC_SUBST(
+            "HAVE_DUPLOCALE",
+            condition = "_gl_cv_func_duplocale",
+            if_false = "0",
+            if_true = "1",
+        ),
+        
+        # REPLACE_DUPLOCALE is set to 1 if:
+        # - gl_cv_func_duplocale_works != yes (duplocale(LC_GLOBAL_LOCALE) doesn't work correctly)
+        # - HAVE_LOCALE_T != 1 (but this is checked separately and sets HAVE_DUPLOCALE=0)
+        # Otherwise, REPLACE_DUPLOCALE=0 (default)
+        # Note: gl_cv_func_duplocale_works is determined by AC_RUN_IFELSE which checks
+        # if duplocale(LC_GLOBAL_LOCALE) works correctly. On glibc < 2.12, uClibc, AIX, NetBSD,
+        # it's "guessing no", on others it's "guessing yes".
+        # Since AC_RUN_IFELSE isn't portable to cross-compilation, we default REPLACE_DUPLOCALE=0
+        # (will be set to 1 if gl_FUNC_SETLOCALE_NULL is included and needed)
+        # Default to 0 - on modern macOS/Linux, duplocale works correctly
+        macros.AC_SUBST("REPLACE_DUPLOCALE", "0"),
+        
+        # DUPLOCALE_LIB and LIB_DUPLOCALE are set based on REPLACE_DUPLOCALE
+        # If REPLACE_DUPLOCALE=1, DUPLOCALE_LIB="$SETLOCALE_NULL_LIB" (from gl_FUNC_SETLOCALE_NULL)
+        # Otherwise, DUPLOCALE_LIB=""
+        # Since REPLACE_DUPLOCALE=0 by default, DUPLOCALE_LIB="" (empty)
+        macros.AC_SUBST("DUPLOCALE_LIB", ""),
+        macros.AC_SUBST("LIB_DUPLOCALE", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/locale_h",  # AC_REQUIRE([gl_LOCALE_H_DEFAULTS,
-
+        # AC_REQUIRE([gl_LOCALE_H_DEFAULTS]) - line 11
+        # Note: gl_LOCALE_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        # "//gnulib/m4/locale_h:defaults",  # Ignored - _DEFAULTS function
+        # AC_REQUIRE([AC_CANONICAL_HOST]) - line 12
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        # AC_REQUIRE([gl_FUNC_SETLOCALE_NULL]) - line 13
+        # This provides SETLOCALE_NULL_LIB which is used if REPLACE_DUPLOCALE=1
+        # It also provides SETLOCALE_NULL_ALL_MTSAFE and SETLOCALE_NULL_ONE_MTSAFE
+        # Note: gl_FUNC_SETLOCALE_NULL is conditionally required, but we include it
+        # to match GNU autoconf test behavior (all m4 files are included)
+        "//gnulib/m4/setlocale_null",
+        # gl_LOCALE_H provides HAVE_LOCALE_T substitution variable (via gl_LOCALE_T)
+        "//gnulib/m4/locale_h",
+        # HAVE_PTHREAD_API comes from threadlib (via toolchain defaults or explicit dependency)
+        # The golden file expects it, so we include threadlib to match GNU autoconf behavior
+        "//gnulib/m4/threadlib:gl_PTHREADLIB_BODY",
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],

@@ -3,75 +3,100 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# From argp.m4:
-# - AC_CHECK_DECLS([program_invocation_name], [], [AC_DEFINE([GNULIB_PROGRAM_INVOCATION_NAME], [1])])
-#   This means: if NOT declared, define GNULIB_PROGRAM_INVOCATION_NAME=1
-# - On Linux: program_invocation_name is declared in errno.h
-# - On macOS: program_invocation_name is NOT declared
-
+# gl_ARGP from argp.m4 (lines 9-77)
+# Check for argp_parse and related functionality.
 autoconf(
     name = "argp",
-    checks = select({
-        "@platforms//os:linux": [
-            macros.AC_CHECK_FUNC("argp_parse"),
-            # On Linux, program_invocation_name IS declared, so GNULIB_ remains undefined
-            # Check if the symbol is linkable
-            macros.AC_TRY_COMPILE(
-                code = """extern char *program_invocation_name;
-int main() { program_invocation_name = "test"; return 0; }""",
-                define = "HAVE_PROGRAM_INVOCATION_NAME",
-                language = "c",
-            ),
-            macros.AC_TRY_COMPILE(
-                code = """extern char *program_invocation_short_name;
-int main() { program_invocation_short_name = "test"; return 0; }""",
-                define = "HAVE_PROGRAM_INVOCATION_SHORT_NAME",
-                language = "c",
-            ),
-        ],
-        "@platforms//os:macos": [
-            macros.AC_CHECK_FUNC("argp_parse"),
-            # On macOS, program_invocation_name is NOT declared, so set GNULIB_ defines
-            macros.AC_DEFINE("GNULIB_PROGRAM_INVOCATION_NAME", "1"),
-            macros.AC_DEFINE("GNULIB_PROGRAM_INVOCATION_SHORT_NAME", "1"),
-            # On macOS, the symbols are also not linkable, so HAVE_* remain undefined
-            # HAVE_DECL_*_UNLOCKED checks are provided by unlocked-io dependency
-        ],
-        "//conditions:default": [
-            macros.AC_CHECK_FUNC("argp_parse"),
-            # Check for declaration
-            macros.AC_CHECK_DECL(
-                "program_invocation_name",
-                define = "HAVE_DECL_PROGRAM_INVOCATION_NAME",
-                headers = ["errno.h"],
-            ),
-            macros.AC_CHECK_DECL(
-                "program_invocation_short_name",
-                define = "HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME",
-                headers = ["errno.h"],
-            ),
-            macros.AC_TRY_COMPILE(
-                code = """extern char *program_invocation_name;
-int main() { program_invocation_name = "test"; return 0; }""",
-                define = "HAVE_PROGRAM_INVOCATION_NAME",
-                language = "c",
-            ),
-            macros.AC_TRY_COMPILE(
-                code = """extern char *program_invocation_short_name;
-int main() { program_invocation_short_name = "test"; return 0; }""",
-                define = "HAVE_PROGRAM_INVOCATION_SHORT_NAME",
-                language = "c",
-            ),
-        ],
-    }),
+    checks = [
+        # AC_CHECK_FUNCS_ONCE([argp_parse]) - line 15
+        macros.AC_CHECK_FUNC("argp_parse", define = "HAVE_ARGP_PARSE"),
+        
+        # Lines 16-22: If argp_parse found, define argp_parse as rpl_argp_parse
+        # This is handled in the actual source code, not via autoconf defines.
+        
+        # AC_CHECK_DECLS([program_invocation_name], [], [AC_DEFINE([GNULIB_PROGRAM_INVOCATION_NAME], [1])], [[#include <errno.h>]]) - lines 24-28
+        # If NOT declared, define GNULIB_PROGRAM_INVOCATION_NAME=1
+        # Note: Using conditional AC_DEFINE based on HAVE_DECL result
+        macros.AC_CHECK_DECL(
+            "program_invocation_name",
+            headers = ["errno.h"],
+        ),
+        macros.AC_DEFINE(
+            "GNULIB_PROGRAM_INVOCATION_NAME",
+            condition = "HAVE_DECL_PROGRAM_INVOCATION_NAME==0",
+            if_true = "1",
+        ),
+        
+        # AC_CHECK_DECLS([program_invocation_short_name], [], [AC_DEFINE([GNULIB_PROGRAM_INVOCATION_SHORT_NAME], [1])], [[#include <errno.h>]]) - lines 29-33
+        # If NOT declared, define GNULIB_PROGRAM_INVOCATION_SHORT_NAME=1
+        # Note: Using conditional AC_DEFINE based on HAVE_DECL result
+        macros.AC_CHECK_DECL(
+            "program_invocation_short_name",
+            headers = ["errno.h"],
+        ),
+        macros.AC_DEFINE(
+            "GNULIB_PROGRAM_INVOCATION_SHORT_NAME",
+            condition = "HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME==0",
+            if_true = "1",
+        ),
+        
+        # AC_LINK_IFELSE for program_invocation_name - lines 40-48
+        # Check if program_invocation_name is linkable (defined)
+        macros.AC_TRY_COMPILE(
+            code = """\
+extern char *program_invocation_name;
+int main(void) {
+    program_invocation_name = "test";
+    return 0;
+}
+""",
+            define = "HAVE_PROGRAM_INVOCATION_NAME",
+            language = "c",
+        ),
+        
+        # AC_LINK_IFELSE for program_invocation_short_name - lines 50-59
+        # Check if program_invocation_short_name is linkable (defined)
+        macros.AC_TRY_COMPILE(
+            code = """\
+extern char *program_invocation_short_name;
+int main(void) {
+    program_invocation_short_name = "test";
+    return 0;
+}
+""",
+            define = "HAVE_PROGRAM_INVOCATION_SHORT_NAME",
+            language = "c",
+        ),
+        
+        # AC_CHECK_FUNCS_ONCE([flockfile funlockfile]) - line 74
+        macros.AC_CHECK_FUNC("flockfile", define = "HAVE_FLOCKFILE"),
+        macros.AC_CHECK_FUNC("funlockfile", define = "HAVE_FUNLOCKFILE"),
+        
+        # AC_CHECK_HEADERS_ONCE([features.h linewrap.h]) - line 75
+        # Note: These are checked but not used for defines
+        macros.AC_CHECK_HEADER("features.h"),
+        macros.AC_CHECK_HEADER("linewrap.h"),
+        
+        # AC_FUNC_STRERROR_R (line 76) provides HAVE_DECL_STRERROR_R
+        # Also check for strerror_r function (HAVE_STRERROR_R)
+        macros.AC_CHECK_FUNC("strerror_r", define = "HAVE_STRERROR_R"),
+        
+        # Note: AC_CHECK_DECLS_ONCE for *_unlocked functions (lines 61-73)
+        # are provided by unlocked-io dependency
+    ],
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS,
-
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        # AC_REQUIRE([AC_C_INLINE]) - line 11
+        "//autoconf/macros/AC_C_INLINE",
+        # AC_REQUIRE([AC_C_RESTRICT]) - line 12
+        "//autoconf/macros/AC_C_RESTRICT",
+        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - line 13
         "//gnulib/m4/extensions",
-        "//gnulib/m4/unlocked-io",  # AC_CHECK_DECLS_ONCE for *_unlocked functions
-        "//autoconf/macros/AC_FUNC_STRERROR_R",  # AC_REQUIRE([AC_FUNC_STRERROR_R])
+        # AC_CHECK_DECLS_ONCE for *_unlocked functions - lines 61-73
+        "//gnulib/m4/unlocked-io",
+        # AC_REQUIRE([AC_FUNC_STRERROR_R]) - line 76
+        "//autoconf/macros/AC_FUNC_STRERROR_R",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
