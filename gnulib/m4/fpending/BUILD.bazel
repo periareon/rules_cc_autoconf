@@ -16,6 +16,5 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/stdio_ext_h",
     ],
 )

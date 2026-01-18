@@ -2,13 +2,10 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 
-# HAVE_STDIO_EXT_H comes from stdio_ext_h dependency
-
 autoconf(
     name = "fwritable",
     checks = [],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/stdio_ext_h",
     ],
 )

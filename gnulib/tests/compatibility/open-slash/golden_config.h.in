@@ -1,5 +1,3 @@
 /* config.h.in */
-#define HAVE_TSEARCH 1
-#define HAVE_TWALK 1
-/* #undef REPLACE_TSEARCH */
-/* #undef REPLACE_TWALK */
+#define HAVE_LSTAT 1
+#define OPEN_TRAILING_SLASH_BUG 1

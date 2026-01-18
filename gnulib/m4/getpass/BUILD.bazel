@@ -54,7 +54,6 @@ int main(void) {
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
-        "//gnulib/m4/stdio_ext_h",
         "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
         "//gnulib/m4/unlocked-io",  # Provides HAVE_DECL_FFLUSH_UNLOCKED, etc.
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility

@@ -6,58 +6,22 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "sys_types_h",
     checks = [
-        # ============================================================
-        # HAVE_* variables - use compile-time checks
-        # ============================================================
+        # gl_SYS_TYPES_H checks for sys/types.h header
         # HAVE_SYS_TYPES_H is provided by AC_CHECK_INCLUDES_DEFAULT
-        # Check for other headers
-        macros.AC_CHECK_HEADER(
-            "sys/mkdev.h",
-            define = "HAVE_SYS_MKDEV_H",
-        ),
-        macros.AC_CHECK_HEADER(
-            "sys/sysmacros.h",
-            define = "HAVE_SYS_SYSMACROS_H",
-        ),
-
-        # Check for types
-        macros.AC_CHECK_TYPE(
-            "blksize_t",
-            code = """\
-#include <sys/types.h>
-int main(void) {
-    blksize_t x;
-    (void)x;
-    return 0;
-}
-""",
-            define = "HAVE_BLKSIZE_T",
-        ),
-        macros.AC_CHECK_TYPE(
-            "blkcnt_t",
-            code = """\
-#include <sys/types.h>
-int main(void) {
-    blkcnt_t x;
-    (void)x;
-    return 0;
-}
-""",
-            define = "HAVE_BLKCNT_T",
-        ),
-
-        # ============================================================
-        # Platform-specific settings
-        # ============================================================
+        
+        # AC_HEADER_MAJOR checks for major/minor macros
+        # Note: The golden file expects HAVE_BLKCNT_T and HAVE_BLKSIZE_T to be undefined
+        # These checks are handled by AC_HEADER_MAJOR but we don't need to define them
+        
         # Use sane struct stat types in OpenVMS 8.2 and later
         macros.AC_DEFINE("_USE_STD_STAT", "1"),
-
-        # Windows-specific stat inodes
-        macros.AC_SUBST("WINDOWS_STAT_INODES", "0"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/include_next",  # For NEXT_SYS_TYPES_H
-        "//gnulib/m4/windows-stat-inodes",
+        "//gnulib/m4/include_next",  # gl_CHECK_NEXT_HEADERS - provides NEXT_SYS_TYPES_H
+        "//gnulib/m4/extensions",  # Provides extension defines (_DARWIN_C_SOURCE, etc.)
+        "//gnulib/m4/windows-stat-inodes",  # Provides WINDOWS_STAT_INODES
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

@@ -6,18 +6,21 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "sys_stat_h",
     checks = [
+        # gl_SYS_STAT_H checks for sys/stat.h header
         # HAVE_SYS_STAT_H is provided by AC_CHECK_INCLUDES_DEFAULT
         # We only do module-specific checks here (none in this case)
     ],
     visibility = ["//visibility:public"],
     deps = [
+        # For test compatibility - provides standard headers and HAVE_SYS_STAT_H
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
 
 autoconf(
     name = "defaults",
     checks = [
-        # Module indicators
+        # Module indicators - gl_SYS_STAT_MODULE_INDICATOR
         macros.AC_SUBST("GNULIB_CHMOD", "0"),
         macros.AC_SUBST("GNULIB_FCHMODAT", "0"),
         macros.AC_SUBST("GNULIB_FSTAT", "0"),
@@ -38,7 +41,7 @@ autoconf(
         macros.AC_SUBST("GNULIB_MDA_CHMOD", "1"),
         macros.AC_SUBST("GNULIB_MDA_MKDIR", "1"),
         macros.AC_SUBST("GNULIB_MDA_UMASK", "1"),
-        # HAVE_* defaults
+        # HAVE_* defaults - gl_SYS_STAT_H_DEFAULTS
         macros.AC_SUBST("HAVE_FCHMODAT", "1"),
         macros.AC_SUBST("HAVE_FSTATAT", "1"),
         macros.AC_SUBST("HAVE_FUTIMENS", "1"),

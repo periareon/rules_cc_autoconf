@@ -3,6 +3,12 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# From threadlib.m4:
+# - AVOID_ANY_THREADS: Defined when --disable-threads is used
+# - HAVE_PTHREAD_API: Defined when pthread.h exists and POSIX threads work
+# - HAVE_WEAK_SYMBOLS: Defined when the compiler supports weak declarations
+# - PTHREAD_IN_USE_DETECTION_HARD: Defined on Solaris/HP-UX where detection is complex
+
 autoconf(
     name = "threadlib",
     checks = select({
@@ -79,7 +85,6 @@ autoconf(
     visibility = ["//visibility:public"],
     deps = [
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
-        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - provides extension defines
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

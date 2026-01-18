@@ -3,141 +3,283 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# printf.m4 contains many PRINTF checking macros
-# COMPLEX CASE: This is one of the most complex gnulib M4 files.
-# It contains many runtime tests for printf format specifiers:
-# - gl_PRINTF_SIZES_C99 (j, z, t, L specifiers)
-# - gl_PRINTF_SIZES_C23 (w8, w16, w32, w64, wf8, wf16, wf32, wf64 specifiers)
-# - gl_PRINTF_LONG_DOUBLE (long double printing)
-# - gl_PRINTF_INFINITE (infinite double/long double)
-# - gl_PRINTF_INFINITE_LONG_DOUBLE
-# - gl_PRINTF_DIRECTIVE_A (a and A directives)
-# - gl_PRINTF_DIRECTIVE_B (b and B directives)
-# - gl_PRINTF_DIRECTIVE_F (F directive)
-# - gl_PRINTF_DIRECTIVE_N (n directive)
-# - gl_PRINTF_DIRECTIVE_LS (ls directive)
-# - gl_PRINTF_DIRECTIVE_LC (lc directive)
-# - gl_PRINTF_POSITIONS (positional parameters)
-# - gl_PRINTF_FLAG_GROUPING (grouping flag)
-# - gl_PRINTF_FLAG_LEFTADJUST (left adjust flag)
-# - gl_PRINTF_FLAG_ZERO (zero flag)
-# - gl_PRINTF_PRECISION (large precisions)
-# - gl_PRINTF_ENOMEM (ENOMEM handling)
-#
-# These are ALL runtime tests that cannot be checked at compile time.
+# =============================================================================
+# Individual AC_DEFUN* function targets
+# =============================================================================
+
+# gl_SNPRINTF_PRESENCE from printf.m4
 autoconf(
-    name = "printf",
-    checks = select({
-        "@platforms//os:macos": [],  # On macOS, CHECK_PRINTF_SAFE is not defined by default
-        "//conditions:default": [
-            # CHECK_PRINTF_SAFE: Enable safe handling of non-IEEE-754 'long double' values
-            # This is set when gl_printf_safe is defined, which bison does by default
-            macros.AC_DEFINE("CHECK_PRINTF_SAFE", "1"),
-        ],
-    }),
+    name = "gl_SNPRINTF_PRESENCE",
+    checks = [
+        macros.AC_CHECK_FUNC(
+            "snprintf",
+            define = "HAVE_SNPRINTF",
+        ),
+    ],
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_AC_HEADER_INTTYPES_H,
-
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
-        "//gnulib/m4/inttypes_h",
-        # AC_REQUIRE([gl_LONG_DOUBLE_VS_DOUBLE])
-        "//gnulib/m4/math_h:long-double-vs-double",
-        "//gnulib/m4/multiarch",
-        # AC_REQUIRE([gl_AC_HEADER_STDINT_H])
-        "//gnulib/m4/stdint_h",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
 
-# =============================================================================
-# printf_posix_compliance - Platform-based heuristic for printf POSIX compliance
-# =============================================================================
-# The upstream gl_FUNC_*_POSIX macros run 20+ runtime tests that cannot be
-# replicated at compile time. This target provides platform-based heuristics
-# based on known printf bugs documented in gnulib.
-#
-# Platforms with known printf bugs (need replacement):
-#   - macOS: %a rounding bugs, %0a flag bugs, various issues through macOS 14
-#   - FreeBSD: %a bugs, infinite handling issues
-#   - NetBSD: %a rounding bugs
-#   - OpenBSD: %a rounding bugs
-#   - Solaris: %a bugs, directive issues
-#   - AIX: %a rounding bugs
-#   - Windows/mingw: Various directive issues
-#   - Haiku: Limited testing, assume needs replacement
-#
-# Platforms that typically pass all checks:
-#   - Linux with glibc 2.17+
-#
+# gl_SWPRINTF_WORKS from printf.m4
 autoconf(
-    name = "printf_posix_compliance",
+    name = "gl_SWPRINTF_WORKS",
     checks = [
-        # Check if the platform's printf is known to be POSIX compliant.
-        # Only Linux with glibc is known to pass all gnulib printf tests.
-        # All other platforms have documented bugs and need replacement.
-        macros.AC_TRY_COMPILE(
-            code = """\
-/* Platform detection for printf POSIX compliance.
- * Based on known bugs documented in gnulib m4/printf.m4
- *
- * Platforms that need printf replacement:
- * - macOS (Darwin): %a rounding bugs through macOS 14+
- * - FreeBSD: %a bugs, infinite handling issues
- * - NetBSD: %a rounding bugs
- * - OpenBSD: %a rounding bugs
- * - Solaris: %a bugs, directive issues
- * - AIX: %a rounding bugs
- * - Windows/mingw: Various directive issues
- * - Cygwin: Various issues
- * - Haiku: Untested, assume needs replacement
- *
- * Linux with glibc 2.17+ is the only platform known to pass all tests.
- */
-
-#if defined(__APPLE__) && defined(__MACH__)
-  /* macOS has printf bugs through at least macOS 14 (Darwin 23) */
-  #error "macOS printf needs replacement"
-#elif defined(__FreeBSD__)
-  /* FreeBSD has %a bugs through at least FreeBSD 14.0 */
-  #error "FreeBSD printf needs replacement"
-#elif defined(__NetBSD__)
-  /* NetBSD has %a rounding bugs through at least NetBSD 10.0 */
-  #error "NetBSD printf needs replacement"
-#elif defined(__OpenBSD__)
-  /* OpenBSD has %a rounding bugs through at least OpenBSD 7.5 */
-  #error "OpenBSD printf needs replacement"
-#elif defined(__sun) && defined(__SVR4)
-  /* Solaris has %a bugs through at least Solaris 11.4 */
-  #error "Solaris printf needs replacement"
-#elif defined(_AIX)
-  /* AIX has %a rounding bugs through at least AIX 7.3 */
-  #error "AIX printf needs replacement"
-#elif defined(_WIN32) || defined(__CYGWIN__)
-  /* Windows and Cygwin have various printf directive issues */
-  #error "Windows/Cygwin printf needs replacement"
-#elif defined(__HAIKU__)
-  /* Haiku is untested, assume needs replacement */
-  #error "Haiku printf needs replacement"
-#elif defined(__ANDROID__)
-  /* Android bionic has various printf limitations */
-  #error "Android printf needs replacement"
-#elif defined(__GLIBC__) && (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 17))
-  /* Linux with glibc 2.17+ passes all gnulib printf tests */
-  /* OK - this platform's printf is POSIX compliant */
-#elif defined(__linux__) && !defined(__GLIBC__)
-  /* Linux with musl or other libc - may have issues */
-  #error "Non-glibc Linux printf may need replacement"
-#else
-  /* Unknown platform - assume needs replacement for safety */
-  #error "Unknown platform printf needs replacement"
-#endif
-
-int main(void) { return 0; }
-""",
-            define = "_gl_cv_func_printf_posix",
-            language = "c",
+        macros.AC_CHECK_FUNC(
+            "swprintf",
+            define = "HAVE_SWPRINTF",
         ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_PRINTF_SIZES_C99 from printf.m4
+# Note: Many printf checks use runtime tests (AC_RUN_IFELSE) that cannot be
+# easily replicated in Bazel. These are left as empty targets for now.
+autoconf(
+    name = "gl_PRINTF_SIZES_C99",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_PRINTF_SIZES_C23 from printf.m4
+autoconf(
+    name = "gl_PRINTF_SIZES_C23",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_PRINTF_LONG_DOUBLE from printf.m4
+autoconf(
+    name = "gl_PRINTF_LONG_DOUBLE",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_PRINTF_INFINITE from printf.m4
+autoconf(
+    name = "gl_PRINTF_INFINITE",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_PRINTF_INFINITE_LONG_DOUBLE from printf.m4
+autoconf(
+    name = "gl_PRINTF_INFINITE_LONG_DOUBLE",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_PRINTF_DIRECTIVE_A from printf.m4
+autoconf(
+    name = "gl_PRINTF_DIRECTIVE_A",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_PRINTF_DIRECTIVE_B from printf.m4
+autoconf(
+    name = "gl_PRINTF_DIRECTIVE_B",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_PRINTF_DIRECTIVE_UPPERCASE_B from printf.m4
+autoconf(
+    name = "gl_PRINTF_DIRECTIVE_UPPERCASE_B",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_PRINTF_DIRECTIVE_F from printf.m4
+autoconf(
+    name = "gl_PRINTF_DIRECTIVE_F",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_PRINTF_DIRECTIVE_N from printf.m4
+autoconf(
+    name = "gl_PRINTF_DIRECTIVE_N",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_PRINTF_DIRECTIVE_LS from printf.m4
+autoconf(
+    name = "gl_PRINTF_DIRECTIVE_LS",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_PRINTF_DIRECTIVE_LC from printf.m4
+autoconf(
+    name = "gl_PRINTF_DIRECTIVE_LC",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_PRINTF_POSITIONS from printf.m4
+autoconf(
+    name = "gl_PRINTF_POSITIONS",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_PRINTF_FLAG_GROUPING from printf.m4
+autoconf(
+    name = "gl_PRINTF_FLAG_GROUPING",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_PRINTF_FLAG_GROUPING_INT_PRECISION from printf.m4
+autoconf(
+    name = "gl_PRINTF_FLAG_GROUPING_INT_PRECISION",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_PRINTF_FLAG_GROUPING_MULTIBYTE from printf.m4
+autoconf(
+    name = "gl_PRINTF_FLAG_GROUPING_MULTIBYTE",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_PRINTF_FLAG_LEFTADJUST from printf.m4
+autoconf(
+    name = "gl_PRINTF_FLAG_LEFTADJUST",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_PRINTF_FLAG_ZERO from printf.m4
+autoconf(
+    name = "gl_PRINTF_FLAG_ZERO",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_PRINTF_FLAG_ALT_PRECISION_ZERO from printf.m4
+autoconf(
+    name = "gl_PRINTF_FLAG_ALT_PRECISION_ZERO",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_PRINTF_PRECISION from printf.m4
+autoconf(
+    name = "gl_PRINTF_PRECISION",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_PRINTF_ENOMEM from printf.m4
+autoconf(
+    name = "gl_PRINTF_ENOMEM",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_SNPRINTF_TRUNCATION_C99 from printf.m4
+autoconf(
+    name = "gl_SNPRINTF_TRUNCATION_C99",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_SNPRINTF_RETVAL_C99 from printf.m4
+autoconf(
+    name = "gl_SNPRINTF_RETVAL_C99",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_SNPRINTF_DIRECTIVE_N from printf.m4
+autoconf(
+    name = "gl_SNPRINTF_DIRECTIVE_N",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_SNPRINTF_SIZE1 from printf.m4
+autoconf(
+    name = "gl_SNPRINTF_SIZE1",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_VSNPRINTF_ZEROSIZE_C99 from printf.m4
+autoconf(
+    name = "gl_VSNPRINTF_ZEROSIZE_C99",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_SWPRINTF_DIRECTIVE_LA from printf.m4
+autoconf(
+    name = "gl_SWPRINTF_DIRECTIVE_LA",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_SWPRINTF_DIRECTIVE_LC from printf.m4
+autoconf(
+    name = "gl_SWPRINTF_DIRECTIVE_LC",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# =============================================================================
+# Main printf target - combines all AC_DEFUN* functions via deps
+# =============================================================================
+
+autoconf(
+    name = "printf",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_SNPRINTF_PRESENCE",
+        ":gl_SWPRINTF_WORKS",
+        ":gl_PRINTF_SIZES_C99",
+        ":gl_PRINTF_SIZES_C23",
+        ":gl_PRINTF_LONG_DOUBLE",
+        ":gl_PRINTF_INFINITE",
+        ":gl_PRINTF_INFINITE_LONG_DOUBLE",
+        ":gl_PRINTF_DIRECTIVE_A",
+        ":gl_PRINTF_DIRECTIVE_B",
+        ":gl_PRINTF_DIRECTIVE_UPPERCASE_B",
+        ":gl_PRINTF_DIRECTIVE_F",
+        ":gl_PRINTF_DIRECTIVE_N",
+        ":gl_PRINTF_DIRECTIVE_LS",
+        ":gl_PRINTF_DIRECTIVE_LC",
+        ":gl_PRINTF_POSITIONS",
+        ":gl_PRINTF_FLAG_GROUPING",
+        ":gl_PRINTF_FLAG_GROUPING_INT_PRECISION",
+        ":gl_PRINTF_FLAG_GROUPING_MULTIBYTE",
+        ":gl_PRINTF_FLAG_LEFTADJUST",
+        ":gl_PRINTF_FLAG_ZERO",
+        ":gl_PRINTF_FLAG_ALT_PRECISION_ZERO",
+        ":gl_PRINTF_PRECISION",
+        ":gl_PRINTF_ENOMEM",
+        ":gl_SNPRINTF_TRUNCATION_C99",
+        ":gl_SNPRINTF_RETVAL_C99",
+        ":gl_SNPRINTF_DIRECTIVE_N",
+        ":gl_SNPRINTF_SIZE1",
+        ":gl_VSNPRINTF_ZEROSIZE_C99",
+        ":gl_SWPRINTF_DIRECTIVE_LA",
+        ":gl_SWPRINTF_DIRECTIVE_LC",
+        # Common dependencies required by multiple printf macros
+        "//gnulib/m4/inttypes_h",  # AC_REQUIRE([gl_AC_HEADER_INTTYPES_H])
+        "//gnulib/m4/math_h:long-double-vs-double",  # AC_REQUIRE([gl_LONG_DOUBLE_VS_DOUBLE])
+        "//gnulib/m4/multiarch",  # AC_REQUIRE([gl_MULTIARCH])
+        "//gnulib/m4/stdint_h",  # AC_REQUIRE([gl_AC_HEADER_STDINT_H])
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

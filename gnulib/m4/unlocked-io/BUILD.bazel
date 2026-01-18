@@ -4,85 +4,77 @@ load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
 # gl_FUNC_GLIBC_UNLOCKED_IO from unlocked-io.m4
-# Checks for glibc *_unlocked I/O macros or functions
+# AC_CHECK_DECLS_ONCE checks for *_unlocked I/O function declarations
+# The M4 file doesn't specify headers, so we rely on default includes
+# which include stdio.h (appropriate for these declarations)
+# Note: These functions may require extension defines (_GNU_SOURCE, etc.)
+# which should be provided by the extensions dependency
 autoconf(
     name = "unlocked-io",
     checks = [
         # AC_CHECK_DECLS_ONCE for unlocked IO functions
+        # No headers specified in M4, so we use default includes
         macros.AC_CHECK_DECL(
             "clearerr_unlocked",
             define = "HAVE_DECL_CLEARERR_UNLOCKED",
-            headers = ["stdio.h"],
         ),
         macros.AC_CHECK_DECL(
             "feof_unlocked",
             define = "HAVE_DECL_FEOF_UNLOCKED",
-            headers = ["stdio.h"],
         ),
         macros.AC_CHECK_DECL(
             "ferror_unlocked",
             define = "HAVE_DECL_FERROR_UNLOCKED",
-            headers = ["stdio.h"],
         ),
         macros.AC_CHECK_DECL(
             "fflush_unlocked",
             define = "HAVE_DECL_FFLUSH_UNLOCKED",
-            headers = ["stdio.h"],
         ),
         macros.AC_CHECK_DECL(
             "fgets_unlocked",
             define = "HAVE_DECL_FGETS_UNLOCKED",
-            headers = ["stdio.h"],
         ),
         macros.AC_CHECK_DECL(
             "fileno_unlocked",
             define = "HAVE_DECL_FILENO_UNLOCKED",
-            headers = ["stdio.h"],
         ),
         macros.AC_CHECK_DECL(
             "fputc_unlocked",
             define = "HAVE_DECL_FPUTC_UNLOCKED",
-            headers = ["stdio.h"],
         ),
         macros.AC_CHECK_DECL(
             "fputs_unlocked",
             define = "HAVE_DECL_FPUTS_UNLOCKED",
-            headers = ["stdio.h"],
         ),
         macros.AC_CHECK_DECL(
             "fread_unlocked",
             define = "HAVE_DECL_FREAD_UNLOCKED",
-            headers = ["stdio.h"],
         ),
         macros.AC_CHECK_DECL(
             "fwrite_unlocked",
             define = "HAVE_DECL_FWRITE_UNLOCKED",
-            headers = ["stdio.h"],
         ),
         macros.AC_CHECK_DECL(
             "getc_unlocked",
             define = "HAVE_DECL_GETC_UNLOCKED",
-            headers = ["stdio.h"],
         ),
         macros.AC_CHECK_DECL(
             "getchar_unlocked",
             define = "HAVE_DECL_GETCHAR_UNLOCKED",
-            headers = ["stdio.h"],
         ),
         macros.AC_CHECK_DECL(
             "putc_unlocked",
             define = "HAVE_DECL_PUTC_UNLOCKED",
-            headers = ["stdio.h"],
         ),
         macros.AC_CHECK_DECL(
             "putchar_unlocked",
             define = "HAVE_DECL_PUTCHAR_UNLOCKED",
-            headers = ["stdio.h"],
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
-        "//gnulib/m4/extensions",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - provides extension defines
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
