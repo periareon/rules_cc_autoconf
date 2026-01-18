@@ -1418,7 +1418,7 @@ def _ac_check_lib(
 
 def _ac_define(
         define,
-        value = "1",
+        value = None,
         requires = None,
         condition = None,
         if_true = None,
@@ -1488,31 +1488,35 @@ def _ac_define(
         "type": "define",
     }
 
-    if condition:
-        # Conditional define - value depends on condition result
+    if requires:
+        check["requires"] = requires
+
+    if value and condition:
+        fail("`value` and `condition` are mutually exclusive. Please update `{}`".format(define))
+
+    if value:
+        # Simple - always use value
+        check["define_value"] = value
+        check["define_value_fail"] = value
+
+    elif condition:
+        # Conditional - value depends on condition result
         check["condition"] = condition
         if if_true != None:
-            check["define_value"] = str(if_true)
+            check["define_value"] = if_true
         if if_false != None:
-            check["define_value_fail"] = str(if_false)
+            check["define_value_fail"] = if_false
 
-        # Add condition to requires so it's evaluated first
-        if requires:
-            check["requires"] = requires + [condition]
-        else:
-            check["requires"] = [condition]
     else:
-        # Simple define - always use value
-        check["define_value"] = str(value)
-        check["define_value_fail"] = str(value)
-        if requires:
-            check["requires"] = requires
+        # Simple - always use value
+        check["define_value"] = 1
+        check["define_value_fail"] = 1
 
     return json.encode(check)
 
 def _ac_subst(
         variable,
-        value = "1",
+        value = None,
         requires = None,
         condition = None,
         if_true = None,
@@ -1584,31 +1588,35 @@ def _ac_subst(
         "type": "subst",  # Mark as substitution type
     }
 
-    if condition:
-        # Conditional subst - value depends on condition result
+    if requires:
+        check["requires"] = requires
+
+    if value and condition:
+        fail("`value` and `condition` are mutually exclusive. Please update `{}`".format(variable))
+
+    if value:
+        # Simple - always use value
+        check["define_value"] = value
+        check["define_value_fail"] = value
+
+    elif condition:
+        # Conditional - value depends on condition result
         check["condition"] = condition
         if if_true != None:
-            check["define_value"] = str(if_true)
+            check["define_value"] = if_true
         if if_false != None:
-            check["define_value_fail"] = str(if_false)
+            check["define_value_fail"] = if_false
 
-        # Add condition to requires so it's evaluated first
-        if requires:
-            check["requires"] = requires + [condition]
-        else:
-            check["requires"] = [condition]
     else:
-        # Simple subst - always use value
-        check["define_value"] = str(value)
-        check["define_value_fail"] = str(value)
-        if requires:
-            check["requires"] = requires
+        # Simple - always use value
+        check["define_value"] = 1
+        check["define_value_fail"] = 1
 
     return json.encode(check)
 
 def _m4_define(
         define,
-        value = "1",
+        value = None,
         requires = None,
         condition = None,
         if_true = None,
@@ -1675,25 +1683,29 @@ def _m4_define(
         "type": "m4_define",  # Compute value for requires but don't generate output
     }
 
-    if condition:
+    if requires:
+        check["requires"] = requires
+
+    if value and condition:
+        fail("`value` and `condition` are mutually exclusive. Please update `{}`".format(define))
+
+    if value:
+        # Simple - always use value
+        check["define_value"] = value
+        check["define_value_fail"] = value
+
+    elif condition:
         # Conditional - value depends on condition result
         check["condition"] = condition
         if if_true != None:
-            check["define_value"] = str(if_true)
+            check["define_value"] = if_true
         if if_false != None:
-            check["define_value_fail"] = str(if_false)
+            check["define_value_fail"] = if_false
 
-        # Add condition to requires so it's evaluated first
-        if requires:
-            check["requires"] = requires + [condition]
-        else:
-            check["requires"] = [condition]
     else:
         # Simple - always use value
-        check["define_value"] = str(value)
-        check["define_value_fail"] = str(value)
-        if requires:
-            check["requires"] = requires
+        check["define_value"] = 1
+        check["define_value_fail"] = 1
 
     return json.encode(check)
 

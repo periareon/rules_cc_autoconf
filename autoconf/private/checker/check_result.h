@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <optional>
 
 namespace rules_cc_autoconf {
 
@@ -37,6 +38,15 @@ struct CheckResult {
     CheckResult(const std::string& define, const std::string& value,
                 bool success, bool is_define = true, bool is_subst = false)
         : define(define), value(value), success(success), is_define(is_define), is_subst(is_subst) {}
+
+
+    /**
+     * @brief Parse a CheckResult from JSON.
+     * @param define_name The define name (typically the JSON key).
+     * @param json_value The JSON value object containing success, value, is_define, is_subst.
+     * @return CheckResult object, or std::nullopt if parsing failed.
+     */
+    static std::optional<CheckResult> from_json(const std::string& define_name, const void* json_value);
 };
 
 }  // namespace rules_cc_autoconf

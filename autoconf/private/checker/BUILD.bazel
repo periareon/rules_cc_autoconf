@@ -4,12 +4,18 @@ load("//autoconf/private:cxxopts.bzl", "cxxopts")
 
 cc_library(
     name = "check_types",
+    srcs = [
+        "check_result.cc",
+    ],
     hdrs = [
         "check.h",
         "check_result.h",
     ],
     cxxopts = cxxopts(),
     visibility = ["//autoconf/private:__subpackages__"],
+    deps = [
+        "//autoconf/private/json",
+    ],
 )
 
 cc_library(

@@ -4,13 +4,19 @@ load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
 # gl_AC_HEADER_INTTYPES_H macro from inttypes_h.m4
-# Check if <inttypes.h> exists and declares uintmax_t
+# Define HAVE_INTTYPES_H_WITH_UINTMAX if <inttypes.h> exists,
+# doesn't clash with <sys/types.h>, and declares uintmax_t.
 autoconf(
     name = "inttypes_h",
     checks = [
+        # AC_COMPILE_IFELSE checks if inttypes.h exists, doesn't clash with
+        # sys/types.h, and declares uintmax_t. This matches the original m4
+        # logic which includes both headers to check for clashes.
         macros.AC_TRY_COMPILE(
             code = """\
+#include <sys/types.h>
 #include <inttypes.h>
+
 int main(void) {
     uintmax_t i = (uintmax_t) -1;
     return !i;

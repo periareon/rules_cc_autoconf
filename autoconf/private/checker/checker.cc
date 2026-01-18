@@ -26,59 +26,31 @@ int Checker::run_checks_by_define(
         // results into a single map for efficient lookup during requirement
         // validation. We store both success status and value for value-based
         // requirement checks (e.g., "FOO=1").
-        struct CheckResultInfo {
-            bool success = false;
-            std::string value {};
-            bool define = false;
-            bool subst = false;
-        };
-        std::map<std::string, CheckResultInfo> other_results{};
+        std::map<std::string, CheckResult> other_results{};
         for (const std::filesystem::path& result_file_path : required_results) {
-            if (!result_file_path.empty() &&
-                std::filesystem::exists(result_file_path)) {
-                std::ifstream results_file(result_file_path);
-                if (results_file.is_open()) {
-                    nlohmann::json results_json{};
-                    results_file >> results_json;
-                    for (nlohmann::json::iterator it = results_json.begin();
-                         it != results_json.end(); ++it) {
-                        const std::string& key = it.key();
-                        const nlohmann::json& json_value = it.value();
-                        if (json_value.is_object() &&
-                            json_value.contains("success") &&
-                            json_value["success"].is_boolean()) {
-                            CheckResultInfo info;
-                            info.success = json_value["success"].get<bool>();
-                            info.value =
-                                json_value.contains("value") &&
-                                        json_value["value"].is_string()
-                                    ? json_value["value"].get<std::string>()
-                                    : "";
-                            // Check for is_define, define_flag, or define for backward compatibility
-                            if (json_value.contains("is_define") && json_value["is_define"].is_boolean()) {
-                                info.define = json_value["is_define"].get<bool>();
-                            } else if (json_value.contains("define_flag") && json_value["define_flag"].is_boolean()) {
-                                info.define = json_value["define_flag"].get<bool>();
-                            } else if (json_value.contains("define") && json_value["define"].is_boolean()) {
-                                info.define = json_value["define"].get<bool>();
-                            } else {
-                                info.define = false;
-                            }
-                            // Check for is_subst, subst_flag, or subst for backward compatibility
-                            if (json_value.contains("is_subst") && json_value["is_subst"].is_boolean()) {
-                                info.subst = json_value["is_subst"].get<bool>();
-                            } else if (json_value.contains("subst_flag") && json_value["subst_flag"].is_boolean()) {
-                                info.subst = json_value["subst_flag"].get<bool>();
-                            } else if (json_value.contains("subst") && json_value["subst"].is_boolean()) {
-                                info.subst = json_value["subst"].get<bool>();
-                            } else {
-                                info.subst = false;
-                            }
-                            other_results[key] = info;
-                        }
+            if (result_file_path.empty()) {
+                throw std::runtime_error("Results path cannot be empty");
+            }
+
+            if (!std::filesystem::exists(result_file_path)) {
+                throw std::runtime_error("Results path does not exist: " + result_file_path.string());
+            }
+
+            std::ifstream results_file(result_file_path);
+            if (results_file.is_open()) {
+                nlohmann::json results_json{};
+                results_file >> results_json;
+                for (nlohmann::json::iterator it = results_json.begin();
+                        it != results_json.end(); ++it) {
+                    const std::string& key = it.key();
+                    const nlohmann::json& json_value = it.value();
+                    std::optional<CheckResult> result = CheckResult::from_json(key, &json_value);
+                    if (!result.has_value()) {
+                        throw std::runtime_error("Failed to parse CheckResult: " + result_file_path.string());
                     }
-                    results_file.close();
+                    other_results.emplace(key, *result);
                 }
+                results_file.close();
             }
         }
 
@@ -93,7 +65,7 @@ int Checker::run_checks_by_define(
             // Exclude subst, m4_define, and other non-compile-time defines
             // These defines (like _GNU_SOURCE, _DARWIN_C_SOURCE) need to be available
             // during compilation tests, not just in config.h
-            if (info.define && info.success && !info.value.empty()) {
+            if (info.is_define && info.success && !info.value.empty()) {
                 required_defines_map[define_name] = info.value;
             }
         }
@@ -141,7 +113,7 @@ int Checker::run_checks_by_define(
             if (check.required_defines().has_value()) {
                 for (const std::string& req : *check.required_defines()) {
                     std::string req_define = req;
-                    std::string req_value;
+                    std::string req_value {};
                     bool negated = false;
                     bool has_value_requirement = false;
                     bool value_negated = false;
@@ -177,7 +149,7 @@ int Checker::run_checks_by_define(
                         }
                     }
 
-                    std::map<std::string, CheckResultInfo>::const_iterator
+                    std::map<std::string, CheckResult>::const_iterator
                         req_it = other_results.find(req_define);
 
                     if (req_it == other_results.end()) {
@@ -186,18 +158,6 @@ int Checker::run_checks_by_define(
                                           req_define +
                                           "' which was not found, skipping");
                         break;
-                    }
-
-                    // For conditional checks, if this requirement is the
-                    // condition itself, we only need it to exist (already
-                    // checked above), not succeed. The condition's
-                    // success/failure determines which value to use.
-                    if (!condition_name.empty() &&
-                        req_define == condition_name && !negated &&
-                        !has_value_requirement) {
-                        // This is the condition for a conditional check -
-                        // skip the success requirement
-                        continue;
                     }
 
                     // Handle negated success check (e.g., "!FOO")
@@ -256,22 +216,76 @@ int Checker::run_checks_by_define(
             CheckResult result(check.define(), "0", false);
             if (requirements_met) {
                 // Handle conditional subst/define checks
-                if (check.condition().has_value() &&
-                    (check.type() == CheckType::kSubst ||
-                     check.type() == CheckType::kDefine ||
-                     check.type() == CheckType::kM4Define)) {
+                if (check.condition().has_value()) {
+                    // Parse condition - may be "DEFINE_NAME", "DEFINE_NAME==value",
+                    // or "DEFINE_NAME!=value"
+                    std::string cond_expr = *check.condition();
+                    std::string cond_define = cond_expr;
+                    std::string cond_value;
+                    bool has_value_compare = false;
+                    bool value_negated = false;
+
+                    // Check for != operator first (e.g., "FOO!=1")
+                    size_t neq_pos = cond_expr.find("!=");
+                    if (neq_pos != std::string::npos) {
+                        cond_value = cond_expr.substr(neq_pos + 2);
+                        cond_define = cond_expr.substr(0, neq_pos);
+                        has_value_compare = true;
+                        value_negated = true;
+                    } else {
+                        // Check for == operator (e.g., "FOO==1")
+                        size_t eq2_pos = cond_expr.find("==");
+                        if (eq2_pos != std::string::npos) {
+                            cond_value = cond_expr.substr(eq2_pos + 2);
+                            cond_define = cond_expr.substr(0, eq2_pos);
+                            has_value_compare = true;
+                        } else {
+                            // Check for legacy = operator (e.g., "FOO=1")
+                            size_t eq_pos = cond_expr.find('=');
+                            if (eq_pos != std::string::npos) {
+                                cond_value = cond_expr.substr(eq_pos + 1);
+                                cond_define = cond_expr.substr(0, eq_pos);
+                                has_value_compare = true;
+                            }
+                        }
+                    }
+
                     // Look up the condition's result
-                    const std::string& cond_name = *check.condition();
-                    std::map<std::string, CheckResultInfo>::const_iterator
-                        cond_it = other_results.find(cond_name);
+                    std::map<std::string, CheckResult>::const_iterator
+                        cond_it = other_results.find(cond_define);
 
                     if (cond_it != other_results.end()) {
-                        // Condition found - use appropriate value
-                        // Condition is "true" if the check succeeded with a
-                        // truthy value (non-empty, non-zero)
-                        bool cond_true = cond_it->second.success &&
-                                         !cond_it->second.value.empty() &&
-                                         cond_it->second.value != "0";
+                        // Debug log the condition with resolved value
+                        if (DebugLogger::is_debug_enabled()) {
+                            std::string debug_msg {};
+                            if (has_value_compare) {
+                                // Format: FOO(`value`)==0 or FOO(`value`)!=0
+                                std::string operator_str = value_negated ? "!=" : "==";
+                                debug_msg = cond_define + "(`" + cond_it->second.value + "`)" + operator_str + cond_value;
+                            } else {
+                                // Format: FOO(`value`)
+                                debug_msg = cond_define + "(`" + cond_it->second.value + "`)";
+                            }
+                            DebugLogger::debug("Evaluating condition: " + debug_msg);
+                        }
+
+                        // Evaluate condition
+                        bool cond_true = false;
+                        if (has_value_compare) {
+                            // Value comparison: check if value matches
+                            bool value_matches = (cond_it->second.value == cond_value);
+                            if (value_negated) {
+                                cond_true = !value_matches;
+                            } else {
+                                cond_true = value_matches;
+                            }
+                        } else {
+                            // Simple condition: check if check succeeded with a
+                            // truthy value (non-empty, non-zero)
+                            cond_true = cond_it->second.success &&
+                                        !cond_it->second.value.empty() &&
+                                        cond_it->second.value != "0";
+                        }
 
                         std::string value;
                         if (cond_true) {
@@ -285,16 +299,22 @@ int Checker::run_checks_by_define(
                         // If value is empty, don't define (for AC_DEFINE with
                         // if_false=None)
                         if (!value.empty()) {
-                            result = CheckResult(check.define(), value, true);
+                            result = CheckResult(check.define(), value, true,
+                                                 check_type_is_define(check.type()),
+                                                 check_type_is_subst(check.type()));
                         } else {
                             // Mark as not successful so it won't be output
-                            result = CheckResult(check.define(), "", false);
+                            result = CheckResult(check.define(), "", false,
+                                                 check_type_is_define(check.type()),
+                                                 check_type_is_subst(check.type()));
                         }
                     } else {
                         DebugLogger::warn("Conditional check '" + define +
-                                          "' references '" + cond_name +
+                                          "' references '" + cond_define +
                                           "' which was not found");
-                        result = CheckResult(check.define(), "", false);
+                        result = CheckResult(check.define(), "", false,
+                                             check_type_is_define(check.type()),
+                                             check_type_is_subst(check.type()));
                     }
                 } else {
                     result = runner.run_check(check);

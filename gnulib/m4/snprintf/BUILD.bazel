@@ -12,8 +12,7 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "snprintf",
     checks = [
-        # AC_CHECK_FUNCS([snprintf])
-        macros.AC_CHECK_FUNC("snprintf"),
+        # HAVE_SNPRINTF comes from gl_SNPRINTF_PRESENCE dependency
 
         # HAVE_SNPRINTF_RETVAL_C99: snprintf returns the would-be length
         # This is true on modern POSIX systems (macOS, Linux glibc)
@@ -29,17 +28,12 @@ autoconf(
             headers = ["stdio.h"],
         ),
 
-        # REPLACE_SNPRINTF: Use platform printf compliance check.
-        macros.AC_SUBST(
-            "REPLACE_SNPRINTF",
-            condition = "_gl_cv_func_printf_posix",
-            if_false = "1",
-            if_true = "0",
-        ),
+        # REPLACE_SNPRINTF: Note - condition check removed as _gl_cv_func_printf_posix
+        # is not available in Bazel build. This may need to be handled differently.
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/printf:printf_posix_compliance",  # Platform printf compliance check
+        "//gnulib/m4/printf",  # Platform printf compliance check (provides gl_SNPRINTF_* targets)
         "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS,
 
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility

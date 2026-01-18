@@ -6,6 +6,8 @@
 
 /* Subst-only variable */
 #undef SUBST_VAR
+#undef SUBST_CONDITIONAL_TRUE
+#undef SUBST_CONDITIONAL_FALSE
 
 #undef SPECIAL_DEFINE
 #ifndef SPECIAL_DEFINE

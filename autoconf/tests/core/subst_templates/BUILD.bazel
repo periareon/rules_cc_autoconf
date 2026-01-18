@@ -24,8 +24,20 @@ write_file(
 autoconf(
     name = "autoconf",
     checks = [
-        macros.AC_SUBST("SUBST_VAR"),
         macros.AC_DEFINE("SPECIAL_DEFINE"),
+        macros.AC_SUBST("SUBST_VAR"),
+        macros.AC_SUBST(
+            "SUBST_CONDITIONAL_TRUE",
+            condition = "SPECIAL_DEFINE",
+            if_false = "0",
+            if_true = "1",
+        ),
+        macros.AC_SUBST(
+            "SUBST_CONDITIONAL_FALSE",
+            condition = "SPECIAL_DEFINE==0",
+            if_false = "0",
+            if_true = "1",
+        ),
     ],
     deps = [":package_info"],
 )

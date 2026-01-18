@@ -245,31 +245,44 @@ def _autoconf_impl(ctx):
         args.add("--results", check_result_file)
         args.add("--check-define", define_name)
 
-        for required in check.get("requires", []):
-            # Extract base define name
-            # Handle various syntaxes:
-            #   - "FOO" - simple success check
-            #   - "!FOO" - negated check (failure)
-            #   - "FOO==value" - value equality
-            #   - "FOO!=value" - value inequality
-            #   - "FOO=value" - legacy value equality
-            required_define = required
-
+        # Helper function to extract base define name from a requirement/condition string
+        def _extract_define_name(expr):
+            """Extract base define name from requirement/condition expression.
+            
+            Handles: "FOO", "!FOO", "FOO==value", "FOO!=value", "FOO=value"
+            """
+            required_define = expr
+            
             if required_define.startswith("!"):
                 # Handle negation prefix
                 required_define = required_define[1:]
-
+            
             if "!=" in required_define:
                 # Handle != operator
                 required_define = required_define.split("!=")[0]
-
             elif "==" in required_define:
                 # Handle == operator
                 required_define = required_define.split("==")[0]
-
             elif "=" in required_define:
                 # Handle legacy = operator
                 required_define = required_define.split("=")[0]
+            
+            return required_define
+
+        # Collect all required defines from both requires and condition
+        required_defines = list(check.get("requires", []))
+        if "condition" in check:
+            condition = check["condition"]
+            # Parse condition to extract the define name it depends on
+            condition_define = _extract_define_name(condition)
+            # Add to required_defines if not already there (to ensure it's in inputs)
+            if condition not in required_defines:
+                required_defines.append(condition)
+
+        for required in required_defines:
+            # Extract base define name
+            # Extract base define name (handles "FOO", "!FOO", "FOO==value", etc.)
+            required_define = _extract_define_name(required)
 
             if required_define not in all_results:
                 fail("Check `{}` requires `{}` but it's not provided. Please update `{}`".format(

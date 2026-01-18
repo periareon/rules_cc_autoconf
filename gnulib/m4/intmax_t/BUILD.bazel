@@ -3,47 +3,51 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# gl_AC_TYPE_INTMAX_T macro from intmax_t.m4
+# Define intmax_t to 'long' or 'long long' if it is not already defined
+# in <stdint.h> or <inttypes.h>.
+#
+# The macro checks if inttypes.h or stdint.h define intmax_t (via uintmax_t),
+# and if so, defines HAVE_INTMAX_T. Otherwise, it would define intmax_t as
+# long long, but in Bazel we check if intmax_t is available using conditional
+# includes based on header availability.
+#
+# Logic from m4:
+# - AC_REQUIRE([gl_AC_HEADER_INTTYPES_H]) - provides HAVE_INTTYPES_H_WITH_UINTMAX
+# - AC_REQUIRE([gl_AC_HEADER_STDINT_H]) - provides HAVE_STDINT_H_WITH_UINTMAX
+# - If both headers are unavailable, define intmax_t as long long
+# - Otherwise, define HAVE_INTMAX_T as 1
 autoconf(
     name = "intmax_t",
     checks = [
-        # gl_AC_TYPE_INTMAX_T checks for intmax_t and uintmax_t types
-        # Check if intmax_t type exists (should be defined in stdint.h or inttypes.h on modern systems)
+        # Check if intmax_t is available using conditional includes.
+        # This matches gt_AC_TYPE_INTMAX_T logic which explicitly tests for intmax_t.
         macros.AC_TRY_COMPILE(
-            code = """#include <stdint.h>
+            code = """\
+#include <stddef.h>
+#include <stdlib.h>
+#if HAVE_STDINT_H_WITH_UINTMAX
+#include <stdint.h>
+#endif
+#if HAVE_INTTYPES_H_WITH_UINTMAX
 #include <inttypes.h>
+#endif
 
 int main(void) {
-    intmax_t x;
-    (void)x;
-    return 0;
-}""",
+    intmax_t x = -1;
+    return !x;
+}
+""",
             define = "HAVE_INTMAX_T",
             language = "c",
+            compile_defines = ["HAVE_STDINT_H_WITH_UINTMAX", "HAVE_INTTYPES_H_WITH_UINTMAX"],
         ),
-        # Check if inttypes.h defines uintmax_t
-        macros.AC_TRY_COMPILE(
-            code = """#include <inttypes.h>
-
-int main(void) {
-    uintmax_t x;
-    (void)x;
-    return 0;
-}""",
-            define = "HAVE_INTTYPES_H_WITH_UINTMAX",
-            language = "c",
-        ),
-        # Check if stdint.h defines uintmax_t
-        macros.AC_TRY_COMPILE(
-            code = """#include <stdint.h>
-
-int main(void) {
-    uintmax_t x;
-    (void)x;
-    return 0;
-}""",
-            define = "HAVE_STDINT_H_WITH_UINTMAX",
-            language = "c",
-        ),
+    ],
+    deps = [
+        # AC_REQUIRE([gl_AC_HEADER_INTTYPES_H])
+        "//gnulib/m4/inttypes_h",
+        # AC_REQUIRE([gl_AC_HEADER_STDINT_H])
+        "//gnulib/m4/stdint_h",
     ],
     visibility = ["//visibility:public"],
 )
