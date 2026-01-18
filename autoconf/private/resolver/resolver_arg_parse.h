@@ -27,6 +27,9 @@ struct ResolverArgs {
     /** Direct substitutions: map from placeholder name to value */
     std::map<std::string, std::string> substitutions{};
 
+    /** Mode for processing: "defines", "subst", or "all" */
+    std::string mode = "defines";
+
     /** Whether to show help */
     bool show_help = false;
 };

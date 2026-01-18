@@ -1,0 +1,3 @@
+- Add `deps` to checks that is used to determine what additional defines to add to the compilation.
+- Make a `autoconf_file` that matches `AC_CONFIG_FILES` where `autoconf_hdr` matches `AC_CONFIG_HEADERS`
+- Make `autoconf_file` only do `@SUBST@`

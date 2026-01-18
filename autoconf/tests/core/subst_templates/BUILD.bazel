@@ -4,18 +4,27 @@ load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
 load("//autoconf:macros.bzl", "macros")
 load("//autoconf:package_info.bzl", "package_info")
 load("//autoconf/tests:diff_test.bzl", "diff_test")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
 
 package_info(
     name = "package_info",
-    package_name = "test_gnulib_templates",
+    package_name = "test_subst_templates",
     package_version = "2.3.4",
+)
+
+write_file(
+    name = "generated_file_h_in",
+    out = "generated_file.h.in",
+    content = """\
+#define FROM_GENERATED 1
+""".splitlines(),
+    newline = "unix",
 )
 
 autoconf(
     name = "autoconf",
     checks = [
-        macros.AC_CHECK_HEADER("stdio.h"),
-        macros.AC_CHECK_HEADER("stdlib.h"),
+        macros.AC_SUBST("SUBST_VAR"),
         macros.AC_DEFINE("SPECIAL_DEFINE"),
     ],
     deps = [":package_info"],
@@ -24,24 +33,40 @@ autoconf(
 autoconf_hdr(
     name = "config",
     out = "config.h",
-    inlines = {
-        "/* @INCLUDE_GNULIB_FOOTER@ */": ":gnulib_footer.h.in",
-        "/* @INCLUDE_GNULIB_HEADER@ */": ":gnulib_header.h.in",
-    },
     template = "config.h.in",
     deps = [":autoconf"],
+    mode = "defines",
+)
+
+autoconf_hdr(
+    name = "subst",
+    out = "subst.h",
+    inlines = {
+        "/* inline source */": "inlined_file.h.in",
+        "/* inline generated */": ":generated_file.h.in",
+    },
+    template = "subst.h.in",
+    deps = [":autoconf"],
+    mode = "subst",
 )
 
 diff_test(
-    name = "diff_test",
+    name = "subst_diff_test",
+    file1 = "golden_subst.h.in",
+    file2 = ":subst.h",
+)
+
+diff_test(
+    name = "config_diff_test",
     file1 = "golden_config.h.in",
     file2 = ":config.h",
 )
 
 cc_test(
-    name = "test_gnulib_templates",
+    name = "test_subst_templates",
     srcs = [
-        "test_gnulib_templates.c",
+        "test_subst_templates.c",
         ":config.h",
+        ":subst.h",
     ],
 )

@@ -4,17 +4,12 @@
 #undef PACKAGE_NAME
 #undef PACKAGE_VERSION
 
-/* Header checks */
-#undef HAVE_STDIO_H
-#undef HAVE_STDLIB_H
+/* Subst-only variable */
+#undef SUBST_VAR
 
-/* Gnulib-style template includes */
-/* @INCLUDE_GNULIB_HEADER@ */
-/* @INCLUDE_GNULIB_FOOTER@ */
-
-#if @SPECIAL_DEFINE@
-#else
-#error "@ SPECIAL_DEFINE @ was not replaced"
+#undef SPECIAL_DEFINE
+#ifndef SPECIAL_DEFINE
+#error "SPECIAL_DEFINE was not retained"
 #endif
 
 /* End of file */

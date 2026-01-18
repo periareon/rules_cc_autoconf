@@ -55,13 +55,33 @@ std::vector<CheckResult> load_results_from_file(
             success = success_it->get<bool>();
         }
 
-        std::string type;
-        nlohmann::json::const_iterator type_it = val.find("type");
-        if (type_it != val.end() && !type_it->is_null()) {
-            type = type_it->get<std::string>();
+        bool is_define = true;
+        nlohmann::json::const_iterator define_it = val.find("define");
+        if (define_it == val.end() || define_it->is_null()) {
+            // Check for "define_flag" or "is_define" for backward compatibility
+            define_it = val.find("define_flag");
+            if (define_it == val.end() || define_it->is_null()) {
+                define_it = val.find("is_define");
+            }
+        }
+        if (define_it != val.end() && !define_it->is_null()) {
+            is_define = define_it->get<bool>();
         }
 
-        loaded_results.emplace_back(define, value, success, type);
+        bool is_subst = false;
+        // Check for "subst", "subst_flag", or "is_subst" for compatibility
+        nlohmann::json::const_iterator subst_it = val.find("subst");
+        if (subst_it == val.end() || subst_it->is_null()) {
+            subst_it = val.find("subst_flag");
+            if (subst_it == val.end() || subst_it->is_null()) {
+                subst_it = val.find("is_subst");
+            }
+        }
+        if (subst_it != val.end() && !subst_it->is_null()) {
+            is_subst = subst_it->get<bool>();
+        }
+
+        loaded_results.emplace_back(define, value, success, is_define, is_subst);
     }
 
     return loaded_results;
@@ -74,7 +94,8 @@ int Resolver::resolve_and_generate(
     const std::optional<std::filesystem::path>& template_path,
     const std::filesystem::path& output_path,
     const std::map<std::string, std::filesystem::path>& inlines,
-    const std::map<std::string, std::string>& substitutions) {
+    const std::map<std::string, std::string>& substitutions,
+    const std::string& mode) {
     try {
         // Load and merge all results (preserve order while deduplicating by
         // define name, keeping first occurrence to preserve autoconf results
@@ -144,8 +165,16 @@ int Resolver::resolve_and_generate(
             }
         }
 
+        // Convert mode string to enum
+        Mode mode_enum = Mode::kDefines;
+        if (mode == "subst") {
+            mode_enum = Mode::kSubst;
+        } else if (mode == "all") {
+            mode_enum = Mode::kAll;
+        }
+
         // Generate header
-        SourceGenerator generator(results);
+        SourceGenerator generator(results, mode_enum);
 
         std::string template_content{};
         std::ifstream template_file(*template_path);

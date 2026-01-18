@@ -1,0 +1,65 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:macros.bzl", "macros")
+load("//autoconf:package_info.bzl", "package_info")
+load("//autoconf/tests:diff_test.bzl", "diff_test")
+
+package_info(
+    name = "package",
+    package_name = "test_mode_filtering",
+    package_version = "1.0.0",
+)
+
+# Test autoconf with both AC_DEFINE (defines) and AC_SUBST (substitution variables)
+autoconf(
+    name = "autoconf",
+    checks = [
+        # AC_DEFINE creates defines that should appear in config.h
+        macros.AC_DEFINE("HAVE_FEATURE", "1"),
+        macros.AC_CHECK_HEADER("stdio.h"),
+        # AC_SUBST creates substitution variables that should NOT appear in config.h
+        # when mode="defines", but SHOULD appear in subst.h when mode="subst"
+        macros.AC_SUBST("SUBST_VAR", "value"),
+        macros.AC_SUBST("ANOTHER_SUBST", "42"),
+    ],
+    deps = [":package"],
+)
+
+# config.h with mode="defines" (default) - should only have defines, NOT subst variables
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    template = "config.h.in",
+    deps = [":autoconf"],
+    mode = "defines",  # Explicit, though it's the default
+)
+
+# subst.h with mode="subst" - should only have subst variables, NOT defines
+autoconf_hdr(
+    name = "subst",
+    out = "subst.h",
+    template = "subst.h.in",
+    deps = [":autoconf"],
+    mode = "subst",
+)
+
+diff_test(
+    name = "diff_test_config",
+    file1 = "golden_config.h.in",
+    file2 = ":config.h",
+)
+
+diff_test(
+    name = "diff_test_subst",
+    file1 = "golden_subst.h.in",
+    file2 = ":subst.h",
+)
+
+cc_test(
+    name = "test_mode_filtering",
+    srcs = [
+        "test_mode_filtering.c",
+        ":config.h",
+    ],
+)

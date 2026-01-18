@@ -36,6 +36,20 @@ enum class CheckType {
 std::string check_type_to_string(CheckType type);
 
 /**
+ * @brief Determine if a CheckType is a define (not kM4Define or kSubst).
+ * @param type The CheckType enum value.
+ * @return True if this is a define, false otherwise.
+ */
+bool check_type_is_define(CheckType type);
+
+/**
+ * @brief Determine if a CheckType is a subst.
+ * @param type The CheckType enum value.
+ * @return True if this is kSubst, false otherwise.
+ */
+bool check_type_is_subst(CheckType type);
+
+/**
  * @brief Configuration check specification.
  *
  * Represents a single autoconf-style check to be performed.
@@ -129,6 +143,15 @@ class Check {
      */
     const std::optional<std::string>& condition() const { return condition_; }
 
+    /**
+     * @brief Get the optional list of compile_defines file paths to include in compilation.
+     * @return Optional vector of result file paths from previous checks to read
+     * and extract defines from, or std::nullopt if not provided.
+     */
+    const std::optional<std::vector<std::string>>& compile_defines() const {
+        return compile_defines_;
+    }
+
    private:
     std::string name_{};                 /// Name (e.g., header/function name)
     std::string define_{};               /// Preprocessor define name
@@ -141,6 +164,8 @@ class Check {
     std::optional<std::vector<std::string>> requires_{};  /// Required defines
     std::optional<std::string>
         condition_{};   /// Condition for conditional checks
+    std::optional<std::vector<std::string>>
+        compile_defines_{};  /// Defines to include in compilation code
     CheckType type_{};  /// Type of check
 
     /**

@@ -22,13 +22,15 @@ int Checker::run_checks_by_define(
 
         // Load results from required check files (passed via --required
         // arguments) Each file contains JSON with check results:
-        // {"DEFINE_NAME": {"success": bool, "value": str}, ...} We merge all
+        // {"DEFINE_NAME": {"success": bool, "value": str, "type": str}, ...} We merge all
         // results into a single map for efficient lookup during requirement
         // validation. We store both success status and value for value-based
         // requirement checks (e.g., "FOO=1").
         struct CheckResultInfo {
-            bool success;
-            std::string value;
+            bool success = false;
+            std::string value {};
+            bool define = false;
+            bool subst = false;
         };
         std::map<std::string, CheckResultInfo> other_results{};
         for (const std::filesystem::path& result_file_path : required_results) {
@@ -52,6 +54,26 @@ int Checker::run_checks_by_define(
                                         json_value["value"].is_string()
                                     ? json_value["value"].get<std::string>()
                                     : "";
+                            // Check for is_define, define_flag, or define for backward compatibility
+                            if (json_value.contains("is_define") && json_value["is_define"].is_boolean()) {
+                                info.define = json_value["is_define"].get<bool>();
+                            } else if (json_value.contains("define_flag") && json_value["define_flag"].is_boolean()) {
+                                info.define = json_value["define_flag"].get<bool>();
+                            } else if (json_value.contains("define") && json_value["define"].is_boolean()) {
+                                info.define = json_value["define"].get<bool>();
+                            } else {
+                                info.define = false;
+                            }
+                            // Check for is_subst, subst_flag, or subst for backward compatibility
+                            if (json_value.contains("is_subst") && json_value["is_subst"].is_boolean()) {
+                                info.subst = json_value["is_subst"].get<bool>();
+                            } else if (json_value.contains("subst_flag") && json_value["subst_flag"].is_boolean()) {
+                                info.subst = json_value["subst_flag"].get<bool>();
+                            } else if (json_value.contains("subst") && json_value["subst"].is_boolean()) {
+                                info.subst = json_value["subst"].get<bool>();
+                            } else {
+                                info.subst = false;
+                            }
                             other_results[key] = info;
                         }
                     }
@@ -61,6 +83,21 @@ int Checker::run_checks_by_define(
         }
 
         CheckRunner runner(*config);
+
+        // Extract AC_DEFINE defines from required checks to include in compilation tests
+        // This matches GNU Autoconf behavior where AC_USE_SYSTEM_EXTENSIONS affects
+        // all subsequent compilation tests
+        std::map<std::string, std::string> required_defines_map;
+        for (const auto& [define_name, info] : other_results) {
+            // Include defines from successful AC_DEFINE checks (check define flag)
+            // Exclude subst, m4_define, and other non-compile-time defines
+            // These defines (like _GNU_SOURCE, _DARWIN_C_SOURCE) need to be available
+            // during compilation tests, not just in config.h
+            if (info.define && info.success && !info.value.empty()) {
+                required_defines_map[define_name] = info.value;
+            }
+        }
+        runner.set_required_defines(required_defines_map);
         nlohmann::json j = nlohmann::json::object();
 
         // Build a map of define names to check indices for fast lookup
@@ -267,7 +304,8 @@ int Checker::run_checks_by_define(
             j[result.define] = {
                 {"value", result.value},
                 {"success", result.success},
-                {"type", check_type_to_string(check.type())},
+                {"is_define", result.is_define},
+                {"is_subst", result.is_subst},
             };
         }
 

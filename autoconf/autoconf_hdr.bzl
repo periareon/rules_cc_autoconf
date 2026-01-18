@@ -59,6 +59,7 @@ def _autoconf_hdr_impl(ctx):
         args.add("--results", results_file_path)
     args.add("--output", ctx.outputs.out)
     args.add("--template", ctx.file.template)
+    args.add("--mode", ctx.attr.mode)
 
     # Add inline mappings: --inline <search_string> <file_path>
     for search_string, file_path in inline_mappings:
@@ -161,6 +162,34 @@ This allows you to run checks once and generate multiple header files from the s
             Any `@VAR@` style placeholders in the inline file content will be replaced with their
             corresponding define values (package info, check results, etc.) after insertion.""",
             allow_files = True,
+        ),
+        "mode": attr.string(
+            doc = """Processing mode that determines what should be replaced within the file.
+
+            Valid values:
+            - `"defines"` (default): Only process defines (AC_DEFINE, AC_CHECK_*, etc.), not substitution variables (AC_SUBST). This is for config.h files.
+            - `"subst"`: Only process substitution variables (AC_SUBST), not defines. This is for subst.h files.
+            - `"all"`: Process both defines and substitution variables.
+
+            Example:
+            ```python
+            autoconf_hdr(
+                name = "config",
+                out = "config.h",
+                template = "config.h.in",
+                mode = "defines",  # Only process defines
+                deps = [":checks"],
+            )
+            autoconf_hdr(
+                name = "subst",
+                out = "subst.h",
+                template = "subst.h.in",
+                mode = "subst",  # Only process substitution variables
+                deps = [":checks"],
+            )
+            ```""",
+            default = "defines",
+            values = ["defines", "subst", "all"],
         ),
         "out": attr.output(
             doc = "The output config file (typically `config.h`).",

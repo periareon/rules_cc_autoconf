@@ -85,6 +85,7 @@ def _ac_check_header(
         header,
         define = None,
         language = "c",
+        compile_defines = None,
         requires = None,
         if_true = None,
         if_false = None):
@@ -109,6 +110,10 @@ def _ac_check_header(
         header: Name of the header file (e.g., `"stdio.h"`)
         define: Custom define name (defaults to `HAVE_<HEADER>`)
         language: Language to use for check (`"c"` or `"cpp"`)
+        compile_defines: Optional list of preprocessor define names from previous checks
+            to add before includes (e.g., `["_GNU_SOURCE", "_DARWIN_C_SOURCE"]`).
+            Each string must match the define name of a previous check. The values
+            from those checks will be used automatically.
         requires: List of requirements that must be met before this check runs.
             Can be simple define names (e.g., `"HAVE_FOO"`), negated checks
             (e.g., `"!HAVE_FOO"`), or value-based requirements
@@ -130,6 +135,8 @@ def _ac_check_header(
         "name": header,
         "type": "header",
     }
+    if compile_defines:
+        check["compile_defines"] = compile_defines
     if requires:
         check["requires"] = requires
 
@@ -143,6 +150,7 @@ def _ac_check_func(
         code = None,
         file = None,
         language = "c",
+        compile_defines = None,
         requires = None,
         if_true = None,
         if_false = None):
@@ -169,6 +177,10 @@ def _ac_check_func(
         code: Custom code to compile (optional)
         file: Label to a file containing custom code (optional)
         language: Language to use for check (`"c"` or `"cpp"`)
+        compile_defines: Optional list of preprocessor define names from previous checks
+            to add before includes (e.g., `["_GNU_SOURCE", "_DARWIN_C_SOURCE"]`).
+            Each string must match the define name of a previous check. The values
+            from those checks will be used automatically.
         requires: List of requirements that must be met before this check runs.
             Can be simple define names (e.g., `"HAVE_FOO"`), negated checks
             (e.g., `"!HAVE_FOO"`), or value-based requirements
@@ -217,6 +229,7 @@ def _ac_check_type(
         file = None,
         includes = None,
         language = "c",
+        compile_defines = None,
         requires = None,
         if_true = None,
         if_false = None):
@@ -243,6 +256,10 @@ def _ac_check_type(
         includes: Optional list of headers to include. If not specified and
             `code` is not specified, uses AC_INCLUDES_DEFAULT.
         language: Language to use for check (`"c"` or `"cpp"`)
+        compile_defines: Optional list of preprocessor define names from previous checks
+            to add before includes (e.g., `["_GNU_SOURCE", "_DARWIN_C_SOURCE"]`).
+            Each string must match the define name of a previous check. The values
+            from those checks will be used automatically.
         requires: List of requirements that must be met before this check runs.
             Can be simple define names (e.g., `"HAVE_FOO"`), negated checks
             (e.g., `"!HAVE_FOO"`), or value-based requirements
@@ -281,6 +298,8 @@ int main(void) {{
         # Use default headers like GNU Autoconf's AC_INCLUDES_DEFAULT
         check["code"] = _AC_TEST_TYPE_CODE_TEMPLATE.format(type_name = type_name)
 
+    if compile_defines:
+        check["compile_defines"] = compile_defines
     if requires:
         check["requires"] = requires
 
@@ -294,6 +313,7 @@ def _ac_check_symbol(
         code = None,
         file = None,
         language = "c",
+        compile_defines = None,
         requires = None,
         if_true = None,
         if_false = None):
@@ -315,6 +335,10 @@ def _ac_check_symbol(
         code: Custom code that includes necessary headers (optional)
         file: Label to a file containing custom code (optional)
         language: Language to use for check (`"c"` or `"cpp"`)
+        compile_defines: Optional list of preprocessor define names from previous checks
+            to add before includes (e.g., `["_GNU_SOURCE", "_DARWIN_C_SOURCE"]`).
+            Each string must match the define name of a previous check. The values
+            from those checks will be used automatically.
         requires: List of requirements that must be met before this check runs.
             Can be simple define names (e.g., `"HAVE_FOO"`), negated checks
             (e.g., `"!HAVE_FOO"`), or value-based requirements
@@ -361,6 +385,7 @@ def _ac_try_compile(
         define = None,
         includes = None,
         language = "c",
+        compile_defines = None,
         requires = None,
         if_true = None,
         if_false = None):
@@ -433,6 +458,8 @@ def _ac_try_compile(
     elif code:
         check["code"] = code
 
+    if compile_defines:
+        check["compile_defines"] = compile_defines
     if requires:
         check["requires"] = requires
 
@@ -446,6 +473,7 @@ def _ac_try_link(
         define = None,
         includes = None,
         language = "c",
+        compile_defines = None,
         requires = None,
         if_true = None,
         if_false = None):
@@ -517,6 +545,8 @@ def _ac_try_link(
     elif code:
         check["code"] = code
 
+    if compile_defines:
+        check["compile_defines"] = compile_defines
     if requires:
         check["requires"] = requires
 
@@ -742,11 +772,19 @@ def _ac_check_alignof(
     return json.encode(check)
 
 _AC_CHECK_DECL_TEMPLATE = """\
-{}
+{0}
 
 int main(void) {{
-    (void) {};
-    return 0;
+#ifndef {1}
+#ifdef __cplusplus
+  (void) {1};
+#else
+  (void) {1};
+#endif
+#endif
+
+  ;
+  return 0;
 }}
 """
 
@@ -757,6 +795,7 @@ def _ac_check_decl(
         headers = None,
         includes = None,
         value = None,
+        compile_defines = None,
         language = "c",
         requires = None,
         if_true = None,
@@ -790,6 +829,10 @@ def _ac_check_decl(
         includes: Optional list of headers to include. If not specified and
             `headers` is not specified, uses AC_INCLUDES_DEFAULT.
         value: Optional value to assign when the check is True.
+        compile_defines: Optional list of preprocessor define names from previous checks
+            to add before includes (e.g., `["_GNU_SOURCE", "_DARWIN_C_SOURCE"]`).
+            Each string must match the define name of a previous check. The values
+            from those checks will be used automatically.
         language: Language to use for check (`"c"` or `"cpp"`)
         requires: List of requirements that must be met before this check runs.
             Can be simple define names (e.g., `"HAVE_FOO"`), negated checks
@@ -826,6 +869,8 @@ def _ac_check_decl(
     }
     if value != None:
         check["define_value"] = value
+    if compile_defines:
+        check["compile_defines"] = compile_defines
     if requires:
         check["requires"] = requires
 
@@ -849,6 +894,7 @@ def _ac_check_member(
         define = None,
         headers = None,
         language = "c",
+        compile_defines = None,
         requires = None,
         if_true = None,
         if_false = None):
@@ -872,6 +918,10 @@ def _ac_check_member(
         define: Custom define name (defaults to `HAVE_<AGGREGATE>_<MEMBER>`)
         headers: Optional list of headers to include
         language: Language to use for check (`"c"` or `"cpp"`)
+        compile_defines: Optional list of preprocessor define names from previous checks
+            to add before includes (e.g., `["_GNU_SOURCE", "_DARWIN_C_SOURCE"]`).
+            Each string must match the define name of a previous check. The values
+            from those checks will be used automatically.
         requires: List of requirements that must be met before this check runs.
             Can be simple define names (e.g., `"HAVE_FOO"`), negated checks
             (e.g., `"!HAVE_FOO"`), or value-based requirements
@@ -900,6 +950,8 @@ def _ac_check_member(
         "name": "{}.{}".format(aggregate, member),
         "type": "member",
     }
+    if compile_defines:
+        check["compile_defines"] = compile_defines
     if requires:
         check["requires"] = requires
 

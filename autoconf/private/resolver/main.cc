@@ -25,5 +25,6 @@ int main(int argc, char* argv[]) {
 
     return Resolver::resolve_and_generate(args.results_paths,
                                           args.template_path, args.output_path,
-                                          args.inlines, args.substitutions);
+                                          args.inlines, args.substitutions,
+                                          args.mode);
 }

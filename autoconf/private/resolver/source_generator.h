@@ -11,6 +11,15 @@
 namespace rules_cc_autoconf {
 
 /**
+ * @brief Processing mode for header generation.
+ */
+enum class Mode {
+    kDefines,  ///< Process only defines (not subst)
+    kSubst,    ///< Process only substitution variables
+    kAll,      ///< Process both defines and substitution variables
+};
+
+/**
  * @brief Generates config.h header files from check results.
  *
  * Can generate headers from scratch or process template files (config.h.in)
@@ -21,8 +30,10 @@ class SourceGenerator {
     /**
      * @brief Construct a SourceGenerator.
      * @param results Vector of check results to include in the header.
+     * @param mode Processing mode (default: kDefines).
      */
-    explicit SourceGenerator(const std::vector<CheckResult>& results);
+    explicit SourceGenerator(const std::vector<CheckResult>& results,
+                             Mode mode = Mode::kDefines);
 
     /**
      * @brief Generate a config.h header file from a template string.
@@ -47,6 +58,7 @@ class SourceGenerator {
 
    private:
     const std::vector<CheckResult>& results_{};  ///< Reference to check results
+    const Mode mode_{Mode::kDefines};  ///< Processing mode
 
     /**
      * @brief Process a template string, substituting placeholders.

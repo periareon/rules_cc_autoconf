@@ -225,6 +225,7 @@ def gnu_gnulib_diff_test_suite(
         out = "config.h",
         deps = [bazel_autoconf_target],
         defaults = False,
+        mode = "defines",
     )
 
     autoconf_hdr(
@@ -233,6 +234,7 @@ def gnu_gnulib_diff_test_suite(
         out = "subst.h",
         deps = [bazel_autoconf_target],
         defaults = False,
+        mode = "subst",
     )
 
     # --- 3. Diff tests for config.h ---

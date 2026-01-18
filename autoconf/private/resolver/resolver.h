@@ -30,6 +30,7 @@ class Resolver {
      * replacements.
      * @param substitutions Map from placeholder names to values for direct
      * @VAR@ substitution.
+     * @param mode Processing mode: "defines" (default), "subst", or "all".
      * @return 0 on success, 1 on error.
      */
     static int resolve_and_generate(
@@ -37,7 +38,8 @@ class Resolver {
         const std::optional<std::filesystem::path>& template_path,
         const std::filesystem::path& output_path,
         const std::map<std::string, std::filesystem::path>& inlines = {},
-        const std::map<std::string, std::string>& substitutions = {});
+        const std::map<std::string, std::string>& substitutions = {},
+        const std::string& mode = "defines");
 };
 
 }  // namespace rules_cc_autoconf

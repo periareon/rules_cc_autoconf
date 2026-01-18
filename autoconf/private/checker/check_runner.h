@@ -41,6 +41,12 @@ class CheckRunner {
      */
     CheckResult run_check(const Check& check);
 
+    /**
+     * @brief Set defines from required checks (dependencies).
+     * @param required_defines Map of define names to their values from required checks.
+     */
+    void set_required_defines(const std::map<std::string, std::string>& required_defines);
+
     // Deleted copy and move assignment operators (const reference member)
     CheckRunner& operator=(const CheckRunner&) = delete;
     CheckRunner& operator=(CheckRunner&&) = delete;
@@ -48,6 +54,8 @@ class CheckRunner {
    private:
     const Config& config_;                ///< Reference to the configuration
     std::vector<CheckResult> results_{};  ///< Accumulated check results
+    ///< Map of define names from required checks (dependencies) to their values
+    std::map<std::string, std::string> required_defines_{};
 
     /** @brief Check if a header file exists and can be included. */
     CheckResult check_header(const Check& check);
@@ -172,6 +180,21 @@ class CheckRunner {
      * @return File extension (".c" or ".cpp").
      */
     std::string get_file_extension(const std::string& language);
+
+    /**
+     * @brief Get #define statements from all successful AC_DEFINE checks processed so far.
+     * @return String containing #define statements for all previous defines,
+     *         to be prepended to compilation test code.
+     */
+    std::string get_defines_from_previous_checks() const;
+
+    /**
+     * @brief Resolve compile_defines from check and build #define statements.
+     * @param check The check that may have compile_defines.
+     * @return String containing #define statements for compile_defines,
+     *         or empty string if no compile_defines specified.
+     */
+    std::string resolve_compile_defines(const Check& check) const;
 };
 
 }  // namespace rules_cc_autoconf

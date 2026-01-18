@@ -3,72 +3,92 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# gl_FUNC_GLIBC_UNLOCKED_IO from unlocked-io.m4
-# AC_CHECK_DECLS_ONCE checks for *_unlocked I/O function declarations
-# The M4 file doesn't specify headers, so we rely on default includes
-# which include stdio.h (appropriate for these declarations)
-# Note: These functions may require extension defines (_GNU_SOURCE, etc.)
-# which should be provided by the extensions dependency
+COMPILE_DEFINES = [
+    "STDC_HEADERS",
+    "_ALL_SOURCE",
+    "_DARWIN_C_SOURCE",
+    "_GNU_SOURCE",
+    "_HPUX_ALT_XOPEN_SOCKET_API",
+    "_NETBSD_SOURCE",
+    "_OPENBSD_SOURCE",
+    "_POSIX_PTHREAD_SEMANTICS",
+]
+
 autoconf(
     name = "unlocked-io",
     checks = [
         # AC_CHECK_DECLS_ONCE for unlocked IO functions
         # No headers specified in M4, so we use default includes
+        # Extension defines are needed for these declarations to be visible
         macros.AC_CHECK_DECL(
             "clearerr_unlocked",
             define = "HAVE_DECL_CLEARERR_UNLOCKED",
+            compile_defines = COMPILE_DEFINES,
         ),
         macros.AC_CHECK_DECL(
             "feof_unlocked",
             define = "HAVE_DECL_FEOF_UNLOCKED",
+            compile_defines = COMPILE_DEFINES,
         ),
         macros.AC_CHECK_DECL(
             "ferror_unlocked",
             define = "HAVE_DECL_FERROR_UNLOCKED",
+            compile_defines = COMPILE_DEFINES,
         ),
         macros.AC_CHECK_DECL(
             "fflush_unlocked",
             define = "HAVE_DECL_FFLUSH_UNLOCKED",
+            compile_defines = COMPILE_DEFINES,
         ),
         macros.AC_CHECK_DECL(
             "fgets_unlocked",
             define = "HAVE_DECL_FGETS_UNLOCKED",
+            compile_defines = COMPILE_DEFINES,
         ),
         macros.AC_CHECK_DECL(
             "fileno_unlocked",
             define = "HAVE_DECL_FILENO_UNLOCKED",
+            compile_defines = COMPILE_DEFINES,
         ),
         macros.AC_CHECK_DECL(
             "fputc_unlocked",
             define = "HAVE_DECL_FPUTC_UNLOCKED",
+            compile_defines = COMPILE_DEFINES,
         ),
         macros.AC_CHECK_DECL(
             "fputs_unlocked",
             define = "HAVE_DECL_FPUTS_UNLOCKED",
+            compile_defines = COMPILE_DEFINES,
         ),
         macros.AC_CHECK_DECL(
             "fread_unlocked",
             define = "HAVE_DECL_FREAD_UNLOCKED",
+            compile_defines = COMPILE_DEFINES,
         ),
         macros.AC_CHECK_DECL(
             "fwrite_unlocked",
             define = "HAVE_DECL_FWRITE_UNLOCKED",
+            compile_defines = COMPILE_DEFINES,
         ),
         macros.AC_CHECK_DECL(
             "getc_unlocked",
             define = "HAVE_DECL_GETC_UNLOCKED",
+            compile_defines = COMPILE_DEFINES,
         ),
         macros.AC_CHECK_DECL(
             "getchar_unlocked",
             define = "HAVE_DECL_GETCHAR_UNLOCKED",
+            compile_defines = COMPILE_DEFINES,
         ),
         macros.AC_CHECK_DECL(
             "putc_unlocked",
             define = "HAVE_DECL_PUTC_UNLOCKED",
+            compile_defines = COMPILE_DEFINES,
         ),
         macros.AC_CHECK_DECL(
             "putchar_unlocked",
             define = "HAVE_DECL_PUTCHAR_UNLOCKED",
+            compile_defines = COMPILE_DEFINES,
         ),
     ],
     visibility = ["//visibility:public"],

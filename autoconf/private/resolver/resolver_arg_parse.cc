@@ -22,6 +22,8 @@ void ResolverArgParse::print_usage(const char* program_name) {
                  "with file content (can be specified multiple times)\n";
     std::cout << "  --subst <name> <value> Replace @name@ placeholder with "
                  "value (can be specified multiple times)\n";
+    std::cout << "  --mode <mode>          Processing mode: \"defines\" (default), "
+                 "\"subst\", or \"all\"\n";
     std::cout << "  --help                 Show this help message\n";
 }
 
@@ -152,6 +154,20 @@ std::optional<ResolverArgs> ResolverArgParse::parse(int argc, char* argv[]) {
             } else {
                 std::cerr << "Error: --subst requires a name and value"
                           << std::endl;
+                return std::nullopt;
+            }
+        } else if (arg == "--mode") {
+            if (i + 1 < expanded_argc) {
+                args.mode = std::string(expanded_argv_ptr[++i]);
+                if (args.mode != "defines" && args.mode != "subst" &&
+                    args.mode != "all") {
+                    std::cerr << "Error: --mode must be \"defines\", \"subst\", "
+                                 "or \"all\""
+                              << std::endl;
+                    return std::nullopt;
+                }
+            } else {
+                std::cerr << "Error: --mode requires a mode value" << std::endl;
                 return std::nullopt;
             }
         } else {

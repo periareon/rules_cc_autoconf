@@ -172,27 +172,11 @@ def _autoconf_impl(ctx):
             check["file_path"] = check_inputs[check["define"]].path
             check.pop("file")
 
-    # Create config dictionary
-    config_dict = create_config_dict(
-        toolchain_info = toolchain_info,
-        checks = checks.values(),
-    )
-
-    # Write config to JSON
-    config_json = write_config_json(ctx, config_dict)
-
-    # Get environment variables from the toolchain (like LIB, INCLUDE, PATH for MSVC)
-    # We need environment variables from both compile and link actions since the autoconf
-    # runner performs both compilation and linking. For MSVC, the INCLUDE environment
-    # variable from the compile action is crucial for finding standard headers like stdint.h
-    env = get_environment_variables(ctx, toolchain_info)
-
+    # Get transitive dependencies to compute compile_defines paths
     deps = collect_deps(ctx.attr.deps)
     transitive_checks = collect_transitive_results(ctx.label, deps.to_list())
 
-    # Create individual CcAutoconfCheck actions for each check
-    # Each check is identified by its unique define name
-    # First, declare all result files
+    # Declare result files first (needed for all_results)
     results = {}
     for check in checks.values():
         define_name = check["define"]
@@ -212,6 +196,39 @@ def _autoconf_impl(ctx):
         results[define_name] = check_result_file
 
     all_results = results | transitive_checks
+
+    # Convert compile_defines from define names to file paths before creating config
+    # This allows compile_defines to resolve values from transitive dependencies
+    for define_name, check in checks.items():
+        compile_defines_list = check.get("compile_defines", [])
+        if compile_defines_list:
+            compile_defines_paths = []
+            for compile_def in compile_defines_list:
+                if compile_def in all_results:
+                    compile_def_file = all_results[compile_def]
+                    # Store the file path as a string (not File object) for JSON encoding
+                    compile_defines_paths.append(compile_def_file.path)
+            # Store the paths (not names) in the check for C++ code to read
+            if compile_defines_paths:
+                check["compile_defines"] = compile_defines_paths
+
+    # Create config dictionary (now with compile_defines paths included)
+    config_dict = create_config_dict(
+        toolchain_info = toolchain_info,
+        checks = checks.values(),
+    )
+
+    # Write config to JSON
+    config_json = write_config_json(ctx, config_dict)
+
+    # Get environment variables from the toolchain (like LIB, INCLUDE, PATH for MSVC)
+    # We need environment variables from both compile and link actions since the autoconf
+    # runner performs both compilation and linking. For MSVC, the INCLUDE environment
+    # variable from the compile action is crucial for finding standard headers like stdint.h
+    env = get_environment_variables(ctx, toolchain_info)
+
+    # Create individual CcAutoconfCheck actions for each check
+    # Each check is identified by its unique define name
 
     for check in checks.values():
         define_name = check["define"]
@@ -264,6 +281,15 @@ def _autoconf_impl(ctx):
             required_check = all_results[required_define]
             inputs.append(required_check)
             args.add("--required", required_check)
+
+        # Add compile_defines result files to inputs (paths are strings in check dict, need File objects)
+        compile_defines_paths = check.get("compile_defines", [])
+        for compile_def_path_str in compile_defines_paths:
+            # Find the File object from all_results using the path
+            for result_define, result_file in all_results.items():
+                if result_file.path == compile_def_path_str:
+                    inputs.append(result_file)
+                    break
 
         ctx.actions.run(
             executable = ctx.executable._checker,

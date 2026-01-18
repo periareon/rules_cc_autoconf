@@ -3,13 +3,18 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <nlohmann/json.hpp>
 #include <sstream>
 #include <stdexcept>
 #include <system_error>
 
+#include "autoconf/private/checker/check.h"
 #include "autoconf/private/checker/debug_logger.h"
 
 namespace rules_cc_autoconf {
+
+using rules_cc_autoconf::check_type_is_define;
+using rules_cc_autoconf::check_type_is_subst;
 
 CheckRunner::CheckRunner(const Config& config) : config_(config) {}
 
@@ -25,6 +30,110 @@ std::vector<CheckResult> CheckRunner::run_all_checks() {
     }
 
     return results_;
+}
+
+void CheckRunner::set_required_defines(
+    const std::map<std::string, std::string>& required_defines) {
+    required_defines_ = required_defines;
+}
+
+std::string CheckRunner::get_defines_from_previous_checks() const {
+    std::ostringstream defines;
+    // Collect all successful AC_DEFINE checks (type "define") from previous
+    // results and from required checks (dependencies). These need to be
+    // available during compilation tests, similar to GNU Autoconf
+    for (const CheckResult& result : results_) {
+        // Include defines from AC_DEFINE checks (type "define")
+        // Exclude subst, m4_define, and other non-compile-time defines
+        if (result.is_define && result.success && !result.value.empty()) {
+            defines << "#define " << result.define;
+            if (result.value != "1") {
+                defines << " " << result.value;
+            }
+            defines << "\n";
+        }
+    }
+    // Also include defines from required checks (dependencies)
+    // These are from other autoconf targets and need to be available for
+    // compilation
+    for (const auto& [define_name, value] : required_defines_) {
+        defines << "#define " << define_name;
+        if (value != "1" && !value.empty()) {
+            defines << " " << value;
+        }
+        defines << "\n";
+    }
+    return defines.str();
+}
+
+std::string CheckRunner::resolve_compile_defines(const Check& check) const {
+    if (!check.compile_defines().has_value()) {
+        return "";
+    }
+
+    std::ostringstream defines;
+    // compile_defines contains file paths to result files
+    for (const std::string& result_file_path : *check.compile_defines()) {
+        if (result_file_path.empty() ||
+            !std::filesystem::exists(result_file_path)) {
+            continue;
+        }
+
+        // Read the result file and extract successful defines
+        std::ifstream results_file(result_file_path);
+        if (!results_file.is_open()) {
+            DebugLogger::warn("Could not open compile_defines result file: " +
+                              result_file_path);
+            continue;
+        }
+
+        nlohmann::json results_json{};
+        try {
+            results_file >> results_json;
+        } catch (const std::exception& ex) {
+            DebugLogger::warn("Could not parse compile_defines result file: " +
+                              result_file_path + " - " + ex.what());
+            results_file.close();
+            continue;
+        }
+        results_file.close();
+
+        // Extract all successful defines from the result file
+        for (nlohmann::json::iterator it = results_json.begin();
+             it != results_json.end(); ++it) {
+            const std::string& define_name = it.key();
+            const nlohmann::json& json_value = it.value();
+
+            if (json_value.is_object() && json_value.contains("success") &&
+                json_value["success"].is_boolean()) {
+                bool success = json_value["success"].get<bool>();
+
+                // Check is_define, define_flag, or define for backward compatibility
+                bool define = true;
+                if (json_value.contains("is_define") && json_value["is_define"].is_boolean()) {
+                    define = json_value["is_define"].get<bool>();
+                } else if (json_value.contains("define_flag") && json_value["define_flag"].is_boolean()) {
+                    define = json_value["define_flag"].get<bool>();
+                } else if (json_value.contains("define") && json_value["define"].is_boolean()) {
+                    // Backward compatibility: check old "define" field
+                    define = json_value["define"].get<bool>();
+                }
+
+                // Only include successful AC_DEFINE checks (check define flag)
+                if (success && define) {
+                    std::string value =
+                        json_value.contains("value") &&
+                                json_value["value"].is_string()
+                            ? json_value["value"].get<std::string>()
+                            : "";
+                    if (!value.empty()) {
+                        defines << "#define " << define_name << " " << value << "\n";
+                    }
+                }
+            }
+        }
+    }
+    return defines.str();
 }
 
 CheckResult CheckRunner::run_check(const Check& check) {
@@ -74,6 +183,12 @@ CheckResult CheckRunner::check_header(const Check& check) {
     std::string header_name = check.name();
     std::string code = "#include <" + header_name + ">\n";
 
+    // Resolve compile_defines and prepend to code
+    std::string defines_code = resolve_compile_defines(check);
+    if (!defines_code.empty()) {
+        code = defines_code + code;
+    }
+
     bool success = try_compile(code, check.language(), check.define());
     return CheckResult(check.define(), success ? "1" : "0", success);
 }
@@ -98,8 +213,14 @@ char )" + func_name +
 int main(void) {
     return )" + func_name +
                R"(();
-}
+    }
 )";
+    }
+
+    // Resolve compile_defines and prepend to code
+    std::string defines_code = resolve_compile_defines(check);
+    if (!defines_code.empty()) {
+        code = defines_code + code;
     }
 
     bool success = try_compile(code, check.language(), check.define());
@@ -161,6 +282,12 @@ int main(void) {
 )";
     }
 
+    // Resolve compile_defines and prepend to code
+    std::string defines_code = resolve_compile_defines(check);
+    if (!defines_code.empty()) {
+        code = defines_code + code;
+    }
+
     bool success = try_compile(code, check.language(), check.define());
     return CheckResult(check.define(), success ? "1" : "0", success);
 }
@@ -180,6 +307,12 @@ int main(void) {
     return 1;
 }
 )";
+    }
+
+    // Resolve compile_defines and prepend to code
+    std::string defines_code = resolve_compile_defines(check);
+    if (!defines_code.empty()) {
+        code = defines_code + code;
     }
 
     bool success = try_compile(code, check.language(), check.define());
@@ -207,6 +340,12 @@ CheckResult CheckRunner::check_compile(const Check& check) {
     } else {
         // Provide a default code if neither code nor file_path is provided
         code = "int main(void) { return 0; }";
+    }
+
+    // Resolve compile_defines and prepend to code
+    std::string defines_code = resolve_compile_defines(check);
+    if (!defines_code.empty()) {
+        code = defines_code + code;
     }
 
     bool success = try_compile(code, check.language());
@@ -247,9 +386,16 @@ CheckResult CheckRunner::check_link(const Check& check) {
         code = "int main(void) { return 0; }";
     }
 
+    // Resolve compile_defines and prepend to code
+    std::string defines_code = resolve_compile_defines(check);
+    if (!defines_code.empty()) {
+        code = defines_code + code;
+    }
+
     // Use try_compile_and_run approach: compile to object, then link
     // We don't need to run it, just verify it links
-    std::optional<int> run_result = try_compile_and_run(code, check.language(), check.define());
+    std::optional<int> run_result =
+        try_compile_and_run(code, check.language(), check.define());
     bool success = run_result.has_value();
 
     std::string value;
@@ -268,7 +414,9 @@ CheckResult CheckRunner::check_link(const Check& check) {
 CheckResult CheckRunner::check_define(const Check& check) {
     std::string value =
         check.define_value().has_value() ? *check.define_value() : "1";
-    return CheckResult(check.define(), value, true);
+    return CheckResult(check.define(), value, true,
+                       check_type_is_define(check.type()),
+                       check_type_is_subst(check.type()));
 }
 
 CheckResult CheckRunner::check_sizeof(const Check& check) {
@@ -347,10 +495,18 @@ CheckResult CheckRunner::check_decl(const Check& check) {
 
     std::string code = *check.code();
 
-    bool found = try_compile(code, check.language());
+    // Resolve compile_defines and prepend to code
+    std::string defines_code = resolve_compile_defines(check);
+    if (!defines_code.empty()) {
+        code = defines_code + code;
+    }
+
+    bool found = try_compile(code, check.language(), check.define());
     // Always mark as success=true because we always want to define the macro
     // The value (1 or 0) indicates whether the declaration was found
-    return CheckResult(check.define(), found ? "1" : "0", true);
+    return CheckResult(check.define(), found ? "1" : "0", true,
+                       check_type_is_define(check.type()),
+                       check_type_is_subst(check.type()));
 }
 
 CheckResult CheckRunner::check_member(const Check& check) {
@@ -360,6 +516,12 @@ CheckResult CheckRunner::check_member(const Check& check) {
     }
 
     std::string code = *check.code();
+
+    // Resolve compile_defines and prepend to code
+    std::string defines_code = resolve_compile_defines(check);
+    if (!defines_code.empty()) {
+        code = defines_code + code;
+    }
 
     bool success = try_compile(code, check.language(), check.define());
     return CheckResult(check.define(), success ? "1" : "0", success);

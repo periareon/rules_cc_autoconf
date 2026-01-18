@@ -44,6 +44,16 @@ std::string check_type_to_string(CheckType type) {
     }
 }
 
+bool check_type_is_define(CheckType type) {
+    // All CheckTypes are defines except kM4Define and kSubst
+    return type != CheckType::kM4Define && type != CheckType::kSubst;
+}
+
+bool check_type_is_subst(CheckType type) {
+    // Only kSubst is a subst
+    return type == CheckType::kSubst;
+}
+
 std::optional<Check> Check::from_json(const void* json_data) {
     const nlohmann::json& json = *static_cast<const nlohmann::json*>(json_data);
 
@@ -147,6 +157,18 @@ std::optional<Check> Check::from_json(const void* json_data) {
 
     if (json.contains("condition") && json["condition"].is_string()) {
         check.condition_ = json["condition"].get<std::string>();
+    }
+
+    if (json.contains("compile_defines") && json["compile_defines"].is_array()) {
+        std::vector<std::string> compile_defines_list;
+        for (const nlohmann::json& def : json["compile_defines"]) {
+            if (def.is_string()) {
+                compile_defines_list.push_back(def.get<std::string>());
+            }
+        }
+        if (!compile_defines_list.empty()) {
+            check.compile_defines_ = compile_defines_list;
+        }
     }
 
     return check;

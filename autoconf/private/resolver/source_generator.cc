@@ -64,8 +64,9 @@ std::string replace_undef(const std::string& content,
     return output;
 }
 
-SourceGenerator::SourceGenerator(const std::vector<CheckResult>& results)
-    : results_(results) {}
+SourceGenerator::SourceGenerator(const std::vector<CheckResult>& results,
+                                 Mode mode)
+    : results_(results), mode_(mode) {}
 
 void SourceGenerator::generate_config_header(
     const std::filesystem::path& output_path,
@@ -132,13 +133,33 @@ std::string SourceGenerator::process_template(
             is_suffixed_subst = true;
         }
 
+        // Filter by mode:
+        // - kDefines: only process !result.is_subst (normal defines)
+        // - kSubst: only process result.is_subst (substitution variables)
+        // - kAll: process everything
+        bool should_process = false;
+        if (mode_ == Mode::kDefines) {
+            should_process = !result.is_subst;
+        } else if (mode_ == Mode::kSubst) {
+            should_process = result.is_subst;
+        } else if (mode_ == Mode::kAll) {
+            should_process = true;
+        }
+
+        if (!should_process) {
+            // Drain this builtin from the set if it's a builtin (even if not processed)
+            builtins.erase(define_name);
+            continue;
+        }
+
         builtin_values[define_name] = result.value;
 
         // ALL check types do @VAR@ substitution when they have values
         // This matches autoconf behavior where all defined variables are
         // available for substitution in output files
         // EXCEPT m4_define type which computes but doesn't generate output
-        if (result.success && !result.value.empty() && result.type != "m4_define") {
+        // Note: We've already filtered by mode, so process all results here
+        if (result.success && !result.value.empty()) {
             std::regex definePattern("@" + define_name + "@");
             content = std::regex_replace(content, definePattern, result.value);
         }
@@ -146,7 +167,9 @@ std::string SourceGenerator::process_template(
         // Non-subst types (AC_DEFINE, AC_CHECK_*, etc.): Also replace #undef
         // AC_SUBST should NOT replace #undef statements in config.h
         // M4_DEFINE should also NOT replace #undef (compute-only)
-        if (result.type != "subst" && result.type != "m4_define" && !is_suffixed_subst) {
+        // Only process #undef replacement in kDefines or kAll mode
+        if ((mode_ == Mode::kDefines || mode_ == Mode::kAll) &&
+            !result.is_subst && result.is_define && !is_suffixed_subst) {
             if (result.success) {
                 std::string replacement_text = "#define " + define_name;
                 if (!result.value.empty()) {

@@ -198,18 +198,17 @@ bool CheckRunner::try_compile(const std::string& code,
 
     std::filesystem::create_directory(tmp_dir);
 
-    // Sanitize unique_id for use in filename
+    // Sanitize unique_id for use in filename and name source file after define
     std::string safe_id = sanitize_for_filename(unique_id);
-
-    // Write source file
-    std::filesystem::path source_file =
-        tmp_dir / (safe_id + get_file_extension(language));
+    std::string source_name = safe_id + get_file_extension(language);
+    std::filesystem::path source_file = tmp_dir / source_name;
     std::ofstream source(source_file);
     if (!source.is_open()) {
         DebugLogger::warn("Failed to create source file");
         std::filesystem::remove_all(tmp_dir);
         return false;
     }
+    // Code already has defines prepended by calling code via resolve_compile_defines()
     source << code;
     source.close();
 
@@ -400,18 +399,17 @@ std::optional<int> CheckRunner::try_compile_and_run(
 
     std::filesystem::create_directory(tmp_dir);
 
-    // Sanitize unique_id for use in filename
+    // Sanitize unique_id for use in filename and name source file after define
     std::string safe_id = sanitize_for_filename(unique_id);
-
-    // Write source file
-    std::filesystem::path source_file =
-        tmp_dir / (safe_id + get_file_extension(language));
+    std::string source_name = safe_id + get_file_extension(language);
+    std::filesystem::path source_file = tmp_dir / source_name;
     std::ofstream source(source_file);
     if (!source.is_open()) {
         DebugLogger::warn("Failed to create source file");
         std::filesystem::remove_all(tmp_dir);
         return std::nullopt;
     }
+    // Code already has defines prepended by calling code
     source << code;
     source.close();
 
@@ -531,18 +529,17 @@ bool CheckRunner::try_compile_and_link_with_lib(const std::string& code,
 
     std::filesystem::create_directory(tmp_dir);
 
-    // Sanitize unique_id for use in filename
+    // Sanitize unique_id for use in filename and name source file after define
     std::string safe_id = sanitize_for_filename(unique_id);
-
-    // Write source file
-    std::filesystem::path source_file =
-        tmp_dir / (safe_id + get_file_extension(language));
+    std::string source_name = safe_id + get_file_extension(language);
+    std::filesystem::path source_file = tmp_dir / source_name;
     std::ofstream source(source_file);
     if (!source.is_open()) {
         DebugLogger::warn("Failed to create source file");
         std::filesystem::remove_all(tmp_dir);
         return false;
     }
+    // Code already has defines prepended by calling code
     source << code;
     source.close();
 
