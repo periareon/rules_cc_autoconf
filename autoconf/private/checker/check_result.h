@@ -3,6 +3,8 @@
 #include <string>
 #include <optional>
 
+#include "autoconf/private/checker/check.h"
+
 namespace rules_cc_autoconf {
 
 /**
@@ -27,6 +29,9 @@ struct CheckResult {
     /** Whether this is a subst (true only for kSubst) */
     bool is_subst = false;
 
+    /** The type of check that produced this result */
+    CheckType type = CheckType::kDefine;
+
     /**
      * @brief Construct a CheckResult.
      * @param define The preprocessor define name.
@@ -34,10 +39,13 @@ struct CheckResult {
      * @param success Whether the check succeeded.
      * @param is_define Whether this is a define (default: true).
      * @param is_subst Whether this is a subst (default: false).
+     * @param type The type of check that produced this result (default: kDefine).
      */
     CheckResult(const std::string& define, const std::string& value,
-                bool success, bool is_define = true, bool is_subst = false)
-        : define(define), value(value), success(success), is_define(is_define), is_subst(is_subst) {}
+                bool success, bool is_define = true, bool is_subst = false,
+                CheckType type = CheckType::kDefine)
+        : define(define), value(value), success(success), is_define(is_define), is_subst(is_subst),
+          type(type) {}
 
 
     /**

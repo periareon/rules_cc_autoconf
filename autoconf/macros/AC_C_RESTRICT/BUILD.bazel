@@ -15,7 +15,6 @@ int main(void) { return 0; }""",
         # Define restrict to empty string if supported
         macros.AC_DEFINE(
             "restrict",
-            "",
             condition = "_gl_cv_c_restrict",
             if_true = "",
         ),

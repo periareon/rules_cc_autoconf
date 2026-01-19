@@ -22,11 +22,21 @@ autoconf(
         macros.AC_CHECK_DECL(
             "stdout",
             headers = ["stdio.h"],
-            value = "/**/",
         ),
         macros.AC_CHECK_DECL(
             "nonexistent_symbol",
             headers = ["stdio.h"],
+        ),
+        # Test AC_CHECK_DECL for non-existent function - should create "/* #undef HAVE_DECL_NONEXISTENT_FUNCTION */"
+        macros.AC_CHECK_DECL(
+            "nonexistent_function",
+            headers = ["stdio.h"],
+        ),
+        macros.AC_CHECK_DECL(
+            "NULL",
+            headers = ["stddef.h"],
+            define = "HAVE_EMPTY",
+            value = "",
         ),
     ],
     deps = [":package"],

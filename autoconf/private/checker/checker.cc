@@ -296,17 +296,43 @@ int Checker::run_checks_by_define(
                             value = check.define_value_fail().value_or("");
                         }
 
-                        // If value is empty, don't define (for AC_DEFINE with
-                        // if_false=None)
-                        if (!value.empty()) {
+                        // If value is empty, check if it should create a define
+                        // For AC_DEFINE (kDefine type) with empty value (if_true="" or if_false=""), we want "#define NAME " (empty value)
+                        // For AC_DEFINE with if_false=None, we don't want to define it
+                        // Only kDefine type creates defines with empty values
+                        bool should_create_define = false;
+                        if (value.empty()) {
+                            // If we're using if_true and it's empty, or if we're using if_false and it's empty,
+                            // that means the user explicitly set an empty value, so we should create a define
+                            // The key is: if define_value or define_value_fail is set to empty string (has_value() && empty()),
+                            // that means the user explicitly wanted an empty value, not that it wasn't provided
+                            if (cond_true) {
+                                // Using if_true branch - check if if_true was explicitly set to empty string
+                                if (check.define_value().has_value() && check.define_value()->empty()) {
+                                    // if_true was explicitly set to empty string
+                                    should_create_define = (check.type() == CheckType::kDefine);
+                                }
+                            } else {
+                                // Using if_false branch - check if if_false was explicitly set to empty string
+                                if (check.define_value_fail().has_value() && check.define_value_fail()->empty()) {
+                                    // if_false was explicitly set to empty string
+                                    should_create_define = (check.type() == CheckType::kDefine);
+                                }
+                            }
+                            // Otherwise, if_false was not provided (None), so don't create a define
+                        }
+                        
+                        if (!value.empty() || should_create_define) {
                             result = CheckResult(check.define(), value, true,
                                                  check_type_is_define(check.type()),
-                                                 check_type_is_subst(check.type()));
+                                                 check_type_is_subst(check.type()),
+                                                 check.type());
                         } else {
-                            // Mark as not successful so it won't be output
+                            // Mark as not successful so it won't be output (if_false=None case)
                             result = CheckResult(check.define(), "", false,
                                                  check_type_is_define(check.type()),
-                                                 check_type_is_subst(check.type()));
+                                                 check_type_is_subst(check.type()),
+                                                 check.type());
                         }
                     } else {
                         DebugLogger::warn("Conditional check '" + define +
@@ -314,7 +340,8 @@ int Checker::run_checks_by_define(
                                           "' which was not found");
                         result = CheckResult(check.define(), "", false,
                                              check_type_is_define(check.type()),
-                                             check_type_is_subst(check.type()));
+                                             check_type_is_subst(check.type()),
+                                             check.type());
                     }
                 } else {
                     result = runner.run_check(check);
@@ -326,6 +353,7 @@ int Checker::run_checks_by_define(
                 {"success", result.success},
                 {"is_define", result.is_define},
                 {"is_subst", result.is_subst},
+                {"type", check_type_to_string(result.type)},
             };
         }
 

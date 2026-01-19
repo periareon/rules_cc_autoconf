@@ -32,3 +32,6 @@
 
 /* Have foo bar */
 #define HAVE_FOO_BAR 1
+
+/* Have empty value */
+#define EMPTY_VALUE /**/

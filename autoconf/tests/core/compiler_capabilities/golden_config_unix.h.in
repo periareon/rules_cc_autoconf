@@ -38,4 +38,4 @@
 #define PACKAGE_VERSION "1.0.0"
 
 /* Define to 1 if the C compiler doesn't accept -c and -o together. */
-#define NO_MINUS_C_MINUS_O
+/* #undef NO_MINUS_C_MINUS_O */

@@ -81,7 +81,48 @@ std::vector<CheckResult> load_results_from_file(
             is_subst = subst_it->get<bool>();
         }
 
-        loaded_results.emplace_back(define, value, success, is_define, is_subst);
+        // Check for type (defaults to kDefine for backward compatibility)
+        CheckType type = CheckType::kDefine;
+        nlohmann::json::const_iterator type_it = val.find("type");
+        if (type_it != val.end() && type_it->is_string()) {
+            std::string type_str = type_it->get<std::string>();
+            // Parse type string to CheckType enum (same logic as check_result.cc)
+            if (type_str == "header") {
+                type = CheckType::kHeader;
+            } else if (type_str == "function") {
+                type = CheckType::kFunction;
+            } else if (type_str == "lib") {
+                type = CheckType::kLib;
+            } else if (type_str == "symbol") {
+                type = CheckType::kSymbol;
+            } else if (type_str == "type") {
+                type = CheckType::kType;
+            } else if (type_str == "compile") {
+                type = CheckType::kCompile;
+            } else if (type_str == "link") {
+                type = CheckType::kLink;
+            } else if (type_str == "define") {
+                type = CheckType::kDefine;
+            } else if (type_str == "subst") {
+                type = CheckType::kSubst;
+            } else if (type_str == "m4_define") {
+                type = CheckType::kM4Define;
+            } else if (type_str == "sizeof") {
+                type = CheckType::kSizeof;
+            } else if (type_str == "alignof") {
+                type = CheckType::kAlignof;
+            } else if (type_str == "compute_int") {
+                type = CheckType::kComputeInt;
+            } else if (type_str == "endian") {
+                type = CheckType::kEndian;
+            } else if (type_str == "decl") {
+                type = CheckType::kDecl;
+            } else if (type_str == "member") {
+                type = CheckType::kMember;
+            }
+        }
+
+        loaded_results.emplace_back(define, value, success, is_define, is_subst, type);
     }
 
     return loaded_results;

@@ -190,7 +190,10 @@ CheckResult CheckRunner::check_header(const Check& check) {
     }
 
     bool success = try_compile(code, check.language(), check.define());
-    return CheckResult(check.define(), success ? "1" : "0", success);
+    return CheckResult(check.define(), success ? "1" : "0", success,
+                       check_type_is_define(check.type()),
+                       check_type_is_subst(check.type()),
+                       check.type());
 }
 
 CheckResult CheckRunner::check_function(const Check& check) {
@@ -224,7 +227,10 @@ int main(void) {
     }
 
     bool success = try_compile(code, check.language(), check.define());
-    return CheckResult(check.define(), success ? "1" : "0", success);
+    return CheckResult(check.define(), success ? "1" : "0", success,
+                       check_type_is_define(check.type()),
+                       check_type_is_subst(check.type()),
+                       check.type());
 }
 
 CheckResult CheckRunner::check_lib(const Check& check) {
@@ -289,7 +295,10 @@ int main(void) {
     }
 
     bool success = try_compile(code, check.language(), check.define());
-    return CheckResult(check.define(), success ? "1" : "0", success);
+    return CheckResult(check.define(), success ? "1" : "0", success,
+                       check_type_is_define(check.type()),
+                       check_type_is_subst(check.type()),
+                       check.type());
 }
 
 CheckResult CheckRunner::check_type_check(const Check& check) {
@@ -316,7 +325,10 @@ int main(void) {
     }
 
     bool success = try_compile(code, check.language(), check.define());
-    return CheckResult(check.define(), success ? "1" : "0", success);
+    return CheckResult(check.define(), success ? "1" : "0", success,
+                       check_type_is_define(check.type()),
+                       check_type_is_subst(check.type()),
+                       check.type());
 }
 
 CheckResult CheckRunner::check_compile(const Check& check) {
@@ -333,7 +345,10 @@ CheckResult CheckRunner::check_compile(const Check& check) {
             file.close();
         } else {
             DebugLogger::warn("Could not open file: " + file_path);
-            return CheckResult(check.define(), "0", false);
+            return CheckResult(check.define(), "0", false,
+                           check_type_is_define(check.type()),
+                           check_type_is_subst(check.type()),
+                           check.type());
         }
     } else if (check.code().has_value()) {
         code = *check.code();
@@ -351,16 +366,34 @@ CheckResult CheckRunner::check_compile(const Check& check) {
     bool success = try_compile(code, check.language());
 
     std::string value;
+    bool should_output = true;
     if (check.define_value().has_value()) {
         value = success ? *check.define_value()
                         : (check.define_value_fail().has_value()
                                ? *check.define_value_fail()
                                : "0");
     } else {
-        value = success ? "1" : "0";
+        // define_value is not set
+        if (success) {
+            // Check succeeded - if define_value_fail is set, it means we only want to define on failure
+            // So don't output when success is true
+            if (check.define_value_fail().has_value()) {
+                should_output = false;
+                value = "";
+            } else {
+                // Neither define_value nor define_value_fail is set - use default "1"
+                value = "1";
+            }
+        } else {
+            // Check failed - use define_value_fail if set, otherwise "0"
+            value = check.define_value_fail().has_value() ? *check.define_value_fail() : "0";
+        }
     }
 
-    return CheckResult(check.define(), value, success);
+    return CheckResult(check.define(), value, should_output ? success : false,
+                       check_type_is_define(check.type()),
+                       check_type_is_subst(check.type()),
+                       check.type());
 }
 
 CheckResult CheckRunner::check_link(const Check& check) {
@@ -377,7 +410,10 @@ CheckResult CheckRunner::check_link(const Check& check) {
             file.close();
         } else {
             DebugLogger::warn("Could not open file: " + file_path);
-            return CheckResult(check.define(), "0", false);
+            return CheckResult(check.define(), "0", false,
+                           check_type_is_define(check.type()),
+                           check_type_is_subst(check.type()),
+                           check.type());
         }
     } else if (check.code().has_value()) {
         code = *check.code();
@@ -408,7 +444,10 @@ CheckResult CheckRunner::check_link(const Check& check) {
         value = success ? "1" : "0";
     }
 
-    return CheckResult(check.define(), value, success);
+    return CheckResult(check.define(), value, success,
+                       check_type_is_define(check.type()),
+                       check_type_is_subst(check.type()),
+                       check.type());
 }
 
 CheckResult CheckRunner::check_define(const Check& check) {
@@ -416,7 +455,8 @@ CheckResult CheckRunner::check_define(const Check& check) {
         check.define_value().has_value() ? *check.define_value() : "1";
     return CheckResult(check.define(), value, true,
                        check_type_is_define(check.type()),
-                       check_type_is_subst(check.type()));
+                       check_type_is_subst(check.type()),
+                       check.type());
 }
 
 CheckResult CheckRunner::check_sizeof(const Check& check) {
@@ -430,9 +470,15 @@ CheckResult CheckRunner::check_sizeof(const Check& check) {
     std::optional<int> size =
         try_compile_and_run(code, check.language(), check.define());
     if (size.has_value()) {
-        return CheckResult(check.define(), std::to_string(*size), true);
+        return CheckResult(check.define(), std::to_string(*size), true,
+                           check_type_is_define(check.type()),
+                           check_type_is_subst(check.type()),
+                           check.type());
     } else {
-        return CheckResult(check.define(), "0", false);
+        return CheckResult(check.define(), "0", false,
+                           check_type_is_define(check.type()),
+                           check_type_is_subst(check.type()),
+                           check.type());
     }
 }
 
@@ -447,16 +493,25 @@ CheckResult CheckRunner::check_alignof(const Check& check) {
     std::optional<int> alignment =
         try_compile_and_run(code, check.language(), check.define());
     if (alignment.has_value()) {
-        return CheckResult(check.define(), std::to_string(*alignment), true);
+        return CheckResult(check.define(), std::to_string(*alignment), true,
+                           check_type_is_define(check.type()),
+                           check_type_is_subst(check.type()),
+                           check.type());
     } else {
-        return CheckResult(check.define(), "0", false);
+        return CheckResult(check.define(), "0", false,
+                           check_type_is_define(check.type()),
+                           check_type_is_subst(check.type()),
+                           check.type());
     }
 }
 
 CheckResult CheckRunner::check_compute_int(const Check& check) {
     if (!check.code().has_value()) {
         DebugLogger::warn("compute_int check missing code");
-        return CheckResult(check.define(), "0", false);
+        return CheckResult(check.define(), "0", false,
+                           check_type_is_define(check.type()),
+                           check_type_is_subst(check.type()),
+                           check.type());
     }
 
     std::string code = *check.code();
@@ -464,16 +519,25 @@ CheckResult CheckRunner::check_compute_int(const Check& check) {
     std::optional<int> value =
         try_compile_and_run(code, check.language(), check.define());
     if (value.has_value()) {
-        return CheckResult(check.define(), std::to_string(*value), true);
+        return CheckResult(check.define(), std::to_string(*value), true,
+                           check_type_is_define(check.type()),
+                           check_type_is_subst(check.type()),
+                           check.type());
     } else {
-        return CheckResult(check.define(), "0", false);
+        return CheckResult(check.define(), "0", false,
+                           check_type_is_define(check.type()),
+                           check_type_is_subst(check.type()),
+                           check.type());
     }
 }
 
 CheckResult CheckRunner::check_endian(const Check& check) {
     if (!check.code().has_value()) {
         DebugLogger::warn("endian check missing code");
-        return CheckResult(check.define(), "0", false);
+        return CheckResult(check.define(), "0", false,
+                           check_type_is_define(check.type()),
+                           check_type_is_subst(check.type()),
+                           check.type());
     }
 
     std::string code = *check.code();
@@ -481,9 +545,15 @@ CheckResult CheckRunner::check_endian(const Check& check) {
     std::optional<int> value =
         try_compile_and_run(code, check.language(), check.define());
     if (value.has_value()) {
-        return CheckResult(check.define(), std::to_string(*value), true);
+        return CheckResult(check.define(), std::to_string(*value), true,
+                           check_type_is_define(check.type()),
+                           check_type_is_subst(check.type()),
+                           check.type());
     } else {
-        return CheckResult(check.define(), "0", false);
+        return CheckResult(check.define(), "0", false,
+                           check_type_is_define(check.type()),
+                           check_type_is_subst(check.type()),
+                           check.type());
     }
 }
 
@@ -502,11 +572,24 @@ CheckResult CheckRunner::check_decl(const Check& check) {
     }
 
     bool found = try_compile(code, check.language(), check.define());
+
+    std::string value;
+    if (check.define_value().has_value()) {
+        value = found ? *check.define_value()
+                      : (check.define_value_fail().has_value()
+                             ? *check.define_value_fail()
+                             : "");
+    } else {
+        value = found ? "1" : "";
+    }
+
     // Always mark as success=true because we always want to define the macro
-    // The value (1 or 0) indicates whether the declaration was found
-    return CheckResult(check.define(), found ? "1" : "0", true,
+    // The value (1 or empty) indicates whether the declaration was found
+    // Empty value means undefined (/* #undef */), non-empty means defined
+    return CheckResult(check.define(), value, true,
                        check_type_is_define(check.type()),
-                       check_type_is_subst(check.type()));
+                       check_type_is_subst(check.type()),
+                       check.type());
 }
 
 CheckResult CheckRunner::check_member(const Check& check) {
@@ -524,7 +607,10 @@ CheckResult CheckRunner::check_member(const Check& check) {
     }
 
     bool success = try_compile(code, check.language(), check.define());
-    return CheckResult(check.define(), success ? "1" : "0", success);
+    return CheckResult(check.define(), success ? "1" : "0", success,
+                       check_type_is_define(check.type()),
+                       check_type_is_subst(check.type()),
+                       check.type());
 }
 
 }  // namespace rules_cc_autoconf

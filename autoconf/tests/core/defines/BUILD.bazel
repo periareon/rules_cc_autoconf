@@ -20,6 +20,8 @@ autoconf(
         macros.AC_DEFINE("PROJECT_YEAR", "2025"),
         macros.AC_DEFINE("HAVE_FOO", "1"),
         macros.AC_DEFINE("HAVE_FOO_BAR", "1"),
+        # Test AC_DEFINE with empty value - should create "#define EMPTY_VALUE /**/" (matching GNU autoconf)
+        macros.AC_DEFINE("EMPTY_VALUE", ""),
     ],
     deps = [":package"],
 )
@@ -32,23 +34,9 @@ autoconf_hdr(
 )
 
 diff_test(
-    name = "diff_test_unix",
+    name = "diff_test",
     file1 = "golden_config.h.in",
     file2 = ":config.h",
-    target_compatible_with = select({
-        "@platforms//os:windows": ["@platforms//:incompatible"],
-        "//conditions:default": [],
-    }),
-)
-
-diff_test(
-    name = "diff_test_windows",
-    file1 = "golden_config_windows.h.in",
-    file2 = ":config.h",
-    target_compatible_with = select({
-        "@platforms//os:windows": [],
-        "//conditions:default": ["@platforms//:incompatible"],
-    }),
 )
 
 cc_test(

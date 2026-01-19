@@ -32,3 +32,6 @@
 
 /* Have foo bar */
 #undef HAVE_FOO_BAR
+
+/* Have empty value */
+#undef EMPTY_VALUE

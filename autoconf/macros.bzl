@@ -862,7 +862,7 @@ def _ac_check_decl(
         "code": code,
         "define": define,
         "define_value": "1",
-        "define_value_fail": "",
+        "define_value_fail": "0",  # AC_CHECK_DECL sets to 0 when declaration is not found
         "language": language,
         "name": symbol,
         "type": "decl",
@@ -1221,8 +1221,8 @@ def _ac_prog_cc_c_o(
     check = {
         "code": _AC_SIMPLE_MAIN_TEMPLATE,
         "define": define,
-        "define_value": "",  # Value if flags work (no define)
-        "define_value_fail": "1",  # Value if flags don't work
+        "define_value": None,  # If flags work, don't define NO_MINUS_C_MINUS_O
+        "define_value_fail": "",  # If flags don't work, define NO_MINUS_C_MINUS_O with empty value
         "language": language,
         "name": "cc_c_o",
         "type": "compile",
@@ -1430,6 +1430,7 @@ def _ac_define(
     AC_DEFINE([CUSTOM_VALUE], [42])
     AC_DEFINE([ENABLE_FEATURE], [1])
     AC_DEFINE([PROJECT_NAME], ["MyProject"])
+    AC_DEFINE([EMPTY_VALUE], [])
     ```
 
     Conditional example (m4):
@@ -1491,10 +1492,10 @@ def _ac_define(
     if requires:
         check["requires"] = requires
 
-    if value and condition:
+    if value != None and condition:
         fail("`value` and `condition` are mutually exclusive. Please update `{}`".format(define))
 
-    if value:
+    if value != None:
         # Simple - always use value
         check["define_value"] = value
         check["define_value_fail"] = value
@@ -1686,10 +1687,10 @@ def _m4_define(
     if requires:
         check["requires"] = requires
 
-    if value and condition:
+    if value != None and condition:
         fail("`value` and `condition` are mutually exclusive. Please update `{}`".format(define))
 
-    if value:
+    if value != None:
         # Simple - always use value
         check["define_value"] = value
         check["define_value_fail"] = value

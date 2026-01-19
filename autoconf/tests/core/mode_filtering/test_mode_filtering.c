@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "config.h"
+#include "autoconf/tests/core/mode_filtering/config.h"
 
 int main(void) {
     // Test that defines work
