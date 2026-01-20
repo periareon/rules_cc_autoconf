@@ -3,47 +3,55 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# gl_STACK_TRACE_EARLY - lines 8-95
+# gl_STACK_TRACE - lines 97-100
 autoconf(
     name = "stack-trace",
     checks = [
-        # Check for libbacktrace header (Ian Lance Taylor's library)
-        # This produces source file names and line numbers if binary has debug info
-        macros.AC_CHECK_HEADER(
-            "backtrace.h",
-            define = "_gl_have_backtrace_h",
-        ),
-
-        # Check if libbacktrace is available and usable
-        macros.AC_TRY_COMPILE(
-            code = """\
-#include <backtrace.h>
-
-int main(void) {
-    struct backtrace_state *state =
-        backtrace_create_state(NULL, 0, NULL, NULL);
-    (void)state;
-    return 0;
-}
-""",
+        # AC_CACHE_CHECK([for libbacktrace], [gl_cv_lib_backtrace]) - lines 30-42
+        # Check if libbacktrace library is available
+        # AC_LINK_IFELSE with -lbacktrace
+        macros.AC_CHECK_LIB(
+            "backtrace",
+            "backtrace_create_state",
             define = "_gl_cv_lib_backtrace",
-            language = "c",
         ),
-
-        # Define HAVE_LIBBACKTRACE if libbacktrace is available
+        
+        # if test $gl_cv_lib_backtrace = yes; then
+        #   AC_DEFINE([HAVE_LIBBACKTRACE], [1]) - lines 43-45
+        #   CAN_PRINT_STACK_TRACE=1 - line 46
+        # fi
         macros.AC_DEFINE(
             "HAVE_LIBBACKTRACE",
             condition = "_gl_cv_lib_backtrace",
             if_true = "1",
         ),
-
-        # CAN_PRINT_STACK_TRACE: Set to 1 if stack trace printing is possible
-        # This is true if we have libbacktrace OR execinfo support
-        # On modern systems (macOS, Linux glibc), execinfo is available
-        macros.AC_DEFINE("CAN_PRINT_STACK_TRACE", "1"),
-    ],
+        
+        # else - lines 47-93
+        # On certain platforms (darwin*, freebsd*, etc.), execinfo is available
+        # CAN_PRINT_STACK_TRACE=1 - line 52 (for darwin*)
+        # Based on golden files, CAN_PRINT_STACK_TRACE=1 on macOS (execinfo support)
+        # CAN_PRINT_STACK_TRACE is a substitution variable, not a define in config.h
+    ] + select({
+        "@platforms//os:macos": [
+            # macOS has execinfo support, so CAN_PRINT_STACK_TRACE=1
+            macros.AC_SUBST("CAN_PRINT_STACK_TRACE", "1"),
+        ],
+        "//conditions:default": [
+            # On other platforms, set CAN_PRINT_STACK_TRACE=1 if libbacktrace is found
+            macros.AC_SUBST(
+                "CAN_PRINT_STACK_TRACE",
+                condition = "_gl_cv_lib_backtrace",
+                if_true = "1",
+                if_false = "0",
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/inline",  # AC_REQUIRE([AC_C_INLINE])
-        "//gnulib/m4/stdlib_h",  # AC_REQUIRE([gl_STDLIB_H_DEFAULTS])
+        "//gnulib/m4/inline",  # AC_REQUIRE([AC_C_INLINE]) - from gl_STACK_TRACE
+        "//gnulib/m4/stdlib_h",  # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - from gl_STACK_TRACE_EARLY
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST]) - from gl_STACK_TRACE_EARLY
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

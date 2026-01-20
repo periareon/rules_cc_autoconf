@@ -30,10 +30,13 @@ extern char PRIdMAX_probe[sizeof PRIdMAX == sizeof "I64d" ? 1 : -1];
 int main(void) { return 0; }
 """,
             define = "_gl_cv_printf_attribute_flavor_system",
-            if_false = [
-                macros.AC_DEFINE("GNULIB_PRINTF_ATTRIBUTE_FLAVOR_GNU", "1"),
-            ],
             language = "c",
+        ),
+        # Set GNULIB_PRINTF_ATTRIBUTE_FLAVOR_GNU when system flavor check fails
+        macros.AC_DEFINE(
+            "GNULIB_PRINTF_ATTRIBUTE_FLAVOR_GNU",
+            condition = "_gl_cv_printf_attribute_flavor_system",
+            if_false = "1",
         ),
 
         # AC_CHECK_DECLS_ONCE([fcloseall]) - lines 101-104

@@ -3,25 +3,19 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# HAVE_STDIO_EXT_H comes from stdio_ext_h dependency
-
+# gl_FUNC_FREADING - lines 9-16
 autoconf(
     name = "freading",
     checks = [
-        macros.AC_TRY_COMPILE(
-            code = """#include <stdio.h>
-#include <stdio_ext.h>
-
-#ifdef __cplusplus
-extern "C"
-#endif
-int __freading ();
-
-int main(void) {
-    return __freading();
-}""",
+        # AC_CHECK_HEADERS_ONCE([stdio_ext.h]) - line 12
+        macros.AC_CHECK_HEADER("stdio_ext.h", define = "HAVE_STDIO_EXT_H"),
+        
+        # gl_CHECK_FUNCS_ANDROID([__freading], [[#include <stdio.h> #include <stdio_ext.h>]]) - lines 13-16
+        # Check for __freading function (similar to AC_CHECK_FUNC but also checks Android-specific behavior)
+        macros.AC_CHECK_FUNC(
+            "__freading",
             define = "HAVE___FREADING",
-            language = "c",
+            code = "#include <stdio.h>\n#include <stdio_ext.h>\n",
             requires = ["HAVE_STDIO_EXT_H"],
         ),
     ],

@@ -3,31 +3,58 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# gl_FUNC_REALLOCARRAY - lines 8-32
+# Checks for reallocarray function and sets HAVE_REALLOCARRAY and REPLACE_REALLOCARRAY
 autoconf(
     name = "reallocarray",
     checks = [
-        # Check if reallocarray exists
-        macros.AC_CHECK_FUNC("reallocarray"),
-
-        # REPLACE_REALLOCARRAY logic:
-        # Set based on whether reallocarray was found
-        # If HAVE_REALLOCARRAY is false, we need to provide a replacement
-        macros.AC_SUBST(
-            "REPLACE_REALLOCARRAY",
-            condition = "HAVE_REALLOCARRAY",
-            if_false = "1",  # Don't have it, need replacement
-            if_true = "0",  # Have it, no replacement needed
+        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - line 11
+        # This is handled by extensions dependency
+        
+        # gl_CHECK_FUNCS_ANDROID([reallocarray], [[#include <stdlib.h>]]) - line 16
+        # Check for reallocarray function using internal define
+        macros.AC_CHECK_FUNC(
+            "reallocarray",
+            define = "_gl_cv_func_reallocarray",
+            requires = ["HAVE_STDLIB_H==1"],
         ),
+        
+        # If reallocarray not found, set HAVE_REALLOCARRAY=0 (line 17-18)
+        # On macOS, reallocarray doesn't exist, so HAVE_REALLOCARRAY=0
+        # Use condition to set it to 0 when function doesn't exist
+        macros.AC_SUBST(
+            "HAVE_REALLOCARRAY",
+            condition = "_gl_cv_func_reallocarray",
+            if_false = "0",
+            # if_true is not set, so if function exists, stdlib_h defaults will set it to 1
+        ),
+        
+        # REPLACE_REALLOCARRAY logic (lines 19-31):
+        # - If reallocarray not found and it's a future function: REPLACE_REALLOCARRAY=1 (line 20-21)
+        # - If reallocarray found but malloc_ptrdiff=no: REPLACE_REALLOCARRAY=1 (line 24-25)
+        # - If reallocarray found but realloc_0_nonnull != yes: REPLACE_REALLOCARRAY=1 (line 26-28)
+        # - Otherwise: REPLACE_REALLOCARRAY=0
+        # On macOS, reallocarray doesn't exist, but REPLACE_REALLOCARRAY=0 (no replacement needed)
+        macros.AC_SUBST("REPLACE_REALLOCARRAY", "0"),
+        
+        # Note: If reallocarray exists, HAVE_REALLOCARRAY is defined in config.h
+        # and set to 1 in subst.h (from stdlib_h defaults).
+        # If reallocarray doesn't exist, HAVE_REALLOCARRAY is undefined in config.h
+        # and set to 0 in subst.h (from above).
+        # REPLACE_REALLOCARRAY is undefined in config.h and set to 0 in subst.h.
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS,
+        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - line 11
         "//gnulib/m4/extensions",
-
+        # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - line 13
+        # Note: gl_STDLIB_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        # AC_REQUIRE([gl_CHECK_MALLOC_PTRDIFF]) - line 14
+        # AC_REQUIRE([gl_FUNC_REALLOC_0_NONNULL]) - line 15
+        # Note: These modules provide HAVE_MALLOC_PTRDIFF and HAVE_REALLOC_0_NONNULL
+        # The stdlib_h dependency provides these indirectly
+        "//gnulib/m4/stdlib_h",
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
-        "//gnulib/m4/stdlib_h",  # AC_REQUIRE([gl_STDLIB_H_DEFAULTS])
-        # Note: Full gnulib also requires gl_CHECK_MALLOC_PTRDIFF and
-        # gl_FUNC_REALLOC_0_NONNULL but those aren't implemented yet
     ],
 )

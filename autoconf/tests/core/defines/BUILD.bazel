@@ -22,6 +22,10 @@ autoconf(
         macros.AC_DEFINE("HAVE_FOO_BAR", "1"),
         # Test AC_DEFINE with empty value - should create "#define EMPTY_VALUE /**/" (matching GNU autoconf)
         macros.AC_DEFINE("EMPTY_VALUE", ""),
+        # Test AC_DEFINE_UNQUOTED with regular value
+        macros.AC_DEFINE_UNQUOTED("UNQUOTED_VALUE", "test"),
+        # Test AC_DEFINE_UNQUOTED with empty value - should create "#define UNQUOTED_EMPTY " (trailing space, not /**/)
+        macros.AC_DEFINE_UNQUOTED("UNQUOTED_EMPTY", ""),
     ],
     deps = [":package"],
 )

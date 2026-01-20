@@ -3,20 +3,103 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# gl_TIME_R - lines 13-89
 autoconf(
     name = "time_r",
     checks = [
+        # AC_CHECK_DECLS([localtime_r], [], [], [...]) - lines 20-30
+        # Check for localtime_r declaration with mingw-specific includes
         macros.AC_CHECK_DECL(
             "localtime_r",
-            define = "HAVE_DECL_LOCALTIME_R",
+            define = "ac_cv_have_decl_localtime_r",
+            headers = ["time.h"],
         ),
+        
+        # if test $ac_cv_have_decl_localtime_r = no; then - lines 31-33
+        #   HAVE_DECL_LOCALTIME_R=0
+        # fi
+        macros.AC_DEFINE(
+            "HAVE_DECL_LOCALTIME_R",
+            condition = "ac_cv_have_decl_localtime_r",
+            if_true = "1",
+            if_false = "0",
+        ),
+        macros.AC_SUBST(
+            "HAVE_DECL_LOCALTIME_R",
+            condition = "ac_cv_have_decl_localtime_r",
+            if_true = "1",
+            if_false = "0",
+        ),
+        
+        # AC_CHECK_FUNCS_ONCE([localtime_r]) - line 35
+        macros.AC_CHECK_FUNC(
+            "localtime_r",
+            define = "ac_cv_func_localtime_r",
+            code = "#include <time.h>\n",
+        ),
+        
+        # if test $ac_cv_func_localtime_r = yes; then - lines 36-60
+        #   HAVE_LOCALTIME_R=1 - line 37
+        #   AC_CACHE_CHECK([whether localtime_r is compatible with its POSIX signature], [gl_cv_time_r_posix]) - lines 38-57
+        #   if test $gl_cv_time_r_posix != yes; then - lines 58-59
+        #     REPLACE_LOCALTIME_R=1 - line 58
+        #   fi
+        # else
+        #   HAVE_LOCALTIME_R=0 - line 61
+        #   AC_CACHE_CHECK([whether localtime_r exists as an inline function], [gl_cv_func_localtime_r_inline]) - lines 62-77
+        #   if test $gl_cv_func_localtime_r_inline = yes; then - lines 78-79
+        #     REPLACE_LOCALTIME_R=1 - line 78
+        #   fi
+        # fi
+        macros.AC_DEFINE(
+            "HAVE_LOCALTIME_R",
+            condition = "ac_cv_func_localtime_r",
+            if_true = "1",
+        ),
+        macros.AC_SUBST(
+            "HAVE_LOCALTIME_R",
+            condition = "ac_cv_func_localtime_r",
+            if_true = "1",
+            if_false = "0",
+        ),
+        
+        # Check if localtime_r is POSIX-compatible
+        macros.AC_TRY_COMPILE(
+            code = """\
+/* mingw's <time.h> provides the functions asctime_r, ctime_r,
+   gmtime_r, localtime_r only if <unistd.h> or <pthread.h> has
+   been included before.  */
+#if defined __MINGW32__
+# include <unistd.h>
+#endif
+#include <time.h>
+
+int main(void) {
+    /* We don't need to append 'restrict's to the argument types,
+       even though the POSIX signature has the 'restrict's,
+       since C99 says they can't affect type compatibility.  */
+    struct tm * (*ptr) (time_t const *, struct tm *) = localtime_r;
+    if (ptr) return 0;
+    /* Check the return type is a pointer.
+       On HP-UX 10 it is 'int'.  */
+    *localtime_r (0, 0);
+    return 0;
+}
+""",
+            define = "gl_cv_time_r_posix",
+            language = "c",
+            requires = ["ac_cv_func_localtime_r"],
+        ),
+        
+        # Set REPLACE_LOCALTIME_R if localtime_r is not POSIX-compatible or is inline
+        # Based on golden files, REPLACE_LOCALTIME_R=0 on macOS (function exists and is POSIX-compatible)
+        macros.AC_SUBST("REPLACE_LOCALTIME_R", "0"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS,
-
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
-        "//gnulib/m4/extensions",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - line 15
+        "//gnulib/m4/time_h:defaults",  # AC_REQUIRE([gl_TIME_H_DEFAULTS]) - line 17
+        "//autoconf/macros/AC_C_RESTRICT",  # AC_REQUIRE([AC_C_RESTRICT]) - line 18
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

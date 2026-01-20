@@ -35,3 +35,9 @@
 
 /* Have empty value */
 #undef EMPTY_VALUE
+
+/* Unquoted value */
+#undef UNQUOTED_VALUE
+
+/* Unquoted empty value */
+#undef UNQUOTED_EMPTY

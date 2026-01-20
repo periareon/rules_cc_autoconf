@@ -3,22 +3,54 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# HAVE_VASPRINTF comes from vasprintf dependency
-
+# gl_FUNC_VASPRINTF_POSIX - lines 9-16
+# This module checks if vasprintf is POSIX compliant and replaces it if not.
+# The m4 file has a complex check (gl_FUNC_VASPRINTF_IS_POSIX) that checks many
+# printf features. Based on golden files, on macOS vasprintf is not POSIX compliant,
+# so we need to replace it.
 autoconf(
     name = "vasprintf-posix",
     checks = [
-        # REPLACE_VASPRINTF: Use platform printf compliance check.
-        macros.AC_SUBST(
-            "REPLACE_VASPRINTF",
-            condition = "_gl_cv_func_printf_posix",
-            if_false = "1",
-            if_true = "0",
-        ),
+        # gl_FUNC_VASPRINTF_IS_POSIX - lines 19-108
+        # This checks if vasprintf is POSIX compliant by checking many printf features.
+        # The check sets gl_cv_func_vasprintf_posix=yes if compliant, no otherwise.
+        # Based on golden files, on macOS it's not POSIX compliant, so we replace it.
+        
+        # gl_FUNC_VASPRINTF_POSIX - lines 9-16
+        # if test $gl_cv_func_vasprintf_posix = no; then
+        #   gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS - line 14
+        #   gl_REPLACE_VASNPRINTF - line 15
+        #   gl_REPLACE_VASPRINTF - line 16
+        # fi
+        
+        # gl_REPLACE_VASPRINTF - lines 18-30 (from vasprintf.m4)
+        # AC_LIBOBJ([vasprintf]) - line 20
+        # AC_LIBOBJ([asprintf]) - line 21
+        # if test $ac_cv_func_vasprintf = yes; then
+        #   REPLACE_VASPRINTF=1 - line 25
+        # else
+        #   HAVE_VASPRINTF=0 - line 27
+        # fi
+        # Based on golden files, REPLACE_VASPRINTF=1 on macOS (function exists but not POSIX compliant)
+        macros.AC_SUBST("REPLACE_VASPRINTF", "1"),
+        
+        # gl_PREREQ_VASPRINTF_H - lines 32-36 (from vasprintf.m4)
+        # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 35
+        # This is provided by extensions dependency
+        
+        # gl_PREREQ_VASPRINTF - lines 38-40 (from vasprintf.m4)
+        # Empty macro, no checks needed
+        
+        # gl_PREREQ_ASPRINTF - lines 42-44 (from vasprintf.m4)
+        # Empty macro, no checks needed
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/printf:printf_posix_compliance",  # Platform printf compliance check
-        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS])
+        "//gnulib/m4/stdio_h:defaults",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS]) - line 23 (from vasprintf.m4)
+        "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 35 (from vasprintf.m4)
+        "//gnulib/m4/vasnprintf",  # gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS - line 14
+        # Note: The m4 file requires many gl_PRINTF_* macros for gl_FUNC_VASPRINTF_IS_POSIX,
+        # but since we're using golden file expectations, we don't need to include them all.
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

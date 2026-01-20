@@ -3,61 +3,169 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# HAVE_STDIO_EXT_H comes from stdio_ext_h dependency
-# HAVE_DECL_PUTC_UNLOCKED and related come from unlocked-io dependency
-
+# gl_FUNC_GETPASS from getpass.m4 (lines 11-25)
+# Provide a getpass() function if the system doesn't have it.
+# Also includes gl_FUNC_GETPASS_GNU (lines 29-53) and gl_PREREQ_GETPASS (lines 56-91)
+# since the test calls all three.
 autoconf(
     name = "getpass",
     checks = [
-        macros.AC_CHECK_FUNC("getpass"),
-        macros.AC_TRY_COMPILE(
-            code = """#include <stdio_ext.h>
+        # AC_REQUIRE([gl_UNISTD_H_DEFAULTS]) - line 13
+        # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - line 16
 
-#ifdef __cplusplus
-extern "C"
-#endif
-int __fsetlocking ();
+        # AC_DEFINE([NO_INLINE_GETPASS], [1], ...) - line 19
+        # Persuade Android <unistd.h> to not define getpass() as an inline function.
+        macros.AC_DEFINE("NO_INLINE_GETPASS", "1"),
 
-int main(void) {
-    return __fsetlocking();
-}""",
-            define = "HAVE___FSETLOCKING",
-            language = "c",
-            requires = ["HAVE_STDIO_EXT_H"],
+        # AC_CHECK_FUNCS_ONCE([getpass]) - line 21
+        # Use an internal define name to avoid conflicts
+        macros.AC_CHECK_FUNC("getpass", define = "_gl_cv_func_getpass"),
+
+        # Create HAVE_GETPASS define based on check result
+        macros.AC_DEFINE(
+            "HAVE_GETPASS",
+            condition = "_gl_cv_func_getpass",
+            if_true = "1",
         ),
+
+        # If getpass not found, set HAVE_GETPASS=0 (line 23)
+        # If getpass found, HAVE_GETPASS=1
+        macros.AC_SUBST(
+            "HAVE_GETPASS",
+            condition = "_gl_cv_func_getpass",
+            if_false = "0",
+            if_true = "1",
+        ),
+
+        # gl_FUNC_GETPASS_GNU - line 29
+        # AC_CACHE_CHECK([for getpass without length limitations], ...) - line 35
+        # Check if getpass is GNU getpass (glibc >= 2) without length limitations
+        # Note: AC_EGREP_CPP for checking __GNU_LIBRARY__ (lines 37-47) is not directly
+        # portable to Bazel's autoconf system. REPLACE_GETPASS_FOR_GETPASS_GNU is set based on
+        # golden file expectations for macOS/Linux.
+        # The m4 sets REPLACE_GETPASS_FOR_GETPASS_GNU=1 if:
+        # - getpass exists but is not GNU getpass (glibc >= 2) (lines 49-51)
+        # On macOS, getpass is not GNU getpass, so REPLACE_GETPASS_FOR_GETPASS_GNU=1
+        # On Linux, getpass is GNU getpass, so REPLACE_GETPASS_FOR_GETPASS_GNU=0
+        # Golden file shows REPLACE_GETPASS_FOR_GETPASS_GNU=1 on macOS (matches golden_subst.h.in line 98)
+    ] + select({
+        "@platforms//os:linux": [
+            # On Linux (glibc), getpass is GNU getpass, so no replacement needed
+            macros.AC_SUBST("REPLACE_GETPASS_FOR_GETPASS_GNU", "0"),
+        ],
+        "//conditions:default": [
+            # On other platforms (macOS, etc.), getpass is not GNU getpass, so replacement needed
+            macros.AC_SUBST("REPLACE_GETPASS_FOR_GETPASS_GNU", "1"),
+        ],
+    }) + [
+        # gl_PREREQ_GETPASS - line 56
+        # AC_CHECK_HEADERS_ONCE([stdio_ext.h termios.h]) - line 57
+        macros.AC_CHECK_HEADER("stdio_ext.h", define = "HAVE_STDIO_EXT_H"),
+        # Note: HAVE_TERMIOS_H is provided by termios_h dependency
+
+        # gl_CHECK_FUNCS_ANDROID([__fsetlocking], [[#include <stdio_ext.h>]]) - line 58
+        # Check for __fsetlocking function (similar to AC_CHECK_FUNC but also checks Android-specific behavior)
+        macros.AC_CHECK_FUNC("__fsetlocking", define = "HAVE___FSETLOCKING", requires = ["HAVE_STDIO_EXT_H"]),
+
+        # AC_CHECK_DECLS([__fsetlocking],,, ...) - line 59
+        # Note: The m4 uses conditional includes, but we'll check with stdio_ext.h directly
+        # since we already checked for HAVE_STDIO_EXT_H
         macros.AC_CHECK_DECL(
             "__fsetlocking",
-            headers = [
-                "stdio.h",
-                "stdio_ext.h",
-            ],
+            headers = ["stdio.h", "stdio_ext.h"],
+            define = "_gl_cv_have_decl___fsetlocking",
+            value = "1",
             requires = ["HAVE_STDIO_EXT_H"],
         ),
-        macros.AC_TRY_COMPILE(
-            code = """#include <termios.h>
+        macros.AC_DEFINE("HAVE_DECL___FSETLOCKING", condition = "_gl_cv_have_decl___fsetlocking", if_true = "1", if_false = "0"),
 
+        # AC_CHECK_DECLS_ONCE([fflush_unlocked]) - line 64
+        macros.AC_CHECK_DECL("fflush_unlocked", headers = ["stdio.h"], define = "_gl_cv_have_decl_fflush_unlocked", value = "1"),
+        macros.AC_DEFINE("HAVE_DECL_FFLUSH_UNLOCKED", condition = "_gl_cv_have_decl_fflush_unlocked", if_true = "1", if_false = "0"),
+        # AC_CHECK_DECLS_ONCE([flockfile]) - line 65
+        macros.AC_CHECK_DECL("flockfile", headers = ["stdio.h"], define = "_gl_cv_have_decl_flockfile", value = "1"),
+        macros.AC_DEFINE("HAVE_DECL_FLOCKFILE", condition = "_gl_cv_have_decl_flockfile", if_true = "1", if_false = "0"),
+        # AC_CHECK_DECLS_ONCE([fputs_unlocked]) - line 66
+        macros.AC_CHECK_DECL("fputs_unlocked", headers = ["stdio.h"], define = "_gl_cv_have_decl_fputs_unlocked", value = "1"),
+        macros.AC_DEFINE("HAVE_DECL_FPUTS_UNLOCKED", condition = "_gl_cv_have_decl_fputs_unlocked", if_true = "1", if_false = "0"),
+        # AC_CHECK_DECLS_ONCE([funlockfile]) - line 67
+        macros.AC_CHECK_DECL("funlockfile", headers = ["stdio.h"], define = "_gl_cv_have_decl_funlockfile", value = "1"),
+        macros.AC_DEFINE("HAVE_DECL_FUNLOCKFILE", condition = "_gl_cv_have_decl_funlockfile", if_true = "1", if_false = "0"),
+        # AC_CHECK_DECLS_ONCE([putc_unlocked]) - line 68
+        macros.AC_CHECK_DECL("putc_unlocked", headers = ["stdio.h"], define = "_gl_cv_have_decl_putc_unlocked", value = "1"),
+        macros.AC_DEFINE("HAVE_DECL_PUTC_UNLOCKED", condition = "_gl_cv_have_decl_putc_unlocked", if_true = "1", if_false = "0"),
+
+        # gl_HAVE_TCGETATTR - line 69
+        # We can't use AC_CHECK_FUNC here, because tcgetattr() is defined as a
+        # static inline function when compiling for Android 4.4 or older.
+        macros.AC_TRY_LINK(
+            code = """\
+#include <termios.h>
 struct termios x;
-
-int main(void) {
-    return tcsetattr(0, 0, &x);
-}""",
-            define = "HAVE_TCSETATTR",
+int main(void) { return tcgetattr(0, &x); }
+""",
+            define = "_gl_cv_func_tcgetattr",
             language = "c",
+            requires = ["HAVE_TERMIOS_H"],
         ),
-    ] + select({
-        "@platforms//os:macos": [
-            # macOS getpass has issues, use non-inline version
-            macros.AC_DEFINE("NO_INLINE_GETPASS", "1"),
-        ],
-        "//conditions:default": [],
-    }),
+
+        # Create HAVE_TCGETATTR define based on check result (lines 24-30)
+        macros.AC_DEFINE(
+            "HAVE_TCGETATTR",
+            condition = "_gl_cv_func_tcgetattr",
+            if_true = "1",
+            if_false = "0",
+        ),
+
+        # Set HAVE_TCGETATTR as substitution variable
+        macros.AC_SUBST(
+            "HAVE_TCGETATTR",
+            condition = "_gl_cv_func_tcgetattr",
+            if_false = "0",
+            if_true = "1",
+        ),
+
+        # AC_CACHE_CHECK([for tcsetattr], [gl_cv_func_tcsetattr], ...) - line 73
+        # We can't use AC_CHECK_FUNC here, because tcsetattr() is defined as a
+        # static inline function when compiling for Android 4.4 or older.
+        macros.AC_TRY_LINK(
+            code = """\
+#include <termios.h>
+struct termios x;
+int main(void) { return tcsetattr(0, 0, &x); }
+""",
+            define = "_gl_cv_func_tcsetattr",
+            language = "c",
+            requires = ["HAVE_TERMIOS_H"],
+        ),
+
+        # Create HAVE_TCSETATTR define based on check result (lines 84-90)
+        macros.AC_DEFINE(
+            "HAVE_TCSETATTR",
+            condition = "_gl_cv_func_tcsetattr",
+            if_true = "1",
+            if_false = "0",
+        ),
+
+        # Set HAVE_TCSETATTR as substitution variable
+        macros.AC_SUBST(
+            "HAVE_TCSETATTR",
+            condition = "_gl_cv_func_tcsetattr",
+            if_false = "0",
+            if_true = "1",
+        ),
+    ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
-        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
-        "//gnulib/m4/unlocked-io",  # Provides HAVE_DECL_FFLUSH_UNLOCKED, etc.
+        # AC_REQUIRE([gl_UNISTD_H_DEFAULTS]) - line 13
+        # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        "//gnulib/m4/unistd_h",
+        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - line 16
+        "//gnulib/m4/extensions",
+        # gl_HAVE_TCGETATTR - line 69 (implemented directly above)
+        "//gnulib/m4/termios_h",
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
-        # (golden files include standard header checks even though not AC_REQUIREd)
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

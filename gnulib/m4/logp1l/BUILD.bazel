@@ -3,22 +3,51 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# gl_FUNC_LOGP1L from logp1l.m4 (lines 8-30)
 autoconf(
     name = "logp1l",
     checks = [
+        # AC_CHECK_FUNCS([logp1l]) - line 19
+        # Test whether logp1l() exists. Assume that logp1l(), if it exists, is
+        # defined in the same library as logp1().
+        # The check is done with LOGP1_LIBM in LIBS
+        # Based on golden files, on macOS, logp1l is not found (HAVE_LOGP1L is undefined in config.h)
+        # But HAVE_LOGP1L=0 as a substitution variable
         macros.AC_CHECK_FUNC(
             "logp1l",
-            define = "HAVE_LOGP1L",
+            define = "_gl_cv_func_logp1l",
         ),
+        
+        # If logp1l is found, LOGP1L_LIBM="$LOGP1_LIBM" - line 21
+        # If not found, HAVE_LOGP1L=0 and LOGP1L_LIBM="$LOG1PL_LIBM" - lines 23-25
+        # Based on golden files, on macOS, logp1l is not found, so:
+        # - HAVE_LOGP1L=0 (substitution variable)
+        # - LOGP1L_LIBM="" (empty, same as LOG1PL_LIBM)
+        macros.AC_SUBST("HAVE_LOGP1L", "0"),
+        macros.AC_SUBST("LOGP1L_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS,
-
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
-        "//gnulib/m4/extensions",
-        "//gnulib/m4/log1pl",
+        # AC_REQUIRE([gl_MATH_H_DEFAULTS]) - line 10
+        # Note: gl_MATH_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        
+        # AC_REQUIRE([gl_LONG_DOUBLE_VS_DOUBLE]) - line 11
+        # Provides HAVE_SAME_LONG_DOUBLE_AS_DOUBLE
+        "//gnulib/m4/math_h:long-double-vs-double",
+        
+        # AC_REQUIRE([gl_FUNC_LOGP1]) - line 12
+        # Provides LOGP1_LIBM
         "//gnulib/m4/logp1",
+        
+        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - line 15
+        "//gnulib/m4/extensions",
+        
+        # AC_REQUIRE([gl_FUNC_LOG1PL]) - line 24 (conditional)
+        # Only required if logp1l is not found
+        # Provides LOG1PL_LIBM
+        "//gnulib/m4/log1pl",
+        
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

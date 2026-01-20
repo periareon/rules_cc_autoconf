@@ -21,6 +21,7 @@ autoconf(
         "@platforms//os:macos": [
             macros.AC_DEFINE("RENAME_TRAILING_SLASH_DEST_BUG", "1"),
             macros.AC_DEFINE("RENAME_TRAILING_SLASH_SOURCE_BUG", "1"),
+            macros.AC_SUBST("REPLACE_RENAME", "1"),
         ],
         "//conditions:default": [],
     }),

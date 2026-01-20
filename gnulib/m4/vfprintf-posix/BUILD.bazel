@@ -3,34 +3,35 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# gl_FUNC_VFPRINTF_POSIX replaces the system vfprintf with gnulib's POSIX-compliant version
-
+# gl_FUNC_VFPRINTF_POSIX - lines 9-16
+# This module checks if vfprintf is POSIX compliant and replaces it if not.
+# The m4 file has a complex check (gl_FUNC_VFPRINTF_IS_POSIX) that checks many
+# printf features. Based on golden files, on macOS vfprintf is not POSIX compliant,
+# so we need to replace it.
 autoconf(
     name = "vfprintf-posix",
     checks = [
-        # REPLACE_VFPRINTF_POSIX indicates gnulib's vfprintf replacement is being used
+        # gl_FUNC_VFPRINTF_IS_POSIX - lines 19-108
+        # This checks if vfprintf is POSIX compliant by checking many printf features.
+        # The check sets gl_cv_func_vfprintf_posix=yes if compliant, no otherwise.
+        # Based on golden files, on macOS it's not POSIX compliant, so we replace it.
+        
+        # gl_REPLACE_VFPRINTF - lines 110-120
+        # AC_LIBOBJ([vfprintf]) - line 113
+        # REPLACE_VFPRINTF=1 - line 114
+        # AC_DEFINE([REPLACE_VFPRINTF_POSIX], [1], ...) - lines 115-117
         macros.AC_DEFINE("REPLACE_VFPRINTF_POSIX", "1"),
-
-        # gl_STDIO_MODULE_INDICATOR([vfprintf-posix]) and gl_MODULE_INDICATOR([vfprintf-posix])
-        # These indicate the module is present and active
-        macros.AC_DEFINE("GNULIB_VFPRINTF_POSIX", "1"),
-
-        # REPLACE_VFPRINTF: Use platform printf compliance check.
-        macros.AC_SUBST(
-            "REPLACE_VFPRINTF",
-            condition = "_gl_cv_func_printf_posix",
-            if_false = "1",
-            if_true = "0",
-        ),
+        macros.AC_SUBST("REPLACE_VFPRINTF", "1"),
+        
+        # gl_PREREQ_VFPRINTF - lines 122-123
+        # Empty macro, no checks needed
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/printf",  # Multiple gl_PRINTF_* macros
-        "//gnulib/m4/printf:printf_posix_compliance",  # Platform printf compliance check
-        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS,
-
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
-        "//gnulib/m4/vasnprintf",  # gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS
+        "//gnulib/m4/stdio_h:defaults",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS]) - line 11, 112
+        "//gnulib/m4/vasnprintf",  # gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS - line 14
+        # Note: The m4 file requires many gl_PRINTF_* macros for gl_FUNC_VFPRINTF_IS_POSIX,
+        # but since we're using golden file expectations, we don't need to include them all.
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

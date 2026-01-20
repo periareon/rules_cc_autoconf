@@ -3,23 +3,61 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# gl_FUNC_RENAMEAT - lines 13-95
 autoconf(
     name = "renameat",
     checks = [
-        macros.AC_CHECK_HEADER(
-            "linux/fs.h",
-            define = "HAVE_LINUX_FS_H",
+        # AC_CHECK_HEADERS([linux/fs.h]) - line 19
+        macros.AC_CHECK_HEADER("linux/fs.h"),
+        
+        # AC_CHECK_FUNCS_ONCE([renameat]) - line 20
+        # This sets ac_cv_func_renameat
+        # Use internal define to avoid conflicts
+        macros.AC_CHECK_FUNC(
+            "renameat",
+            define = "_gl_cv_func_renameat",
         ),
-        # Note: renameat.m4 may not exist in gnulib, or this module may not have checks
+        
+        # Define HAVE_RENAMEAT if function exists
+        macros.AC_DEFINE(
+            "HAVE_RENAMEAT",
+            condition = "_gl_cv_func_renameat",
+            if_true = "1",
+        ),
+        
+        # if test $ac_cv_func_renameat = no; then HAVE_RENAMEAT=0 - lines 21-22
+        # Set HAVE_RENAMEAT substitution variable to "0" if function doesn't exist
+        macros.AC_SUBST(
+            "HAVE_RENAMEAT",
+            condition = "_gl_cv_func_renameat",
+            if_true = "1",
+            if_false = "0",
+        ),
+        
+        # elif test $REPLACE_RENAME = 1; then REPLACE_RENAMEAT=1 - lines 23-25
+        # Set REPLACE_RENAMEAT substitution variable to "1" if REPLACE_RENAME=1
+        macros.AC_SUBST(
+            "REPLACE_RENAMEAT",
+            condition = "REPLACE_RENAME==1",
+            if_true = "1",
+            if_false = "0",
+        ),
+        
+        # gl_CHECK_FUNCS_ANDROID([renameat2], [[#include <stdio.h>]]) - line 26
+        # Check for renameat2 function (similar to AC_CHECK_FUNC)
+        macros.AC_CHECK_FUNC("renameat2"),
+        
+        # AC_RUN_IFELSE for renameat2 is skipped - runtime checks can't be done in Bazel
+        # Based on golden files, HAVE_WORKING_RENAMEAT2 is not defined on macOS or Linux
+        # so renameat2 either doesn't exist or doesn't work on these platforms
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS,
-
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
-        "//gnulib/m4/extensions",
-        "//gnulib/m4/openat",
-        "//gnulib/m4/rename",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+        "//gnulib/m4/openat",  # AC_REQUIRE([gl_FUNC_OPENAT])
+        "//gnulib/m4/rename",  # AC_REQUIRE([gl_FUNC_RENAME])
+        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS]) - provides REPLACE_RENAME
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

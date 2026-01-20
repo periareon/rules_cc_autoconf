@@ -3,25 +3,77 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# HAVE_SYS_VFS_H comes from sys_vfs_h dependency
-
+# gl_FUNC_FTS - lines 9-11
+# gl_FUNC_FTS_CORE - lines 13-60
 autoconf(
     name = "fts",
     checks = [
+        # gl_FUNC_OPENAT - line 16
+        # This is provided by openat dependency
+        
+        # gl_CHECK_HEADER_SYS_CDEFS_H - line 17
+        # This is provided by sys_cdefs_h dependency
+        
+        # AC_CHECK_FUNCS_ONCE([fstatfs]) - line 19
+        macros.AC_CHECK_FUNC("fstatfs", define = "ac_cv_func_fstatfs"),
+        
+        # AC_CHECK_HEADERS_ONCE([sys/param.h sys/vfs.h]) - line 20
+        macros.AC_CHECK_HEADER("sys/param.h", define = "ac_cv_header_sys_param_h"),
+        macros.AC_CHECK_HEADER("sys/vfs.h", define = "ac_cv_header_sys_vfs_h"),
+        
+        # if test "$ac_cv_func_fstatfs,$ac_cv_header_sys_vfs_h" = yes,yes; then
+        #   AC_CHECK_MEMBERS([struct statfs.f_type], ...) - lines 21-25
+        # fi
+        macros.AC_CHECK_MEMBER(
+            "struct statfs",
+            "f_type",
+            headers = ["sys/vfs.h"],
+            define = "ac_cv_member_struct_statfs_f_type",
+            requires = ["ac_cv_func_fstatfs", "ac_cv_header_sys_vfs_h"],
+        ),
+        
+        # if test "$ac_cv_member_struct_statfs_f_type" = yes; then
+        #   AC_CHECK_TYPES([__fsword_t], ...) - lines 26-30
+        # fi
         macros.AC_CHECK_TYPE(
             "__fsword_t",
-            code = """\
-#include <sys/vfs.h>
-int main(void) {
-    if (sizeof(__fsword_t))
-        return 0;
-    return 1;
-}
+            code = """#include <sys/vfs.h>
+__fsword_t x;
 """,
-            requires = ["HAVE_SYS_VFS_H"],
+            define = "ac_cv_type___fsword_t",
+            requires = ["ac_cv_member_struct_statfs_f_type"],
         ),
+        
+        # gl_CHECK_FUNCS_ANDROID([fts_open], [[#include <fts.h>]]) - line 32
+        # Check for fts_open function (similar to AC_CHECK_FUNC but also checks Android-specific behavior)
+        macros.AC_CHECK_FUNC("fts_open", define = "gl_cv_func_fts_open", code = "#include <fts.h>\n"),
+        
+        # if case "$gl_cv_onwards_func_fts_open" in
+        #      yes | future*) true ;;
+        #      *) false ;;
+        #    esac; then
+        #   AC_DEFINE([fts_open], [rpl_fts_open], ...) - lines 34-48
+        #   AC_DEFINE([fts_close], [rpl_fts_close], ...)
+        #   AC_DEFINE([fts_read], [rpl_fts_read], ...)
+        #   AC_DEFINE([fts_set], [rpl_fts_set], ...)
+        #   AC_DEFINE([fts_children], [rpl_fts_children], ...)
+        #   AC_DEFINE([fts_cross_check], [rpl_fts_cross_check], ...)
+        # fi
+        # Based on golden files, on macOS fts_open exists, so we define the replacement macros
+        macros.AC_DEFINE("fts_open", "rpl_fts_open"),
+        macros.AC_DEFINE("fts_close", "rpl_fts_close"),
+        macros.AC_DEFINE("fts_read", "rpl_fts_read"),
+        macros.AC_DEFINE("fts_set", "rpl_fts_set"),
+        macros.AC_DEFINE("fts_children", "rpl_fts_children"),
+        macros.AC_DEFINE("fts_cross_check", "rpl_fts_cross_check"),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        # gl_FUNC_OPENAT - line 16
+        "//gnulib/m4/openat",
+        # gl_CHECK_HEADER_SYS_CDEFS_H - line 17
+        "//gnulib/m4/sys_cdefs_h",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

@@ -34,16 +34,12 @@ int main(void) { return 0; }
             macros.AC_CHECK_FUNC(
                 "__mktime_internal",
                 define = "HAVE_MKTIME_INTERNAL",
-                if_false = [
-                    macros.AC_DEFINE("WANT_MKTIME_INTERNAL", "1"),
-                    macros.AC_DEFINE("NEED_MKTIME_INTERNAL", "1"),
-                ],
-                if_true = [
-                    macros.AC_DEFINE("mktime_internal", "__mktime_internal"),
-                ],
             ),
             macros.M4_DEFINE("REPLACE_MKTIME", "1"),
             macros.M4_DEFINE("NEED_MKTIME_WINDOWS", "1"),
+            macros.AC_DEFINE("mktime_internal", "__mktime_internal", requires=["HAVE_MKTIME_INTERNAL==1"]),
+            macros.AC_DEFINE("WANT_MKTIME_INTERNAL", "1", requires=["HAVE_MKTIME_INTERNAL==0"]),
+            macros.AC_DEFINE("NEED_MKTIME_INTERNAL", "1", requires=["HAVE_MKTIME_INTERNAL==0"]),
         ],
         "//conditions:default": [
             # If __mktime_internal is found, define mktime_internal as __mktime_internal
@@ -51,14 +47,10 @@ int main(void) { return 0; }
             macros.AC_CHECK_FUNC(
                 "__mktime_internal",
                 define = "HAVE_MKTIME_INTERNAL",
-                if_false = [
-                    macros.AC_DEFINE("WANT_MKTIME_INTERNAL", "1"),
-                    macros.AC_DEFINE("NEED_MKTIME_INTERNAL", "1"),
-                ],
-                if_true = [
-                    macros.AC_DEFINE("mktime_internal", "__mktime_internal"),
-                ],
             ),
+            macros.AC_DEFINE("mktime_internal", "__mktime_internal", requires=["HAVE_MKTIME_INTERNAL==1"]),
+            macros.AC_DEFINE("WANT_MKTIME_INTERNAL", "1", requires=["HAVE_MKTIME_INTERNAL==0"]),
+            macros.AC_DEFINE("NEED_MKTIME_INTERNAL", "1", requires=["HAVE_MKTIME_INTERNAL==0"]),
         ],
     }),
     visibility = ["//visibility:public"],

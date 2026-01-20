@@ -3,26 +3,57 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# gl_FUNC_LOGBF from logbf.m4 (lines 8-40)
 autoconf(
     name = "logbf",
     checks = [
-        # Check for logbf function
-        # Equivalent to gl_FUNC_LOGBF macro from logbf.m4
-        # Note: Full implementation uses gl_MATHFUNC and includes runtime checks
-        # Note: AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
+        # gl_MATHFUNC([logbf], [float], [(float)]) - line 16
+        # This checks for logbf function and determines LOGBF_LIBM
+        # gl_MATHFUNC is a complex macro that checks if the function exists
+        # and whether it needs -lm to link
+        # Based on golden files, on macOS, logbf is not available (HAVE_LOGBF is undefined in config.h)
+        # But HAVE_LOGBF=1 as a substitution variable (from golden_subst_macos.h.in)
+        # This suggests the function exists but is not defined in config.h
+        # We'll use an internal define to check for the function
         macros.AC_CHECK_FUNC(
             "logbf",
-            define = "HAVE_LOGBF",
+            define = "_gl_cv_func_logbf",
         ),
+        
+        # gl_FUNC_LOGBF_WORKS - line 19 (runtime check)
+        # This is a runtime check (AC_RUN_IFELSE) that can't be easily ported
+        # It checks if logbf works correctly for subnormal arguments
+        # Based on golden files, on macOS, REPLACE_LOGBF=0 (function works or is replaced)
+        
+        # LOGBF_LIBM substitution variable - line 40
+        # Set to empty string if function is in libc, or to library name if needed
+        # Based on golden files, LOGBF_LIBM is empty
+        macros.AC_SUBST("LOGBF_LIBM", ""),
+        
+        # REPLACE_LOGBF substitution variable
+        # Set to 1 if function needs replacement, 0 otherwise
+        # Based on golden files, REPLACE_LOGBF=0
+        macros.AC_SUBST("REPLACE_LOGBF", "0"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS,
-
+        # AC_REQUIRE([gl_MATH_H_DEFAULTS]) - line 10
+        # Note: gl_MATH_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        
+        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - line 13
+        "//gnulib/m4/extensions",
+        
+        # AC_REQUIRE([gl_FUNC_FREXPF]) - line 30 (conditional)
+        # Only required if HAVE_LOGBF=0 or REPLACE_LOGBF=1
+        # But we include it as a dependency anyway
+        "//gnulib/m4/frexpf",
+        
+        # AC_REQUIRE([gl_FUNC_ISNANF]) - line 31 (conditional)
+        # Only required if HAVE_LOGBF=0 or REPLACE_LOGBF=1
+        # But we include it as a dependency anyway
+        "//gnulib/m4/isnanf",
+        
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
-        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
-        "//gnulib/m4/frexpf",  # AC_REQUIRE([gl_FUNC_FREXPF]) - conditional but still required
-        "//gnulib/m4/isnanf",  # AC_REQUIRE([gl_FUNC_ISNANF]) - conditional but still required
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

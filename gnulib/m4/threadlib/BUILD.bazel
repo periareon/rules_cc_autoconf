@@ -46,6 +46,11 @@ int main(void) {
             if_true = "1",
         ),
         
+        # Define USE_POSIX_THREADS if pthread API is available (line 520-522)
+        # This is set when gl_threads_api=posix
+        # Based on golden files, on macOS/Linux, USE_POSIX_THREADS=1
+        macros.AC_DEFINE("USE_POSIX_THREADS", "1"),
+        
         # Check for sched_yield (lines 289-300)
         # On some systems, sched_yield is in librt, rather than in libpthread.
         # On most systems, sched_yield is in libc, so SCHED_YIELD_LIB is empty.

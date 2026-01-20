@@ -49,48 +49,25 @@ def _checks_equivalent(a, b):
     return True
 
 def _flatten_checks(raw_checks, label):
-    """Flatten nested conditional checks into a flat list with requirements.
-
-    This processes checks with if_true/if_false nested checks and converts
-    them into a flat list where nested checks have their parent's define
-    added to their requires list.
+    """Process checks and handle deduplication.
 
     Args:
         raw_checks: List of JSON-encoded check strings.
         label: The label of the target (for error messages).
 
     Returns:
-        A dictionary mapping define names to flattened check dictionaries.
+        A dictionary mapping define names to check dictionaries.
     """
     result = {}
 
-    # Queue entries are (check_dict, inherited_requires)
-    queue = []
-
-    # Initialize queue with top-level checks
+    # Process all checks
     for check_json in raw_checks:
         check = json.decode(check_json)
-        queue.append((check, []))
-
-    for _ in range(10000):  # Prevent infinite loops
-        if not queue:
-            break
-
-        check, inherited_reqs = queue.pop(0)
         define = check["define"]
 
-        # Extract nested checks before processing
-        if_true_checks = check.pop("if_true", [])
-        if_false_checks = check.pop("if_false", [])
-
-        # Merge inherited requires with check's own requires
-        own_requires = check.get("requires", [])
-        all_requires = inherited_reqs + own_requires
-
-        if all_requires:
-            check["requires"] = all_requires
-        elif "requires" in check:
-            check.pop("requires")
+        # if_true and if_false are now values, not lists of checks
+        # They are stored in the check dict and used by the checker to set values
+        # No need to extract or process them here
 
         # Handle uniqueness/deduplication
         if define in result:
@@ -107,16 +84,16 @@ def _flatten_checks(raw_checks, label):
                 else:
                     # Replace m4_define with the check that generates output
                     result[define] = check
-            elif (existing.get("type") == "define" and check.get("type") == "subst") or \
-                 (existing.get("type") == "subst" and check.get("type") == "define"):
-                # AC_DEFINE generates config.h defines, AC_SUBST generates @VAR@ substitutions
-                # AC_DEFINE values are already used for @VAR@ replacement, so skip subst
-                # Keep the define check (it handles both outputs)
+            elif ((existing.get("type") == "define" or existing.get("type") == "define_unquoted" or existing.get("type") == "decl") and check.get("type") == "subst") or \
+                 (existing.get("type") == "subst" and (check.get("type") == "define" or check.get("type") == "define_unquoted" or check.get("type") == "decl")):
+                # AC_DEFINE/AC_DEFINE_UNQUOTED/AC_CHECK_DECL generates config.h defines, AC_SUBST generates @VAR@ substitutions
+                # AC_DEFINE/AC_CHECK_DECL values are already used for @VAR@ replacement, so skip subst
+                # Keep the define/decl check (it handles both outputs)
                 if check.get("type") == "subst":
-                    # Skip subst - define already provides @VAR@ replacement
+                    # Skip subst - define/decl already provides @VAR@ replacement
                     pass
                 else:
-                    # Keep define (replaces subst)
+                    # Keep define/decl (replaces subst)
                     result[define] = check
             else:
                 fail(("Conflicting check definitions for '{}' in '{}'. " +
@@ -127,14 +104,6 @@ def _flatten_checks(raw_checks, label):
                 ))
         else:
             result[define] = check
-
-        # Queue if_true checks - they require this check to succeed
-        for nested in if_true_checks:
-            queue.append((nested, all_requires + [define]))
-
-        # Queue if_false checks - they require this check to fail
-        for nested in if_false_checks:
-            queue.append((nested, all_requires + ["!" + define]))
 
     return result
 
@@ -181,16 +150,32 @@ def _autoconf_impl(ctx):
     for check in checks.values():
         define_name = check["define"]
         if define_name in transitive_checks:
-            providers = []
-            for dep_info in deps.to_list():
-                if define_name in dep_info.results:
-                    providers.append(str(dep_info.owner))
+            # Check if this is a define/subst conflict, which is allowed
+            # AC_DEFINE/AC_DEFINE_UNQUOTED and AC_SUBST with the same name can coexist
+            # (one generates config.h defines, the other generates @VAR@ substitutions)
+            check_type = check.get("type")
+            is_define_type = check_type in ["define", "define_unquoted"]
+            is_subst_type = check_type == "subst"
+            
+            # If current check is a define/subst type, allow it to coexist with transitive checks
+            # The _flatten_checks logic already handles define/subst conflicts within the same target
+            # We assume transitive checks of the same name are likely subst if we're creating a define,
+            # or define if we're creating a subst, which is the common pattern
+            if is_define_type or is_subst_type:
+                # Allow define/subst to coexist with transitive checks
+                # This matches the behavior in _flatten_checks which allows define and subst with same name
+                pass
+            else:
+                providers = []
+                for dep_info in deps.to_list():
+                    if define_name in dep_info.results:
+                        providers.append(str(dep_info.owner))
 
-            fail("Check `{}` is duplicating a dependent check for `{}`: {}".format(
-                define_name,
-                ctx.label,
-                providers,
-            ))
+                fail("Check `{}` is duplicating a dependent check for `{}`: {}".format(
+                    define_name,
+                    ctx.label,
+                    providers,
+                ))
 
         check_result_file = ctx.actions.declare_file("{}/{}.json".format(ctx.label.name, define_name))
         results[define_name] = check_result_file

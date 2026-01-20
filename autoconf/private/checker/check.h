@@ -18,6 +18,7 @@ enum class CheckType {
     kCompile,     ///< Check if code compiles
     kLink,        ///< Check if code compiles and links
     kDefine,      ///< Directly apply the define with the given value
+    kDefineUnquoted,  ///< AC_DEFINE_UNQUOTED - like kDefine but empty values use trailing space instead of /**/
     kSubst,       ///< AC_SUBST - substitution variable (may be conditional)
     kM4Define,    ///< M4_DEFINE - compute value for requires but don't generate output
     kSizeof,      ///< Determine size of type

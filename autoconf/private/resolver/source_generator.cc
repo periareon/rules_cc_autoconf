@@ -172,22 +172,29 @@ std::string SourceGenerator::process_template(
         // Only process #undef replacement in kDefines or kAll mode
         if ((mode_ == Mode::kDefines || mode_ == Mode::kAll) &&
             !result.is_subst && result.is_define && !is_suffixed_subst) {
-            // Only kDefine type creates defines with empty values (AC_DEFINE behavior)
+            // Only kDefine and kDefineUnquoted types create defines with empty values
             // All other types (kDecl, kCompile, etc.) leave empty values as /* #undef */
             bool should_create_define = result.success && 
                                        (!result.value.empty() || 
-                                        (result.value.empty() && result.type == CheckType::kDefine));
+                                        (result.value.empty() && (result.type == CheckType::kDefine || result.type == CheckType::kDefineUnquoted)));
             
             if (should_create_define) {
                 // Replace #undef with #define when:
                 // - We have a non-empty value, OR
-                // - We have an empty value and type is kDefine (AC_DEFINE with empty value)
+                // - We have an empty value and type is kDefine or kDefineUnquoted
                 std::string replacement_text = "#define " + define_name;
                 if (!result.value.empty()) {
                     replacement_text += " " + result.value;
                 } else {
-                    // Empty value: create "#define NAME /**/" to match GNU autoconf behavior
-                    replacement_text += " /**/";
+                    // Empty value: 
+                    // - kDefine: create "#define NAME /**/" to match GNU autoconf AC_DEFINE behavior
+                    // - kDefineUnquoted: create "#define NAME " (trailing space) to match GNU autoconf AC_DEFINE_UNQUOTED
+                    //   behavior when used with shell variables (common case, e.g., iconv.m4)
+                    if (result.type == CheckType::kDefineUnquoted) {
+                        replacement_text += " ";  // Trailing space for AC_DEFINE_UNQUOTED
+                    } else {
+                        replacement_text += " /**/";  // /**/ for AC_DEFINE
+                    }
                 }
                 content = replace_undef(content, define_name, replacement_text,
                                         false);
@@ -313,19 +320,24 @@ std::string SourceGenerator::process_template(
 
     // Step 5: Strip trailing whitespace from each line
     // This ensures the output matches what clang-format produces
-    // Exception: Preserve "#define NAME /**/" (empty value defines) to match GNU autoconf
+    // Exception: Preserve "#define NAME /**/" (AC_DEFINE) and "#define NAME " (AC_DEFINE_UNQUOTED) to match GNU autoconf
     std::string final_content{};
     std::istringstream stream(content);
     std::string line{};
     bool first_line = true;
     while (std::getline(stream, line)) {
-        // Check if this is a "#define NAME /**/" line (empty value define)
+        // Check if this is a "#define NAME /**/" line (AC_DEFINE empty value)
         // Pattern: #define followed by identifier followed by /**/
         std::regex empty_define_pattern(R"(^#define\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+/\*\*/$)");
         bool is_empty_define = std::regex_match(line, empty_define_pattern);
         
+        // Check if this is a "#define NAME " line (AC_DEFINE_UNQUOTED empty value with trailing space)
+        // Pattern: #define followed by identifier followed by space and nothing else (or just newline)
+        std::regex empty_define_unquoted_pattern(R"(^#define\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+$)");
+        bool is_empty_define_unquoted = std::regex_match(line, empty_define_unquoted_pattern);
+        
         // Strip trailing whitespace from the line, unless it's an empty define
-        if (!is_empty_define) {
+        if (!is_empty_define && !is_empty_define_unquoted) {
             while (!line.empty() && (line.back() == ' ' || line.back() == '\t')) {
                 line.pop_back();
             }

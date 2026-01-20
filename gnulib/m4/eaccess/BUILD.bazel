@@ -15,10 +15,8 @@ autoconf(
             macros.AC_CHECK_FUNC(
                 "eaccess",
                 define = "HAVE_EACCESS",
-                if_false = [
-                    macros.AC_DEFINE("eaccess", "access"),
-                ],
             ),
+            macros.AC_DEFINE("eaccess", "access", requires=["HAVE_EACCESS==0"]),
         ],
     }),
     visibility = ["//visibility:public"],

@@ -12,7 +12,12 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "AC_TYPE_MBSTATE_T",
     checks = [
-        macros.AC_CHECK_TYPE("mbstate_t"),
+        # AC_CHECK_TYPE checks if mbstate_t is defined
+        # mbstate_t is defined in wchar.h
+        macros.AC_CHECK_TYPE(
+            "mbstate_t",
+            includes = ["wchar.h"],
+        ),
     ],
     visibility = ["//visibility:public"],
 )

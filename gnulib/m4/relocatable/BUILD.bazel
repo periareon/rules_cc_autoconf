@@ -3,13 +3,59 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# HAVE_COPY_FILE_RANGE comes from copy-file-range dependency
-
+# gl_RELOCATABLE_BODY - lines 14-133
+# gl_RELOCATABLE_LIBRARY_BODY - from relocatable-lib.m4
+# Default prefix is /usr/local
 autoconf(
     name = "relocatable",
     checks = [
+        # gl_RELOCATABLE_LIBRARY_BODY defines INSTALLPREFIX
+        # AC_DEFINE_UNQUOTED([INSTALLPREFIX], [${reloc_final_prefix_c}])
+        macros.AC_DEFINE_UNQUOTED("INSTALLPREFIX", '"/usr/local"'),
+        
+        # gl_RELOCATABLE_BODY checks
+        # AC_CHECK_HEADERS([mach-o/dyld.h])
         macros.AC_CHECK_HEADER("mach-o/dyld.h"),
+        # AC_CHECK_FUNCS([_NSGetExecutablePath])
         macros.AC_CHECK_FUNC("_NSGetExecutablePath"),
+        
+        # AC_SUBST([RELOCATABLE]) - default is "no"
+        macros.AC_SUBST("RELOCATABLE", value = "no"),
+        
+        # AC_SUBST([RELOCATABLE_CONFIG_H_DIR]) - line 135
+        macros.AC_SUBST("RELOCATABLE_CONFIG_H_DIR", value = "$(top_builddir)"),
+        
+        # AC_SUBST([RELOCATABLE_SRC_DIR]) - line 136
+        macros.AC_SUBST("RELOCATABLE_SRC_DIR", value = "$(top_srcdir)/"),
+        
+        # AC_SUBST([RELOCATABLE_BUILD_DIR]) - line 137
+        macros.AC_SUBST("RELOCATABLE_BUILD_DIR", value = "$(top_builddir)/"),
+        
+        # AC_SUBST([RELOCATABLE_STRIP]) - line 140
+        macros.AC_SUBST("RELOCATABLE_STRIP", value = ":"),
+        
+        # AC_SUBST([RELOCATABLE_LIBRARY_PATH]) - line 134, default is empty
+        macros.AC_SUBST("RELOCATABLE_LIBRARY_PATH", value = ""),
+        
+        # RELOCATABLE_LDFLAGS is set conditionally, but when RELOCATABLE=no it's empty
+        # Line 61: RELOCATABLE_LDFLAGS=: when is_noop=yes
+        # Line 67: RELOCATABLE_LDFLAGS="..." when use_elf_origin_trick=yes || use_macos_tools=yes
+        # For default case (RELOCATABLE=no), this is empty
+        macros.AC_SUBST("RELOCATABLE_LDFLAGS", value = ""),
+        
+        # AM_CONDITIONAL substitution variables for automake conditionals
+        # These are not defines in config.h, but substitution variables for Makefiles
+        # RELOCATABLE_VIA_LD condition is: test $is_noop = yes || test $use_elf_origin_trick = yes || test $use_macos_tools = yes
+        # RELOCATABLE_VIA_WRAPPER condition is: test $use_wrapper = yes
+        # For default case (RELOCATABLE=no), both are false, so:
+        # - RELOCATABLE_VIA_LD_TRUE = "#" (commented in Makefile)
+        # - RELOCATABLE_VIA_LD_FALSE = "" (not set)
+        # - RELOCATABLE_VIA_WRAPPER_TRUE = "#" (commented in Makefile)
+        # - RELOCATABLE_VIA_WRAPPER_FALSE = "" (not set)
+        macros.AC_SUBST("RELOCATABLE_VIA_LD_TRUE", value = "#"),
+        macros.AC_SUBST("RELOCATABLE_VIA_LD_FALSE", value = ""),
+        macros.AC_SUBST("RELOCATABLE_VIA_WRAPPER_TRUE", value = "#"),
+        macros.AC_SUBST("RELOCATABLE_VIA_WRAPPER_FALSE", value = ""),
     ],
     visibility = ["//visibility:public"],
     deps = [

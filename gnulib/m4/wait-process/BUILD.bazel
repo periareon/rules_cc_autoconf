@@ -3,13 +3,20 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# gl_WAIT_PROCESS - lines 9-13
 autoconf(
     name = "wait-process",
     checks = [
+        # AC_CHECK_FUNCS([waitid]) - line 12
         macros.AC_CHECK_FUNC(
             "waitid",
             define = "HAVE_WAITID",
+            code = "#include <sys/wait.h>\n",
         ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/sig_atomic_t",  # AC_REQUIRE([gt_TYPE_SIG_ATOMIC_T]) - line 11
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

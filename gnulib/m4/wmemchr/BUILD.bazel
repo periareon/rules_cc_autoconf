@@ -3,25 +3,38 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# gl_FUNC_WMEMCHR macro from wmemchr.m4
-# Uses AC_LINK_IFELSE because MSVC 9 provides wmemchr as inline function
+# gl_FUNC_WMEMCHR - lines 9-25
 autoconf(
     name = "wmemchr",
     checks = [
-        # AC_LINK_IFELSE to check for wmemchr
-        macros.AC_TRY_COMPILE(
+        # AC_CACHE_CHECK([for wmemchr], [gl_cv_func_wmemchr], ...) - lines 15-23
+        # AC_LINK_IFELSE to check for wmemchr (not AC_CHECK_FUNCS because MSVC 9
+        # provides it as an inline function)
+        macros.AC_TRY_LINK(
             code = """\
 #include <wchar.h>
 int main(void) {
     return ! wmemchr ((const wchar_t *) 0, (wchar_t) ' ', 0);
 }
 """,
-            define = "HAVE_WMEMCHR",
+            define = "gl_cv_func_wmemchr",
+        ),
+        
+        # if test $gl_cv_func_wmemchr = no; then
+        #   HAVE_WMEMCHR=0 - line 24
+        # fi
+        # Note: The m4 file only sets HAVE_WMEMCHR=0 if the function doesn't exist.
+        # If it exists, HAVE_WMEMCHR is not set (remains undefined).
+        # Based on golden files, on macOS wmemchr doesn't exist, so HAVE_WMEMCHR is undefined.
+        macros.AC_SUBST(
+            "HAVE_WMEMCHR",
+            "0",
+            requires = ["gl_cv_func_wmemchr==0"],
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_WCHAR_H_DEFAULTS])
-        "//gnulib/m4/wchar_h",
+        "//gnulib/m4/wchar_h:defaults",  # AC_REQUIRE([gl_WCHAR_H_DEFAULTS]) - line 13
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

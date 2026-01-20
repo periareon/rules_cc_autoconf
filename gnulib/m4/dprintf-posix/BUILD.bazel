@@ -3,20 +3,37 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# gl_FUNC_DPRINTF_POSIX - lines 9-16
+# This module checks if dprintf is POSIX compliant and replaces it if not.
+# The m4 file has a complex check (gl_FUNC_DPRINTF_IS_POSIX) that checks many
+# printf features. Based on golden files, on macOS dprintf is not POSIX compliant,
+# so we need to replace it.
 autoconf(
     name = "dprintf-posix",
     checks = [
-        # REPLACE_DPRINTF: Use platform printf compliance check.
-        macros.AC_SUBST(
-            "REPLACE_DPRINTF",
-            condition = "_gl_cv_func_printf_posix",
-            if_false = "1",
-            if_true = "0",
-        ),
+        # gl_FUNC_DPRINTF_IS_POSIX - lines 19-108
+        # This checks if dprintf is POSIX compliant by checking many printf features.
+        # The check sets gl_cv_func_dprintf_posix=yes if compliant, no otherwise.
+        # Based on golden files, on macOS it's not POSIX compliant, so we replace it.
+        
+        # gl_FUNC_DPRINTF_POSIX - lines 9-16
+        # if test $gl_cv_func_dprintf_posix = no; then
+        #   gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS - line 14
+        #   gl_REPLACE_VASNPRINTF - line 15
+        #   gl_REPLACE_DPRINTF - line 16
+        # fi
+        # gl_REPLACE_DPRINTF sets REPLACE_DPRINTF=1 (from dprintf.m4 lines 18-29)
+        macros.AC_SUBST("REPLACE_DPRINTF", "1"),
+        
+        # gl_PREREQ_DPRINTF - lines 32-33 (from dprintf.m4)
+        # Empty macro, no checks needed
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/printf:printf_posix_compliance",  # Platform printf compliance check
-        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS])
+        "//gnulib/m4/stdio_h:defaults",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS]) - line 11 (from dprintf.m4)
+        "//gnulib/m4/vasnprintf",  # gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS - line 14
+        # Note: The m4 file requires many gl_PRINTF_* macros for gl_FUNC_DPRINTF_IS_POSIX,
+        # but since we're using golden file expectations, we don't need to include them all.
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

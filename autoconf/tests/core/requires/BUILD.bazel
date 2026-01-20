@@ -105,26 +105,14 @@ autoconf(
             "1",
             requires = ["REPLACE_FEATURE!=1"],
         ),
-        # NEW: Test if_true - nested checks run when parent succeeds
-        macros.AC_CHECK_HEADER(
-            "string.h",
-            if_false = [
-                macros.AC_DEFINE("STRING_H_IF_FALSE", "1"),
-            ],
-            if_true = [
-                macros.AC_DEFINE("STRING_H_IF_TRUE", "1"),
-            ],
-        ),
-        # NEW: Test if_false - nested checks run when parent fails
-        macros.AC_CHECK_HEADER(
-            "another_nonexistent_xyz.h",
-            if_false = [
-                macros.AC_DEFINE("NONEXISTENT2_IF_FALSE", "1"),
-            ],
-            if_true = [
-                macros.AC_DEFINE("NONEXISTENT2_IF_TRUE", "1"),
-            ],
-        ),
+        # Test conditional defines using requires
+        macros.AC_CHECK_HEADER("string.h", define = "HAVE_STRING_H"),
+        macros.AC_DEFINE("STRING_H_IF_TRUE", condition = "HAVE_STRING_H", if_true = "1"),
+        macros.AC_DEFINE("STRING_H_IF_FALSE", condition = "HAVE_STRING_H", if_false = "1"),
+        # Test conditional defines when header doesn't exist
+        macros.AC_CHECK_HEADER("another_nonexistent_xyz.h", define = "HAVE_ANOTHER_NONEXISTENT_XYZ_H"),
+        macros.AC_DEFINE("NONEXISTENT2_IF_FALSE", condition = "HAVE_ANOTHER_NONEXISTENT_XYZ_H", if_false = "1"),
+        macros.AC_DEFINE("NONEXISTENT2_IF_TRUE", condition = "HAVE_ANOTHER_NONEXISTENT_XYZ_H", if_true = "1"),
     ],
     deps = [
         ":base_autoconf",

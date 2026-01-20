@@ -10,23 +10,14 @@ autoconf(
     checks = [
         # AC_REQUIRE([AC_TYPE_MBSTATE_T]) - line 210
         # AC_TYPE_MBSTATE_T checks for mbstate_t type
-        # We need to explicitly define HAVE_MBSTATE_T based on the check
-        # (similar to how mbrtowc does it)
-        macros.AC_CHECK_TYPE(
-            "mbstate_t",
-            code = """\
-#include <wchar.h>
-mbstate_t x;
-""",
-            define = "HAVE_MBSTATE_T",
-        ),
+        # This is provided by mbsrtowcs dependency via AC_TYPE_MBSTATE_T
         # AC_CHECK_FUNCS_ONCE([mbsrtowcs]) - line 211
         # This provides HAVE_MBSRTOWCS via mbsrtowcs dependency
     ],
     visibility = ["//visibility:public"],
     deps = [
         # AC_REQUIRE([AC_TYPE_MBSTATE_T]) - line 210
-        # We check for mbstate_t directly above, so we don't need AC_TYPE_MBSTATE_T dependency
+        # This is provided by mbsrtowcs dependency
         # AC_CHECK_FUNCS_ONCE([mbsrtowcs]) - line 211
         "//gnulib/m4/mbsrtowcs",
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility

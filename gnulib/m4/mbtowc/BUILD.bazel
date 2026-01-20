@@ -3,28 +3,44 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# gl_FUNC_MBTOWC - lines 12-25
+# Checks for mbtowc function and sets HAVE_MBTOWC and REPLACE_MBTOWC
 autoconf(
     name = "mbtowc",
     checks = [
+        # gl_CHECK_FUNCS_ANDROID([mbtowc], [[#include <stdlib.h>]]) - line 15
         # Check for mbtowc function
-        # Equivalent to gl_FUNC_MBTOWC macro from mbtowc.m4
-        macros.AC_TRY_COMPILE(
-            code = """#include <stdlib.h>
-
-#ifdef __cplusplus
-extern "C"
-#endif
-int mbtowc ();
-
-int main(void) {
-    return mbtowc();
-}""",
-            define = "HAVE_MBTOWC",
-            language = "c",
+        # gl_CHECK_FUNCS_ANDROID is similar to AC_CHECK_FUNC but with Android-specific handling
+        # Use internal define to avoid conflict with substitution variable
+        macros.AC_CHECK_FUNC(
+            "mbtowc",
+            define = "_gl_cv_func_mbtowc",
         ),
+        
+        # Set HAVE_MBTOWC as define if function exists
+        macros.AC_DEFINE(
+            "HAVE_MBTOWC",
+            "1",
+            requires = ["_gl_cv_func_mbtowc==1"],
+        ),
+        
+        # Set HAVE_MBTOWC=0 as substitution variable if function is not found (line 17)
+        macros.AC_SUBST(
+            "HAVE_MBTOWC",
+            "0",
+            requires = ["_gl_cv_func_mbtowc==0"],
+        ),
+        
+        # Set REPLACE_MBTOWC based on conditions
+        # If mbtowc is not found and it's a future function, REPLACE_MBTOWC=1 (line 19)
+        # Otherwise, REPLACE_MBTOWC=0 (default, line 22-24 has `if false` which never executes)
+        # Based on golden file, REPLACE_MBTOWC=0 on macOS
+        macros.AC_SUBST("REPLACE_MBTOWC", "0"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/stdlib_h",  # AC_REQUIRE([gl_STDLIB_H_DEFAULTS])
+        # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - line 14 (ignore, it's a _DEFAULTS function)
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

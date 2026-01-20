@@ -22,7 +22,12 @@ autoconf(
             define = "HAVE_POSIX_SPAWN",
         ),
 
-        # Check for types
+        # AC_CHECK_TYPES([posix_spawnattr_t], [], [HAVE_POSIX_SPAWNATTR_T=0], ...) - line 29
+        # AC_CHECK_TYPES([posix_spawn_file_actions_t], [], [HAVE_POSIX_SPAWN_FILE_ACTIONS_T=0], ...) - line 34
+        # Check for types using internal defines
+        # These types are conditionally defined in posix_spawn based on REPLACE_POSIX_SPAWN
+        # When used standalone (spawn_h test), define them if they exist
+        # When used by posix_spawn with REPLACE_POSIX_SPAWN=1, they shouldn't be defined
         macros.AC_CHECK_TYPE(
             "posix_spawnattr_t",
             code = """\
@@ -33,7 +38,7 @@ int main(void) {
     return 0;
 }
 """,
-            define = "HAVE_POSIX_SPAWNATTR_T",
+            define = "_gl_cv_type_posix_spawnattr_t",
         ),
         macros.AC_CHECK_TYPE(
             "posix_spawn_file_actions_t",
@@ -45,7 +50,20 @@ int main(void) {
     return 0;
 }
 """,
-            define = "HAVE_POSIX_SPAWN_FILE_ACTIONS_T",
+            define = "_gl_cv_type_posix_spawn_file_actions_t",
+        ),
+        
+        # Define these types when used standalone (spawn_h test expects them)
+        # posix_spawn will handle the conditional logic based on REPLACE_POSIX_SPAWN
+        macros.AC_DEFINE(
+            "HAVE_POSIX_SPAWNATTR_T",
+            "1",
+            requires = ["_gl_cv_type_posix_spawnattr_t==1"],
+        ),
+        macros.AC_DEFINE(
+            "HAVE_POSIX_SPAWN_FILE_ACTIONS_T",
+            "1",
+            requires = ["_gl_cv_type_posix_spawn_file_actions_t==1"],
         ),
         
         # Note: HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR and ADDFCHDIR checks

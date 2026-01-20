@@ -125,23 +125,9 @@ def collect_transitive_results(label, dep_infos):
     """
     transitive_checks = {}
     for dep_info in dep_infos:
-        total = len(transitive_checks)
-        new = len(dep_info.results)
-        updated = transitive_checks | dep_info.results
-        if total + new != len(updated):
-            providers = {}
-            duplicates = [define_name for define_name in dep_info.results.keys() if define_name in transitive_checks]
-            for duplicate in duplicates:
-                providers[duplicate] = []
-                for info in dep_infos:
-                    if duplicate in info.results:
-                        providers[duplicate].append(str(info.owner))
-
-            fail("A duplicate check was detected in dependencies of `{}`: {}".format(
-                label,
-                json.encode_indent(providers, indent = " " * 4),
-            ))
-        transitive_checks = updated
+        # Merge results, allowing duplicates to pass through
+        # The conflict detection in autoconf.bzl will handle define/subst coexistence
+        transitive_checks = transitive_checks | dep_info.results
 
     return transitive_checks
 

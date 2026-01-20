@@ -59,6 +59,8 @@ std::optional<CheckResult> CheckResult::from_json(const std::string& define_name
             type = CheckType::kLink;
         } else if (type_str == "define") {
             type = CheckType::kDefine;
+        } else if (type_str == "define_unquoted") {
+            type = CheckType::kDefineUnquoted;
         } else if (type_str == "subst") {
             type = CheckType::kSubst;
         } else if (type_str == "m4_define") {

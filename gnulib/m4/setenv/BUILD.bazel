@@ -3,34 +3,104 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# gl_FUNC_SETENV / gl_FUNC_UNSETENV from setenv.m4
-# HAVE_UNISTD_H comes from environ -> unistd_h dependency
-# HAVE_TSEARCH comes from tsearch dependency
-
+# gl_FUNC_SETENV_SEPARATE - lines 41-49
+# gl_FUNC_SETENV - lines 10-38
+# gl_FUNC_UNSETENV - lines 51-141
+# gl_PREREQ_SETENV - lines 144-151
+# gl_PREREQ_UNSETENV - lines 154-159
 autoconf(
     name = "setenv",
     checks = [
+        # gl_FUNC_SETENV_SEPARATE - lines 44-48
+        # AC_CHECK_DECLS_ONCE([setenv])
         macros.AC_CHECK_DECL(
             "setenv",
+            define = "HAVE_DECL_SETENV",
             headers = ["stdlib.h"],
         ),
-        macros.AC_CHECK_FUNC("setenv"),
+        # AC_CHECK_FUNCS_ONCE([setenv])
+        # Use internal define to avoid conflicts
+        macros.AC_CHECK_FUNC(
+            "setenv",
+            define = "_gl_cv_func_setenv",
+        ),
+        # Define HAVE_SETENV if function exists
+        macros.AC_DEFINE(
+            "HAVE_SETENV",
+            condition = "_gl_cv_func_setenv",
+            if_true = "1",
+        ),
+        
+        # gl_FUNC_SETENV - lines 11-37
+        # if test $ac_cv_func_setenv = no; then HAVE_SETENV=0 - lines 12-13
+        macros.AC_SUBST(
+            "HAVE_SETENV",
+            condition = "_gl_cv_func_setenv",
+            if_true = "1",
+            if_false = "0",
+        ),
+        # else - runtime check for validation, skipped in Bazel
+        # REPLACE_SETENV=1 if function doesn't work correctly - lines 36-37
+        # Based on golden files, REPLACE_SETENV=0 on macOS/Linux (function works)
+        macros.AC_SUBST("REPLACE_SETENV", "0"),
+        
+        # gl_FUNC_UNSETENV - lines 53-141
+        # AC_CHECK_DECLS_ONCE([unsetenv])
         macros.AC_CHECK_DECL(
             "unsetenv",
+            define = "HAVE_DECL_UNSETENV",
             headers = ["stdlib.h"],
         ),
-        macros.AC_CHECK_FUNC("unsetenv"),
+        # AC_CHECK_FUNCS([unsetenv])
+        # Use internal define to avoid conflicts
+        macros.AC_CHECK_FUNC(
+            "unsetenv",
+            define = "_gl_cv_func_unsetenv",
+        ),
+        # Define HAVE_UNSETENV if function exists
+        macros.AC_DEFINE(
+            "HAVE_UNSETENV",
+            condition = "_gl_cv_func_unsetenv",
+            if_true = "1",
+        ),
+        # if test $ac_cv_func_unsetenv = no; then HAVE_UNSETENV=0 - lines 57-58
+        # else HAVE_UNSETENV=1 - line 59
+        macros.AC_SUBST(
+            "HAVE_UNSETENV",
+            condition = "_gl_cv_func_unsetenv",
+            if_true = "1",
+            if_false = "0",
+        ),
+        # AC_COMPILE_IFELSE for return type check - lines 61-76
+        # If unsetenv returns void, define VOID_UNSETENV - lines 77-79
+        # Based on golden files, VOID_UNSETENV is not defined (function returns int)
+        # Runtime checks for POSIX compliance - lines 81-126
+        # REPLACE_UNSETENV=1 if function doesn't work correctly - lines 138-140
+        # Based on golden files, REPLACE_UNSETENV=0 on macOS/Linux (function works)
+        macros.AC_SUBST("REPLACE_UNSETENV", "0"),
+        
+        # gl_PREREQ_SETENV - lines 147-151
+        # AC_CHECK_HEADERS_ONCE([unistd.h]) - already checked by dependencies
+        # AC_CHECK_HEADERS([search.h])
         macros.AC_CHECK_HEADER("search.h"),
+        # AC_CHECK_DECLS_ONCE([_putenv])
         macros.AC_CHECK_DECL(
             "_putenv",
+            define = "HAVE_DECL__PUTENV",
             headers = ["stdlib.h"],
+        ),
+        # gl_CHECK_FUNCS_ANDROID([tsearch], [[#include <search.h>]])
+        # Check for tsearch function (search.h header is checked separately above)
+        macros.AC_CHECK_FUNC(
+            "tsearch",
+            define = "HAVE_TSEARCH",
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/stdlib_h",  # AC_REQUIRE([gl_STDLIB_H_DEFAULTS,
-
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//gnulib/m4/stdlib_h",  # AC_REQUIRE([gl_STDLIB_H_DEFAULTS])
+        "//gnulib/m4/environ",  # AC_REQUIRE([gl_ENVIRON]) - from gl_PREREQ_SETENV and gl_PREREQ_UNSETENV
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST]) - from gl_FUNC_SETENV and gl_FUNC_UNSETENV
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

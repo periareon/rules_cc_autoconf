@@ -297,9 +297,10 @@ int Checker::run_checks_by_define(
                         }
 
                         // If value is empty, check if it should create a define
-                        // For AC_DEFINE (kDefine type) with empty value (if_true="" or if_false=""), we want "#define NAME " (empty value)
+                        // For AC_DEFINE (kDefine type) with empty value (if_true="" or if_false=""), we want "#define NAME /**/"
+                        // For AC_DEFINE_UNQUOTED (kDefineUnquoted type) with empty value, we want "#define NAME " (trailing space)
                         // For AC_DEFINE with if_false=None, we don't want to define it
-                        // Only kDefine type creates defines with empty values
+                        // Only kDefine and kDefineUnquoted types create defines with empty values
                         bool should_create_define = false;
                         if (value.empty()) {
                             // If we're using if_true and it's empty, or if we're using if_false and it's empty,
@@ -310,13 +311,13 @@ int Checker::run_checks_by_define(
                                 // Using if_true branch - check if if_true was explicitly set to empty string
                                 if (check.define_value().has_value() && check.define_value()->empty()) {
                                     // if_true was explicitly set to empty string
-                                    should_create_define = (check.type() == CheckType::kDefine);
+                                    should_create_define = (check.type() == CheckType::kDefine || check.type() == CheckType::kDefineUnquoted);
                                 }
                             } else {
                                 // Using if_false branch - check if if_false was explicitly set to empty string
                                 if (check.define_value_fail().has_value() && check.define_value_fail()->empty()) {
                                     // if_false was explicitly set to empty string
-                                    should_create_define = (check.type() == CheckType::kDefine);
+                                    should_create_define = (check.type() == CheckType::kDefine || check.type() == CheckType::kDefineUnquoted);
                                 }
                             }
                             // Otherwise, if_false was not provided (None), so don't create a define

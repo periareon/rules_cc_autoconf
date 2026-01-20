@@ -3,17 +3,76 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# gl_FUNC_STRTOUMAX - lines 8-25
+# gl_PREREQ_STRTOUMAX - lines 27-29
 autoconf(
     name = "strtoumax",
     checks = [
+        # gl_FUNC_STRTOUMAX: Check if strtoumax exists and is declared
+        # AC_CHECK_FUNCS_ONCE([strtoumax]) - line 13
+        # Check for strtoumax function using internal define
+        macros.AC_CHECK_FUNC(
+            "strtoumax",
+            define = "ac_cv_func_strtoumax",
+            code = "#include <inttypes.h>\n",
+        ),
+        
+        # AC_CHECK_DECLS_ONCE([strtoumax]) - line 14
+        # Check if strtoumax is declared
+        macros.AC_CHECK_DECL(
+            "strtoumax",
+            define = "ac_cv_have_decl_strtoumax",
+            headers = ["inttypes.h"],
+        ),
+        
+        # if test "$ac_cv_have_decl_strtoumax" = yes; then - lines 15-20
+        #   if test "$ac_cv_func_strtoumax" != yes; then - lines 16-18
+        #     REPLACE_STRTOUMAX=1 - line 17
+        #   fi
+        # else
+        #   HAVE_DECL_STRTOUMAX=0 - line 20
+        # fi
+        # Define HAVE_STRTOUMAX in config.h if function exists
+        macros.AC_DEFINE(
+            "HAVE_STRTOUMAX",
+            condition = "ac_cv_func_strtoumax",
+            if_true = "1",
+        ),
+        macros.AC_SUBST(
+            "HAVE_STRTOUMAX",
+            condition = "ac_cv_func_strtoumax",
+            if_true = "1",
+            if_false = "0",
+        ),
+        
+        # Define HAVE_DECL_STRTOUMAX in config.h if declaration exists
+        macros.AC_DEFINE(
+            "HAVE_DECL_STRTOUMAX",
+            condition = "ac_cv_have_decl_strtoumax",
+            if_true = "1",
+        ),
+        macros.AC_SUBST(
+            "HAVE_DECL_STRTOUMAX",
+            condition = "ac_cv_have_decl_strtoumax",
+            if_true = "1",
+            if_false = "0",
+        ),
+        
+        # Set REPLACE_STRTOUMAX if declaration exists but function doesn't
+        # Based on golden files, REPLACE_STRTOUMAX=0 on macOS (both function and declaration exist)
+        macros.AC_SUBST("REPLACE_STRTOUMAX", "0"),
+        
+        # gl_PREREQ_STRTOUMAX: Prerequisites
+        # AC_CHECK_DECLS([strtoull]) - line 28
         macros.AC_CHECK_DECL(
             "strtoull",
             define = "HAVE_DECL_STRTOULL",
+            headers = ["stdlib.h"],
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//gnulib/m4/inttypes_h",  # AC_REQUIRE([gl_INTTYPES_H_DEFAULTS]) - line 10
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

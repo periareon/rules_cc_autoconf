@@ -1,15 +1,68 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sockpfaf.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
 
-# HAVE_NETINET_IN_H comes from netinet_in_h dependency
-# HAVE_SYS_UN_H comes from sys_un_h dependency
-
+# gl_SOCKET_FAMILIES - lines 15-50
+# gl_SOCKET_FAMILY_UNIX - lines 52-80
 autoconf(
     name = "sockpfaf",
-    checks = [],
+    checks = [
+        # gl_SOCKET_FAMILY_UNIX: Check for UNIX domain sockets
+        # AC_CHECK_HEADERS_ONCE([sys/un.h]) - line 55
+        # Check for sys/un.h header (AC_CHECK_HEADERS_ONCE prevents duplicate checks in autoconf)
+        macros.AC_CHECK_HEADER("sys/un.h", define = "ac_cv_header_sys_un_h"),
+        
+        # Define HAVE_SYS_UN_H in config.h if header exists
+        macros.AC_DEFINE(
+            "HAVE_SYS_UN_H",
+            condition = "ac_cv_header_sys_un_h",
+            if_true = "1",
+        ),
+        
+        # Check for afunix.h on Windows - lines 58-60 (skipped, not needed for macOS)
+        # AC_CACHE_CHECK([for UNIX domain sockets], [gl_cv_socket_unix]) - lines 62-75
+        macros.AC_TRY_COMPILE(
+            code = """\
+#include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#include <sys/un.h>
+#ifdef HAVE_WINSOCK2_H
+#include <winsock2.h>
+#endif
+#ifdef HAVE_AFUNIX_H
+#include <afunix.h>
+#endif
+
+int main(void) {
+    int x = AF_UNIX;
+    struct sockaddr_un y;
+    if (&x && &y) return 0;
+    return 1;
+}
+""",
+            define = "gl_cv_socket_unix",
+            language = "c",
+            requires = ["ac_cv_header_sys_un_h"],  # Require that sys/un.h header check passes first
+            compile_defines = ["HAVE_SYS_UN_H"],  # Pass HAVE_SYS_UN_H as compile define
+        ),
+        
+        # if test $gl_cv_socket_unix = yes; then - lines 76-78
+        #   AC_DEFINE([HAVE_UNIXSOCKET], [1], ...) - line 77
+        # fi
+        macros.AC_DEFINE(
+            "HAVE_UNIXSOCKET",
+            condition = "gl_cv_socket_unix",
+            if_true = "1",
+        ),
+    ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/netinet_in_h",
+        "//gnulib/m4/sys_socket_h",  # AC_REQUIRE([gl_SYS_SOCKET_H]) - line 54
+        "//gnulib/m4/netinet_in_h",  # For HAVE_NETINET_IN_H
+        # Note: AC_CHECK_HEADERS_ONCE([sys/un.h]) - line 55 - we check for it here to break cycle with sys_un_h
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

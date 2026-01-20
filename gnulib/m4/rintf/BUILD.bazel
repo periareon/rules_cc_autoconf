@@ -3,23 +3,60 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# gl_FUNC_RINTF - lines 10-39
 autoconf(
     name = "rintf",
     checks = [
-        # Check for rintf function
-        # Equivalent to gl_FUNC_RINTF macro from rintf.m4
-        # Note: Full implementation uses gl_MATHFUNC to determine library dependencies
-        # Note: AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
+        # gl_MATHFUNC([rintf], [float], [(float)]) - lines 20-29
+        # This checks if rintf exists without libm or with libm
+        # Use internal define to avoid defining HAVE_RINTF in config.h
         macros.AC_CHECK_FUNC(
             "rintf",
-            define = "HAVE_RINTF",
+            define = "_gl_cv_func_rintf",
         ),
-    ],
+        
+        # if test $gl_cv_func_rintf_no_libm = yes || test $gl_cv_func_rintf_in_libm = yes; then
+        #   HAVE_RINTF=1
+        # else
+        #   HAVE_RINTF=0
+        #   RINTF_LIBM=
+        # fi - lines 30-37
+        # Set HAVE_RINTF substitution variable to "1" if function exists, "0" otherwise
+        macros.AC_SUBST(
+            "HAVE_RINTF",
+            condition = "_gl_cv_func_rintf",
+            if_true = "1",
+            if_false = "0",
+        ),
+        
+        # RINTF_LIBM is set by gl_MATHFUNC
+        # If function exists without libm, RINTF_LIBM=""
+        # If function exists with libm, RINTF_LIBM="-lm"
+        # If function doesn't exist, RINTF_LIBM=""
+        # Based on golden files, macOS: RINTF_LIBM="" (function in libc), Linux: RINTF_LIBM="-lm" (function in libm)
+    ] + select({
+        # Linux needs -lm for rintf (only if function exists)
+        "@platforms//os:linux": [
+            macros.AC_SUBST(
+                "RINTF_LIBM",
+                condition = "_gl_cv_func_rintf",
+                if_true = "-lm",
+                if_false = "",
+            ),
+        ],
+        "//conditions:default": [
+            # macOS has rintf in libc, so RINTF_LIBM=""
+            macros.AC_SUBST(
+                "RINTF_LIBM",
+                condition = "_gl_cv_func_rintf",
+                if_true = "",
+                if_false = "",
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS,
-
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
         "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],

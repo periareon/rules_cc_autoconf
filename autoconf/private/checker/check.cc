@@ -23,6 +23,8 @@ std::string check_type_to_string(CheckType type) {
             return "link";
         case CheckType::kDefine:
             return "define";
+        case CheckType::kDefineUnquoted:
+            return "define_unquoted";
         case CheckType::kSubst:
             return "subst";
         case CheckType::kM4Define:
@@ -105,6 +107,8 @@ std::optional<Check> Check::from_json(const void* json_data) {
         type = CheckType::kMember;
     } else if (type_str == "define") {
         type = CheckType::kDefine;
+    } else if (type_str == "define_unquoted") {
+        type = CheckType::kDefineUnquoted;
     } else if (type_str == "subst") {
         type = CheckType::kSubst;
     } else if (type_str == "m4_define") {

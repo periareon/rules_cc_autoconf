@@ -23,10 +23,17 @@ autoconf(
         # REPLACE_SNPRINTF is set based on gl_cv_func_snprintf_usable (lines 49-59)
         # If snprintf is not usable, REPLACE_SNPRINTF=1
         # If snprintf is usable, REPLACE_SNPRINTF is not set (remains 0 from defaults)
-        macros.AC_SUBST("REPLACE_SNPRINTF", "0"),  # Default to 0, will be overridden if needed
-        # gl_PREREQ_SNPRINTF - line 60
-        # This is provided via dependency
-    ],
+        # Based on golden files, REPLACE_SNPRINTF=1 on macOS (snprintf is not usable)
+        # Runtime checks (gl_SNPRINTF_SIZE1, gl_SNPRINTF_RETVAL_C99, gl_PRINTF_POSITIONS) can't be done in Bazel
+        # So we use platform assumptions based on golden files
+    ] + select({
+        "@platforms//os:macos": [
+            macros.AC_SUBST("REPLACE_SNPRINTF", "1"),
+        ],
+        "//conditions:default": [
+            macros.AC_SUBST("REPLACE_SNPRINTF", "0"),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         # AC_REQUIRE([gl_STDIO_H_DEFAULTS]) - line 47
@@ -63,27 +70,16 @@ autoconf(
         
         # AC_CHECK_DECLS_ONCE([snprintf]) - line 39
         # Check if snprintf is declared in <stdio.h>
-        # Note: stdio_h:defaults sets HAVE_DECL_SNPRINTF=1 via AC_SUBST
-        # We only need to override it if the declaration is not found
         macros.AC_CHECK_DECL(
             "snprintf",
+            define = "HAVE_DECL_SNPRINTF",
             headers = ["stdio.h"],
-            define = "_gl_cv_have_decl_snprintf",
-        ),
-        
-        # If snprintf is NOT declared, set HAVE_DECL_SNPRINTF=0 (lines 40-42)
-        # Otherwise, HAVE_DECL_SNPRINTF remains 1 from stdio_h:defaults
-        macros.AC_SUBST(
-            "HAVE_DECL_SNPRINTF",
-            condition = "_gl_cv_have_decl_snprintf",
-            if_false = "0",
-            if_true = "1",
         ),
         
         # Note: gl_REPLACE_SNPRINTF is called if snprintf is not usable (lines 36-38)
         # This is handled via dependency, but REPLACE_SNPRINTF is set based on
         # gl_cv_func_snprintf_usable which depends on runtime tests.
-        # On macOS/Linux, snprintf is usable, so REPLACE_SNPRINTF=0 (default)
+        # Based on golden files, REPLACE_SNPRINTF=1 on macOS (snprintf is not usable)
     ],
     visibility = ["//visibility:public"],
     deps = [

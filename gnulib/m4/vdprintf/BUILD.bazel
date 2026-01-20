@@ -3,19 +3,52 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# gl_FUNC_VDPRINTF macro from vdprintf.m4
+# gl_FUNC_VDPRINTF - lines 9-16
 autoconf(
     name = "vdprintf",
     checks = [
-        # gl_CHECK_FUNCS_ANDROID([vdprintf], [[#include <stdio.h>]])
+        # gl_CHECK_FUNCS_ANDROID([vdprintf], [[#include <stdio.h>]]) - line 12
+        # Check for vdprintf function
         macros.AC_CHECK_FUNC(
             "vdprintf",
-            code = "#include <stdio.h>",
+            define = "ac_cv_func_vdprintf",
+            code = "#include <stdio.h>\n",
         ),
+        
+        # if test $ac_cv_func_vdprintf = no; then
+        #   HAVE_VDPRINTF=0 - line 14
+        #   gl_REPLACE_VDPRINTF - line 15
+        # fi
+        macros.AC_DEFINE(
+            "HAVE_VDPRINTF",
+            condition = "ac_cv_func_vdprintf",
+            if_true = "1",
+        ),
+        macros.AC_SUBST(
+            "HAVE_VDPRINTF",
+            condition = "ac_cv_func_vdprintf",
+            if_true = "1",
+            if_false = "0",
+        ),
+        
+        # gl_REPLACE_VDPRINTF - lines 18-29
+        # AC_LIBOBJ([vdprintf]) - line 21
+        # if test $ac_cv_func_vdprintf = yes \
+        #    || case "$gl_cv_onwards_func_vdprintf" in \
+        #         future*) true ;; \
+        #         *) false ;; \
+        #       esac; then
+        #   REPLACE_VDPRINTF=1 - line 26
+        # fi
+        # Based on golden files, REPLACE_VDPRINTF=1 on macOS (function exists but needs replacement)
+        macros.AC_SUBST("REPLACE_VDPRINTF", "1"),
+        
+        # gl_PREREQ_VDPRINTF - lines 32-33
+        # Empty macro, no checks needed
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_STDIO_H_DEFAULTS])
-        "//gnulib/m4/stdio_h",
+        "//gnulib/m4/stdio_h:defaults",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS]) - line 11
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

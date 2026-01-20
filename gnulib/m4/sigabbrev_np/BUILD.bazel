@@ -3,17 +3,30 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# gl_FUNC_SIGABBREV_NP - lines 8-17
 autoconf(
     name = "sigabbrev_np",
     checks = [
+        # AC_CHECK_FUNCS([sigabbrev_np]) - line 14
+        # Use internal define to avoid defining HAVE_SIGABBREV_NP in config.h
         macros.AC_CHECK_FUNC(
             "sigabbrev_np",
-            define = "HAVE_SIGABBREV_NP",
+            define = "_gl_cv_func_sigabbrev_np",
+        ),
+        
+        # if test $ac_cv_func_sigabbrev_np = no; then HAVE_SIGABBREV_NP=0 - lines 15-16
+        # Set HAVE_SIGABBREV_NP substitution variable to "0" if function doesn't exist
+        # If function exists, HAVE_SIGABBREV_NP is not set (no substitution variable)
+        macros.AC_SUBST(
+            "HAVE_SIGABBREV_NP",
+            condition = "_gl_cv_func_sigabbrev_np",
+            if_false = "0",
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
+        "//gnulib/m4/string_h",  # AC_REQUIRE([gl_STRING_H_DEFAULTS])
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

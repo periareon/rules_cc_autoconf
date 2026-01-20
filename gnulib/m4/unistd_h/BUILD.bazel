@@ -7,11 +7,23 @@ autoconf(
     name = "unistd_h",
     checks = [
         # gl_UNISTD_H checks for unistd.h header
-        # Check for execvpe declaration - golden file shows HAVE_DECL_EXECVPE 0 (not found)
+        # AC_CHECK_DECLS_ONCE([execvpe]) - line ~53
+        # This checks for execvpe declaration and sets HAVE_DECL_EXECVPE=0 as substitution variable if not found
+        # But it doesn't create a define in config.h unless the declaration is found
+        # Use internal define to avoid creating a define in config.h when not found
         macros.AC_CHECK_DECL(
             "execvpe",
-            define = "HAVE_DECL_EXECVPE",
+            define = "_gl_cv_have_decl_execvpe",
             headers = ["unistd.h"],
+        ),
+        
+        # Set HAVE_DECL_EXECVPE as substitution variable only
+        # If declaration is found, we don't set it (it's already 1 by default from AC_CHECK_DECL)
+        # If declaration is not found, set it to 0 as substitution variable
+        macros.AC_SUBST(
+            "HAVE_DECL_EXECVPE",
+            "0",
+            requires = ["_gl_cv_have_decl_execvpe==0"],
         ),
     ],
     visibility = ["//visibility:public"],

@@ -24,7 +24,6 @@ autoconf(
         # Backward compatibility: define HAVE_TM_GMTOFF if tm_gmtoff member exists
         macros.AC_DEFINE(
             "HAVE_TM_GMTOFF",
-            "1",
             condition = "HAVE_STRUCT_TM_TM_GMTOFF",
             if_true = "1",
         ),

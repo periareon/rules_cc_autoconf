@@ -1,2 +1,2 @@
 /* config.h.in */
-/* #undef WINDOWS_STAT_INODES */
+/* #undef SYSTEMD_CHOICE */

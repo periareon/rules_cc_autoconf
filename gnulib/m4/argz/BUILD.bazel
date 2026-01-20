@@ -33,17 +33,25 @@ int main(void) {
 }
 """,
                 define = "HAVE_ERROR_T",
-                if_false = [
-                    macros.AC_DEFINE("error_t", "int"),
-                    macros.AC_DEFINE("__error_t_defined", "1"),
-                ],
+            ),
+            macros.AC_DEFINE(
+                "error_t",
+                "int",
+                requires = ["HAVE_ERROR_T==0"],
+            ),
+            macros.AC_DEFINE(
+                "__error_t_defined",
+                "1",
+                requires = ["HAVE_ERROR_T==0"],
             ),
             macros.AC_CHECK_FUNC(
                 "argz_replace",
                 define = "HAVE_ARGZ_REPLACE",
-                if_false = [
-                    macros.AC_DEFINE("GL_GENERATE_ARGZ_H", "1"),
-                ],
+            ),
+            macros.AC_DEFINE(
+                "GL_GENERATE_ARGZ_H",
+                "1",
+                requires = ["HAVE_ARGZ_REPLACE==0"],
             ),
         ],
         "@platforms//os:macos": [
@@ -71,17 +79,25 @@ int main(void) {
 }
 """,
                 define = "HAVE_ERROR_T",
-                if_false = [
-                    macros.AC_DEFINE("error_t", "int"),
-                    macros.AC_DEFINE("__error_t_defined", "1"),
-                ],
+            ),
+            macros.AC_DEFINE(
+                "error_t",
+                "int",
+                requires = ["HAVE_ERROR_T==0"],
+            ),
+            macros.AC_DEFINE(
+                "__error_t_defined",
+                "1",
+                requires = ["HAVE_ERROR_T==0"],
             ),
             macros.AC_CHECK_FUNC(
                 "argz_replace",
                 define = "HAVE_ARGZ_REPLACE",
-                if_false = [
-                    macros.AC_DEFINE("GL_GENERATE_ARGZ_H", "1"),
-                ],
+            ),
+            macros.AC_DEFINE(
+                "GL_GENERATE_ARGZ_H",
+                "1",
+                requires = ["HAVE_ARGZ_REPLACE==0"],
             ),
         ],
     }),

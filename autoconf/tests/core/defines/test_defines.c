@@ -14,5 +14,12 @@ int main(void) {
     assert(HAVE_FOO == 1);
     assert(HAVE_FOO_BAR == 1);
 
+    // Verify AC_DEFINE_UNQUOTED values
+    // Note: We can't easily test empty values in C, but we can verify non-empty values
+    // The empty value test is verified by the diff_test comparing with golden file
+    #ifdef UNQUOTED_VALUE
+    // UNQUOTED_VALUE should be defined (but we can't easily test its value as a string in C)
+    #endif
+
     return 0;
 }

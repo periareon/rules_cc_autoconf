@@ -35,3 +35,9 @@
 
 /* Have empty value */
 #define EMPTY_VALUE /**/
+
+/* Unquoted value */
+#define UNQUOTED_VALUE test
+
+/* Unquoted empty value */
+#define UNQUOTED_EMPTY 

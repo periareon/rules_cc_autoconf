@@ -103,6 +103,8 @@ std::vector<CheckResult> load_results_from_file(
                 type = CheckType::kLink;
             } else if (type_str == "define") {
                 type = CheckType::kDefine;
+            } else if (type_str == "define_unquoted") {
+                type = CheckType::kDefineUnquoted;
             } else if (type_str == "subst") {
                 type = CheckType::kSubst;
             } else if (type_str == "m4_define") {

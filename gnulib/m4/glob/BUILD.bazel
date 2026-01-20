@@ -3,40 +3,149 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# gl_PREREQ_GLOB from glob.m4 (lines 178-184)
+# Prerequisites of lib/glob.c and lib/globfree.c.
+autoconf(
+    name = "gl_PREREQ_GLOB",
+    checks = [
+        # AC_REQUIRE([gl_CHECK_TYPE_STRUCT_DIRENT_D_TYPE]) - line 180
+        # Note: HAVE_STRUCT_DIRENT_D_TYPE is provided by d-type dependency
+
+        # AC_CHECK_HEADERS_ONCE([unistd.h]) - line 181
+        # Note: HAVE_UNISTD_H is provided by AC_CHECK_INCLUDES_DEFAULT dependency
+
+        # gl_CHECK_FUNCS_ANDROID([getlogin_r], [[#include <unistd.h>]]) - line 182
+        macros.AC_CHECK_FUNC("getlogin_r", define = "HAVE_GETLOGIN_R"),
+
+        # gl_CHECK_FUNCS_ANDROID([getpwnam_r], [[#include <pwd.h>]]) - line 183
+        macros.AC_CHECK_FUNC("getpwnam_r", define = "HAVE_GETPWNAM_R"),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # AC_REQUIRE([gl_CHECK_TYPE_STRUCT_DIRENT_D_TYPE]) - line 180
+        "//gnulib/m4/d-type",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_GLOB from glob.m4 (lines 13-175)
+# The glob module assumes you want GNU glob, with glob_pattern_p etc,
+# rather than vanilla POSIX glob.
 autoconf(
     name = "glob",
     checks = [
-        # Check for glob function
-        macros.AC_CHECK_FUNC("glob"),
+        # AC_REQUIRE([gl_GLOB_H]) - line 15
+        # Note: gl_GLOB_H is provided by glob_h dependency
 
-        # Check for glob_pattern_p function
-        macros.AC_CHECK_FUNC("glob_pattern_p"),
+        # AC_CHECK_FUNCS_ONCE([glob_pattern_p]) - line 17
+        # Use an internal define name to avoid conflicts with glob_h:defaults
+        # Note: glob_pattern_p is a GNU extension, not available on macOS
+        # AC_CHECK_FUNCS_ONCE includes default headers, but glob_pattern_p needs glob.h
+        macros.AC_TRY_LINK(
+            code = "return glob_pattern_p(\"test\");",
+            define = "_gl_cv_func_glob_pattern_p",
+            includes = ["glob.h"],
+        ),
 
-        # Related functions needed by lib/glob.c
-        macros.AC_CHECK_FUNC("getlogin_r"),
-        macros.AC_CHECK_FUNC("getpwnam_r"),
+        # gl_CHECK_FUNCS_ANDROID([glob], [[#include <glob.h>]]) - line 18
+        # Check for glob function (similar to AC_CHECK_FUNC but also checks Android-specific behavior)
+        # Use an internal define name to avoid conflicts with glob_h:defaults
+        macros.AC_CHECK_FUNC("glob", define = "_gl_cv_func_glob"),
 
-        # REPLACE_GLOB_PATTERN_P defaults to 0
-        macros.AC_SUBST("REPLACE_GLOB_PATTERN_P", "0"),
-    ] + select(
-        # REPLACE_GLOB logic from gnulib:
-        # The original macro does extensive runtime tests for:
-        # - Stack overflow with recursive calls (glibc <= 2.42, Cygwin, Android)
-        # - Broken symlinks handling (AIX, HP-UX)
-        # - GLOB_TILDE functionality
-        {
-            "@platforms//os:android": [macros.AC_SUBST("REPLACE_GLOB", "1")],  # Known stack overflow issues
-            "@platforms//os:windows": [macros.AC_SUBST("REPLACE_GLOB", "1")],  # No glob on Windows
-            # Note: glibc <= 2.42, Cygwin also have issues but hard to detect at build time
-            "//conditions:default": [macros.AC_SUBST("REPLACE_GLOB", "0")],  # Most modern systems have working glob
-        },
-    ),
+        # Create HAVE_GLOB define based on check result
+        # Note: glob_h:defaults provides HAVE_GLOB=1 by default, but we override it here
+        macros.AC_DEFINE(
+            "HAVE_GLOB",
+            condition = "_gl_cv_func_glob",
+            if_true = "1",
+        ),
+
+        # If glob not found, set HAVE_GLOB=0 (line 20)
+        # If glob found, HAVE_GLOB=1
+        macros.AC_SUBST(
+            "HAVE_GLOB",
+            condition = "_gl_cv_func_glob",
+            if_false = "0",
+            if_true = "1",
+        ),
+
+        # If glob not found and gl_cv_onwards_func_glob is future*, set REPLACE_GLOB=1 (lines 21-23)
+        # This is handled via select below
+
+        # Note: AC_RUN_IFELSE checks for gl_cv_glob_overflows_stack (lines 26-78),
+        # gl_cv_glob_lists_symlinks (lines 86-116), and gl_cv_glob_omit_nondir_symlinks
+        # (lines 124-155) are not directly portable to Bazel's cross-compilation environment.
+        # REPLACE_GLOB is set based on golden file expectations for macOS/Linux.
+        # The m4 sets REPLACE_GLOB=1 if:
+        # - glob doesn't exist and gl_cv_onwards_func_glob is future* (lines 21-23)
+        # - OR gl_cv_glob_overflows_stack = yes (line 81)
+        # - OR gl_cv_glob_lists_symlinks != yes (line 119)
+        # - OR gl_cv_glob_omit_nondir_symlinks != yes (line 158)
+        # On macOS, glob has bugs (stack overflow, symlink handling), so REPLACE_GLOB=1
+        # On Linux, glob works correctly, so REPLACE_GLOB=0
+        # Golden file shows REPLACE_GLOB=1 on macOS (matches golden_subst.h.in line 27)
+
+        # If glob_pattern_p not found, set HAVE_GLOB_PATTERN_P=0 (line 165)
+        # If glob_pattern_p found, HAVE_GLOB_PATTERN_P=1 (default from AC_CHECK_FUNC)
+        # Note: glob_h:defaults provides HAVE_GLOB_PATTERN_P=1 by default, but we override it here
+        macros.AC_DEFINE(
+            "HAVE_GLOB_PATTERN_P",
+            condition = "_gl_cv_func_glob_pattern_p",
+            if_true = "1",
+        ),
+
+        macros.AC_SUBST(
+            "HAVE_GLOB_PATTERN_P",
+            condition = "_gl_cv_func_glob_pattern_p",
+            if_false = "0",
+            if_true = "1",
+        ),
+
+        # If REPLACE_GLOB=1 and glob_pattern_p exists, set REPLACE_GLOB_PATTERN_P=1 (lines 167-169)
+        # Otherwise, REPLACE_GLOB_PATTERN_P=0
+        # This is handled in the select statement below
+    ] + select({
+        "@platforms//os:macos": [
+            # On macOS, glob has bugs, so REPLACE_GLOB=1
+            macros.AC_SUBST("REPLACE_GLOB", "1"),
+            # If glob_pattern_p exists and REPLACE_GLOB=1, set REPLACE_GLOB_PATTERN_P=1
+            macros.AC_SUBST(
+                "REPLACE_GLOB_PATTERN_P",
+                condition = "_gl_cv_func_glob_pattern_p",
+                if_true = "1",
+                if_false = "0",
+            ),
+        ],
+        "@platforms//os:android": [
+            # On Android, glob has stack overflow issues, so REPLACE_GLOB=1
+            macros.AC_SUBST("REPLACE_GLOB", "1"),
+            macros.AC_SUBST(
+                "REPLACE_GLOB_PATTERN_P",
+                condition = "_gl_cv_func_glob_pattern_p",
+                if_true = "1",
+                if_false = "0",
+            ),
+        ],
+        "@platforms//os:windows": [
+            # On Windows, glob doesn't exist, so REPLACE_GLOB=1
+            macros.AC_SUBST("REPLACE_GLOB", "1"),
+            macros.AC_SUBST("REPLACE_GLOB_PATTERN_P", "0"),
+        ],
+        "//conditions:default": [
+            # On Linux and other systems, glob works correctly, so REPLACE_GLOB=0
+            macros.AC_SUBST("REPLACE_GLOB", "0"),
+            # If REPLACE_GLOB=0, then REPLACE_GLOB_PATTERN_P=0 (line 169)
+            macros.AC_SUBST("REPLACE_GLOB_PATTERN_P", "0"),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/d-type",  # AC_REQUIRE([gl_CHECK_TYPE_STRUCT_DIRENT_D_TYPE,
-
+        # AC_REQUIRE([gl_GLOB_H]) - line 15
+        "//gnulib/m4/glob_h",
+        # gl_PREREQ_GLOB - line 178
+        ":gl_PREREQ_GLOB",
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
-        "//gnulib/m4/glob_h",  # AC_REQUIRE([gl_GLOB_H])
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

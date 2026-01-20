@@ -154,6 +154,7 @@ CheckResult CheckRunner::run_check(const Check& check) {
         case CheckType::kLink:
             return check_link(check);
         case CheckType::kDefine:
+        case CheckType::kDefineUnquoted:
             return check_compile(check);
         case CheckType::kSubst:
             // Non-conditional subst - just return the value

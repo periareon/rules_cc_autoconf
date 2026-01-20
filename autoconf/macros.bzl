@@ -41,20 +41,20 @@ def _add_conditionals(
         check,
         if_true = None,
         if_false = None):
-    """Add conditional checks to a check dictionary.
+    """Add conditional values to a check dictionary.
 
     Args:
         check: The check dictionary to add conditionals to.
-        if_true: List of JSON-encoded checks to run if this check succeeds.
-        if_false: List of JSON-encoded checks to run if this check fails.
+        if_true: Value to use when check succeeds (string or None).
+        if_false: Value to use when check fails (string or None).
 
     Returns:
         The modified check dictionary.
     """
-    if if_true:
-        check["if_true"] = [json.decode(c) for c in if_true]
-    if if_false:
-        check["if_false"] = [json.decode(c) for c in if_false]
+    if if_true != None:
+        check["if_true"] = if_true
+    if if_false != None:
+        check["if_false"] = if_false
     return check
 
 def _validate_not_select(value, param_name, macro_name):
@@ -100,10 +100,9 @@ def _ac_check_header(
     Example:
     ```python
     macros.AC_CHECK_HEADER("stdio.h")
-    macros.AC_CHECK_HEADER(
-        "pthread.h",
-        if_true = [macros.AC_CHECK_FUNC("pthread_create")],
-    )
+    # To chain checks, use requires on separate checks:
+    macros.AC_CHECK_HEADER("pthread.h", define = "HAVE_PTHREAD_H")
+    macros.AC_CHECK_FUNC("pthread_create", requires = ["HAVE_PTHREAD_H"])
     ```
 
     Args:
@@ -118,10 +117,8 @@ def _ac_check_header(
             Can be simple define names (e.g., `"HAVE_FOO"`), negated checks
             (e.g., `"!HAVE_FOO"`), or value-based requirements
             (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
-        if_true: List of checks to run if this check succeeds. These checks
-            will automatically have this check's define added to their requires.
-        if_false: List of checks to run if this check fails. These checks
-            will automatically have a negated require added (e.g., `"!HAVE_FOO"`).
+        if_true: Value to use when check succeeds (currently not used for header checks).
+        if_false: Value to use when check fails (currently not used for header checks).
 
     Returns:
         A JSON-encoded check string for use with the autoconf rule.
@@ -165,10 +162,9 @@ def _ac_check_func(
     Example:
     ```python
     macros.AC_CHECK_FUNC("malloc")
-    macros.AC_CHECK_FUNC(
-        "mmap",
-        if_true = [macros.AC_DEFINE("HAVE_MMAP_FEATURE", "1")],
-    )
+    # To chain checks, use requires on separate checks:
+    macros.AC_CHECK_FUNC("mmap", define = "HAVE_MMAP")
+    macros.AC_DEFINE("HAVE_MMAP_FEATURE", condition = "HAVE_MMAP", if_true = "1")
     ```
 
     Args:
@@ -185,10 +181,8 @@ def _ac_check_func(
             Can be simple define names (e.g., `"HAVE_FOO"`), negated checks
             (e.g., `"!HAVE_FOO"`), or value-based requirements
             (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
-        if_true: List of checks to run if this check succeeds. These checks
-            will automatically have this check's define added to their requires.
-        if_false: List of checks to run if this check fails. These checks
-            will automatically have a negated require added (e.g., `"!HAVE_FOO"`).
+        if_true: Value to use when check succeeds (currently not used for function checks).
+        if_false: Value to use when check fails (currently not used for function checks).
 
     Returns:
         A JSON-encoded check string for use with the autoconf rule.
@@ -264,8 +258,8 @@ def _ac_check_type(
             Can be simple define names (e.g., `"HAVE_FOO"`), negated checks
             (e.g., `"!HAVE_FOO"`), or value-based requirements
             (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
-        if_true: List of checks to run if this check succeeds.
-        if_false: List of checks to run if this check fails.
+        if_true: Value to use when check succeeds (currently not used for this check type).
+        if_false: Value to use when check fails (currently not used for this check type).
 
     Returns:
         A JSON-encoded check string for use with the autoconf rule.
@@ -343,8 +337,8 @@ def _ac_check_symbol(
             Can be simple define names (e.g., `"HAVE_FOO"`), negated checks
             (e.g., `"!HAVE_FOO"`), or value-based requirements
             (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
-        if_true: List of checks to run if this check succeeds.
-        if_false: List of checks to run if this check fails.
+        if_true: Value to use when check succeeds (currently not used for this check type).
+        if_false: Value to use when check fails (currently not used for this check type).
 
     Returns:
         A JSON-encoded check string for use with the autoconf rule.
@@ -430,8 +424,8 @@ def _ac_try_compile(
             Can be simple define names (e.g., `"HAVE_FOO"`), negated checks
             (e.g., `"!HAVE_FOO"`), or value-based requirements
             (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
-        if_true: List of checks to run if this check succeeds.
-        if_false: List of checks to run if this check fails.
+        if_true: Value to use when check succeeds (currently not used for this check type).
+        if_false: Value to use when check fails (currently not used for this check type).
 
     Returns:
         A JSON-encoded check string for use with the autoconf rule.
@@ -517,8 +511,8 @@ def _ac_try_link(
             Can be simple define names (e.g., `"HAVE_FOO"`), negated checks
             (e.g., `"!HAVE_FOO"`), or value-based requirements
             (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
-        if_true: List of checks to run if this check succeeds.
-        if_false: List of checks to run if this check fails.
+        if_true: Value to use when check succeeds (currently not used for this check type).
+        if_false: Value to use when check fails (currently not used for this check type).
 
     Returns:
         A JSON-encoded check string for use with the autoconf rule.
@@ -671,8 +665,8 @@ def _ac_check_sizeof(
             Can be simple define names (e.g., `"HAVE_FOO"`), negated checks
             (e.g., `"!HAVE_FOO"`), or value-based requirements
             (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
-        if_true: List of checks to run if this check succeeds.
-        if_false: List of checks to run if this check fails.
+        if_true: Value to use when check succeeds (currently not used for this check type).
+        if_false: Value to use when check fails (currently not used for this check type).
 
     Returns:
         A JSON-encoded check string for use with the autoconf rule.
@@ -838,8 +832,8 @@ def _ac_check_decl(
             Can be simple define names (e.g., `"HAVE_FOO"`), negated checks
             (e.g., `"!HAVE_FOO"`), or value-based requirements
             (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
-        if_true: List of checks to run if this check succeeds.
-        if_false: List of checks to run if this check fails.
+        if_true: Value to use when check succeeds (currently not used for this check type).
+        if_false: Value to use when check fails (currently not used for this check type).
 
     Returns:
         A JSON-encoded check string for use with the autoconf rule.
@@ -926,8 +920,8 @@ def _ac_check_member(
             Can be simple define names (e.g., `"HAVE_FOO"`), negated checks
             (e.g., `"!HAVE_FOO"`), or value-based requirements
             (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
-        if_true: List of checks to run if this check succeeds.
-        if_false: List of checks to run if this check fails.
+        if_true: Value to use when check succeeds (currently not used for this check type).
+        if_false: Value to use when check fails (currently not used for this check type).
 
     Returns:
         A JSON-encoded check string for use with the autoconf rule.
@@ -1383,8 +1377,8 @@ def _ac_check_lib(
             Can be simple define names (e.g., `"HAVE_FOO"`), negated checks
             (e.g., `"!HAVE_FOO"`), or value-based requirements
             (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
-        if_true: List of checks to run if this check succeeds.
-        if_false: List of checks to run if this check fails.
+        if_true: Value to use when check succeeds (currently not used for this check type).
+        if_false: Value to use when check fails (currently not used for this check type).
 
     Returns:
         A JSON-encoded check string for use with the autoconf rule.
@@ -1487,6 +1481,100 @@ def _ac_define(
         "language": "c",
         "name": define,
         "type": "define",
+    }
+
+    if requires:
+        check["requires"] = requires
+
+    if value != None and condition:
+        fail("`value` and `condition` are mutually exclusive. Please update `{}`".format(define))
+
+    if value != None:
+        # Simple - always use value
+        check["define_value"] = value
+        check["define_value_fail"] = value
+
+    elif condition:
+        # Conditional - value depends on condition result
+        check["condition"] = condition
+        if if_true != None:
+            check["define_value"] = if_true
+        if if_false != None:
+            check["define_value_fail"] = if_false
+
+    else:
+        # Simple - always use value
+        check["define_value"] = 1
+        check["define_value_fail"] = 1
+
+    return json.encode(check)
+
+def _ac_define_unquoted(
+        define,
+        value = None,
+        requires = None,
+        condition = None,
+        if_true = None,
+        if_false = None):
+    """Define a configuration macro without quoting (AC_DEFINE_UNQUOTED).
+
+    Original m4 example:
+    ```m4
+    AC_DEFINE_UNQUOTED([ICONV_CONST], [$iconv_arg1])
+    AC_DEFINE_UNQUOTED([VERSION], ["$PACKAGE_VERSION"])
+    ```
+
+    This is similar to AC_DEFINE, but with one key difference:
+    - AC_DEFINE with empty value generates: `#define NAME /**/`
+    - AC_DEFINE_UNQUOTED with empty value generates: `#define NAME ` (trailing space)
+
+    Example:
+    ```python
+    # Simple (always define)
+    macros.AC_DEFINE_UNQUOTED("ICONV_CONST", "")
+
+    # Conditional (define based on another check's result)
+    macros.AC_DEFINE_UNQUOTED(
+        "ICONV_CONST",
+        condition = "_gl_cv_iconv_nonconst",
+        if_true = "",      # Empty value - will generate "#define ICONV_CONST " (trailing space)
+        if_false = "const",  # Non-empty value
+    )
+    ```
+
+    Note:
+        This is equivalent to GNU Autoconf's AC_DEFINE_UNQUOTED macro. The main
+        difference from AC_DEFINE is how empty values are rendered in config.h:
+        AC_DEFINE uses `/**/` while AC_DEFINE_UNQUOTED uses a trailing space.
+
+    Args:
+        define: Define name (e.g., `"ICONV_CONST"`)
+        value: Value to assign when no condition is specified (defaults to `"1"`)
+        requires: List of requirements that must be met before this check runs.
+            Can be simple define names (e.g., `"HAVE_FOO"`), negated checks
+            (e.g., `"!HAVE_FOO"`), or value-based requirements
+            (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
+        condition: Optional name of a check/define to evaluate. When specified,
+            `if_true` and `if_false` determine the value based on the condition.
+        if_true: Value to use when condition is true (only used with `condition`).
+        if_false: Value to use when condition is false (only used with `condition`).
+            Use `None` to not define the macro when condition is false.
+
+    Returns:
+        A JSON-encoded check string for use with the autoconf rule.
+    """
+
+    # Validate that select() is not used
+    _validate_not_select(value, "value", "AC_DEFINE_UNQUOTED")
+    _validate_not_select(if_true, "if_true", "AC_DEFINE_UNQUOTED")
+    _validate_not_select(if_false, "if_false", "AC_DEFINE_UNQUOTED")
+
+    check = {
+        "code": "",
+        "define": define,
+        "language": "c",
+        "name": define,
+        "type": "define_unquoted",
     }
 
     if requires:
@@ -1727,6 +1815,7 @@ macros = struct(
     AC_CHECK_TYPE = _ac_check_type,
     AC_COMPUTE_INT = _ac_compute_int,
     AC_DEFINE = _ac_define,
+    AC_DEFINE_UNQUOTED = _ac_define_unquoted,
     AC_PROG_CC = _ac_prog_cc,
     AC_PROG_CC_C_O = _ac_prog_cc_c_o,
     AC_PROG_CXX = _ac_prog_cxx,

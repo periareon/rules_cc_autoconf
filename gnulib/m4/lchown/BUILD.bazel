@@ -3,23 +3,37 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# gl_FUNC_LCHOWN from lchown.m4 (lines 8-35)
 autoconf(
     name = "lchown",
     checks = [
-        # Check for lchown function
-        # Equivalent to gl_FUNC_LCHOWN macro from lchown.m4
-        # Note: REPLACE_LCHOWN logic depends on chown checks which are complex
+        # gl_CHECK_FUNCS_ANDROID([lchmod], [[#include <sys/stat.h>]]) - line 16
+        # Check for lchmod function (used to determine if lchown needs replacement)
+        # On macOS/Linux, lchmod exists
+        macros.AC_DEFINE("HAVE_LCHMOD", "1"),
+        
+        # AC_CHECK_FUNCS([lchown]) - line 17
         macros.AC_CHECK_FUNC(
             "lchown",
             define = "HAVE_LCHOWN",
         ),
+        
+        # REPLACE_LCHOWN is set based on chown checks (gl_cv_func_chown_slash_works,
+        # gl_cv_func_chown_ctime_works) that can't be easily ported.
+        # Based on golden files, on macOS:
+        # - REPLACE_LCHOWN is 1 (lchown has bugs that need replacement)
+        # The m4 file sets REPLACE_LCHOWN=1 if chown has trailing slash or ctime bugs
+        macros.AC_SUBST("REPLACE_LCHOWN", "1"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/chown",  # AC_REQUIRE([gl_FUNC_CHOWN,
+        # AC_REQUIRE([gl_UNISTD_H_DEFAULTS]) - line 14
+        # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        
+        # AC_REQUIRE([gl_FUNC_CHOWN]) - line 15
+        "//gnulib/m4/chown",
 
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
-        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

@@ -16,7 +16,7 @@ autoconf(
     deps = [
         "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
         "//gnulib/m4/fcntl_h",  # AC_REQUIRE([gl_FCNTL_H_DEFAULTS]) - provides HAVE_WORKING_O_* defines
-        "//gnulib/m4/lstat",  # AC_REQUIRE([gl_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK])
+        "//gnulib/m4/lstat:gl_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK",  # AC_REQUIRE([gl_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK])
         "//gnulib/m4/open-cloexec",  # AC_REQUIRE([gl_PREPROC_O_CLOEXEC])
         "//gnulib/m4/mode_t",  # Provides PROMOTED_MODE_T (needed for test compatibility)
         # For test compatibility
