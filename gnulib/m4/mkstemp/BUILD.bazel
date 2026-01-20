@@ -51,7 +51,7 @@ autoconf(
     deps = [
         # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - line 14
         # Use stdlib_h:defaults to avoid HAVE_DECL_ECVT conflict
-        "//gnulib/m4/stdlib_h:defaults",
+        "//gnulib/m4/stdlib_h",
         # AC_REQUIRE([AC_CANONICAL_HOST]) - line 15
         "//autoconf/macros/AC_CANONICAL_HOST",
         # For test compatibility

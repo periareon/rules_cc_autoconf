@@ -46,7 +46,7 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/stdio_h:defaults",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS]) - line 23 (from vasprintf.m4)
+        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS]) - line 23 (from vasprintf.m4)
         "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 35 (from vasprintf.m4)
         "//gnulib/m4/vasnprintf",  # gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS - line 14
         # Note: The m4 file requires many gl_PRINTF_* macros for gl_FUNC_VASPRINTF_IS_POSIX,

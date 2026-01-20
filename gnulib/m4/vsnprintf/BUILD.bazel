@@ -93,7 +93,7 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/stdio_h:defaults",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS]) - line 11, 44
+        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS]) - line 11, 44
         # Note: The m4 file requires gl_SNPRINTF_SIZE1, gl_SNPRINTF_RETVAL_C99, gl_PRINTF_POSITIONS
         # for runtime checks, but since we're using golden file expectations, we don't need them.
         # We check for snprintf directly to provide HAVE_SNPRINTF without HAVE_DECL_SNPRINTF.

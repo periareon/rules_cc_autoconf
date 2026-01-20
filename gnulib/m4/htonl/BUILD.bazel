@@ -52,7 +52,7 @@ autoconf(
     deps = [
         # AC_REQUIRE([gl_ARPA_INET_H_DEFAULTS]) - line 12
         # Use defaults to get substitution variable defaults, but don't create defines in config.h
-        "//gnulib/m4/arpa_inet_h:defaults",
+        "//gnulib/m4/arpa_inet_h",
         # arpa_inet_h depends on sys_socket_h, which provides HAVE_SYS_SOCKET_H
         # We need to pull it in to match golden file expectations
         "//gnulib/m4/sys_socket_h",

@@ -98,7 +98,7 @@ int main(void) {
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - line 15
-        "//gnulib/m4/time_h:defaults",  # AC_REQUIRE([gl_TIME_H_DEFAULTS]) - line 17
+        "//gnulib/m4/time_h",  # AC_REQUIRE([gl_TIME_H_DEFAULTS]) - line 17
         "//autoconf/macros/AC_C_RESTRICT",  # AC_REQUIRE([AC_C_RESTRICT]) - line 18
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],

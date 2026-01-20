@@ -10,22 +10,10 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "stdlib_h",
     checks = [
+        # AC_CHECK_DECLS_ONCE([ecvt]) - lines 89-92
         # Check for ecvt, fcvt, gcvt function declarations (legacy functions)
-        macros.AC_CHECK_DECL(
-            "ecvt",
-            define = "HAVE_DECL_ECVT",
-            headers = ["stdlib.h"],
-        ),
-        macros.AC_CHECK_DECL(
-            "fcvt",
-            define = "HAVE_DECL_FCVT",
-            headers = ["stdlib.h"],
-        ),
-        macros.AC_CHECK_DECL(
-            "gcvt",
-            define = "HAVE_DECL_GCVT",
-            headers = ["stdlib.h"],
-        ),
+        # These checks are moved to :defaults to avoid pulling them in transitively
+        # The m4 file has them in gl_STDLIB_H, but they should only be available via :defaults
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -44,8 +32,67 @@ autoconf(
 autoconf(
     name = "defaults",
     checks = [
+        # AC_CHECK_DECLS_ONCE([ecvt]) - lines 89-92
+        # Check for ecvt, fcvt, gcvt function declarations (legacy functions)
+        # AC_CHECK_DECLS_ONCE sets substitution variables and defines in config.h
+        # if test $ac_cv_have_decl_ecvt = no; then
+        #   HAVE_DECL_ECVT=0
+        # fi
+        macros.AC_CHECK_DECL(
+            "ecvt",
+            define = "ac_cv_have_decl_ecvt",
+            headers = ["stdlib.h"],
+        ),
+        macros.AC_SUBST(
+            "HAVE_DECL_ECVT",
+            condition = "ac_cv_have_decl_ecvt",
+            if_false = "0",
+        ),
+        macros.AC_DEFINE(
+            "HAVE_DECL_ECVT",
+            condition = "ac_cv_have_decl_ecvt",
+            if_true = "1",
+        ),
+        # AC_CHECK_DECLS_ONCE([fcvt]) - lines 93-96
+        macros.AC_CHECK_DECL(
+            "fcvt",
+            define = "ac_cv_have_decl_fcvt",
+            headers = ["stdlib.h"],
+        ),
+        macros.AC_SUBST(
+            "HAVE_DECL_FCVT",
+            condition = "ac_cv_have_decl_fcvt",
+            if_false = "0",
+        ),
+        macros.AC_DEFINE(
+            "HAVE_DECL_FCVT",
+            condition = "ac_cv_have_decl_fcvt",
+            if_true = "1",
+        ),
+        # AC_CHECK_DECLS_ONCE([gcvt]) - lines 97-100
+        macros.AC_CHECK_DECL(
+            "gcvt",
+            define = "ac_cv_have_decl_gcvt",
+            headers = ["stdlib.h"],
+        ),
+        macros.AC_SUBST(
+            "HAVE_DECL_GCVT",
+            condition = "ac_cv_have_decl_gcvt",
+            if_false = "0",
+        ),
+        macros.AC_DEFINE(
+            "HAVE_DECL_GCVT",
+            condition = "ac_cv_have_decl_gcvt",
+            if_true = "1",
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # Need stdlib_h for the header check
+        ":stdlib_h",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )
 
 # =============================================================================

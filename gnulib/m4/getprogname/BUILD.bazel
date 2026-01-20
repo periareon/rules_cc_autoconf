@@ -116,7 +116,7 @@ int main(void) { return *__progname; }""",
     deps = [
         # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - line 12
         # Use stdlib_h:defaults to avoid HAVE_DECL_ECVT conflict
-        "//gnulib/m4/stdlib_h:defaults",
+        "//gnulib/m4/stdlib_h",
         # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - line 13
         "//gnulib/m4/extensions",
         # For test compatibility

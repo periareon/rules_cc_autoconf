@@ -24,7 +24,7 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/stdlib_h:defaults",  # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - line 10
+        "//gnulib/m4/stdlib_h",  # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - line 10
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST]) - line 11
         "//gnulib/m4/ldexp",  # AC_REQUIRE([gl_CHECK_LDEXP_NO_LIBM]) - from gl_PREREQ_STRTOD - line 160, provides HAVE_LDEXP_IN_LIBC
         "//gnulib/m4/nl_langinfo",  # gl_CHECK_FUNCS_ANDROID([nl_langinfo]) - from gl_PREREQ_STRTOD - line 164, provides HAVE_NL_LANGINFO

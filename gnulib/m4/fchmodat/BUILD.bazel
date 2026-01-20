@@ -76,7 +76,7 @@ autoconf(
     deps = [
         # AC_REQUIRE([gl_SYS_STAT_H_DEFAULTS]) - line 13
         # Note: gl_SYS_STAT_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
-        # "//gnulib/m4/sys_stat_h:defaults",  # Ignored - _DEFAULTS function
+        # "//gnulib/m4/sys_stat_h",  # Ignored - _DEFAULTS function
         # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - line 14
         "//gnulib/m4/extensions",
         # AC_REQUIRE([AC_CANONICAL_HOST]) - line 15

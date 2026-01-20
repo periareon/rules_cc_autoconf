@@ -34,7 +34,7 @@ autoconf(
     deps = [
         # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - line 62, 41
         # Use stdlib_h:defaults to avoid HAVE_DECL_ECVT conflict
-        "//gnulib/m4/stdlib_h:defaults",
+        "//gnulib/m4/stdlib_h",
         # AC_REQUIRE([gl_FUNC_MALLOC_POSIX]) - line 63
         "//gnulib/m4/malloc",
         # AC_REQUIRE([AC_CANONICAL_HOST]) - line 16 (for gl_FUNC_CALLOC_IF)

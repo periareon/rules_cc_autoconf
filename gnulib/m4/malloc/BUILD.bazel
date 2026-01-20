@@ -70,7 +70,7 @@ autoconf(
     visibility = ["//visibility:public"],
     deps = [
         # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - line 72
-        "//gnulib/m4/stdlib_h:defaults",
+        "//gnulib/m4/stdlib_h",
         # AC_REQUIRE([gl_CHECK_MALLOC_PTRDIFF]) - line 73
         ":gl_CHECK_MALLOC_PTRDIFF",
         # For test compatibility
@@ -150,7 +150,7 @@ autoconf(
     visibility = ["//visibility:public"],
     deps = [
         # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - line 200
-        "//gnulib/m4/stdlib_h:defaults",
+        "//gnulib/m4/stdlib_h",
         # AC_REQUIRE([gl_FUNC_MALLOC_PTRDIFF]) - line 201
         ":gl_FUNC_MALLOC_PTRDIFF",
         # AC_REQUIRE([gl_CHECK_MALLOC_POSIX]) - line 202
@@ -184,7 +184,7 @@ autoconf(
     visibility = ["//visibility:public"],
     deps = [
         # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - line 48
-        "//gnulib/m4/stdlib_h:defaults",
+        "//gnulib/m4/stdlib_h",
         # AC_REQUIRE([gl_FUNC_MALLOC_POSIX]) - line 49
         ":gl_FUNC_MALLOC_POSIX",
         # AC_REQUIRE([gl_FUNC_MALLOC_0_NONNULL]) - line 50

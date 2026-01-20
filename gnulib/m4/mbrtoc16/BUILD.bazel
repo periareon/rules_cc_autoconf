@@ -56,7 +56,7 @@ autoconf(
         "//autoconf/macros/AC_TYPE_MBSTATE_T",
         # AC_REQUIRE([gl_MBSTATE_T_BROKEN]) - line 19
         # Provides REPLACE_MBSTATE_T (from wchar_h:defaults)
-        "//gnulib/m4/wchar_h:defaults",
+        "//gnulib/m4/wchar_h",
         # AC_REQUIRE([gl_TYPE_CHAR16_T]) - line 21
         # Provides GNULIBHEADERS_OVERRIDE_CHAR16_T (from uchar_h)
         "//gnulib/m4/uchar_h",

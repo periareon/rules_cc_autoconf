@@ -73,7 +73,7 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/string_h:defaults",  # AC_REQUIRE([gl_STRING_H_DEFAULTS]) - line 10
+        "//gnulib/m4/string_h",  # AC_REQUIRE([gl_STRING_H_DEFAULTS]) - line 10
         "//gnulib/m4/errno_h",  # AC_REQUIRE([gl_HEADER_ERRNO_H]) - from gl_FUNC_STRERROR_R_WORKS - line 47
         "//gnulib/m4/strerror",  # AC_REQUIRE([gl_FUNC_STRERROR_0]) - from gl_FUNC_STRERROR_R_WORKS - line 55
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST]) - from gl_FUNC_STRERROR_R_WORKS - line 48

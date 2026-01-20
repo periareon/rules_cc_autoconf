@@ -30,7 +30,7 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/stdio_h:defaults",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS]) - line 11 (from vdprintf.m4)
+        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS]) - line 11 (from vdprintf.m4)
         "//gnulib/m4/vasnprintf",  # gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS - line 14
         # Note: The m4 file requires many gl_PRINTF_* macros for gl_FUNC_VDPRINTF_IS_POSIX,
         # but since we're using golden file expectations, we don't need to include them all.

@@ -53,7 +53,7 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/unistd_h:defaults",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS]) - line 13
+        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS]) - line 13
         "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - line 16
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST]) - line 18
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",

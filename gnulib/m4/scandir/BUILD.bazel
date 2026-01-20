@@ -3,17 +3,62 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# gl_FUNC_SCANDIR - lines 8-20
+# Checks for scandir function and sets HAVE_SCANDIR
 autoconf(
     name = "scandir",
     checks = [
+        # AC_REQUIRE([gl_DIRENT_H_DEFAULTS]) - line 11
+        # Note: gl_DIRENT_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        
+        # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 14
+        # This is provided by extensions dependency
+        
+        # AC_CHECK_FUNCS([scandir]) - line 16
         macros.AC_CHECK_FUNC(
             "scandir",
-            define = "HAVE_SCANDIR",
+            define = "ac_cv_func_scandir",
+        ),
+        
+        # if test $ac_cv_func_scandir = no; then
+        #   HAVE_SCANDIR=0 - line 17
+        # fi
+        # Set HAVE_SCANDIR as substitution variable
+        macros.AC_SUBST(
+            "HAVE_SCANDIR",
+            condition = "ac_cv_func_scandir",
+            if_true = "1",
+            if_false = "0",
+        ),
+        
+        # Define HAVE_SCANDIR in config.h only if the function exists
+        macros.AC_DEFINE(
+            "HAVE_SCANDIR",
+            condition = "ac_cv_func_scandir",
+            if_true = "1",
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        # AC_REQUIRE([gl_DIRENT_H_DEFAULTS]) - line 11
+        # Note: gl_DIRENT_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 14
+        "//gnulib/m4/extensions",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_PREREQ_SCANDIR - lines 22-23
+# Prerequisites of lib/scandir.c
+autoconf(
+    name = "gl_PREREQ_SCANDIR",
+    checks = [
+        # Empty - no prerequisites
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

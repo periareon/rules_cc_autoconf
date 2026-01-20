@@ -60,7 +60,7 @@ autoconf(
     deps = [
         # AC_REQUIRE([gl_WCHAR_H_DEFAULTS]) - line 12
         # Use wchar_h:defaults to avoid HAVE_DECL_WCSDUP conflict
-        "//gnulib/m4/wchar_h:defaults",
+        "//gnulib/m4/wchar_h",
         # AC_REQUIRE([gt_TYPE_WINT_T]) - line 13
         "//gnulib/m4/wint_t",
         # AC_REQUIRE([AC_PROG_CC]) - line 25 (ignored, provided by toolchain)

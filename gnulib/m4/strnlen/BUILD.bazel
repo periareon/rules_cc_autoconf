@@ -49,7 +49,7 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/string_h:defaults",  # AC_REQUIRE([gl_STRING_H_DEFAULTS]) - line 62
+        "//gnulib/m4/string_h",  # AC_REQUIRE([gl_STRING_H_DEFAULTS]) - line 62
         "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 65
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],

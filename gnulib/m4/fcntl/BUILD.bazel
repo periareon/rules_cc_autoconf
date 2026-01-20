@@ -63,7 +63,7 @@ autoconf(
         "//gnulib/m4/extensions",
         # AC_REQUIRE([gl_FCNTL_H_DEFAULTS]) - line 21
         # Use fcntl_h:defaults to avoid HAVE_SYMLINK conflict
-        "//gnulib/m4/fcntl_h:defaults",
+        "//gnulib/m4/fcntl_h",
         # AC_REQUIRE([AC_CANONICAL_HOST]) - line 22
         "//autoconf/macros/AC_CANONICAL_HOST",
         # Note: fchdir is not added as a dependency to avoid HAVE_DECL_FCHDIR conflict

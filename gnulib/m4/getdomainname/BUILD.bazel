@@ -89,7 +89,7 @@ int main(void) { return 0; }""",
     visibility = ["//visibility:public"],
     deps = [
         # AC_REQUIRE([gl_UNISTD_H_DEFAULTS]) - line 12
-        "//gnulib/m4/unistd_h:defaults",
+        "//gnulib/m4/unistd_h",
         # AC_REQUIRE([gl_SYS_SOCKET_H]) - line 13
         "//gnulib/m4/sys_socket_h",
         # AC_REQUIRE([gl_NETDB_H]) - line 14

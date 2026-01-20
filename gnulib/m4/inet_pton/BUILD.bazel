@@ -140,7 +140,7 @@ int main(void) {
     visibility = ["//visibility:public"],
     deps = [
         # AC_REQUIRE([gl_ARPA_INET_H_DEFAULTS]) - line 10
-        "//gnulib/m4/arpa_inet_h:defaults",
+        "//gnulib/m4/arpa_inet_h",
         # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - line 13
         "//gnulib/m4/extensions",
         # AC_REQUIRE([AC_C_RESTRICT]) - line 15

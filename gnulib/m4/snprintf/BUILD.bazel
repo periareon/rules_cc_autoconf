@@ -85,7 +85,7 @@ autoconf(
     deps = [
         # AC_REQUIRE([gl_STDIO_H_DEFAULTS]) - line 15
         # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
-        # "//gnulib/m4/stdio_h:defaults",  # Ignored - _DEFAULTS function
+        # "//gnulib/m4/stdio_h",  # Ignored - _DEFAULTS function
         # gl_SNPRINTF_SIZE1 - line 19
         "//gnulib/m4/printf:gl_SNPRINTF_SIZE1",
         # gl_SNPRINTF_RETVAL_C99 - line 22
