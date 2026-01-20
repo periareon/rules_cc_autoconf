@@ -47,7 +47,7 @@ autoconf(
     checks = [
         # AC_REQUIRE([gl_STDIO_H_DEFAULTS]) - line 11
         # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
-        
+
         # gl_cv_func_vsnprintf_usable=no - line 12
         # AC_CHECK_FUNCS([vsnprintf]) - line 17
         macros.AC_CHECK_FUNC(
@@ -55,7 +55,7 @@ autoconf(
             code = "#include <stdio.h>\n",
             define = "ac_cv_func_vsnprintf",
         ),
-        
+
         # if test $ac_cv_func_vsnprintf = yes; then
         #   gl_SNPRINTF_SIZE1 - line 19
         #   case "$gl_cv_func_snprintf_size1" in
@@ -77,7 +77,7 @@ autoconf(
         # The runtime checks (gl_SNPRINTF_SIZE1, gl_SNPRINTF_RETVAL_C99, gl_PRINTF_POSITIONS)
         # can't be done in Bazel. Based on golden files, vsnprintf is not usable on macOS,
         # so we always call gl_REPLACE_VSNPRINTF.
-        
+
         # Set HAVE_VSNPRINTF as substitution variable
         macros.AC_SUBST(
             "HAVE_VSNPRINTF",
@@ -85,21 +85,21 @@ autoconf(
             if_false = "0",
             if_true = "1",
         ),
-        
+
         # Define HAVE_VSNPRINTF in config.h if function exists
         macros.AC_DEFINE(
             "HAVE_VSNPRINTF",
             condition = "ac_cv_func_vsnprintf",
             if_true = "1",
         ),
-        
+
         # AC_CHECK_DECLS_ONCE([vsnprintf]) - line 38
         macros.AC_CHECK_DECL(
             "vsnprintf",
             define = "ac_cv_have_decl_vsnprintf",
             headers = ["stdio.h"],
         ),
-        
+
         # if test $ac_cv_have_decl_vsnprintf = no; then
         #   HAVE_DECL_VSNPRINTF=0 - line 40
         # fi
@@ -110,14 +110,14 @@ autoconf(
             if_false = "0",
             if_true = "1",
         ),
-        
+
         # Define HAVE_DECL_VSNPRINTF in config.h if declaration exists
         macros.AC_DEFINE(
             "HAVE_DECL_VSNPRINTF",
             condition = "ac_cv_have_decl_vsnprintf",
             if_true = "1",
         ),
-        
+
         # The m4 file checks for snprintf via gl_SNPRINTF_SIZE1 (line 19),
         # but the golden file shows HAVE_SNPRINTF=1, so we need to provide it.
         # Check for snprintf function (but not declaration to avoid HAVE_DECL_SNPRINTF)
@@ -126,7 +126,7 @@ autoconf(
             code = "#include <stdio.h>\n",
             define = "ac_cv_func_snprintf",
         ),
-        
+
         # Define HAVE_SNPRINTF in config.h if function exists
         macros.AC_DEFINE(
             "HAVE_SNPRINTF",

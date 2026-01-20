@@ -12,21 +12,21 @@ autoconf(
         # AC_REQUIRE([gl_PTHREADLIB]) - line 13
         # Provides thread library info (gl_threads_api)
         # AC_REQUIRE([AC_CANONICAL_HOST]) - line 14
-        
+
         # if { case "$host_os" in mingw* | windows*) true;; *) false;; esac; } \
         #    && test $gl_threads_api = windows; then
         #   REPLACE_SCHED_YIELD=1 - line 17
         # else
         #   AC_CHECK_DECL([sched_yield], , [HAVE_SCHED_YIELD=0], [[#include <sched.h>]]) - lines 19-20
         # fi
-        
+
         # Check for sched_yield declaration
         macros.AC_CHECK_DECL(
             "sched_yield",
             define = "ac_cv_have_decl_sched_yield",
             headers = ["sched.h"],
         ),
-        
+
         # Set HAVE_SCHED_YIELD as substitution variable
         # If declaration not found, HAVE_SCHED_YIELD=0 (line 20)
         # If declaration found, HAVE_SCHED_YIELD remains default (from defaults, which is "1")
@@ -35,7 +35,7 @@ autoconf(
             condition = "ac_cv_have_decl_sched_yield",
             if_false = "0",
         ),
-        
+
         # Set REPLACE_SCHED_YIELD based on conditions:
         # - If on mingw/windows and using windows threads API, REPLACE_SCHED_YIELD=1
         # - Otherwise, REPLACE_SCHED_YIELD=0

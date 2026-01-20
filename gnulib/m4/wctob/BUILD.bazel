@@ -15,7 +15,7 @@ autoconf(
             code = "#include <wchar.h>\n",
             define = "ac_cv_func_wctob",
         ),
-        
+
         # if test $ac_cv_func_wctob = no; then
         #   HAVE_WCTOB=0 - line 16
         # else
@@ -33,14 +33,14 @@ autoconf(
             if_false = "0",
             if_true = "1",
         ),
-        
+
         # Define HAVE_WCTOB in config.h if function exists
         macros.AC_DEFINE(
             "HAVE_WCTOB",
             condition = "ac_cv_func_wctob",
             if_true = "1",
         ),
-        
+
         # The m4 file has runtime checks (AC_RUN_IFELSE) to verify wctob works correctly
         # on Solaris 9, Cygwin, and native Windows. Based on golden files, on macOS:
         # - REPLACE_WCTOB=0 (function works correctly)

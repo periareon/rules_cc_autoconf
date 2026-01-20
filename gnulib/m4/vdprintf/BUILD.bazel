@@ -46,7 +46,7 @@ autoconf(
             code = "#include <stdio.h>\n",
             define = "ac_cv_func_vdprintf",
         ),
-        
+
         # if test $ac_cv_func_vdprintf = no; then
         #   HAVE_VDPRINTF=0 - line 14
         #   gl_REPLACE_VDPRINTF - line 15
@@ -58,7 +58,7 @@ autoconf(
             if_false = "0",
             if_true = "1",
         ),
-        
+
         # Define HAVE_VDPRINTF in config.h if function exists
         macros.AC_DEFINE(
             "HAVE_VDPRINTF",

@@ -9,7 +9,7 @@ autoconf(
     checks = [
         # AC_REQUIRE([gl_WCHAR_H_DEFAULTS]) - line 13
         # Note: gl_WCHAR_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
-        
+
         # AC_CACHE_CHECK([for wmemchr], [gl_cv_func_wmemchr], ...) - lines 15-23
         # AC_LINK_IFELSE to check for wmemchr (not AC_CHECK_FUNCS because MSVC 9
         # provides it as an inline function)
@@ -20,7 +20,7 @@ int main(void) {
 }""",
             define = "gl_cv_func_wmemchr",
         ),
-        
+
         # if test $gl_cv_func_wmemchr = no; then
         #   HAVE_WMEMCHR=0 - line 24
         # fi

@@ -11,10 +11,13 @@ autoconf(
         # Note: gl_WCHAR_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
         # AC_REQUIRE([AC_TYPE_MBSTATE_T]) - line 17
         # gl_MBSTATE_T_BROKEN - line 18
-        
+
         # AC_CHECK_FUNCS_ONCE([mbsrtowcs]) - line 18
-        macros.AC_CHECK_FUNC("mbsrtowcs", define = "ac_cv_func_mbsrtowcs"),
-        
+        macros.AC_CHECK_FUNC(
+            "mbsrtowcs",
+            define = "ac_cv_func_mbsrtowcs",
+        ),
+
         # if test $ac_cv_func_mbsrtowcs = no; then
         #   HAVE_MBSRTOWCS=0 - line 20
         #   AC_CHECK_DECLS([mbsrtowcs],,, [[#include <wchar.h>]]) - lines 21-27
@@ -30,7 +33,7 @@ autoconf(
         #     ... set REPLACE_MBSRTOWCS=1 if checks fail ...
         #   fi
         # fi
-        
+
         # Set HAVE_MBSRTOWCS as substitution variable
         macros.AC_SUBST(
             "HAVE_MBSRTOWCS",
@@ -38,14 +41,14 @@ autoconf(
             if_false = "0",
             if_true = "1",
         ),
-        
+
         # Define HAVE_MBSRTOWCS in config.h if function exists
         macros.AC_DEFINE(
             "HAVE_MBSRTOWCS",
             condition = "ac_cv_func_mbsrtowcs",
             if_true = "1",
         ),
-        
+
         # Check for mbsrtowcs declaration (for Minix 3.1.8 which declares but doesn't have it)
         macros.AC_CHECK_DECL(
             "mbsrtowcs",
@@ -53,7 +56,7 @@ autoconf(
             headers = ["wchar.h"],
             requires = ["ac_cv_func_mbsrtowcs==0"],  # Only check if function doesn't exist
         ),
-        
+
         # Set REPLACE_MBSRTOWCS based on conditions:
         # 1. If function not found but declared, REPLACE_MBSRTOWCS=1 (Minix case)
         # 2. If function found and REPLACE_MBSTATE_T=1, REPLACE_MBSRTOWCS=1

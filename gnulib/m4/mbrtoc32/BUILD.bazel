@@ -10,11 +10,11 @@ autoconf(
         # AC_CHECK_DECL([mbrtoc32], ...) - lines 70-75
         macros.AC_CHECK_DECL(
             "mbrtoc32",
+            compile_defines = ["__HAIKU__"],
             define = "ac_cv_have_decl_mbrtoc32",
             headers = ["uchar.h"],
-            compile_defines = ["__HAIKU__"],
         ),
-        
+
         # if test $ac_cv_have_decl_mbrtoc32 = yes; then
         #   AC_CACHE_CHECK([for mbrtoc32], [gl_cv_func_mbrtoc32], ...) - lines 76-87
         #   AC_LINK_IFELSE checks for mbrtoc32 function
@@ -59,7 +59,7 @@ autoconf(
             if_false = "0",
             if_true = "1",  # Assume it works if function exists (Linux case)
         ),
-        
+
         # Define HAVE_WORKING_MBRTOC32 in config.h if function exists and works
         macros.AC_DEFINE(
             "HAVE_WORKING_MBRTOC32",
@@ -87,7 +87,7 @@ autoconf(
     checks = [
         # gl_CHECK_FUNC_MBRTOC32 - lines 63-88
         # Handled via dependency
-        
+
         # if test $gl_cv_func_mbrtoc32 = no; then
         #   HAVE_MBRTOC32=0 - line 22
         # else
@@ -102,7 +102,7 @@ autoconf(
             if_false = "0",
             if_true = "1",
         ),
-        
+
         # Set REPLACE_MBRTOC32 based on conditions (lines 25-58)
         # Based on golden files:
         # - macOS: REPLACE_MBRTOC32=0 (function doesn't exist, so no replacement needed)
@@ -115,7 +115,7 @@ autoconf(
             if_false = "0",  # If function doesn't exist, no replacement needed
             if_true = "1",  # If function exists, assume it needs replacement (Linux case)
         ),
-        
+
         # Note: The m4 file performs various runtime checks (gl_MBRTOC32_EMPTY_INPUT,
         # gl_MBRTOC32_C_LOCALE, gl_MBRTOC32_UTF8_LOCALE) that use AC_RUN_IFELSE,
         # which is not portable to Bazel's cross-compilation environment.

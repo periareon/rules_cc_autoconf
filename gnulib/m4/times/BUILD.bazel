@@ -10,8 +10,11 @@ autoconf(
         # AC_REQUIRE([gl_SYS_TIMES_H_DEFAULTS]) - line 12
         # Note: gl_SYS_TIMES_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
         # AC_CHECK_FUNCS_ONCE([times]) - line 13
-        macros.AC_CHECK_FUNC("times", define = "ac_cv_func_times"),
-        
+        macros.AC_CHECK_FUNC(
+            "times",
+            define = "ac_cv_func_times",
+        ),
+
         # if test $ac_cv_func_times = no; then
         #   HAVE_TIMES=0 - line 15
         # fi
@@ -22,7 +25,7 @@ autoconf(
             condition = "ac_cv_func_times",
             if_false = "0",
         ),
-        
+
         # Define HAVE_TIMES in config.h if function exists
         macros.AC_DEFINE(
             "HAVE_TIMES",

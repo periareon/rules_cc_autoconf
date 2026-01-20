@@ -11,18 +11,18 @@ autoconf(
         # Check for mbrtoc16 declaration first, then function
         macros.AC_CHECK_DECL(
             "mbrtoc16",
+            compile_defines = ["__HAIKU__"],
             define = "ac_cv_have_decl_mbrtoc16",
             headers = ["uchar.h"],
-            compile_defines = ["__HAIKU__"],
         ),
-        
+
         # If declaration is found, check for function
         macros.AC_CHECK_FUNC(
             "mbrtoc16",
             define = "gl_cv_func_mbrtoc16",
             requires = ["ac_cv_have_decl_mbrtoc16==1"],
         ),
-        
+
         # Set HAVE_MBRTOC16 as substitution variable
         # If function doesn't exist, HAVE_MBRTOC16=0 (line 20)
         macros.AC_SUBST(
@@ -31,14 +31,14 @@ autoconf(
             if_false = "0",
             if_true = "1",
         ),
-        
+
         # Define HAVE_MBRTOC16 in config.h if function exists
         macros.AC_DEFINE(
             "HAVE_MBRTOC16",
             condition = "gl_cv_func_mbrtoc16",
             if_true = "1",
         ),
-        
+
         # gl_MBRTOC16_SANITYCHECK - lines 340-404
         # Sets HAVE_WORKING_MBRTOC16 based on runtime checks
         # Based on golden files:
@@ -50,14 +50,14 @@ autoconf(
             if_false = "0",
             if_true = "1",  # Assume it works if function exists (Linux case)
         ),
-        
+
         # Define HAVE_WORKING_MBRTOC16 in config.h if function exists and works
         macros.AC_DEFINE(
             "HAVE_WORKING_MBRTOC16",
             condition = "gl_cv_func_mbrtoc16",
             if_true = "1",
         ),
-        
+
         # Set REPLACE_MBRTOC16 based on conditions (lines 25-58)
         # Based on golden files:
         # - macOS: REPLACE_MBRTOC16=0 (function doesn't exist, so no replacement needed)

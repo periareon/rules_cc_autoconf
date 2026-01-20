@@ -100,17 +100,29 @@ autoconf(
 autoconf(
     name = "gl_PREREQ_VASNPRINTF",
     checks = [
-        # AC_CHECK_FUNCS([snprintf strnlen wcrtomb])
-        # Note: HAVE_SNPRINTF comes from snprintf dependency
+        # AC_CHECK_FUNCS([snprintf strnlen wcrtomb]) - line 103
+        # Note: The m4 file only checks for the function, not the full gl_FUNC_SNPRINTF
+        # This avoids pulling in HAVE_DECL_SNPRINTF which fprintf-posix doesn't want
+        macros.AC_CHECK_FUNC(
+            "snprintf",
+            define = "ac_cv_func_snprintf",
+        ),
         macros.AC_CHECK_FUNC("strnlen"),
         macros.AC_CHECK_FUNC("wcrtomb"),
+
+        # Define HAVE_SNPRINTF in config.h if function exists
+        macros.AC_DEFINE(
+            "HAVE_SNPRINTF",
+            condition = "ac_cv_func_snprintf",
+            if_true = "1",
+        ),
 
         # AC_CHECK_TYPE([ptrdiff_t], ...) - line 105
         # Note: ptrdiff_t is also checked in gl_PREREQ_PRINTF_PARSE (line 88)
         # Since both are dependencies of gl_REPLACE_VASNPRINTF, we rely on gl_PREREQ_PRINTF_PARSE
         # to provide HAVE_PTRDIFF_T to avoid duplicate checks
 
-        # AC_CHECK_DECLS([_snprintf], , , [[#include <stdio.h>]])
+        # AC_CHECK_DECLS([_snprintf], , , [[#include <stdio.h>]]) - line 113
         macros.AC_CHECK_DECL(
             "_snprintf",
             headers = ["stdio.h"],
@@ -130,12 +142,13 @@ autoconf(
         "//gnulib/m4/intmax_t",
         # AC_REQUIRE([gt_TYPE_WINT_T]) - line 78
         "//gnulib/m4/wint_t",
-        # HAVE_SNPRINTF comes from snprintf dependency
-        "//gnulib/m4/snprintf",
+        # Note: The m4 file only checks for snprintf function, not the full gl_FUNC_SNPRINTF
+        # This avoids pulling in HAVE_DECL_SNPRINTF which fprintf-posix doesn't want
         # gl_SNPRINTF_RETVAL_C99 and gl_SNPRINTF_TRUNCATION_C99 are runtime checks
         # that we can't easily port, but we include them for dependency tracking
         "//gnulib/m4/printf:gl_SNPRINTF_RETVAL_C99",
         "//gnulib/m4/printf:gl_SNPRINTF_TRUNCATION_C99",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
 
@@ -144,7 +157,10 @@ autoconf(
     name = "gl_PREREQ_VASNXPRINTF",
     checks = [
         # AC_CHECK_FUNCS([wcslen])
-        macros.AC_CHECK_FUNC("wcslen", define = "ac_cv_func_wcslen"),
+        macros.AC_CHECK_FUNC(
+            "wcslen",
+            define = "ac_cv_func_wcslen",
+        ),
         # Define HAVE_WCSLEN in config.h if the function exists
         macros.AC_DEFINE(
             "HAVE_WCSLEN",

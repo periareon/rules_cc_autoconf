@@ -12,10 +12,13 @@ autoconf(
         # AC_REQUIRE([AC_CANONICAL_HOST]) - line 16
         # AC_REQUIRE([AC_TYPE_MBSTATE_T]) - line 18
         # gl_MBSTATE_T_BROKEN - line 19
-        
+
         # AC_CHECK_FUNCS_ONCE([mbsinit]) - line 18
-        macros.AC_CHECK_FUNC("mbsinit", define = "ac_cv_func_mbsinit"),
-        
+        macros.AC_CHECK_FUNC(
+            "mbsinit",
+            define = "ac_cv_func_mbsinit",
+        ),
+
         # if test $ac_cv_func_mbsinit = no; then
         #   HAVE_MBSINIT=0 - line 20
         #   AC_CHECK_DECLS([mbsinit],,, [[#include <wchar.h>]]) - lines 21-27
@@ -31,7 +34,7 @@ autoconf(
         #     esac
         #   fi
         # fi
-        
+
         # Set HAVE_MBSINIT as substitution variable
         macros.AC_SUBST(
             "HAVE_MBSINIT",
@@ -39,14 +42,14 @@ autoconf(
             if_false = "0",
             if_true = "1",
         ),
-        
+
         # Define HAVE_MBSINIT in config.h if function exists
         macros.AC_DEFINE(
             "HAVE_MBSINIT",
             condition = "ac_cv_func_mbsinit",
             if_true = "1",
         ),
-        
+
         # Check for mbsinit declaration (for Minix 3.1.8 which declares but doesn't have it)
         macros.AC_CHECK_DECL(
             "mbsinit",
@@ -54,7 +57,7 @@ autoconf(
             headers = ["wchar.h"],
             requires = ["ac_cv_func_mbsinit==0"],  # Only check if function doesn't exist
         ),
-        
+
         # Set REPLACE_MBSINIT based on conditions:
         # 1. If function not found but declared, REPLACE_MBSINIT=1 (Minix case)
         # 2. If function found and REPLACE_MBSTATE_T=1, REPLACE_MBSINIT=1

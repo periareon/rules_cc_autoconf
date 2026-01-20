@@ -12,24 +12,24 @@ autoconf(
         # AC_REQUIRE([AC_CANONICAL_HOST]) - line 14
         # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 19
         # AC_REQUIRE([gt_TYPE_WINT_T]) - line 21
-        
+
         # AC_CHECK_HEADERS_ONCE([wchar.h]) - line 24
         # Note: This is handled by dependencies
-        
+
         # AC_CHECK_FUNCS_ONCE([wcwidth]) - line 25
         macros.AC_CHECK_FUNC(
             "wcwidth",
             code = "#include <wchar.h>\n",
             define = "ac_cv_func_wcwidth",
         ),
-        
+
         # AC_CHECK_DECLS([wcwidth], [], [], [[#include <wchar.h>]]) - lines 27-30
         macros.AC_CHECK_DECL(
             "wcwidth",
             define = "ac_cv_have_decl_wcwidth",
             headers = ["wchar.h"],
         ),
-        
+
         # if test $ac_cv_have_decl_wcwidth != yes; then
         #   HAVE_DECL_WCWIDTH=0 - line 32
         # fi
@@ -40,14 +40,14 @@ autoconf(
             if_false = "0",
             if_true = "1",
         ),
-        
+
         # Define HAVE_DECL_WCWIDTH in config.h if declaration exists
         macros.AC_DEFINE(
             "HAVE_DECL_WCWIDTH",
             condition = "ac_cv_have_decl_wcwidth",
             if_true = "1",
         ),
-        
+
         # if test $ac_cv_func_wcwidth != yes; then
         #   AC_CACHE_CHECK([whether wcwidth is a macro], ...) - lines 34-44
         #   Check if wcwidth is defined as a macro
@@ -68,17 +68,17 @@ autoconf(
             condition = "ac_cv_func_wcwidth",
             if_true = "1",
         ),
-        
+
         # Note: The m4 file doesn't substitute HAVE_WCWIDTH (lines 90-91)
         # "We don't substitute HAVE_WCWIDTH. We assume that if the system does not
         # have the wcwidth function, then it does not declare it."
         # So we don't set it as a substitution variable
-        
+
         # The m4 file has runtime checks (AC_RUN_IFELSE) to verify wcwidth works correctly
         # in UTF-8 locales on various platforms. Based on golden files, on macOS:
         # - REPLACE_WCWIDTH=0 (function works correctly, or runtime check passes)
         macros.AC_SUBST("REPLACE_WCWIDTH", "0"),
-        
+
         # gl_PREREQ_WCWIDTH - lines 98-101
         # AC_REQUIRE([AC_C_INLINE]) - line 99
         # Empty macro, no checks needed
