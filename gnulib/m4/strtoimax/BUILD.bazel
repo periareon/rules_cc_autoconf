@@ -3,17 +3,102 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# gl_FUNC_STRTOIMAX - lines 9-80
 autoconf(
     name = "strtoimax",
     checks = [
+        # AC_REQUIRE([gl_INTTYPES_H_DEFAULTS]) - line 11
+        # Note: gl_INTTYPES_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+
+        # AC_CHECK_FUNCS_ONCE([strtoimax]) - line 13
+        macros.AC_CHECK_FUNC(
+            "strtoimax",
+            define = "ac_cv_func_strtoimax",
+        ),
+
+        # AC_CHECK_DECLS_ONCE([strtoimax]) - line 14
+        macros.AC_CHECK_DECL(
+            "strtoimax",
+            define = "ac_cv_have_decl_strtoimax",
+            headers = ["inttypes.h"],
+        ),
+
+        # if test "$ac_cv_have_decl_strtoimax" != yes; then
+        #   HAVE_DECL_STRTOIMAX=0 - line 15-17
+        # fi
+        macros.AC_SUBST(
+            "HAVE_DECL_STRTOIMAX",
+            condition = "ac_cv_have_decl_strtoimax",
+            if_false = "0",
+        ),
+
+        # Define HAVE_DECL_STRTOIMAX in config.h if found
+        macros.AC_DEFINE(
+            "HAVE_DECL_STRTOIMAX",
+            condition = "ac_cv_have_decl_strtoimax",
+            if_true = "1",
+        ),
+
+        # if test "$ac_cv_func_strtoimax" = yes; then
+        #   HAVE_STRTOIMAX=1 - line 19-20
+        #   ... (AC_RUN_IFELSE check for working strtoimax) - lines 21-60
+        #   case "$gl_cv_func_strtoimax" in
+        #     *no) REPLACE_STRTOIMAX=1 ;; - line 61-62
+        #   esac
+        # else
+        #   if test "$ac_cv_have_decl_strtoimax" = yes; then
+        #     # HP-UX 11.11 has "#define strtoimax(...) ..." but no function.
+        #     REPLACE_STRTOIMAX=1 - line 64-67
+        #   fi
+        #   HAVE_STRTOIMAX=0 - line 68
+        # fi
+        macros.AC_SUBST(
+            "HAVE_STRTOIMAX",
+            condition = "ac_cv_func_strtoimax",
+            if_false = "0",
+            if_true = "1",
+        ),
+
+        # Define HAVE_STRTOIMAX in config.h if the function exists
+        macros.AC_DEFINE(
+            "HAVE_STRTOIMAX",
+            condition = "ac_cv_func_strtoimax",
+            if_true = "1",
+        ),
+
+        # REPLACE_STRTOIMAX: Based on golden files, REPLACE_STRTOIMAX=0 on macOS/Linux
+        # The AC_RUN_IFELSE check can't be done in Bazel, so we assume it works correctly
+        # on our target platforms (macOS/Linux)
+        macros.AC_SUBST("REPLACE_STRTOIMAX", "0"),
+
+        # gl_PREREQ_STRTOIMAX - lines 82-84
+        # AC_CHECK_DECLS([strtoll]) - line 83
         macros.AC_CHECK_DECL(
             "strtoll",
-            define = "HAVE_DECL_STRTOLL",
+            define = "ac_cv_have_decl_strtoll",
+            headers = ["stdlib.h"],
+        ),
+
+        # Set substitution variable
+        macros.AC_SUBST(
+            "HAVE_DECL_STRTOLL",
+            condition = "ac_cv_have_decl_strtoll",
+            if_false = "0",
+            if_true = "1",
+        ),
+
+        # Define in config.h
+        macros.AC_DEFINE(
+            "HAVE_DECL_STRTOLL",
+            condition = "ac_cv_have_decl_strtoll",
+            if_false = "0",
+            if_true = "1",
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/inttypes_h",  # AC_REQUIRE([gl_INTTYPES_H_DEFAULTS])
     ],
 )

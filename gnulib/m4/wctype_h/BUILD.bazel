@@ -9,29 +9,41 @@ autoconf(
     name = "wctype_h",
     checks = [
         # AC_CHECK_FUNCS_ONCE([iswcntrl]) - line 19
-        macros.AC_CHECK_FUNC("iswcntrl", define = "HAVE_ISWCNTRL"),
-        
+        macros.AC_CHECK_FUNC(
+            "iswcntrl",
+            define = "HAVE_ISWCNTRL",
+        ),
+
         # AC_REQUIRE([gt_TYPE_WINT_T]) - line 27
         # HAVE_WINT_T comes from wint_t dependency via AC_SUBST
-        
+
         # AC_REQUIRE([gl_TYPE_WINT_T_PREREQ]) - line 35
         # GNULIBHEADERS_OVERRIDE_WINT_T comes from wint_t dependency
-        
+
         # gl_CHECK_NEXT_HEADERS([wctype.h]) - line 37
         # This checks for wctype.h header and sets NEXT_WCTYPE_H and
         # NEXT_AS_FIRST_DIRECTIVE_WCTYPE_H via include_next dependency
-        macros.AC_CHECK_HEADER("wctype.h", define = "HAVE_WCTYPE_H"),
-        
+        macros.AC_CHECK_HEADER(
+            "wctype.h",
+            define = "HAVE_WCTYPE_H",
+        ),
+
         # AC_CHECK_FUNCS([towlower]) - line 85
-        macros.AC_CHECK_FUNC("towlower", define = "HAVE_TOWLOWER"),
-        
+        macros.AC_CHECK_FUNC(
+            "towlower",
+            define = "HAVE_TOWLOWER",
+        ),
+
         # AC_CHECK_DECLS([towlower],,, [[#include <wchar.h> ...]]) - lines 89-94
         # If towlower is not found, check for its declaration
         macros.AC_CHECK_DECL(
             "towlower",
-            includes = ["wchar.h", "wctype.h"],
+            includes = [
+                "wchar.h",
+                "wctype.h",
+            ],
         ),
-        
+
         # AC_CACHE_CHECK([for wctype_t], [gl_cv_type_wctype_t], ...) - lines 116-131
         # Check for wctype_t type (conditionally includes wctype.h if HAVE_WCTYPE_H)
         # Default is 1 (from m4 defaults), only set to 0 if not found
@@ -48,9 +60,9 @@ int main(void) {
     return 0;
 }
 """,
+            compile_defines = ["HAVE_WCTYPE_H"],
             define = "_gl_have_wctype_t",
             language = "c",
-            compile_defines = ["HAVE_WCTYPE_H"],
         ),
         # Set HAVE_WCTYPE_T to 0 if type not found, otherwise defaults to 1
         # (handled by checking the _gl_have_wctype_t result)
@@ -60,7 +72,7 @@ int main(void) {
             if_false = "0",
             if_true = "1",
         ),
-        
+
         # AC_CACHE_CHECK([for wctrans_t], [gl_cv_type_wctrans_t], ...) - lines 135-148
         # Check for wctrans_t type (requires wctype.h)
         # Default is 1 (from m4 defaults), only set to 0 if not found
@@ -86,7 +98,7 @@ int main(void) {
             if_false = "0",
             if_true = "1",
         ),
-        
+
         # Note: AC_RUN_IFELSE for gl_cv_func_iswcntrl_works (lines 42-59) is not directly
         # portable to Bazel's cross-compilation environment. REPLACE_ISWCNTRL and
         # REPLACE_TOWLOWER are set based on golden file expectations for macOS/Linux.
@@ -95,10 +107,10 @@ int main(void) {
         macros.AC_SUBST(
             "REPLACE_ISWCNTRL",
             condition = "GNULIBHEADERS_OVERRIDE_WINT_T",
-            if_true = "1",
             if_false = "0",
+            if_true = "1",
         ),
-        
+
         # Lines 82-105: REPLACE_TOWLOWER logic
         # If REPLACE_ISWCNTRL=1, then REPLACE_TOWLOWER=1
         # Otherwise check for towlower function/declaration

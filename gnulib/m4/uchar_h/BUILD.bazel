@@ -9,11 +9,11 @@ autoconf(
     checks = [
         # gl_UCHAR_H checks for uchar.h header
         macros.AC_CHECK_HEADER("uchar.h"),
-        
+
         # BITSIZEOF_WCHAR_T is computed by gl_UCHAR_H
         # On most platforms (including macOS), wchar_t is 32 bits
         macros.AC_DEFINE("BITSIZEOF_WCHAR_T", "32"),
-        
+
         # gl_TYPE_CHAR8_T, gl_TYPE_CHAR16_T, gl_TYPE_CHAR32_T checks for types
         # Note: These checks are performed but the golden file doesn't show explicit defines
         # for these types, so we rely on the header check.

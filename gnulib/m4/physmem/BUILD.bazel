@@ -20,7 +20,7 @@ int main(void) {
             define = "gl_cv_var__system_configuration",
             language = "c",
         ),
-        
+
         # if test $gl_cv_var__system_configuration = yes; then
         #   AC_DEFINE([HAVE__SYSTEM_CONFIGURATION], [1]) - lines 22-25
         # fi
@@ -43,25 +43,64 @@ autoconf(
     name = "physmem",
     checks = [
         # AC_CHECK_HEADERS([sys/pstat.h sys/sysinfo.h machine/hal_sysinfo.h sys/table.h sys/param.h sys/systemcfg.h], ...) - line 35
-        macros.AC_CHECK_HEADER("sys/pstat.h", define = "HAVE_SYS_PSTAT_H"),
-        macros.AC_CHECK_HEADER("sys/sysinfo.h", define = "HAVE_SYS_SYSINFO_H"),
-        macros.AC_CHECK_HEADER("machine/hal_sysinfo.h", define = "HAVE_MACHINE_HAL_SYSINFO_H"),
-        macros.AC_CHECK_HEADER("sys/table.h", define = "HAVE_SYS_TABLE_H"),
-        macros.AC_CHECK_HEADER("sys/param.h", define = "HAVE_SYS_PARAM_H"),
-        macros.AC_CHECK_HEADER("sys/systemcfg.h", define = "HAVE_SYS_SYSTEMCFG_H"),
-        
+        macros.AC_CHECK_HEADER(
+            "sys/pstat.h",
+            define = "HAVE_SYS_PSTAT_H",
+        ),
+        macros.AC_CHECK_HEADER(
+            "sys/sysinfo.h",
+            define = "HAVE_SYS_SYSINFO_H",
+        ),
+        macros.AC_CHECK_HEADER(
+            "machine/hal_sysinfo.h",
+            define = "HAVE_MACHINE_HAL_SYSINFO_H",
+        ),
+        macros.AC_CHECK_HEADER(
+            "sys/table.h",
+            define = "HAVE_SYS_TABLE_H",
+        ),
+        macros.AC_CHECK_HEADER(
+            "sys/param.h",
+            define = "HAVE_SYS_PARAM_H",
+        ),
+        macros.AC_CHECK_HEADER(
+            "sys/systemcfg.h",
+            define = "HAVE_SYS_SYSTEMCFG_H",
+        ),
+
         # AC_CHECK_HEADERS([sys/sysctl.h], ...) - lines 36-42
         # Note: sys/sysctl.h requires sys/param.h on OpenBSD 4.0
-        macros.AC_CHECK_HEADER("sys/sysctl.h", define = "HAVE_SYS_SYSCTL_H"),
-        
+        macros.AC_CHECK_HEADER(
+            "sys/sysctl.h",
+            define = "HAVE_SYS_SYSCTL_H",
+        ),
+
         # AC_CHECK_FUNCS([pstat_getstatic pstat_getdynamic getsysinfo sysctl table sysinfo]) - line 44
-        macros.AC_CHECK_FUNC("pstat_getstatic", define = "HAVE_PSTAT_GETSTATIC"),
-        macros.AC_CHECK_FUNC("pstat_getdynamic", define = "HAVE_PSTAT_GETDYNAMIC"),
-        macros.AC_CHECK_FUNC("getsysinfo", define = "HAVE_GETSYSINFO"),
-        macros.AC_CHECK_FUNC("sysctl", define = "HAVE_SYSCTL"),
-        macros.AC_CHECK_FUNC("table", define = "HAVE_TABLE"),
-        macros.AC_CHECK_FUNC("sysinfo", define = "HAVE_SYSINFO"),
-        
+        macros.AC_CHECK_FUNC(
+            "pstat_getstatic",
+            define = "HAVE_PSTAT_GETSTATIC",
+        ),
+        macros.AC_CHECK_FUNC(
+            "pstat_getdynamic",
+            define = "HAVE_PSTAT_GETDYNAMIC",
+        ),
+        macros.AC_CHECK_FUNC(
+            "getsysinfo",
+            define = "HAVE_GETSYSINFO",
+        ),
+        macros.AC_CHECK_FUNC(
+            "sysctl",
+            define = "HAVE_SYSCTL",
+        ),
+        macros.AC_CHECK_FUNC(
+            "table",
+            define = "HAVE_TABLE",
+        ),
+        macros.AC_CHECK_FUNC(
+            "sysinfo",
+            define = "HAVE_SYSINFO",
+        ),
+
         # AC_CHECK_MEMBERS([struct sysinfo.mem_unit], ...) - line 45
         macros.AC_CHECK_MEMBER(
             "struct sysinfo",
@@ -69,7 +108,7 @@ autoconf(
             define = "HAVE_STRUCT_SYSINFO_MEM_UNIT",
             headers = ["sys/sysinfo.h"],
         ),
-        
+
         # AC_REQUIRE([gl_SYS__SYSTEM_CONFIGURATION]) - line 46
         # This is provided by gl_SYS__SYSTEM_CONFIGURATION dependency
     ],

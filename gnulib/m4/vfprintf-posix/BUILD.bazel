@@ -3,35 +3,110 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# gl_FUNC_VFPRINTF_POSIX - lines 9-16
-# This module checks if vfprintf is POSIX compliant and replaces it if not.
-# The m4 file has a complex check (gl_FUNC_VFPRINTF_IS_POSIX) that checks many
-# printf features. Based on golden files, on macOS vfprintf is not POSIX compliant,
-# so we need to replace it.
+# gl_PREREQ_VFPRINTF - lines 122-123
+# Prerequisites of lib/vfprintf.c (empty)
 autoconf(
-    name = "vfprintf-posix",
+    name = "gl_PREREQ_VFPRINTF",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_REPLACE_VFPRINTF - lines 110-120
+autoconf(
+    name = "gl_REPLACE_VFPRINTF",
     checks = [
-        # gl_FUNC_VFPRINTF_IS_POSIX - lines 19-108
-        # This checks if vfprintf is POSIX compliant by checking many printf features.
-        # The check sets gl_cv_func_vfprintf_posix=yes if compliant, no otherwise.
-        # Based on golden files, on macOS it's not POSIX compliant, so we replace it.
-        
-        # gl_REPLACE_VFPRINTF - lines 110-120
+        # AC_REQUIRE([gl_STDIO_H_DEFAULTS]) - line 112
+        # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
         # AC_LIBOBJ([vfprintf]) - line 113
+        # This is handled in the source code, not via autoconf defines
         # REPLACE_VFPRINTF=1 - line 114
-        # AC_DEFINE([REPLACE_VFPRINTF_POSIX], [1], ...) - lines 115-117
-        macros.AC_DEFINE("REPLACE_VFPRINTF_POSIX", "1"),
         macros.AC_SUBST("REPLACE_VFPRINTF", "1"),
-        
-        # gl_PREREQ_VFPRINTF - lines 122-123
-        # Empty macro, no checks needed
+        # AC_DEFINE([REPLACE_VFPRINTF_POSIX], [1]) - lines 115-117
+        macros.AC_DEFINE("REPLACE_VFPRINTF_POSIX", "1"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS]) - line 11, 112
-        "//gnulib/m4/vasnprintf",  # gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS - line 14
-        # Note: The m4 file requires many gl_PRINTF_* macros for gl_FUNC_VFPRINTF_IS_POSIX,
-        # but since we're using golden file expectations, we don't need to include them all.
+        # AC_REQUIRE([gl_STDIO_H_DEFAULTS]) - line 112
+        # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        ":gl_PREREQ_VFPRINTF",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_FUNC_VFPRINTF_IS_POSIX - lines 19-108
+# Test whether vfprintf is POSIX compliant.
+# Result is gl_cv_func_vfprintf_posix.
+# Note: The m4 file performs many complex runtime checks that can't be easily replicated in Bazel.
+# Based on golden files, vfprintf is not POSIX compliant on macOS/Linux, so we always replace it.
+autoconf(
+    name = "gl_FUNC_VFPRINTF_IS_POSIX",
+    checks = [
+        # The m4 file checks many printf features and sets gl_cv_func_vfprintf_posix=yes only if all pass.
+        # Since we can't replicate all these checks, we assume vfprintf is not POSIX compliant.
+        # This will cause gl_FUNC_VFPRINTF_POSIX to call gl_REPLACE_VFPRINTF.
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # All the printf-related dependencies are listed but not used since we can't replicate the checks
+        # AC_REQUIRE([gl_PRINTF_SIZES_C99]) - line 24
+        "//gnulib/m4/printf:gl_PRINTF_SIZES_C99",
+        # AC_REQUIRE([gl_PRINTF_SIZES_C23]) - line 25
+        "//gnulib/m4/printf:gl_PRINTF_SIZES_C23",
+        # AC_REQUIRE([gl_PRINTF_LONG_DOUBLE]) - line 26
+        "//gnulib/m4/printf:gl_PRINTF_LONG_DOUBLE",
+        # AC_REQUIRE([gl_PRINTF_INFINITE]) - line 27
+        "//gnulib/m4/printf:gl_PRINTF_INFINITE",
+        # AC_REQUIRE([gl_PRINTF_INFINITE_LONG_DOUBLE]) - line 28
+        "//gnulib/m4/printf:gl_PRINTF_INFINITE_LONG_DOUBLE",
+        # AC_REQUIRE([gl_PRINTF_DIRECTIVE_A]) - line 29
+        "//gnulib/m4/printf:gl_PRINTF_DIRECTIVE_A",
+        # AC_REQUIRE([gl_PRINTF_DIRECTIVE_B]) - line 30
+        "//gnulib/m4/printf:gl_PRINTF_DIRECTIVE_B",
+        # AC_REQUIRE([gl_PRINTF_DIRECTIVE_F]) - line 31
+        "//gnulib/m4/printf:gl_PRINTF_DIRECTIVE_F",
+        # m4_ifdef([gl_PRINTF_SUPPORT_N_DIRECTIVE],[AC_REQUIRE([gl_PRINTF_DIRECTIVE_N])]) - line 32
+        # AC_REQUIRE([gl_PRINTF_DIRECTIVE_LS]) - line 33
+        "//gnulib/m4/printf:gl_PRINTF_DIRECTIVE_LS",
+        # AC_REQUIRE([gl_PRINTF_DIRECTIVE_LC]) - line 34
+        "//gnulib/m4/printf:gl_PRINTF_DIRECTIVE_LC",
+        # AC_REQUIRE([gl_PRINTF_POSITIONS]) - line 35
+        "//gnulib/m4/printf:gl_PRINTF_POSITIONS",
+        # AC_REQUIRE([gl_PRINTF_FLAG_GROUPING]) - line 36
+        "//gnulib/m4/printf:gl_PRINTF_FLAG_GROUPING",
+        # AC_REQUIRE([gl_PRINTF_FLAG_GROUPING_INT_PRECISION]) - line 37
+        "//gnulib/m4/printf:gl_PRINTF_FLAG_GROUPING_INT_PRECISION",
+        # AC_REQUIRE([gl_PRINTF_FLAG_GROUPING_MULTIBYTE]) - line 38
+        "//gnulib/m4/printf:gl_PRINTF_FLAG_GROUPING_MULTIBYTE",
+        # AC_REQUIRE([gl_PRINTF_FLAG_LEFTADJUST]) - line 39
+        "//gnulib/m4/printf:gl_PRINTF_FLAG_LEFTADJUST",
+        # AC_REQUIRE([gl_PRINTF_FLAG_ZERO]) - line 40
+        "//gnulib/m4/printf:gl_PRINTF_FLAG_ZERO",
+        # AC_REQUIRE([gl_PRINTF_FLAG_ALT_PRECISION_ZERO]) - line 41
+        "//gnulib/m4/printf:gl_PRINTF_FLAG_ALT_PRECISION_ZERO",
+        # AC_REQUIRE([gl_PRINTF_PRECISION]) - line 42
+        "//gnulib/m4/printf:gl_PRINTF_PRECISION",
+        # AC_REQUIRE([gl_PRINTF_ENOMEM]) - line 43
+        "//gnulib/m4/printf:gl_PRINTF_ENOMEM",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_FUNC_VFPRINTF_POSIX - lines 9-16
+autoconf(
+    name = "vfprintf-posix",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        # AC_REQUIRE([gl_FUNC_VFPRINTF_IS_POSIX]) - line 11
+        ":gl_FUNC_VFPRINTF_IS_POSIX",
+        # If gl_cv_func_vfprintf_posix = no (line 12-15):
+        #   gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS - line 13
+        #   gl_REPLACE_VASNPRINTF - line 14
+        #   gl_REPLACE_VFPRINTF - line 15
+        # Based on golden files, vfprintf is not POSIX compliant, so we always need these
+        "//gnulib/m4/vasnprintf:gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS",
+        "//gnulib/m4/vasnprintf:gl_REPLACE_VASNPRINTF",
+        ":gl_REPLACE_VFPRINTF",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

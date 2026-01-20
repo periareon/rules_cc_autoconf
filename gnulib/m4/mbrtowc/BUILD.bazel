@@ -11,13 +11,13 @@ autoconf(
             "mbrtowc",
             define = "HAVE_MBRTOWC",
         ),
-        
+
         # Check for mbrtowc declaration (for Minix 3.1.8 which declares but doesn't have it)
         macros.AC_CHECK_DECL(
             "mbrtowc",
             headers = ["wchar.h"],
         ),
-        
+
         # AC_TYPE_MBSTATE_T checks for mbstate_t type
         macros.AC_CHECK_TYPE(
             "mbstate_t",
@@ -27,13 +27,13 @@ mbstate_t x;
 """,
             define = "HAVE_MBSTATE_T",
         ),
-        
+
         # Check for mbsinit function (gl_MBSTATE_T_BROKEN, gl_MBRTOWC_INCOMPLETE_STATE)
         macros.AC_CHECK_FUNC(
             "mbsinit",
             define = "HAVE_MBSINIT",
         ),
-        
+
         # Note: Various runtime checks are performed by gl_MBRTOWC_* macros,
         # but they use AC_RUN_IFELSE which cannot be easily replicated in Bazel.
         # Default values are set via AC_SUBST in defaults target.

@@ -10,7 +10,10 @@ autoconf(
     name = "features_h",
     checks = [
         # AC_CHECK_HEADERS_ONCE([features.h]) - line 1118
-        macros.AC_CHECK_HEADER("features.h", define = "_gl_cv_header_features_h"),
+        macros.AC_CHECK_HEADER(
+            "features.h",
+            define = "_gl_cv_header_features_h",
+        ),
         # If features.h exists, set HAVE_FEATURES_H=1 (lines 1119-1123)
         # If features.h does not exist, set HAVE_FEATURES_H=0
         macros.AC_SUBST(

@@ -16,14 +16,14 @@ autoconf(
             "monetary.h",
             define = "_gl_cv_header_monetary_h",
         ),
-        
+
         # Set HAVE_MONETARY_H as define if header exists
         macros.AC_DEFINE(
             "HAVE_MONETARY_H",
             "1",
             requires = ["_gl_cv_header_monetary_h==1"],
         ),
-        
+
         # If monetary.h is found, set HAVE_MONETARY_H=1, otherwise HAVE_MONETARY_H=0 (lines 27-31)
         macros.AC_SUBST(
             "HAVE_MONETARY_H",
@@ -35,11 +35,11 @@ autoconf(
             "0",
             requires = ["_gl_cv_header_monetary_h==0"],
         ),
-        
+
         # gl_CHECK_NEXT_HEADERS([monetary.h]) - line 26
         # This provides NEXT_MONETARY_H and NEXT_AS_FIRST_DIRECTIVE_MONETARY_H
         # These are provided by the include_next dependency
-        
+
         # AC_CHECK_HEADERS_ONCE([xlocale.h]) - line 33
         # Check for xlocale.h header
         # Use internal define to avoid conflict with substitution variable
@@ -47,14 +47,14 @@ autoconf(
             "xlocale.h",
             define = "_gl_cv_header_xlocale_h",
         ),
-        
+
         # Set HAVE_XLOCALE_H as define if header exists
         macros.AC_DEFINE(
             "HAVE_XLOCALE_H",
             "1",
             requires = ["_gl_cv_header_xlocale_h==1"],
         ),
-        
+
         # If xlocale.h is found, set HAVE_XLOCALE_H=1, otherwise HAVE_XLOCALE_H=0 (lines 34-38)
         macros.AC_SUBST(
             "HAVE_XLOCALE_H",
@@ -66,14 +66,14 @@ autoconf(
             "0",
             requires = ["_gl_cv_header_xlocale_h==0"],
         ),
-        
+
         # gl_MONETARY_H_DEFAULTS - lines 55-61
         # Sets default values for HAVE_STRFMON_L and REPLACE_STRFMON_L
         # HAVE_STRFMON_L=1 by default (line 58)
         macros.AC_SUBST("HAVE_STRFMON_L", "1"),
         # REPLACE_STRFMON_L=0 by default (line 59)
         macros.AC_SUBST("REPLACE_STRFMON_L", "0"),
-        
+
         # gl_WARN_ON_USE_PREPARE - line 42
         # This is for runtime checks and is not directly portable
         # The check for strfmon_l is handled by the defaults above

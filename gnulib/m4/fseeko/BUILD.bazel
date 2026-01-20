@@ -43,7 +43,10 @@ autoconf(
         # If fseeko exists, define HAVE_FSEEKO=1 (lines 73-76)
         # Note: This is handled in gl_FUNC_FSEEKO based on gl_cv_func_fseeko
         # We check for _fseeki64 here (lines 79-82)
-        macros.AC_CHECK_FUNC("_fseeki64", define = "HAVE__FSEEKI64"),
+        macros.AC_CHECK_FUNC(
+            "_fseeki64",
+            define = "HAVE__FSEEKI64",
+        ),
         # AC_CHECK_DECLS([_fseeki64]) - line 81
         # Only check if _fseeki64 function exists
         macros.AC_CHECK_DECL(
@@ -95,8 +98,8 @@ int main(void) { fseeko(stdin, 0, 0); return 0; }
         # AC_CHECK_DECLS_ONCE creates both a define for config.h and a cache variable ac_cv_have_decl_fseeko
         macros.AC_CHECK_DECL(
             "fseeko",
-            headers = ["stdio.h"],
             define = "HAVE_DECL_FSEEKO",  # Creates define for config.h (1 if declared, undef if not)
+            headers = ["stdio.h"],
         ),
         # If fseeko is NOT declared, set HAVE_DECL_FSEEKO=0 (lines 27-29)
         # AC_CHECK_DECL creates HAVE_DECL_FSEEKO define for config.h
@@ -128,8 +131,8 @@ int main(void) { fseeko(stdin, 0, 0); return 0; }
         macros.AC_SUBST(
             "REPLACE_FSEEKO",
             condition = "_gl_cv_var_stdin_large_offset==0",
-            if_true = "1",
             if_false = "0",
+            if_true = "1",
         ),
     ],
     visibility = ["//visibility:public"],

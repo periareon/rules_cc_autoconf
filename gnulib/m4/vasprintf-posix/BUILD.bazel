@@ -15,14 +15,14 @@ autoconf(
         # This checks if vasprintf is POSIX compliant by checking many printf features.
         # The check sets gl_cv_func_vasprintf_posix=yes if compliant, no otherwise.
         # Based on golden files, on macOS it's not POSIX compliant, so we replace it.
-        
+
         # gl_FUNC_VASPRINTF_POSIX - lines 9-16
         # if test $gl_cv_func_vasprintf_posix = no; then
         #   gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS - line 14
         #   gl_REPLACE_VASNPRINTF - line 15
         #   gl_REPLACE_VASPRINTF - line 16
         # fi
-        
+
         # gl_REPLACE_VASPRINTF - lines 18-30 (from vasprintf.m4)
         # AC_LIBOBJ([vasprintf]) - line 20
         # AC_LIBOBJ([asprintf]) - line 21
@@ -33,14 +33,14 @@ autoconf(
         # fi
         # Based on golden files, REPLACE_VASPRINTF=1 on macOS (function exists but not POSIX compliant)
         macros.AC_SUBST("REPLACE_VASPRINTF", "1"),
-        
+
         # gl_PREREQ_VASPRINTF_H - lines 32-36 (from vasprintf.m4)
         # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 35
         # This is provided by extensions dependency
-        
+
         # gl_PREREQ_VASPRINTF - lines 38-40 (from vasprintf.m4)
         # Empty macro, no checks needed
-        
+
         # gl_PREREQ_ASPRINTF - lines 42-44 (from vasprintf.m4)
         # Empty macro, no checks needed
     ],

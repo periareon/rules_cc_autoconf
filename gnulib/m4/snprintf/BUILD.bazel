@@ -51,23 +51,26 @@ autoconf(
     checks = [
         # AC_REQUIRE([gl_STDIO_H_DEFAULTS]) - line 15
         # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
-        
+
         # AC_CHECK_FUNCS([snprintf]) - line 17
         # HAVE_SNPRINTF comes from this check (internal define)
-        macros.AC_CHECK_FUNC("snprintf", define = "_gl_cv_func_snprintf"),
-        
+        macros.AC_CHECK_FUNC(
+            "snprintf",
+            define = "_gl_cv_func_snprintf",
+        ),
+
         # Create HAVE_SNPRINTF define if function exists
         macros.AC_DEFINE(
             "HAVE_SNPRINTF",
             condition = "_gl_cv_func_snprintf",
             if_true = "1",
         ),
-        
+
         # gl_SNPRINTF_SIZE1, gl_SNPRINTF_RETVAL_C99, gl_PRINTF_POSITIONS (lines 19-34)
         # These are runtime tests that check if snprintf is "usable"
         # HAVE_SNPRINTF_RETVAL_C99 and HAVE_SNPRINTF_TRUNCATION_C99 are provided
         # by the printf module dependencies
-        
+
         # AC_CHECK_DECLS_ONCE([snprintf]) - line 39
         # Check if snprintf is declared in <stdio.h>
         macros.AC_CHECK_DECL(
@@ -75,7 +78,13 @@ autoconf(
             define = "HAVE_DECL_SNPRINTF",
             headers = ["stdio.h"],
         ),
-        
+        # Set HAVE_DECL_SNPRINTF as substitution variable (m4 sets it to 0 if not found)
+        macros.AC_SUBST(
+            "HAVE_DECL_SNPRINTF",
+            condition = "HAVE_DECL_SNPRINTF",
+            if_false = "0",
+        ),
+
         # Note: gl_REPLACE_SNPRINTF is called if snprintf is not usable (lines 36-38)
         # This is handled via dependency, but REPLACE_SNPRINTF is set based on
         # gl_cv_func_snprintf_usable which depends on runtime tests.

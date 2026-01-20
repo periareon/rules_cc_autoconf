@@ -30,15 +30,18 @@ autoconf(
         # AC_CHECK_DECLS_ONCE([getline]) - line 26
         macros.AC_CHECK_DECL(
             "getline",
-            headers = ["stdio.h"],
             define = "HAVE_DECL_GETLINE",
+            headers = ["stdio.h"],
         ),
 
         # gl_CHECK_FUNCS_ANDROID([getline], [[#include <stdio.h>]]) - line 28
         # Check for getline function (similar to AC_CHECK_FUNC but also checks Android-specific behavior)
         # Use AC_CHECK_FUNC which performs a link test and is equivalent to gl_CHECK_FUNCS_ANDROID
         # on non-Android systems
-        macros.AC_CHECK_FUNC("getline", define = "_am_cv_func_getline"),
+        macros.AC_CHECK_FUNC(
+            "getline",
+            define = "_am_cv_func_getline",
+        ),
 
         # Create HAVE_GETLINE define if function exists (line 29)
         # The m4 sets HAVE_GETLINE=1 if getline found

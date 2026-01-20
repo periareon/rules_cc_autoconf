@@ -15,7 +15,7 @@ autoconf(
             "pipe2",
             define = "_gl_cv_func_pipe2",
         ),
-        
+
         # If pipe2 not found, set HAVE_PIPE2=0 (line 19-21)
         # Otherwise, HAVE_PIPE2 is not set as a define (it's undefined in config.h)
         # But we set it as a substitution variable
@@ -24,7 +24,7 @@ autoconf(
             "0",
             requires = ["_gl_cv_func_pipe2==0"],
         ),
-        
+
         # REPLACE_PIPE2 logic (lines 19-24):
         # - If pipe2 not found and gl_cv_onwards_func_pipe2 starts with "future", REPLACE_PIPE2=1
         # - If pipe2 found, REPLACE_PIPE2=1

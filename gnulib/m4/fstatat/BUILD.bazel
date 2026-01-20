@@ -18,7 +18,10 @@ autoconf(
         # AC_REQUIRE([AC_CANONICAL_HOST]) - line 18
 
         # AC_CHECK_FUNCS_ONCE([fstatat]) - line 19
-        macros.AC_CHECK_FUNC("fstatat", define = "_gl_cv_func_fstatat"),
+        macros.AC_CHECK_FUNC(
+            "fstatat",
+            define = "_gl_cv_func_fstatat",
+        ),
 
         # Create HAVE_FSTATAT define if function exists
         macros.AC_DEFINE(

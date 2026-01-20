@@ -33,12 +33,12 @@ int main(void) {
             define = "_gl_cv_func_mkfifoat",
             language = "c",
         ),
-        
+
         # If mkfifoat is found, check for trailing slash bugs (lines 28-64)
         # This is a runtime check (AC_RUN_IFELSE) that can't be easily ported
         # Based on golden file, on macOS mkfifoat has bugs and REPLACE_MKFIFOAT=1
         # So we assume mkfifoat is not found or has bugs on macOS
-        
+
         # If mkfifoat is found and works correctly, both functions are available
         # If mkfifoat is found but has bugs, REPLACE_MKFIFOAT=1 and REPLACE_MKNODAT=1 (lines 59-61)
         # If mkfifoat is not found, HAVE_MKFIFOAT=0, HAVE_MKNODAT=0 (lines 63-68)
@@ -46,7 +46,7 @@ int main(void) {
         # - HAVE_MKFIFOAT and HAVE_MKNODAT are undefined in config.h
         # - HAVE_MKFIFOAT=0 and HAVE_MKNODAT=0 as substitution variables
         # - REPLACE_MKFIFOAT=1 and REPLACE_MKNODAT=1 as substitution variables
-        
+
         # Set HAVE_MKFIFOAT and HAVE_MKNODAT as defines if functions exist
         macros.AC_DEFINE(
             "HAVE_MKFIFOAT",
@@ -58,7 +58,7 @@ int main(void) {
             "1",
             requires = ["_gl_cv_func_mknodat==1"],
         ),
-        
+
         # Set HAVE_MKFIFOAT=0 and HAVE_MKNODAT=0 as substitution variables if functions are not found (lines 64, 67)
         macros.AC_SUBST(
             "HAVE_MKFIFOAT",
@@ -70,7 +70,7 @@ int main(void) {
             "0",
             requires = ["_gl_cv_func_mknodat==0"],
         ),
-        
+
         # Set REPLACE_MKFIFOAT and REPLACE_MKNODAT based on conditions
         # If mkfifoat is found but has bugs, REPLACE_MKFIFOAT=1 and REPLACE_MKNODAT=1 (lines 59-61)
         # If mkfifoat is not found and it's a future function, REPLACE_MKFIFOAT=1 (line 66)

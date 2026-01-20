@@ -15,7 +15,7 @@ autoconf(
             "xlocale.h",
             define = "HAVE_XLOCALE_H",
         ),
-        
+
         # gl_LOCALE_T checks for locale_t type
         # Note: This check doesn't directly define HAVE_LOCALE_T in config.h
         # Based on the golden file, HAVE_LOCALE_T is expected to be undefined
@@ -32,7 +32,7 @@ int main(void) {
 """,
             define = "_gl_cv_type_locale_t",  # Use temporary define to avoid direct HAVE_LOCALE_T
         ),
-        
+
         # Check for _locale_t (Windows)
         macros.AC_TRY_COMPILE(
             code = """\
@@ -42,7 +42,7 @@ _locale_t x;
             define = "HAVE_WINDOWS_LOCALE_T",
             language = "c",
         ),
-        
+
         # Check if locale.h conforms to POSIX:2001
         macros.AC_TRY_COMPILE(
             code = """\
@@ -53,7 +53,7 @@ int y = sizeof (((struct lconv *) 0)->decimal_point);
             define = "HAVE_LOCALE_H_POSIX2001",
             language = "c",
         ),
-        
+
         # Check if struct lconv is properly defined
         macros.AC_TRY_COMPILE(
             code = """\

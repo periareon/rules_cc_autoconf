@@ -9,20 +9,23 @@ autoconf(
     name = "setlocale_null",
     checks = [
         # AC_CHECK_HEADERS_ONCE([threads.h]) - line 13
-        macros.AC_CHECK_HEADER("threads.h", define = "HAVE_THREADS_H"),
-        
+        macros.AC_CHECK_HEADER(
+            "threads.h",
+            define = "HAVE_THREADS_H",
+        ),
+
         # SETLOCALE_NULL_ALL_MTSAFE is set based on host_os (lines 15-55)
         # On macOS (darwin*), it's "no", so SETLOCALE_NULL_ALL_MTSAFE=0 (line 19)
         # On glibc, HP-UX, Solaris, native Windows, it's "yes", so SETLOCALE_NULL_ALL_MTSAFE=1
         # For macOS, set to 0; for Linux (glibc), set to 1; default to 0
         macros.AC_DEFINE("SETLOCALE_NULL_ALL_MTSAFE", "0"),  # Default to 0 (macOS)
-        
+
         # SETLOCALE_NULL_ONE_MTSAFE is set based on host_os (lines 60-88)
         # On macOS (darwin*), it's "yes", so SETLOCALE_NULL_ONE_MTSAFE=1 (line 67)
         # On OpenBSD, AIX, it's "no", so SETLOCALE_NULL_ONE_MTSAFE=0
         # For macOS, set to 1; for Linux (glibc), set to 1; default to 1
         macros.AC_DEFINE("SETLOCALE_NULL_ONE_MTSAFE", "1"),  # Default to 1 (macOS/Linux)
-        
+
         # SETLOCALE_NULL_LIB is set based on whether weak symbols are supported (lines 91-106)
         # If SETLOCALE_NULL_ALL_MTSAFE=0 or SETLOCALE_NULL_ONE_MTSAFE=0, and weak symbols are not supported,
         # SETLOCALE_NULL_LIB="$LIBPTHREAD", otherwise it's empty

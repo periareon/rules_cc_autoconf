@@ -14,31 +14,37 @@ autoconf(
         # Check for strerror_r function using internal define
         macros.AC_CHECK_FUNC(
             "strerror_r",
-            define = "ac_cv_func_strerror_r",
             code = "#include <string.h>\n",
+            define = "ac_cv_func_strerror_r",
         ),
-        
+
         # AC_CHECK_DECLS_ONCE([strerror_r]) - line 16
         # HAVE_DECL_STRERROR_R is provided by AC_FUNC_STRERROR_R dependency
         # if test $ac_cv_have_decl_strerror_r = no; then - lines 17-19
         #   HAVE_DECL_STRERROR_R=0
         # fi
         # This is handled by AC_FUNC_STRERROR_R dependency
-        
+
         # gl_PREREQ_STRERROR_R: Prerequisites
         # AC_CHECK_FUNCS_ONCE([__xpg_strerror_r]) - line 37
-        macros.AC_CHECK_FUNC("__xpg_strerror_r", define = "ac_cv_func___xpg_strerror_r"),
-        
+        macros.AC_CHECK_FUNC(
+            "__xpg_strerror_r",
+            define = "ac_cv_func___xpg_strerror_r",
+        ),
+
         # gl_CHECK_FUNCS_ANDROID([catgets], [[#include <nl_types.h>]]) - line 38
         macros.AC_CHECK_FUNC(
             "catgets",
-            define = "HAVE_CATGETS",
             code = "#include <nl_types.h>\n",
+            define = "HAVE_CATGETS",
         ),
-        
+
         # AC_CHECK_FUNCS_ONCE([snprintf]) - line 39
-        macros.AC_CHECK_FUNC("snprintf", define = "HAVE_SNPRINTF"),
-        
+        macros.AC_CHECK_FUNC(
+            "snprintf",
+            define = "HAVE_SNPRINTF",
+        ),
+
         # gl_FUNC_STRERROR_R: Set REPLACE_STRERROR_R
         # if test $ac_cv_func_strerror_r = yes; then - line 21
         #   if test "$GL_GENERATE_ERRNO_H:$REPLACE_STRERROR_0" = false:0; then - line 22
@@ -73,12 +79,12 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/string_h",  # AC_REQUIRE([gl_STRING_H_DEFAULTS]) - line 10
-        "//gnulib/m4/errno_h",  # AC_REQUIRE([gl_HEADER_ERRNO_H]) - from gl_FUNC_STRERROR_R_WORKS - line 47
-        "//gnulib/m4/strerror",  # AC_REQUIRE([gl_FUNC_STRERROR_0]) - from gl_FUNC_STRERROR_R_WORKS - line 55
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST]) - from gl_FUNC_STRERROR_R_WORKS - line 48
-        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - from gl_FUNC_STRERROR_R_WORKS - line 52
-        "//autoconf/macros/AC_FUNC_STRERROR_R",  # AC_REQUIRE([AC_FUNC_STRERROR_R]) - from gl_PREREQ_STRERROR_R - line 36, provides HAVE_DECL_STRERROR_R
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//autoconf/macros/AC_FUNC_STRERROR_R",  # AC_REQUIRE([AC_FUNC_STRERROR_R]) - from gl_PREREQ_STRERROR_R - line 36, provides HAVE_DECL_STRERROR_R
+        "//gnulib/m4/errno_h",  # AC_REQUIRE([gl_HEADER_ERRNO_H]) - from gl_FUNC_STRERROR_R_WORKS - line 47
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - from gl_FUNC_STRERROR_R_WORKS - line 52
+        "//gnulib/m4/strerror",  # AC_REQUIRE([gl_FUNC_STRERROR_0]) - from gl_FUNC_STRERROR_R_WORKS - line 55
+        "//gnulib/m4/string_h",  # AC_REQUIRE([gl_STRING_H_DEFAULTS]) - line 10
     ],
 )

@@ -52,7 +52,6 @@ int main(void) {
 """,
             define = "_gl_cv_type_posix_spawn_file_actions_t",
         ),
-
         macros.AC_DEFINE(
             "HAVE_POSIX_SPAWNATTR_T",
             "1",

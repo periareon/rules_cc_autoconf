@@ -12,7 +12,7 @@ autoconf(
         # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
         # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 26
         # This is provided by extensions dependency
-        
+
         # AC_CHECK_FUNCS([euidaccess]) - line 28
         # AC_CHECK_FUNCS uses AC_TRY_COMPILE which only checks for compilation
         # On macOS, euidaccess doesn't exist, so it should fail
@@ -33,14 +33,14 @@ int main(void) {
             define = "_gl_cv_func_euidaccess",
             language = "c",
         ),
-        
+
         # Create HAVE_EUIDACCESS define if function exists
         macros.AC_DEFINE(
             "HAVE_EUIDACCESS",
             condition = "_gl_cv_func_euidaccess",
             if_true = "1",
         ),
-        
+
         # Set HAVE_EUIDACCESS as substitution variable (line 29-31)
         # If euidaccess not found, set HAVE_EUIDACCESS=0
         # If euidaccess found, set HAVE_EUIDACCESS=1
@@ -67,10 +67,13 @@ autoconf(
     checks = [
         # AC_REQUIRE([gl_FUNC_EUIDACCESS]) - line 11
         # gl_FUNC_EUIDACCESS is included via dependency
-        
+
         # AC_CHECK_DECLS([setregid]) - line 12
-        macros.AC_CHECK_DECL("setregid", define = "HAVE_DECL_SETREGID"),
-        
+        macros.AC_CHECK_DECL(
+            "setregid",
+            define = "HAVE_DECL_SETREGID",
+        ),
+
         # AC_DEFINE([PREFER_NONREENTRANT_EUIDACCESS], [1]) - lines 13-18
         macros.AC_DEFINE("PREFER_NONREENTRANT_EUIDACCESS", "1"),
     ],
@@ -105,27 +108,30 @@ int main(void) {
             define = "HAVE_FACCESSAT",
             language = "c",
         ),
-        
+
         # AC_CHECK_HEADERS([libgen.h]) - line 39
-        macros.AC_CHECK_HEADER("libgen.h", define = "HAVE_LIBGEN_H"),
-        
+        macros.AC_CHECK_HEADER(
+            "libgen.h",
+            define = "HAVE_LIBGEN_H",
+        ),
+
         # AC_FUNC_GETGROUPS - line 40
         # This checks for getgroups and defines GETGROUPS_T
         # GETGROUPS_T is set to the type of the getgroups argument (gid_t, int, etc.)
         # On macOS/Linux, it's typically gid_t
         # GETGROUPS_T is provided by AC_FUNC_GETGROUPS dependency
         # We need to add the dependency to get GETGROUPS_T and HAVE_GETGROUPS
-        
+
         # AC_SEARCH_LIBS([eaccess], [gen], ...) - lines 49-51
         # Check for eaccess function in libgen library (Solaris)
         # EUIDACCESS_LIBGEN is set to -lgen if eaccess is found, otherwise empty
         # Since we can't easily check libraries in Bazel, we default to empty
         macros.AC_SUBST("EUIDACCESS_LIBGEN", ""),
-        
+
         # AC_CHECK_FUNCS([eaccess]) - line 52
         # Note: eaccess is checked but not used in the main logic
         # We can skip it or add it if needed
-        
+
         # LIB_EACCESS="$EUIDACCESS_LIBGEN" - line 55
         macros.AC_SUBST("LIB_EACCESS", ""),
     ],

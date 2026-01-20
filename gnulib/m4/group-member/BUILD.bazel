@@ -34,7 +34,10 @@ autoconf(
         # If NOT found, set HAVE_GROUP_MEMBER=0 as substitution variable (line 22)
         # If found, do nothing (HAVE_GROUP_MEMBER is not set, so it's undefined in config.h)
         # Note: The m4 only sets HAVE_GROUP_MEMBER=0 when NOT found, it doesn't set it when found
-        macros.AC_CHECK_FUNC("group_member", define = "_gl_cv_func_group_member"),
+        macros.AC_CHECK_FUNC(
+            "group_member",
+            define = "_gl_cv_func_group_member",
+        ),
 
         # If group_member not found, set HAVE_GROUP_MEMBER=0 as substitution variable (line 22)
         # If group_member found, do nothing (HAVE_GROUP_MEMBER remains undefined in config.h)

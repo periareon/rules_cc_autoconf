@@ -23,41 +23,41 @@ int main(void) {
             define = "_gl_cv_func_memset_explicit",
             language = "c",
         ),
-        
+
         # Set HAVE_MEMSET_EXPLICIT as define if function exists
         macros.AC_DEFINE(
             "HAVE_MEMSET_EXPLICIT",
             "1",
             requires = ["_gl_cv_func_memset_explicit==1"],
         ),
-        
+
         # Set HAVE_MEMSET_EXPLICIT=0 as substitution variable if function is not found (line 22)
         macros.AC_SUBST(
             "HAVE_MEMSET_EXPLICIT",
             "0",
             requires = ["_gl_cv_func_memset_explicit==0"],
         ),
-        
+
         # Set REPLACE_MEMSET_EXPLICIT based on conditions
         # If memset_explicit is not found and it's a future function, REPLACE_MEMSET_EXPLICIT=1 (line 24)
         # Otherwise, REPLACE_MEMSET_EXPLICIT=0 (default)
         # Based on golden file, REPLACE_MEMSET_EXPLICIT=0 on macOS
         macros.AC_SUBST("REPLACE_MEMSET_EXPLICIT", "0"),
-        
+
         # gl_PREREQ_MEMSET_EXPLICIT - lines 26-60
         # Check for explicit_memset function (line 29)
         macros.AC_CHECK_FUNC(
             "explicit_memset",
             define = "HAVE_EXPLICIT_MEMSET",
         ),
-        
+
         # AC_CHECK_FUNCS_ONCE([memset_s]) - line 30
         # Check for memset_s function
         macros.AC_CHECK_FUNC(
             "memset_s",
             define = "HAVE_MEMSET_S",
         ),
-        
+
         # gl_cv_func_memset_s_works - lines 31-50
         # Runtime check for working memset_s (AC_RUN_IFELSE)
         # Based on golden file, HAVE_MEMSET_S_SUPPORTS_ZERO=1 on macOS

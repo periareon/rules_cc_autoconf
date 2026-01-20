@@ -37,7 +37,7 @@ int main(void) {
             define = "HAVE_UNSIGNED_LONG_LONG_INT",
             language = "c",
         ),
-        
+
         # AC_TYPE_LONG_LONG_INT - lines 12-46
         # Define HAVE_LONG_LONG_INT if 'long long int' works
         # Requires AC_TYPE_UNSIGNED_LONG_LONG_INT first

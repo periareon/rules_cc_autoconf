@@ -6,6 +6,24 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "chown",
     checks = select({
+        "@platforms//os:linux": [
+            # AC_FUNC_CHOWN checks for chown function
+            # Use temporary define to avoid conflict with unistd_h:defaults AC_SUBST
+            macros.AC_CHECK_FUNC(
+                "chown",
+                define = "_gl_cv_func_chown",
+            ),
+            macros.AC_DEFINE(
+                "HAVE_CHOWN",
+                "1",
+                requires = ["_gl_cv_func_chown=1"],
+            ),
+            macros.AC_CHECK_FUNC(
+                "fchown",
+                define = "HAVE_FCHOWN",
+            ),
+            # Linux with glibc handles trailing slashes correctly
+        ],
         "@platforms//os:macos": [
             # AC_FUNC_CHOWN checks for chown function
             # Use temporary define to avoid conflict with unistd_h:defaults AC_SUBST
@@ -24,24 +42,6 @@ autoconf(
             ),
             # macOS has the trailing slash bug (gl_FUNC_CHOWN_FOLLOWS_SYMLINK)
             macros.AC_DEFINE("CHOWN_TRAILING_SLASH_BUG", "1"),
-        ],
-        "@platforms//os:linux": [
-            # AC_FUNC_CHOWN checks for chown function
-            # Use temporary define to avoid conflict with unistd_h:defaults AC_SUBST
-            macros.AC_CHECK_FUNC(
-                "chown",
-                define = "_gl_cv_func_chown",
-            ),
-            macros.AC_DEFINE(
-                "HAVE_CHOWN",
-                "1",
-                requires = ["_gl_cv_func_chown=1"],
-            ),
-            macros.AC_CHECK_FUNC(
-                "fchown",
-                define = "HAVE_FCHOWN",
-            ),
-            # Linux with glibc handles trailing slashes correctly
         ],
         "//conditions:default": [
             # AC_FUNC_CHOWN checks for chown function

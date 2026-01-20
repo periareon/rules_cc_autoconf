@@ -41,7 +41,10 @@ autoconf(
         # AC_REQUIRE([AC_CANONICAL_HOST]) - line 13
 
         # AC_CHECK_FUNCS_ONCE([lstat]) - line 17
-        macros.AC_CHECK_FUNC("lstat", define = "_gl_cv_func_lstat"),
+        macros.AC_CHECK_FUNC(
+            "lstat",
+            define = "_gl_cv_func_lstat",
+        ),
 
         # Create HAVE_LSTAT define if function exists
         macros.AC_DEFINE(

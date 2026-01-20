@@ -9,17 +9,26 @@ autoconf(
     name = "gl_PREREQ_GETLOADAVG",
     checks = [
         # AC_CHECK_HEADERS_ONCE([sys/param.h unistd.h]) - line 119
-        macros.AC_CHECK_HEADER("sys/param.h", define = "HAVE_SYS_PARAM_H"),
+        macros.AC_CHECK_HEADER(
+            "sys/param.h",
+            define = "HAVE_SYS_PARAM_H",
+        ),
         # Note: HAVE_UNISTD_H is provided by AC_CHECK_INCLUDES_DEFAULT dependency
 
         # AC_CHECK_FUNCS([pstat_getdynamic], ...) - line 123
         # Note: HAVE_PSTAT_GETDYNAMIC is provided by physmem dependency
 
         # AC_CHECK_HEADERS([mach/mach.h]) - line 149
-        macros.AC_CHECK_HEADER("mach/mach.h", define = "HAVE_MACH_MACH_H"),
+        macros.AC_CHECK_HEADER(
+            "mach/mach.h",
+            define = "HAVE_MACH_MACH_H",
+        ),
 
         # AC_CHECK_HEADERS([nlist.h], ...) - line 152
-        macros.AC_CHECK_HEADER("nlist.h", define = "HAVE_NLIST_H"),
+        macros.AC_CHECK_HEADER(
+            "nlist.h",
+            define = "HAVE_NLIST_H",
+        ),
 
         # AC_CHECK_MEMBERS([struct nlist.n_un.n_name], ...) - line 153
         # Note: This is handled via AC_CHECK_HEADER for nlist.h and platform-specific logic
@@ -46,7 +55,10 @@ autoconf(
         # Check for getloadavg function (similar to AC_CHECK_FUNC but also checks Android-specific behavior)
         # Use AC_CHECK_FUNC which performs a link test and is equivalent to gl_CHECK_FUNCS_ANDROID
         # on non-Android systems
-        macros.AC_CHECK_FUNC("getloadavg", define = "_gl_cv_func_getloadavg"),
+        macros.AC_CHECK_FUNC(
+            "getloadavg",
+            define = "_gl_cv_func_getloadavg",
+        ),
 
         # Create HAVE_GETLOADAVG define if function exists (line 27)
         # The m4 sets HAVE_GETLOADAVG=1 by default, then sets it to 0 if function not found (line 63)
@@ -73,7 +85,10 @@ autoconf(
         macros.AC_SUBST("GETLOADAVG_LIBS", ""),
 
         # AC_CHECK_HEADERS([sys/loadavg.h]) - line 95
-        macros.AC_CHECK_HEADER("sys/loadavg.h", define = "HAVE_SYS_LOADAVG_H"),
+        macros.AC_CHECK_HEADER(
+            "sys/loadavg.h",
+            define = "HAVE_SYS_LOADAVG_H",
+        ),
 
         # AC_CHECK_DECL([getloadavg], [], [HAVE_DECL_GETLOADAVG=0], ...) - line 101
         # Check for getloadavg declaration with special headers
@@ -87,8 +102,8 @@ autoconf(
         # Let's check the declaration but use a custom define name to avoid conflicts
         macros.AC_CHECK_DECL(
             "getloadavg",
-            headers = ["stdlib.h"],
             define = "_gl_cv_have_decl_getloadavg",
+            headers = ["stdlib.h"],
         ),
 
         # The m4 sets HAVE_DECL_GETLOADAVG=0 as substitution variable if not found (line 101)

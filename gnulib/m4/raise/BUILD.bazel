@@ -19,3 +19,13 @@ autoconf(
         "//gnulib/m4/signal_h",  # AC_REQUIRE([gl_SIGNAL_H_DEFAULTS])
     ],
 )
+
+autoconf(
+    name = "raise_with_defaults",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":raise",
+        "//gnulib/m4/signal_h:with_defaults",  # Include signal_h defaults including HAVE_SIGSET_T
+    ],
+)

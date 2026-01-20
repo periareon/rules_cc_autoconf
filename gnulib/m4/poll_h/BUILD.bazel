@@ -12,31 +12,31 @@ autoconf(
             "poll.h",
             define = "_gl_cv_header_poll_h",
         ),
-        
+
         # Set HAVE_POLL_H as define if header is found
         macros.AC_DEFINE(
             "HAVE_POLL_H",
             "1",
             requires = ["_gl_cv_header_poll_h==1"],
         ),
-        
+
         # Set HAVE_POLL_H as substitution variable (lines 20-23)
         # If header found: HAVE_POLL_H=1, else HAVE_POLL_H=0
         macros.AC_SUBST(
             "HAVE_POLL_H",
             condition = "_gl_cv_header_poll_h",
-            if_true = "1",
             if_false = "0",
+            if_true = "1",
         ),
-        
+
         # gl_CHECK_NEXT_HEADERS([poll.h]) - line 26
         # This provides NEXT_POLL_H and NEXT_AS_FIRST_DIRECTIVE_POLL_H
         # These are provided by include_next dependency
-        
+
         # gl_PREREQ_SYS_H_WINSOCK2 - line 28
         # This checks for HAVE_WINSOCK2_H (for Windows)
         # It's handled by include_next dependency through AC_CHECK_INCLUDES_DEFAULT
-        
+
         # gl_WARN_ON_USE_PREPARE([[#include <poll.h>]], [poll]) - line 32
         # This is a warning/preparation macro, not a check that needs to be ported
     ],

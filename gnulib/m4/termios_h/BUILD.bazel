@@ -9,15 +9,18 @@ autoconf(
     checks = [
         # gl_CHECK_NEXT_HEADERS([termios.h]) - line 13
         # Check for termios.h header
-        macros.AC_CHECK_HEADER("termios.h", define = "ac_cv_header_termios_h"),
-        
+        macros.AC_CHECK_HEADER(
+            "termios.h",
+            define = "ac_cv_header_termios_h",
+        ),
+
         # Define HAVE_TERMIOS_H in config.h if header exists
         macros.AC_DEFINE(
             "HAVE_TERMIOS_H",
             condition = "ac_cv_header_termios_h",
             if_true = "1",
         ),
-        
+
         # if test $ac_cv_header_termios_h != yes; then - lines 14-16
         #   HAVE_TERMIOS_H=0
         # fi
@@ -27,7 +30,7 @@ autoconf(
             condition = "ac_cv_header_termios_h",
             if_false = "0",
         ),
-        
+
         # if test $ac_cv_header_termios_h = yes; then - lines 18-40
         #   AC_CACHE_CHECK([for struct winsize in <termios.h>], [gl_cv_struct_winsize_in_termios_h]) - lines 19-26
         macros.AC_TRY_COMPILE(
@@ -44,15 +47,18 @@ int main(void) {
             language = "c",
             requires = ["ac_cv_header_termios_h"],
         ),
-        
+
         # if test $gl_cv_struct_winsize_in_termios_h = no; then - lines 27-38
         #   AC_CHECK_HEADERS_ONCE([sys/ioctl.h]) - line 28
         #   if test $ac_cv_header_sys_ioctl_h = yes; then - lines 29-37
         #     AC_CACHE_CHECK([for struct winsize in <sys/ioctl.h>], [gl_cv_struct_winsize_in_sys_ioctl_h]) - lines 30-36
         #   fi
         # fi
-        macros.AC_CHECK_HEADER("sys/ioctl.h", define = "ac_cv_header_sys_ioctl_h"),
-        
+        macros.AC_CHECK_HEADER(
+            "sys/ioctl.h",
+            define = "ac_cv_header_sys_ioctl_h",
+        ),
+
         # Define HAVE_SYS_IOCTL_H in config.h if header exists
         macros.AC_DEFINE(
             "HAVE_SYS_IOCTL_H",
@@ -73,7 +79,7 @@ int main(void) {
             language = "c",
             requires = ["ac_cv_header_sys_ioctl_h"],
         ),
-        
+
         # TERMIOS_H_DEFINES_STRUCT_WINSIZE=0 - line 42
         # SYS_IOCTL_H_DEFINES_STRUCT_WINSIZE=0 - line 43
         # if test "$gl_cv_struct_winsize_in_termios_h" != yes \ - lines 44-50
@@ -93,8 +99,8 @@ int main(void) {
         macros.AC_SUBST(
             "TERMIOS_H_DEFINES_STRUCT_WINSIZE",
             condition = "gl_cv_struct_winsize_in_termios_h",
-            if_true = "1",
             if_false = "0",
+            if_true = "1",
         ),
         # SYS_IOCTL_H_DEFINES_STRUCT_WINSIZE is 1 only if struct winsize is in sys/ioctl.h but not in termios.h
         # Since we can't use complex conditions, we set it based on sys/ioctl.h check, but the m4 logic ensures
@@ -103,9 +109,9 @@ int main(void) {
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/include_next",  # gl_CHECK_NEXT_HEADERS([termios.h]) - line 13
-        "//autoconf/macros/AC_TYPE_PID_T",  # AC_REQUIRE([AC_TYPE_PID_T]) - line 52
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//autoconf/macros/AC_TYPE_PID_T",  # AC_REQUIRE([AC_TYPE_PID_T]) - line 52
+        "//gnulib/m4/include_next",  # gl_CHECK_NEXT_HEADERS([termios.h]) - line 13
     ],
 )
 

@@ -16,14 +16,14 @@ autoconf(
             "fchdir",
             define = "_gl_cv_func_fchdir",
         ),
-        
+
         # Set HAVE_FCHDIR as define if function exists
         macros.AC_DEFINE(
             "HAVE_FCHDIR",
             "1",
             requires = ["_gl_cv_func_fchdir==1"],
         ),
-        
+
         # Set HAVE_FCHDIR as substitution variable
         macros.AC_SUBST(
             "HAVE_FCHDIR",
@@ -35,7 +35,7 @@ autoconf(
             "0",
             requires = ["_gl_cv_func_fchdir==0"],
         ),
-        
+
         # REPLACE_OPEN is set based on various conditions (lines 14-63)
         # On macOS, REPLACE_OPEN should be 0 by default (based on golden file)
         # The m4 logic sets REPLACE_OPEN=1 if:

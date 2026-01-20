@@ -10,13 +10,13 @@ autoconf(
     checks = [
         # AC_REQUIRE([gl_SYSTEMD_CHOICE]) - line 11
         # This is handled by systemd dependency
-        
+
         # READUTMP_LIB logic (lines 17-42)
         # On macOS, SYSTEMD_CHOICE is "no", so READUTMP_LIB is empty
         # On Linux, if systemd is available and version >= 254, READUTMP_LIB="-lsystemd"
         # For now, set READUTMP_LIB to empty string (macOS case)
         macros.AC_SUBST("READUTMP_LIB", ""),
-        
+
         # gl_PREREQ_READUTMP_H - lines 47-156
         # This is called automatically from gl_READUTMP
     ],
@@ -38,11 +38,17 @@ autoconf(
     checks = [
         # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 50
         # This is handled by extensions dependency
-        
+
         # AC_CHECK_HEADERS_ONCE([utmp.h utmpx.h]) - line 52
-        macros.AC_CHECK_HEADER("utmp.h", define = "HAVE_UTMP_H"),
-        macros.AC_CHECK_HEADER("utmpx.h", define = "HAVE_UTMPX_H"),
-        
+        macros.AC_CHECK_HEADER(
+            "utmp.h",
+            define = "HAVE_UTMP_H",
+        ),
+        macros.AC_CHECK_HEADER(
+            "utmpx.h",
+            define = "HAVE_UTMPX_H",
+        ),
+
         # AC_CHECK_FUNCS_ONCE([utmpname utmpxname]) - line 54
         # Only check if utmp.h or utmpx.h exists
         macros.AC_CHECK_FUNC(
@@ -55,165 +61,237 @@ autoconf(
             define = "HAVE_UTMPXNAME",
             requires = ["HAVE_UTMPX_H==1"],
         ),
-        
+
         # AC_CHECK_DECLS([endutent], ...) - line 55
         # Check for endutent declaration
         macros.AC_CHECK_DECL(
             "endutent",
             define = "HAVE_DECL_ENDUTENT",
-            headers = ["sys/types.h", "utmp.h"],
+            headers = [
+                "sys/types.h",
+                "utmp.h",
+            ],
         ),
-        
+
         # AC_CHECK_MEMBERS for struct utmpx and struct utmp members (lines 67-124)
         # Only check if utmp.h or utmpx.h exists
         # Check struct utmpx members
         macros.AC_CHECK_MEMBER(
             "struct utmpx",
             "ut_user",
-            headers = ["utmpx.h", "utmp.h"],
+            headers = [
+                "utmpx.h",
+                "utmp.h",
+            ],
             requires = ["HAVE_UTMPX_H==1"],
         ),
         macros.AC_CHECK_MEMBER(
             "struct utmp",
             "ut_user",
-            headers = ["utmp.h", "utmpx.h"],
+            headers = [
+                "utmp.h",
+                "utmpx.h",
+            ],
             requires = ["HAVE_UTMP_H==1"],
         ),
         macros.AC_CHECK_MEMBER(
             "struct utmpx",
             "ut_name",
-            headers = ["utmpx.h", "utmp.h"],
+            headers = [
+                "utmpx.h",
+                "utmp.h",
+            ],
             requires = ["HAVE_UTMPX_H==1"],
         ),
         macros.AC_CHECK_MEMBER(
             "struct utmp",
             "ut_name",
-            headers = ["utmp.h", "utmpx.h"],
+            headers = [
+                "utmp.h",
+                "utmpx.h",
+            ],
             requires = ["HAVE_UTMP_H==1"],
         ),
         macros.AC_CHECK_MEMBER(
             "struct utmpx",
             "ut_type",
-            headers = ["utmpx.h", "utmp.h"],
+            headers = [
+                "utmpx.h",
+                "utmp.h",
+            ],
             requires = ["HAVE_UTMPX_H==1"],
         ),
         macros.AC_CHECK_MEMBER(
             "struct utmp",
             "ut_type",
-            headers = ["utmp.h", "utmpx.h"],
+            headers = [
+                "utmp.h",
+                "utmpx.h",
+            ],
             requires = ["HAVE_UTMP_H==1"],
         ),
         macros.AC_CHECK_MEMBER(
             "struct utmpx",
             "ut_pid",
-            headers = ["utmpx.h", "utmp.h"],
+            headers = [
+                "utmpx.h",
+                "utmp.h",
+            ],
             requires = ["HAVE_UTMPX_H==1"],
         ),
         macros.AC_CHECK_MEMBER(
             "struct utmp",
             "ut_pid",
-            headers = ["utmp.h", "utmpx.h"],
+            headers = [
+                "utmp.h",
+                "utmpx.h",
+            ],
             requires = ["HAVE_UTMP_H==1"],
         ),
         macros.AC_CHECK_MEMBER(
             "struct utmp",
             "ut_tv",
-            headers = ["utmp.h", "utmpx.h"],
+            headers = [
+                "utmp.h",
+                "utmpx.h",
+            ],
             requires = ["HAVE_UTMP_H==1"],
         ),
         macros.AC_CHECK_MEMBER(
             "struct utmpx",
             "ut_host",
-            headers = ["utmpx.h", "utmp.h"],
+            headers = [
+                "utmpx.h",
+                "utmp.h",
+            ],
             requires = ["HAVE_UTMPX_H==1"],
         ),
         macros.AC_CHECK_MEMBER(
             "struct utmp",
             "ut_host",
-            headers = ["utmp.h", "utmpx.h"],
+            headers = [
+                "utmp.h",
+                "utmpx.h",
+            ],
             requires = ["HAVE_UTMP_H==1"],
         ),
         macros.AC_CHECK_MEMBER(
             "struct utmpx",
             "ut_id",
-            headers = ["utmpx.h", "utmp.h"],
+            headers = [
+                "utmpx.h",
+                "utmp.h",
+            ],
             requires = ["HAVE_UTMPX_H==1"],
         ),
         macros.AC_CHECK_MEMBER(
             "struct utmp",
             "ut_id",
-            headers = ["utmp.h", "utmpx.h"],
+            headers = [
+                "utmp.h",
+                "utmpx.h",
+            ],
             requires = ["HAVE_UTMP_H==1"],
         ),
         macros.AC_CHECK_MEMBER(
             "struct utmpx",
             "ut_session",
-            headers = ["utmpx.h", "utmp.h"],
+            headers = [
+                "utmpx.h",
+                "utmp.h",
+            ],
             requires = ["HAVE_UTMPX_H==1"],
         ),
         macros.AC_CHECK_MEMBER(
             "struct utmp",
             "ut_session",
-            headers = ["utmp.h", "utmpx.h"],
+            headers = [
+                "utmp.h",
+                "utmpx.h",
+            ],
             requires = ["HAVE_UTMP_H==1"],
         ),
         macros.AC_CHECK_MEMBER(
             "struct utmpx",
             "ut_exit",
-            headers = ["utmpx.h", "utmp.h"],
+            headers = [
+                "utmpx.h",
+                "utmp.h",
+            ],
             requires = ["HAVE_UTMPX_H==1"],
         ),
         macros.AC_CHECK_MEMBER(
             "struct utmp",
             "ut_exit",
-            headers = ["utmp.h", "utmpx.h"],
+            headers = [
+                "utmp.h",
+                "utmpx.h",
+            ],
             requires = ["HAVE_UTMP_H==1"],
         ),
         macros.AC_CHECK_MEMBER(
             "struct utmpx",
             "ut_exit.e_exit",
-            headers = ["utmpx.h", "utmp.h"],
+            headers = [
+                "utmpx.h",
+                "utmp.h",
+            ],
             requires = ["HAVE_UTMPX_H==1"],
         ),
         macros.AC_CHECK_MEMBER(
             "struct utmp",
             "ut_exit.e_exit",
-            headers = ["utmp.h", "utmpx.h"],
+            headers = [
+                "utmp.h",
+                "utmpx.h",
+            ],
             requires = ["HAVE_UTMP_H==1"],
         ),
         macros.AC_CHECK_MEMBER(
             "struct utmpx",
             "ut_exit.e_termination",
-            headers = ["utmpx.h", "utmp.h"],
+            headers = [
+                "utmpx.h",
+                "utmp.h",
+            ],
             requires = ["HAVE_UTMPX_H==1"],
         ),
         macros.AC_CHECK_MEMBER(
             "struct utmp",
             "ut_exit.e_termination",
-            headers = ["utmp.h", "utmpx.h"],
+            headers = [
+                "utmp.h",
+                "utmpx.h",
+            ],
             requires = ["HAVE_UTMP_H==1"],
         ),
-        
+
         # AC_CHECK_DECLS([sysinfo], ...) - line 126
         macros.AC_CHECK_DECL(
             "sysinfo",
             define = "HAVE_DECL_SYSINFO",
             headers = ["sys/sysinfo.h"],
         ),
-        
+
         # AC_CHECK_HEADERS_ONCE([sys/param.h]) - line 129
-        macros.AC_CHECK_HEADER("sys/param.h", define = "HAVE_SYS_PARAM_H"),
-        
+        macros.AC_CHECK_HEADER(
+            "sys/param.h",
+            define = "HAVE_SYS_PARAM_H",
+        ),
+
         # AC_CHECK_HEADERS([sys/sysctl.h], ...) - line 131
         macros.AC_CHECK_HEADER(
             "sys/sysctl.h",
             define = "HAVE_SYS_SYSCTL_H",
             requires = ["HAVE_SYS_PARAM_H==1"],
         ),
-        
+
         # AC_CHECK_FUNCS([sysctl]) - line 138
-        macros.AC_CHECK_FUNC("sysctl", define = "HAVE_SYSCTL"),
-        
+        macros.AC_CHECK_FUNC(
+            "sysctl",
+            define = "HAVE_SYSCTL",
+        ),
+
         # AC_CHECK_HEADERS_ONCE([OS.h]) - line 140
         # Note: OS.h is typically for BeOS/Haiku, not needed for macOS/Linux
         # macros.AC_CHECK_HEADER("OS.h", define = "HAVE_OS_H"),

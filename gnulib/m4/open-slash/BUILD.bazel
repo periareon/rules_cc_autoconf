@@ -14,12 +14,12 @@ autoconf(
             define = "HAVE_LSTAT",
         ),
     ] + select({
+        # Linux typically doesn't have this bug
+        "@platforms//os:linux": [],
         # macOS has a trailing slash bug in open()
         "@platforms//os:macos": [
             macros.AC_DEFINE("OPEN_TRAILING_SLASH_BUG", "1"),
         ],
-        # Linux typically doesn't have this bug
-        "@platforms//os:linux": [],
         # Other platforms: default to no bug (can be adjusted if needed)
         "//conditions:default": [],
     }),

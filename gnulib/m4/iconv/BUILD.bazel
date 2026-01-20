@@ -37,7 +37,10 @@ iconv(cd,NULL,NULL,NULL,NULL);
 iconv_close(cd);
 """,
             define = "_am_cv_func_iconv",
-            includes = ["stdlib.h", "iconv.h"],
+            includes = [
+                "iconv.h",
+                "stdlib.h",
+            ],
         ),
 
         # AC_DEFINE([HAVE_ICONV], [1], ...) - line 249
@@ -102,16 +105,16 @@ size_t iconv (iconv_t cd, char * *inbuf, size_t *inbytesleft, char * *outbuf, si
         macros.AC_DEFINE_UNQUOTED(
             "ICONV_CONST",
             condition = "_gl_cv_iconv_nonconst",
-            if_true = "",  # Non-const iconv signature - empty, will generate "#define ICONV_CONST " (trailing space)
             if_false = "const",  # Const iconv signature (some systems like Solaris, HP-UX)
+            if_true = "",  # Non-const iconv signature - empty, will generate "#define ICONV_CONST " (trailing space)
         ),
 
         # Also substitute ICONV_CONST in the gnulib generated <iconv.h> (lines 302-307)
         macros.AC_SUBST(
             "ICONV_CONST",
             condition = "_gl_cv_iconv_nonconst",
-            if_true = "",  # Non-const iconv signature
             if_false = "const",  # Const iconv signature
+            if_true = "",  # Non-const iconv signature
         ),
     ],
     visibility = ["//visibility:public"],

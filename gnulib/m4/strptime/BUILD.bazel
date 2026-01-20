@@ -12,17 +12,17 @@ autoconf(
         # Check for strptime function using internal define
         macros.AC_CHECK_FUNC(
             "strptime",
-            define = "ac_cv_func_strptime",
             code = "#include <time.h>\n",
+            define = "ac_cv_func_strptime",
         ),
-        
+
         # Define HAVE_STRPTIME in config.h if function exists
         macros.AC_DEFINE(
             "HAVE_STRPTIME",
             condition = "ac_cv_func_strptime",
             if_true = "1",
         ),
-        
+
         # if test $ac_cv_func_strptime != yes; then - lines 14-16
         #   HAVE_STRPTIME=0
         # fi
@@ -30,15 +30,15 @@ autoconf(
         macros.AC_SUBST(
             "HAVE_STRPTIME",
             condition = "ac_cv_func_strptime",
-            if_true = "1",
             if_false = "0",
+            if_true = "1",
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/time_h",  # AC_REQUIRE([gl_TIME_H_DEFAULTS]) - line 10
-        "//autoconf/macros/AC_C_RESTRICT",  # AC_REQUIRE([AC_C_RESTRICT]) - line 11
-        "//gnulib/m4/tm_gmtoff",  # AC_REQUIRE([gl_TM_GMTOFF]) - from gl_PREREQ_STRPTIME - line 21
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//autoconf/macros/AC_C_RESTRICT",  # AC_REQUIRE([AC_C_RESTRICT]) - line 11
+        "//gnulib/m4/time_h",  # AC_REQUIRE([gl_TIME_H_DEFAULTS]) - line 10
+        "//gnulib/m4/tm_gmtoff",  # AC_REQUIRE([gl_TM_GMTOFF]) - from gl_PREREQ_STRPTIME - line 21
     ],
 )

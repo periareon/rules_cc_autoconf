@@ -106,13 +106,35 @@ autoconf(
             requires = ["REPLACE_FEATURE!=1"],
         ),
         # Test conditional defines using requires
-        macros.AC_CHECK_HEADER("string.h", define = "HAVE_STRING_H"),
-        macros.AC_DEFINE("STRING_H_IF_TRUE", condition = "HAVE_STRING_H", if_true = "1"),
-        macros.AC_DEFINE("STRING_H_IF_FALSE", condition = "HAVE_STRING_H", if_false = "1"),
+        macros.AC_CHECK_HEADER(
+            "string.h",
+            define = "HAVE_STRING_H",
+        ),
+        macros.AC_DEFINE(
+            "STRING_H_IF_TRUE",
+            condition = "HAVE_STRING_H",
+            if_true = "1",
+        ),
+        macros.AC_DEFINE(
+            "STRING_H_IF_FALSE",
+            condition = "HAVE_STRING_H",
+            if_false = "1",
+        ),
         # Test conditional defines when header doesn't exist
-        macros.AC_CHECK_HEADER("another_nonexistent_xyz.h", define = "HAVE_ANOTHER_NONEXISTENT_XYZ_H"),
-        macros.AC_DEFINE("NONEXISTENT2_IF_FALSE", condition = "HAVE_ANOTHER_NONEXISTENT_XYZ_H", if_false = "1"),
-        macros.AC_DEFINE("NONEXISTENT2_IF_TRUE", condition = "HAVE_ANOTHER_NONEXISTENT_XYZ_H", if_true = "1"),
+        macros.AC_CHECK_HEADER(
+            "another_nonexistent_xyz.h",
+            define = "HAVE_ANOTHER_NONEXISTENT_XYZ_H",
+        ),
+        macros.AC_DEFINE(
+            "NONEXISTENT2_IF_FALSE",
+            condition = "HAVE_ANOTHER_NONEXISTENT_XYZ_H",
+            if_false = "1",
+        ),
+        macros.AC_DEFINE(
+            "NONEXISTENT2_IF_TRUE",
+            condition = "HAVE_ANOTHER_NONEXISTENT_XYZ_H",
+            if_true = "1",
+        ),
     ],
     deps = [
         ":base_autoconf",

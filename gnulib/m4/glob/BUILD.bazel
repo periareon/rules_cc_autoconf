@@ -15,10 +15,16 @@ autoconf(
         # Note: HAVE_UNISTD_H is provided by AC_CHECK_INCLUDES_DEFAULT dependency
 
         # gl_CHECK_FUNCS_ANDROID([getlogin_r], [[#include <unistd.h>]]) - line 182
-        macros.AC_CHECK_FUNC("getlogin_r", define = "HAVE_GETLOGIN_R"),
+        macros.AC_CHECK_FUNC(
+            "getlogin_r",
+            define = "HAVE_GETLOGIN_R",
+        ),
 
         # gl_CHECK_FUNCS_ANDROID([getpwnam_r], [[#include <pwd.h>]]) - line 183
-        macros.AC_CHECK_FUNC("getpwnam_r", define = "HAVE_GETPWNAM_R"),
+        macros.AC_CHECK_FUNC(
+            "getpwnam_r",
+            define = "HAVE_GETPWNAM_R",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -51,7 +57,10 @@ autoconf(
         # gl_CHECK_FUNCS_ANDROID([glob], [[#include <glob.h>]]) - line 18
         # Check for glob function (similar to AC_CHECK_FUNC but also checks Android-specific behavior)
         # Use an internal define name to avoid conflicts with glob_h:defaults
-        macros.AC_CHECK_FUNC("glob", define = "_gl_cv_func_glob"),
+        macros.AC_CHECK_FUNC(
+            "glob",
+            define = "_gl_cv_func_glob",
+        ),
 
         # Create HAVE_GLOB define based on check result
         # Note: glob_h:defaults provides HAVE_GLOB=1 by default, but we override it here
@@ -94,7 +103,6 @@ autoconf(
             condition = "_gl_cv_func_glob_pattern_p",
             if_true = "1",
         ),
-
         macros.AC_SUBST(
             "HAVE_GLOB_PATTERN_P",
             condition = "_gl_cv_func_glob_pattern_p",
@@ -106,6 +114,16 @@ autoconf(
         # Otherwise, REPLACE_GLOB_PATTERN_P=0
         # This is handled in the select statement below
     ] + select({
+        "@platforms//os:android": [
+            # On Android, glob has stack overflow issues, so REPLACE_GLOB=1
+            macros.AC_SUBST("REPLACE_GLOB", "1"),
+            macros.AC_SUBST(
+                "REPLACE_GLOB_PATTERN_P",
+                condition = "_gl_cv_func_glob_pattern_p",
+                if_false = "0",
+                if_true = "1",
+            ),
+        ],
         "@platforms//os:macos": [
             # On macOS, glob has bugs, so REPLACE_GLOB=1
             macros.AC_SUBST("REPLACE_GLOB", "1"),
@@ -113,18 +131,8 @@ autoconf(
             macros.AC_SUBST(
                 "REPLACE_GLOB_PATTERN_P",
                 condition = "_gl_cv_func_glob_pattern_p",
-                if_true = "1",
                 if_false = "0",
-            ),
-        ],
-        "@platforms//os:android": [
-            # On Android, glob has stack overflow issues, so REPLACE_GLOB=1
-            macros.AC_SUBST("REPLACE_GLOB", "1"),
-            macros.AC_SUBST(
-                "REPLACE_GLOB_PATTERN_P",
-                condition = "_gl_cv_func_glob_pattern_p",
                 if_true = "1",
-                if_false = "0",
             ),
         ],
         "@platforms//os:windows": [

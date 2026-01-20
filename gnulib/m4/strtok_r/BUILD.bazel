@@ -12,10 +12,10 @@ autoconf(
         # Check for strtok_r function using internal define
         macros.AC_CHECK_FUNC(
             "strtok_r",
-            define = "ac_cv_func_strtok_r",
             code = "#include <string.h>\n",
+            define = "ac_cv_func_strtok_r",
         ),
-        
+
         # if test $ac_cv_func_strtok_r = yes; then - lines 16-44
         #   HAVE_STRTOK_R=1 - line 17
         #   AC_CACHE_CHECK([whether strtok_r works], [gl_cv_func_strtok_r_works]) - lines 18-42
@@ -37,10 +37,10 @@ autoconf(
         macros.AC_SUBST(
             "HAVE_STRTOK_R",
             condition = "ac_cv_func_strtok_r",
-            if_true = "1",
             if_false = "0",
+            if_true = "1",
         ),
-        
+
         # AC_CHECK_DECLS_ONCE([strtok_r]) - line 50
         # Check if strtok_r is declared
         macros.AC_CHECK_DECL(
@@ -48,7 +48,7 @@ autoconf(
             define = "ac_cv_have_decl_strtok_r",
             headers = ["string.h"],
         ),
-        
+
         # if test $ac_cv_have_decl_strtok_r = no; then - lines 51-53
         #   HAVE_DECL_STRTOK_R=0
         # fi
@@ -61,10 +61,10 @@ autoconf(
         macros.AC_SUBST(
             "HAVE_DECL_STRTOK_R",
             condition = "ac_cv_have_decl_strtok_r",
-            if_true = "1",
             if_false = "0",
+            if_true = "1",
         ),
-        
+
         # Based on golden files, strtok_r works on macOS, so:
         # - UNDEFINE_STRTOK_R=0
         # - REPLACE_STRTOK_R=0
@@ -73,9 +73,9 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//autoconf/macros/AC_C_RESTRICT",  # AC_REQUIRE([AC_C_RESTRICT]) - line 11
-        "//gnulib/m4/string_h",  # AC_REQUIRE([gl_STRING_H_DEFAULTS]) - line 13
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST]) - line 14
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//autoconf/macros/AC_C_RESTRICT",  # AC_REQUIRE([AC_C_RESTRICT]) - line 11
+        "//gnulib/m4/string_h",  # AC_REQUIRE([gl_STRING_H_DEFAULTS]) - line 13
     ],
 )

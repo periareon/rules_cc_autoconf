@@ -26,10 +26,13 @@ int main(void) {
             define = "_gl_cv_func_duplocale",
             language = "c",
         ),
-        
+
         # Check for snprintf_l function (line 24)
-        macros.AC_CHECK_FUNC("snprintf_l", define = "HAVE_SNPRINTF_L"),
-        
+        macros.AC_CHECK_FUNC(
+            "snprintf_l",
+            define = "HAVE_SNPRINTF_L",
+        ),
+
         # Check for nl_langinfo_l function (line 25)
         # gl_CHECK_FUNCS_ANDROID([nl_langinfo_l], [[#include <langinfo.h>]])
         # Note: On macOS, nl_langinfo_l may require xlocale.h
@@ -49,11 +52,11 @@ int main(void) {
     return nl_langinfo_l(MON_1, (locale_t)0) != (char *)0;
 }
 """,
+            compile_defines = ["HAVE_XLOCALE_H"],
             define = "HAVE_NL_LANGINFO_L",
             language = "c",
-            compile_defines = ["HAVE_XLOCALE_H"],
         ),
-        
+
         # HAVE_DUPLOCALE is set based on:
         # - If duplocale function found AND HAVE_LOCALE_T = 1: HAVE_DUPLOCALE=1 (define + subst)
         # - If duplocale function found BUT HAVE_LOCALE_T != 1: HAVE_DUPLOCALE=0 (subst only)
@@ -68,7 +71,7 @@ int main(void) {
             condition = "_gl_cv_func_duplocale",
             if_true = "1",
         ),
-        
+
         # Set HAVE_DUPLOCALE as substitution variable based on check result
         # If duplocale found: HAVE_DUPLOCALE=1 (assuming HAVE_LOCALE_T=1)
         # If duplocale not found: HAVE_DUPLOCALE=0
@@ -78,7 +81,7 @@ int main(void) {
             if_false = "0",
             if_true = "1",
         ),
-        
+
         # REPLACE_DUPLOCALE is set to 1 if:
         # - gl_cv_func_duplocale_works != yes (duplocale(LC_GLOBAL_LOCALE) doesn't work correctly)
         # - HAVE_LOCALE_T != 1 (but this is checked separately and sets HAVE_DUPLOCALE=0)
@@ -90,7 +93,7 @@ int main(void) {
         # (will be set to 1 if gl_FUNC_SETLOCALE_NULL is included and needed)
         # Default to 0 - on modern macOS/Linux, duplocale works correctly
         macros.AC_SUBST("REPLACE_DUPLOCALE", "0"),
-        
+
         # DUPLOCALE_LIB and LIB_DUPLOCALE are set based on REPLACE_DUPLOCALE
         # If REPLACE_DUPLOCALE=1, DUPLOCALE_LIB="$SETLOCALE_NULL_LIB" (from gl_FUNC_SETLOCALE_NULL)
         # Otherwise, DUPLOCALE_LIB=""

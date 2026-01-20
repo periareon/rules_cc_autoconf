@@ -34,8 +34,8 @@ autoconf(
         ),
         macros.AC_CHECK_DECL(
             "NULL",
-            headers = ["stddef.h"],
             define = "HAVE_EMPTY",
+            headers = ["stddef.h"],
             value = "",
         ),
     ],

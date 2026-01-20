@@ -17,7 +17,7 @@ autoconf(
             "poll",
             define = "_gl_cv_func_poll",
         ),
-        
+
         # The m4 logic (lines 21-67):
         # - If poll.h doesn't exist, poll() is not available
         # - If poll.h exists, check if poll() function exists
@@ -27,7 +27,7 @@ autoconf(
         # - If poll() exists but doesn't work, set REPLACE_POLL=1
         # - If poll() doesn't exist, set HAVE_POLL=0
         # - If HAVE_POLL != 0 and REPLACE_POLL != 1, define HAVE_POLL as 1
-        
+
         # On macOS, poll() exists but doesn't work correctly, so:
         # - REPLACE_POLL=1 (substitution variable)
         # - HAVE_POLL is set as substitution variable "1" (function exists, just needs replacement)
@@ -35,24 +35,24 @@ autoconf(
         macros.AC_SUBST(
             "HAVE_POLL",
             condition = "_gl_cv_func_poll",
-            if_true = "1",
             if_false = "0",
+            if_true = "1",
         ),
-        
+
         # REPLACE_POLL=1 on macOS (poll() exists but doesn't work correctly)
         # Based on golden file, REPLACE_POLL=1 on macOS
         macros.AC_SUBST(
             "REPLACE_POLL",
             condition = "_gl_cv_func_poll",
-            if_true = "1",
             if_false = "0",
+            if_true = "1",
         ),
-        
+
         # POLL_LIB and LIB_POLL substitution variables (lines 78-91)
         # On macOS, these are empty strings (no additional library needed)
         macros.AC_SUBST("POLL_LIB", ""),
         macros.AC_SUBST("LIB_POLL", ""),
-        
+
         # gl_PREREQ_POLL - lines 94-97
         # AC_CHECK_HEADERS_ONCE([sys/ioctl.h sys/filio.h])
         # These are already checked by sys_ioctl_h dependency

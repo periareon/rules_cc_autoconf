@@ -45,18 +45,24 @@ autoconf(
         # This is provided by extensions dependency
         # AC_REQUIRE([AC_CANONICAL_HOST]) - line 15
         # This is provided by AC_CANONICAL_HOST dependency
-        
+
         # AC_CHECK_FUNCS_ONCE([fchmodat lchmod]) - line 16
-        macros.AC_CHECK_FUNC("fchmodat", define = "_gl_cv_func_fchmodat"),
-        macros.AC_CHECK_FUNC("lchmod", define = "HAVE_LCHMOD"),
-        
+        macros.AC_CHECK_FUNC(
+            "fchmodat",
+            define = "_gl_cv_func_fchmodat",
+        ),
+        macros.AC_CHECK_FUNC(
+            "lchmod",
+            define = "HAVE_LCHMOD",
+        ),
+
         # Create HAVE_FCHMODAT define if function exists
         macros.AC_DEFINE(
             "HAVE_FCHMODAT",
             condition = "_gl_cv_func_fchmodat",
             if_true = "1",
         ),
-        
+
         # If fchmodat not found, set HAVE_FCHMODAT=0 (line 17-19)
         macros.AC_SUBST(
             "HAVE_FCHMODAT",
@@ -64,7 +70,7 @@ autoconf(
             if_false = "0",
             if_true = "1",
         ),
-        
+
         # AC_RUN_IFELSE for gl_cv_func_fchmodat_works (lines 20-82) is not directly
         # portable to Bazel's cross-compilation environment. HAVE_NEARLY_WORKING_FCHMODAT
         # and NEED_FCHMODAT_NONSYMLINK_FIX are set based on golden file expectations.

@@ -9,11 +9,20 @@ autoconf(
     name = "gl_PREREQ_HOST_NAME_MAX",
     checks = [
         # AC_CHECK_HEADERS_ONCE([sys/param.h]) - line 62
-        macros.AC_CHECK_HEADER("sys/param.h", define = "HAVE_SYS_PARAM_H"),
+        macros.AC_CHECK_HEADER(
+            "sys/param.h",
+            define = "HAVE_SYS_PARAM_H",
+        ),
         # AC_CHECK_HEADERS_ONCE([sys/socket.h]) - line 63
-        macros.AC_CHECK_HEADER("sys/socket.h", define = "HAVE_SYS_SOCKET_H"),
+        macros.AC_CHECK_HEADER(
+            "sys/socket.h",
+            define = "HAVE_SYS_SOCKET_H",
+        ),
         # AC_CHECK_HEADERS_ONCE([netdb.h]) - line 64
-        macros.AC_CHECK_HEADER("netdb.h", define = "HAVE_NETDB_H"),
+        macros.AC_CHECK_HEADER(
+            "netdb.h",
+            define = "HAVE_NETDB_H",
+        ),
 
         # AC_CACHE_CHECK([for HOST_NAME_MAX], [gl_cv_decl_HOST_NAME_MAX], ...) - lines 65-97
         # Check if HOST_NAME_MAX is defined in <limits.h>
@@ -39,7 +48,10 @@ autoconf(
     checks = [
         # AC_CHECK_FUNCS([uname]) - line 107 (only if not Windows)
         # On non-Windows systems, check for uname function
-        macros.AC_CHECK_FUNC("uname", define = "HAVE_UNAME"),
+        macros.AC_CHECK_FUNC(
+            "uname",
+            define = "HAVE_UNAME",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -59,7 +71,10 @@ autoconf(
 
         # AC_CHECK_FUNCS([gethostname], , [...]) - line 21
         # This creates ac_cv_func_gethostname cache variable and HAVE_GETHOSTNAME define
-        macros.AC_CHECK_FUNC("gethostname", define = "HAVE_GETHOSTNAME"),
+        macros.AC_CHECK_FUNC(
+            "gethostname",
+            define = "HAVE_GETHOSTNAME",
+        ),
 
         # If gethostname not found, set HAVE_GETHOSTNAME=0 (line 42)
         # AC_CHECK_FUNC already creates HAVE_GETHOSTNAME define

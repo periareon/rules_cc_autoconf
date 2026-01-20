@@ -20,7 +20,10 @@ autoconf(
 
         # AC_CHECK_FUNCS_ONCE([getpass]) - line 21
         # Use an internal define name to avoid conflicts
-        macros.AC_CHECK_FUNC("getpass", define = "_gl_cv_func_getpass"),
+        macros.AC_CHECK_FUNC(
+            "getpass",
+            define = "_gl_cv_func_getpass",
+        ),
 
         # Create HAVE_GETPASS define based on check result
         macros.AC_DEFINE(
@@ -61,40 +64,105 @@ autoconf(
     }) + [
         # gl_PREREQ_GETPASS - line 56
         # AC_CHECK_HEADERS_ONCE([stdio_ext.h termios.h]) - line 57
-        macros.AC_CHECK_HEADER("stdio_ext.h", define = "HAVE_STDIO_EXT_H"),
+        macros.AC_CHECK_HEADER(
+            "stdio_ext.h",
+            define = "HAVE_STDIO_EXT_H",
+        ),
         # Note: HAVE_TERMIOS_H is provided by termios_h dependency
 
         # gl_CHECK_FUNCS_ANDROID([__fsetlocking], [[#include <stdio_ext.h>]]) - line 58
         # Check for __fsetlocking function (similar to AC_CHECK_FUNC but also checks Android-specific behavior)
-        macros.AC_CHECK_FUNC("__fsetlocking", define = "HAVE___FSETLOCKING", requires = ["HAVE_STDIO_EXT_H"]),
+        macros.AC_CHECK_FUNC(
+            "__fsetlocking",
+            define = "HAVE___FSETLOCKING",
+            requires = ["HAVE_STDIO_EXT_H"],
+        ),
 
         # AC_CHECK_DECLS([__fsetlocking],,, ...) - line 59
         # Note: The m4 uses conditional includes, but we'll check with stdio_ext.h directly
         # since we already checked for HAVE_STDIO_EXT_H
         macros.AC_CHECK_DECL(
             "__fsetlocking",
-            headers = ["stdio.h", "stdio_ext.h"],
             define = "_gl_cv_have_decl___fsetlocking",
-            value = "1",
+            headers = [
+                "stdio.h",
+                "stdio_ext.h",
+            ],
             requires = ["HAVE_STDIO_EXT_H"],
+            value = "1",
         ),
-        macros.AC_DEFINE("HAVE_DECL___FSETLOCKING", condition = "_gl_cv_have_decl___fsetlocking", if_true = "1", if_false = "0"),
+        macros.AC_DEFINE(
+            "HAVE_DECL___FSETLOCKING",
+            condition = "_gl_cv_have_decl___fsetlocking",
+            if_false = "0",
+            if_true = "1",
+        ),
 
         # AC_CHECK_DECLS_ONCE([fflush_unlocked]) - line 64
-        macros.AC_CHECK_DECL("fflush_unlocked", headers = ["stdio.h"], define = "_gl_cv_have_decl_fflush_unlocked", value = "1"),
-        macros.AC_DEFINE("HAVE_DECL_FFLUSH_UNLOCKED", condition = "_gl_cv_have_decl_fflush_unlocked", if_true = "1", if_false = "0"),
+        macros.AC_CHECK_DECL(
+            "fflush_unlocked",
+            define = "_gl_cv_have_decl_fflush_unlocked",
+            headers = ["stdio.h"],
+            value = "1",
+        ),
+        macros.AC_DEFINE(
+            "HAVE_DECL_FFLUSH_UNLOCKED",
+            condition = "_gl_cv_have_decl_fflush_unlocked",
+            if_false = "0",
+            if_true = "1",
+        ),
         # AC_CHECK_DECLS_ONCE([flockfile]) - line 65
-        macros.AC_CHECK_DECL("flockfile", headers = ["stdio.h"], define = "_gl_cv_have_decl_flockfile", value = "1"),
-        macros.AC_DEFINE("HAVE_DECL_FLOCKFILE", condition = "_gl_cv_have_decl_flockfile", if_true = "1", if_false = "0"),
+        macros.AC_CHECK_DECL(
+            "flockfile",
+            define = "_gl_cv_have_decl_flockfile",
+            headers = ["stdio.h"],
+            value = "1",
+        ),
+        macros.AC_DEFINE(
+            "HAVE_DECL_FLOCKFILE",
+            condition = "_gl_cv_have_decl_flockfile",
+            if_false = "0",
+            if_true = "1",
+        ),
         # AC_CHECK_DECLS_ONCE([fputs_unlocked]) - line 66
-        macros.AC_CHECK_DECL("fputs_unlocked", headers = ["stdio.h"], define = "_gl_cv_have_decl_fputs_unlocked", value = "1"),
-        macros.AC_DEFINE("HAVE_DECL_FPUTS_UNLOCKED", condition = "_gl_cv_have_decl_fputs_unlocked", if_true = "1", if_false = "0"),
+        macros.AC_CHECK_DECL(
+            "fputs_unlocked",
+            define = "_gl_cv_have_decl_fputs_unlocked",
+            headers = ["stdio.h"],
+            value = "1",
+        ),
+        macros.AC_DEFINE(
+            "HAVE_DECL_FPUTS_UNLOCKED",
+            condition = "_gl_cv_have_decl_fputs_unlocked",
+            if_false = "0",
+            if_true = "1",
+        ),
         # AC_CHECK_DECLS_ONCE([funlockfile]) - line 67
-        macros.AC_CHECK_DECL("funlockfile", headers = ["stdio.h"], define = "_gl_cv_have_decl_funlockfile", value = "1"),
-        macros.AC_DEFINE("HAVE_DECL_FUNLOCKFILE", condition = "_gl_cv_have_decl_funlockfile", if_true = "1", if_false = "0"),
+        macros.AC_CHECK_DECL(
+            "funlockfile",
+            define = "_gl_cv_have_decl_funlockfile",
+            headers = ["stdio.h"],
+            value = "1",
+        ),
+        macros.AC_DEFINE(
+            "HAVE_DECL_FUNLOCKFILE",
+            condition = "_gl_cv_have_decl_funlockfile",
+            if_false = "0",
+            if_true = "1",
+        ),
         # AC_CHECK_DECLS_ONCE([putc_unlocked]) - line 68
-        macros.AC_CHECK_DECL("putc_unlocked", headers = ["stdio.h"], define = "_gl_cv_have_decl_putc_unlocked", value = "1"),
-        macros.AC_DEFINE("HAVE_DECL_PUTC_UNLOCKED", condition = "_gl_cv_have_decl_putc_unlocked", if_true = "1", if_false = "0"),
+        macros.AC_CHECK_DECL(
+            "putc_unlocked",
+            define = "_gl_cv_have_decl_putc_unlocked",
+            headers = ["stdio.h"],
+            value = "1",
+        ),
+        macros.AC_DEFINE(
+            "HAVE_DECL_PUTC_UNLOCKED",
+            condition = "_gl_cv_have_decl_putc_unlocked",
+            if_false = "0",
+            if_true = "1",
+        ),
 
         # gl_HAVE_TCGETATTR - line 69
         # We can't use AC_CHECK_FUNC here, because tcgetattr() is defined as a
@@ -114,8 +182,8 @@ int main(void) { return tcgetattr(0, &x); }
         macros.AC_DEFINE(
             "HAVE_TCGETATTR",
             condition = "_gl_cv_func_tcgetattr",
-            if_true = "1",
             if_false = "0",
+            if_true = "1",
         ),
 
         # Set HAVE_TCGETATTR as substitution variable
@@ -144,8 +212,8 @@ int main(void) { return tcsetattr(0, 0, &x); }
         macros.AC_DEFINE(
             "HAVE_TCSETATTR",
             condition = "_gl_cv_func_tcsetattr",
-            if_true = "1",
             if_false = "0",
+            if_true = "1",
         ),
 
         # Set HAVE_TCSETATTR as substitution variable

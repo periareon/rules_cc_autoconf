@@ -14,7 +14,7 @@ autoconf(
             define = "_gl_cv_func_isnanf",
         ),
         # HAVE_ISNANF_IN_LIBC: isnanf() is available in libc without -lm
-        macros.AC_DEFINE("HAVE_ISNANF_IN_LIBC", "1"), # Assumed on modern systems
+        macros.AC_DEFINE("HAVE_ISNANF_IN_LIBC", "1"),  # Assumed on modern systems
     ],
     visibility = ["//visibility:public"],
     deps = [

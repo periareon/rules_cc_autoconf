@@ -11,7 +11,7 @@ autoconf(
             "mkfifo",
             define = "HAVE_MKFIFO",
         ),
-        
+
         # Check for lstat function (gl_FUNC_MKFIFO uses lstat for trailing slash check)
         macros.AC_CHECK_FUNC(
             "lstat",

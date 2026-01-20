@@ -10,12 +10,21 @@ autoconf(
     checks = [
         # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 18
         # This is provided by extensions dependency
-        
+
         # AC_CHECK_HEADERS([mntent.h sys/pstat.h sys/param.h], ...) - line 20
-        macros.AC_CHECK_HEADER("mntent.h", define = "HAVE_MNTENT_H"),
-        macros.AC_CHECK_HEADER("sys/pstat.h", define = "HAVE_SYS_PSTAT_H"),
-        macros.AC_CHECK_HEADER("sys/param.h", define = "HAVE_SYS_PARAM_H"),
-        
+        macros.AC_CHECK_HEADER(
+            "mntent.h",
+            define = "HAVE_MNTENT_H",
+        ),
+        macros.AC_CHECK_HEADER(
+            "sys/pstat.h",
+            define = "HAVE_SYS_PSTAT_H",
+        ),
+        macros.AC_CHECK_HEADER(
+            "sys/param.h",
+            define = "HAVE_SYS_PARAM_H",
+        ),
+
         # gl_CHECK_FUNCS_ANDROID([setmntent], ...) - lines 21-24
         # Use AC_TRY_LINK to check for setmntent function
         macros.AC_TRY_LINK(
@@ -28,18 +37,33 @@ int main(void) {
             define = "HAVE_SETMNTENT",
             language = "c",
         ),
-        
+
         # AC_CHECK_HEADERS([sys/sysctl.h], ...) - lines 25-31
-        macros.AC_CHECK_HEADER("sys/sysctl.h", define = "HAVE_SYS_SYSCTL_H"),
-        
+        macros.AC_CHECK_HEADER(
+            "sys/sysctl.h",
+            define = "HAVE_SYS_SYSCTL_H",
+        ),
+
         # AC_CHECK_FUNCS([sched_getaffinity_np pstat_getdynamic sysctl]) - line 33
-        macros.AC_CHECK_FUNC("sched_getaffinity_np", define = "HAVE_SCHED_GETAFFINITY_NP"),
-        macros.AC_CHECK_FUNC("pstat_getdynamic", define = "HAVE_PSTAT_GETDYNAMIC"),
-        macros.AC_CHECK_FUNC("sysctl", define = "HAVE_SYSCTL"),
-        
+        macros.AC_CHECK_FUNC(
+            "sched_getaffinity_np",
+            define = "HAVE_SCHED_GETAFFINITY_NP",
+        ),
+        macros.AC_CHECK_FUNC(
+            "pstat_getdynamic",
+            define = "HAVE_PSTAT_GETDYNAMIC",
+        ),
+        macros.AC_CHECK_FUNC(
+            "sysctl",
+            define = "HAVE_SYSCTL",
+        ),
+
         # gl_CHECK_FUNCS_ANDROID([sched_getaffinity], ...) - line 34
-        macros.AC_CHECK_FUNC("sched_getaffinity", define = "HAVE_SCHED_GETAFFINITY"),
-        
+        macros.AC_CHECK_FUNC(
+            "sched_getaffinity",
+            define = "HAVE_SCHED_GETAFFINITY",
+        ),
+
         # Test whether sched_getaffinity has the expected declaration - lines 36-50
         # if test $ac_cv_func_sched_getaffinity = yes; then
         #   AC_CACHE_CHECK([for glibc compatible sched_getaffinity], ...) - lines 37-48
@@ -56,7 +80,7 @@ int main(void) {
             language = "c",
             requires = ["HAVE_SCHED_GETAFFINITY"],
         ),
-        
+
         # if test $gl_cv_func_sched_getaffinity3 = yes; then
         #   AC_DEFINE([HAVE_SCHED_GETAFFINITY_LIKE_GLIBC], [1]) - lines 49-51
         # fi

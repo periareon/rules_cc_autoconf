@@ -37,21 +37,42 @@ int main(void) {
         # Check for declarations of getaddrinfo, freeaddrinfo, getnameinfo
         macros.AC_CHECK_DECL(
             "getaddrinfo",
-            headers = ["sys/types.h", "sys/socket.h", "netdb.h"],
             define = "HAVE_DECL_GETADDRINFO",
-            requires = ["HAVE_SYS_SOCKET_H", "HAVE_NETDB_H"],
+            headers = [
+                "sys/types.h",
+                "sys/socket.h",
+                "netdb.h",
+            ],
+            requires = [
+                "HAVE_SYS_SOCKET_H",
+                "HAVE_NETDB_H",
+            ],
         ),
         macros.AC_CHECK_DECL(
             "freeaddrinfo",
-            headers = ["sys/types.h", "sys/socket.h", "netdb.h"],
             define = "HAVE_DECL_FREEADDRINFO",
-            requires = ["HAVE_SYS_SOCKET_H", "HAVE_NETDB_H"],
+            headers = [
+                "sys/types.h",
+                "sys/socket.h",
+                "netdb.h",
+            ],
+            requires = [
+                "HAVE_SYS_SOCKET_H",
+                "HAVE_NETDB_H",
+            ],
         ),
         macros.AC_CHECK_DECL(
             "getnameinfo",
-            headers = ["sys/types.h", "sys/socket.h", "netdb.h"],
             define = "HAVE_DECL_GETNAMEINFO",
-            requires = ["HAVE_SYS_SOCKET_H", "HAVE_NETDB_H"],
+            headers = [
+                "sys/types.h",
+                "sys/socket.h",
+                "netdb.h",
+            ],
+            requires = [
+                "HAVE_SYS_SOCKET_H",
+                "HAVE_NETDB_H",
+            ],
         ),
 
         # AC_CHECK_TYPES([struct addrinfo],,,[...]) - lines 248-259
@@ -69,7 +90,10 @@ int main(void) {
 }
 """,
             define = "HAVE_STRUCT_ADDRINFO",
-            requires = ["HAVE_SYS_SOCKET_H", "HAVE_NETDB_H"],
+            requires = [
+                "HAVE_SYS_SOCKET_H",
+                "HAVE_NETDB_H",
+            ],
         ),
     ],
     visibility = ["//visibility:public"],
@@ -122,17 +146,20 @@ int main(void) {
     return 0;
 }
 """,
+            compile_defines = [
+                "HAVE_SYS_SOCKET_H",
+                "HAVE_NETDB_H",
+            ],
             define = "_gl_cv_func_getaddrinfo",
             language = "c",
-            compile_defines = ["HAVE_SYS_SOCKET_H", "HAVE_NETDB_H"],
         ),
 
         # Create HAVE_GETADDRINFO define (defaults to 1 if function exists, 0 otherwise) - lines 29, 43-89
         macros.AC_DEFINE(
             "HAVE_GETADDRINFO",
             condition = "_gl_cv_func_getaddrinfo",
-            if_true = "1",
             if_false = "0",
+            if_true = "1",
         ),
 
         # AC_DEFINE_UNQUOTED([HAVE_GETADDRINFO], [$HAVE_GETADDRINFO], ...) - lines 132-133
@@ -141,17 +168,31 @@ int main(void) {
         # AC_CHECK_DECLS([gai_strerror], [], [], [...]) - lines 138-150
         macros.AC_CHECK_DECL(
             "gai_strerror",
-            headers = ["sys/types.h", "sys/socket.h", "netdb.h"],
             define = "HAVE_DECL_GAI_STRERROR",
-            requires = ["HAVE_SYS_SOCKET_H", "HAVE_NETDB_H"],
+            headers = [
+                "sys/types.h",
+                "sys/socket.h",
+                "netdb.h",
+            ],
+            requires = [
+                "HAVE_SYS_SOCKET_H",
+                "HAVE_NETDB_H",
+            ],
         ),
 
         # AC_CHECK_DECLS([gai_strerrorA], [], [], [...]) - lines 152-164
         macros.AC_CHECK_DECL(
             "gai_strerrorA",
             define = "_gl_cv_have_decl_gai_strerrorA",
-            headers = ["sys/types.h", "sys/socket.h", "netdb.h"],
-            requires = ["HAVE_SYS_SOCKET_H", "HAVE_NETDB_H"],
+            headers = [
+                "sys/types.h",
+                "sys/socket.h",
+                "netdb.h",
+            ],
+            requires = [
+                "HAVE_SYS_SOCKET_H",
+                "HAVE_NETDB_H",
+            ],
         ),
 
         # Set HAVE_DECL_GAI_STRERRORA=0 if not declared - lines 151-164

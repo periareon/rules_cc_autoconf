@@ -12,22 +12,22 @@ autoconf(
         # AC_CHECK_FUNCS_ONCE([strtod]) - line 13 (if gl_FUNC_STRTOD_OBSOLETE is defined)
         # AC_CHECK_DECLS_ONCE([strtod]) - line 16 (if gl_FUNC_STRTOD_OBSOLETE is defined)
         # For now, we assume strtod exists and is declared on modern platforms
-        
+
         # AC_CACHE_CHECK([whether strtod obeys C99], [gl_cv_func_strtod_works]) - lines 20-156
         # Uses AC_RUN_IFELSE to test various strtod behaviors
         # Since we can't do runtime tests, we assume strtod works on modern platforms
         # Based on golden files, strtod works on macOS, so REPLACE_STRTOD=0
-        
+
         # Set HAVE_STRTOD as substitution variable only (not in config.h)
         macros.AC_SUBST("HAVE_STRTOD", "1"),
         macros.AC_SUBST("REPLACE_STRTOD", "0"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/stdlib_h",  # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - line 10
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST]) - line 11
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/ldexp",  # AC_REQUIRE([gl_CHECK_LDEXP_NO_LIBM]) - from gl_PREREQ_STRTOD - line 160, provides HAVE_LDEXP_IN_LIBC
         "//gnulib/m4/nl_langinfo",  # gl_CHECK_FUNCS_ANDROID([nl_langinfo]) - from gl_PREREQ_STRTOD - line 164, provides HAVE_NL_LANGINFO
-        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/stdlib_h",  # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - line 10
     ],
 )

@@ -17,7 +17,10 @@ autoconf(
         # Note: include_next dependency may already provide HAVE_GETOPT_H via gl_CHECK_NEXT_HEADERS
         # We'll check for it here and set the substitution variable
         # Use an internal define name to avoid conflicts
-        macros.AC_CHECK_HEADER("getopt.h", define = "_gl_cv_header_getopt_h"),
+        macros.AC_CHECK_HEADER(
+            "getopt.h",
+            define = "_gl_cv_header_getopt_h",
+        ),
 
         # Create HAVE_GETOPT_H define based on check result
         macros.AC_DEFINE(
@@ -37,7 +40,10 @@ autoconf(
 
         # AC_CHECK_FUNCS([getopt_long_only], ...) - line 77
         # Check for getopt_long_only function
-        macros.AC_CHECK_FUNC("getopt_long_only", define = "HAVE_GETOPT_LONG_ONLY"),
+        macros.AC_CHECK_FUNC(
+            "getopt_long_only",
+            define = "HAVE_GETOPT_LONG_ONLY",
+        ),
 
         # Note: AC_RUN_IFELSE checks for gl_cv_func_getopt_posix (lines 85-209) and
         # gl_cv_func_getopt_gnu (lines 213-318) are not directly portable to

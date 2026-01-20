@@ -38,16 +38,19 @@ int main(void) {
     return !x;
 }
 """,
+            compile_defines = [
+                "HAVE_STDINT_H_WITH_UINTMAX",
+                "HAVE_INTTYPES_H_WITH_UINTMAX",
+            ],
             define = "HAVE_INTMAX_T",
             language = "c",
-            compile_defines = ["HAVE_STDINT_H_WITH_UINTMAX", "HAVE_INTTYPES_H_WITH_UINTMAX"],
         ),
     ],
+    visibility = ["//visibility:public"],
     deps = [
         # AC_REQUIRE([gl_AC_HEADER_INTTYPES_H])
         "//gnulib/m4/inttypes_h",
         # AC_REQUIRE([gl_AC_HEADER_STDINT_H])
         "//gnulib/m4/stdint_h",
     ],
-    visibility = ["//visibility:public"],
 )

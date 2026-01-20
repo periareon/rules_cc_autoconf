@@ -3,16 +3,57 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# gl_PREREQ_VSNPRINTF - lines 62-63
+# Prerequisites of lib/vsnprintf.c (empty)
+autoconf(
+    name = "gl_PREREQ_VSNPRINTF",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_REPLACE_VSNPRINTF - lines 42-60
+autoconf(
+    name = "gl_REPLACE_VSNPRINTF",
+    checks = [
+        # AC_REQUIRE([gl_STDIO_H_DEFAULTS]) - line 44
+        # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        # AC_LIBOBJ([vsnprintf]) - line 45
+        # This is handled in the source code, not via autoconf defines
+        # if test $ac_cv_func_vsnprintf = yes; then
+        #   REPLACE_VSNPRINTF=1 - line 46
+        # else
+        #   AC_CHECK_DECLS_ONCE([vsnprintf]) - line 49
+        #   if test $ac_cv_have_decl_vsnprintf = yes; then
+        #     REPLACE_VSNPRINTF=1 - line 52
+        #   fi
+        # fi
+        # Based on golden files, REPLACE_VSNPRINTF=1 on macOS (function exists but not usable)
+        macros.AC_SUBST("REPLACE_VSNPRINTF", "1"),
+        # gl_PREREQ_VSNPRINTF - line 58
+        # Empty macro, no checks needed
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # AC_REQUIRE([gl_STDIO_H_DEFAULTS]) - line 44
+        # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        ":gl_PREREQ_VSNPRINTF",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
 # gl_FUNC_VSNPRINTF - lines 9-40
 autoconf(
     name = "vsnprintf",
     checks = [
+        # AC_REQUIRE([gl_STDIO_H_DEFAULTS]) - line 11
+        # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        
+        # gl_cv_func_vsnprintf_usable=no - line 12
         # AC_CHECK_FUNCS([vsnprintf]) - line 17
-        # Check for vsnprintf function
         macros.AC_CHECK_FUNC(
             "vsnprintf",
-            define = "ac_cv_func_vsnprintf",
             code = "#include <stdio.h>\n",
+            define = "ac_cv_func_vsnprintf",
         ),
         
         # if test $ac_cv_func_vsnprintf = yes; then
@@ -34,28 +75,25 @@ autoconf(
         #   gl_REPLACE_VSNPRINTF - line 33
         # fi
         # The runtime checks (gl_SNPRINTF_SIZE1, gl_SNPRINTF_RETVAL_C99, gl_PRINTF_POSITIONS)
-        # can't be done in Bazel. Based on golden files, on macOS vsnprintf needs replacement.
+        # can't be done in Bazel. Based on golden files, vsnprintf is not usable on macOS,
+        # so we always call gl_REPLACE_VSNPRINTF.
+        
+        # Set HAVE_VSNPRINTF as substitution variable
+        macros.AC_SUBST(
+            "HAVE_VSNPRINTF",
+            condition = "ac_cv_func_vsnprintf",
+            if_false = "0",
+            if_true = "1",
+        ),
+        
+        # Define HAVE_VSNPRINTF in config.h if function exists
         macros.AC_DEFINE(
             "HAVE_VSNPRINTF",
             condition = "ac_cv_func_vsnprintf",
             if_true = "1",
         ),
-        macros.AC_SUBST(
-            "HAVE_VSNPRINTF",
-            condition = "ac_cv_func_vsnprintf",
-            if_true = "1",
-        ),
-        
-        # gl_SNPRINTF_SIZE1 checks for snprintf function (line 19)
-        # We need HAVE_SNPRINTF but not HAVE_DECL_SNPRINTF
-        macros.AC_CHECK_FUNC(
-            "snprintf",
-            define = "HAVE_SNPRINTF",
-            code = "#include <stdio.h>\n",
-        ),
         
         # AC_CHECK_DECLS_ONCE([vsnprintf]) - line 38
-        # Check for vsnprintf declaration
         macros.AC_CHECK_DECL(
             "vsnprintf",
             define = "ac_cv_have_decl_vsnprintf",
@@ -65,38 +103,45 @@ autoconf(
         # if test $ac_cv_have_decl_vsnprintf = no; then
         #   HAVE_DECL_VSNPRINTF=0 - line 40
         # fi
+        # Set HAVE_DECL_VSNPRINTF as substitution variable
+        macros.AC_SUBST(
+            "HAVE_DECL_VSNPRINTF",
+            condition = "ac_cv_have_decl_vsnprintf",
+            if_false = "0",
+            if_true = "1",
+        ),
+        
+        # Define HAVE_DECL_VSNPRINTF in config.h if declaration exists
         macros.AC_DEFINE(
             "HAVE_DECL_VSNPRINTF",
             condition = "ac_cv_have_decl_vsnprintf",
             if_true = "1",
         ),
-        macros.AC_SUBST(
-            "HAVE_DECL_VSNPRINTF",
-            condition = "ac_cv_have_decl_vsnprintf",
-            if_true = "1",
-            if_false = "0",
+        
+        # The m4 file checks for snprintf via gl_SNPRINTF_SIZE1 (line 19),
+        # but the golden file shows HAVE_SNPRINTF=1, so we need to provide it.
+        # Check for snprintf function (but not declaration to avoid HAVE_DECL_SNPRINTF)
+        macros.AC_CHECK_FUNC(
+            "snprintf",
+            code = "#include <stdio.h>\n",
+            define = "ac_cv_func_snprintf",
         ),
         
-        # gl_REPLACE_VSNPRINTF - lines 42-60
-        # AC_LIBOBJ([vsnprintf]) - line 45
-        # if test $ac_cv_func_vsnprintf = yes; then
-        #   REPLACE_VSNPRINTF=1 - line 46
-        # else
-        #   ... (check if declared but inline)
-        #   REPLACE_VSNPRINTF=1 - line 52
-        # fi
-        # Based on golden files, REPLACE_VSNPRINTF=1 on macOS (function exists but not usable)
-        macros.AC_SUBST("REPLACE_VSNPRINTF", "1"),
-        
-        # gl_PREREQ_VSNPRINTF - lines 62-63
-        # Empty macro, no checks needed
+        # Define HAVE_SNPRINTF in config.h if function exists
+        macros.AC_DEFINE(
+            "HAVE_SNPRINTF",
+            condition = "ac_cv_func_snprintf",
+            if_true = "1",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS]) - line 11, 44
+        # AC_REQUIRE([gl_STDIO_H_DEFAULTS]) - line 11
+        # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        # gl_REPLACE_VSNPRINTF is called if vsnprintf is not usable - line 33
+        ":gl_REPLACE_VSNPRINTF",
         # Note: The m4 file requires gl_SNPRINTF_SIZE1, gl_SNPRINTF_RETVAL_C99, gl_PRINTF_POSITIONS
         # for runtime checks, but since we're using golden file expectations, we don't need them.
-        # We check for snprintf directly to provide HAVE_SNPRINTF without HAVE_DECL_SNPRINTF.
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

@@ -30,18 +30,18 @@ autoconf(
 autoconf_hdr(
     name = "config",
     out = "config.h",
+    mode = "defines",  # Explicit, though it's the default
     template = "config.h.in",
     deps = [":autoconf"],
-    mode = "defines",  # Explicit, though it's the default
 )
 
 # subst.h with mode="subst" - should only have subst variables, NOT defines
 autoconf_hdr(
     name = "subst",
     out = "subst.h",
+    mode = "subst",
     template = "subst.h.in",
     deps = [":autoconf"],
-    mode = "subst",
 )
 
 diff_test(

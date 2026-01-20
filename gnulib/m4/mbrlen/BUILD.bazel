@@ -15,7 +15,7 @@ autoconf(
             "mbrlen",
             define = "_gl_cv_func_mbrlen",
         ),
-        
+
         # Set HAVE_MBRLEN as define if function exists, or as substitution variable if not
         macros.AC_DEFINE(
             "HAVE_MBRLEN",
@@ -27,15 +27,15 @@ autoconf(
             "0",
             requires = ["_gl_cv_func_mbrlen==0"],
         ),
-        
+
         # Check for mbrlen declaration (for Minix 3.1.8 which declares but doesn't have it)
         # Lines 22-28
         macros.AC_CHECK_DECL(
             "mbrlen",
-            headers = ["wchar.h"],
             define = "HAVE_DECL_MBRLEN",
+            headers = ["wchar.h"],
         ),
-        
+
         # Set REPLACE_MBRLEN based on conditions
         # Based on golden file, REPLACE_MBRLEN=0 on macOS
         # The m4 logic sets REPLACE_MBRLEN=1 if:

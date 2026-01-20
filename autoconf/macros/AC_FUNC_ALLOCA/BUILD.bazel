@@ -15,7 +15,13 @@ autoconf(
     name = "AC_FUNC_ALLOCA",
     checks = [
         # Check for alloca.h header
-        macros.AC_CHECK_HEADER("alloca.h"),
+        macros.AC_CHECK_HEADER("alloca.h", define = "ac_cv_header_alloca_h"),
+        # Define HAVE_ALLOCA_H in config.h if header exists
+        macros.AC_DEFINE(
+            "HAVE_ALLOCA_H",
+            condition = "ac_cv_header_alloca_h",
+            if_true = "1",
+        ),
         # Check if alloca works (typically via compiler builtin)
         macros.AC_TRY_COMPILE(
             code = """#include <alloca.h>
@@ -24,7 +30,13 @@ int main(void) {
     (void)p;
     return 0;
 }""",
-            define = "HAVE_ALLOCA",
+            define = "ac_cv_func_alloca",
+        ),
+        # Define HAVE_ALLOCA in config.h if alloca works
+        macros.AC_DEFINE(
+            "HAVE_ALLOCA",
+            condition = "ac_cv_func_alloca",
+            if_true = "1",
         ),
     ],
     visibility = ["//visibility:public"],

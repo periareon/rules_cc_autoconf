@@ -1,10 +1,10 @@
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
 load("//autoconf:macros.bzl", "macros")
 load("//autoconf:package_info.bzl", "package_info")
 load("//autoconf/tests:diff_test.bzl", "diff_test")
-load("@bazel_skylib//rules:write_file.bzl", "write_file")
 
 package_info(
     name = "package_info",
@@ -45,21 +45,21 @@ autoconf(
 autoconf_hdr(
     name = "config",
     out = "config.h",
+    mode = "defines",
     template = "config.h.in",
     deps = [":autoconf"],
-    mode = "defines",
 )
 
 autoconf_hdr(
     name = "subst",
     out = "subst.h",
     inlines = {
-        "/* inline source */": "inlined_file.h.in",
         "/* inline generated */": ":generated_file.h.in",
+        "/* inline source */": "inlined_file.h.in",
     },
+    mode = "subst",
     template = "subst.h.in",
     deps = [":autoconf"],
-    mode = "subst",
 )
 
 diff_test(

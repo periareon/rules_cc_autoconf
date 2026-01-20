@@ -8,14 +8,17 @@ autoconf(
     name = "freading",
     checks = [
         # AC_CHECK_HEADERS_ONCE([stdio_ext.h]) - line 12
-        macros.AC_CHECK_HEADER("stdio_ext.h", define = "HAVE_STDIO_EXT_H"),
-        
+        macros.AC_CHECK_HEADER(
+            "stdio_ext.h",
+            define = "HAVE_STDIO_EXT_H",
+        ),
+
         # gl_CHECK_FUNCS_ANDROID([__freading], [[#include <stdio.h> #include <stdio_ext.h>]]) - lines 13-16
         # Check for __freading function (similar to AC_CHECK_FUNC but also checks Android-specific behavior)
         macros.AC_CHECK_FUNC(
             "__freading",
-            define = "HAVE___FREADING",
             code = "#include <stdio.h>\n#include <stdio_ext.h>\n",
+            define = "HAVE___FREADING",
             requires = ["HAVE_STDIO_EXT_H"],
         ),
     ],

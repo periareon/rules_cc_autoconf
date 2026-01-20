@@ -8,11 +8,11 @@ autoconf(
     checks = [
         # gl_SYS_TYPES_H checks for sys/types.h header
         # HAVE_SYS_TYPES_H is provided by AC_CHECK_INCLUDES_DEFAULT
-        
+
         # AC_HEADER_MAJOR checks for major/minor macros
         # Note: The golden file expects HAVE_BLKCNT_T and HAVE_BLKSIZE_T to be undefined
         # These checks are handled by AC_HEADER_MAJOR but we don't need to define them
-        
+
         # Use sane struct stat types in OpenVMS 8.2 and later
         macros.AC_DEFINE("_USE_STD_STAT", "1"),
     ],

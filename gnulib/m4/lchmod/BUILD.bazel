@@ -20,7 +20,7 @@ autoconf(
     deps = [
         # AC_REQUIRE([gl_SYS_STAT_H_DEFAULTS]) - line 12
         # Note: gl_SYS_STAT_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
-        
+
         # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 15
         "//gnulib/m4/extensions",
 

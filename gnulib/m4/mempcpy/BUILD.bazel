@@ -10,13 +10,13 @@ autoconf(
     checks = [
         # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 15
         # This is provided by extensions dependency
-        
+
         # AC_REQUIRE([AC_C_RESTRICT]) - line 18
         # This is provided by AC_C_RESTRICT dependency
-        
+
         # AC_REQUIRE([gl_STRING_H_DEFAULTS]) - line 20
         # This is provided by string_h:defaults dependency
-        
+
         # gl_CHECK_FUNCS_ANDROID([mempcpy], [[#include <string.h>]]) - line 20
         # Check for mempcpy function
         # gl_CHECK_FUNCS_ANDROID is similar to AC_CHECK_FUNC but with Android-specific handling
@@ -32,7 +32,7 @@ int main(void) {
             define = "ac_cv_func_mempcpy",
             language = "c",
         ),
-        
+
         # if test $ac_cv_func_mempcpy = no; then
         #   HAVE_MEMPCPY=0 - line 22
         #   case "$gl_cv_onwards_func_mempcpy" in
@@ -43,16 +43,16 @@ int main(void) {
         macros.AC_SUBST(
             "HAVE_MEMPCPY",
             condition = "ac_cv_func_mempcpy",
-            if_true = "1",
             if_false = "0",
+            if_true = "1",
         ),
-        
+
         # Set REPLACE_MEMPCPY based on conditions
         # If mempcpy is not found and it's a future function, REPLACE_MEMPCPY=1 (line 24)
         # Otherwise, REPLACE_MEMPCPY=0 (default)
         # Based on golden file, REPLACE_MEMPCPY=0 on macOS
         macros.AC_SUBST("REPLACE_MEMPCPY", "0"),
-        
+
         # Note: The m4 file doesn't define HAVE_MEMPCPY in config.h, only as a substitution variable
         # Based on golden file, HAVE_MEMPCPY is undefined in config.h on macOS
     ],

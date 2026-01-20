@@ -9,16 +9,16 @@ autoconf(
     checks = [
         # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - line 12
         # This is provided by stdlib_h:defaults dependency
-        
+
         # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - line 13
         # This is provided by extensions dependency
-        
+
         # gl_CHECK_FUNCS_ANDROID([getprogname], [[#include <stdlib.h>]]) - line 14
         # This is equivalent to AC_CHECK_FUNC
         macros.AC_CHECK_FUNC(
             "getprogname",
-            define = "ac_cv_func_getprogname",
             code = "#include <stdlib.h>\n",
+            define = "ac_cv_func_getprogname",
         ),
         # Define HAVE_GETPROGNAME if function exists
         macros.AC_DEFINE(
@@ -36,12 +36,12 @@ autoconf(
         macros.AC_SUBST(
             "HAVE_GETPROGNAME",
             condition = "ac_cv_func_getprogname",
-            if_true = "1",
             if_false = "0",
+            if_true = "1",
         ),
         # Based on golden files, REPLACE_GETPROGNAME=0 on macOS
         macros.AC_SUBST("REPLACE_GETPROGNAME", "0"),
-        
+
         # AC_CHECK_DECLS([program_invocation_name], ...) - lines 20-24
         macros.AC_CHECK_DECL(
             "program_invocation_name",
@@ -52,21 +52,24 @@ autoconf(
         macros.AC_DEFINE(
             "HAVE_DECL_PROGRAM_INVOCATION_NAME",
             condition = "ac_cv_have_decl_program_invocation_name",
-            if_true = "1",
             if_false = "0",
+            if_true = "1",
         ),
         # Set HAVE_DECL_PROGRAM_INVOCATION_NAME=0 as substitution variable if declaration doesn't exist
         macros.AC_SUBST(
             "HAVE_DECL_PROGRAM_INVOCATION_NAME",
             condition = "ac_cv_have_decl_program_invocation_name",
-            if_true = "1",
             if_false = "0",
+            if_true = "1",
         ),
-        
+
         # gl_PREREQ_GETPROGNAME - lines 27-66
         # AC_CHECK_FUNCS_ONCE([getexecname]) - line 30
-        macros.AC_CHECK_FUNC("getexecname", define = "ac_cv_func_getexecname"),
-        
+        macros.AC_CHECK_FUNC(
+            "getexecname",
+            define = "ac_cv_func_getexecname",
+        ),
+
         # AC_CHECK_DECLS([program_invocation_name], ...) - line 32
         # Already checked above, but need to check again for gl_PREREQ_GETPROGNAME logic
         # AC_CHECK_DECLS([program_invocation_short_name], ...) - line 34
@@ -79,10 +82,10 @@ autoconf(
         macros.AC_DEFINE(
             "HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME",
             condition = "ac_cv_have_decl_program_invocation_short_name",
-            if_true = "1",
             if_false = "0",
+            if_true = "1",
         ),
-        
+
         # AC_CHECK_DECLS([__argv], ...) - line 36
         macros.AC_CHECK_DECL(
             "__argv",
@@ -93,10 +96,10 @@ autoconf(
         macros.AC_DEFINE(
             "HAVE_DECL___ARGV",
             condition = "ac_cv_have_decl___argv",
-            if_true = "1",
             if_false = "0",
+            if_true = "1",
         ),
-        
+
         # AC_CACHE_CHECK([whether __progname is defined in default libraries], ...) - lines 42-52
         # AC_LINK_IFELSE checks for __progname variable
         macros.AC_TRY_LINK(

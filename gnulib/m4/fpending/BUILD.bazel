@@ -8,8 +8,11 @@ autoconf(
     name = "fpending",
     checks = [
         # AC_CHECK_HEADERS_ONCE([stdio_ext.h]) - line 20
-        macros.AC_CHECK_HEADER("stdio_ext.h", define = "HAVE_STDIO_EXT_H"),
-        
+        macros.AC_CHECK_HEADER(
+            "stdio_ext.h",
+            define = "HAVE_STDIO_EXT_H",
+        ),
+
         # AC_CACHE_CHECK([for __fpending], [gl_cv_func___fpending], ...) - lines 21-30
         # AC_LINK_IFELSE([AC_LANG_PROGRAM([[$fp_headers]], [[return ! __fpending (stdin);]])], ...) - lines 25-28
         # Check for __fpending function using AC_TRY_LINK (equivalent to AC_LINK_IFELSE)
@@ -25,15 +28,18 @@ int main(void) {
             define = "gl_cv_func___fpending",
             language = "c",
         ),
-        
+
         # if test $gl_cv_func___fpending = yes; then
         #   AC_CHECK_DECLS([__fpending], [], [], [$fp_headers]) - lines 32-33
         # fi
         # Check for __fpending declaration if the function exists
         macros.AC_CHECK_DECL(
             "__fpending",
-            headers = ["stdio.h", "stdio_ext.h"],
             define = "HAVE_DECL___FPENDING",
+            headers = [
+                "stdio.h",
+                "stdio_ext.h",
+            ],
             requires = ["gl_cv_func___fpending"],
         ),
     ],

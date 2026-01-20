@@ -12,7 +12,7 @@ autoconf(
         # Note: gl_STRING_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
         # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 14
         # This is provided by extensions dependency
-        
+
         # AC_CACHE_CHECK([for ffsl], [gl_cv_func_ffsl], ...) - lines 21-34
         # Uses AC_LINK_IFELSE instead of AC_CHECK_FUNC because ffsl() may be
         # a static inline function on Android 13 or older (lines 16-20)
@@ -31,7 +31,7 @@ int main(void) {
             define = "_gl_cv_func_ffsl",
             language = "c",
         ),
-        
+
         # Note: HAVE_FFSL is NOT defined as a #define in config.h
         # It's only set as a substitution variable (line 35-37)
         # If ffsl not found, set HAVE_FFSL=0

@@ -16,21 +16,21 @@ autoconf(
             "mbtowc",
             define = "_gl_cv_func_mbtowc",
         ),
-        
+
         # Set HAVE_MBTOWC as define if function exists
         macros.AC_DEFINE(
             "HAVE_MBTOWC",
             "1",
             requires = ["_gl_cv_func_mbtowc==1"],
         ),
-        
+
         # Set HAVE_MBTOWC=0 as substitution variable if function is not found (line 17)
         macros.AC_SUBST(
             "HAVE_MBTOWC",
             "0",
             requires = ["_gl_cv_func_mbtowc==0"],
         ),
-        
+
         # Set REPLACE_MBTOWC based on conditions
         # If mbtowc is not found and it's a future function, REPLACE_MBTOWC=1 (line 19)
         # Otherwise, REPLACE_MBTOWC=0 (default, line 22-24 has `if false` which never executes)

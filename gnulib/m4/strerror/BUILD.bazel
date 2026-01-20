@@ -54,7 +54,7 @@ int main(void) { return 0; }
             define = "_gl_cv_func_strerror_0_works",
             language = "c",
         ),
-        
+
         # case "$gl_cv_func_strerror_0_works" in - lines 88-95
         #   *yes) ;;
         #   *)
@@ -82,7 +82,7 @@ int main(void) { return 0; }
             ),
         ],
     }) + [
-        
+
         # gl_FUNC_STRERROR: Check if strerror works correctly
         # if test "$GL_GENERATE_ERRNO_H:$REPLACE_STRERROR_0" = false:0; then - line 18
         #   AC_CACHE_CHECK([for working strerror function], [gl_cv_func_working_strerror]) - lines 19-40
@@ -99,7 +99,10 @@ int main(void) { return 0; }
         # Based on golden files, REPLACE_STRERROR=1 on macOS (because REPLACE_STRERROR_0=1)
         # If strerror(0) doesn't work, we need to replace strerror
         # Also check for strerror_r function (HAVE_STRERROR_R) - needed for golden file
-        macros.AC_CHECK_FUNC("strerror_r", define = "HAVE_STRERROR_R"),
+        macros.AC_CHECK_FUNC(
+            "strerror_r",
+            define = "HAVE_STRERROR_R",
+        ),
     ] + select({
         "@platforms//os:macos": [
             macros.AC_SUBST("REPLACE_STRERROR", "1"),
@@ -116,10 +119,10 @@ int main(void) { return 0; }
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/string_h",  # AC_REQUIRE([gl_STRING_H_DEFAULTS]) - line 10
-        "//gnulib/m4/errno_h",  # AC_REQUIRE([gl_HEADER_ERRNO_H]) - line 11
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST]) - lines 12, 64
-        "//gnulib/m4/extensions",  # AC_USE_SYSTEM_EXTENSIONS (via errno_h or string_h)
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/errno_h",  # AC_REQUIRE([gl_HEADER_ERRNO_H]) - line 11
+        "//gnulib/m4/extensions",  # AC_USE_SYSTEM_EXTENSIONS (via errno_h or string_h)
+        "//gnulib/m4/string_h",  # AC_REQUIRE([gl_STRING_H_DEFAULTS]) - line 10
     ],
 )

@@ -11,15 +11,18 @@ autoconf(
         # gl_SOCKET_FAMILY_UNIX: Check for UNIX domain sockets
         # AC_CHECK_HEADERS_ONCE([sys/un.h]) - line 55
         # Check for sys/un.h header (AC_CHECK_HEADERS_ONCE prevents duplicate checks in autoconf)
-        macros.AC_CHECK_HEADER("sys/un.h", define = "ac_cv_header_sys_un_h"),
-        
+        macros.AC_CHECK_HEADER(
+            "sys/un.h",
+            define = "ac_cv_header_sys_un_h",
+        ),
+
         # Define HAVE_SYS_UN_H in config.h if header exists
         macros.AC_DEFINE(
             "HAVE_SYS_UN_H",
             condition = "ac_cv_header_sys_un_h",
             if_true = "1",
         ),
-        
+
         # Check for afunix.h on Windows - lines 58-60 (skipped, not needed for macOS)
         # AC_CACHE_CHECK([for UNIX domain sockets], [gl_cv_socket_unix]) - lines 62-75
         macros.AC_TRY_COMPILE(
@@ -43,12 +46,12 @@ int main(void) {
     return 1;
 }
 """,
+            compile_defines = ["HAVE_SYS_UN_H"],  # Pass HAVE_SYS_UN_H as compile define
             define = "gl_cv_socket_unix",
             language = "c",
             requires = ["ac_cv_header_sys_un_h"],  # Require that sys/un.h header check passes first
-            compile_defines = ["HAVE_SYS_UN_H"],  # Pass HAVE_SYS_UN_H as compile define
         ),
-        
+
         # if test $gl_cv_socket_unix = yes; then - lines 76-78
         #   AC_DEFINE([HAVE_UNIXSOCKET], [1], ...) - line 77
         # fi

@@ -9,11 +9,14 @@ autoconf(
     name = "argp",
     checks = [
         # AC_CHECK_FUNCS_ONCE([argp_parse]) - line 15
-        macros.AC_CHECK_FUNC("argp_parse", define = "HAVE_ARGP_PARSE"),
-        
+        macros.AC_CHECK_FUNC(
+            "argp_parse",
+            define = "HAVE_ARGP_PARSE",
+        ),
+
         # Lines 16-22: If argp_parse found, define argp_parse as rpl_argp_parse
         # This is handled in the actual source code, not via autoconf defines.
-        
+
         # AC_CHECK_DECLS([program_invocation_name], [], [AC_DEFINE([GNULIB_PROGRAM_INVOCATION_NAME], [1])], [[#include <errno.h>]]) - lines 24-28
         # If NOT declared, define GNULIB_PROGRAM_INVOCATION_NAME=1
         # Note: Using conditional AC_DEFINE based on HAVE_DECL result
@@ -26,7 +29,7 @@ autoconf(
             condition = "HAVE_DECL_PROGRAM_INVOCATION_NAME==0",
             if_true = "1",
         ),
-        
+
         # AC_CHECK_DECLS([program_invocation_short_name], [], [AC_DEFINE([GNULIB_PROGRAM_INVOCATION_SHORT_NAME], [1])], [[#include <errno.h>]]) - lines 29-33
         # If NOT declared, define GNULIB_PROGRAM_INVOCATION_SHORT_NAME=1
         # Note: Using conditional AC_DEFINE based on HAVE_DECL result
@@ -39,7 +42,7 @@ autoconf(
             condition = "HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME==0",
             if_true = "1",
         ),
-        
+
         # AC_LINK_IFELSE for program_invocation_name - lines 40-48
         # Check if program_invocation_name is linkable (defined)
         macros.AC_TRY_COMPILE(
@@ -53,7 +56,7 @@ int main(void) {
             define = "HAVE_PROGRAM_INVOCATION_NAME",
             language = "c",
         ),
-        
+
         # AC_LINK_IFELSE for program_invocation_short_name - lines 50-59
         # Check if program_invocation_short_name is linkable (defined)
         macros.AC_TRY_COMPILE(
@@ -67,20 +70,29 @@ int main(void) {
             define = "HAVE_PROGRAM_INVOCATION_SHORT_NAME",
             language = "c",
         ),
-        
+
         # AC_CHECK_FUNCS_ONCE([flockfile funlockfile]) - line 74
-        macros.AC_CHECK_FUNC("flockfile", define = "HAVE_FLOCKFILE"),
-        macros.AC_CHECK_FUNC("funlockfile", define = "HAVE_FUNLOCKFILE"),
-        
+        macros.AC_CHECK_FUNC(
+            "flockfile",
+            define = "HAVE_FLOCKFILE",
+        ),
+        macros.AC_CHECK_FUNC(
+            "funlockfile",
+            define = "HAVE_FUNLOCKFILE",
+        ),
+
         # AC_CHECK_HEADERS_ONCE([features.h linewrap.h]) - line 75
         # Note: These are checked but not used for defines
         macros.AC_CHECK_HEADER("features.h"),
         macros.AC_CHECK_HEADER("linewrap.h"),
-        
+
         # AC_FUNC_STRERROR_R (line 76) provides HAVE_DECL_STRERROR_R
         # Also check for strerror_r function (HAVE_STRERROR_R)
-        macros.AC_CHECK_FUNC("strerror_r", define = "HAVE_STRERROR_R"),
-        
+        macros.AC_CHECK_FUNC(
+            "strerror_r",
+            define = "HAVE_STRERROR_R",
+        ),
+
         # Note: AC_CHECK_DECLS_ONCE for *_unlocked functions (lines 61-73)
         # are provided by unlocked-io dependency
     ],

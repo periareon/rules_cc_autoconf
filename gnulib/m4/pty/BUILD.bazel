@@ -10,7 +10,7 @@ autoconf(
     checks = [
         # AC_REQUIRE([AC_CANONICAL_HOST]) - line 12
         # This is provided by AC_CANONICAL_HOST dependency
-        
+
         # AC_SEARCH_LIBS([forkpty], [util], ...) - lines 21-26
         # Check for forkpty in libutil
         # On macOS, forkpty is in libutil, so PTY_LIB should be empty (linked automatically)
@@ -33,10 +33,10 @@ autoconf(
     checks = [
         # AC_REQUIRE([gl_PTY_LIB]) - line 34
         # This is provided by gl_PTY_LIB dependency
-        
+
         # AC_REQUIRE([gl_PTY_H]) - line 35
         # This is provided by pty_h dependency
-        
+
         # AC_CHECK_DECLS([forkpty], ...) - lines 37-50
         # Check for forkpty declaration
         # The m4 file includes headers conditionally based on HAVE_PTY_H, HAVE_UTIL_H, etc.
@@ -50,7 +50,7 @@ autoconf(
                 "termios.h",
             ],
         ),
-        
+
         # if test $ac_cv_have_decl_forkpty = yes; then
         #   ... check for const-safe forkpty signature ...
         # else
@@ -60,10 +60,10 @@ autoconf(
         macros.AC_SUBST(
             "HAVE_FORKPTY",
             condition = "ac_cv_have_decl_forkpty",
-            if_true = "1",
             if_false = "0",
+            if_true = "1",
         ),
-        
+
         # AC_DEFINE_UNQUOTED([HAVE_FORKPTY], [$HAVE_FORKPTY], ...) - lines 73-75
         # Define HAVE_FORKPTY in config.h
         # AC_DEFINE_UNQUOTED([HAVE_FORKPTY], [$HAVE_FORKPTY], ...) - lines 73-75
@@ -72,15 +72,15 @@ autoconf(
             condition = "ac_cv_have_decl_forkpty",
             if_true = "1",
         ),
-        
+
         # Define HAVE_DECL_FORKPTY in config.h
         macros.AC_DEFINE(
             "HAVE_DECL_FORKPTY",
             condition = "ac_cv_have_decl_forkpty",
-            if_true = "1",
             if_false = "0",
+            if_true = "1",
         ),
-        
+
         # The m4 file also checks for const-safe forkpty signature using AC_COMPILE_IFELSE
         # If the signature is not const-safe, REPLACE_FORKPTY=1
         # Based on golden files, REPLACE_FORKPTY=1 on macOS (forkpty exists but is not const-safe)
@@ -104,13 +104,13 @@ autoconf(
     checks = [
         # AC_REQUIRE([gl_PTY_LIB]) - line 79
         # This is provided by gl_PTY_LIB dependency
-        
+
         # AC_REQUIRE([gl_PTY_H]) - line 80
         # This is provided by pty_h dependency
-        
+
         # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 83
         # This is provided by extensions dependency
-        
+
         # AC_CHECK_DECLS([openpty], ...) - lines 85-98
         # Check for openpty declaration
         # The m4 file includes headers conditionally based on HAVE_PTY_H, HAVE_UTIL_H, etc.
@@ -124,7 +124,7 @@ autoconf(
                 "termios.h",
             ],
         ),
-        
+
         # if test $ac_cv_have_decl_openpty = yes; then
         #   AC_DEFINE([HAVE_OPENPTY], [1], ...) - lines 99-101
         #   ... check for const-safe openpty signature ...
@@ -139,23 +139,23 @@ autoconf(
             condition = "ac_cv_have_decl_openpty",
             if_true = "1",
         ),
-        
+
         # Define HAVE_DECL_OPENPTY in config.h
         macros.AC_DEFINE(
             "HAVE_DECL_OPENPTY",
             condition = "ac_cv_have_decl_openpty",
-            if_true = "1",
             if_false = "0",
+            if_true = "1",
         ),
-        
+
         # Set HAVE_OPENPTY as substitution variable
         macros.AC_SUBST(
             "HAVE_OPENPTY",
             condition = "ac_cv_have_decl_openpty",
-            if_true = "1",
             if_false = "0",
+            if_true = "1",
         ),
-        
+
         # The m4 file also checks for const-safe openpty signature using AC_COMPILE_IFELSE
         # If the signature is not const-safe, REPLACE_OPENPTY=1
         # Based on golden files, REPLACE_OPENPTY=1 on macOS (openpty exists but is not const-safe)

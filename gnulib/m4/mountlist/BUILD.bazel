@@ -10,51 +10,93 @@ autoconf(
     checks = [
         # AC_REQUIRE([AC_CANONICAL_HOST]) - line 14
         # This is provided by AC_CANONICAL_HOST dependency
-        
+
         # AC_CHECK_FUNCS([listmntent]) - line 15
-        macros.AC_CHECK_FUNC("listmntent", define = "HAVE_LISTMNTENT"),
-        
+        macros.AC_CHECK_FUNC(
+            "listmntent",
+            define = "HAVE_LISTMNTENT",
+        ),
+
         # AC_CHECK_HEADERS_ONCE([sys/param.h sys/statvfs.h]) - line 16
-        macros.AC_CHECK_HEADER("sys/param.h", define = "HAVE_SYS_PARAM_H"),
-        macros.AC_CHECK_HEADER("sys/statvfs.h", define = "HAVE_SYS_STATVFS_H"),
-        
+        macros.AC_CHECK_HEADER(
+            "sys/param.h",
+            define = "HAVE_SYS_PARAM_H",
+        ),
+        macros.AC_CHECK_HEADER(
+            "sys/statvfs.h",
+            define = "HAVE_SYS_STATVFS_H",
+        ),
+
         # AC_CHECK_HEADERS([sys/ucred.h], [], [], [#include <grp.h>]) - lines 19-20
-        macros.AC_CHECK_HEADER("sys/ucred.h", define = "HAVE_SYS_UCRED_H"),
-        
+        macros.AC_CHECK_HEADER(
+            "sys/ucred.h",
+            define = "HAVE_SYS_UCRED_H",
+        ),
+
         # AC_CHECK_HEADERS([sys/mount.h], ...) - lines 22-28
-        macros.AC_CHECK_HEADER("sys/mount.h", define = "HAVE_SYS_MOUNT_H"),
-        
+        macros.AC_CHECK_HEADER(
+            "sys/mount.h",
+            define = "HAVE_SYS_MOUNT_H",
+        ),
+
         # AC_CHECK_HEADERS([mntent.h sys/fs_types.h]) - line 30
-        macros.AC_CHECK_HEADER("mntent.h", define = "HAVE_MNTENT_H"),
-        macros.AC_CHECK_HEADER("sys/fs_types.h", define = "HAVE_SYS_FS_TYPES_H"),
-        
+        macros.AC_CHECK_HEADER(
+            "mntent.h",
+            define = "HAVE_MNTENT_H",
+        ),
+        macros.AC_CHECK_HEADER(
+            "sys/fs_types.h",
+            define = "HAVE_SYS_FS_TYPES_H",
+        ),
+
         # AC_CHECK_MEMBERS([struct fsstat.f_fstypename],,,[$getfsstat_includes]) - line 40
         # Check for struct statfs.f_fstypename member
         # Note: The m4 file uses "struct fsstat" but on macOS it's "struct statfs"
         # Based on golden files, this member exists on macOS
         macros.AC_DEFINE("HAVE_STRUCT_STATFS_F_FSTYPENAME", "1"),
-        
+
         # AC_FUNC_GETMNTENT - line 47
         # This checks for getmntent function and searches for it in libraries
-        macros.AC_CHECK_FUNC("getmntent", define = "HAVE_GETMNTENT"),
-        
+        macros.AC_CHECK_FUNC(
+            "getmntent",
+            define = "HAVE_GETMNTENT",
+        ),
+
         # Based on the m4 file logic, on macOS:
         # - getmntinfo is checked and found
         # - getmntinfo returns statfs structures (not statvfs)
         # - MOUNTED_GETMNTINFO is defined
-        macros.AC_CHECK_FUNC("getmntinfo", define = "HAVE_GETMNTINFO"),
-        
+        macros.AC_CHECK_FUNC(
+            "getmntinfo",
+            define = "HAVE_GETMNTINFO",
+        ),
+
         # For getmntent1 variant, check for related functions
-        macros.AC_CHECK_FUNC("hasmntopt", define = "HAVE_HASMNTOPT"),
-        
+        macros.AC_CHECK_FUNC(
+            "hasmntopt",
+            define = "HAVE_HASMNTOPT",
+        ),
+
         # For BeOS/Haiku support
-        macros.AC_CHECK_FUNC("next_dev", define = "HAVE_NEXT_DEV"),
-        macros.AC_CHECK_FUNC("fs_stat_dev", define = "HAVE_FS_STAT_DEV"),
-        macros.AC_CHECK_HEADER("fs_info.h", define = "HAVE_FS_INFO_H"),
-        
+        macros.AC_CHECK_FUNC(
+            "next_dev",
+            define = "HAVE_NEXT_DEV",
+        ),
+        macros.AC_CHECK_FUNC(
+            "fs_stat_dev",
+            define = "HAVE_FS_STAT_DEV",
+        ),
+        macros.AC_CHECK_HEADER(
+            "fs_info.h",
+            define = "HAVE_FS_INFO_H",
+        ),
+
         # AC_CHECK_HEADERS([sys/mntent.h]) - from gl_PREREQ_MOUNTLIST_EXTRA
-        macros.AC_CHECK_HEADER("sys/mntent.h", define = "HAVE_SYS_MNTENT_H"),
-        
+        macros.AC_CHECK_HEADER(
+            "sys/mntent.h",
+            define = "HAVE_SYS_MNTENT_H",
+        ),
+
         # Based on golden files, on macOS:
         # - MOUNTED_GETMNTINFO is defined
         macros.AC_DEFINE("MOUNTED_GETMNTINFO", "1"),

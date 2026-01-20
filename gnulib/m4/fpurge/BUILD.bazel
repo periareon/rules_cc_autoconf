@@ -13,7 +13,10 @@ autoconf(
         macros.AC_CHECK_HEADER("stdio_ext.h"),
 
         # AC_CHECK_FUNCS_ONCE([fpurge]) - line 13
-        macros.AC_CHECK_FUNC("fpurge", define = "HAVE_FPURGE"),
+        macros.AC_CHECK_FUNC(
+            "fpurge",
+            define = "HAVE_FPURGE",
+        ),
 
         # gl_CHECK_FUNCS_ANDROID([__fpurge], [[#include <stdio_ext.h>]]) - line 14
         # Check for __fpurge function on Android (conditionally includes stdio_ext.h)

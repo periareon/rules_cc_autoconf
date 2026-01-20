@@ -16,7 +16,7 @@ autoconf(
             "setrlimit",
             define = "HAVE_SETRLIMIT",
         ),
-        
+
         # AC_CHECK_TYPE([stack_t], ...) - lines 19-32
         # Check for stack_t type with signal.h header
         # If stack_t doesn't exist, define it as struct sigaltstack

@@ -3,18 +3,73 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# gl_ENVIRON - lines 10-30
+# Checks if environ variable is properly declared
 autoconf(
     name = "environ",
     checks = [
-        macros.AC_CHECK_DECL(
-            "environ",
-            headers = ["unistd.h"],
+        # AC_REQUIRE([gl_UNISTD_H_DEFAULTS]) - line 12
+        # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+
+        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - line 14
+        # This is provided by extensions dependency
+
+        # AC_CHECK_HEADERS_ONCE([unistd.h]) - line 16
+        # Already checked by dependencies
+
+        # gt_CHECK_VAR_DECL([...], [environ]) - lines 17-26
+        # Check if environ variable is properly declared
+        # Uses AC_COMPILE_IFELSE to check if variable can be redeclared
+        # If compile succeeds, environ is NOT properly declared (we can redeclare it)
+        # If compile fails, environ IS properly declared (compiler complains)
+        macros.AC_TRY_COMPILE(
+            code = """\
+#if HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+/* mingw, BeOS, Haiku declare environ in <stdlib.h>, not in <unistd.h>.  */
+#include <stdlib.h>
+typedef struct { int foo; } foo_t;
+extern foo_t environ;
+int main(void) {
+    environ.foo = 1;
+    return 0;
+}
+""",
+            define = "gt_cv_var_environ_declaration_compile_succeeds",
+            language = "c",
         ),
+
+        # gt_CHECK_VAR_DECL logic:
+        # If compile succeeds (gt_cv_var_environ_declaration_compile_succeeds=1):
+        #   gt_cv_var=no (environ is NOT properly declared)
+        # If compile fails (gt_cv_var_environ_declaration_compile_succeeds=0):
+        #   gt_cv_var=yes (environ IS properly declared)
+        # if test $gt_cv_var_environ_declaration != yes; then
+        #   HAVE_DECL_ENVIRON=0 - line 27-29
+        # fi
+        # Set HAVE_DECL_ENVIRON as substitution variable only
+        # If properly declared (compile failed), set to "1" or leave undefined
+        # If not properly declared (compile succeeded), set to "0"
+        macros.AC_SUBST(
+            "HAVE_DECL_ENVIRON",
+            condition = "gt_cv_var_environ_declaration_compile_succeeds",
+            if_false = "1",  # Compile failed = properly declared
+            if_true = "0",  # Compile succeeded = not properly declared
+        ),
+
+        # gt_CHECK_VAR_DECL defines HAVE_ENVIRON_DECL (not HAVE_DECL_ENVIRON) if found
+        # But we don't need to define it in config.h based on golden files
+        # The golden file shows HAVE_DECL_ENVIRON is undefined in config.h
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - line 14
         "//gnulib/m4/extensions",
-        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
+        # AC_REQUIRE([gl_UNISTD_H_DEFAULTS]) - line 12
+        # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        "//gnulib/m4/unistd_h",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

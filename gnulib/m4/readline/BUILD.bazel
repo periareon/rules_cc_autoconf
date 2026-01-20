@@ -11,7 +11,7 @@ autoconf(
         # AC_LIB_LINKFLAGS_BODY([readline]) - line 20
         # This searches for libreadline and sets LIBREADLINE, LTLIBREADLINE, INCREADLINE
         # Since we don't have AC_LIB_LINKFLAGS_BODY, we'll use AC_CHECK_LIB directly
-        
+
         # AC_LINK_IFELSE([...], ...) - lines 31-60
         # Try to link with libreadline, testing with additional libraries if needed
         # On some systems, -lreadline needs -lncurses or -ltermcap
@@ -19,8 +19,6 @@ autoconf(
         # For now, use AC_CHECK_LIB which tries -lreadline
         # The m4 code checks if readline((char*)0) can be linked
         macros.AC_CHECK_LIB(
-            library = "readline",
-            function = "readline",
             code = """\
 #include <stdio.h>
 #include <readline/readline.h>
@@ -30,15 +28,17 @@ int main(void) {
 }
 """,
             define = "_gl_cv_lib_readline",
+            function = "readline",
+            library = "readline",
         ),
-        
+
         # If readline links successfully, define HAVE_READLINE (line 63)
         macros.AC_DEFINE(
             "HAVE_READLINE",
             "1",
             requires = ["_gl_cv_lib_readline==1"],
         ),
-        
+
         # Set LIBREADLINE and LTLIBREADLINE substitution variables (lines 68-69, 73-74)
         # If readline links successfully, set to "-lreadline"
         # Note: The m4 also tries additional libraries like -lncurses if needed,
@@ -53,7 +53,7 @@ int main(void) {
             "-lreadline",
             requires = ["_gl_cv_lib_readline==1"],
         ),
-        
+
         # AC_CHECK_HEADERS([readline/readline.h readline/history.h]) - line 78
         macros.AC_CHECK_HEADER(
             "readline/readline.h",
@@ -63,7 +63,7 @@ int main(void) {
             "readline/history.h",
             define = "HAVE_READLINE_HISTORY_H",
         ),
-        
+
         # Note: If readline doesn't link, HAVE_READLINE is undefined,
         # and LIBREADLINE/LTLIBREADLINE are undefined (empty strings in subst.h)
     ],

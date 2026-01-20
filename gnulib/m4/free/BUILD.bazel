@@ -9,7 +9,7 @@ autoconf(
     checks = [
         # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - line 12
         # This is provided by stdlib_h:defaults dependency
-        
+
         # AC_CACHE_CHECK([whether free is known to preserve errno], ...) - lines 24-38
         # AC_COMPILE_IFELSE checks for glibc >= 2.33, OpenBSD, or Solaris
         macros.AC_TRY_COMPILE(
@@ -24,7 +24,7 @@ int main(void) { return 0; }""",
             define = "gl_cv_func_free_preserves_errno",
             language = "c",
         ),
-        
+
         # case $gl_cv_func_free_preserves_errno in
         #  *yes)
         #   AC_DEFINE([HAVE_FREE_POSIX], [1]) - lines 40-42

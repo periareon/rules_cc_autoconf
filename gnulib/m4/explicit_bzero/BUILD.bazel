@@ -12,7 +12,7 @@ autoconf(
         # Note: gl_STRING_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
         # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 14
         # This is provided by extensions dependency
-        
+
         # AC_CHECK_FUNCS_ONCE([explicit_bzero]) - line 16
         # AC_CHECK_FUNCS_ONCE uses AC_TRY_COMPILE which only checks for compilation
         # On macOS, explicit_bzero doesn't exist, so we need to use AC_TRY_LINK to ensure
@@ -35,14 +35,14 @@ int main(void) {
             define = "_gl_cv_func_explicit_bzero",
             language = "c",
         ),
-        
+
         # Create HAVE_EXPLICIT_BZERO define if function exists
         macros.AC_DEFINE(
             "HAVE_EXPLICIT_BZERO",
             condition = "_gl_cv_func_explicit_bzero",
             if_true = "1",
         ),
-        
+
         # If explicit_bzero not found, set HAVE_EXPLICIT_BZERO=0 (line 17-19)
         # Set as substitution variable
         macros.AC_SUBST(

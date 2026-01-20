@@ -12,13 +12,13 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "fflush",
     checks = select({
-        "@platforms//os:macos": [
-            # macOS: fflush on input streams is broken
-            macros.AC_DEFINE("FUNC_FFLUSH_STDIN", "0"),
-        ],
         "@platforms//os:linux": [
             # Linux: fflush works on input streams
             macros.AC_DEFINE("FUNC_FFLUSH_STDIN", "1"),
+        ],
+        "@platforms//os:macos": [
+            # macOS: fflush on input streams is broken
+            macros.AC_DEFINE("FUNC_FFLUSH_STDIN", "0"),
         ],
         "//conditions:default": [
             # Default: assume broken (conservative approach)

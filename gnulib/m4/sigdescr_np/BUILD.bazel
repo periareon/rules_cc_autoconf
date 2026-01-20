@@ -3,17 +3,57 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# gl_FUNC_SIGDESCR_NP - lines 8-18
+# Check for sigdescr_np function
 autoconf(
     name = "sigdescr_np",
     checks = [
-        macros.AC_CHECK_FUNC(
-            "sigdescr_np",
-            define = "HAVE_SIGDESCR_NP",
+        # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 11
+        # This is provided by extensions dependency
+
+        # AC_REQUIRE([gl_STRING_H_DEFAULTS]) - line 13
+        # Note: gl_STRING_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+
+        # AC_CHECK_FUNCS([sigdescr_np]) - line 14
+        # Use AC_TRY_LINK to verify the function actually links (not just declared)
+        macros.AC_TRY_LINK(
+            code = """\
+#include <string.h>
+int main(void) {
+    (void)sigdescr_np;
+    return 0;
+}
+""",
+            define = "ac_cv_func_sigdescr_np",
+        ),
+
+        # if test $ac_cv_func_sigdescr_np = no; then
+        #   HAVE_SIGDESCR_NP=0 - line 15-17
+        # fi
+        # Set HAVE_SIGDESCR_NP as substitution variable
+        macros.AC_SUBST(
+            "HAVE_SIGDESCR_NP",
+            condition = "ac_cv_func_sigdescr_np",
+            if_false = "0",
+            if_true = "1",
+        ),
+
+        # Define HAVE_SIGDESCR_NP in config.h only if the function exists
+        macros.AC_DEFINE(
+            "HAVE_SIGDESCR_NP",
+            condition = "ac_cv_func_sigdescr_np",
+            if_true = "1",
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 11
+        "//gnulib/m4/extensions",
+        # AC_REQUIRE([gl_STRING_H_DEFAULTS]) - line 13
+        # Note: gl_STRING_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        # But string_h dependency may provide other defines
+        "//gnulib/m4/string_h",
+        # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

@@ -18,7 +18,7 @@ autoconf(
         # AC_REQUIRE([gl_CTYPE_H_DEFAULTS]) - line 12
         # Note: gl_CTYPE_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
         # "//gnulib/m4/ctype_h",  # Ignored - _DEFAULTS function
-        
+
         # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 10
         "//gnulib/m4/extensions",
 

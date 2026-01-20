@@ -10,8 +10,11 @@ autoconf(
         # gl_CHECK_NEXT_HEADERS([limits.h]) - line 15
         # This checks for limits.h header and sets NEXT_LIMITS_H and
         # NEXT_AS_FIRST_DIRECTIVE_LIMITS_H via include_next dependency
-        macros.AC_CHECK_HEADER("limits.h", define = "HAVE_LIMITS_H"),
-        
+        macros.AC_CHECK_HEADER(
+            "limits.h",
+            define = "HAVE_LIMITS_H",
+        ),
+
         # AC_CACHE_CHECK([whether limits.h has WORD_BIT, BOOL_WIDTH etc.],
         #   [gl_cv_header_limits_width], ...) - lines 17-30
         # Check if limits.h has WORD_BIT, BOOL_WIDTH, etc.
@@ -29,7 +32,7 @@ int mblm = MB_LEN_MAX;""",
             define = "_gl_cv_header_limits_width",
             language = "c",
         ),
-        
+
         # AC_CACHE_CHECK([whether limits.h has SSIZE_MAX],
         #   [gl_cv_header_limits_ssize_max], ...) - lines 32-42
         # Only checked if gl_cv_header_limits_width is yes
@@ -43,7 +46,7 @@ int mblm = MB_LEN_MAX;""",
             language = "c",
             requires = ["_gl_cv_header_limits_width=1"],
         ),
-        
+
         # GL_GENERATE_LIMITS_H is set based on the checks above
         # If gl_cv_header_limits_width is yes and gl_cv_header_limits_ssize_max is yes,
         # then GL_GENERATE_LIMITS_H=false, otherwise GL_GENERATE_LIMITS_H=true
@@ -56,7 +59,7 @@ int mblm = MB_LEN_MAX;""",
     deps = [
         # gl_CHECK_NEXT_HEADERS([limits.h]) requires include_next
         "//gnulib/m4/include_next",
-        
+
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],

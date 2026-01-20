@@ -10,17 +10,17 @@ autoconf(
     checks = [
         # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 12
         # This is provided by extensions dependency
-        
+
         # AC_REQUIRE([gl_STRING_H_DEFAULTS]) - line 14
         # This is provided by string_h:defaults dependency
-        
+
         # AC_CHECK_FUNCS([memmem]) - line 15
         # Use internal define to avoid conflict with substitution variable
         macros.AC_CHECK_FUNC(
             "memmem",
             define = "ac_cv_func_memmem",
         ),
-        
+
         # if test $ac_cv_func_memmem = yes; then
         #   HAVE_MEMMEM=1 - line 17
         # else
@@ -30,8 +30,8 @@ autoconf(
         macros.AC_SUBST(
             "HAVE_MEMMEM",
             condition = "ac_cv_func_memmem",
-            if_true = "1",
             if_false = "0",
+            if_true = "1",
         ),
         # Also define HAVE_MEMMEM in config.h if function exists
         macros.AC_DEFINE(
@@ -39,7 +39,7 @@ autoconf(
             condition = "ac_cv_func_memmem",
             if_true = "1",
         ),
-        
+
         # AC_CHECK_DECLS_ONCE([memmem]) - line 20
         # Note: string_h:defaults may already provide HAVE_DECL_MEMMEM
         # Use internal define to avoid conflict
@@ -48,14 +48,14 @@ autoconf(
             define = "ac_cv_have_decl_memmem",
             headers = ["string.h"],
         ),
-        
+
         # Set HAVE_DECL_MEMMEM based on the check result
         macros.AC_DEFINE(
             "HAVE_DECL_MEMMEM",
             condition = "ac_cv_have_decl_memmem",
             if_true = "1",
         ),
-        
+
         # if test $ac_cv_have_decl_memmem = no; then
         #   HAVE_DECL_MEMMEM=0 - line 21
         # else
@@ -85,7 +85,7 @@ autoconf(
     checks = [
         # AC_REQUIRE([gl_FUNC_MEMMEM_SIMPLE]) - line 63
         # This is provided by gl_FUNC_MEMMEM_SIMPLE dependency
-        
+
         # if test $HAVE_DECL_MEMMEM = 1 && test $REPLACE_MEMMEM = 0; then
         #   ... runtime performance checks ...
         # fi

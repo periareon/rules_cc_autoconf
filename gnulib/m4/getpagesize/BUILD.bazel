@@ -36,10 +36,18 @@ int main(void) { return getpagesize(); }
         ),
 
         # If getpagesize not found, check for OS.h header (lines 17-20)
-        macros.AC_CHECK_HEADER("OS.h", define = "HAVE_OS_H", requires = ["_gl_cv_func_getpagesize==0"]),
+        macros.AC_CHECK_HEADER(
+            "OS.h",
+            define = "HAVE_OS_H",
+            requires = ["_gl_cv_func_getpagesize==0"],
+        ),
 
         # If getpagesize not found, check for sys/param.h header (lines 21-24)
-        macros.AC_CHECK_HEADER("sys/param.h", define = "HAVE_SYS_PARAM_H", requires = ["_gl_cv_func_getpagesize==0"]),
+        macros.AC_CHECK_HEADER(
+            "sys/param.h",
+            define = "HAVE_SYS_PARAM_H",
+            requires = ["_gl_cv_func_getpagesize==0"],
+        ),
 
         # REPLACE_GETPAGESIZE is set to 1 on Windows (lines 26-30)
         # This is handled via select below
@@ -50,8 +58,8 @@ int main(void) { return getpagesize(); }
         # If declared, do nothing (no define in config.h)
         macros.AC_CHECK_DECL(
             "getpagesize",
-            headers = ["unistd.h"],
             define = "_gl_cv_have_decl_getpagesize",
+            headers = ["unistd.h"],
         ),
 
         # Set HAVE_DECL_GETPAGESIZE=0 as substitution variable if NOT declared

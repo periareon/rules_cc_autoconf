@@ -11,8 +11,11 @@ autoconf(
     name = "gl_PTHREADLIB_BODY",
     checks = [
         # AC_CHECK_HEADER([pthread.h]) - line 183
-        macros.AC_CHECK_HEADER("pthread.h", define = "_gl_have_pthread_h"),
-        
+        macros.AC_CHECK_HEADER(
+            "pthread.h",
+            define = "_gl_have_pthread_h",
+        ),
+
         # Test whether pthread_mutex_lock can be linked (lines 197-208)
         # On systems with pthread in libc (e.g., Linux with glibc >= 2.34),
         # no library is needed. Otherwise, -pthread or -lpthread is needed.
@@ -28,7 +31,7 @@ int main(void) {
             define = "_gl_pthread_api_yes",
             language = "c",
         ),
-        
+
         # If pthread works without library, LIBPTHREAD and LIBPMULTITHREAD are empty.
         # Otherwise, they are set to -pthread or -lpthread based on link test.
         # On macOS/Linux, pthread is typically in libc or available via -lpthread
@@ -38,19 +41,19 @@ int main(void) {
         # LIBPMULTITHREAD is set based on platform - will need conditional logic
         # But for now, set a default value and adjust based on golden files
         macros.AC_SUBST("LIBPMULTITHREAD", ""),
-        
+
         # Define HAVE_PTHREAD_API if pthread.h exists and pthread_mutex_lock links (line 284)
         macros.AC_DEFINE(
             "HAVE_PTHREAD_API",
             condition = "_gl_pthread_api_yes",
             if_true = "1",
         ),
-        
+
         # Define USE_POSIX_THREADS if pthread API is available (line 520-522)
         # This is set when gl_threads_api=posix
         # Based on golden files, on macOS/Linux, USE_POSIX_THREADS=1
         macros.AC_DEFINE("USE_POSIX_THREADS", "1"),
-        
+
         # Check for sched_yield (lines 289-300)
         # On some systems, sched_yield is in librt, rather than in libpthread.
         # On most systems, sched_yield is in libc, so SCHED_YIELD_LIB is empty.
@@ -124,7 +127,7 @@ autoconf(
         # Since configure.ac calls gl_DISABLE_THREADS, threads are disabled by default
         # So AVOID_ANY_THREADS should be defined
         macros.AC_DEFINE("AVOID_ANY_THREADS", "1"),
-        
+
         # gl_THREADLIB_BODY also sets LIBTHREAD, LTLIBTHREAD, LIBMULTITHREAD, LTLIBMULTITHREAD
         # These are set based on the threading API in use
         # Since threads are disabled (AVOID_ANY_THREADS), these are empty
@@ -180,8 +183,8 @@ autoconf(
     checks = [],
     visibility = ["//visibility:public"],
     deps = [
-        ":gl_THREADLIB_EARLY",
         ":gl_THREADLIB_BODY",
+        ":gl_THREADLIB_EARLY",
     ],
 )
 
@@ -191,8 +194,11 @@ autoconf(
     name = "gl_STDTHREADLIB_BODY",
     checks = [
         # AC_CHECK_HEADERS_ONCE([threads.h]) - line 335
-        macros.AC_CHECK_HEADER("threads.h", define = "HAVE_THREADS_H"),
-        
+        macros.AC_CHECK_HEADER(
+            "threads.h",
+            define = "HAVE_THREADS_H",
+        ),
+
         # LIBSTDTHREAD is set based on whether thrd_create is in libc or needs a library
         # On most systems, if threads.h exists, thrd_create is in libc
         macros.AC_SUBST("LIBSTDTHREAD", ""),

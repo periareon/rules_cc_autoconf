@@ -56,15 +56,36 @@ autoconf(
     name = "gl_PREREQ_POSIX_SPAWN_INTERNAL",
     checks = [
         # AC_CHECK_HEADERS([paths.h]) - line 375
-        macros.AC_CHECK_HEADER("paths.h", define = "HAVE_PATHS_H"),
-        
+        macros.AC_CHECK_HEADER(
+            "paths.h",
+            define = "HAVE_PATHS_H",
+        ),
+
         # AC_CHECK_FUNCS([confstr sched_setparam sched_setscheduler setegid seteuid vfork]) - line 376
-        macros.AC_CHECK_FUNC("confstr", define = "HAVE_CONFSTR"),
-        macros.AC_CHECK_FUNC("sched_setparam", define = "HAVE_SCHED_SETPARAM"),
-        macros.AC_CHECK_FUNC("sched_setscheduler", define = "HAVE_SCHED_SETSCHEDULER"),
-        macros.AC_CHECK_FUNC("setegid", define = "HAVE_SETEGID"),
-        macros.AC_CHECK_FUNC("seteuid", define = "HAVE_SETEUID"),
-        macros.AC_CHECK_FUNC("vfork", define = "HAVE_VFORK"),
+        macros.AC_CHECK_FUNC(
+            "confstr",
+            define = "HAVE_CONFSTR",
+        ),
+        macros.AC_CHECK_FUNC(
+            "sched_setparam",
+            define = "HAVE_SCHED_SETPARAM",
+        ),
+        macros.AC_CHECK_FUNC(
+            "sched_setscheduler",
+            define = "HAVE_SCHED_SETSCHEDULER",
+        ),
+        macros.AC_CHECK_FUNC(
+            "setegid",
+            define = "HAVE_SETEGID",
+        ),
+        macros.AC_CHECK_FUNC(
+            "seteuid",
+            define = "HAVE_SETEUID",
+        ),
+        macros.AC_CHECK_FUNC(
+            "vfork",
+            define = "HAVE_VFORK",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -80,10 +101,10 @@ autoconf(
     checks = [
         # AC_REQUIRE([gl_SPAWN_H_DEFAULTS]) - line 14
         # This is provided by spawn_h:defaults dependency (ignore, it's a _DEFAULTS function)
-        
+
         # AC_REQUIRE([gl_HAVE_POSIX_SPAWN]) - line 15
         # This is provided by spawn_h dependency
-        
+
         # AC_CHECK_DECLS([posix_spawn], , , [[#include <spawn.h>]]) - line 43
         # Check for posix_spawn declaration
         macros.AC_CHECK_DECL(
@@ -91,14 +112,14 @@ autoconf(
             define = "ac_cv_have_decl_posix_spawn",
             headers = ["spawn.h"],
         ),
-        
+
         # Define HAVE_DECL_POSIX_SPAWN based on the check
         macros.AC_DEFINE(
             "HAVE_DECL_POSIX_SPAWN",
             condition = "ac_cv_have_decl_posix_spawn",
             if_true = "1",
         ),
-        
+
         # Check for POSIX_SPAWN_SETSCHEDULER and POSIX_SPAWN_SETSCHEDPARAM
         # These are compile-time constants, not runtime checks
         # AC_EGREP_CPP checks for POSIX_SPAWN_SETSCHEDULER - lines 78-87
@@ -121,14 +142,14 @@ int main(void) { return 0; }
 """,
             define = "gl_cv_func_spawnattr_setschedparam",
         ),
-        
+
         # if test $ac_cv_func_posix_spawn != yes || test $REPLACE_POSIX_SPAWN = 1; then
         #   AC_DEFINE([REPLACE_POSIX_SPAWN], [1]) - lines 106-108
         # fi
         # Based on golden files, REPLACE_POSIX_SPAWN=1 on macOS
         macros.AC_DEFINE("REPLACE_POSIX_SPAWN", "1"),
         macros.AC_SUBST("REPLACE_POSIX_SPAWN", "1"),
-        
+
         # When REPLACE_POSIX_SPAWN=1, we use our own types, so the system types
         # (HAVE_POSIX_SPAWNATTR_T and HAVE_POSIX_SPAWN_FILE_ACTIONS_T) shouldn't be defined
         # in config.h even if they exist in system headers.
@@ -160,7 +181,7 @@ int main(void) {
 """,
             define = "_gl_cv_type_posix_spawn_file_actions_t_posix_spawn",
         ),
-        
+
         # Only define these types when REPLACE_POSIX_SPAWN=0
         # When REPLACE_POSIX_SPAWN=1, we use our own types, so the system types
         # shouldn't be defined in config.h even if they exist.
@@ -174,22 +195,22 @@ int main(void) {
             condition = "_gl_cv_type_posix_spawn_file_actions_t_posix_spawn==1 && REPLACE_POSIX_SPAWN==0",
             if_true = "1",
         ),
-        
+
         # REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDCLOSE - lines 379-417
         # On macOS, posix_spawn_file_actions_addclose has bugs (doesn't reject negative fds)
         # Based on golden file, REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDCLOSE=1 on macOS
         macros.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDCLOSE", "1"),
-        
+
         # REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDDUP2 - lines 419-457
         # On macOS, posix_spawn_file_actions_adddup2 has bugs (doesn't reject out-of-range fds)
         # Based on golden file, REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDDUP2=1 on macOS
         macros.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDDUP2", "1"),
-        
+
         # REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDOPEN - lines 459-497
         # On macOS, posix_spawn_file_actions_addopen has bugs (doesn't reject out-of-range fds)
         # Based on golden file, REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDOPEN=1 on macOS
         macros.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDOPEN", "1"),
-        
+
         # POSIX_SPAWN_LIB and LIB_POSIX_SPAWN substitution variables
         # On macOS, these are empty strings (no additional library needed)
         macros.AC_SUBST("POSIX_SPAWN_LIB", ""),

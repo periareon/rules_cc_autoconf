@@ -10,17 +10,17 @@ autoconf(
     checks = [
         # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - line 14
         # This is provided by stdlib_h:defaults dependency
-        
+
         # AC_REQUIRE([AC_CANONICAL_HOST]) - line 15
         # This is provided by AC_CANONICAL_HOST dependency
-        
+
         # AC_CHECK_FUNCS_ONCE([mkstemp]) - line 17
         # Use internal define to avoid conflict with substitution variable
         macros.AC_CHECK_FUNC(
             "mkstemp",
             define = "ac_cv_func_mkstemp",
         ),
-        
+
         # if test $ac_cv_func_mkstemp = yes; then
         #   ... runtime checks ...
         # else
@@ -30,17 +30,17 @@ autoconf(
         macros.AC_SUBST(
             "HAVE_MKSTEMP",
             condition = "ac_cv_func_mkstemp",
-            if_true = "1",
             if_false = "0",
+            if_true = "1",
         ),
-        
+
         # Also define HAVE_MKSTEMP in config.h if function exists
         macros.AC_DEFINE(
             "HAVE_MKSTEMP",
             condition = "ac_cv_func_mkstemp",
             if_true = "1",
         ),
-        
+
         # The m4 file performs runtime checks (gl_cv_func_working_mkstemp)
         # that use AC_RUN_IFELSE, which is not portable to Bazel's cross-compilation environment.
         # These checks test for file creation limits and permissions.

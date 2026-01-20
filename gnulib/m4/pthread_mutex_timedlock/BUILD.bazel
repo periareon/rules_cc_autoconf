@@ -10,7 +10,7 @@ autoconf(
     checks = [
         # AC_REQUIRE([gl_PTHREAD_H_DEFAULTS]) - line 12
         # Note: gl_PTHREAD_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
-        
+
         # AC_CHECK_DECL([pthread_mutex_timedlock], ...) - line 14
         # Check for pthread_mutex_timedlock declaration
         # Use internal define to check if the declaration exists
@@ -19,7 +19,7 @@ autoconf(
             define = "ac_cv_have_decl_pthread_mutex_timedlock",
             headers = ["pthread.h"],
         ),
-        
+
         # If the declaration exists and gl_THREADLIB is in use, check if the function
         # actually exists (FreeBSD 5.2.1 declares it but doesn't define it)
         # AC_LINK_IFELSE([...], ...) - lines 23-39
@@ -35,33 +35,33 @@ int main(void) {
 }
 """,
             define = "_gl_cv_func_pthread_mutex_timedlock",
-            requires = ["ac_cv_have_decl_pthread_mutex_timedlock==1"],
             language = "c",
+            requires = ["ac_cv_have_decl_pthread_mutex_timedlock==1"],
         ),
-        
+
         # Set HAVE_PTHREAD_MUTEX_TIMEDLOCK as substitution variable
         # Logic from m4:
         # - If declaration doesn't exist: HAVE_PTHREAD_MUTEX_TIMEDLOCK=0 (line 46)
         # - If declaration exists but function doesn't exist: HAVE_PTHREAD_MUTEX_TIMEDLOCK=0 (line 40)
         # - If declaration exists and function exists: HAVE_PTHREAD_MUTEX_TIMEDLOCK is not set (undefined)
-        # 
+        #
         # pthread_h defaults sets HAVE_PTHREAD_MUTEX_TIMEDLOCK=1, but we need to override it
         # when the function doesn't exist.
-        # 
+        #
         # Set to "0" when declaration doesn't exist
         macros.AC_SUBST(
             "HAVE_PTHREAD_MUTEX_TIMEDLOCK",
             condition = "ac_cv_have_decl_pthread_mutex_timedlock==0",
             if_true = "0",
         ),
-        
+
         # Set to "0" when declaration exists but function doesn't exist (macOS case)
         macros.AC_SUBST(
             "HAVE_PTHREAD_MUTEX_TIMEDLOCK",
             condition = "ac_cv_have_decl_pthread_mutex_timedlock==1 && _gl_cv_func_pthread_mutex_timedlock==0",
             if_true = "0",
         ),
-        
+
         # Note: HAVE_PTHREAD_MUTEX_TIMEDLOCK is not defined in config.h, only as substitution variable
         # The golden file shows it's undefined in config.h but set to 0 in subst.h on macOS
         # If the function exists, HAVE_PTHREAD_MUTEX_TIMEDLOCK is not set (undefined), matching the golden file

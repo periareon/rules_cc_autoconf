@@ -9,10 +9,13 @@ autoconf(
     checks = [
         # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - line 12
         # This is provided by stdlib_h:defaults dependency
-        
+
         # AC_CHECK_FUNCS([atoll]) - line 13
-        macros.AC_CHECK_FUNC("atoll", define = "ac_cv_func_atoll"),
-        
+        macros.AC_CHECK_FUNC(
+            "atoll",
+            define = "ac_cv_func_atoll",
+        ),
+
         # if test $ac_cv_func_atoll = no; then
         #   HAVE_ATOLL=0 - line 15
         # fi
@@ -26,8 +29,8 @@ autoconf(
         macros.AC_SUBST(
             "HAVE_ATOLL",
             condition = "ac_cv_func_atoll",
-            if_true = "1",
             if_false = "0",
+            if_true = "1",
         ),
     ],
     visibility = ["//visibility:public"],

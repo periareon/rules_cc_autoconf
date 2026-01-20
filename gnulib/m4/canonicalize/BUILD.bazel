@@ -62,7 +62,10 @@ int main(void) {
         # AC_CHECK_FUNCS([getcwd]) - lines 72-73 (conditional on host_os)
         # On native Windows (mingw*, windows*), we use _getcwd(), not getcwd()
         # For other platforms, check for getcwd
-        macros.AC_CHECK_FUNC("getcwd", define = "HAVE_GETCWD"),
+        macros.AC_CHECK_FUNC(
+            "getcwd",
+            define = "HAVE_GETCWD",
+        ),
 
         # AC_CHECK_HEADERS_ONCE([sys/param.h]) - line 77
         macros.AC_CHECK_HEADER("sys/param.h"),
@@ -91,7 +94,10 @@ autoconf(
     name = "gl_FUNC_REALPATH_WORKS",
     checks = [
         # AC_CHECK_FUNCS_ONCE([realpath lstat]) - line 85
-        macros.AC_CHECK_FUNC("realpath", define = "HAVE_REALPATH"),
+        macros.AC_CHECK_FUNC(
+            "realpath",
+            define = "HAVE_REALPATH",
+        ),
         # Note: HAVE_LSTAT is provided by lstat dependency, not checked here to avoid duplicate
 
         # Note: AC_RUN_IFELSE for gl_cv_func_realpath_works (lines 87-177) is not directly
@@ -169,9 +175,9 @@ autoconf(
     checks = [],
     visibility = ["//visibility:public"],
     deps = [
-        ":gl_FUNC_CANONICALIZE_FILENAME_MODE",
         ":gl_CANONICALIZE_LGPL",
         ":gl_CANONICALIZE_LGPL_SEPARATE",
+        ":gl_FUNC_CANONICALIZE_FILENAME_MODE",
         ":gl_FUNC_REALPATH_WORKS",
     ],
 )

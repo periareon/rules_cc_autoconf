@@ -24,7 +24,7 @@ int main(void) {
             define = "_gl_cv_func_newlocale",
             language = "c",
         ),
-        
+
         # Set HAVE_NEWLOCALE as define if function exists
         # (we assume HAVE_LOCALE_T=1 on modern systems)
         macros.AC_DEFINE(
@@ -32,14 +32,14 @@ int main(void) {
             "1",
             requires = ["_gl_cv_func_newlocale==1"],
         ),
-        
+
         # If newlocale is not found, set HAVE_NEWLOCALE=0 (line 78)
         macros.AC_SUBST(
             "HAVE_NEWLOCALE",
             "0",
             requires = ["_gl_cv_func_newlocale==0"],
         ),
-        
+
         # gl_CHECK_FUNCS_ANDROID([nl_langinfo_l], [[#include <langinfo.h>]]) - line 27
         # Check for nl_langinfo_l function
         # Use internal define to avoid conflict
@@ -56,19 +56,22 @@ int main(void) {
     const char *result = nl_langinfo_l(RADIXCHAR, loc);
     return result != NULL ? 0 : 1;
 }""",
+            compile_defines = ["HAVE_XLOCALE_H"],
             define = "_gl_cv_func_nl_langinfo_l",
             language = "c",
-            compile_defines = ["HAVE_XLOCALE_H"],
             requires = ["_gl_cv_func_newlocale==1"],
         ),
-        
+
         # Set HAVE_NL_LANGINFO_L as define if function exists
         macros.AC_DEFINE(
             "HAVE_NL_LANGINFO_L",
             "1",
-            requires = ["_gl_cv_func_newlocale==1", "_gl_cv_func_nl_langinfo_l==1"],
+            requires = [
+                "_gl_cv_func_newlocale==1",
+                "_gl_cv_func_nl_langinfo_l==1",
+            ],
         ),
-        
+
         # Check if newlocale works correctly (runtime test) - lines 29-68
         # On macOS, newlocale with NULL base doesn't work correctly (line 39)
         # Based on golden file, REPLACE_NEWLOCALE=1 on macOS

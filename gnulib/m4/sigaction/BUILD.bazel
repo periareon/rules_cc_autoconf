@@ -3,34 +3,175 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# gl_SIGACTION - lines 10-25
+# Determine if sigaction interface is present
 autoconf(
-    name = "sigaction",
+    name = "gl_SIGACTION",
     checks = [
-        macros.AC_CHECK_FUNC("sigaction"),
+        # AC_REQUIRE([gl_SIGNAL_H_DEFAULTS]) - line 12
+        # Note: gl_SIGNAL_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+
+        # AC_CHECK_FUNCS_ONCE([sigaction]) - line 13
+        macros.AC_CHECK_FUNC(
+            "sigaction",
+            define = "ac_cv_func_sigaction",
+        ),
+
+        # if test $ac_cv_func_sigaction = yes; then
+        #   AC_CHECK_MEMBERS([struct sigaction.sa_sigaction], ...) - line 14-16
+        #   if test $ac_cv_member_struct_sigaction_sa_sigaction = no; then
+        #     HAVE_STRUCT_SIGACTION_SA_SIGACTION=0 - line 17-19
+        #   fi
+        # else
+        #   HAVE_SIGACTION=0 - line 20-21
+        # fi
         macros.AC_CHECK_MEMBER(
             "struct sigaction",
             "sa_sigaction",
+            define = "ac_cv_member_struct_sigaction_sa_sigaction",
             headers = ["signal.h"],
+            requires = ["ac_cv_func_sigaction==1"],
         ),
-        macros.AC_CHECK_FUNC("sigaltstack"),
-        macros.AC_CHECK_FUNC("siginterrupt"),
-        macros.AC_CHECK_TYPE(
-            "siginfo_t",
-            code = """\
-#include <signal.h>
-int main(void) {
-    if (sizeof(siginfo_t))
-        return 0;
-    return 1;
-}
-""",
+
+        # Set HAVE_SIGACTION as substitution variable
+        macros.AC_SUBST(
+            "HAVE_SIGACTION",
+            condition = "ac_cv_func_sigaction",
+            if_false = "0",
+            if_true = "1",
+        ),
+
+        # Define HAVE_SIGACTION in config.h only if the function exists
+        macros.AC_DEFINE(
+            "HAVE_SIGACTION",
+            condition = "ac_cv_func_sigaction",
+            if_true = "1",
+        ),
+
+        # Set HAVE_STRUCT_SIGACTION_SA_SIGACTION as substitution variable
+        macros.AC_SUBST(
+            "HAVE_STRUCT_SIGACTION_SA_SIGACTION",
+            condition = "ac_cv_member_struct_sigaction_sa_sigaction",
+            if_false = "0",
+        ),
+
+        # Define HAVE_STRUCT_SIGACTION_SA_SIGACTION in config.h if the member exists
+        macros.AC_DEFINE(
+            "HAVE_STRUCT_SIGACTION_SA_SIGACTION",
+            condition = "ac_cv_member_struct_sigaction_sa_sigaction",
+            if_true = "1",
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/signal_h",  # AC_REQUIRE([gl_SIGNAL_H_DEFAULTS,
-
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        # AC_REQUIRE([gl_SIGNAL_H_DEFAULTS]) - line 12
+        # Note: gl_SIGNAL_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        "//gnulib/m4/signal_h",
+        # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_PREREQ_SIGACTION - lines 27-44
+# Prerequisites of the part of lib/signal.in.h and of lib/sigaction.c
+autoconf(
+    name = "gl_PREREQ_SIGACTION",
+    checks = [
+        # AC_REQUIRE([gl_SIGNAL_H_DEFAULTS]) - line 30
+        # Note: gl_SIGNAL_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+
+        # AC_REQUIRE([AC_C_RESTRICT]) - line 31
+        # This is provided by AC_C_RESTRICT dependency
+
+        # AC_REQUIRE([AC_TYPE_UID_T]) - line 32
+        # This is provided by AC_TYPE_UID_T dependency
+
+        # AC_REQUIRE([gl_PREREQ_SIG_HANDLER_H]) - line 33
+        # This is provided by gl_PREREQ_SIG_HANDLER_H dependency
+
+        # AC_CHECK_FUNCS_ONCE([sigaltstack siginterrupt]) - line 34
+        macros.AC_CHECK_FUNC(
+            "sigaltstack",
+            define = "ac_cv_func_sigaltstack",
+        ),
+        macros.AC_DEFINE(
+            "HAVE_SIGALTSTACK",
+            condition = "ac_cv_func_sigaltstack",
+            if_true = "1",
+        ),
+        macros.AC_CHECK_FUNC(
+            "siginterrupt",
+            define = "ac_cv_func_siginterrupt",
+        ),
+        macros.AC_DEFINE(
+            "HAVE_SIGINTERRUPT",
+            condition = "ac_cv_func_siginterrupt",
+            if_true = "1",
+        ),
+
+        # AC_CHECK_TYPES([siginfo_t], ...) - line 35-38
+        macros.AC_CHECK_TYPE(
+            "siginfo_t",
+            code = """\
+#include <signal.h>
+""",
+            define = "ac_cv_type_siginfo_t",
+        ),
+
+        # if test $ac_cv_type_siginfo_t = no; then
+        #   HAVE_SIGINFO_T=0 - line 39-41
+        # fi
+        macros.AC_SUBST(
+            "HAVE_SIGINFO_T",
+            condition = "ac_cv_type_siginfo_t",
+            if_false = "0",
+        ),
+
+        # Define HAVE_SIGINFO_T in config.h if the type exists
+        macros.AC_DEFINE(
+            "HAVE_SIGINFO_T",
+            condition = "ac_cv_type_siginfo_t",
+            if_true = "1",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # AC_REQUIRE([gl_SIGNAL_H_DEFAULTS]) - line 30
+        # Note: gl_SIGNAL_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        "//gnulib/m4/signal_h",
+        # AC_REQUIRE([AC_C_RESTRICT]) - line 31
+        "//autoconf/macros/AC_C_RESTRICT",
+        # AC_REQUIRE([AC_TYPE_UID_T]) - line 32
+        "//autoconf/macros/AC_TYPE_UID_T",
+        # AC_REQUIRE([gl_PREREQ_SIG_HANDLER_H]) - line 33
+        ":gl_PREREQ_SIG_HANDLER_H",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_PREREQ_SIG_HANDLER_H - lines 46-47
+# Prerequisites of lib/sig-handler.h
+autoconf(
+    name = "gl_PREREQ_SIG_HANDLER_H",
+    checks = [
+        # Empty - no prerequisites
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Main sigaction target - combines all sub-targets
+autoconf(
+    name = "sigaction",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_PREREQ_SIGACTION",
+        ":gl_PREREQ_SIG_HANDLER_H",
+        ":gl_SIGACTION",
     ],
 )

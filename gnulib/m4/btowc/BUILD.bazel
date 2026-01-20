@@ -8,29 +8,18 @@ autoconf(
     name = "btowc",
     checks = [
         # AC_REQUIRE([gl_WCHAR_H_DEFAULTS]) - line 12
-        # This is provided by wchar_h:defaults dependency
-        
+        # Note: gl_WCHAR_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
         # AC_REQUIRE([gt_TYPE_WINT_T]) - line 13
-        # This is provided by wint_t dependency
-        
         # AC_REQUIRE([gl_WCHAR_H_INLINE_OK]) - line 18
-        # This is part of wchar_h but we use wchar_h:defaults to avoid HAVE_DECL_WCSDUP conflict
         
         # AC_CHECK_FUNCS_ONCE([btowc]) - line 20
         macros.AC_CHECK_FUNC("btowc", define = "ac_cv_func_btowc"),
         
         # if test $ac_cv_func_btowc = no; then
-        #   HAVE_BTOWC=0 - line 21
+        #   HAVE_BTOWC=0 - line 21-22
         # else
         #   ... runtime checks ...
         # fi
-        # Define HAVE_BTOWC if function exists
-        macros.AC_DEFINE(
-            "HAVE_BTOWC",
-            condition = "ac_cv_func_btowc",
-            if_true = "1",
-        ),
-        # Set HAVE_BTOWC=0 as substitution variable if function doesn't exist
         macros.AC_SUBST(
             "HAVE_BTOWC",
             condition = "ac_cv_func_btowc",
@@ -38,10 +27,18 @@ autoconf(
             if_false = "0",
         ),
         
+        # Define HAVE_BTOWC in config.h if the function exists
+        macros.AC_DEFINE(
+            "HAVE_BTOWC",
+            condition = "ac_cv_func_btowc",
+            if_true = "1",
+        ),
+        
         # AC_CHECK_FUNCS_ONCE([mbrtowc]) - line 60
-        # This creates ac_cv_func_mbrtowc and sets HAVE_MBRTOWC as a substitution variable
+        # Note: This is also in gl_PREREQ_BTOWC, but we include it here
         macros.AC_CHECK_FUNC("mbrtowc", define = "ac_cv_func_mbrtowc"),
-        # Define HAVE_MBRTOWC if function exists
+        
+        # Define HAVE_MBRTOWC in config.h if the function exists
         macros.AC_DEFINE(
             "HAVE_MBRTOWC",
             condition = "ac_cv_func_mbrtowc",
@@ -49,28 +46,35 @@ autoconf(
         ),
         
         # Note: The m4 file performs several AC_RUN_IFELSE checks:
-        # 1. gl_cv_func_btowc_nul - checks if btowc('\0') is correct
-        # 2. gl_cv_func_btowc_consistent - checks if btowc is consistent with mbrtowc
+        # 1. gl_cv_func_btowc_nul - checks if btowc('\0') is correct (Cygwin issue)
+        # 2. gl_cv_func_btowc_consistent - checks if btowc is consistent with mbrtowc (mingw issue)
         # 3. gl_MBRTOWC_C_LOCALE - checks if mbrtowc works correctly in C locale
         # These runtime checks cannot be easily replicated in Bazel.
-        # Based on golden files, REPLACE_BTOWC=0 on macOS
+        # Based on golden files:
+        # - macOS: REPLACE_BTOWC=0
+        # - Linux: REPLACE_BTOWC=1 (but config.h shows it as undefined, meaning 0)
+        # Since config.h shows REPLACE_BTOWC as undefined, we set it to 0
         macros.AC_SUBST("REPLACE_BTOWC", "0"),
     ],
     visibility = ["//visibility:public"],
     deps = [
         # AC_REQUIRE([gl_WCHAR_H_DEFAULTS]) - line 12
-        # Use wchar_h:defaults to avoid HAVE_DECL_WCSDUP conflict
-        "//gnulib/m4/wchar_h",
+        # Note: gl_WCHAR_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
         # AC_REQUIRE([gt_TYPE_WINT_T]) - line 13
         "//gnulib/m4/wint_t",
+        # AC_REQUIRE([gl_WCHAR_H_INLINE_OK]) - line 18
+        # This is part of wchar_h, but we don't need to depend on it since we're not using wchar_h defaults
         # AC_REQUIRE([AC_PROG_CC]) - line 25 (ignored, provided by toolchain)
         # AC_REQUIRE([gt_LOCALE_FR]) - line 26
         "//gnulib/m4/locale-fr",
         # AC_REQUIRE([AC_CANONICAL_HOST]) - line 27
         "//autoconf/macros/AC_CANONICAL_HOST",
-        # Note: mbrtowc is not added as a dependency to avoid HAVE_MBSINIT conflict
-        # The golden file expects HAVE_MBSINIT to be undefined in config.h
-        # For test compatibility
+        # Note: mbrtowc is checked in this module, not as a dependency
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
+
+# gl_PREREQ_BTOWC - lines 121-124
+# Prerequisites of lib/btowc.c
+# AC_CHECK_FUNCS_ONCE([mbrtowc]) - already included in main target above
+# No separate target needed

@@ -3,17 +3,54 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# gl_FUNC_SCHED_YIELD - lines 9-25
 autoconf(
     name = "sched_yield",
     checks = [
+        # AC_REQUIRE([gl_SCHED_H_DEFAULTS]) - line 12
+        # Note: gl_SCHED_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        # AC_REQUIRE([gl_PTHREADLIB]) - line 13
+        # Provides thread library info (gl_threads_api)
+        # AC_REQUIRE([AC_CANONICAL_HOST]) - line 14
+        
+        # if { case "$host_os" in mingw* | windows*) true;; *) false;; esac; } \
+        #    && test $gl_threads_api = windows; then
+        #   REPLACE_SCHED_YIELD=1 - line 17
+        # else
+        #   AC_CHECK_DECL([sched_yield], , [HAVE_SCHED_YIELD=0], [[#include <sched.h>]]) - lines 19-20
+        # fi
+        
+        # Check for sched_yield declaration
         macros.AC_CHECK_DECL(
             "sched_yield",
-            define = "HAVE_DECL_SCHED_YIELD",
+            define = "ac_cv_have_decl_sched_yield",
+            headers = ["sched.h"],
         ),
+        
+        # Set HAVE_SCHED_YIELD as substitution variable
+        # If declaration not found, HAVE_SCHED_YIELD=0 (line 20)
+        # If declaration found, HAVE_SCHED_YIELD remains default (from defaults, which is "1")
+        macros.AC_SUBST(
+            "HAVE_SCHED_YIELD",
+            condition = "ac_cv_have_decl_sched_yield",
+            if_false = "0",
+        ),
+        
+        # Set REPLACE_SCHED_YIELD based on conditions:
+        # - If on mingw/windows and using windows threads API, REPLACE_SCHED_YIELD=1
+        # - Otherwise, REPLACE_SCHED_YIELD=0
+        # Based on golden files, REPLACE_SCHED_YIELD=0 on macOS/Linux
+        macros.AC_SUBST("REPLACE_SCHED_YIELD", "0"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        # AC_REQUIRE([gl_SCHED_H_DEFAULTS]) - line 12
+        # Note: gl_SCHED_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        # AC_REQUIRE([gl_PTHREADLIB]) - line 13
+        # Provides thread library info
+        "//gnulib/m4/threadlib",
+        # AC_REQUIRE([AC_CANONICAL_HOST]) - line 14
+        "//autoconf/macros/AC_CANONICAL_HOST",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

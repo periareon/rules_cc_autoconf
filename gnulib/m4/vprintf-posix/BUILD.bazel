@@ -15,7 +15,7 @@ autoconf(
         # This checks if vprintf is POSIX compliant by checking vfprintf.
         # The check sets gl_cv_func_vprintf_posix="$gl_cv_func_vfprintf_posix".
         # Based on golden files, on macOS it's not POSIX compliant, so we replace it.
-        
+
         # gl_FUNC_VPRINTF_POSIX - lines 9-16
         # AC_REQUIRE([gl_FUNC_VPRINTF_IS_POSIX]) - line 11
         # if test $gl_cv_func_vprintf_posix = no; then
@@ -23,14 +23,14 @@ autoconf(
         #   gl_REPLACE_VASNPRINTF - line 15
         #   gl_REPLACE_VPRINTF - line 16
         # fi
-        
+
         # gl_REPLACE_VPRINTF - lines 24-33
         # AC_LIBOBJ([vprintf]) - line 28
         # REPLACE_VPRINTF=1 - line 29
         # AC_DEFINE([REPLACE_VPRINTF_POSIX], [1], ...) - lines 30-32
         macros.AC_DEFINE("REPLACE_VPRINTF_POSIX", "1"),
         macros.AC_SUBST("REPLACE_VPRINTF", "1"),
-        
+
         # gl_PREREQ_VPRINTF - lines 35-36
         # Empty macro, no checks needed
     ],

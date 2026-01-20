@@ -124,8 +124,8 @@ autoconf(
         # AC_CHECK_DECLS_ONCE([getcwd]) - not explicitly in m4, but checked for declaration
         macros.AC_CHECK_DECL(
             "getcwd",
-            headers = ["unistd.h"],
             define = "HAVE_DECL_GETCWD",
+            headers = ["unistd.h"],
         ),
 
         # Note: AC_RUN_IFELSE for gl_cv_func_getcwd_path_max (lines 122-122) and
@@ -141,7 +141,10 @@ autoconf(
         macros.AC_DEFINE("HAVE_MINIMALLY_WORKING_GETCWD", "1"),
 
         # Check for sys/param.h (may be needed by getcwd implementation)
-        macros.AC_CHECK_HEADER("sys/param.h", define = "HAVE_SYS_PARAM_H"),
+        macros.AC_CHECK_HEADER(
+            "sys/param.h",
+            define = "HAVE_SYS_PARAM_H",
+        ),
 
         # REPLACE_GETCWD is set to 0 if getcwd works correctly (line 157)
         macros.AC_SUBST("REPLACE_GETCWD", "0"),

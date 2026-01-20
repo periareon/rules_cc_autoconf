@@ -11,7 +11,10 @@ autoconf(
         # If ftello exists, define HAVE_FTELLO=1 (lines 161-164)
         # Note: This is handled in gl_FUNC_FTELLO based on gl_cv_func_ftello
         # We check for _ftelli64 here (lines 167-167)
-        macros.AC_CHECK_FUNC("_ftelli64", define = "HAVE__FTELLI64"),
+        macros.AC_CHECK_FUNC(
+            "_ftelli64",
+            define = "HAVE__FTELLI64",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -38,8 +41,8 @@ autoconf(
         # AC_CHECK_DECLS_ONCE creates both a define for config.h and a cache variable ac_cv_have_decl_ftello
         macros.AC_CHECK_DECL(
             "ftello",
-            headers = ["stdio.h"],
             define = "HAVE_DECL_FTELLO",  # Creates define for config.h (1 if declared, undef if not)
+            headers = ["stdio.h"],
         ),
 
         # If ftello is NOT declared, set HAVE_DECL_FTELLO=0 (lines 20-22)
@@ -92,8 +95,8 @@ int main(void) { ftello(stdin); return 0; }
         macros.AC_SUBST(
             "REPLACE_FTELLO",
             condition = "_gl_cv_var_stdin_large_offset==0",
-            if_true = "1",
             if_false = "0",
+            if_true = "1",
         ),
     ],
     visibility = ["//visibility:public"],

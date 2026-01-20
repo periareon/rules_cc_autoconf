@@ -17,11 +17,11 @@ struct if_nameindex ni;""",
             define = "_gl_cv_header_net_if_h_selfcontained",
             language = "c",
         ),
-        
+
         # If <net/if.h> is self-contained (line 21), GL_GENERATE_NET_IF_H=false
         # No defines are set in this case
         # If not self-contained (line 23), GL_GENERATE_NET_IF_H=true and we check for the header
-        
+
         # AC_CHECK_HEADERS([net/if.h], [], [], [[#include <sys/socket.h>]]) - line 24
         # Check for net/if.h header with sys/socket.h included first
         # Only set defines if header is not self-contained
@@ -34,27 +34,36 @@ int main(void) { return 0; }""",
             language = "c",
             requires = ["_gl_cv_header_net_if_h_selfcontained==0"],
         ),
-        
+
         # Set HAVE_NET_IF_H as define if header exists and is not self-contained
         macros.AC_DEFINE(
             "HAVE_NET_IF_H",
             "1",
-            requires = ["_gl_cv_header_net_if_h_selfcontained==0", "_gl_cv_header_net_if_h==1"],
+            requires = [
+                "_gl_cv_header_net_if_h_selfcontained==0",
+                "_gl_cv_header_net_if_h==1",
+            ],
         ),
-        
+
         # If net/if.h is found and not self-contained, set HAVE_NET_IF_H=1 (line 26)
         # If not found and not self-contained, set HAVE_NET_IF_H=0 (line 28)
         macros.AC_SUBST(
             "HAVE_NET_IF_H",
             "1",
-            requires = ["_gl_cv_header_net_if_h_selfcontained==0", "_gl_cv_header_net_if_h==1"],
+            requires = [
+                "_gl_cv_header_net_if_h_selfcontained==0",
+                "_gl_cv_header_net_if_h==1",
+            ],
         ),
         macros.AC_SUBST(
             "HAVE_NET_IF_H",
             "0",
-            requires = ["_gl_cv_header_net_if_h_selfcontained==0", "_gl_cv_header_net_if_h==0"],
+            requires = [
+                "_gl_cv_header_net_if_h_selfcontained==0",
+                "_gl_cv_header_net_if_h==0",
+            ],
         ),
-        
+
         # gl_NEXT_HEADERS([net/if.h]) - line 25
         # This provides NEXT_NET_IF_H and NEXT_AS_FIRST_DIRECTIVE_NET_IF_H
         # Only set if header is not self-contained

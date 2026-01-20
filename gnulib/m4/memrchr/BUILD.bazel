@@ -13,17 +13,17 @@ autoconf(
         # AC_CHECK_DECL defines HAVE_DECL_MEMRCHR as 1 if found, 0 if not found in config.h
         macros.AC_CHECK_DECL(
             "memrchr",
-            headers = ["string.h"],
             define = "HAVE_DECL_MEMRCHR",
+            headers = ["string.h"],
         ),
-        
+
         # Set HAVE_DECL_MEMRCHR=0 as substitution variable if declaration is not found (line 19)
         macros.AC_SUBST(
             "HAVE_DECL_MEMRCHR",
             "0",
             requires = ["HAVE_DECL_MEMRCHR==0"],
         ),
-        
+
         # AC_CHECK_FUNCS([memrchr]) - line 22
         # Check for memrchr function
         macros.AC_CHECK_FUNC(

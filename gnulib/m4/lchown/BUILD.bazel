@@ -11,13 +11,13 @@ autoconf(
         # Check for lchmod function (used to determine if lchown needs replacement)
         # On macOS/Linux, lchmod exists
         macros.AC_DEFINE("HAVE_LCHMOD", "1"),
-        
+
         # AC_CHECK_FUNCS([lchown]) - line 17
         macros.AC_CHECK_FUNC(
             "lchown",
             define = "HAVE_LCHOWN",
         ),
-        
+
         # REPLACE_LCHOWN is set based on chown checks (gl_cv_func_chown_slash_works,
         # gl_cv_func_chown_ctime_works) that can't be easily ported.
         # Based on golden files, on macOS:
@@ -29,7 +29,7 @@ autoconf(
     deps = [
         # AC_REQUIRE([gl_UNISTD_H_DEFAULTS]) - line 14
         # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
-        
+
         # AC_REQUIRE([gl_FUNC_CHOWN]) - line 15
         "//gnulib/m4/chown",
 

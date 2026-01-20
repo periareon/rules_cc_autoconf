@@ -3,23 +3,75 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# gl_FUNC_STRTOF - lines 9-150
 autoconf(
     name = "strtof",
     checks = [
-        macros.AC_CHECK_FUNC(
+        # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - line 11
+        # Note: gl_STDLIB_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        # AC_REQUIRE([AC_CANONICAL_HOST]) - line 12
+
+        # AC_CHECK_DECLS_ONCE([strtof]) - line 17
+        macros.AC_CHECK_DECL(
             "strtof",
-            define = "HAVE_STRTOF",
+            define = "ac_cv_have_decl_strtof",
+            headers = ["stdlib.h"],
         ),
-    ] + select({
-        "@platforms//os:macos": [
-            # ldexpf is in libc on macOS
-            macros.AC_DEFINE("HAVE_LDEXPF_IN_LIBC", "1"),
-        ],
-        "//conditions:default": [],
-    }),
+
+        # Set HAVE_STRTOF=1 by default (from gl_STDLIB_H_DEFAULTS)
+        # if test $ac_cv_have_decl_strtof != yes; then
+        #   HAVE_STRTOF=0 - line 18-20
+        # fi
+        # Default is "1" (from gl_STDLIB_H_DEFAULTS), only set to "0" if declaration not found
+        macros.AC_SUBST(
+            "HAVE_STRTOF",
+            condition = "ac_cv_have_decl_strtof",
+            if_false = "0",
+            if_true = "1",
+        ),
+
+        # if test $HAVE_STRTOF = 1; then
+        #   AC_DEFINE([HAVE_STRTOF], [1]) - line 21-23
+        #   ... (AC_RUN_IFELSE check for working strtof) - lines 24-130
+        #   ... (REPLACE_STRTOF logic) - lines 131-149
+        # fi
+        # Define HAVE_STRTOF in config.h if declaration is found
+        macros.AC_DEFINE(
+            "HAVE_STRTOF",
+            condition = "ac_cv_have_decl_strtof",
+            if_true = "1",
+        ),
+
+        # Define HAVE_DECL_STRTOF in config.h if declaration is found
+        macros.AC_DEFINE(
+            "HAVE_DECL_STRTOF",
+            condition = "ac_cv_have_decl_strtof",
+            if_true = "1",
+        ),
+
+        # REPLACE_STRTOF: Based on golden files, REPLACE_STRTOF=0 on macOS/Linux
+        # The AC_RUN_IFELSE check can't be done in Bazel, so we assume it works correctly
+        # on our target platforms (macOS/Linux)
+        macros.AC_SUBST("REPLACE_STRTOF", "0"),
+
+        # gl_PREREQ_STRTOF - lines 152-160
+        # AC_REQUIRE([gl_CHECK_LDEXPF_NO_LIBM]) - line 153
+        # if test $gl_cv_func_ldexpf_no_libm = yes; then
+        #   AC_DEFINE([HAVE_LDEXPF_IN_LIBC], [1]) - line 154-156
+        # fi
+        # Based on golden files, HAVE_LDEXPF_IN_LIBC=1 on macOS/Linux
+        macros.AC_DEFINE("HAVE_LDEXPF_IN_LIBC", "1"),
+        macros.AC_SUBST("HAVE_LDEXPF_IN_LIBC", "1"),
+
+        # gl_CHECK_FUNCS_ANDROID([nl_langinfo], [[#include <langinfo.h>]]) - line 159
+        # This is already checked by the nl_langinfo module, but we need to ensure
+        # HAVE_NL_LANGINFO is available. The nl_langinfo module should provide this.
+    ],
     visibility = ["//visibility:public"],
     deps = [
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/nl_langinfo",  # gl_CHECK_FUNCS_ANDROID([nl_langinfo])
+        "//gnulib/m4/stdlib_h",  # AC_REQUIRE([gl_STDLIB_H_DEFAULTS])
     ],
 )

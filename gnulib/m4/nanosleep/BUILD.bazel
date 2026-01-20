@@ -13,10 +13,10 @@ autoconf(
         # Check for alarm declaration
         macros.AC_CHECK_DECL(
             "alarm",
-            headers = ["unistd.h"],
             define = "HAVE_DECL_ALARM",
+            headers = ["unistd.h"],
         ),
-        
+
         # AC_SEARCH_LIBS([nanosleep], [rt posix4], ...) - lines 28-32
         # Search for nanosleep function in rt and posix4 libraries
         # Use AC_CHECK_LIB to check for nanosleep in rt library
@@ -30,31 +30,31 @@ autoconf(
             "nanosleep",
             define = "_gl_cv_func_nanosleep",
         ),
-        
+
         # If nanosleep is found (either in libc or in rt library)
         # Based on m4 logic, on macOS nanosleep mishandles large arguments
         # So we set HAVE_BUG_BIG_NANOSLEEP=1 and REPLACE_NANOSLEEP=1
-        
+
         # Set HAVE_NANOSLEEP as define if function exists
         # But based on golden file, on macOS HAVE_NANOSLEEP is undefined
         # This suggests that nanosleep is found but doesn't work correctly
         # So we don't define HAVE_NANOSLEEP
-        
+
         # If nanosleep is not found, set HAVE_NANOSLEEP=0 (line 132)
         macros.AC_SUBST(
             "HAVE_NANOSLEEP",
             "0",
             requires = ["_gl_cv_func_nanosleep==0"],
         ),
-        
+
         # Based on golden file, on macOS REPLACE_NANOSLEEP=1 (from subst file)
         # This is because nanosleep mishandles large arguments
         macros.AC_SUBST("REPLACE_NANOSLEEP", "1"),
-        
+
         # HAVE_BUG_BIG_NANOSLEEP=1 on macOS (lines 119-121)
         # Based on golden file, HAVE_BUG_BIG_NANOSLEEP is defined
         macros.AC_DEFINE("HAVE_BUG_BIG_NANOSLEEP", "1"),
-        
+
         # NANOSLEEP_LIB and LIB_NANOSLEEP (lines 33, 142-143)
         # Based on golden file, these are empty strings on macOS
         macros.AC_SUBST("NANOSLEEP_LIB", ""),

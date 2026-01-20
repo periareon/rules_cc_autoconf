@@ -10,28 +10,40 @@ autoconf(
     checks = [
         # gl_FUNC_OPENAT - line 16
         # This is provided by openat dependency
-        
+
         # gl_CHECK_HEADER_SYS_CDEFS_H - line 17
         # This is provided by sys_cdefs_h dependency
-        
+
         # AC_CHECK_FUNCS_ONCE([fstatfs]) - line 19
-        macros.AC_CHECK_FUNC("fstatfs", define = "ac_cv_func_fstatfs"),
-        
+        macros.AC_CHECK_FUNC(
+            "fstatfs",
+            define = "ac_cv_func_fstatfs",
+        ),
+
         # AC_CHECK_HEADERS_ONCE([sys/param.h sys/vfs.h]) - line 20
-        macros.AC_CHECK_HEADER("sys/param.h", define = "ac_cv_header_sys_param_h"),
-        macros.AC_CHECK_HEADER("sys/vfs.h", define = "ac_cv_header_sys_vfs_h"),
-        
+        macros.AC_CHECK_HEADER(
+            "sys/param.h",
+            define = "ac_cv_header_sys_param_h",
+        ),
+        macros.AC_CHECK_HEADER(
+            "sys/vfs.h",
+            define = "ac_cv_header_sys_vfs_h",
+        ),
+
         # if test "$ac_cv_func_fstatfs,$ac_cv_header_sys_vfs_h" = yes,yes; then
         #   AC_CHECK_MEMBERS([struct statfs.f_type], ...) - lines 21-25
         # fi
         macros.AC_CHECK_MEMBER(
             "struct statfs",
             "f_type",
-            headers = ["sys/vfs.h"],
             define = "ac_cv_member_struct_statfs_f_type",
-            requires = ["ac_cv_func_fstatfs", "ac_cv_header_sys_vfs_h"],
+            headers = ["sys/vfs.h"],
+            requires = [
+                "ac_cv_func_fstatfs",
+                "ac_cv_header_sys_vfs_h",
+            ],
         ),
-        
+
         # if test "$ac_cv_member_struct_statfs_f_type" = yes; then
         #   AC_CHECK_TYPES([__fsword_t], ...) - lines 26-30
         # fi
@@ -43,11 +55,15 @@ __fsword_t x;
             define = "ac_cv_type___fsword_t",
             requires = ["ac_cv_member_struct_statfs_f_type"],
         ),
-        
+
         # gl_CHECK_FUNCS_ANDROID([fts_open], [[#include <fts.h>]]) - line 32
         # Check for fts_open function (similar to AC_CHECK_FUNC but also checks Android-specific behavior)
-        macros.AC_CHECK_FUNC("fts_open", define = "gl_cv_func_fts_open", code = "#include <fts.h>\n"),
-        
+        macros.AC_CHECK_FUNC(
+            "fts_open",
+            code = "#include <fts.h>\n",
+            define = "gl_cv_func_fts_open",
+        ),
+
         # if case "$gl_cv_onwards_func_fts_open" in
         #      yes | future*) true ;;
         #      *) false ;;

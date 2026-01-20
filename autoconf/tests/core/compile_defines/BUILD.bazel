@@ -35,8 +35,8 @@ int feature_a_enabled = 1;
 #error "_ENABLE_FEATURE_A not defined"
 #endif
 """,
-            define = "HAVE_FEATURE_A",
             compile_defines = ["_ENABLE_FEATURE_A"],
+            define = "HAVE_FEATURE_A",
         ),
         # This check tries to compile code that requires _ENABLE_FEATURE_B
         # It should fail because _ENABLE_FEATURE_B is not defined in features
@@ -48,13 +48,13 @@ int feature_b_enabled = 1;
 #error "_ENABLE_FEATURE_B not defined"
 #endif
 """,
-            define = "HAVE_FEATURE_B",
             compile_defines = ["_ENABLE_FEATURE_B"],
+            define = "HAVE_FEATURE_B",
         ),
     ],
     deps = [
-        ":package",
         ":features",
+        ":package",
     ],
 )
 

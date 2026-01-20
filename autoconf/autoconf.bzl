@@ -156,7 +156,7 @@ def _autoconf_impl(ctx):
             check_type = check.get("type")
             is_define_type = check_type in ["define", "define_unquoted"]
             is_subst_type = check_type == "subst"
-            
+
             # If current check is a define/subst type, allow it to coexist with transitive checks
             # The _flatten_checks logic already handles define/subst conflicts within the same target
             # We assume transitive checks of the same name are likely subst if we're creating a define,
@@ -191,8 +191,10 @@ def _autoconf_impl(ctx):
             for compile_def in compile_defines_list:
                 if compile_def in all_results:
                     compile_def_file = all_results[compile_def]
+
                     # Store the file path as a string (not File object) for JSON encoding
                     compile_defines_paths.append(compile_def_file.path)
+
             # Store the paths (not names) in the check for C++ code to read
             if compile_defines_paths:
                 check["compile_defines"] = compile_defines_paths
@@ -233,15 +235,15 @@ def _autoconf_impl(ctx):
         # Helper function to extract base define name from a requirement/condition string
         def _extract_define_name(expr):
             """Extract base define name from requirement/condition expression.
-            
+
             Handles: "FOO", "!FOO", "FOO==value", "FOO!=value", "FOO=value"
             """
             required_define = expr
-            
+
             if required_define.startswith("!"):
                 # Handle negation prefix
                 required_define = required_define[1:]
-            
+
             if "!=" in required_define:
                 # Handle != operator
                 required_define = required_define.split("!=")[0]
@@ -251,15 +253,17 @@ def _autoconf_impl(ctx):
             elif "=" in required_define:
                 # Handle legacy = operator
                 required_define = required_define.split("=")[0]
-            
+
             return required_define
 
         # Collect all required defines from both requires and condition
         required_defines = list(check.get("requires", []))
         if "condition" in check:
             condition = check["condition"]
+
             # Parse condition to extract the define name it depends on
             condition_define = _extract_define_name(condition)
+
             # Add to required_defines if not already there (to ensure it's in inputs)
             if condition not in required_defines:
                 required_defines.append(condition)

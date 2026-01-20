@@ -34,17 +34,20 @@ autoconf(
         # This provides fnmatch.h header checks
         # AC_REQUIRE([AC_CANONICAL_HOST]) - line 20
         # This is provided by AC_CANONICAL_HOST dependency
-        
+
         # AC_CHECK_FUNCS_ONCE([fnmatch]) - line 24
-        macros.AC_CHECK_FUNC("fnmatch", define = "_gl_cv_func_fnmatch"),
-        
+        macros.AC_CHECK_FUNC(
+            "fnmatch",
+            define = "_gl_cv_func_fnmatch",
+        ),
+
         # Create HAVE_FNMATCH define if function exists
         macros.AC_DEFINE(
             "HAVE_FNMATCH",
             condition = "_gl_cv_func_fnmatch",
             if_true = "1",
         ),
-        
+
         # If fnmatch not found, set HAVE_FNMATCH=0 (line 25-27)
         macros.AC_SUBST(
             "HAVE_FNMATCH",
@@ -52,7 +55,7 @@ autoconf(
             if_false = "0",
             if_true = "1",
         ),
-        
+
         # AC_RUN_IFELSE for gl_cv_func_fnmatch_posix (lines 29-168) is not directly
         # portable to Bazel's cross-compilation environment. REPLACE_FNMATCH is set
         # based on golden file expectations.

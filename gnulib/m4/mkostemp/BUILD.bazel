@@ -16,21 +16,21 @@ autoconf(
             "mkostemp",
             define = "_gl_cv_func_mkostemp",
         ),
-        
+
         # Set HAVE_MKOSTEMP as define if function exists
         macros.AC_DEFINE(
             "HAVE_MKOSTEMP",
             "1",
             requires = ["_gl_cv_func_mkostemp==1"],
         ),
-        
+
         # If mkostemp is not found, set HAVE_MKOSTEMP=0 (line 18)
         macros.AC_SUBST(
             "HAVE_MKOSTEMP",
             "0",
             requires = ["_gl_cv_func_mkostemp==0"],
         ),
-        
+
         # If mkostemp is not found and it's a future function, REPLACE_MKOSTEMP=1 (line 20)
         # Otherwise, REPLACE_MKOSTEMP=0 (default)
         # Based on golden file, REPLACE_MKOSTEMP=0 on macOS

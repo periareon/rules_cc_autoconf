@@ -14,7 +14,7 @@ autoconf(
             define = "ac_cv_have_decl_ttyname_r",
             headers = ["unistd.h"],
         ),
-        
+
         # if test $ac_cv_have_decl_ttyname_r = no; then
         #   HAVE_DECL_TTYNAME_R=0 - line 22
         # fi
@@ -26,18 +26,18 @@ autoconf(
         macros.AC_SUBST(
             "HAVE_DECL_TTYNAME_R",
             condition = "ac_cv_have_decl_ttyname_r",
-            if_true = "1",
             if_false = "0",
+            if_true = "1",
         ),
-        
+
         # gl_CHECK_FUNCS_ANDROID([ttyname_r], [[#include <unistd.h>]]) - line 24
         # Check for ttyname_r function
         macros.AC_CHECK_FUNC(
             "ttyname_r",
-            define = "ac_cv_func_ttyname_r",
             code = "#include <unistd.h>\n",
+            define = "ac_cv_func_ttyname_r",
         ),
-        
+
         # if test $ac_cv_func_ttyname_r = no; then
         #   HAVE_TTYNAME_R=0 - line 26
         # else
@@ -52,10 +52,10 @@ autoconf(
         macros.AC_SUBST(
             "HAVE_TTYNAME_R",
             condition = "ac_cv_func_ttyname_r",
-            if_true = "1",
             if_false = "0",
+            if_true = "1",
         ),
-        
+
         # AC_CACHE_CHECK([whether ttyname_r is compatible with its POSIX signature], ...) - lines 30-40
         # Check if ttyname_r has POSIX-compliant signature (returns int, not char*)
         # The m4 test tries to compile: *ttyname_r (0, NULL, 0);
@@ -76,7 +76,7 @@ int test() {
             define = "_gl_cv_func_ttyname_r_non_posix",
             requires = ["ac_cv_func_ttyname_r"],
         ),
-        
+
         # If the non-POSIX code compiles, ttyname_r is non-POSIX (gl_cv_func_ttyname_r_posix=no)
         # If it doesn't compile, ttyname_r is POSIX (gl_cv_func_ttyname_r_posix=yes)
         # So gl_cv_func_ttyname_r_posix = !_gl_cv_func_ttyname_r_non_posix
@@ -86,7 +86,7 @@ int test() {
             condition = "_gl_cv_func_ttyname_r_non_posix",
             if_false = "1",  # If non-POSIX code doesn't compile, it's POSIX
         ),
-        
+
         # if test $gl_cv_func_ttyname_r_posix = no; then
         #   REPLACE_TTYNAME_R=1 - line 42
         # else
@@ -103,12 +103,12 @@ int test() {
             condition = "gl_cv_func_ttyname_r_posix",
             if_true = "1",
         ),
-        
+
         # The m4 file has complex runtime checks for Android and Solaris bugs
         # Based on golden files, on macOS:
         # - REPLACE_TTYNAME_R=0 (function works correctly)
         macros.AC_SUBST("REPLACE_TTYNAME_R", "0"),
-        
+
         # gl_PREREQ_TTYNAME_R - lines 121-123
         # AC_CHECK_FUNCS([ttyname]) - line 122
         macros.AC_CHECK_FUNC(
@@ -118,9 +118,9 @@ int test() {
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS]) - line 13
-        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - line 17
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST]) - line 48
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - line 17
+        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS]) - line 13
     ],
 )

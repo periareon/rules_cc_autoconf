@@ -48,10 +48,10 @@ autoconf(
     checks = [
         # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - line 72
         # This is provided by stdlib_h:defaults dependency
-        
+
         # AC_REQUIRE([gl_CHECK_MALLOC_PTRDIFF]) - line 73
         # This is provided by gl_CHECK_MALLOC_PTRDIFF dependency
-        
+
         # AS_IF([test "$gl_cv_malloc_ptrdiff" = yes], ...) - lines 74-77
         # Define HAVE_MALLOC_PTRDIFF if malloc is ptrdiff_t safe
         macros.AC_DEFINE(
@@ -105,7 +105,7 @@ autoconf(
     checks = [
         # AC_REQUIRE([AC_CANONICAL_HOST]) - line 113
         # This is provided by AC_CANONICAL_HOST dependency
-        
+
         # AC_CACHE_CHECK([whether malloc, calloc set errno on failure], ...) - lines 114-194
         # Based on m4 file lines 125-194, most Unix platforms assume "yes"
         # On macOS, malloc sets errno on failure
@@ -127,13 +127,13 @@ autoconf(
     checks = [
         # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - line 200
         # This is provided by stdlib_h:defaults dependency
-        
+
         # AC_REQUIRE([gl_FUNC_MALLOC_PTRDIFF]) - line 201
         # This is provided by gl_FUNC_MALLOC_PTRDIFF dependency
-        
+
         # AC_REQUIRE([gl_CHECK_MALLOC_POSIX]) - line 202
         # This is provided by gl_CHECK_MALLOC_POSIX dependency
-        
+
         # case "$gl_cv_func_malloc_posix" in
         #   *yes)
         #     AC_DEFINE([HAVE_MALLOC_POSIX], [1]) - lines 203-206
@@ -167,13 +167,13 @@ autoconf(
     checks = [
         # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - line 48
         # This is provided by stdlib_h:defaults dependency
-        
+
         # AC_REQUIRE([gl_FUNC_MALLOC_POSIX]) - line 49
         # This is provided by gl_FUNC_MALLOC_POSIX dependency
-        
+
         # AC_REQUIRE([gl_FUNC_MALLOC_0_NONNULL]) - line 50
         # This is provided by gl_FUNC_MALLOC_0_NONNULL dependency
-        
+
         # AS_CASE([$ac_cv_func_malloc_0_nonnull],
         #   [*yes],
         #     [REPLACE_MALLOC_FOR_MALLOC_GNU=$REPLACE_MALLOC_FOR_MALLOC_POSIX], - line 53

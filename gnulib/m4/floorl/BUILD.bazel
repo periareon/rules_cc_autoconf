@@ -52,27 +52,27 @@ autoconf(
         # This provides HAVE_SAME_LONG_DOUBLE_AS_DOUBLE
         # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - line 15
         # This is provided by extensions dependency
-        
+
         # AC_CHECK_DECLS([floorl], , , [[#include <math.h>]]) - line 18
         macros.AC_CHECK_DECL(
             "floorl",
             define = "HAVE_DECL_FLOORL",
             headers = ["math.h"],
         ),
-        
+
         # If floorl is declared, check if it needs libm (line 21-26)
         # gl_FUNC_FLOORL_LIBS is called via dependency
         # If FLOORL_LIBM="?", then REPLACE_FLOORL=1 (line 22-25)
         # We assume floorl works correctly on macOS, so REPLACE_FLOORL=0
-        
+
         # If floorl is NOT declared, set HAVE_DECL_FLOORL=0 (line 27-29)
         # This is handled by AC_CHECK_DECL automatically
-        
+
         # REPLACE_FLOORL is set to 1 if:
         # - FLOORL_LIBM="?" (floorl declared but not linkable)
         # - Otherwise, REPLACE_FLOORL=0 (default)
         macros.AC_SUBST("REPLACE_FLOORL", "0"),
-        
+
         # FLOORL_LIBM is set based on:
         # - If HAVE_SAME_LONG_DOUBLE_AS_DOUBLE=1: FLOORL_LIBM="$FLOOR_LIBM" (line 32-34)
         # - Otherwise: FLOORL_LIBM="" (from gl_FUNC_FLOORL_LIBS) (line 35-36)

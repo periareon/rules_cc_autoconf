@@ -7,12 +7,22 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "wmempcpy",
     checks = [
+        # AC_REQUIRE([gl_WCHAR_H_DEFAULTS]) - line 13
+        # Note: gl_WCHAR_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 17
+        # AC_REQUIRE([AC_C_RESTRICT]) - line 20
+        
         # gl_CHECK_FUNCS_ANDROID([wmempcpy], [[#include <wchar.h>]]) - line 19
         # Check for wmempcpy function
-        macros.AC_CHECK_FUNC(
-            "wmempcpy",
+        # Use AC_TRY_LINK to check if the function actually links (not just declared)
+        macros.AC_TRY_LINK(
+            code = """#include <wchar.h>
+int main(void) {
+    wchar_t *dst, *src;
+    size_t n = 0;
+    return wmempcpy(dst, src, n) != NULL ? 0 : 1;
+}""",
             define = "ac_cv_func_wmempcpy",
-            code = "#include <wchar.h>\n",
         ),
         
         # if test $ac_cv_func_wmempcpy = no; then
@@ -21,23 +31,34 @@ autoconf(
         #     future*) REPLACE_WMEMPCPY=1 ;; - line 22
         #   esac
         # fi
-        # Note: The m4 file only sets HAVE_WMEMPCPY=0 as a substitution variable if the function doesn't exist.
-        # It doesn't create a define in config.h. Based on golden files, on macOS wmempcpy doesn't exist.
-        # We use condition with if_false to override the default value from wchar_h:defaults
+        # Set HAVE_WMEMPCPY as substitution variable
         macros.AC_SUBST(
             "HAVE_WMEMPCPY",
             condition = "ac_cv_func_wmempcpy",
             if_false = "0",
+            if_true = "1",
         ),
         
-        # Based on golden files, REPLACE_WMEMPCPY=0 on macOS (function doesn't exist, not a future function)
+        # Define HAVE_WMEMPCPY in config.h if function exists
+        # Based on golden files, on Linux it's defined as "1", on macOS it's undefined
+        macros.AC_DEFINE(
+            "HAVE_WMEMPCPY",
+            condition = "ac_cv_func_wmempcpy",
+            if_true = "1",
+        ),
+        
+        # Based on golden files, REPLACE_WMEMPCPY=0 on macOS/Linux
+        # (function doesn't exist on macOS, but it's not a future function)
         macros.AC_SUBST("REPLACE_WMEMPCPY", "0"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/wchar_h",  # AC_REQUIRE([gl_WCHAR_H_DEFAULTS]) - line 13
-        "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 17
-        "//autoconf/macros/AC_C_RESTRICT",  # AC_REQUIRE([AC_C_RESTRICT]) - line 20
+        # AC_REQUIRE([gl_WCHAR_H_DEFAULTS]) - line 13
+        # Note: gl_WCHAR_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 17
+        "//gnulib/m4/extensions",
+        # AC_REQUIRE([AC_C_RESTRICT]) - line 20
+        "//autoconf/macros/AC_C_RESTRICT",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

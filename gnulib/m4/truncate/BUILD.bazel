@@ -11,17 +11,17 @@ autoconf(
         # Check for truncate function
         macros.AC_CHECK_FUNC(
             "truncate",
-            define = "ac_cv_func_truncate",
             code = "#include <unistd.h>\n",
+            define = "ac_cv_func_truncate",
         ),
-        
+
         # Define HAVE_TRUNCATE in config.h if function exists
         macros.AC_DEFINE(
             "HAVE_TRUNCATE",
             condition = "ac_cv_func_truncate",
             if_true = "1",
         ),
-        
+
         # AC_CHECK_DECL([truncate], , , [[#include <unistd.h>]]) - line 20
         # Check for truncate declaration
         macros.AC_CHECK_DECL(
@@ -29,7 +29,7 @@ autoconf(
             define = "ac_cv_have_decl_truncate",
             headers = ["unistd.h"],
         ),
-        
+
         # if test $ac_cv_have_decl_truncate = yes; then - lines 21-67
         #   ... (Windows and AIX bug checks)
         # else
@@ -40,18 +40,18 @@ autoconf(
         macros.AC_SUBST(
             "HAVE_DECL_TRUNCATE",
             condition = "ac_cv_have_decl_truncate",
-            if_true = "1",
             if_false = "0",
+            if_true = "1",
         ),
-        
+
         # The m4 file has complex logic for REPLACE_TRUNCATE based on Windows, AIX bugs, etc.
         # Based on golden files, REPLACE_TRUNCATE=0 on macOS (function works correctly)
         macros.AC_SUBST("REPLACE_TRUNCATE", "0"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS]) - line 16
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST]) - line 17
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS]) - line 16
     ],
 )

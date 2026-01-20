@@ -3,41 +3,83 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# gl_STRINGS_H from strings_h.m4
+# gl_STRINGS_H - lines 8-30
+# Configure a replacement for <strings.h>
 autoconf(
     name = "strings_h",
     checks = [
-        # HAVE_STRINGS_H is provided by AC_CHECK_INCLUDES_DEFAULT
-        # Check for functions in strings.h
-        macros.AC_CHECK_FUNC(
-            "ffs",
-            code = """\
-#include <sys/types.h>
-#include <strings.h>
-""",
-            requires = ["HAVE_STRINGS_H"],
+        # AC_REQUIRE([gl_STRINGS_H_DEFAULTS]) - line 13
+        # Note: gl_STRINGS_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+
+        # gl_CHECK_NEXT_HEADERS([strings.h]) - line 15
+        # Check for strings.h header
+        macros.AC_CHECK_HEADER(
+            "strings.h",
+            define = "ac_cv_header_strings_h",
         ),
-        macros.AC_CHECK_FUNC(
-            "strcasecmp",
-            code = """\
-#include <sys/types.h>
-#include <strings.h>
-""",
-            requires = ["HAVE_STRINGS_H"],
+
+        # if test $ac_cv_header_strings_h = yes; then
+        #   HAVE_STRINGS_H=1 - line 16-18
+        # else
+        #   HAVE_STRINGS_H=0 - line 19-20
+        # fi
+        # AC_SUBST([HAVE_STRINGS_H]) - line 21
+        macros.AC_SUBST(
+            "HAVE_STRINGS_H",
+            condition = "ac_cv_header_strings_h",
+            if_false = "0",
+            if_true = "1",
         ),
-        macros.AC_CHECK_FUNC(
-            "strncasecmp",
-            code = """\
-#include <sys/types.h>
-#include <strings.h>
-""",
-            requires = ["HAVE_STRINGS_H"],
+
+        # Define HAVE_STRINGS_H in config.h if the header exists
+        macros.AC_DEFINE(
+            "HAVE_STRINGS_H",
+            condition = "ac_cv_header_strings_h",
+            if_true = "1",
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # Note: HAVE_STRINGS_H is provided by AC_CHECK_INCLUDES_DEFAULT
-        # (normally from AC_INCLUDES_DEFAULT but not AC_REQUIREd in this module)
+        # gl_CHECK_NEXT_HEADERS([strings.h]) - line 15
+        "//gnulib/m4/include_next",
+        # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# =============================================================================
+# defaults - Default AC_SUBST values. Added to gnulib_toolchain.
+# =============================================================================
+
+autoconf(
+    name = "defaults",
+    checks = [
+        # gl_STRINGS_H_DEFAULTS - lines 60-70
+        # Assume proper GNU behavior unless another module says otherwise
+        macros.AC_SUBST("HAVE_FFS", "1"),
+        macros.AC_SUBST("HAVE_STRCASECMP", "1"),
+        macros.AC_SUBST("HAVE_STRCASECMP_L", "1"),
+        macros.AC_SUBST("HAVE_STRNCASECMP", "1"),
+        macros.AC_SUBST("HAVE_STRNCASECMP_L", "1"),
+        macros.AC_SUBST("HAVE_DECL_STRNCASECMP", "1"),
+        macros.AC_SUBST("REPLACE_STRCASECMP", "0"),
+        macros.AC_SUBST("REPLACE_STRCASECMP_L", "0"),
+        macros.AC_SUBST("REPLACE_STRNCASECMP", "0"),
+        macros.AC_SUBST("REPLACE_STRNCASECMP_L", "0"),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# =============================================================================
+# with_defaults - For external consumers who don't use the toolchain
+# =============================================================================
+
+autoconf(
+    name = "with_defaults",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":defaults",
+        ":strings_h",
     ],
 )

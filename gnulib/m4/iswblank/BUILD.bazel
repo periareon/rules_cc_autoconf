@@ -15,7 +15,7 @@ autoconf(
         # The m4 file checks for the function, but since we can't easily replicate
         # the exact check behavior, we set it based on platform expectations
         macros.AC_DEFINE("HAVE_ISWBLANK", "1"),
-        
+
         # AC_CHECK_DECLS([iswblank], , , [[#include <wchar.h> #include <wctype.h>]]) - line 17
         macros.AC_CHECK_DECL(
             "iswblank",
@@ -25,7 +25,7 @@ autoconf(
                 "wctype.h",
             ],
         ),
-        
+
         # REPLACE_ISWBLANK is set based on runtime checks that can't be easily ported.
         # Based on golden files, on macOS/Linux:
         # - REPLACE_ISWBLANK is 0 (iswblank works correctly)
@@ -35,10 +35,10 @@ autoconf(
     deps = [
         # AC_REQUIRE([gl_WCTYPE_H_DEFAULTS]) - line 10
         # Note: gl_WCTYPE_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
-        
+
         # AC_REQUIRE([gl_WCTYPE_H]) - line 11
         "//gnulib/m4/wctype_h",
-        
+
         # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - line 13
         "//gnulib/m4/extensions",
 

@@ -22,32 +22,32 @@ int main(void) {
             define = "_gl_cv_func_nl_langinfo",
             language = "c",
         ),
-        
+
         # Set HAVE_NL_LANGINFO as define if function exists
         macros.AC_DEFINE(
             "HAVE_NL_LANGINFO",
             "1",
             requires = ["_gl_cv_func_nl_langinfo==1"],
         ),
-        
+
         # If nl_langinfo is not found, set HAVE_NL_LANGINFO=0 (line 49)
         macros.AC_SUBST(
             "HAVE_NL_LANGINFO",
             "0",
             requires = ["_gl_cv_func_nl_langinfo==0"],
         ),
-        
+
         # NL_LANGINFO_MTSAFE - lines 20-29
         # On macOS and Solaris, nl_langinfo is not multithread-safe
         # Based on golden file, NL_LANGINFO_MTSAFE=0 on macOS
         macros.AC_DEFINE_UNQUOTED("NL_LANGINFO_MTSAFE", "0"),
-        
+
         # REPLACE_NL_LANGINFO - lines 30-40
         # If nl_langinfo doesn't have required features or is not MTSAFE, REPLACE_NL_LANGINFO=1
         # Based on golden file, REPLACE_NL_LANGINFO=1 on macOS
         macros.AC_DEFINE("REPLACE_NL_LANGINFO", "1"),
         macros.AC_SUBST("REPLACE_NL_LANGINFO", "1"),
-        
+
         # LIB_NL_LANGINFO - lines 42-50
         # Based on golden file, LIB_NL_LANGINFO="" (empty string) on macOS
         macros.AC_SUBST("LIB_NL_LANGINFO", ""),

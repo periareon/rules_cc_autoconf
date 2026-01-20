@@ -9,7 +9,7 @@ autoconf(
     checks = [
         # AC_REQUIRE([gl_ARPA_INET_H_DEFAULTS]) - line 12
         # This is provided by arpa_inet_h:defaults dependency
-        
+
         # gl_PREREQ_SYS_H_WINSOCK2 - line 18
         # This checks for HAVE_WINSOCK2_H (Windows-specific, not applicable on macOS)
         # HTONL_LIB= - line 16
@@ -20,7 +20,7 @@ autoconf(
         # fi
         # Based on golden files, HTONL_LIB="" on macOS (not Windows)
         macros.AC_SUBST("HTONL_LIB", ""),
-        
+
         # AC_CHECK_DECLS([htons, htonl, ntohs, ntohl], ...) - line 22
         # Only check if arpa/inet.h exists (which it does on macOS)
         # But the declarations might not be found, leaving them undefined

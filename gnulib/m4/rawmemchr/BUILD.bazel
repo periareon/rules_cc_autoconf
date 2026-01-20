@@ -10,10 +10,10 @@ autoconf(
     checks = [
         # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 11
         # This is provided by extensions dependency
-        
+
         # AC_REQUIRE([gl_STRING_H_DEFAULTS]) - line 13
         # Note: gl_STRING_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
-        
+
         # AC_CHECK_FUNCS([rawmemchr]) - line 15
         # Use AC_TRY_LINK to verify the function actually links (not just declared)
         macros.AC_TRY_LINK(
@@ -26,7 +26,7 @@ int main(void) {
 """,
             define = "ac_cv_func_rawmemchr",
         ),
-        
+
         # if test $ac_cv_func_rawmemchr = no; then
         #   HAVE_RAWMEMCHR=0 - line 16
         # fi
@@ -38,7 +38,7 @@ int main(void) {
             condition = "ac_cv_func_rawmemchr",
             if_false = "0",
         ),
-        
+
         # Define HAVE_RAWMEMCHR in config.h only if the function exists
         # (string_h:defaults will define it if the function exists)
         macros.AC_DEFINE(

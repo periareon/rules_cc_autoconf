@@ -11,7 +11,7 @@ autoconf(
             "pthread.h",
             define = "HAVE_PTHREAD_H",
         ),
-        
+
         # gl_PTHREAD_H_PART1 checks for pthread_t type
         macros.AC_CHECK_TYPE(
             "pthread_t",
@@ -21,7 +21,7 @@ pthread_t x;
 """,
             define = "HAVE_PTHREAD_T",
         ),
-        
+
         # USE_POSIX_THREADS is set when pthread.h exists
         macros.AC_DEFINE("USE_POSIX_THREADS", "1"),
     ],

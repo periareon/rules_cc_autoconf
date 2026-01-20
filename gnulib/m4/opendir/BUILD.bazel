@@ -14,21 +14,21 @@ autoconf(
             "opendir",
             define = "_gl_cv_func_opendir",
         ),
-        
+
         # Set HAVE_OPENDIR as define if function exists
         macros.AC_DEFINE(
             "HAVE_OPENDIR",
             "1",
             requires = ["_gl_cv_func_opendir==1"],
         ),
-        
+
         # If opendir not found, set HAVE_OPENDIR=0 (line 19-21)
         macros.AC_SUBST(
             "HAVE_OPENDIR",
             "0",
             requires = ["_gl_cv_func_opendir==0"],
         ),
-        
+
         # gl_TEST_FCHDIR - line 27
         # Check for fchdir function (not the declaration)
         # This sets HAVE_FCHDIR as a substitution variable
@@ -36,14 +36,14 @@ autoconf(
             "fchdir",
             define = "_gl_cv_func_fchdir",
         ),
-        
+
         # Set HAVE_FCHDIR as define if function exists
         macros.AC_DEFINE(
             "HAVE_FCHDIR",
             "1",
             requires = ["_gl_cv_func_fchdir==1"],
         ),
-        
+
         # Set HAVE_FCHDIR as substitution variable
         macros.AC_SUBST(
             "HAVE_FCHDIR",
@@ -55,7 +55,7 @@ autoconf(
             "0",
             requires = ["_gl_cv_func_fchdir==0"],
         ),
-        
+
         # REPLACE_OPENDIR is set to 1 if:
         # - DIR_HAS_FD_MEMBER = 0 (DIR structure doesn't have fd member, e.g., on Windows) - line 25
         # - HAVE_FCHDIR = 0 (fchdir function not available) - line 30-32

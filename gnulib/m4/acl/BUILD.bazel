@@ -140,7 +140,11 @@ autoconf(
                 "acl_entries",
                 define = "HAVE_ACL_ENTRIES",
             ),
-            macros.AC_DEFINE("NEED_ACL_ENTRIES", "1", requires=["HAVE_ACL_ENTRIES==0"]),
+            macros.AC_DEFINE(
+                "NEED_ACL_ENTRIES",
+                "1",
+                requires = ["HAVE_ACL_ENTRIES==0"],
+            ),
             # Linux may or may not have ACL support depending on libraries
             # Default to not defining USE_ACL (requires libacl)
         ],
@@ -162,7 +166,11 @@ autoconf(
                 "acl_entries",
                 define = "HAVE_ACL_ENTRIES",
             ),
-            macros.AC_DEFINE("NEED_ACL_ENTRIES", "1", requires=["HAVE_ACL_ENTRIES==0"]),
+            macros.AC_DEFINE(
+                "NEED_ACL_ENTRIES",
+                "1",
+                requires = ["HAVE_ACL_ENTRIES==0"],
+            ),
         ],
     }),
     visibility = ["//visibility:public"],

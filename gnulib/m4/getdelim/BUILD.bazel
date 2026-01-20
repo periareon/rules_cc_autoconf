@@ -9,8 +9,14 @@ autoconf(
     name = "gl_PREREQ_GETDELIM",
     checks = [
         # AC_CHECK_FUNCS([flockfile funlockfile]) - line 121
-        macros.AC_CHECK_FUNC("flockfile", define = "HAVE_FLOCKFILE"),
-        macros.AC_CHECK_FUNC("funlockfile", define = "HAVE_FUNLOCKFILE"),
+        macros.AC_CHECK_FUNC(
+            "flockfile",
+            define = "HAVE_FLOCKFILE",
+        ),
+        macros.AC_CHECK_FUNC(
+            "funlockfile",
+            define = "HAVE_FUNLOCKFILE",
+        ),
         # AC_CHECK_DECLS([getc_unlocked]) - line 122
         # Note: HAVE_DECL_GETC_UNLOCKED is provided by unlocked-io dependency
     ],
@@ -34,15 +40,18 @@ autoconf(
         # AC_CHECK_DECLS_ONCE([getdelim]) - line 21
         macros.AC_CHECK_DECL(
             "getdelim",
-            headers = ["stdio.h"],
             define = "HAVE_DECL_GETDELIM",
+            headers = ["stdio.h"],
         ),
 
         # gl_CHECK_FUNCS_ANDROID([getdelim], [[#include <stdio.h>]]) - line 23
         # Check for getdelim function (similar to AC_CHECK_FUNC but also checks Android-specific behavior)
         # Use AC_CHECK_FUNC which performs a link test and is equivalent to gl_CHECK_FUNCS_ANDROID
         # on non-Android systems
-        macros.AC_CHECK_FUNC("getdelim", define = "_gl_cv_func_getdelim"),
+        macros.AC_CHECK_FUNC(
+            "getdelim",
+            define = "_gl_cv_func_getdelim",
+        ),
 
         # Create HAVE_GETDELIM define if function exists (lines 24-25)
         # The m4 sets HAVE_GETDELIM=1 if getdelim found, 0 otherwise

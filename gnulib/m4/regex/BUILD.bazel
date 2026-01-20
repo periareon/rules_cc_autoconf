@@ -10,19 +10,19 @@ autoconf(
     checks = [
         # AC_REQUIRE([AC_CANONICAL_HOST]) - line 14
         # This is handled by AC_CANONICAL_HOST dependency
-        
+
         # AC_RUN_IFELSE test (lines 36-304)
         # This is a complex runtime test that can't be done in Bazel's cross-compilation environment
         # The test checks if the system's regex works correctly. If it fails or if cross-compiling,
         # the included regex is used.
         # Based on golden files, both macOS and Linux use the included regex
         # (both show _REGEX_INCLUDE_LIMITS_H and _REGEX_LARGE_OFFSETS defined)
-        
+
         # If included regex is used, define various macros (lines 239-289)
         # Based on golden files, these are always defined on both platforms
         macros.AC_DEFINE("_REGEX_INCLUDE_LIMITS_H", "1"),
         macros.AC_DEFINE("_REGEX_LARGE_OFFSETS", "1"),
-        
+
         # Define rpl_* replacements (lines 242-289)
         # These are AC_DEFINE_UNQUOTED calls that rename functions
         macros.AC_DEFINE_UNQUOTED("re_syntax_options", "rpl_re_syntax_options"),
@@ -59,30 +59,39 @@ autoconf(
     checks = [
         # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 309
         # This is handled by extensions dependency
-        
+
         # AC_REQUIRE([AC_C_INLINE]) - line 310
         # This is handled by AC_C_INLINE dependency
-        
+
         # AC_REQUIRE([AC_C_RESTRICT]) - line 311
         # This is handled by AC_C_RESTRICT dependency
-        
+
         # AC_REQUIRE([AC_TYPE_MBSTATE_T]) - line 312
         # This is handled by AC_TYPE_MBSTATE_T dependency
-        
+
         # AC_CHECK_HEADERS([libintl.h]) - line 313
-        macros.AC_CHECK_HEADER("libintl.h", define = "HAVE_LIBINTL_H"),
-        
+        macros.AC_CHECK_HEADER(
+            "libintl.h",
+            define = "HAVE_LIBINTL_H",
+        ),
+
         # AC_CHECK_FUNCS_ONCE([isblank iswctype]) - line 314
-        macros.AC_CHECK_FUNC("isblank", define = "HAVE_ISBLANK"),
-        macros.AC_CHECK_FUNC("iswctype", define = "HAVE_ISWCTYPE"),
-        
+        macros.AC_CHECK_FUNC(
+            "isblank",
+            define = "HAVE_ISBLANK",
+        ),
+        macros.AC_CHECK_FUNC(
+            "iswctype",
+            define = "HAVE_ISWCTYPE",
+        ),
+
         # AC_CHECK_DECLS([isblank], ...) - line 315
         macros.AC_CHECK_DECL(
             "isblank",
             define = "HAVE_DECL_ISBLANK",
             headers = ["ctype.h"],
         ),
-        
+
         # Note: AC_CHECK_DECLS_ONCE([alarm]) is called from gl_REGEX (line 28)
         # This needs to be checked
         macros.AC_CHECK_DECL(

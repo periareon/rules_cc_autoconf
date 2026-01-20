@@ -9,7 +9,7 @@ autoconf(
     checks = [
         # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - line 63
         # This is provided by extensions dependency
-        
+
         # AC_CACHE_CHECK([for arithmetic hrtime_t], ...) - lines 64-70
         # AC_COMPILE_IFELSE checks if hrtime_t is an arithmetic type
         macros.AC_TRY_COMPILE(
@@ -19,7 +19,7 @@ int main(void) { return x/x; }""",
             define = "gl_cv_arithmetic_hrtime_t",
             language = "c",
         ),
-        
+
         # if test $gl_cv_arithmetic_hrtime_t = yes; then
         #   AC_DEFINE([HAVE_ARITHMETIC_HRTIME_T], [1]) - lines 71-73
         # fi
@@ -52,13 +52,13 @@ autoconf(
     checks = [
         # AC_REQUIRE([gl_ARITHMETIC_HRTIME_T]) - line 11
         # This is provided by gl_ARITHMETIC_HRTIME_T dependency
-        
+
         # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - line 12
         # This is provided by extensions dependency
-        
+
         # AC_REQUIRE([gl_XTIME]) - line 13
         # This is provided by gl_XTIME dependency
-        
+
         # AC_CHECK_DECLS([gethrtime], ...) - line 14
         macros.AC_CHECK_DECL(
             "gethrtime",
@@ -69,10 +69,10 @@ autoconf(
         macros.AC_DEFINE(
             "HAVE_DECL_GETHRTIME",
             condition = "ac_cv_have_decl_gethrtime",
-            if_true = "1",
             if_false = "0",
+            if_true = "1",
         ),
-        
+
         # GETHRXTIME_LIB= - line 15
         # if test $ac_cv_have_decl_gethrtime = no \
         #    || test $gl_cv_arithmetic_hrtime_t = no; then
@@ -81,15 +81,21 @@ autoconf(
         # fi
         # Based on golden files, GETHRXTIME_LIB="" on macOS
         macros.AC_SUBST("GETHRXTIME_LIB", ""),
-        
+
         # LIB_GETHRXTIME="$GETHRXTIME_LIB" - line 45
         # For backward compatibility
         macros.AC_SUBST("LIB_GETHRXTIME", ""),
-        
+
         # AC_CHECK_FUNCS_ONCE([microuptime nanouptime]) - line 24
         # These are BSD-specific functions, not available on macOS
-        macros.AC_CHECK_FUNC("microuptime", define = "ac_cv_func_microuptime"),
-        macros.AC_CHECK_FUNC("nanouptime", define = "ac_cv_func_nanouptime"),
+        macros.AC_CHECK_FUNC(
+            "microuptime",
+            define = "ac_cv_func_microuptime",
+        ),
+        macros.AC_CHECK_FUNC(
+            "nanouptime",
+            define = "ac_cv_func_nanouptime",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [

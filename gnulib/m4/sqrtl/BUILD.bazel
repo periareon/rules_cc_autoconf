@@ -11,8 +11,8 @@ autoconf(
         # Use temporary define to avoid direct HAVE_DECL_SQRTL definition
         macros.AC_CHECK_DECL(
             "sqrtl",
-            headers = ["math.h"],
             define = "_gl_cv_decl_sqrtl",  # Use temporary define to avoid direct HAVE_DECL_SQRTL
+            headers = ["math.h"],
         ),
     ],
     visibility = ["//visibility:public"],
