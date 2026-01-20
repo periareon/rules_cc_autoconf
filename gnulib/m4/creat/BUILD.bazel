@@ -10,7 +10,7 @@ autoconf(
     checks = select({
         "@platforms//os:windows": [
             # On Windows, unconditionally set REPLACE_CREAT=1
-            macros.M4_DEFINE("REPLACE_CREAT", "1"),
+            macros.M4_VARIABLE("REPLACE_CREAT", "1"),
         ],
         "//conditions:default": [],
     }),

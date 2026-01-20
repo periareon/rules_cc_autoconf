@@ -326,13 +326,13 @@ int Checker::run_checks_by_define(
                         if (!value.empty() || should_create_define) {
                             result = CheckResult(check.define(), value, true,
                                                  check_type_is_define(check.type()),
-                                                 check_type_is_subst(check.type()),
+                                                 check.subst(),
                                                  check.type());
                         } else {
                             // Mark as not successful so it won't be output (if_false=None case)
                             result = CheckResult(check.define(), "", false,
                                                  check_type_is_define(check.type()),
-                                                 check_type_is_subst(check.type()),
+                                                 check.subst(),
                                                  check.type());
                         }
                     } else {
@@ -341,7 +341,7 @@ int Checker::run_checks_by_define(
                                           "' which was not found");
                         result = CheckResult(check.define(), "", false,
                                              check_type_is_define(check.type()),
-                                             check_type_is_subst(check.type()),
+                                             check.subst(),
                                              check.type());
                     }
                 } else {

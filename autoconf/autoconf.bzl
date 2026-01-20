@@ -30,6 +30,7 @@ def _checks_equivalent(a, b):
     # Compare all fields that affect check behavior
     fields = [
         "type",
+        "subst",
         "name",
         "define",
         "language",
@@ -75,26 +76,41 @@ def _flatten_checks(raw_checks, label):
             if _checks_equivalent(existing, check):
                 # Identical check - skip (silently merge)
                 pass
-            elif existing.get("type") == "m4_define" or check.get("type") == "m4_define":
+            elif existing.get("type") == "m4_variable":
                 # m4_define doesn't generate output, so it can coexist with other types
                 # Keep the non-m4_define check as the one that generates output
-                if check.get("type") == "m4_define":
+                if check.get("type") == "m4_variable":
                     # This m4_define is for computation only, existing check handles output
                     pass
                 else:
                     # Replace m4_define with the check that generates output
                     result[define] = check
-            elif ((existing.get("type") == "define" or existing.get("type") == "define_unquoted" or existing.get("type") == "decl") and check.get("type") == "subst") or \
-                 (existing.get("type") == "subst" and (check.get("type") == "define" or check.get("type") == "define_unquoted" or check.get("type") == "decl")):
+            elif ((existing.get("type") == "define" or existing.get("type") == "define_unquoted" or existing.get("type") == "decl") and check.get("subst") == True) or \
+                 (existing.get("type") == "m4_variable" and (check.get("type") == "define" or check.get("type") == "define_unquoted" or check.get("type") == "decl")):
                 # AC_DEFINE/AC_DEFINE_UNQUOTED/AC_CHECK_DECL generates config.h defines, AC_SUBST generates @VAR@ substitutions
                 # AC_DEFINE/AC_CHECK_DECL values are already used for @VAR@ replacement, so skip subst
                 # Keep the define/decl check (it handles both outputs)
-                if check.get("type") == "subst":
+                if check.get("subst") == True:
                     # Skip subst - define/decl already provides @VAR@ replacement
                     pass
                 else:
                     # Keep define/decl (replaces subst)
                     result[define] = check
+            elif existing.get("subst") == True and check.get("subst") == True:
+                # Both are subst - allow if equivalent, otherwise conflict
+                if _checks_equivalent(existing, check):
+                    # Identical subst - skip (silently merge)
+                    pass
+                else:
+                    fail(("Conflicting subst definitions for '{}' in '{}'. " +
+                          "The same subst variable is used with different parameters. " +
+                          "Use a custom 'define' parameter to disambiguate.").format(
+                        define,
+                        label,
+                    ))
+            elif (existing.get("subst") == True and (check.get("type") == "define" or check.get("type") == "define_unquoted" or check.get("type") == "decl")):
+                # Existing is subst, new is define/decl - keep define/decl (replaces subst)
+                result[define] = check
             else:
                 fail(("Conflicting check definitions for '{}' in '{}'. " +
                       "The same define name is used with different parameters. " +
@@ -155,7 +171,7 @@ def _autoconf_impl(ctx):
             # (one generates config.h defines, the other generates @VAR@ substitutions)
             check_type = check.get("type")
             is_define_type = check_type in ["define", "define_unquoted"]
-            is_subst_type = check_type == "subst"
+            is_subst_type = check.get("subst") == True
 
             # If current check is a define/subst type, allow it to coexist with transitive checks
             # The _flatten_checks logic already handles define/subst conflicts within the same target

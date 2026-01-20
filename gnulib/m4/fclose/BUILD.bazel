@@ -24,18 +24,18 @@ autoconf(
     checks = select({
         # glibc: fflush works but fclose_stdin doesn't
         "@platforms//os:linux": [
-            macros.M4_DEFINE("REPLACE_FCLOSE", "1"),
+            macros.M4_VARIABLE("REPLACE_FCLOSE", "1"),
         ],
         # NetBSD/OpenBSD: fflush broken → fclose needs replacement
         "@platforms//os:netbsd": [
-            macros.M4_DEFINE("REPLACE_FCLOSE", "1"),
+            macros.M4_VARIABLE("REPLACE_FCLOSE", "1"),
         ],
         "@platforms//os:openbsd": [
-            macros.M4_DEFINE("REPLACE_FCLOSE", "1"),
+            macros.M4_VARIABLE("REPLACE_FCLOSE", "1"),
         ],
         # Windows: both fflush and fclose are broken
         "@platforms//os:windows": [
-            macros.M4_DEFINE("REPLACE_FCLOSE", "1"),
+            macros.M4_VARIABLE("REPLACE_FCLOSE", "1"),
         ],
         # musl and other platforms: assume fclose works
         "//conditions:default": [],

@@ -13,11 +13,11 @@ autoconf(
     checks = select({
         "@platforms//os:macos": [
             # On macOS, set REPLACE_FSTAT=1 (can return negative tv_nsec)
-            macros.M4_DEFINE("REPLACE_FSTAT", "1"),
+            macros.M4_VARIABLE("REPLACE_FSTAT", "1"),
         ],
         "@platforms//os:windows": [
             # On Windows, unconditionally set REPLACE_FSTAT=1
-            macros.M4_DEFINE("REPLACE_FSTAT", "1"),
+            macros.M4_VARIABLE("REPLACE_FSTAT", "1"),
         ],
         "//conditions:default": [],
     }),

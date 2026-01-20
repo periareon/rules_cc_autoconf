@@ -25,10 +25,8 @@ std::string check_type_to_string(CheckType type) {
             return "define";
         case CheckType::kDefineUnquoted:
             return "define_unquoted";
-        case CheckType::kSubst:
-            return "subst";
-        case CheckType::kM4Define:
-            return "m4_define";
+        case CheckType::kM4Variable:
+            return "m4_variable";
         case CheckType::kSizeof:
             return "sizeof";
         case CheckType::kAlignof:
@@ -47,13 +45,8 @@ std::string check_type_to_string(CheckType type) {
 }
 
 bool check_type_is_define(CheckType type) {
-    // All CheckTypes are defines except kM4Define and kSubst
-    return type != CheckType::kM4Define && type != CheckType::kSubst;
-}
-
-bool check_type_is_subst(CheckType type) {
-    // Only kSubst is a subst
-    return type == CheckType::kSubst;
+    // All CheckTypes are defines except kM4Variable
+    return type != CheckType::kM4Variable;
 }
 
 std::optional<Check> Check::from_json(const void* json_data) {
@@ -110,9 +103,13 @@ std::optional<Check> Check::from_json(const void* json_data) {
     } else if (type_str == "define_unquoted") {
         type = CheckType::kDefineUnquoted;
     } else if (type_str == "subst") {
-        type = CheckType::kSubst;
-    } else if (type_str == "m4_define") {
-        type = CheckType::kM4Define;
+        // Backward compatibility: subst -> kM4Variable with subst=true
+        type = CheckType::kM4Variable;
+    } else if (type_str == "m4_variable") {
+        // Backward compatibility: m4_define -> kM4Variable
+        type = CheckType::kM4Variable;
+    } else if (type_str == "m4_variable") {
+        type = CheckType::kM4Variable;
     } else {
         DebugLogger::warn("Unknown check type: " + type_str);
         return std::nullopt;
@@ -124,6 +121,14 @@ std::optional<Check> Check::from_json(const void* json_data) {
                 json.contains("language") && json["language"].is_string()
                     ? json["language"].get<std::string>()
                     : "c");
+
+    // Parse subst field (defaults to false)
+    if (json.contains("subst") && json["subst"].is_boolean()) {
+        check.subst_ = json["subst"].get<bool>();
+    } else if (type_str == "subst") {
+        // Backward compatibility: "subst" type implies subst=true
+        check.subst_ = true;
+    }
 
     // Parse optional fields
     if (json.contains("code") && json["code"].is_string()) {

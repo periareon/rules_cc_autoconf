@@ -287,10 +287,10 @@ macros.AC_DEFINE("PROJECT_NAME", '"MyProject"')
 - Second argument becomes `value` parameter
 - Preserve quotes in string values (use `'"string"'` for string literals)
 
-### Pattern 10b: M4 Shell Variables (M4_DEFINE)
+### Pattern 10b: M4 Shell Variables (M4_VARIABLE)
 
 Many M4 macros use shell variables like `REPLACE_*` or `HAVE_*` that are set via
-assignment (not `AC_DEFINE`). These are tracked separately using `M4_DEFINE`.
+assignment (not `AC_DEFINE`). These are tracked separately using `M4_VARIABLE`.
 
 **M4:**
 
@@ -303,16 +303,16 @@ HAVE_WORKING_MKTIME=0
 **Bazel:**
 
 ```python
-# Use M4_DEFINE for shell variables
-macros.M4_DEFINE("REPLACE_FSTAT", "1")
-macros.M4_DEFINE("HAVE_WORKING_MKTIME", "0")
+# Use M4_VARIABLE for shell variables
+macros.M4_VARIABLE("REPLACE_FSTAT", "1")
+macros.M4_VARIABLE("HAVE_WORKING_MKTIME", "0")
 ```
 
 **Rules:**
 
-- Use `macros.M4_DEFINE` for M4 shell variable assignments (e.g., `REPLACE_*=1`)
+- Use `macros.M4_VARIABLE` for M4 shell variable assignments (e.g., `REPLACE_*=1`)
 - Use `macros.AC_DEFINE` only for actual `AC_DEFINE()` calls in the M4 source
-- Both produce the same result, but `M4_DEFINE` helps track the semantic difference
+- Both produce the same result, but `M4_VARIABLE` helps track the semantic difference
 
 ### Pattern 11: Conditional Dependencies
 
@@ -387,7 +387,7 @@ AC_CHECK_HEADER([stdio.h],
 AC_CHECK_FUNCS([ffs],
     [
         # If ffs() exists, check if it's declared in strings.h
-        AC_CHECK_DECL([ffs], 
+        AC_CHECK_DECL([ffs],
             [AC_DEFINE([STRINGS_H_DECLARES_FFS], [1])],
             [],
             [[#include <strings.h>]]
@@ -640,7 +640,7 @@ autoconf(
     name = "autoconf",
     checks = select({
         "@platforms//os:windows": [
-            macros.M4_DEFINE("REPLACE_ACCESS", "1"),
+            macros.M4_VARIABLE("REPLACE_ACCESS", "1"),
         ],
         "//conditions:default": [
             macros.AC_CHECK_FUNC("access"),
@@ -689,8 +689,8 @@ autoconf(
     checks = select({
         "@platforms//os:windows": [
             # On Windows, unconditionally set REPLACE_ACCESS=1
-            # Use M4_DEFINE for M4 shell variables (not AC_DEFINE values)
-            macros.M4_DEFINE("REPLACE_ACCESS", "1"),
+            # Use M4_VARIABLE for M4 shell variables (not AC_DEFINE values)
+            macros.M4_VARIABLE("REPLACE_ACCESS", "1"),
         ],
         "//conditions:default": [
             # Non-Windows checks
@@ -704,7 +704,7 @@ autoconf(
 
 **Rules:**
 
-- Use `macros.M4_DEFINE` for M4 shell variables (e.g., `REPLACE_*`, `HAVE_*` set via assignment)
+- Use `macros.M4_VARIABLE` for M4 shell variables (e.g., `REPLACE_*`, `HAVE_*` set via assignment)
 - Use `macros.AC_DEFINE` only for actual `AC_DEFINE()` calls in the M4 source
 - `case "$host_os" in mingw* | windows*)` → `select({"@platforms//os:windows": [...]})`
 - `case "$host_os" in darwin*)` → `select({"@platforms//os:macos": [...]})`
@@ -734,11 +734,11 @@ autoconf(
     checks = select({
         "@platforms//os:windows": [
             # Windows: stat returns timezone-affected timestamps
-            macros.M4_DEFINE("REPLACE_FSTAT", "1"),
+            macros.M4_VARIABLE("REPLACE_FSTAT", "1"),
         ],
         "@platforms//os:macos": [
             # macOS: stat can return negative tv_nsec
-            macros.M4_DEFINE("REPLACE_FSTAT", "1"),
+            macros.M4_VARIABLE("REPLACE_FSTAT", "1"),
         ],
         "//conditions:default": [
             # Other platforms: no replacement needed
@@ -761,7 +761,7 @@ autoconf(
     ] + select({
         "@platforms//os:windows": [
             # Windows-specific: unconditionally replace open()
-            macros.M4_DEFINE("REPLACE_OPEN", "1"),
+            macros.M4_VARIABLE("REPLACE_OPEN", "1"),
         ],
         "//conditions:default": [],
     }),

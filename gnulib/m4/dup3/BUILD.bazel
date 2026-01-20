@@ -13,7 +13,7 @@ autoconf(
             "dup3",
             define = "ac_cv_func_dup3",
         ),
-        macros.M4_DEFINE(
+        macros.M4_VARIABLE(
             "HAVE_DUP3",
             "0",
             requires = ["ac_cv_func_dup3==1"],

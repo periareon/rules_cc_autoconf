@@ -106,9 +106,13 @@ std::vector<CheckResult> load_results_from_file(
             } else if (type_str == "define_unquoted") {
                 type = CheckType::kDefineUnquoted;
             } else if (type_str == "subst") {
-                type = CheckType::kSubst;
-            } else if (type_str == "m4_define") {
-                type = CheckType::kM4Define;
+                // Backward compatibility: subst -> kM4Variable
+                type = CheckType::kM4Variable;
+            } else if (type_str == "m4_variable") {
+                // Backward compatibility: m4_define -> kM4Variable
+                type = CheckType::kM4Variable;
+            } else if (type_str == "m4_variable") {
+                type = CheckType::kM4Variable;
             } else if (type_str == "sizeof") {
                 type = CheckType::kSizeof;
             } else if (type_str == "alignof") {

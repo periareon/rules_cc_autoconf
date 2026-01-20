@@ -60,7 +60,7 @@ def _add_conditionals(
 def _validate_not_select(value, param_name, macro_name):
     """Validate that a value is not a select().
 
-    Bazel's select() cannot be used with AC_DEFINE, AC_SUBST, or M4_DEFINE
+    Bazel's select() cannot be used with AC_DEFINE, AC_SUBST, or M4_VARIABLE
     because these macros are evaluated at loading time to produce JSON,
     but select() is only resolved at analysis time.
 
@@ -1674,7 +1674,8 @@ def _ac_subst(
         "define": variable,
         "language": "c",
         "name": variable,
-        "type": "subst",  # Mark as substitution type
+        "type": "m4_variable",  # Use M4Variable type
+        "subst": True,  # Mark as substitution variable
     }
 
     if requires:
@@ -1703,7 +1704,7 @@ def _ac_subst(
 
     return json.encode(check)
 
-def _m4_define(
+def _m4_variable(
         define,
         value = None,
         requires = None,
@@ -1729,10 +1730,10 @@ def _m4_define(
     Example:
     ```python
     # Simple (always set)
-    macros.M4_DEFINE("REPLACE_FOO", "1")
+    macros.M4_VARIABLE("REPLACE_FOO", "1")
 
     # Conditional (set based on another check's result)
-    macros.M4_DEFINE(
+    macros.M4_VARIABLE(
         "REPLACE_FOO",
         condition = "HAVE_FOO",
         if_true = "0",    # Value when HAVE_FOO is true
@@ -1743,6 +1744,7 @@ def _m4_define(
     Note:
         This is similar to `AC_SUBST` but is useful for tracking the difference
         between actual `AC_DEFINE` values and M4 shell variables used in macros.
+        Unlike `AC_SUBST`, this does not set `subst=true` by default.
 
     Args:
         define: Define name (e.g., `"REPLACE_FOO"`)
@@ -1760,16 +1762,17 @@ def _m4_define(
     """
 
     # Validate that select() is not used
-    _validate_not_select(value, "value", "M4_DEFINE")
-    _validate_not_select(if_true, "if_true", "M4_DEFINE")
-    _validate_not_select(if_false, "if_false", "M4_DEFINE")
+    _validate_not_select(value, "value", "M4_VARIABLE")
+    _validate_not_select(if_true, "if_true", "M4_VARIABLE")
+    _validate_not_select(if_false, "if_false", "M4_VARIABLE")
 
     check = {
         "code": _AC_SIMPLE_MAIN_TEMPLATE,
         "define": define,
         "language": "c",
         "name": define,
-        "type": "m4_define",  # Compute value for requires but don't generate output
+        "type": "m4_variable",  # Compute value for requires but don't generate output
+        "subst": False,  # Default to False (not a substitution variable)
     }
 
     if requires:
@@ -1822,5 +1825,5 @@ macros = struct(
     AC_SUBST = _ac_subst,
     AC_TRY_COMPILE = _ac_try_compile,
     AC_TRY_LINK = _ac_try_link,
-    M4_DEFINE = _m4_define,
+    M4_VARIABLE = _m4_variable,
 )

@@ -62,7 +62,7 @@ int main(void) { return 0; }
     ] + select({
         "@platforms//os:windows": [
             # On Windows, unconditionally set REPLACE_STAT=1
-            macros.M4_DEFINE("REPLACE_STAT", "1"),
+            macros.M4_VARIABLE("REPLACE_STAT", "1"),
         ],
         "//conditions:default": [],
     }),

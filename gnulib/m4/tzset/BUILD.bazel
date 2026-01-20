@@ -13,7 +13,7 @@ autoconf(
     ] + select({
         "@platforms//os:windows": [
             # On Windows, unconditionally set REPLACE_TZSET=1
-            macros.M4_DEFINE("REPLACE_TZSET", "1"),
+            macros.M4_VARIABLE("REPLACE_TZSET", "1"),
         ],
         "//conditions:default": [],
     }),

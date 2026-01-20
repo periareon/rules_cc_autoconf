@@ -35,8 +35,8 @@ int main(void) { return 0; }
                 "__mktime_internal",
                 define = "HAVE_MKTIME_INTERNAL",
             ),
-            macros.M4_DEFINE("REPLACE_MKTIME", "1"),
-            macros.M4_DEFINE("NEED_MKTIME_WINDOWS", "1"),
+            macros.M4_VARIABLE("REPLACE_MKTIME", "1"),
+            macros.M4_VARIABLE("NEED_MKTIME_WINDOWS", "1"),
             macros.AC_DEFINE(
                 "mktime_internal",
                 "__mktime_internal",

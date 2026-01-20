@@ -23,10 +23,10 @@ struct CheckResult {
     /** Whether the check succeeded */
     bool success = false;
 
-    /** Whether this is a define (true for all CheckTypes except kM4Define and kSubst) */
+    /** Whether this is a define (true for all CheckTypes except kM4Variable) */
     bool is_define = false;
 
-    /** Whether this is a subst (true only for kSubst) */
+    /** Whether this is a subst (true when subst field is set on the check) */
     bool is_subst = false;
 
     /** The type of check that produced this result */

@@ -173,7 +173,7 @@ std::string SourceGenerator::process_template(
 
         // Non-subst types (AC_DEFINE, AC_CHECK_*, etc.): Also replace #undef
         // AC_SUBST should NOT replace #undef statements in config.h
-        // M4_DEFINE should also NOT replace #undef (compute-only)
+        // M4_VARIABLE should also NOT replace #undef (compute-only)
         // Only process #undef replacement in kDefines or kAll mode
         if ((mode_ == Mode::kDefines || mode_ == Mode::kAll) &&
             !result.is_subst && result.is_define && !is_suffixed_subst) {

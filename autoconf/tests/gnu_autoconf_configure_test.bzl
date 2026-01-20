@@ -86,5 +86,6 @@ def gnu_autoconf_configure_test(
         deps = [Label("//autoconf/tests:gnu_autoconf_configure_tester")],
         tags = tags + ["requires-autoconf"],
         target_compatible_with = target_compatible_with,
+        env_inherit = ["PATH"],
         **kwargs
     )

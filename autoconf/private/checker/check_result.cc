@@ -7,17 +7,17 @@ namespace rules_cc_autoconf {
 
 std::optional<CheckResult> CheckResult::from_json(const std::string& define_name, const void* json_value_ptr) {
     const nlohmann::json* json_value = static_cast<const nlohmann::json*>(json_value_ptr);
-    
+
     if (!json_value->is_object() || !json_value->contains("success") || !(*json_value)["success"].is_boolean()) {
         return std::nullopt;
     }
-    
+
     bool success = (*json_value)["success"].get<bool>();
     std::string value =
         json_value->contains("value") && (*json_value)["value"].is_string()
             ? (*json_value)["value"].get<std::string>()
             : "";
-    
+
     // Check for is_define, define_flag, or define for backward compatibility
     bool is_define = false;
     if (json_value->contains("is_define") && (*json_value)["is_define"].is_boolean()) {
@@ -27,7 +27,7 @@ std::optional<CheckResult> CheckResult::from_json(const std::string& define_name
     } else if (json_value->contains("define") && (*json_value)["define"].is_boolean()) {
         is_define = (*json_value)["define"].get<bool>();
     }
-    
+
     // Check for is_subst, subst_flag, or subst for backward compatibility
     bool is_subst = false;
     if (json_value->contains("is_subst") && (*json_value)["is_subst"].is_boolean()) {
@@ -37,7 +37,7 @@ std::optional<CheckResult> CheckResult::from_json(const std::string& define_name
     } else if (json_value->contains("subst") && (*json_value)["subst"].is_boolean()) {
         is_subst = (*json_value)["subst"].get<bool>();
     }
-    
+
     // Check for type (defaults to kDefine for backward compatibility)
     CheckType type = CheckType::kDefine;
     if (json_value->contains("type") && (*json_value)["type"].is_string()) {
@@ -62,9 +62,13 @@ std::optional<CheckResult> CheckResult::from_json(const std::string& define_name
         } else if (type_str == "define_unquoted") {
             type = CheckType::kDefineUnquoted;
         } else if (type_str == "subst") {
-            type = CheckType::kSubst;
-        } else if (type_str == "m4_define") {
-            type = CheckType::kM4Define;
+            // Backward compatibility: subst -> kM4Variable
+            type = CheckType::kM4Variable;
+        } else if (type_str == "m4_variable") {
+            // Backward compatibility: m4_define -> kM4Variable
+            type = CheckType::kM4Variable;
+        } else if (type_str == "m4_variable") {
+            type = CheckType::kM4Variable;
         } else if (type_str == "sizeof") {
             type = CheckType::kSizeof;
         } else if (type_str == "alignof") {
@@ -79,7 +83,7 @@ std::optional<CheckResult> CheckResult::from_json(const std::string& define_name
             type = CheckType::kMember;
         }
     }
-    
+
     CheckResult result(define_name, value, success, is_define, is_subst, type);
     return result;
 }

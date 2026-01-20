@@ -19,8 +19,7 @@ enum class CheckType {
     kLink,        ///< Check if code compiles and links
     kDefine,      ///< Directly apply the define with the given value
     kDefineUnquoted,  ///< AC_DEFINE_UNQUOTED - like kDefine but empty values use trailing space instead of /**/
-    kSubst,       ///< AC_SUBST - substitution variable (may be conditional)
-    kM4Define,    ///< M4_DEFINE - compute value for requires but don't generate output
+    kM4Variable,  ///< M4_VARIABLE - compute value for requires but don't generate output (can be subst)
     kSizeof,      ///< Determine size of type
     kAlignof,     ///< Determine alignment of type
     kComputeInt,  ///< Compute integer value
@@ -37,18 +36,11 @@ enum class CheckType {
 std::string check_type_to_string(CheckType type);
 
 /**
- * @brief Determine if a CheckType is a define (not kM4Define or kSubst).
+ * @brief Determine if a CheckType is a define (not kM4Variable).
  * @param type The CheckType enum value.
  * @return True if this is a define, false otherwise.
  */
 bool check_type_is_define(CheckType type);
-
-/**
- * @brief Determine if a CheckType is a subst.
- * @param type The CheckType enum value.
- * @return True if this is kSubst, false otherwise.
- */
-bool check_type_is_subst(CheckType type);
 
 /**
  * @brief Configuration check specification.
@@ -153,6 +145,12 @@ class Check {
         return compile_defines_;
     }
 
+    /**
+     * @brief Get whether this check is a substitution variable.
+     * @return True if this is a substitution variable, false otherwise.
+     */
+    bool subst() const { return subst_; }
+
    private:
     std::string name_{};                 /// Name (e.g., header/function name)
     std::string define_{};               /// Preprocessor define name
@@ -168,6 +166,7 @@ class Check {
     std::optional<std::vector<std::string>>
         compile_defines_{};  /// Defines to include in compilation code
     CheckType type_{};  /// Type of check
+    bool subst_ = false;  /// Whether this is a substitution variable
 
     /**
      * @brief Private constructor (use from_json to create).
