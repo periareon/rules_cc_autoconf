@@ -40,4 +40,4 @@
 #define UNQUOTED_VALUE test
 
 /* Unquoted empty value */
-#define UNQUOTED_EMPTY /**/
+#define UNQUOTED_EMPTY 

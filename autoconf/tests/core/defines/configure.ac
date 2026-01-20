@@ -9,6 +9,7 @@ AC_DEFINE([HAVE_FOO], [1], [Have foo])
 AC_DEFINE([HAVE_FOO_BAR], [1], [Have foo bar])
 AC_DEFINE([EMPTY_VALUE], [], [Have empty value])
 AC_DEFINE_UNQUOTED([UNQUOTED_VALUE], [test], [Unquoted value])
-AC_DEFINE_UNQUOTED([UNQUOTED_EMPTY], [], [Unquoted empty value])
+variable=""
+AC_DEFINE_UNQUOTED([UNQUOTED_EMPTY], [$variable], [Unquoted empty value])
 
 AC_OUTPUT
