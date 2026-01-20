@@ -3,13 +3,37 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
+# gl_FUNC_ATOLL - lines 9-16
 autoconf(
     name = "atoll",
     checks = [
-        macros.AC_CHECK_FUNC("atoll"),
+        # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - line 12
+        # This is provided by stdlib_h:defaults dependency
+        
+        # AC_CHECK_FUNCS([atoll]) - line 13
+        macros.AC_CHECK_FUNC("atoll", define = "ac_cv_func_atoll"),
+        
+        # if test $ac_cv_func_atoll = no; then
+        #   HAVE_ATOLL=0 - line 15
+        # fi
+        # Define HAVE_ATOLL if function exists
+        macros.AC_DEFINE(
+            "HAVE_ATOLL",
+            condition = "ac_cv_func_atoll",
+            if_true = "1",
+        ),
+        # Set HAVE_ATOLL=0 as substitution variable if function doesn't exist
+        macros.AC_SUBST(
+            "HAVE_ATOLL",
+            condition = "ac_cv_func_atoll",
+            if_true = "1",
+            if_false = "0",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/stdlib_h",  # AC_REQUIRE([gl_STDLIB_H_DEFAULTS])
+        "//gnulib/m4/stdlib_h:defaults",  # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - line 12
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

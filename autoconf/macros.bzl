@@ -1680,11 +1680,11 @@ def _ac_subst(
     if requires:
         check["requires"] = requires
 
-    if value and condition:
+    if value != None and condition:
         fail("`value` and `condition` are mutually exclusive. Please update `{}`".format(variable))
 
-    if value:
-        # Simple - always use value
+    if value != None:
+        # Simple - always use value (including empty string)
         check["define_value"] = value
         check["define_value_fail"] = value
 

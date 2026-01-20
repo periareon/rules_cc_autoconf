@@ -52,9 +52,7 @@ int main(void) {
 """,
             define = "_gl_cv_type_posix_spawn_file_actions_t",
         ),
-        
-        # Define these types when used standalone (spawn_h test expects them)
-        # posix_spawn will handle the conditional logic based on REPLACE_POSIX_SPAWN
+
         macros.AC_DEFINE(
             "HAVE_POSIX_SPAWNATTR_T",
             "1",
@@ -65,7 +63,7 @@ int main(void) {
             "1",
             requires = ["_gl_cv_type_posix_spawn_file_actions_t==1"],
         ),
-        
+
         # Note: HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR and ADDFCHDIR checks
         # are handled in gl_HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR macro,
         # but the golden file expects them to be undefined, so we don't check for them.
@@ -110,6 +108,10 @@ autoconf(
         macros.AC_SUBST("GNULIB_POSIX_SPAWNATTR_SETSIGMASK", "0"),
         macros.AC_SUBST("GNULIB_POSIX_SPAWNATTR_DESTROY", "0"),
         # REPLACE_* defaults
+        # Note: REPLACE_POSIX_SPAWN is only set as a substitution variable here.
+        # The define is set by posix_spawn module when needed.
+        # The requires clause in spawn_h checks REPLACE_POSIX_SPAWN==0, which will
+        # fail if posix_spawn sets REPLACE_POSIX_SPAWN=1, preventing the types from being defined.
         macros.AC_SUBST("REPLACE_POSIX_SPAWN", "0"),
         macros.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR", "0"),
         macros.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDCLOSE", "0"),

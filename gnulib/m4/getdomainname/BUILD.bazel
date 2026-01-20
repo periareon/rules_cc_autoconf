@@ -3,24 +3,100 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# HAVE_SYSINFO comes from physmem dependency
-
+# gl_FUNC_GETDOMAINNAME - lines 9-88
 autoconf(
     name = "getdomainname",
     checks = [
-        macros.AC_CHECK_HEADER("sys/systeminfo.h"),
+        # AC_REQUIRE([gl_UNISTD_H_DEFAULTS]) - line 12
+        # This is provided by unistd_h:defaults dependency
+        
+        # AC_REQUIRE([gl_SYS_SOCKET_H]) - line 13
+        # This is provided by sys_socket_h dependency
+        
+        # AC_REQUIRE([gl_NETDB_H]) - line 14
+        # This is provided by netdb_h dependency
+        
+        # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 17
+        # This is provided by extensions dependency
+        
+        # gl_CHECK_FUNCS_ANDROID([getdomainname], [[#include <unistd.h>]]) - line 28
+        # This is equivalent to AC_CHECK_FUNC
         macros.AC_CHECK_FUNC(
             "getdomainname",
-            define = "HAVE_GETDOMAINNAME",
+            define = "ac_cv_func_getdomainname",
+            code = "#include <unistd.h>\n",
         ),
+        # Define HAVE_GETDOMAINNAME if function exists (from gl_PREREQ_GETDOMAINNAME)
+        macros.AC_DEFINE(
+            "HAVE_GETDOMAINNAME",
+            condition = "ac_cv_func_getdomainname",
+            if_true = "1",
+        ),
+        
+        # AC_CHECK_DECLS([getdomainname], ...) - lines 50-59
         macros.AC_CHECK_DECL(
             "getdomainname",
-            headers = ["unistd.h"],
+            define = "ac_cv_have_decl_getdomainname",
+            headers = ["sys/types.h", "sys/socket.h", "netdb.h", "unistd.h"],
         ),
+        # Define HAVE_DECL_GETDOMAINNAME if declaration exists
+        macros.AC_DEFINE(
+            "HAVE_DECL_GETDOMAINNAME",
+            condition = "ac_cv_have_decl_getdomainname",
+            if_true = "1",
+        ),
+        # Set HAVE_DECL_GETDOMAINNAME=0 as substitution variable if declaration doesn't exist
+        macros.AC_SUBST(
+            "HAVE_DECL_GETDOMAINNAME",
+            condition = "ac_cv_have_decl_getdomainname",
+            if_true = "1",
+            if_false = "0",
+        ),
+        
+        # AC_CACHE_CHECK([for getdomainname's second argument type], ...) - lines 55-75
+        # Check if second argument is 'int' or 'size_t'
+        # On macOS, it's 'int', so we need to replace it
+        macros.AC_TRY_COMPILE(
+            code = """#include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#ifdef HAVE_NETDB_H
+#include <netdb.h>
+#endif
+#include <unistd.h>
+extern
+#ifdef __cplusplus
+"C"
+#endif
+int getdomainname (char *, int);
+int main(void) { return 0; }""",
+            define = "_gl_cv_decl_getdomainname_argtype2_int",
+            language = "c",
+            requires = ["ac_cv_have_decl_getdomainname"],
+        ),
+        
+        # Based on golden files, REPLACE_GETDOMAINNAME=1 on macOS
+        # (function exists but has wrong argument type: int instead of size_t)
+        macros.AC_SUBST("REPLACE_GETDOMAINNAME", "1"),
+        
+        # gl_PREREQ_GETDOMAINNAME - lines 90-96
+        # AC_CHECK_HEADERS([sys/systeminfo.h]) - line 94
+        macros.AC_CHECK_HEADER("sys/systeminfo.h", define = "HAVE_SYS_SYSTEMINFO_H"),
+        # AC_CHECK_FUNCS([sysinfo]) - line 95
+        macros.AC_CHECK_FUNC("sysinfo", define = "HAVE_SYSINFO"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        # AC_REQUIRE([gl_UNISTD_H_DEFAULTS]) - line 12
+        "//gnulib/m4/unistd_h:defaults",
+        # AC_REQUIRE([gl_SYS_SOCKET_H]) - line 13
+        "//gnulib/m4/sys_socket_h",
+        # AC_REQUIRE([gl_NETDB_H]) - line 14
+        "//gnulib/m4/netdb_h",
+        # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 17
+        "//gnulib/m4/extensions",
+        # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

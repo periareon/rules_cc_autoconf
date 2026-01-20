@@ -68,7 +68,8 @@ int main(void) {
         # On most systems, sched_yield is in libc, so SCHED_YIELD_LIB is empty
         macros.AC_SUBST("SCHED_YIELD_LIB", ""),
         # For backward compatibility
-        macros.AC_SUBST("LIB_SCHED_YIELD", "", condition = "_gl_have_sched_yield_in_libc", if_false = ""),
+        # LIB_SCHED_YIELD="$SCHED_YIELD_LIB" (line 308 in m4)
+        macros.AC_SUBST("LIB_SCHED_YIELD", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [

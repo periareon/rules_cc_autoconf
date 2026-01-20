@@ -161,9 +161,14 @@ std::string SourceGenerator::process_template(
         // available for substitution in output files
         // EXCEPT m4_define type which computes but doesn't generate output
         // Note: We've already filtered by mode, so process all results here
-        if (result.success && !result.value.empty()) {
+        // For substitution variables (is_subst), we always replace @VAR@ even if value is empty
+        if (result.success) {
             std::regex definePattern("@" + define_name + "@");
-            content = std::regex_replace(content, definePattern, result.value);
+            // For subst type, always replace (even with empty string)
+            // For other types, only replace if value is non-empty
+            if (result.is_subst || !result.value.empty()) {
+                content = std::regex_replace(content, definePattern, result.value);
+            }
         }
 
         // Non-subst types (AC_DEFINE, AC_CHECK_*, etc.): Also replace #undef
@@ -190,6 +195,9 @@ std::string SourceGenerator::process_template(
                     // - kDefine: create "#define NAME /**/" to match GNU autoconf AC_DEFINE behavior
                     // - kDefineUnquoted: create "#define NAME " (trailing space) to match GNU autoconf AC_DEFINE_UNQUOTED
                     //   behavior when used with shell variables (common case, e.g., iconv.m4)
+                    //   Note: GNU autoconf generates /**/ for AC_DEFINE_UNQUOTED([NAME], [], ...) (empty literal),
+                    //   but trailing space for AC_DEFINE_UNQUOTED([NAME], [$var], ...) where var=""
+                    //   Since we can't distinguish in Bazel, we use trailing space (the common case)
                     if (result.type == CheckType::kDefineUnquoted) {
                         replacement_text += " ";  // Trailing space for AC_DEFINE_UNQUOTED
                     } else {

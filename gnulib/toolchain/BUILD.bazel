@@ -4,8 +4,6 @@ autoconf_toolchain(
     name = "gnulib_toolchain",
     visibility = ["//visibility:public"],
     deps = [
-        # wint_t provides HAVE_WINT_T and HAVE_CRTDEFS_H needed by many headers
-        "//gnulib/m4/wint_t:wint_t",
         "//gnulib/m4/arpa_inet_h:defaults",
         "//gnulib/m4/ctype_h:defaults",
         "//gnulib/m4/dirent_h:defaults",
@@ -37,6 +35,7 @@ autoconf_toolchain(
         "//gnulib/m4/unistd_h:defaults",
         "//gnulib/m4/wchar_h:defaults",
         "//gnulib/m4/wctype_h:defaults",
+        "//gnulib/m4/wint_t:wint_t",
     ],
 )
 
