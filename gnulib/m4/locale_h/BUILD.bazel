@@ -109,6 +109,7 @@ autoconf(
         macros.AC_SUBST("REPLACE_DUPLOCALE", "0"),
         macros.AC_SUBST("REPLACE_FREELOCALE", "0"),
         macros.AC_SUBST("REPLACE_GETLOCALENAME_L", "0"),
+        macros.AC_SUBST("REPLACE_STRUCT_LCONV", "0"),
         macros.AC_SUBST("LOCALENAME_ENHANCE_LOCALE_FUNCS", "0"),
     ],
     visibility = ["//visibility:public"],

@@ -20,13 +20,3 @@ autoconf(
         "//gnulib/m4/signal_h",  # AC_REQUIRE([gl_SIGNAL_H_DEFAULTS])
     ],
 )
-
-autoconf(
-    name = "defaults",
-    checks = [
-        # Override HAVE_SIGHANDLER_T to "1" (conditional AC_SUBST sets it to "0" but golden expects "1")
-        macros.AC_SUBST("HAVE_SIGHANDLER_T", "1"),
-    ],
-    visibility = ["//visibility:public"],
-)
-

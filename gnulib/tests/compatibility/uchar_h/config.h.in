@@ -34,5 +34,3 @@
 #undef REPLACE_MBRTOC32
 #undef SMALL_WCHAR_T
 #undef STDC_HEADERS
-#undef am__fastdepCXX_FALSE
-#undef am__fastdepCXX_TRUE

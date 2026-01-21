@@ -1,6 +1,7 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/threads_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "threads_h",
@@ -17,4 +18,39 @@ autoconf(
         # Standard headers come from AC_USE_SYSTEM_EXTENSIONS
         "//gnulib/m4/extensions",
     ],
+)
+
+autoconf(
+    name = "defaults",
+    checks = [
+        macros.AC_SUBST("HAVE_THREAD_LOCAL", 1),
+        macros.AC_SUBST("BROKEN_THRD_JOIN", 0),
+        macros.AC_SUBST("BROKEN_THRD_START_T", 0),
+        macros.AC_SUBST("REPLACE_CALL_ONCE", 0),
+        macros.AC_SUBST("REPLACE_CND_BROADCAST", 0),
+        macros.AC_SUBST("REPLACE_CND_DESTROY", 0),
+        macros.AC_SUBST("REPLACE_CND_INIT", 0),
+        macros.AC_SUBST("REPLACE_CND_SIGNAL", 0),
+        macros.AC_SUBST("REPLACE_CND_TIMEDWAIT", 0),
+        macros.AC_SUBST("REPLACE_CND_WAIT", 0),
+        macros.AC_SUBST("REPLACE_MTX_DESTROY", 0),
+        macros.AC_SUBST("REPLACE_MTX_INIT", 0),
+        macros.AC_SUBST("REPLACE_MTX_LOCK", 0),
+        macros.AC_SUBST("REPLACE_MTX_TIMEDLOCK", 0),
+        macros.AC_SUBST("REPLACE_MTX_TRYLOCK", 0),
+        macros.AC_SUBST("REPLACE_MTX_UNLOCK", 0),
+        macros.AC_SUBST("REPLACE_THRD_CREATE", 0),
+        macros.AC_SUBST("REPLACE_THRD_CURRENT", 0),
+        macros.AC_SUBST("REPLACE_THRD_DETACH", 0),
+        macros.AC_SUBST("REPLACE_THRD_EQUAL", 0),
+        macros.AC_SUBST("REPLACE_THRD_EXIT", 0),
+        macros.AC_SUBST("REPLACE_THRD_JOIN", 0),
+        macros.AC_SUBST("REPLACE_THRD_SLEEP", 0),
+        macros.AC_SUBST("REPLACE_THRD_YIELD", 0),
+        macros.AC_SUBST("REPLACE_TSS_CREATE", 0),
+        macros.AC_SUBST("REPLACE_TSS_DELETE", 0),
+        macros.AC_SUBST("REPLACE_TSS_GET", 0),
+        macros.AC_SUBST("REPLACE_TSS_SET", 0),
+    ],
+    visibility = ["//visibility:public"],
 )

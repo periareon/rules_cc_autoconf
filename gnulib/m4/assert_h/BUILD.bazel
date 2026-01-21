@@ -33,13 +33,3 @@ int main(void) {
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
-
-autoconf(
-    name = "defaults",
-    checks = [
-        # NEXT_* variables (from include_next)
-        macros.AC_SUBST("NEXT_ASSERT_H", "<assert.h>"),
-        macros.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_ASSERT_H", "<assert.h>"),
-    ],
-    visibility = ["//visibility:public"],
-)

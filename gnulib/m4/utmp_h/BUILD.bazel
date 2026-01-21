@@ -1,6 +1,7 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/utmp_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
 
 # HAVE_TERMIOS_H comes from termios_h dependency
 
@@ -11,4 +12,13 @@ autoconf(
     deps = [
         "//gnulib/m4/termios_h",
     ],
+)
+
+autoconf(
+    name = "defaults",
+    checks = [
+        macros.AC_SUBST("HAVE_LOGIN_TTY", 1),
+        macros.AC_SUBST("REPLACE_LOGIN_TTY", 0),
+    ],
+    visibility = ["//visibility:public"],
 )

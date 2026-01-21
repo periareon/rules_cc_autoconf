@@ -1,7 +1,6 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/c32rtomb.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "c32rtomb",
@@ -13,23 +12,4 @@ autoconf(
         # Provides HAVE_LANGINFO_CODESET placeholder
         "//gnulib/m4/codeset",
     ],
-)
-
-autoconf(
-    name = "defaults",
-    checks = [
-        # Substitution defaults matching golden_subst*.h.in
-        macros.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR32_T", "1"),
-        macros.AC_SUBST("HAVE_C32RTOMB", "0"),
-        macros.AC_SUBST("HAVE_MBRTOC16", "1"),
-        macros.AC_SUBST("HAVE_MBRTOC32", "1"),
-        macros.AC_SUBST("HAVE_WORKING_C32RTOMB", "0"),
-        macros.AC_SUBST("HAVE_WORKING_MBRTOC32", "0"),
-        macros.AC_SUBST("LOCALE_FR", "fr_FR.ISO8859-1"),
-        macros.AC_SUBST("LOCALE_ZH_CN", "zh_CN.GB18030"),
-        macros.AC_SUBST("REPLACE_C32RTOMB", "0"),
-        macros.AC_SUBST("REPLACE_MBRTOC16", "0"),
-        macros.AC_SUBST("REPLACE_MBRTOC32", "0"),
-    ],
-    visibility = ["//visibility:public"],
 )

@@ -90,3 +90,12 @@ autoconf(
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
+
+autoconf(
+    name = "defaults",
+    checks = [
+        macros.AC_SUBST("HAVE_STRFMON_L", 1),
+        macros.AC_SUBST("REPLACE_STRFMON_L", 0),
+    ],
+    visibility = ["//visibility:public"],
+)

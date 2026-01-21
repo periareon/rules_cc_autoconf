@@ -11,8 +11,11 @@ autoconf(
         # Uses gl_CHECK_FUNCS_ANDROID([_Exit], [[#include <stdlib.h>]])
         # which ultimately calls AC_CHECK_FUNC([_Exit])
         # Sets HAVE__EXIT=1 if found, 0 if not found (as substitution variable)
-        macros.AC_CHECK_FUNC("_Exit", subst = True),
-        
+        macros.AC_CHECK_FUNC(
+            "_Exit",
+            subst = True,
+        ),
+
         # Set REPLACE__EXIT as substitution variable
         # If _Exit is not found but is a future function, REPLACE__EXIT=1 (line 18)
         # Otherwise, REPLACE__EXIT=0 (default from gl_STDLIB_H_DEFAULTS)

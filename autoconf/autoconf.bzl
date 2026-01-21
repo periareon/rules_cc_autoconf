@@ -289,7 +289,7 @@ def _autoconf_impl(ctx):
             # Extract base define name
             # Extract base define name (handles "FOO", "!FOO", "FOO==value", etc.)
             required_define = _extract_define_name(required)
-            
+
             if required_define not in all_results:
                 fail("Check `{}` requires `{}` but it's not provided. Please update `{}`".format(
                     define_name,

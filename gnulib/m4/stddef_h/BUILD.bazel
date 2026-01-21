@@ -19,3 +19,14 @@ autoconf(
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
+
+autoconf(
+    name = "defaults",
+    checks = [
+        macros.AC_SUBST("NULLPTR_T_NEEDS_STDDEF", 1),
+        macros.AC_SUBST("STDDEF_NOT_IDEMPOTENT", 0),
+        macros.AC_SUBST("REPLACE_NULL", 0),
+        macros.AC_SUBST("HAVE_MAX_ALIGN_T", 1),
+    ],
+    visibility = ["//visibility:public"],
+)

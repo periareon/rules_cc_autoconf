@@ -1,5 +1,58 @@
 #!/usr/bin/env bash
 
+set -x
+
+grep "_DEFAULTS" ~/Code/gnulib/m4/arpa_inet_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/assert_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/c32rtomb.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/call_once.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/cbrt.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/ceil.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/ceilf.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/chown.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/clock_time.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/cnd.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/copy.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/copysign.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/copysignf.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/copysignl.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/ctype_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/dirent_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/fcntl_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/fnmatch_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/glob_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/iconv_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/langinfo_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/locale_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/malloc_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/math_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/netdb_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/poll_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/pthread_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/raise.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/sched_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/signal_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/spawn_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/stdint.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/stdio_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/stdlib_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/string_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/strings_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/sys_ioctl_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/sys_resource_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/sys_select_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/sys_socket_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/sys_stat_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/sys_time_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/sys_times_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/sys_utsname_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/termios_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/time_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/uchar_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/unistd_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/wchar_h.m4
+grep "_DEFAULTS" ~/Code/gnulib/m4/wctype_h.m4
+
 # bazel test -- //gnulib/tests/compatibility/exponentd/... \
 # //gnulib/tests/compatibility/extensions/... \
 # //gnulib/tests/compatibility/include_next/... \
@@ -107,123 +160,123 @@
 # //gnulib/tests/compatibility/vasnprintf/... \
 # //gnulib/tests/compatibility/wctype_h/...
 
-bazel test -k -- \
-//gnulib/tests/compatibility/argp/... \
-//gnulib/tests/compatibility/canonicalize/... \
-//gnulib/tests/compatibility/closedir/... \
-//gnulib/tests/compatibility/dup/... \
-//gnulib/tests/compatibility/dup2/... \
-//gnulib/tests/compatibility/duplocale/... \
-//gnulib/tests/compatibility/euidaccess/... \
-//gnulib/tests/compatibility/explicit_bzero/... \
-//gnulib/tests/compatibility/fchmodat/... \
-//gnulib/tests/compatibility/fcntl/... \
-//gnulib/tests/compatibility/ffsl/... \
-//gnulib/tests/compatibility/floorl/... \
-//gnulib/tests/compatibility/fnmatch/... \
-//gnulib/tests/compatibility/fprintf-posix/... \
-//gnulib/tests/compatibility/fpurge/... \
-//gnulib/tests/compatibility/fseeko/... \
-//gnulib/tests/compatibility/fstatat/... \
-//gnulib/tests/compatibility/ftello/... \
-//gnulib/tests/compatibility/futimens/... \
-//gnulib/tests/compatibility/getaddrinfo/... \
-//gnulib/tests/compatibility/getcwd/... \
-//gnulib/tests/compatibility/getdelim/... \
-//gnulib/tests/compatibility/gethostname/... \
-//gnulib/tests/compatibility/gethrxtime/... \
-//gnulib/tests/compatibility/getline/... \
-//gnulib/tests/compatibility/getloadavg/... \
-//gnulib/tests/compatibility/getopt/... \
-//gnulib/tests/compatibility/getpagesize/... \
-//gnulib/tests/compatibility/getpass/... \
-//gnulib/tests/compatibility/glob/... \
-//gnulib/tests/compatibility/grantpt/... \
-//gnulib/tests/compatibility/group-member/... \
-//gnulib/tests/compatibility/iconv/... \
-//gnulib/tests/compatibility/inet_pton/... \
- \
-//gnulib/tests/compatibility/isblank/... \
-//gnulib/tests/compatibility/isfinite/... \
-//gnulib/tests/compatibility/isinf/... \
- \
-//gnulib/tests/compatibility/iswblank/... \
-//gnulib/tests/compatibility/lchmod/... \
-//gnulib/tests/compatibility/lchown/... \
-//gnulib/tests/compatibility/limits-h/... \
-//gnulib/tests/compatibility/linkat/... \
-//gnulib/tests/compatibility/lock/... \
-//gnulib/tests/compatibility/logbf/... \
-//gnulib/tests/compatibility/logp1f/... \
-//gnulib/tests/compatibility/logp1l/... \
-//gnulib/tests/compatibility/longlong/... \
- \
-//gnulib/tests/compatibility/mbrlen/... \
-//gnulib/tests/compatibility/mbrtoc16/... \
-//gnulib/tests/compatibility/mbsinit/... \
-//gnulib/tests/compatibility/mbsrtowcs/... \
-//gnulib/tests/compatibility/mbtowc/... \
-//gnulib/tests/compatibility/mempcpy/... \
-//gnulib/tests/compatibility/memrchr/... \
- \
-//gnulib/tests/compatibility/memset_explicit/... \
-//gnulib/tests/compatibility/mkfifoat/... \
-//gnulib/tests/compatibility/mkostemp/... \
-//gnulib/tests/compatibility/mkostemps/... \
-//gnulib/tests/compatibility/monetary_h/... \
-//gnulib/tests/compatibility/nanosleep/... \
-//gnulib/tests/compatibility/net_if_h/... \
-//gnulib/tests/compatibility/newlocale/... \
-//gnulib/tests/compatibility/nl_langinfo/... \
-//gnulib/tests/compatibility/open/... \
-//gnulib/tests/compatibility/opendir/... \
-//gnulib/tests/compatibility/pipe2/... \
-//gnulib/tests/compatibility/poll/... \
-//gnulib/tests/compatibility/poll_h/... \
-//gnulib/tests/compatibility/posix_spawn/... \
-//gnulib/tests/compatibility/pthread_mutex_timedlock/... \
-//gnulib/tests/compatibility/rawmemchr/... \
-//gnulib/tests/compatibility/readline/... \
- \
-//gnulib/tests/compatibility/readutmp/... \
-//gnulib/tests/compatibility/reallocarray/... \
-//gnulib/tests/compatibility/regex/... \
-//gnulib/tests/compatibility/relocatable/... \
-//gnulib/tests/compatibility/renameat/... \
-//gnulib/tests/compatibility/rintf/... \
- \
-//gnulib/tests/compatibility/setenv/... \
-//gnulib/tests/compatibility/sigabbrev_np/... \
-//gnulib/tests/compatibility/sigaltstack/... \
-//gnulib/tests/compatibility/signalblocking/... \
-//gnulib/tests/compatibility/snprintf/... \
-//gnulib/tests/compatibility/stack-trace/... \
- \
-//gnulib/tests/compatibility/stpcpy/... \
-//gnulib/tests/compatibility/strerror/... \
-//gnulib/tests/compatibility/strerror_r/... \
-//gnulib/tests/compatibility/strnlen/... \
-//gnulib/tests/compatibility/strptime/... \
-//gnulib/tests/compatibility/strtod/... \
- \
-//gnulib/tests/compatibility/strtok_r/... \
-//gnulib/tests/compatibility/strtoumax/... \
-//gnulib/tests/compatibility/sys_un_h/... \
- \
-//gnulib/tests/compatibility/termios_h/... \
-//gnulib/tests/compatibility/thread/... \
-//gnulib/tests/compatibility/time_r/... \
-//gnulib/tests/compatibility/tmpfile/... \
-//gnulib/tests/compatibility/truncate/... \
-//gnulib/tests/compatibility/truncf/... \
- \
-//gnulib/tests/compatibility/ttyname_r/... \
-//gnulib/tests/compatibility/usleep/... \
-//gnulib/tests/compatibility/vdprintf/... \
-//gnulib/tests/compatibility/vfprintf-posix/... \
-//gnulib/tests/compatibility/vsnprintf/... \
-//gnulib/tests/compatibility/wait-process/... \
-//gnulib/tests/compatibility/wctob/... \
-//gnulib/tests/compatibility/wcwidth/... \
-//gnulib/tests/compatibility/wmemchr/... \
-//gnulib/tests/compatibility/wmempcpy/...
+# bazel test -k -- \
+# //gnulib/tests/compatibility/argp/... \
+# //gnulib/tests/compatibility/canonicalize/... \
+# //gnulib/tests/compatibility/closedir/... \
+# //gnulib/tests/compatibility/dup/... \
+# //gnulib/tests/compatibility/dup2/... \
+# //gnulib/tests/compatibility/duplocale/... \
+# //gnulib/tests/compatibility/euidaccess/... \
+# //gnulib/tests/compatibility/explicit_bzero/... \
+# //gnulib/tests/compatibility/fchmodat/... \
+# //gnulib/tests/compatibility/fcntl/... \
+# //gnulib/tests/compatibility/ffsl/... \
+# //gnulib/tests/compatibility/floorl/... \
+# //gnulib/tests/compatibility/fnmatch/... \
+# //gnulib/tests/compatibility/fprintf-posix/... \
+# //gnulib/tests/compatibility/fpurge/... \
+# //gnulib/tests/compatibility/fseeko/... \
+# //gnulib/tests/compatibility/fstatat/... \
+# //gnulib/tests/compatibility/ftello/... \
+# //gnulib/tests/compatibility/futimens/... \
+# //gnulib/tests/compatibility/getaddrinfo/... \
+# //gnulib/tests/compatibility/getcwd/... \
+# //gnulib/tests/compatibility/getdelim/... \
+# //gnulib/tests/compatibility/gethostname/... \
+# //gnulib/tests/compatibility/gethrxtime/... \
+# //gnulib/tests/compatibility/getline/... \
+# //gnulib/tests/compatibility/getloadavg/... \
+# //gnulib/tests/compatibility/getopt/... \
+# //gnulib/tests/compatibility/getpagesize/... \
+# //gnulib/tests/compatibility/getpass/... \
+# //gnulib/tests/compatibility/glob/... \
+# //gnulib/tests/compatibility/grantpt/... \
+# //gnulib/tests/compatibility/group-member/... \
+# //gnulib/tests/compatibility/iconv/... \
+# //gnulib/tests/compatibility/inet_pton/... \
+#  \
+# //gnulib/tests/compatibility/isblank/... \
+# //gnulib/tests/compatibility/isfinite/... \
+# //gnulib/tests/compatibility/isinf/... \
+#  \
+# //gnulib/tests/compatibility/iswblank/... \
+# //gnulib/tests/compatibility/lchmod/... \
+# //gnulib/tests/compatibility/lchown/... \
+# //gnulib/tests/compatibility/limits-h/... \
+# //gnulib/tests/compatibility/linkat/... \
+# //gnulib/tests/compatibility/lock/... \
+# //gnulib/tests/compatibility/logbf/... \
+# //gnulib/tests/compatibility/logp1f/... \
+# //gnulib/tests/compatibility/logp1l/... \
+# //gnulib/tests/compatibility/longlong/... \
+#  \
+# //gnulib/tests/compatibility/mbrlen/... \
+# //gnulib/tests/compatibility/mbrtoc16/... \
+# //gnulib/tests/compatibility/mbsinit/... \
+# //gnulib/tests/compatibility/mbsrtowcs/... \
+# //gnulib/tests/compatibility/mbtowc/... \
+# //gnulib/tests/compatibility/mempcpy/... \
+# //gnulib/tests/compatibility/memrchr/... \
+#  \
+# //gnulib/tests/compatibility/memset_explicit/... \
+# //gnulib/tests/compatibility/mkfifoat/... \
+# //gnulib/tests/compatibility/mkostemp/... \
+# //gnulib/tests/compatibility/mkostemps/... \
+# //gnulib/tests/compatibility/monetary_h/... \
+# //gnulib/tests/compatibility/nanosleep/... \
+# //gnulib/tests/compatibility/net_if_h/... \
+# //gnulib/tests/compatibility/newlocale/... \
+# //gnulib/tests/compatibility/nl_langinfo/... \
+# //gnulib/tests/compatibility/open/... \
+# //gnulib/tests/compatibility/opendir/... \
+# //gnulib/tests/compatibility/pipe2/... \
+# //gnulib/tests/compatibility/poll/... \
+# //gnulib/tests/compatibility/poll_h/... \
+# //gnulib/tests/compatibility/posix_spawn/... \
+# //gnulib/tests/compatibility/pthread_mutex_timedlock/... \
+# //gnulib/tests/compatibility/rawmemchr/... \
+# //gnulib/tests/compatibility/readline/... \
+#  \
+# //gnulib/tests/compatibility/readutmp/... \
+# //gnulib/tests/compatibility/reallocarray/... \
+# //gnulib/tests/compatibility/regex/... \
+# //gnulib/tests/compatibility/relocatable/... \
+# //gnulib/tests/compatibility/renameat/... \
+# //gnulib/tests/compatibility/rintf/... \
+#  \
+# //gnulib/tests/compatibility/setenv/... \
+# //gnulib/tests/compatibility/sigabbrev_np/... \
+# //gnulib/tests/compatibility/sigaltstack/... \
+# //gnulib/tests/compatibility/signalblocking/... \
+# //gnulib/tests/compatibility/snprintf/... \
+# //gnulib/tests/compatibility/stack-trace/... \
+#  \
+# //gnulib/tests/compatibility/stpcpy/... \
+# //gnulib/tests/compatibility/strerror/... \
+# //gnulib/tests/compatibility/strerror_r/... \
+# //gnulib/tests/compatibility/strnlen/... \
+# //gnulib/tests/compatibility/strptime/... \
+# //gnulib/tests/compatibility/strtod/... \
+#  \
+# //gnulib/tests/compatibility/strtok_r/... \
+# //gnulib/tests/compatibility/strtoumax/... \
+# //gnulib/tests/compatibility/sys_un_h/... \
+#  \
+# //gnulib/tests/compatibility/termios_h/... \
+# //gnulib/tests/compatibility/thread/... \
+# //gnulib/tests/compatibility/time_r/... \
+# //gnulib/tests/compatibility/tmpfile/... \
+# //gnulib/tests/compatibility/truncate/... \
+# //gnulib/tests/compatibility/truncf/... \
+#  \
+# //gnulib/tests/compatibility/ttyname_r/... \
+# //gnulib/tests/compatibility/usleep/... \
+# //gnulib/tests/compatibility/vdprintf/... \
+# //gnulib/tests/compatibility/vfprintf-posix/... \
+# //gnulib/tests/compatibility/vsnprintf/... \
+# //gnulib/tests/compatibility/wait-process/... \
+# //gnulib/tests/compatibility/wctob/... \
+# //gnulib/tests/compatibility/wcwidth/... \
+# //gnulib/tests/compatibility/wmemchr/... \
+# //gnulib/tests/compatibility/wmempcpy/...

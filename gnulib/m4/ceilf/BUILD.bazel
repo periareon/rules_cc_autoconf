@@ -23,11 +23,3 @@ autoconf(
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
-
-autoconf(
-    name = "defaults",
-    checks = [
-        macros.AC_SUBST("CEILF_LIBM", ""),
-    ],
-    visibility = ["//visibility:public"],
-)

@@ -11,3 +11,10 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
 )
+
+autoconf(
+    name = "defaults",
+    checks = [
+    ],
+    visibility = ["//visibility:public"],
+)

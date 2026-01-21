@@ -84,8 +84,8 @@ int main(void) { sigset_t x; (void)x; return 0; }
         macros.AC_DEFINE(
             "HAVE_SIGSET_T",
             condition = "gl_cv_type_sigset_t",
-            if_true = "1",
             if_false = "0",
+            if_true = "1",
             subst = True,
         ),
     ],
@@ -121,6 +121,7 @@ autoconf(
         macros.AC_SUBST("HAVE_SIGACTION", "1"),
         macros.AC_SUBST("HAVE_STR2SIG", "1"),
         macros.AC_SUBST("HAVE_STRUCT_SIGACTION_SA_SIGACTION", "1"),
+        macros.AC_SUBST("HAVE_TYPE_VOLATILE_SIG_ATOMIC_T", "1"),
         macros.AC_SUBST("HAVE_SIGHANDLER_T", "1"),
         macros.AC_SUBST("HAVE_SIGSET_T", "1"),
         # REPLACE_* defaults
@@ -129,4 +130,3 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
 )
-

@@ -48,7 +48,7 @@ autoconf(
         macros.AC_SUBST("GNULIB_PTHREAD_SPIN", "0"),
         macros.AC_SUBST("GNULIB_PTHREAD_MUTEX_TIMEDLOCK", "0"),
         # HAVE_* defaults - gl_PTHREAD_H_DEFAULTS
-        # Note: HAVE_PTHREAD_T is provided by pthread_h checks, not defaults
+        macros.AC_SUBST("HAVE_PTHREAD_T", "1"),
         macros.AC_SUBST("HAVE_PTHREAD_SPINLOCK_T", "1"),
         macros.AC_SUBST("HAVE_PTHREAD_CREATE_DETACHED", "1"),
         macros.AC_SUBST("HAVE_PTHREAD_MUTEX_RECURSIVE", "1"),

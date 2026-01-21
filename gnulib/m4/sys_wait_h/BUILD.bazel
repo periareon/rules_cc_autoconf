@@ -42,3 +42,10 @@ autoconf(
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
+
+autoconf(
+    name = "defaults",
+    checks = [
+    ],
+    visibility = ["//visibility:public"],
+)

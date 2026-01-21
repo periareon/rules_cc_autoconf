@@ -27,28 +27,28 @@ for entry in sorted(glob.glob("bazel-testlogs/gnulib/tests/compatibility/*")):
     new_config = outputs_dir / "gnu_configure/config.h"
     new_subst = outputs_dir / "gnu_configure/subst.h"
 
-    dest_config.chmod(MODE)
-    dest_subst.chmod(MODE)
+    # dest_config.chmod(MODE)
+    # dest_subst.chmod(MODE)
 
-    try:
-        # content = new_config.read_text(encoding="utf-8")
-        # clean = "\n".join(content.splitlines()[1:]).strip() + "\n"
-        # dest_config.write_text(clean, encoding="utf-8")
+    # try:
+    #     # content = new_config.read_text(encoding="utf-8")
+    #     # clean = "\n".join(content.splitlines()[1:]).strip() + "\n"
+    #     # dest_config.write_text(clean, encoding="utf-8")
 
-        shutil.copy(new_subst, dest_subst)
-    except Exception as exc:
-        print(exc)
+    #     shutil.copy(new_subst, dest_subst)
+    # except Exception as exc:
+    #     print(exc)
 
-    dest_config.chmod(MODE)
-    dest_subst.chmod(MODE)
+    # dest_config.chmod(MODE)
+    # dest_subst.chmod(MODE)
 
-    # subst_in = outputs_dir / "expected_subst.h.in"
-    # config_in = outputs_dir / "expected_config.h.in"
-    # if subst_in.exists():
-    #     shutil.copy(subst_in, dest_dir / "subst.h.in")
-    #     (dest_dir / "subst.h.in").chmod(MODE)
-    # if config_in.exists():
-    #     shutil.copy(config_in, dest_dir / "config.h.in")
-    #     (dest_dir / "config.h.in").chmod(MODE)
+    subst_in = outputs_dir / "expected_subst.h.in"
+    config_in = outputs_dir / "expected_config.h.in"
+    if subst_in.exists():
+        shutil.copy(subst_in, dest_dir / "subst.h.in")
+        (dest_dir / "subst.h.in").chmod(MODE)
+    if config_in.exists():
+        shutil.copy(config_in, dest_dir / "config.h.in")
+        (dest_dir / "config.h.in").chmod(MODE)
 
     print(name)

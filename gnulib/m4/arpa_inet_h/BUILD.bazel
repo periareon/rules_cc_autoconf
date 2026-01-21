@@ -54,4 +54,3 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
 )
-

@@ -161,37 +161,3 @@ autoconf(
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
-
-# =============================================================================
-# defaults - Default AC_SUBST values. Added to gnulib_toolchain.
-# =============================================================================
-
-autoconf(
-    name = "defaults",
-    checks = [
-        # These are typically set by gl_STDINT_TYPE_PROPERTIES, gl_STDINT_BITSIZEOF,
-        # gl_CHECK_TYPES_SIGNED, and gl_INTEGER_TYPE_SUFFIX, but we provide defaults
-        # for the toolchain based on golden file expectations.
-        # BITSIZEOF_* - bit sizes of various types (from gl_STDINT_BITSIZEOF)
-        macros.AC_DEFINE("BITSIZEOF_PTRDIFF_T", "64"),
-        macros.AC_DEFINE("BITSIZEOF_SIG_ATOMIC_T", "32"),
-        macros.AC_DEFINE("BITSIZEOF_SIZE_T", "64"),
-        macros.AC_DEFINE("BITSIZEOF_WCHAR_T", "32"),
-        macros.AC_DEFINE("BITSIZEOF_WINT_T", "32"),
-        # HAVE_SIGNED_* - whether types are signed (from gl_CHECK_TYPES_SIGNED)
-        macros.AC_DEFINE("HAVE_SIGNED_SIG_ATOMIC_T", "1"),
-        macros.AC_DEFINE("HAVE_SIGNED_WCHAR_T", "1"),
-        macros.AC_DEFINE("HAVE_SIGNED_WINT_T", "1"),
-        # *_SUFFIX - literal suffixes for integer constants (from gl_INTEGER_TYPE_SUFFIX)
-        macros.AC_DEFINE_UNQUOTED("PTRDIFF_T_SUFFIX", "l"),
-        macros.AC_DEFINE_UNQUOTED("SIG_ATOMIC_T_SUFFIX", ""),
-        macros.AC_DEFINE_UNQUOTED("SIZE_T_SUFFIX", "ul"),
-        macros.AC_DEFINE_UNQUOTED("WCHAR_T_SUFFIX", ""),
-        macros.AC_DEFINE_UNQUOTED("WINT_T_SUFFIX", ""),
-    ],
-    visibility = ["//visibility:public"],
-)
-
-# =============================================================================
-# with_defaults - For external consumers who don't use the toolchain
-# =============================================================================

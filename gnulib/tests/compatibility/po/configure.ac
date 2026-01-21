@@ -1,0 +1,11 @@
+AC_INIT([test_po], [1.0])
+AC_CONFIG_HEADERS([config.h])
+
+# Invoke macros from po.m4
+AM_PO_SUBDIRS
+AM_POSTPROCESS_PO_MAKEFILE
+AM_XGETTEXT_OPTION_INIT
+AM_XGETTEXT_OPTION
+
+AC_CONFIG_FILES([subst.h:subst.h.in])
+AC_OUTPUT

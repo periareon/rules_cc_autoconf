@@ -1,7 +1,6 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/copysign.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "copysign",
@@ -18,12 +17,4 @@ autoconf(
     deps = [
         "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS]) - provides HAVE_COPYSIGN=1 default
     ],
-)
-
-autoconf(
-    name = "defaults",
-    checks = [
-        macros.AC_SUBST("COPYSIGN_LIBM", ""),
-    ],
-    visibility = ["//visibility:public"],
 )

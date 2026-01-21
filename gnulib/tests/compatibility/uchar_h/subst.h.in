@@ -34,5 +34,3 @@
 #define SUBST_REPLACE_MBRTOC32 "@REPLACE_MBRTOC32@"
 #define SUBST_SMALL_WCHAR_T "@SMALL_WCHAR_T@"
 #define SUBST_STDC_HEADERS "@STDC_HEADERS@"
-#define SUBST_am__fastdepCXX_FALSE "@am__fastdepCXX_FALSE@"
-#define SUBST_am__fastdepCXX_TRUE "@am__fastdepCXX_TRUE@"

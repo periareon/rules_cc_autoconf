@@ -17,3 +17,12 @@ autoconf(
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
+
+autoconf(
+    name = "defaults",
+    checks = [
+        macros.AC_SUBST("HAVE_UTIME", 1),
+        macros.AC_SUBST("REPLACE_UTIME", 0),
+    ],
+    visibility = ["//visibility:public"],
+)

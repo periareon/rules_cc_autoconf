@@ -158,15 +158,15 @@ autoconf(
         macros.AC_SUBST("GNULIB_MDA_TEMPNAM", "1"),
 
         # HAVE_DECL_* defaults - lines 217-227
-        # Note: HAVE_DECL_FCLOSEALL, HAVE_DECL_GETW, HAVE_DECL_PUTW are checked
-        # in the main stdio_h target, not here, to avoid duplicates.
-        # Note: HAVE_DECL_FPURGE is checked in fpurge module, not here.
-        # Remaining defaults assume declarations present unless checked elsewhere.
+        macros.AC_SUBST("HAVE_DECL_FCLOSEALL", "1"),
+        macros.AC_SUBST("HAVE_DECL_FPURGE", "1"),
         macros.AC_SUBST("HAVE_DECL_FSEEKO", "1"),
         macros.AC_SUBST("HAVE_DECL_FTELLO", "1"),
         macros.AC_SUBST("HAVE_DECL_GETDELIM", "1"),
         macros.AC_SUBST("HAVE_DECL_GETLINE", "1"),
+        macros.AC_SUBST("HAVE_DECL_GETW", "1"),
         macros.AC_SUBST("HAVE_DECL_OBSTACK_PRINTF", "1"),
+        macros.AC_SUBST("HAVE_DECL_PUTW", "1"),
         macros.AC_SUBST("HAVE_DECL_SNPRINTF", "1"),
         macros.AC_SUBST("HAVE_DECL_VSNPRINTF", "1"),
 

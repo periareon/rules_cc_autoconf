@@ -74,12 +74,3 @@ autoconf(
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
-
-autoconf(
-    name = "defaults",
-    checks = [
-        # REPLACE_CHOWN is "1" on macOS (chown has trailing slash bug)
-        macros.AC_SUBST("REPLACE_CHOWN", "1"),
-    ],
-    visibility = ["//visibility:public"],
-)

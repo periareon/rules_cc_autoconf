@@ -24,15 +24,3 @@ autoconf(
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
-
-autoconf(
-    name = "defaults",
-    checks = select({
-        "@platforms//os:macos": [
-            # macOS doesn't have copy_file_range
-            macros.AC_SUBST("HAVE_COPY_FILE_RANGE", "0"),
-        ],
-        "//conditions:default": [],
-    }),
-    visibility = ["//visibility:public"],
-)

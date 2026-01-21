@@ -132,8 +132,8 @@ def _ac_check_header(
         "define": define,
         "language": language,
         "name": header,
-        "type": "header",
         "subst": subst,
+        "type": "header",
     }
     if compile_defines:
         check["compile_defines"] = compile_defines
@@ -1502,8 +1502,8 @@ def _ac_define(
         "define": define,
         "language": "c",
         "name": define,
-        "type": "define",
         "subst": subst,
+        "type": "define",
     }
 
     if requires:
@@ -1697,8 +1697,8 @@ def _ac_subst(
         "define": variable,
         "language": "c",
         "name": variable,
-        "type": "m4_variable",  # Use M4Variable type
         "subst": True,  # Mark as substitution variable
+        "type": "m4_variable",  # Use M4Variable type
     }
 
     if requires:
@@ -1794,8 +1794,8 @@ def _m4_variable(
         "define": define,
         "language": "c",
         "name": define,
-        "type": "m4_variable",  # Compute value for requires but don't generate output (config.h or subst.h)
         "subst": False,  # M4_VARIABLE is never a substitution variable - use AC_SUBST for that
+        "type": "m4_variable",  # Compute value for requires but don't generate output (config.h or subst.h)
     }
 
     if requires:

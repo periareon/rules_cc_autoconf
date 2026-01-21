@@ -91,3 +91,26 @@ int main(void) {
         "//gnulib/m4/stdint_h",  # AC_REQUIRE([gl_STDINT_H])
     ],
 )
+
+autoconf(
+    name = "defaults",
+    checks = [
+        macros.AC_SUBST("HAVE_DECL_IMAXABS", 1),
+        macros.AC_SUBST("HAVE_DECL_IMAXDIV", 1),
+        macros.AC_SUBST("HAVE_DECL_STRTOIMAX", 1),
+        macros.AC_SUBST("HAVE_DECL_STRTOUMAX", 1),
+        macros.AC_SUBST("HAVE_IMAXDIV_T", 1),
+        macros.AC_SUBST("HAVE_IMAXABS", 1),
+        macros.AC_SUBST("HAVE_IMAXDIV", 1),
+        macros.AC_SUBST("REPLACE_IMAXABS", 0),
+        macros.AC_SUBST("REPLACE_IMAXDIV", 0),
+        macros.AC_SUBST("REPLACE_STRTOIMAX", 0),
+        macros.AC_SUBST("REPLACE_STRTOUMAX", 0),
+        macros.AC_SUBST("INT32_MAX_LT_INTMAX_MAX", 1),
+        macros.AC_SUBST("INT64_MAX_EQ_LONG_MAX", "defined _LP64"),
+        macros.AC_SUBST("PRIPTR_PREFIX", "__PRIPTR_PREFIX"),
+        macros.AC_SUBST("UINT32_MAX_LT_UINTMAX_MAX", 1),
+        macros.AC_SUBST("UINT64_MAX_EQ_ULONG_MAX", "defined _LP64"),
+    ],
+    visibility = ["//visibility:public"],
+)

@@ -1,11 +1,50 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fenv_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "fenv_h",
     checks = [
         # Note: fenv_h.m4 may not exist in gnulib, or this module may not have checks
+    ],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "defaults",
+    checks = [
+        macros.AC_SUBST("HAVE_FECLEAREXCEPT", 1),
+        macros.AC_SUBST("HAVE_FEDISABLEEXCEPT", 1),
+        macros.AC_SUBST("HAVE_FEENABLEEXCEPT", 1),
+        macros.AC_SUBST("HAVE_FEGETENV", 1),
+        macros.AC_SUBST("HAVE_FEGETEXCEPT", 1),
+        macros.AC_SUBST("HAVE_FEGETEXCEPTFLAG", 1),
+        macros.AC_SUBST("HAVE_FEGETROUND", 1),
+        macros.AC_SUBST("HAVE_FEHOLDEXCEPT", 1),
+        macros.AC_SUBST("HAVE_FERAISEEXCEPT", 1),
+        macros.AC_SUBST("HAVE_FESETENV", 1),
+        macros.AC_SUBST("HAVE_FESETEXCEPT", 1),
+        macros.AC_SUBST("HAVE_FESETEXCEPTFLAG", 1),
+        macros.AC_SUBST("HAVE_FESETROUND", 1),
+        macros.AC_SUBST("HAVE_FETESTEXCEPT", 1),
+        macros.AC_SUBST("HAVE_FETESTEXCEPTFLAG", 1),
+        macros.AC_SUBST("HAVE_FEUPDATEENV", 1),
+        macros.AC_SUBST("REPLACE_FECLEAREXCEPT", 0),
+        macros.AC_SUBST("REPLACE_FEDISABLEEXCEPT", 0),
+        macros.AC_SUBST("REPLACE_FEENABLEEXCEPT", 0),
+        macros.AC_SUBST("REPLACE_FEGETENV", 0),
+        macros.AC_SUBST("REPLACE_FEGETEXCEPT", 0),
+        macros.AC_SUBST("REPLACE_FEGETEXCEPTFLAG", 0),
+        macros.AC_SUBST("REPLACE_FEGETROUND", 0),
+        macros.AC_SUBST("REPLACE_FEHOLDEXCEPT", 0),
+        macros.AC_SUBST("REPLACE_FERAISEEXCEPT", 0),
+        macros.AC_SUBST("REPLACE_FESETENV", 0),
+        macros.AC_SUBST("REPLACE_FESETEXCEPT", 0),
+        macros.AC_SUBST("REPLACE_FESETEXCEPTFLAG", 0),
+        macros.AC_SUBST("REPLACE_FESETROUND", 0),
+        macros.AC_SUBST("REPLACE_FETESTEXCEPT", 0),
+        macros.AC_SUBST("REPLACE_FEUPDATEENV", 0),
     ],
     visibility = ["//visibility:public"],
 )

@@ -20,3 +20,16 @@ autoconf(
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
+
+autoconf(
+    name = "defaults",
+    checks = [
+        macros.AC_SUBST("HAVE_UTIL_H", 0),
+        macros.AC_SUBST("HAVE_LIBUTIL_H", 0),
+        macros.AC_SUBST("HAVE_FORKPTY", 1),
+        macros.AC_SUBST("HAVE_OPENPTY", 1),
+        macros.AC_SUBST("REPLACE_FORKPTY", 0),
+        macros.AC_SUBST("REPLACE_OPENPTY", 0),
+    ],
+    visibility = ["//visibility:public"],
+)

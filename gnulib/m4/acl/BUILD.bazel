@@ -157,7 +157,11 @@ autoconf(
             macros.AC_DEFINE("NEED_ACL_ENTRIES", "1"),
             # macOS has working ACL support
             # AC_DEFINE for config.h, subst=True for subst.h
-            macros.AC_DEFINE("USE_ACL", "1", subst = True),
+            macros.AC_DEFINE(
+                "USE_ACL",
+                "1",
+                subst = True,
+            ),
             # Set FILE_HAS_ACL_LIB and QCOPY_ACL_LIB to empty strings (subst-only)
             macros.AC_SUBST("FILE_HAS_ACL_LIB", ""),
             macros.AC_SUBST("QCOPY_ACL_LIB", ""),

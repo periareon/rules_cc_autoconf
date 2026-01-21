@@ -58,6 +58,9 @@ _GL_CTYPE_H_DEFAULTS = [
     macros.AC_SUBST("HAVE_ISXDIGIT_L", "1"),
     macros.AC_SUBST("HAVE_TOLOWER_L", "1"),
     macros.AC_SUBST("HAVE_TOUPPER_L", "1"),
+    # NEXT_* variables (from include_next)
+    macros.AC_SUBST("NEXT_CTYPE_H", "<ctype.h>"),
+    macros.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_CTYPE_H", "<ctype.h>"),
 ]
 
 autoconf(
