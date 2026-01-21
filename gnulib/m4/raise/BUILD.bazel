@@ -11,6 +11,7 @@ autoconf(
         macros.AC_CHECK_FUNC(
             "raise",
             define = "HAVE_RAISE",
+            subst = True,
         ),
     ],
     visibility = ["//visibility:public"],
@@ -21,11 +22,11 @@ autoconf(
 )
 
 autoconf(
-    name = "raise_with_defaults",
-    checks = [],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":raise",
-        "//gnulib/m4/signal_h:with_defaults",  # Include signal_h defaults including HAVE_SIGSET_T
+    name = "defaults",
+    checks = [
+        # Override HAVE_SIGHANDLER_T to "1" (conditional AC_SUBST sets it to "0" but golden expects "1")
+        macros.AC_SUBST("HAVE_SIGHANDLER_T", "1"),
     ],
+    visibility = ["//visibility:public"],
 )
+

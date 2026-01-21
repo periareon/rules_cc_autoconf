@@ -20,12 +20,12 @@ autoconf(
                 define = "HAVE_ACCESS",
             ),
             macros.AC_DEFINE("ACCESS_TRAILING_SLASH_BUG", "1"),
-            macros.M4_VARIABLE("REPLACE_ACCESS", "1"),
+            macros.AC_SUBST("REPLACE_ACCESS", "1"),
         ],
         "@platforms//os:windows": [
             # On Windows, unconditionally set REPLACE_ACCESS=1
             # because access() (= _access) does not support X_OK mode
-            macros.M4_VARIABLE("REPLACE_ACCESS", "1"),
+            macros.AC_SUBST("REPLACE_ACCESS", "1"),
         ],
         "//conditions:default": [
             # On Linux and other POSIX systems, access() works correctly

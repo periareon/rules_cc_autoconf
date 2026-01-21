@@ -20,6 +20,7 @@ autoconf(
             "HAVE_CLOSEDIR",
             condition = "_gl_have_closedir",
             if_true = "1",
+            subst = True,
         ),
 
         # Set HAVE_CLOSEDIR as substitution variable based on check result
@@ -43,6 +44,7 @@ autoconf(
             "HAVE_FCHDIR",
             condition = "_gl_have_fchdir",
             if_true = "1",
+            subst = True,
         ),
 
         # REPLACE_CLOSEDIR is set to 1 if:

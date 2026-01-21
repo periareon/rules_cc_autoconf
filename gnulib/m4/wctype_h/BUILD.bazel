@@ -166,12 +166,3 @@ autoconf(
 )
 
 # Combined target that includes defaults for convenience
-autoconf(
-    name = "with_defaults",
-    checks = [],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":defaults",
-        ":wctype_h",
-    ],
-)

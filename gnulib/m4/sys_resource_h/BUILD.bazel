@@ -30,13 +30,3 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
 )
-
-autoconf(
-    name = "with_defaults",
-    checks = [],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":defaults",
-        ":sys_resource_h",
-    ],
-)

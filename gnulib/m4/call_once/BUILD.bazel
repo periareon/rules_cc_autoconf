@@ -7,7 +7,7 @@ autoconf(
     name = "call_once",
     checks = [
         # gl_CHECK_FUNCS_ANDROID([call_once], [[#include <threads.h>]])
-        macros.AC_CHECK_FUNC("call_once"),
+        macros.AC_CHECK_FUNC("call_once", subst=True),
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -19,4 +19,50 @@ autoconf(
         "//autoconf/macros/AC_CANONICAL_HOST",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
+)
+
+autoconf(
+    name = "defaults",
+    checks = [
+        # Thread-related defaults
+        macros.AC_SUBST("BROKEN_THRD_JOIN", "0"),
+        macros.AC_SUBST("BROKEN_THRD_START_T", "0"),
+        macros.AC_SUBST("HAVE_THREADS_H", "0"),
+        macros.AC_SUBST("HAVE_THREAD_LOCAL", "1"),
+        macros.AC_SUBST("LIBPMULTITHREAD", "-lpthread"),
+        macros.AC_SUBST("LIBPTHREAD", ""),
+        macros.AC_SUBST("LIBSTDTHREAD", "-lpthread "),
+        macros.AC_SUBST("LIBTHREADLOCAL", ""),
+        macros.AC_SUBST("LIB_SCHED_YIELD", ""),
+        macros.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_THREADS_H", "<threads.h>"),
+        macros.AC_SUBST("NEXT_THREADS_H", "<threads.h>"),
+        macros.AC_SUBST("SCHED_YIELD_LIB", ""),
+        # REPLACE_* defaults
+        macros.AC_SUBST("REPLACE_CALL_ONCE", "0"),
+        macros.AC_SUBST("REPLACE_CND_BROADCAST", "0"),
+        macros.AC_SUBST("REPLACE_CND_DESTROY", "0"),
+        macros.AC_SUBST("REPLACE_CND_INIT", "0"),
+        macros.AC_SUBST("REPLACE_CND_SIGNAL", "0"),
+        macros.AC_SUBST("REPLACE_CND_TIMEDWAIT", "0"),
+        macros.AC_SUBST("REPLACE_CND_WAIT", "0"),
+        macros.AC_SUBST("REPLACE_MTX_DESTROY", "0"),
+        macros.AC_SUBST("REPLACE_MTX_INIT", "0"),
+        macros.AC_SUBST("REPLACE_MTX_LOCK", "0"),
+        macros.AC_SUBST("REPLACE_MTX_TIMEDLOCK", "0"),
+        macros.AC_SUBST("REPLACE_MTX_TRYLOCK", "0"),
+        macros.AC_SUBST("REPLACE_MTX_UNLOCK", "0"),
+        macros.AC_SUBST("REPLACE_THRD_CREATE", "0"),
+        macros.AC_SUBST("REPLACE_THRD_CURRENT", "0"),
+        macros.AC_SUBST("REPLACE_THRD_DETACH", "0"),
+        macros.AC_SUBST("REPLACE_THRD_EQUAL", "0"),
+        macros.AC_SUBST("REPLACE_THRD_EXIT", "0"),
+        macros.AC_SUBST("REPLACE_THRD_JOIN", "0"),
+        macros.AC_SUBST("REPLACE_THRD_SLEEP", "0"),
+        macros.AC_SUBST("REPLACE_THRD_YIELD", "0"),
+        macros.AC_SUBST("REPLACE_TSS_CREATE", "0"),
+        macros.AC_SUBST("REPLACE_TSS_DELETE", "0"),
+        macros.AC_SUBST("REPLACE_TSS_GET", "0"),
+        macros.AC_SUBST("REPLACE_TSS_SET", "0"),
+    ],
+    visibility = ["//visibility:public"],
 )

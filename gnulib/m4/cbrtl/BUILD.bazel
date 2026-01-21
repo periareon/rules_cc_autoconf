@@ -6,7 +6,7 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "cbrtl",
     checks = [
-        macros.AC_CHECK_FUNC("cbrtl"),
+        macros.AC_CHECK_FUNC("cbrtl", subst=True),
     ],
     visibility = ["//visibility:public"],
     deps = [

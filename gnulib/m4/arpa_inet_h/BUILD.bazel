@@ -9,6 +9,15 @@ autoconf(
         macros.AC_CHECK_HEADER(
             "arpa/inet.h",
             define = "HAVE_ARPA_INET_H",
+            subst = True,
+        ),
+        # Check for sys/socket.h for config.h (but not subst.h)
+        # sys_socket_h provides HAVE_SYS_SOCKET_H with subst=True, but arpa_inet_h
+        # should only have it as a placeholder in subst.h
+        macros.AC_CHECK_HEADER(
+            "sys/socket.h",
+            define = "HAVE_SYS_SOCKET_H",
+            subst = False,
         ),
     ],
     visibility = ["//visibility:public"],
@@ -35,6 +44,10 @@ autoconf(
         macros.AC_SUBST("HAVE_DECL_INET_PTON", "1"),
         macros.AC_SUBST("HAVE_DECL_NTOHL", "1"),
         macros.AC_SUBST("HAVE_DECL_NTOHS", "1"),
+        macros.AC_SUBST("HAVE_FEATURES_H", "0"),
+        # NEXT_* variables (from include_next)
+        macros.AC_SUBST("NEXT_ARPA_INET_H", "<arpa/inet.h>"),
+        macros.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_ARPA_INET_H", "<arpa/inet.h>"),
         # REPLACE_* defaults
         macros.AC_SUBST("REPLACE_INET_NTOP", "0"),
         macros.AC_SUBST("REPLACE_INET_PTON", "0"),
@@ -42,12 +55,3 @@ autoconf(
     visibility = ["//visibility:public"],
 )
 
-autoconf(
-    name = "with_defaults",
-    checks = [],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":arpa_inet_h",
-        ":defaults",
-    ],
-)

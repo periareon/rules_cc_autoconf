@@ -10,6 +10,7 @@ autoconf(
         macros.AC_CHECK_FUNC(
             "cbrt",
             define = "HAVE_CBRT",
+            subst = True,
         ),
     ],
     visibility = ["//visibility:public"],
@@ -21,4 +22,18 @@ autoconf(
         # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
+)
+
+autoconf(
+    name = "defaults",
+    checks = [
+        # LIBM variables (typically empty on modern systems)
+        macros.AC_SUBST("CBRT_LIBM", ""),
+        macros.AC_SUBST("FABS_LIBM", ""),
+        macros.AC_SUBST("FREXP_LIBM", ""),
+        macros.AC_SUBST("ISNAND_LIBM", ""),
+        macros.AC_SUBST("LDEXP_LIBM", ""),
+        macros.AC_SUBST("POW_LIBM", ""),
+    ],
+    visibility = ["//visibility:public"],
 )

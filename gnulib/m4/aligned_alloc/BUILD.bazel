@@ -18,10 +18,12 @@ autoconf(
 
         # gl_CHECK_FUNCS_ANDROID([aligned_alloc], [[#include <stdlib.h>]]) - line 18
         # Check for aligned_alloc function (similar to AC_CHECK_FUNC but also checks Android-specific behavior)
+        # On macOS, aligned_alloc exists but has bugs, so it needs replacement
         macros.AC_CHECK_FUNC(
             "aligned_alloc",
             code = "#include <stdlib.h>\n",
-            define = "ac_cv_func_aligned_alloc",
+            define = "HAVE_ALIGNED_ALLOC",
+            subst = True,
         ),
 
         # if test $ac_cv_func_aligned_alloc = yes; then
@@ -39,17 +41,6 @@ autoconf(
         # The runtime test checks if aligned_alloc works correctly for small alignments and sizes.
         # On macOS, AIX, and Solaris, aligned_alloc has bugs, so REPLACE_ALIGNED_ALLOC=1.
         # Based on golden files, on macOS aligned_alloc exists but needs replacement.
-        macros.AC_DEFINE(
-            "HAVE_ALIGNED_ALLOC",
-            condition = "ac_cv_func_aligned_alloc",
-            if_true = "1",
-        ),
-        macros.AC_SUBST(
-            "HAVE_ALIGNED_ALLOC",
-            condition = "ac_cv_func_aligned_alloc",
-            if_false = "0",
-            if_true = "1",
-        ),
         macros.AC_SUBST("REPLACE_ALIGNED_ALLOC", "1"),  # Based on golden files, needs replacement on macOS
     ],
     visibility = ["//visibility:public"],

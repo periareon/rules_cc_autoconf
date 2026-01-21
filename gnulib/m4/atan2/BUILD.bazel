@@ -12,6 +12,11 @@ autoconf(
             "atan2",
             define = "HAVE_ATAN2",
         ),
+        # Set ATAN2_LIBM and POW_LIBM to empty strings (subst-only)
+        # gl_COMMON_DOUBLE_MATHFUNC sets these based on whether the function needs libm
+        # On macOS, atan2 is in libc, so ATAN2_LIBM="" and POW_LIBM=""
+        macros.AC_SUBST("ATAN2_LIBM", ""),
+        macros.AC_SUBST("POW_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [

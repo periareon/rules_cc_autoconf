@@ -13,10 +13,19 @@ autoconf(
         macros.AC_CHECK_FUNC(
             "ceil",
             define = "HAVE_CEIL",
+            subst = True,
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
     ],
+)
+
+autoconf(
+    name = "defaults",
+    checks = [
+        macros.AC_SUBST("CEIL_LIBM", ""),
+    ],
+    visibility = ["//visibility:public"],
 )

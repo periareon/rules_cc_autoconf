@@ -43,6 +43,8 @@ autoconf(
         macros.AC_SUBST("HAVE_FDOPENDIR", "1"),
         macros.AC_SUBST("HAVE_SCANDIR", "1"),
         macros.AC_SUBST("HAVE_ALPHASORT", "1"),
+        # DIR_HAS_FD_MEMBER is 1 on Unix-like systems (macOS, Linux), 0 on Windows
+        macros.AC_SUBST("DIR_HAS_FD_MEMBER", "1"),
         # REPLACE_* defaults
         macros.AC_SUBST("REPLACE_OPENDIR", "0"),
         macros.AC_SUBST("REPLACE_READDIR", "0"),
@@ -52,14 +54,4 @@ autoconf(
         macros.AC_SUBST("REPLACE_FDOPENDIR", "0"),
     ],
     visibility = ["//visibility:public"],
-)
-
-autoconf(
-    name = "with_defaults",
-    checks = [],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":defaults",
-        ":dirent_h",
-    ],
 )

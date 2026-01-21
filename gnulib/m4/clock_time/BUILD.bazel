@@ -28,3 +28,11 @@ autoconf(
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
+
+autoconf(
+    name = "defaults",
+    checks = [
+        macros.AC_SUBST("CLOCK_TIME_LIB", ""),
+    ],
+    visibility = ["//visibility:public"],
+)

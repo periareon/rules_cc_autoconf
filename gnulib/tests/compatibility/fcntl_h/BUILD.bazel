@@ -2,7 +2,7 @@ load("//gnulib/tests/compatibility:gnu_gnulib_diff_test_suite.bzl", "gnu_gnulib_
 
 gnu_gnulib_diff_test_suite(
     name = "fcntl_h_test",
-    bazel_autoconf_target = "//gnulib/m4/fcntl_h:with_defaults",
+    bazel_autoconf_target = "//gnulib/m4/fcntl_h:fcntl_h",
     config_h_in = "config.h.in",
     configure_ac = "configure.ac",
     golden_config_h = "golden_config.h.in",

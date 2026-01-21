@@ -43,13 +43,3 @@ autoconf(
     checks = _GL_ICONV_H_DEFAULTS,
     visibility = ["//visibility:public"],
 )
-
-autoconf(
-    name = "with_defaults",
-    checks = [],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":defaults",
-        ":iconv_h",
-    ],
-)

@@ -2,7 +2,7 @@ load("//gnulib/tests/compatibility:gnu_gnulib_diff_test_suite.bzl", "gnu_gnulib_
 
 gnu_gnulib_diff_test_suite(
     name = "iconv_h_test",
-    bazel_autoconf_target = "//gnulib/m4/iconv_h:with_defaults",
+    bazel_autoconf_target = "//gnulib/m4/iconv_h:iconv_h",
     config_h_in = "config.h.in",
     configure_ac = "configure.ac",
     # subst.h differs: ICONV_CONST is empty on macOS, "const" on Linux

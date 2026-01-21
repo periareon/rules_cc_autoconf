@@ -196,14 +196,3 @@ autoconf(
 # =============================================================================
 # with_defaults - For external consumers who don't use the toolchain
 # =============================================================================
-
-autoconf(
-    name = "with_defaults",
-    checks = [],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":defaults",
-        ":stdlib_h",
-        ":stdlib_h_decls",  # Include decl checks only when using with_defaults
-    ],
-)

@@ -98,13 +98,3 @@ autoconf(
 # =============================================================================
 # with_defaults - For external consumers who don't use the toolchain
 # =============================================================================
-
-autoconf(
-    name = "with_defaults",
-    checks = [],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":defaults",
-        ":sys_utsname_h",
-    ],
-)

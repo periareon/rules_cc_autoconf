@@ -12,6 +12,11 @@ autoconf(
             "asin",
             define = "HAVE_ASIN",
         ),
+        # Set ASIN_LIBM and POW_LIBM to empty strings (subst-only)
+        # gl_COMMON_DOUBLE_MATHFUNC sets these based on whether the function needs libm
+        # On macOS, asin is in libc, so ASIN_LIBM="" and POW_LIBM=""
+        macros.AC_SUBST("ASIN_LIBM", ""),
+        macros.AC_SUBST("POW_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [

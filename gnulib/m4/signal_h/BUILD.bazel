@@ -80,17 +80,13 @@ int main(void) { sigset_t x; (void)x; return 0; }
         #   HAVE_SIGSET_T=0 - line 55-57
         # fi
         # Set HAVE_SIGSET_T as substitution variable
-        macros.AC_SUBST(
-            "HAVE_SIGSET_T",
-            condition = "gl_cv_type_sigset_t",
-            if_false = "0",
-        ),
-
         # Define HAVE_SIGSET_T in config.h if the type exists
         macros.AC_DEFINE(
             "HAVE_SIGSET_T",
             condition = "gl_cv_type_sigset_t",
             if_true = "1",
+            if_false = "0",
+            subst = True,
         ),
     ],
     visibility = ["//visibility:public"],
@@ -125,6 +121,8 @@ autoconf(
         macros.AC_SUBST("HAVE_SIGACTION", "1"),
         macros.AC_SUBST("HAVE_STR2SIG", "1"),
         macros.AC_SUBST("HAVE_STRUCT_SIGACTION_SA_SIGACTION", "1"),
+        macros.AC_SUBST("HAVE_SIGHANDLER_T", "1"),
+        macros.AC_SUBST("HAVE_SIGSET_T", "1"),
         # REPLACE_* defaults
         macros.AC_SUBST("REPLACE_PTHREAD_SIGMASK", "0"),
         macros.AC_SUBST("REPLACE_RAISE", "0"),
@@ -132,17 +130,3 @@ autoconf(
     visibility = ["//visibility:public"],
 )
 
-# =============================================================================
-# with_defaults - For external consumers who don't use the toolchain
-# =============================================================================
-
-autoconf(
-    name = "with_defaults",
-    checks = [],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":defaults",
-        ":signal_h",
-        ":signal_h_sigset_t",  # Include sigset_t check only when using with_defaults
-    ],
-)

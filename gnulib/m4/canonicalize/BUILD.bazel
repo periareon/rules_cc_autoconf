@@ -97,6 +97,7 @@ autoconf(
         macros.AC_CHECK_FUNC(
             "realpath",
             define = "HAVE_REALPATH",
+            subst = True,
         ),
         # Note: HAVE_LSTAT is provided by lstat dependency, not checked here to avoid duplicate
 
@@ -172,7 +173,12 @@ autoconf(
 # Main canonicalize target - combines all the macros
 autoconf(
     name = "canonicalize",
-    checks = [],
+    checks = [
+        # HAVE_CANONICALIZE_FILE_NAME is "0" on macOS (not available)
+        macros.AC_SUBST("HAVE_CANONICALIZE_FILE_NAME", "0"),
+        # REPLACE_REALPATH is set to "1" on macOS (realpath is broken)
+        macros.AC_SUBST("REPLACE_REALPATH", "1"),
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_CANONICALIZE_LGPL",

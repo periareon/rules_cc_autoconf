@@ -28,6 +28,7 @@ int main(void) {
 """,
             define = "HAVE_SAME_LONG_DOUBLE_AS_DOUBLE",
             language = "c",
+            subst = True,
         ),
     ],
     visibility = ["//visibility:public"],
@@ -434,14 +435,4 @@ autoconf(
         macros.AC_SUBST("REPLACE_TRUNCL", "0"),
     ],
     visibility = ["//visibility:public"],
-)
-
-autoconf(
-    name = "with_defaults",
-    checks = [],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":defaults",
-        ":math_h",
-    ],
 )

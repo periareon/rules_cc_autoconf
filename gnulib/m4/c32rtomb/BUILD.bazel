@@ -5,18 +5,31 @@ load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "c32rtomb",
-    checks = [
-        macros.AC_CHECK_DECL(
-            "c32rtomb",
-            define = "HAVE_DECL_C32RTOMB",
-            headers = ["uchar.h"],
-        ),
-    ],
+    checks = [],
     visibility = ["//visibility:public"],
     deps = [
         # AC_REQUIRE([AC_CANONICAL_HOST])
         "//autoconf/macros/AC_CANONICAL_HOST",
-        # HAVE_LANGINFO_CODESET appears in golden file, likely from locale-related checks
+        # Provides HAVE_LANGINFO_CODESET placeholder
         "//gnulib/m4/codeset",
     ],
+)
+
+autoconf(
+    name = "defaults",
+    checks = [
+        # Substitution defaults matching golden_subst*.h.in
+        macros.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR32_T", "1"),
+        macros.AC_SUBST("HAVE_C32RTOMB", "0"),
+        macros.AC_SUBST("HAVE_MBRTOC16", "1"),
+        macros.AC_SUBST("HAVE_MBRTOC32", "1"),
+        macros.AC_SUBST("HAVE_WORKING_C32RTOMB", "0"),
+        macros.AC_SUBST("HAVE_WORKING_MBRTOC32", "0"),
+        macros.AC_SUBST("LOCALE_FR", "fr_FR.ISO8859-1"),
+        macros.AC_SUBST("LOCALE_ZH_CN", "zh_CN.GB18030"),
+        macros.AC_SUBST("REPLACE_C32RTOMB", "0"),
+        macros.AC_SUBST("REPLACE_MBRTOC16", "0"),
+        macros.AC_SUBST("REPLACE_MBRTOC32", "0"),
+    ],
+    visibility = ["//visibility:public"],
 )

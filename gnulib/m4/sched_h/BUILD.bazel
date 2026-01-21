@@ -42,13 +42,3 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
 )
-
-autoconf(
-    name = "with_defaults",
-    checks = [],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":defaults",
-        ":sched_h",
-    ],
-)

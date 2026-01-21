@@ -1,0 +1,145 @@
+## Subst Fix Pass Status (2026-01-20)
+
+Completed (subst fixed and tests previously passing):
+- acl, acos, acosf, af_alg, aligned_alloc, alloca (+ AC_FUNC_ALLOCA), alphasort, arpa_inet_h, asin, asinf, assert_h, atan, atan2, atan2f, atanf, atoll, btowc, c32rtomb
+
+Not yet processed in this pass (requires follow-up):
+- call_once
+- canonicalize
+- cbrt, cbrtf, cbrtl
+- ceil, ceilf
+- chown
+- clock_time
+- closedir
+- cnd
+- copy-file-range
+- copysign, copysignf, copysignl
+- cos, cosf, coshf
+- ctype_h
+- dirent_h
+- dup, dup2, dup3
+- duplocale
+- endian_h
+- errno_h
+- error_h
+- euidaccess
+- execinfo
+- exp, exp2, exp2f, exp2l, expf, explicit_bzero
+- expm1, expm1f
+- fabs, fabsf, fabsl
+- faccessat
+- fchdir
+- fchmodat
+- fchownat
+- fcntl_h, fcntl
+- fdopendir
+- fflush
+- floor, floorf, floorl
+- fmod, fmodf, fmodl
+- fnmatch_h, fnmatch
+- fprintf-posix
+- fpurge
+- frexp, frexpf, frexpl
+- fseeko, fstatat, ftello, ftruncate, futimens
+- getaddrinfo, getcwd, getdelim, getdomainname, getdtablesize, getgroups, gethostname, gethrxtime, getline, getloadavg, getlogin, getopt, getpagesize, getpass, getprogname, gettime, gettimeofday, getusershell
+- glob_h, glob
+- group-member
+- hostent
+- hypot, hypotf, hypotl
+- iconv_h, iconv
+- inet_ntop, inet_pton
+- ioctl
+- isblank, isfinite, isinf, isnand, isnanf, isnanl, iswblank
+- langinfo_h
+- lchmod, lchown
+- ldexp, ldexpf, ldexpl
+- limits-h
+- link, linkat
+- locale_h
+- lock
+- log, log10f, log1p, log1pf, log1pl, logb, logbf, logf, logl, logp1, logp1f, logp1l
+- lstat
+- malloc_h
+- math_h, mathfunc
+- mbrlen, mbrtoc16, mbrtoc32, mbrtowc, mbsinit, mbsrtowcs, mbtowc
+- memmem, memrchr, memset_explicit
+- mkdirat, mkdtemp, mkfifo, mkfifoat, mknod, mkostemp, mkostemps, mkstemp, mktime
+- mntent_h, monetary_h, multiarch
+- nanosleep
+- net_if_h, netdb_h, netinet_in_h
+- newlocale
+- nl_langinfo
+- obstack
+- off64_t
+- open, openat, opendir
+- pipe, pipe2
+- poll_h, poll
+- posix_spawn
+- posixver
+- powf
+- printf
+- pthread_h, pthread_mutex_timedlock, pthread-rwlock
+- pty_h, pty
+- raise
+- random_r
+- rawmemchr
+- readdir
+- readlink
+- readutmp
+- reallocarray
+- relocatable
+- rename, renameat
+- rewinddir
+- rintf
+- round, roundl
+- rpmatch
+- scandir
+- sched_h, sched_yield
+- secure_getenv
+- select
+- selinux-selinux-h
+- semaphore
+- servent
+- setenv
+- sethostname
+- sigabbrev_np, sigaction, sigdescr_np
+- signal_h, signalblocking
+- signbit
+- sinf, sinhf
+- sleep
+- snprintf
+- socketlib
+- spawn_h
+- sqrt, sqrtf, sqrtl
+- stat
+- stdalign, stdarg, stdbit_h, stdbool, stdcountof_h, stddef_h, stdint, stdio_h, stdlib_h
+- stpcpy
+- strcasestr, strchrnul, strdup, strerror_r, strerror
+- string_h, strings_h
+- strnlen, strpbrk, strptime, strsep, strsignal, strtof, strtoimax, strtok_r, strtol, strtoll, strtoul, strtoull, strtoumax, strverscmp
+- symlink, symlinkat
+- sys_cdefs_h, sys_ioctl_h, sys_msg_h, sys_random_h, sys_resource_h, sys_select_h, sys_sem_h, sys_shm_h, sys_socket_h, sys_stat_h, sys_time_h, sys_times_h, sys_types_h, sys_uio_h, sys_un_h, sys_utsname_h, sys_wait_h
+- sysexits
+- systemd
+- tanf, tanhf
+- tcgetsid
+- termcap
+- termios_h
+- thrd, thread, threadlib
+- time_h, time_r, time_rz, timegm, timer_time, times, timespec_get
+- tmpfile
+- trunc, truncf, truncl
+- tsearch
+- ttyname_r
+- tzset
+- uchar_h
+- uname
+- unistd_h
+- unlinkat
+- usleep
+- utime_h, utime, utimens
+- vasnprintf, vasprintf, vdprintf, vfprintf-posix, vsnprintf
+- wchar_h, wcrtomb, wcslen, wcsrtombs, wcsxfrm, wctob, wctype_h, wctype, wcwidth, wmemchr, wmempcpy
+- xattr
+
+Note: c32rtomb was updated to add a defaults target and a with_defaults aggregator; tests were not rerun here due to Bazel download/TLS issues. Please run the tests in your environment.

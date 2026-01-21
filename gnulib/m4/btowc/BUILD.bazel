@@ -15,40 +15,16 @@ autoconf(
         # AC_CHECK_FUNCS_ONCE([btowc]) - line 20
         macros.AC_CHECK_FUNC(
             "btowc",
-            define = "ac_cv_func_btowc",
-        ),
-
-        # if test $ac_cv_func_btowc = no; then
-        #   HAVE_BTOWC=0 - line 21-22
-        # else
-        #   ... runtime checks ...
-        # fi
-        macros.AC_SUBST(
-            "HAVE_BTOWC",
-            condition = "ac_cv_func_btowc",
-            if_false = "0",
-            if_true = "1",
-        ),
-
-        # Define HAVE_BTOWC in config.h if the function exists
-        macros.AC_DEFINE(
-            "HAVE_BTOWC",
-            condition = "ac_cv_func_btowc",
-            if_true = "1",
+            define = "HAVE_BTOWC",
+            subst = True,
         ),
 
         # AC_CHECK_FUNCS_ONCE([mbrtowc]) - line 60
         # Note: This is also in gl_PREREQ_BTOWC, but we include it here
         macros.AC_CHECK_FUNC(
             "mbrtowc",
-            define = "ac_cv_func_mbrtowc",
-        ),
-
-        # Define HAVE_MBRTOWC in config.h if the function exists
-        macros.AC_DEFINE(
-            "HAVE_MBRTOWC",
-            condition = "ac_cv_func_mbrtowc",
-            if_true = "1",
+            define = "HAVE_MBRTOWC",
+            subst = True,
         ),
 
         # Note: The m4 file performs several AC_RUN_IFELSE checks:
@@ -61,15 +37,17 @@ autoconf(
         # - Linux: REPLACE_BTOWC=1 (but config.h shows it as undefined, meaning 0)
         # Since config.h shows REPLACE_BTOWC as undefined, we set it to 0
         macros.AC_SUBST("REPLACE_BTOWC", "0"),
+        # Set LOCALE_FR for substitution (from gt_LOCALE_FR)
+        macros.AC_SUBST("LOCALE_FR", "fr_FR.ISO8859-1"),
+        # Set HAVE_DECL_WCWIDTH as subst-only (not in config.h)
+        macros.AC_SUBST("HAVE_DECL_WCWIDTH", "1"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_WCHAR_H_DEFAULTS]) - line 12
-        # Note: gl_WCHAR_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
         # AC_REQUIRE([gt_TYPE_WINT_T]) - line 13
         "//gnulib/m4/wint_t",
         # AC_REQUIRE([gl_WCHAR_H_INLINE_OK]) - line 18
-        # This is part of wchar_h, but we don't need to depend on it since we're not using wchar_h defaults
+        # This is part of wchar_h, but we don't need to depend on it since we're not using wchar_h checks
         # AC_REQUIRE([AC_PROG_CC]) - line 25 (ignored, provided by toolchain)
         # AC_REQUIRE([gt_LOCALE_FR]) - line 26
         "//gnulib/m4/locale-fr",

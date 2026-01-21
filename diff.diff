@@ -1,0 +1,3876 @@
+diff --git a/autoconf/macros.bzl b/autoconf/macros.bzl
+index e7401ba4..b66f8eb4 100644
+--- a/autoconf/macros.bzl
++++ b/autoconf/macros.bzl
+@@ -88,7 +88,8 @@ def _ac_check_header(
+         compile_defines = None,
+         requires = None,
+         if_true = None,
+-        if_false = None):
++        if_false = None,
++        subst = False):
+     """Check for a header file.
+ 
+     Original m4 example:
+@@ -119,6 +120,7 @@ def _ac_check_header(
+             (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
+         if_true: Value to use when check succeeds (currently not used for header checks).
+         if_false: Value to use when check fails (currently not used for header checks).
++        subst: If True, mark as a substitution variable (for @VAR@ replacement in subst.h).
+ 
+     Returns:
+         A JSON-encoded check string for use with the autoconf rule.
+@@ -131,6 +133,7 @@ def _ac_check_header(
+         "language": language,
+         "name": header,
+         "type": "header",
++        "subst": subst,
+     }
+     if compile_defines:
+         check["compile_defines"] = compile_defines
+@@ -1433,7 +1436,8 @@ def _ac_define(
+         requires = None,
+         condition = None,
+         if_true = None,
+-        if_false = None):
++        if_false = None,
++        subst = False):
+     """Define a configuration macro.
+ 
+     Original m4 example:
+@@ -1482,6 +1486,7 @@ def _ac_define(
+         if_true: Value to use when condition is true (only used with `condition`).
+         if_false: Value to use when condition is false (only used with `condition`).
+             Use `None` to not define the macro when condition is false.
++        subst: If True, mark as a substitution variable (for @VAR@ replacement in subst.h).
+ 
+     Returns:
+         A JSON-encoded check string for use with the autoconf rule.
+@@ -1498,6 +1503,7 @@ def _ac_define(
+         "language": "c",
+         "name": define,
+         "type": "define",
++        "subst": subst,
+     }
+ 
+     if requires:
+diff --git a/autoconf/macros/AC_FUNC_ALLOCA/BUILD.bazel b/autoconf/macros/AC_FUNC_ALLOCA/BUILD.bazel
+index 6c229f79..bcb315b8 100644
+--- a/autoconf/macros/AC_FUNC_ALLOCA/BUILD.bazel
++++ b/autoconf/macros/AC_FUNC_ALLOCA/BUILD.bazel
+@@ -17,13 +17,8 @@ autoconf(
+         # Check for alloca.h header
+         macros.AC_CHECK_HEADER(
+             "alloca.h",
+-            define = "ac_cv_header_alloca_h",
+-        ),
+-        # Define HAVE_ALLOCA_H in config.h if header exists
+-        macros.AC_DEFINE(
+-            "HAVE_ALLOCA_H",
+-            condition = "ac_cv_header_alloca_h",
+-            if_true = "1",
++            define = "HAVE_ALLOCA_H",
++            subst = True,
+         ),
+         # Check if alloca works (typically via compiler builtin)
+         macros.AC_TRY_COMPILE(
+diff --git a/bison.log b/bison.log
+deleted file mode 100644
+index 5922fca8..00000000
+--- a/bison.log
++++ /dev/null
+@@ -1,2520 +0,0 @@
+-andrebrisco@Andres-MacBook-Pro bison-3.8.2 % bazel test //... -k
+-# Execution platform: @@platforms//host:host
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-# Execution platform: @@platforms//host:host
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-392 | #elif @UNISTD_H_HAVE_WINSOCK2_H_AND_USE_SOCKETS@
+-# Execution platform: @@platforms//host:host
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-392 | #elif @UNISTD_H_HAVE_WINSOCK2_H_AND_USE_SOCKETS@
+-# Execution platform: @@platforms//host:host
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-392 | #elif @UNISTD_H_HAVE_WINSOCK2_H_AND_USE_SOCKETS@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-392 | #elif @UNISTD_H_HAVE_WINSOCK2_H_AND_USE_SOCKETS@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-# Execution platform: @@platforms//host:host
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-95 | #if ! @HAVE_C99_STDINT_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-147 | #if @REPLACE_ITOLD@
+-160 | #if !defined NAN || @REPLACE_NAN@
+-182 | #if @REPLACE_HUGE_VAL@
+-1170 | #if 0 && @REPLACE_FREXPL@
+-1179 | # if !@HAVE_DECL_FREXPL@
+-1187 | #if 0 && !(@REPLACE_FREXPL@ && !@HAVE_DECL_FREXPL@)
+-1418 | #if 0 && @REPLACE_LDEXPL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-64 | #if @HAVE_FEATURES_H@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-64 | #if @HAVE_FEATURES_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-392 | #elif @UNISTD_H_HAVE_WINSOCK2_H_AND_USE_SOCKETS@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-392 | #elif @UNISTD_H_HAVE_WINSOCK2_H_AND_USE_SOCKETS@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-392 | #elif @UNISTD_H_HAVE_WINSOCK2_H_AND_USE_SOCKETS@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-392 | #elif @UNISTD_H_HAVE_WINSOCK2_H_AND_USE_SOCKETS@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-392 | #elif @UNISTD_H_HAVE_WINSOCK2_H_AND_USE_SOCKETS@
+-# Execution platform: @@platforms//host:host
+-64 | #if @HAVE_FEATURES_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-150 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-147 | #if @REPLACE_ITOLD@
+-160 | #if !defined NAN || @REPLACE_NAN@
+-182 | #if @REPLACE_HUGE_VAL@
+-1170 | #if 0 && @REPLACE_FREXPL@
+-1179 | # if !@HAVE_DECL_FREXPL@
+-1187 | #if 0 && !(@REPLACE_FREXPL@ && !@HAVE_DECL_FREXPL@)
+-1418 | #if 0 && @REPLACE_LDEXPL@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-# Execution platform: @@platforms//host:host
+-# Execution platform: @@platforms//host:host
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-147 | #if @REPLACE_ITOLD@
+-160 | #if !defined NAN || @REPLACE_NAN@
+-182 | #if @REPLACE_HUGE_VAL@
+-1170 | #if 0 && @REPLACE_FREXPL@
+-1179 | # if !@HAVE_DECL_FREXPL@
+-1187 | #if 0 && !(@REPLACE_FREXPL@ && !@HAVE_DECL_FREXPL@)
+-1418 | #if 0 && @REPLACE_LDEXPL@
+-# Execution platform: @@platforms//host:host
+-# Execution platform: @@platforms//host:host
+-64 | #if @HAVE_FEATURES_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-150 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-392 | #elif @UNISTD_H_HAVE_WINSOCK2_H_AND_USE_SOCKETS@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-392 | #elif @UNISTD_H_HAVE_WINSOCK2_H_AND_USE_SOCKETS@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-# Execution platform: @@platforms//host:host
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-95 | #if ! @HAVE_C99_STDINT_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-64 | #if @HAVE_FEATURES_H@
+-# Execution platform: @@platforms//host:host
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-392 | #elif @UNISTD_H_HAVE_WINSOCK2_H_AND_USE_SOCKETS@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-31 | #if @HAVE_GETOPT_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-31 | #if @HAVE_GETOPT_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-64 | #if @HAVE_FEATURES_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-150 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-31 | #if @HAVE_GETOPT_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-31 | #if @HAVE_GETOPT_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-# Execution platform: @@platforms//host:host
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-147 | #if @REPLACE_ITOLD@
+-160 | #if !defined NAN || @REPLACE_NAN@
+-182 | #if @REPLACE_HUGE_VAL@
+-1170 | #if 0 && @REPLACE_FREXPL@
+-1179 | # if !@HAVE_DECL_FREXPL@
+-1187 | #if 0 && !(@REPLACE_FREXPL@ && !@HAVE_DECL_FREXPL@)
+-1418 | #if 0 && @REPLACE_LDEXPL@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-64 | #if @HAVE_FEATURES_H@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-64 | #if @HAVE_FEATURES_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-# Execution platform: @@platforms//host:host
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-392 | #elif @UNISTD_H_HAVE_WINSOCK2_H_AND_USE_SOCKETS@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-392 | #elif @UNISTD_H_HAVE_WINSOCK2_H_AND_USE_SOCKETS@
+-# Execution platform: @@platforms//host:host
+-64 | #if @HAVE_FEATURES_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-150 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-392 | #elif @UNISTD_H_HAVE_WINSOCK2_H_AND_USE_SOCKETS@
+-# Execution platform: @@platforms//host:host
+-147 | #if @REPLACE_ITOLD@
+-160 | #if !defined NAN || @REPLACE_NAN@
+-182 | #if @REPLACE_HUGE_VAL@
+-1170 | #if 0 && @REPLACE_FREXPL@
+-1179 | # if !@HAVE_DECL_FREXPL@
+-1187 | #if 0 && !(@REPLACE_FREXPL@ && !@HAVE_DECL_FREXPL@)
+-1418 | #if 0 && @REPLACE_LDEXPL@
+-# Execution platform: @@platforms//host:host
+-147 | #if @REPLACE_ITOLD@
+-160 | #if !defined NAN || @REPLACE_NAN@
+-182 | #if @REPLACE_HUGE_VAL@
+-1170 | #if 0 && @REPLACE_FREXPL@
+-1179 | # if !@HAVE_DECL_FREXPL@
+-1187 | #if 0 && !(@REPLACE_FREXPL@ && !@HAVE_DECL_FREXPL@)
+-1418 | #if 0 && @REPLACE_LDEXPL@
+-# Execution platform: @@platforms//host:host
+-64 | #if @HAVE_FEATURES_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-150 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-78 | #if ! @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+-88 | #if !@HAVE_SIGSET_T@
+-96 | #if !@HAVE_SIGHANDLER_T@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-# Execution platform: @@platforms//host:host
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-64 | #if @HAVE_FEATURES_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-44 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@ \
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-125 |     && @UNISTD_H_HAVE_SYS_RANDOM_H@ \
+-165 | #if 0 && @UNISTD_H_HAVE_WINSOCK2_H@
+-392 | #elif @UNISTD_H_HAVE_WINSOCK2_H_AND_USE_SOCKETS@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-87 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-64 | #if @HAVE_FEATURES_H@
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-150 | #if (@REPLACE_FREE@ && !defined free \
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-95 | #if ! @HAVE_C99_STDINT_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-# Execution platform: @@platforms//host:host
+-252 | # if 0 || @REPLACE_LOCALTIME@
+-269 | # if 0 || @REPLACE_GMTIME@
+-342 | # if defined _GNU_SOURCE && 0 && ! @HAVE_TIMEZONE_T@
+-52 | #if (defined _MSC_VER || @REPLACE_STRUCT_TIMEVAL@) && 0 && !defined _GL_INCLUDING_WINSOCK2_H
+-68 | #if !@HAVE_STRUCT_TIMEVAL@ || @REPLACE_STRUCT_TIMEVAL@
+-95 | #if ! @HAVE_C99_STDINT_H@
+-40 | # if defined __GNUC__ && (defined _WIN32 && ! defined __CYGWIN__) && @HAVE_ALLOCA_H@
+-andrebrisco@Andres-MacBook-Pro bison-3.8.2 %
+diff --git a/gnulib/m4/access/BUILD.bazel b/gnulib/m4/access/BUILD.bazel
+index 4124e054..6d1d1b49 100644
+--- a/gnulib/m4/access/BUILD.bazel
++++ b/gnulib/m4/access/BUILD.bazel
+@@ -20,12 +20,12 @@ autoconf(
+                 define = "HAVE_ACCESS",
+             ),
+             macros.AC_DEFINE("ACCESS_TRAILING_SLASH_BUG", "1"),
+-            macros.M4_VARIABLE("REPLACE_ACCESS", "1"),
++            macros.AC_SUBST("REPLACE_ACCESS", "1"),
+         ],
+         "@platforms//os:windows": [
+             # On Windows, unconditionally set REPLACE_ACCESS=1
+             # because access() (= _access) does not support X_OK mode
+-            macros.M4_VARIABLE("REPLACE_ACCESS", "1"),
++            macros.AC_SUBST("REPLACE_ACCESS", "1"),
+         ],
+         "//conditions:default": [
+             # On Linux and other POSIX systems, access() works correctly
+diff --git a/gnulib/m4/acl/BUILD.bazel b/gnulib/m4/acl/BUILD.bazel
+index 3a85b7ca..21af9dab 100644
+--- a/gnulib/m4/acl/BUILD.bazel
++++ b/gnulib/m4/acl/BUILD.bazel
+@@ -156,8 +156,11 @@ autoconf(
+             # On macOS, acl_entries doesn't exist, so NEED_ACL_ENTRIES=1
+             macros.AC_DEFINE("NEED_ACL_ENTRIES", "1"),
+             # macOS has working ACL support
+-            # AC_DEFINE for config.h, AC_SUBST for subst.h
+-            macros.AC_DEFINE("USE_ACL", "1"),
++            # AC_DEFINE for config.h, subst=True for subst.h
++            macros.AC_DEFINE("USE_ACL", "1", subst = True),
++            # Set FILE_HAS_ACL_LIB and QCOPY_ACL_LIB to empty strings (subst-only)
++            macros.AC_SUBST("FILE_HAS_ACL_LIB", ""),
++            macros.AC_SUBST("QCOPY_ACL_LIB", ""),
+         ],
+         "//conditions:default": _COMMON_CHECKS + [
+             # AC_CHECK_FUNCS_ONCE([fchmod])
+diff --git a/gnulib/m4/acos/BUILD.bazel b/gnulib/m4/acos/BUILD.bazel
+index 6f9a8892..fad1336e 100644
+--- a/gnulib/m4/acos/BUILD.bazel
++++ b/gnulib/m4/acos/BUILD.bazel
+@@ -13,6 +13,11 @@ autoconf(
+             "acos",
+             define = "HAVE_ACOS",
+         ),
++        # Set ACOS_LIBM and POW_LIBM to empty strings (subst-only)
++        # gl_COMMON_DOUBLE_MATHFUNC sets these based on whether the function needs libm
++        # On macOS, acos is in libc, so ACOS_LIBM="" and POW_LIBM=""
++        macros.AC_SUBST("ACOS_LIBM", ""),
++        macros.AC_SUBST("POW_LIBM", ""),
+     ],
+     visibility = ["//visibility:public"],
+     deps = [
+diff --git a/gnulib/m4/acosf/BUILD.bazel b/gnulib/m4/acosf/BUILD.bazel
+index 6589254f..6c46eda9 100644
+--- a/gnulib/m4/acosf/BUILD.bazel
++++ b/gnulib/m4/acosf/BUILD.bazel
+@@ -10,6 +10,7 @@ autoconf(
+         macros.AC_CHECK_FUNC(
+             "acosf",
+             define = "HAVE_ACOSF",
++            subst = True,
+         ),
+         # AC_CHECK_DECLS([acosf], ..., [[#include <math.h>]])
+         macros.AC_CHECK_DECL(
+@@ -17,6 +18,10 @@ autoconf(
+             define = "HAVE_DECL_ACOSF",
+             headers = ["math.h"],
+         ),
++        # Set ACOSF_LIBM to empty string (subst-only)
++        # gl_COMMON_FLOAT_MATHFUNC sets this based on whether the function needs libm
++        # On macOS, acosf is in libc, so ACOSF_LIBM=""
++        macros.AC_SUBST("ACOSF_LIBM", ""),
+     ],
+     visibility = ["//visibility:public"],
+     deps = [
+diff --git a/gnulib/m4/af_alg/BUILD.bazel b/gnulib/m4/af_alg/BUILD.bazel
+index 347995ae..6f4b857c 100644
+--- a/gnulib/m4/af_alg/BUILD.bazel
++++ b/gnulib/m4/af_alg/BUILD.bazel
+@@ -31,7 +31,7 @@ int main(void) {
+     ],
+     visibility = ["//visibility:public"],
+     deps = [
+-        "//gnulib/m4/sys_socket_h",  # AC_REQUIRE([gl_SYS_SOCKET_H])
++        "//gnulib/m4/sys_socket_h",  # AC_REQUIRE([gl_SYS_SOCKET_H]) - provides checks and defaults
+         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+         # (golden files include standard header checks even though not AC_REQUIREd)
+         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+diff --git a/gnulib/m4/aligned_alloc/BUILD.bazel b/gnulib/m4/aligned_alloc/BUILD.bazel
+index e4c4ec9a..889409ed 100644
+--- a/gnulib/m4/aligned_alloc/BUILD.bazel
++++ b/gnulib/m4/aligned_alloc/BUILD.bazel
+@@ -18,10 +18,12 @@ autoconf(
+ 
+         # gl_CHECK_FUNCS_ANDROID([aligned_alloc], [[#include <stdlib.h>]]) - line 18
+         # Check for aligned_alloc function (similar to AC_CHECK_FUNC but also checks Android-specific behavior)
++        # On macOS, aligned_alloc exists but has bugs, so it needs replacement
+         macros.AC_CHECK_FUNC(
+             "aligned_alloc",
+             code = "#include <stdlib.h>\n",
+-            define = "ac_cv_func_aligned_alloc",
++            define = "HAVE_ALIGNED_ALLOC",
++            subst = True,
+         ),
+ 
+         # if test $ac_cv_func_aligned_alloc = yes; then
+@@ -39,17 +41,6 @@ autoconf(
+         # The runtime test checks if aligned_alloc works correctly for small alignments and sizes.
+         # On macOS, AIX, and Solaris, aligned_alloc has bugs, so REPLACE_ALIGNED_ALLOC=1.
+         # Based on golden files, on macOS aligned_alloc exists but needs replacement.
+-        macros.AC_DEFINE(
+-            "HAVE_ALIGNED_ALLOC",
+-            condition = "ac_cv_func_aligned_alloc",
+-            if_true = "1",
+-        ),
+-        macros.AC_SUBST(
+-            "HAVE_ALIGNED_ALLOC",
+-            condition = "ac_cv_func_aligned_alloc",
+-            if_false = "0",
+-            if_true = "1",
+-        ),
+         macros.AC_SUBST("REPLACE_ALIGNED_ALLOC", "1"),  # Based on golden files, needs replacement on macOS
+     ],
+     visibility = ["//visibility:public"],
+diff --git a/gnulib/m4/alloca/BUILD.bazel b/gnulib/m4/alloca/BUILD.bazel
+index 406dd08f..1511b4c8 100644
+--- a/gnulib/m4/alloca/BUILD.bazel
++++ b/gnulib/m4/alloca/BUILD.bazel
+@@ -1,6 +1,7 @@
+ """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/alloca.m4"""
+ 
+ load("//autoconf:autoconf.bzl", "autoconf")
++load("//autoconf:macros.bzl", "macros")
+ 
+ autoconf(
+     name = "alloca",
+@@ -8,6 +9,8 @@ autoconf(
+         # gl_FUNC_ALLOCA does additional logic after AC_FUNC_ALLOCA
+         # but for now we just depend on AC_FUNC_ALLOCA which provides
+         # HAVE_ALLOCA_H and HAVE_ALLOCA
++        # Set ALLOCA to empty string (subst-only) - alloca is a compiler builtin
++        macros.AC_SUBST("ALLOCA", ""),
+     ],
+     visibility = ["//visibility:public"],
+     deps = [
+diff --git a/gnulib/m4/alphasort/BUILD.bazel b/gnulib/m4/alphasort/BUILD.bazel
+index a075bb30..f04145a2 100644
+--- a/gnulib/m4/alphasort/BUILD.bazel
++++ b/gnulib/m4/alphasort/BUILD.bazel
+@@ -6,7 +6,7 @@ load("//autoconf:macros.bzl", "macros")
+ autoconf(
+     name = "alphasort",
+     checks = [
+-        macros.AC_CHECK_FUNC("alphasort"),
++        macros.AC_CHECK_FUNC("alphasort", subst = True),
+     ],
+     visibility = ["//visibility:public"],
+     deps = [
+diff --git a/gnulib/m4/arpa_inet_h/BUILD.bazel b/gnulib/m4/arpa_inet_h/BUILD.bazel
+index 51f70f6c..2fa36a0e 100644
+--- a/gnulib/m4/arpa_inet_h/BUILD.bazel
++++ b/gnulib/m4/arpa_inet_h/BUILD.bazel
+@@ -9,12 +9,21 @@ autoconf(
+         macros.AC_CHECK_HEADER(
+             "arpa/inet.h",
+             define = "HAVE_ARPA_INET_H",
++            subst = True,
++        ),
++        # Check for sys/socket.h for config.h (but not subst.h)
++        # sys_socket_h provides HAVE_SYS_SOCKET_H with subst=True, but arpa_inet_h
++        # should only have it as a placeholder in subst.h
++        macros.AC_CHECK_HEADER(
++            "sys/socket.h",
++            define = "HAVE_SYS_SOCKET_H",
++            subst = False,
+         ),
+     ],
+     visibility = ["//visibility:public"],
+     deps = [
+         "//gnulib/m4/include_next",
+-        "//gnulib/m4/sys_socket_h",
++        "//gnulib/m4/sys_socket_h:defaults",  # Get defaults but not HAVE_SYS_SOCKET_H subst value
+         "//gnulib/m4/extensions",  # AC_USE_SYSTEM_EXTENSIONS
+         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+         # (golden files include standard header checks even though not AC_REQUIREd)
+@@ -35,6 +44,10 @@ autoconf(
+         macros.AC_SUBST("HAVE_DECL_INET_PTON", "1"),
+         macros.AC_SUBST("HAVE_DECL_NTOHL", "1"),
+         macros.AC_SUBST("HAVE_DECL_NTOHS", "1"),
++        macros.AC_SUBST("HAVE_FEATURES_H", "0"),
++        # NEXT_* variables (from include_next)
++        macros.AC_SUBST("NEXT_ARPA_INET_H", "<arpa/inet.h>"),
++        macros.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_ARPA_INET_H", "<arpa/inet.h>"),
+         # REPLACE_* defaults
+         macros.AC_SUBST("REPLACE_INET_NTOP", "0"),
+         macros.AC_SUBST("REPLACE_INET_PTON", "0"),
+diff --git a/gnulib/m4/asin/BUILD.bazel b/gnulib/m4/asin/BUILD.bazel
+index e823c925..ad02101e 100644
+--- a/gnulib/m4/asin/BUILD.bazel
++++ b/gnulib/m4/asin/BUILD.bazel
+@@ -12,6 +12,11 @@ autoconf(
+             "asin",
+             define = "HAVE_ASIN",
+         ),
++        # Set ASIN_LIBM and POW_LIBM to empty strings (subst-only)
++        # gl_COMMON_DOUBLE_MATHFUNC sets these based on whether the function needs libm
++        # On macOS, asin is in libc, so ASIN_LIBM="" and POW_LIBM=""
++        macros.AC_SUBST("ASIN_LIBM", ""),
++        macros.AC_SUBST("POW_LIBM", ""),
+     ],
+     visibility = ["//visibility:public"],
+     deps = [
+diff --git a/gnulib/m4/asinf/BUILD.bazel b/gnulib/m4/asinf/BUILD.bazel
+index 0c7fb9e2..affa2e60 100644
+--- a/gnulib/m4/asinf/BUILD.bazel
++++ b/gnulib/m4/asinf/BUILD.bazel
+@@ -9,19 +9,24 @@ autoconf(
+         macros.AC_CHECK_FUNC(
+             "asinf",
+             define = "HAVE_ASINF",
++            subst = True,
+         ),
+         macros.AC_CHECK_DECL(
+             "asinf",
+             define = "HAVE_DECL_ASINF",
+         ),
++        # Set ASINF_LIBM to empty string (subst-only)
++        # gl_COMMON_FLOAT_MATHFUNC sets this based on whether the function needs libm
++        # On macOS, asinf is in libc, so ASINF_LIBM=""
++        macros.AC_SUBST("ASINF_LIBM", ""),
+     ],
+     visibility = ["//visibility:public"],
+     deps = [
+-        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS,
+-
+-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
++        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+         "//gnulib/m4/extensions",
+-        "//gnulib/m4/asin",
++        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
++        "//gnulib/m4/asin",  # AC_REQUIRE([gl_FUNC_ASIN])
++        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+     ],
+ )
+diff --git a/gnulib/m4/assert_h/BUILD.bazel b/gnulib/m4/assert_h/BUILD.bazel
+index 8b9250e9..380a0b2c 100644
+--- a/gnulib/m4/assert_h/BUILD.bazel
++++ b/gnulib/m4/assert_h/BUILD.bazel
+@@ -33,3 +33,23 @@ int main(void) {
+         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+     ],
+ )
++
++autoconf(
++    name = "defaults",
++    checks = [
++        # NEXT_* variables (from include_next)
++        macros.AC_SUBST("NEXT_ASSERT_H", "<assert.h>"),
++        macros.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_ASSERT_H", "<assert.h>"),
++    ],
++    visibility = ["//visibility:public"],
++)
++
++autoconf(
++    name = "with_defaults",
++    checks = [],
++    visibility = ["//visibility:public"],
++    deps = [
++        ":assert_h",
++        ":defaults",
++    ],
++)
+diff --git a/gnulib/m4/atan/BUILD.bazel b/gnulib/m4/atan/BUILD.bazel
+index 3e657a94..195db251 100644
+--- a/gnulib/m4/atan/BUILD.bazel
++++ b/gnulib/m4/atan/BUILD.bazel
+@@ -12,6 +12,11 @@ autoconf(
+             "atan",
+             define = "HAVE_ATAN",
+         ),
++        # Set ATAN_LIBM and POW_LIBM to empty strings (subst-only)
++        # gl_COMMON_DOUBLE_MATHFUNC sets these based on whether the function needs libm
++        # On macOS, atan is in libc, so ATAN_LIBM="" and POW_LIBM=""
++        macros.AC_SUBST("ATAN_LIBM", ""),
++        macros.AC_SUBST("POW_LIBM", ""),
+     ],
+     visibility = ["//visibility:public"],
+     deps = [
+diff --git a/gnulib/m4/atan2/BUILD.bazel b/gnulib/m4/atan2/BUILD.bazel
+index 59b599f4..b1be582f 100644
+--- a/gnulib/m4/atan2/BUILD.bazel
++++ b/gnulib/m4/atan2/BUILD.bazel
+@@ -12,6 +12,11 @@ autoconf(
+             "atan2",
+             define = "HAVE_ATAN2",
+         ),
++        # Set ATAN2_LIBM and POW_LIBM to empty strings (subst-only)
++        # gl_COMMON_DOUBLE_MATHFUNC sets these based on whether the function needs libm
++        # On macOS, atan2 is in libc, so ATAN2_LIBM="" and POW_LIBM=""
++        macros.AC_SUBST("ATAN2_LIBM", ""),
++        macros.AC_SUBST("POW_LIBM", ""),
+     ],
+     visibility = ["//visibility:public"],
+     deps = [
+diff --git a/gnulib/m4/atan2f/BUILD.bazel b/gnulib/m4/atan2f/BUILD.bazel
+index dbbd7aae..c0aea69d 100644
+--- a/gnulib/m4/atan2f/BUILD.bazel
++++ b/gnulib/m4/atan2f/BUILD.bazel
+@@ -9,11 +9,16 @@ autoconf(
+         macros.AC_CHECK_FUNC(
+             "atan2f",
+             define = "HAVE_ATAN2F",
++            subst = True,
+         ),
+         macros.AC_CHECK_DECL(
+             "atan2f",
+             define = "HAVE_DECL_ATAN2F",
+         ),
++        # Set ATAN2F_LIBM to empty string (subst-only)
++        # gl_COMMON_FLOAT_MATHFUNC sets this based on whether the function needs libm
++        # On macOS, atan2f is in libc, so ATAN2F_LIBM=""
++        macros.AC_SUBST("ATAN2F_LIBM", ""),
+     ],
+     visibility = ["//visibility:public"],
+     deps = [
+diff --git a/gnulib/m4/atanf/BUILD.bazel b/gnulib/m4/atanf/BUILD.bazel
+index 4a1a4a07..154adde4 100644
+--- a/gnulib/m4/atanf/BUILD.bazel
++++ b/gnulib/m4/atanf/BUILD.bazel
+@@ -9,11 +9,16 @@ autoconf(
+         macros.AC_CHECK_FUNC(
+             "atanf",
+             define = "HAVE_ATANF",
++            subst = True,
+         ),
+         macros.AC_CHECK_DECL(
+             "atanf",
+             define = "HAVE_DECL_ATANF",
+         ),
++        # Set ATANF_LIBM to empty string (subst-only)
++        # gl_COMMON_FLOAT_MATHFUNC sets this based on whether the function needs libm
++        # On macOS, atanf is in libc, so ATANF_LIBM=""
++        macros.AC_SUBST("ATANF_LIBM", ""),
+     ],
+     visibility = ["//visibility:public"],
+     deps = [
+diff --git a/gnulib/m4/atoll/BUILD.bazel b/gnulib/m4/atoll/BUILD.bazel
+index b5168b3c..f77431bb 100644
+--- a/gnulib/m4/atoll/BUILD.bazel
++++ b/gnulib/m4/atoll/BUILD.bazel
+@@ -8,34 +8,19 @@ autoconf(
+     name = "atoll",
+     checks = [
+         # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - line 12
+-        # This is provided by stdlib_h:defaults dependency
++        # This is provided by stdlib_h dependency
+ 
+         # AC_CHECK_FUNCS([atoll]) - line 13
++        # Also mark subst=True so HAVE_ATOLL is available in subst.h
+         macros.AC_CHECK_FUNC(
+             "atoll",
+-            define = "ac_cv_func_atoll",
+-        ),
+-
+-        # if test $ac_cv_func_atoll = no; then
+-        #   HAVE_ATOLL=0 - line 15
+-        # fi
+-        # Define HAVE_ATOLL if function exists
+-        macros.AC_DEFINE(
+-            "HAVE_ATOLL",
+-            condition = "ac_cv_func_atoll",
+-            if_true = "1",
+-        ),
+-        # Set HAVE_ATOLL=0 as substitution variable if function doesn't exist
+-        macros.AC_SUBST(
+-            "HAVE_ATOLL",
+-            condition = "ac_cv_func_atoll",
+-            if_false = "0",
+-            if_true = "1",
++            define = "HAVE_ATOLL",
++            subst = True,
+         ),
+     ],
+     visibility = ["//visibility:public"],
+     deps = [
+-        "//gnulib/m4/stdlib_h",  # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - line 12
++        "//gnulib/m4/stdlib_h",  # AC_REQUIRE([gl_STDLIB_H_DEFAULTS])
+         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+     ],
+diff --git a/gnulib/m4/btowc/BUILD.bazel b/gnulib/m4/btowc/BUILD.bazel
+index 1c3c6614..df0d699e 100644
+--- a/gnulib/m4/btowc/BUILD.bazel
++++ b/gnulib/m4/btowc/BUILD.bazel
+@@ -15,40 +15,16 @@ autoconf(
+         # AC_CHECK_FUNCS_ONCE([btowc]) - line 20
+         macros.AC_CHECK_FUNC(
+             "btowc",
+-            define = "ac_cv_func_btowc",
+-        ),
+-
+-        # if test $ac_cv_func_btowc = no; then
+-        #   HAVE_BTOWC=0 - line 21-22
+-        # else
+-        #   ... runtime checks ...
+-        # fi
+-        macros.AC_SUBST(
+-            "HAVE_BTOWC",
+-            condition = "ac_cv_func_btowc",
+-            if_false = "0",
+-            if_true = "1",
+-        ),
+-
+-        # Define HAVE_BTOWC in config.h if the function exists
+-        macros.AC_DEFINE(
+-            "HAVE_BTOWC",
+-            condition = "ac_cv_func_btowc",
+-            if_true = "1",
++            define = "HAVE_BTOWC",
++            subst = True,
+         ),
+ 
+         # AC_CHECK_FUNCS_ONCE([mbrtowc]) - line 60
+         # Note: This is also in gl_PREREQ_BTOWC, but we include it here
+         macros.AC_CHECK_FUNC(
+             "mbrtowc",
+-            define = "ac_cv_func_mbrtowc",
+-        ),
+-
+-        # Define HAVE_MBRTOWC in config.h if the function exists
+-        macros.AC_DEFINE(
+-            "HAVE_MBRTOWC",
+-            condition = "ac_cv_func_mbrtowc",
+-            if_true = "1",
++            define = "HAVE_MBRTOWC",
++            subst = True,
+         ),
+ 
+         # Note: The m4 file performs several AC_RUN_IFELSE checks:
+@@ -61,15 +37,19 @@ autoconf(
+         # - Linux: REPLACE_BTOWC=1 (but config.h shows it as undefined, meaning 0)
+         # Since config.h shows REPLACE_BTOWC as undefined, we set it to 0
+         macros.AC_SUBST("REPLACE_BTOWC", "0"),
++        # Set LOCALE_FR for substitution (from gt_LOCALE_FR)
++        macros.AC_SUBST("LOCALE_FR", "fr_FR.ISO8859-1"),
++        # Set HAVE_DECL_WCWIDTH as subst-only (not in config.h)
++        macros.AC_SUBST("HAVE_DECL_WCWIDTH", "1"),
+     ],
+     visibility = ["//visibility:public"],
+     deps = [
+         # AC_REQUIRE([gl_WCHAR_H_DEFAULTS]) - line 12
+-        # Note: gl_WCHAR_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
++        "//gnulib/m4/wchar_h:defaults",  # Provides HAVE_DECL_WCSDUP and other defaults (subst-only, not config.h)
+         # AC_REQUIRE([gt_TYPE_WINT_T]) - line 13
+         "//gnulib/m4/wint_t",
+         # AC_REQUIRE([gl_WCHAR_H_INLINE_OK]) - line 18
+-        # This is part of wchar_h, but we don't need to depend on it since we're not using wchar_h defaults
++        # This is part of wchar_h, but we don't need to depend on it since we're not using wchar_h checks
+         # AC_REQUIRE([AC_PROG_CC]) - line 25 (ignored, provided by toolchain)
+         # AC_REQUIRE([gt_LOCALE_FR]) - line 26
+         "//gnulib/m4/locale-fr",
+diff --git a/gnulib/m4/c32rtomb/BUILD.bazel b/gnulib/m4/c32rtomb/BUILD.bazel
+index 3fec9e9b..3b6d8484 100644
+--- a/gnulib/m4/c32rtomb/BUILD.bazel
++++ b/gnulib/m4/c32rtomb/BUILD.bazel
+@@ -5,18 +5,41 @@ load("//autoconf:macros.bzl", "macros")
+ 
+ autoconf(
+     name = "c32rtomb",
+-    checks = [
+-        macros.AC_CHECK_DECL(
+-            "c32rtomb",
+-            define = "HAVE_DECL_C32RTOMB",
+-            headers = ["uchar.h"],
+-        ),
+-    ],
++    checks = [],
+     visibility = ["//visibility:public"],
+     deps = [
+         # AC_REQUIRE([AC_CANONICAL_HOST])
+         "//autoconf/macros/AC_CANONICAL_HOST",
+-        # HAVE_LANGINFO_CODESET appears in golden file, likely from locale-related checks
++        # Provides HAVE_LANGINFO_CODESET placeholder
+         "//gnulib/m4/codeset",
+     ],
+ )
++
++autoconf(
++    name = "defaults",
++    checks = [
++        # Substitution defaults matching golden_subst*.h.in
++        macros.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR32_T", "1"),
++        macros.AC_SUBST("HAVE_C32RTOMB", "0"),
++        macros.AC_SUBST("HAVE_MBRTOC16", "1"),
++        macros.AC_SUBST("HAVE_MBRTOC32", "1"),
++        macros.AC_SUBST("HAVE_WORKING_C32RTOMB", "0"),
++        macros.AC_SUBST("HAVE_WORKING_MBRTOC32", "0"),
++        macros.AC_SUBST("LOCALE_FR", "fr_FR.ISO8859-1"),
++        macros.AC_SUBST("LOCALE_ZH_CN", "zh_CN.GB18030"),
++        macros.AC_SUBST("REPLACE_C32RTOMB", "0"),
++        macros.AC_SUBST("REPLACE_MBRTOC16", "0"),
++        macros.AC_SUBST("REPLACE_MBRTOC32", "0"),
++    ],
++    visibility = ["//visibility:public"],
++)
++
++autoconf(
++    name = "with_defaults",
++    checks = [],
++    visibility = ["//visibility:public"],
++    deps = [
++        ":c32rtomb",
++        ":defaults",
++    ],
++)
+diff --git a/gnulib/m4/call_once/BUILD.bazel b/gnulib/m4/call_once/BUILD.bazel
+index 306aab38..2cb35e57 100644
+--- a/gnulib/m4/call_once/BUILD.bazel
++++ b/gnulib/m4/call_once/BUILD.bazel
+@@ -7,7 +7,7 @@ autoconf(
+     name = "call_once",
+     checks = [
+         # gl_CHECK_FUNCS_ANDROID([call_once], [[#include <threads.h>]])
+-        macros.AC_CHECK_FUNC("call_once"),
++        macros.AC_CHECK_FUNC("call_once", subst=True),
+     ],
+     visibility = ["//visibility:public"],
+     deps = [
+@@ -20,3 +20,59 @@ autoconf(
+         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+     ],
+ )
++
++autoconf(
++    name = "defaults",
++    checks = [
++        # Thread-related defaults
++        macros.AC_SUBST("BROKEN_THRD_JOIN", "0"),
++        macros.AC_SUBST("BROKEN_THRD_START_T", "0"),
++        macros.AC_SUBST("HAVE_THREADS_H", "0"),
++        macros.AC_SUBST("HAVE_THREAD_LOCAL", "1"),
++        macros.AC_SUBST("LIBPMULTITHREAD", "-lpthread"),
++        macros.AC_SUBST("LIBPTHREAD", ""),
++        macros.AC_SUBST("LIBSTDTHREAD", "-lpthread "),
++        macros.AC_SUBST("LIBTHREADLOCAL", ""),
++        macros.AC_SUBST("LIB_SCHED_YIELD", ""),
++        macros.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_THREADS_H", "<threads.h>"),
++        macros.AC_SUBST("NEXT_THREADS_H", "<threads.h>"),
++        macros.AC_SUBST("SCHED_YIELD_LIB", ""),
++        # REPLACE_* defaults
++        macros.AC_SUBST("REPLACE_CALL_ONCE", "0"),
++        macros.AC_SUBST("REPLACE_CND_BROADCAST", "0"),
++        macros.AC_SUBST("REPLACE_CND_DESTROY", "0"),
++        macros.AC_SUBST("REPLACE_CND_INIT", "0"),
++        macros.AC_SUBST("REPLACE_CND_SIGNAL", "0"),
++        macros.AC_SUBST("REPLACE_CND_TIMEDWAIT", "0"),
++        macros.AC_SUBST("REPLACE_CND_WAIT", "0"),
++        macros.AC_SUBST("REPLACE_MTX_DESTROY", "0"),
++        macros.AC_SUBST("REPLACE_MTX_INIT", "0"),
++        macros.AC_SUBST("REPLACE_MTX_LOCK", "0"),
++        macros.AC_SUBST("REPLACE_MTX_TIMEDLOCK", "0"),
++        macros.AC_SUBST("REPLACE_MTX_TRYLOCK", "0"),
++        macros.AC_SUBST("REPLACE_MTX_UNLOCK", "0"),
++        macros.AC_SUBST("REPLACE_THRD_CREATE", "0"),
++        macros.AC_SUBST("REPLACE_THRD_CURRENT", "0"),
++        macros.AC_SUBST("REPLACE_THRD_DETACH", "0"),
++        macros.AC_SUBST("REPLACE_THRD_EQUAL", "0"),
++        macros.AC_SUBST("REPLACE_THRD_EXIT", "0"),
++        macros.AC_SUBST("REPLACE_THRD_JOIN", "0"),
++        macros.AC_SUBST("REPLACE_THRD_SLEEP", "0"),
++        macros.AC_SUBST("REPLACE_THRD_YIELD", "0"),
++        macros.AC_SUBST("REPLACE_TSS_CREATE", "0"),
++        macros.AC_SUBST("REPLACE_TSS_DELETE", "0"),
++        macros.AC_SUBST("REPLACE_TSS_GET", "0"),
++        macros.AC_SUBST("REPLACE_TSS_SET", "0"),
++    ],
++    visibility = ["//visibility:public"],
++)
++
++autoconf(
++    name = "with_defaults",
++    checks = [],
++    visibility = ["//visibility:public"],
++    deps = [
++        ":call_once",
++        ":defaults",
++    ],
++)
+diff --git a/gnulib/m4/canonicalize/BUILD.bazel b/gnulib/m4/canonicalize/BUILD.bazel
+index 06a93270..10d8e45b 100644
+--- a/gnulib/m4/canonicalize/BUILD.bazel
++++ b/gnulib/m4/canonicalize/BUILD.bazel
+@@ -97,6 +97,7 @@ autoconf(
+         macros.AC_CHECK_FUNC(
+             "realpath",
+             define = "HAVE_REALPATH",
++            subst = True,
+         ),
+         # Note: HAVE_LSTAT is provided by lstat dependency, not checked here to avoid duplicate
+ 
+@@ -172,7 +173,12 @@ autoconf(
+ # Main canonicalize target - combines all the macros
+ autoconf(
+     name = "canonicalize",
+-    checks = [],
++    checks = [
++        # HAVE_CANONICALIZE_FILE_NAME is "0" on macOS (not available)
++        macros.AC_SUBST("HAVE_CANONICALIZE_FILE_NAME", "0"),
++        # REPLACE_REALPATH is set to "1" on macOS (realpath is broken)
++        macros.AC_SUBST("REPLACE_REALPATH", "1"),
++    ],
+     visibility = ["//visibility:public"],
+     deps = [
+         ":gl_CANONICALIZE_LGPL",
+diff --git a/gnulib/m4/cbrt/BUILD.bazel b/gnulib/m4/cbrt/BUILD.bazel
+index 5ec57635..7d19931a 100644
+--- a/gnulib/m4/cbrt/BUILD.bazel
++++ b/gnulib/m4/cbrt/BUILD.bazel
+@@ -10,6 +10,7 @@ autoconf(
+         macros.AC_CHECK_FUNC(
+             "cbrt",
+             define = "HAVE_CBRT",
++            subst = True,
+         ),
+     ],
+     visibility = ["//visibility:public"],
+@@ -22,3 +23,27 @@ autoconf(
+         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+     ],
+ )
++
++autoconf(
++    name = "defaults",
++    checks = [
++        # LIBM variables (typically empty on modern systems)
++        macros.AC_SUBST("CBRT_LIBM", ""),
++        macros.AC_SUBST("FABS_LIBM", ""),
++        macros.AC_SUBST("FREXP_LIBM", ""),
++        macros.AC_SUBST("ISNAND_LIBM", ""),
++        macros.AC_SUBST("LDEXP_LIBM", ""),
++        macros.AC_SUBST("POW_LIBM", ""),
++    ],
++    visibility = ["//visibility:public"],
++)
++
++autoconf(
++    name = "with_defaults",
++    checks = [],
++    visibility = ["//visibility:public"],
++    deps = [
++        ":cbrt",
++        ":defaults",
++    ],
++)
+diff --git a/gnulib/m4/cbrtf/BUILD.bazel b/gnulib/m4/cbrtf/BUILD.bazel
+index 1fed29bb..c61bfc40 100644
+--- a/gnulib/m4/cbrtf/BUILD.bazel
++++ b/gnulib/m4/cbrtf/BUILD.bazel
+@@ -6,7 +6,7 @@ load("//autoconf:macros.bzl", "macros")
+ autoconf(
+     name = "cbrtf",
+     checks = [
+-        macros.AC_CHECK_FUNC("cbrtf"),
++        macros.AC_CHECK_FUNC("cbrtf", subst=True),
+     ],
+     visibility = ["//visibility:public"],
+     deps = [
+diff --git a/gnulib/m4/cbrtl/BUILD.bazel b/gnulib/m4/cbrtl/BUILD.bazel
+index 7d7c4f21..5f0353d2 100644
+--- a/gnulib/m4/cbrtl/BUILD.bazel
++++ b/gnulib/m4/cbrtl/BUILD.bazel
+@@ -6,7 +6,7 @@ load("//autoconf:macros.bzl", "macros")
+ autoconf(
+     name = "cbrtl",
+     checks = [
+-        macros.AC_CHECK_FUNC("cbrtl"),
++        macros.AC_CHECK_FUNC("cbrtl", subst=True),
+     ],
+     visibility = ["//visibility:public"],
+     deps = [
+diff --git a/gnulib/m4/ceil/BUILD.bazel b/gnulib/m4/ceil/BUILD.bazel
+index e67450d8..049d4175 100644
+--- a/gnulib/m4/ceil/BUILD.bazel
++++ b/gnulib/m4/ceil/BUILD.bazel
+@@ -13,6 +13,7 @@ autoconf(
+         macros.AC_CHECK_FUNC(
+             "ceil",
+             define = "HAVE_CEIL",
++            subst = True,
+         ),
+     ],
+     visibility = ["//visibility:public"],
+@@ -20,3 +21,21 @@ autoconf(
+         "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+     ],
+ )
++
++autoconf(
++    name = "defaults",
++    checks = [
++        macros.AC_SUBST("CEIL_LIBM", ""),
++    ],
++    visibility = ["//visibility:public"],
++)
++
++autoconf(
++    name = "with_defaults",
++    checks = [],
++    visibility = ["//visibility:public"],
++    deps = [
++        ":ceil",
++        ":defaults",
++    ],
++)
+diff --git a/gnulib/m4/ceilf/BUILD.bazel b/gnulib/m4/ceilf/BUILD.bazel
+index ac3b1bfe..83a85a15 100644
+--- a/gnulib/m4/ceilf/BUILD.bazel
++++ b/gnulib/m4/ceilf/BUILD.bazel
+@@ -10,6 +10,7 @@ autoconf(
+             "ceilf",
+             define = "HAVE_DECL_CEILF",
+             headers = ["math.h"],
++            subst = True,
+         ),
+     ],
+     visibility = ["//visibility:public"],
+@@ -18,6 +19,25 @@ autoconf(
+ 
+         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+         "//gnulib/m4/extensions",
++        "//gnulib/m4/math_h",  # Provides REPLACE_HUGE_VAL, REPLACE_NAN
+         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+     ],
+ )
++
++autoconf(
++    name = "defaults",
++    checks = [
++        macros.AC_SUBST("CEILF_LIBM", ""),
++    ],
++    visibility = ["//visibility:public"],
++)
++
++autoconf(
++    name = "with_defaults",
++    checks = [],
++    visibility = ["//visibility:public"],
++    deps = [
++        ":ceilf",
++        ":defaults",
++    ],
++)
+diff --git a/gnulib/m4/chown/BUILD.bazel b/gnulib/m4/chown/BUILD.bazel
+index 7d7bb978..22eb4569 100644
+--- a/gnulib/m4/chown/BUILD.bazel
++++ b/gnulib/m4/chown/BUILD.bazel
+@@ -17,6 +17,7 @@ autoconf(
+                 "HAVE_CHOWN",
+                 "1",
+                 requires = ["_gl_cv_func_chown=1"],
++                subst = True,
+             ),
+             macros.AC_CHECK_FUNC(
+                 "fchown",
+@@ -35,6 +36,7 @@ autoconf(
+                 "HAVE_CHOWN",
+                 "1",
+                 requires = ["_gl_cv_func_chown=1"],
++                subst = True,
+             ),
+             macros.AC_CHECK_FUNC(
+                 "fchown",
+@@ -54,6 +56,7 @@ autoconf(
+                 "HAVE_CHOWN",
+                 "1",
+                 requires = ["_gl_cv_func_chown=1"],
++                subst = True,
+             ),
+             macros.AC_CHECK_FUNC(
+                 "fchown",
+@@ -71,3 +74,22 @@ autoconf(
+         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+     ],
+ )
++
++autoconf(
++    name = "defaults",
++    checks = [
++        # REPLACE_CHOWN is "1" on macOS (chown has trailing slash bug)
++        macros.AC_SUBST("REPLACE_CHOWN", "1"),
++    ],
++    visibility = ["//visibility:public"],
++)
++
++autoconf(
++    name = "with_defaults",
++    checks = [],
++    visibility = ["//visibility:public"],
++    deps = [
++        ":chown",
++        ":defaults",
++    ],
++)
+diff --git a/gnulib/m4/clock_time/BUILD.bazel b/gnulib/m4/clock_time/BUILD.bazel
+index b1258935..2aaf60e0 100644
+--- a/gnulib/m4/clock_time/BUILD.bazel
++++ b/gnulib/m4/clock_time/BUILD.bazel
+@@ -28,3 +28,21 @@ autoconf(
+         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+     ],
+ )
++
++autoconf(
++    name = "defaults",
++    checks = [
++        macros.AC_SUBST("CLOCK_TIME_LIB", ""),
++    ],
++    visibility = ["//visibility:public"],
++)
++
++autoconf(
++    name = "with_defaults",
++    checks = [],
++    visibility = ["//visibility:public"],
++    deps = [
++        ":clock_time",
++        ":defaults",
++    ],
++)
+diff --git a/gnulib/m4/closedir/BUILD.bazel b/gnulib/m4/closedir/BUILD.bazel
+index 6f90224c..9dc9c6cd 100644
+--- a/gnulib/m4/closedir/BUILD.bazel
++++ b/gnulib/m4/closedir/BUILD.bazel
+@@ -20,6 +20,7 @@ autoconf(
+             "HAVE_CLOSEDIR",
+             condition = "_gl_have_closedir",
+             if_true = "1",
++            subst = True,
+         ),
+ 
+         # Set HAVE_CLOSEDIR as substitution variable based on check result
+@@ -43,6 +44,7 @@ autoconf(
+             "HAVE_FCHDIR",
+             condition = "_gl_have_fchdir",
+             if_true = "1",
++            subst = True,
+         ),
+ 
+         # REPLACE_CLOSEDIR is set to 1 if:
+diff --git a/gnulib/m4/cnd/BUILD.bazel b/gnulib/m4/cnd/BUILD.bazel
+index df7b7b34..6c7eac8d 100644
+--- a/gnulib/m4/cnd/BUILD.bazel
++++ b/gnulib/m4/cnd/BUILD.bazel
+@@ -31,3 +31,59 @@ int main(void) {
+         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+     ],
+ )
++
++autoconf(
++    name = "defaults",
++    checks = [
++        # Thread-related defaults (same as call_once)
++        macros.AC_SUBST("BROKEN_THRD_JOIN", "0"),
++        macros.AC_SUBST("BROKEN_THRD_START_T", "0"),
++        macros.AC_SUBST("HAVE_THREADS_H", "0"),
++        macros.AC_SUBST("HAVE_THREAD_LOCAL", "1"),
++        macros.AC_SUBST("LIBPMULTITHREAD", "-lpthread"),
++        macros.AC_SUBST("LIBPTHREAD", ""),
++        macros.AC_SUBST("LIBSTDTHREAD", "-lpthread "),
++        macros.AC_SUBST("LIBTHREADLOCAL", ""),
++        macros.AC_SUBST("LIB_SCHED_YIELD", ""),
++        macros.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_THREADS_H", "<threads.h>"),
++        macros.AC_SUBST("NEXT_THREADS_H", "<threads.h>"),
++        macros.AC_SUBST("SCHED_YIELD_LIB", ""),
++        # REPLACE_* defaults
++        macros.AC_SUBST("REPLACE_CALL_ONCE", "0"),
++        macros.AC_SUBST("REPLACE_CND_BROADCAST", "0"),
++        macros.AC_SUBST("REPLACE_CND_DESTROY", "0"),
++        macros.AC_SUBST("REPLACE_CND_INIT", "0"),
++        macros.AC_SUBST("REPLACE_CND_SIGNAL", "0"),
++        macros.AC_SUBST("REPLACE_CND_TIMEDWAIT", "0"),
++        macros.AC_SUBST("REPLACE_CND_WAIT", "0"),
++        macros.AC_SUBST("REPLACE_MTX_DESTROY", "0"),
++        macros.AC_SUBST("REPLACE_MTX_INIT", "0"),
++        macros.AC_SUBST("REPLACE_MTX_LOCK", "0"),
++        macros.AC_SUBST("REPLACE_MTX_TIMEDLOCK", "0"),
++        macros.AC_SUBST("REPLACE_MTX_TRYLOCK", "0"),
++        macros.AC_SUBST("REPLACE_MTX_UNLOCK", "0"),
++        macros.AC_SUBST("REPLACE_THRD_CREATE", "0"),
++        macros.AC_SUBST("REPLACE_THRD_CURRENT", "0"),
++        macros.AC_SUBST("REPLACE_THRD_DETACH", "0"),
++        macros.AC_SUBST("REPLACE_THRD_EQUAL", "0"),
++        macros.AC_SUBST("REPLACE_THRD_EXIT", "0"),
++        macros.AC_SUBST("REPLACE_THRD_JOIN", "0"),
++        macros.AC_SUBST("REPLACE_THRD_SLEEP", "0"),
++        macros.AC_SUBST("REPLACE_THRD_YIELD", "0"),
++        macros.AC_SUBST("REPLACE_TSS_CREATE", "0"),
++        macros.AC_SUBST("REPLACE_TSS_DELETE", "0"),
++        macros.AC_SUBST("REPLACE_TSS_GET", "0"),
++        macros.AC_SUBST("REPLACE_TSS_SET", "0"),
++    ],
++    visibility = ["//visibility:public"],
++)
++
++autoconf(
++    name = "with_defaults",
++    checks = [],
++    visibility = ["//visibility:public"],
++    deps = [
++        ":cnd",
++        ":defaults",
++    ],
++)
+diff --git a/gnulib/m4/copy-file-range/BUILD.bazel b/gnulib/m4/copy-file-range/BUILD.bazel
+index a510b9b8..ee535592 100644
+--- a/gnulib/m4/copy-file-range/BUILD.bazel
++++ b/gnulib/m4/copy-file-range/BUILD.bazel
+@@ -24,3 +24,25 @@ autoconf(
+         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+     ],
+ )
++
++autoconf(
++    name = "defaults",
++    checks = select({
++        "@platforms//os:macos": [
++            # macOS doesn't have copy_file_range
++            macros.AC_SUBST("HAVE_COPY_FILE_RANGE", "0"),
++        ],
++        "//conditions:default": [],
++    }),
++    visibility = ["//visibility:public"],
++)
++
++autoconf(
++    name = "with_defaults",
++    checks = [],
++    visibility = ["//visibility:public"],
++    deps = [
++        ":copy-file-range",
++        ":defaults",
++    ],
++)
+diff --git a/gnulib/m4/dirent_h/BUILD.bazel b/gnulib/m4/dirent_h/BUILD.bazel
+index f4157d10..81674407 100644
+--- a/gnulib/m4/dirent_h/BUILD.bazel
++++ b/gnulib/m4/dirent_h/BUILD.bazel
+@@ -43,6 +43,8 @@ autoconf(
+         macros.AC_SUBST("HAVE_FDOPENDIR", "1"),
+         macros.AC_SUBST("HAVE_SCANDIR", "1"),
+         macros.AC_SUBST("HAVE_ALPHASORT", "1"),
++        # DIR_HAS_FD_MEMBER is 1 on Unix-like systems (macOS, Linux), 0 on Windows
++        macros.AC_SUBST("DIR_HAS_FD_MEMBER", "1"),
+         # REPLACE_* defaults
+         macros.AC_SUBST("REPLACE_OPENDIR", "0"),
+         macros.AC_SUBST("REPLACE_READDIR", "0"),
+diff --git a/gnulib/m4/raise/BUILD.bazel b/gnulib/m4/raise/BUILD.bazel
+index bafcd616..290ac3b2 100644
+--- a/gnulib/m4/raise/BUILD.bazel
++++ b/gnulib/m4/raise/BUILD.bazel
+@@ -11,6 +11,7 @@ autoconf(
+         macros.AC_CHECK_FUNC(
+             "raise",
+             define = "HAVE_RAISE",
++            subst = True,
+         ),
+     ],
+     visibility = ["//visibility:public"],
+@@ -20,12 +21,23 @@ autoconf(
+     ],
+ )
+ 
++autoconf(
++    name = "defaults",
++    checks = [
++        # Override HAVE_SIGHANDLER_T to "1" (conditional AC_SUBST sets it to "0" but golden expects "1")
++        macros.AC_SUBST("HAVE_SIGHANDLER_T", "1"),
++    ],
++    visibility = ["//visibility:public"],
++)
++
+ autoconf(
+     name = "raise_with_defaults",
+     checks = [],
+     visibility = ["//visibility:public"],
+     deps = [
+         ":raise",
+-        "//gnulib/m4/signal_h:with_defaults",  # Include signal_h defaults including HAVE_SIGSET_T
++        ":defaults",
++        "//gnulib/m4/signal_h",  # Include signal_h defaults
++        "//gnulib/m4/signal_h:signal_h_sigset_t",  # Include sigset_t check for HAVE_SIGSET_T in config.h
+     ],
+ )
+diff --git a/gnulib/m4/selinux-selinux-h/BUILD.bazel b/gnulib/m4/selinux-selinux-h/BUILD.bazel
+index 8514d824..f4b0b265 100644
+--- a/gnulib/m4/selinux-selinux-h/BUILD.bazel
++++ b/gnulib/m4/selinux-selinux-h/BUILD.bazel
+@@ -13,8 +13,8 @@ autoconf(
+     ] + select({
+         "@platforms//os:macos": [
+             # SELinux is not available on macOS - set to 0 (not undef)
+-            # AC_DEFINE only affects config.h (#undef), not subst.h (@VAR@)
+-            macros.AC_DEFINE("USE_SELINUX_SELINUX_H", "0"),
++            # AC_DEFINE for config.h, subst=True for subst.h
++            macros.AC_DEFINE("USE_SELINUX_SELINUX_H", "0", subst = True),
+         ],
+         "//conditions:default": [],
+     }),
+diff --git a/gnulib/m4/signal_h/BUILD.bazel b/gnulib/m4/signal_h/BUILD.bazel
+index e83b01e4..f1b43a10 100644
+--- a/gnulib/m4/signal_h/BUILD.bazel
++++ b/gnulib/m4/signal_h/BUILD.bazel
+@@ -80,17 +80,13 @@ int main(void) { sigset_t x; (void)x; return 0; }
+         #   HAVE_SIGSET_T=0 - line 55-57
+         # fi
+         # Set HAVE_SIGSET_T as substitution variable
+-        macros.AC_SUBST(
+-            "HAVE_SIGSET_T",
+-            condition = "gl_cv_type_sigset_t",
+-            if_false = "0",
+-        ),
+-
+         # Define HAVE_SIGSET_T in config.h if the type exists
+         macros.AC_DEFINE(
+             "HAVE_SIGSET_T",
+             condition = "gl_cv_type_sigset_t",
+             if_true = "1",
++            if_false = "0",
++            subst = True,
+         ),
+     ],
+     visibility = ["//visibility:public"],
+@@ -125,6 +121,8 @@ autoconf(
+         macros.AC_SUBST("HAVE_SIGACTION", "1"),
+         macros.AC_SUBST("HAVE_STR2SIG", "1"),
+         macros.AC_SUBST("HAVE_STRUCT_SIGACTION_SA_SIGACTION", "1"),
++        macros.AC_SUBST("HAVE_SIGHANDLER_T", "1"),
++        macros.AC_SUBST("HAVE_SIGSET_T", "1"),
+         # REPLACE_* defaults
+         macros.AC_SUBST("REPLACE_PTHREAD_SIGMASK", "0"),
+         macros.AC_SUBST("REPLACE_RAISE", "0"),
+diff --git a/gnulib/m4/sys_socket_h/BUILD.bazel b/gnulib/m4/sys_socket_h/BUILD.bazel
+index 537127bb..e81e9591 100644
+--- a/gnulib/m4/sys_socket_h/BUILD.bazel
++++ b/gnulib/m4/sys_socket_h/BUILD.bazel
+@@ -9,6 +9,7 @@ autoconf(
+         macros.AC_CHECK_HEADER(
+             "sys/socket.h",
+             define = "HAVE_SYS_SOCKET_H",
++            subst = True,
+         ),
+         # Check for shutdown function
+         macros.AC_CHECK_FUNC(
+@@ -27,6 +28,7 @@ int main(void) {
+ }""",
+             define = "HAVE_STRUCT_SOCKADDR_STORAGE",
+             language = "c",
++            subst = True,
+         ),
+         # Check for ss_family member in struct sockaddr_storage
+         macros.AC_TRY_COMPILE(
+@@ -40,6 +42,7 @@ int main(void) {
+ }""",
+             define = "HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY",
+             language = "c",
++            subst = True,
+         ),
+         # Check for sa_family_t type (gl_PREREQ_SYS_SA_FAMILY)
+         macros.AC_TRY_COMPILE(
+@@ -53,6 +56,7 @@ int main(void) {
+ }""",
+             define = "HAVE_SA_FAMILY_T",
+             language = "c",
++            subst = True,
+         ),
+     ],
+     visibility = ["//visibility:public"],
+diff --git a/gnulib/m4/wchar_h/BUILD.bazel b/gnulib/m4/wchar_h/BUILD.bazel
+index fb7ec042..a84be02a 100644
+--- a/gnulib/m4/wchar_h/BUILD.bazel
++++ b/gnulib/m4/wchar_h/BUILD.bazel
+@@ -21,6 +21,7 @@ int main(void) {
+             "wcsdup",
+             define = "HAVE_DECL_WCSDUP",
+             headers = ["wchar.h"],
++            subst = True,
+         ),
+     ],
+     visibility = ["//visibility:public"],
+@@ -121,7 +122,8 @@ autoconf(
+         macros.AC_SUBST("HAVE_WCSWIDTH", "1"),
+         macros.AC_SUBST("HAVE_WCSFTIME", "1"),
+         macros.AC_SUBST("HAVE_WCTOB", "1"),
+-        # Note: HAVE_DECL_WCSDUP is provided by wchar_h checks, not defaults
++        # Note: HAVE_DECL_WCSDUP is provided by wchar_h checks, but also needed in defaults for subst-only usage
++        macros.AC_SUBST("HAVE_DECL_WCSDUP", "1"),
+         macros.AC_SUBST("HAVE_DECL_WCTOB", "1"),
+         # REPLACE_* defaults
+         macros.AC_SUBST("REPLACE_MBSTATE_T", "0"),
+diff --git a/gnulib/tests/compatibility/assert_h/BUILD.bazel b/gnulib/tests/compatibility/assert_h/BUILD.bazel
+index 2fc6b76a..7b8eb48c 100644
+--- a/gnulib/tests/compatibility/assert_h/BUILD.bazel
++++ b/gnulib/tests/compatibility/assert_h/BUILD.bazel
+@@ -2,7 +2,7 @@ load("//gnulib/tests/compatibility:gnu_gnulib_diff_test_suite.bzl", "gnu_gnulib_
+ 
+ gnu_gnulib_diff_test_suite(
+     name = "assert_h_test",
+-    bazel_autoconf_target = "//gnulib/m4/assert_h:assert_h",
++    bazel_autoconf_target = "//gnulib/m4/assert_h:with_defaults",
+     config_h_in = "config.h.in",
+     configure_ac = "configure.ac",
+     golden_config_h = {
+diff --git a/gnulib/tests/compatibility/c32rtomb/BUILD.bazel b/gnulib/tests/compatibility/c32rtomb/BUILD.bazel
+index 7a17aba2..906b2fe3 100644
+--- a/gnulib/tests/compatibility/c32rtomb/BUILD.bazel
++++ b/gnulib/tests/compatibility/c32rtomb/BUILD.bazel
+@@ -2,7 +2,7 @@ load("//gnulib/tests/compatibility:gnu_gnulib_diff_test_suite.bzl", "gnu_gnulib_
+ 
+ gnu_gnulib_diff_test_suite(
+     name = "c32rtomb_test",
+-    bazel_autoconf_target = "//gnulib/m4/c32rtomb:c32rtomb",
++    bazel_autoconf_target = "//gnulib/m4/c32rtomb:with_defaults",
+     config_h_in = "config.h.in",
+     configure_ac = "configure.ac",
+     golden_config_h = {
+diff --git a/gnulib/tests/compatibility/call_once/BUILD.bazel b/gnulib/tests/compatibility/call_once/BUILD.bazel
+index e4845e6b..26ba030b 100644
+--- a/gnulib/tests/compatibility/call_once/BUILD.bazel
++++ b/gnulib/tests/compatibility/call_once/BUILD.bazel
+@@ -2,7 +2,7 @@ load("//gnulib/tests/compatibility:gnu_gnulib_diff_test_suite.bzl", "gnu_gnulib_
+ 
+ gnu_gnulib_diff_test_suite(
+     name = "call_once_test",
+-    bazel_autoconf_target = "//gnulib/m4/call_once:call_once",
++    bazel_autoconf_target = "//gnulib/m4/call_once:with_defaults",
+     config_h_in = "config.h.in",
+     configure_ac = "configure.ac",
+     golden_config_h = {
+diff --git a/gnulib/tests/compatibility/cbrt/BUILD.bazel b/gnulib/tests/compatibility/cbrt/BUILD.bazel
+index 40ceede9..4f88c9cf 100644
+--- a/gnulib/tests/compatibility/cbrt/BUILD.bazel
++++ b/gnulib/tests/compatibility/cbrt/BUILD.bazel
+@@ -2,7 +2,7 @@ load("//gnulib/tests/compatibility:gnu_gnulib_diff_test_suite.bzl", "gnu_gnulib_
+ 
+ gnu_gnulib_diff_test_suite(
+     name = "cbrt_test",
+-    bazel_autoconf_target = "//gnulib/m4/cbrt:cbrt",
++    bazel_autoconf_target = "//gnulib/m4/cbrt:with_defaults",
+     config_h_in = "config.h.in",
+     configure_ac = "configure.ac",
+     golden_config_h = {
+diff --git a/gnulib/tests/compatibility/ceil/BUILD.bazel b/gnulib/tests/compatibility/ceil/BUILD.bazel
+index 11bcf39f..35cb6609 100644
+--- a/gnulib/tests/compatibility/ceil/BUILD.bazel
++++ b/gnulib/tests/compatibility/ceil/BUILD.bazel
+@@ -2,7 +2,7 @@ load("//gnulib/tests/compatibility:gnu_gnulib_diff_test_suite.bzl", "gnu_gnulib_
+ 
+ gnu_gnulib_diff_test_suite(
+     name = "ceil_test",
+-    bazel_autoconf_target = "//gnulib/m4/ceil:ceil",
++    bazel_autoconf_target = "//gnulib/m4/ceil:with_defaults",
+     config_h_in = "config.h.in",
+     configure_ac = "configure.ac",
+     golden_config_h = "golden_config.h.in",
+diff --git a/gnulib/tests/compatibility/ceilf/BUILD.bazel b/gnulib/tests/compatibility/ceilf/BUILD.bazel
+index 9900b313..9e5ad4bf 100644
+--- a/gnulib/tests/compatibility/ceilf/BUILD.bazel
++++ b/gnulib/tests/compatibility/ceilf/BUILD.bazel
+@@ -2,7 +2,7 @@ load("//gnulib/tests/compatibility:gnu_gnulib_diff_test_suite.bzl", "gnu_gnulib_
+ 
+ gnu_gnulib_diff_test_suite(
+     name = "ceilf_test",
+-    bazel_autoconf_target = "//gnulib/m4/ceilf:ceilf",
++    bazel_autoconf_target = "//gnulib/m4/ceilf:with_defaults",
+     config_h_in = "config.h.in",
+     configure_ac = "configure.ac",
+     golden_config_h = "golden_config.h.in",
+diff --git a/gnulib/tests/compatibility/chown/BUILD.bazel b/gnulib/tests/compatibility/chown/BUILD.bazel
+index 88ccb627..064bc3ed 100644
+--- a/gnulib/tests/compatibility/chown/BUILD.bazel
++++ b/gnulib/tests/compatibility/chown/BUILD.bazel
+@@ -2,7 +2,7 @@ load("//gnulib/tests/compatibility:gnu_gnulib_diff_test_suite.bzl", "gnu_gnulib_
+ 
+ gnu_gnulib_diff_test_suite(
+     name = "chown_test",
+-    bazel_autoconf_target = "//gnulib/m4/chown:chown",
++    bazel_autoconf_target = "//gnulib/m4/chown:with_defaults",
+     config_h_in = "config.h.in",
+     configure_ac = "configure.ac",
+     golden_config_h = {
+diff --git a/gnulib/tests/compatibility/clock_time/BUILD.bazel b/gnulib/tests/compatibility/clock_time/BUILD.bazel
+index b25d6fe9..2648144f 100644
+--- a/gnulib/tests/compatibility/clock_time/BUILD.bazel
++++ b/gnulib/tests/compatibility/clock_time/BUILD.bazel
+@@ -2,7 +2,7 @@ load("//gnulib/tests/compatibility:gnu_gnulib_diff_test_suite.bzl", "gnu_gnulib_
+ 
+ gnu_gnulib_diff_test_suite(
+     name = "clock_time_test",
+-    bazel_autoconf_target = "//gnulib/m4/clock_time:clock_time",
++    bazel_autoconf_target = "//gnulib/m4/clock_time:with_defaults",
+     config_h_in = "config.h.in",
+     configure_ac = "configure.ac",
+     golden_config_h = "golden_config.h.in",
+diff --git a/gnulib/tests/compatibility/cnd/BUILD.bazel b/gnulib/tests/compatibility/cnd/BUILD.bazel
+index 39843c63..813c563b 100644
+--- a/gnulib/tests/compatibility/cnd/BUILD.bazel
++++ b/gnulib/tests/compatibility/cnd/BUILD.bazel
+@@ -2,7 +2,7 @@ load("//gnulib/tests/compatibility:gnu_gnulib_diff_test_suite.bzl", "gnu_gnulib_
+ 
+ gnu_gnulib_diff_test_suite(
+     name = "cnd_test",
+-    bazel_autoconf_target = "//gnulib/m4/cnd:cnd",
++    bazel_autoconf_target = "//gnulib/m4/cnd:with_defaults",
+     config_h_in = "config.h.in",
+     configure_ac = "configure.ac",
+     golden_config_h = {
+diff --git a/gnulib/tests/compatibility/copy-file-range/BUILD.bazel b/gnulib/tests/compatibility/copy-file-range/BUILD.bazel
+index e42aadf8..56d4a0d8 100644
+--- a/gnulib/tests/compatibility/copy-file-range/BUILD.bazel
++++ b/gnulib/tests/compatibility/copy-file-range/BUILD.bazel
+@@ -2,7 +2,7 @@ load("//gnulib/tests/compatibility:gnu_gnulib_diff_test_suite.bzl", "gnu_gnulib_
+ 
+ gnu_gnulib_diff_test_suite(
+     name = "copy-file-range_test",
+-    bazel_autoconf_target = "//gnulib/m4/copy-file-range:copy-file-range",
++    bazel_autoconf_target = "//gnulib/m4/copy-file-range:with_defaults",
+     config_h_in = "config.h.in",
+     configure_ac = "configure.ac",
+     golden_config_h = {
+diff --git a/gnulib/tests/compatibility/gnu_gnulib_diff_test_suite.bzl b/gnulib/tests/compatibility/gnu_gnulib_diff_test_suite.bzl
+index aa091cb6..a6da6605 100644
+--- a/gnulib/tests/compatibility/gnu_gnulib_diff_test_suite.bzl
++++ b/gnulib/tests/compatibility/gnu_gnulib_diff_test_suite.bzl
+@@ -256,22 +256,22 @@ def gnu_gnulib_diff_test_suite(
+         all_tests.append(":{}".format(test_name))
+ 
+     # --- 4. Diff tests for subst_*.h ---
+-    # for platform, golden_label, constraint in gnulib_entries:
+-    #     suffix = "_{}".format(platform) if platform else ""
+-    #     test_name = "{}_bazel_subst_diff{}".format(name, suffix)
+-
+-    #     diff_kwargs = {
+-    #         "file1": golden_label,
+-    #         "file2": ":{}_bazel_subst_h".format(name),
+-    #         "name": test_name,
+-    #         "size": "small",
+-    #         "tags": tags,
+-    #     }
+-    #     if constraint != None:
+-    #         diff_kwargs["target_compatible_with"] = constraint
+-
+-    #     diff_test(**diff_kwargs)
+-    #     all_tests.append(":{}".format(test_name))
++    for platform, golden_label, constraint in gnulib_entries:
++        suffix = "_{}".format(platform) if platform else ""
++        test_name = "{}_bazel_subst_diff{}".format(name, suffix)
++
++        diff_kwargs = {
++            "file1": golden_label,
++            "file2": ":{}_bazel_subst_h".format(name),
++            "name": test_name,
++            "size": "small",
++            "tags": tags,
++        }
++        if constraint != None:
++            diff_kwargs["target_compatible_with"] = constraint
++
++        diff_test(**diff_kwargs)
++        all_tests.append(":{}".format(test_name))
+ 
+     # --- 5. Compile Test ---
+     # Verify that the Bazel-generated headers compile correctly.

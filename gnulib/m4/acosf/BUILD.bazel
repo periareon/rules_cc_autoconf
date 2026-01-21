@@ -10,6 +10,7 @@ autoconf(
         macros.AC_CHECK_FUNC(
             "acosf",
             define = "HAVE_ACOSF",
+            subst = True,
         ),
         # AC_CHECK_DECLS([acosf], ..., [[#include <math.h>]])
         macros.AC_CHECK_DECL(
@@ -17,6 +18,10 @@ autoconf(
             define = "HAVE_DECL_ACOSF",
             headers = ["math.h"],
         ),
+        # Set ACOSF_LIBM to empty string (subst-only)
+        # gl_COMMON_FLOAT_MATHFUNC sets this based on whether the function needs libm
+        # On macOS, acosf is in libc, so ACOSF_LIBM=""
+        macros.AC_SUBST("ACOSF_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [

@@ -88,7 +88,8 @@ def _ac_check_header(
         compile_defines = None,
         requires = None,
         if_true = None,
-        if_false = None):
+        if_false = None,
+        subst = False):
     """Check for a header file.
 
     Original m4 example:
@@ -119,6 +120,7 @@ def _ac_check_header(
             (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
         if_true: Value to use when check succeeds (currently not used for header checks).
         if_false: Value to use when check fails (currently not used for header checks).
+        subst: If True, mark as a substitution variable (for @VAR@ replacement in subst.h).
 
     Returns:
         A JSON-encoded check string for use with the autoconf rule.
@@ -131,6 +133,7 @@ def _ac_check_header(
         "language": language,
         "name": header,
         "type": "header",
+        "subst": subst,
     }
     if compile_defines:
         check["compile_defines"] = compile_defines
@@ -1433,7 +1436,8 @@ def _ac_define(
         requires = None,
         condition = None,
         if_true = None,
-        if_false = None):
+        if_false = None,
+        subst = False):
     """Define a configuration macro.
 
     Original m4 example:
@@ -1482,6 +1486,7 @@ def _ac_define(
         if_true: Value to use when condition is true (only used with `condition`).
         if_false: Value to use when condition is false (only used with `condition`).
             Use `None` to not define the macro when condition is false.
+        subst: If True, mark as a substitution variable (for @VAR@ replacement in subst.h).
 
     Returns:
         A JSON-encoded check string for use with the autoconf rule.
@@ -1498,6 +1503,7 @@ def _ac_define(
         "language": "c",
         "name": define,
         "type": "define",
+        "subst": subst,
     }
 
     if requires:

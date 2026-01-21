@@ -42,13 +42,3 @@ autoconf(
     checks = _GL_SYS_IOCTL_H_DEFAULTS,
     visibility = ["//visibility:public"],
 )
-
-autoconf(
-    name = "with_defaults",
-    checks = [],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":defaults",
-        ":sys_ioctl_h",
-    ],
-)

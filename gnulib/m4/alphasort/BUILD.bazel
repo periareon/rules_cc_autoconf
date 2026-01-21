@@ -6,7 +6,7 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "alphasort",
     checks = [
-        macros.AC_CHECK_FUNC("alphasort"),
+        macros.AC_CHECK_FUNC("alphasort", subst = True),
     ],
     visibility = ["//visibility:public"],
     deps = [

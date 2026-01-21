@@ -9,6 +9,7 @@ autoconf(
         macros.AC_CHECK_HEADER(
             "sys/socket.h",
             define = "HAVE_SYS_SOCKET_H",
+            subst = True,
         ),
         # Check for shutdown function
         macros.AC_CHECK_FUNC(
@@ -27,6 +28,7 @@ int main(void) {
 }""",
             define = "HAVE_STRUCT_SOCKADDR_STORAGE",
             language = "c",
+            subst = True,
         ),
         # Check for ss_family member in struct sockaddr_storage
         macros.AC_TRY_COMPILE(
@@ -40,6 +42,7 @@ int main(void) {
 }""",
             define = "HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY",
             language = "c",
+            subst = True,
         ),
         # Check for sa_family_t type (gl_PREREQ_SYS_SA_FAMILY)
         macros.AC_TRY_COMPILE(
@@ -53,6 +56,7 @@ int main(void) {
 }""",
             define = "HAVE_SA_FAMILY_T",
             language = "c",
+            subst = True,
         ),
     ],
     visibility = ["//visibility:public"],
@@ -204,14 +208,4 @@ autoconf(
         macros.AC_SUBST("REPLACE_WRITE", "0"),
     ],
     visibility = ["//visibility:public"],
-)
-
-autoconf(
-    name = "with_defaults",
-    checks = [],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":defaults",
-        ":sys_socket_h",
-    ],
 )
