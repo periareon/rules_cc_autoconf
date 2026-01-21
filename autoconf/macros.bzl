@@ -150,7 +150,8 @@ def _ac_check_func(
         compile_defines = None,
         requires = None,
         if_true = None,
-        if_false = None):
+        if_false = None,
+        subst = False):
     """Check for a function.
 
     Original m4 example:
@@ -165,6 +166,8 @@ def _ac_check_func(
     # To chain checks, use requires on separate checks:
     macros.AC_CHECK_FUNC("mmap", define = "HAVE_MMAP")
     macros.AC_DEFINE("HAVE_MMAP_FEATURE", condition = "HAVE_MMAP", if_true = "1")
+    # Create both define and substitution variable:
+    macros.AC_CHECK_FUNC("_Exit", subst = True)
     ```
 
     Args:
@@ -183,6 +186,8 @@ def _ac_check_func(
             (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
         if_true: Value to use when check succeeds (currently not used for function checks).
         if_false: Value to use when check fails (currently not used for function checks).
+        subst: If True, automatically create a substitution variable with the same name
+            that will be set to "1" if the check succeeds, "0" if it fails.
 
     Returns:
         A JSON-encoded check string for use with the autoconf rule.
@@ -203,6 +208,8 @@ def _ac_check_func(
         check["file"] = _into_label(file)
     if requires:
         check["requires"] = requires
+    if subst:
+        check["subst"] = True
 
     _add_conditionals(check, if_true, if_false)
     return json.encode(check)
@@ -382,7 +389,8 @@ def _ac_try_compile(
         compile_defines = None,
         requires = None,
         if_true = None,
-        if_false = None):
+        if_false = None,
+        subst = False):
     """Try to compile custom code.
 
     Original m4 example:
@@ -426,6 +434,8 @@ def _ac_try_compile(
             (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
         if_true: Value to use when check succeeds (currently not used for this check type).
         if_false: Value to use when check fails (currently not used for this check type).
+        subst: If True, automatically create a substitution variable with the same name
+            that will be set to "1" if the check succeeds, "0" if it fails.
 
     Returns:
         A JSON-encoded check string for use with the autoconf rule.
@@ -456,6 +466,8 @@ def _ac_try_compile(
         check["compile_defines"] = compile_defines
     if requires:
         check["requires"] = requires
+    if subst:
+        check["subst"] = True
 
     _add_conditionals(check, if_true, if_false)
     return json.encode(check)
@@ -793,7 +805,8 @@ def _ac_check_decl(
         language = "c",
         requires = None,
         if_true = None,
-        if_false = None):
+        if_false = None,
+        subst = False):
     """Check if a symbol is declared.
 
     Original m4 example:
@@ -834,6 +847,8 @@ def _ac_check_decl(
             (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
         if_true: Value to use when check succeeds (currently not used for this check type).
         if_false: Value to use when check fails (currently not used for this check type).
+        subst: If True, automatically create a substitution variable with the same name
+            that will be set to "1" if the check succeeds, "0" if it fails.
 
     Returns:
         A JSON-encoded check string for use with the autoconf rule.
@@ -867,6 +882,8 @@ def _ac_check_decl(
         check["compile_defines"] = compile_defines
     if requires:
         check["requires"] = requires
+    if subst:
+        check["subst"] = True
 
     _add_conditionals(check, if_true, if_false)
     return json.encode(check)
@@ -1771,8 +1788,8 @@ def _m4_variable(
         "define": define,
         "language": "c",
         "name": define,
-        "type": "m4_variable",  # Compute value for requires but don't generate output
-        "subst": False,  # Default to False (not a substitution variable)
+        "type": "m4_variable",  # Compute value for requires but don't generate output (config.h or subst.h)
+        "subst": False,  # M4_VARIABLE is never a substitution variable - use AC_SUBST for that
     }
 
     if requires:

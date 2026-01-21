@@ -173,6 +173,5 @@ autoconf(
     deps = [
         ":defaults",
         ":wctype_h",
-        "//gnulib/m4/wint_t:with_defaults",
     ],
 )

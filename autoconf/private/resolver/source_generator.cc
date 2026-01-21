@@ -136,12 +136,13 @@ std::string SourceGenerator::process_template(
         }
 
         // Filter by mode:
-        // - kDefines: only process !result.is_subst (normal defines)
-        // - kSubst: only process result.is_subst (substitution variables)
+        // - kDefines: process results that are defines (is_define=True), including those with subst=True
+        // - kSubst: process results that have subst=True (substitution variables)
         // - kAll: process everything
         bool should_process = false;
         if (mode_ == Mode::kDefines) {
-            should_process = !result.is_subst;
+            // Process defines (including those that also have subst=True)
+            should_process = result.is_define;
         } else if (mode_ == Mode::kSubst) {
             should_process = result.is_subst;
         } else if (mode_ == Mode::kAll) {
@@ -172,11 +173,12 @@ std::string SourceGenerator::process_template(
         }
 
         // Non-subst types (AC_DEFINE, AC_CHECK_*, etc.): Also replace #undef
-        // AC_SUBST should NOT replace #undef statements in config.h
+        // AC_SUBST (pure subst, not a define) should NOT replace #undef statements in config.h
         // M4_VARIABLE should also NOT replace #undef (compute-only)
+        // If a check has both is_define=True and is_subst=True, it should replace #undef in config.h
         // Only process #undef replacement in kDefines or kAll mode
         if ((mode_ == Mode::kDefines || mode_ == Mode::kAll) &&
-            !result.is_subst && result.is_define && !is_suffixed_subst) {
+            result.is_define && !is_suffixed_subst) {
             // Only kDefine and kDefineUnquoted types create defines with empty values
             // All other types (kDecl, kCompile, etc.) leave empty values as /* #undef */
             bool should_create_define = result.success && 

@@ -163,7 +163,7 @@ def _autoconf_impl(ctx):
 
     # Declare result files first (needed for all_results)
     results = {}
-    for check in checks.values():
+    for check_key, check in checks.items():
         define_name = check["define"]
         if define_name in transitive_checks:
             # Check if this is a define/subst conflict, which is allowed
@@ -233,7 +233,8 @@ def _autoconf_impl(ctx):
     # Create individual CcAutoconfCheck actions for each check
     # Each check is identified by its unique define name
 
-    for check in checks.values():
+    # Process all checks - those with subst=True will create both define and subst results
+    for check_key, check in checks.items():
         define_name = check["define"]
         check_result_file = results[define_name]
 
@@ -288,7 +289,7 @@ def _autoconf_impl(ctx):
             # Extract base define name
             # Extract base define name (handles "FOO", "!FOO", "FOO==value", etc.)
             required_define = _extract_define_name(required)
-
+            
             if required_define not in all_results:
                 fail("Check `{}` requires `{}` but it's not provided. Please update `{}`".format(
                     define_name,

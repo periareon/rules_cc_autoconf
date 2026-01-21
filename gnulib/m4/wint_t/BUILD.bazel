@@ -77,19 +77,3 @@ int main(void) { return 0; }
     ],
     visibility = ["//visibility:public"],
 )
-
-autoconf(
-    name = "defaults",
-    checks = [],
-    visibility = ["//visibility:public"],
-)
-
-autoconf(
-    name = "with_defaults",
-    checks = [],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":defaults",
-        ":wint_t",
-    ],
-)

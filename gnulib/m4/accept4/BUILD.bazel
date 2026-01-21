@@ -27,11 +27,24 @@ autoconf(
                 "sys/socket.h",
             ],
             language = "c",
+            # Note: subst=False - HAVE_DECL_ACCEPT4 is only a define, not a subst variable
+            # The golden file shows @HAVE_DECL_ACCEPT4@ as a placeholder (not replaced)
+        ),
+        # Set HAVE_ACCEPT4 as a substitution variable
+        # Default value is "1" from sys_socket_h:defaults
+        # Override to "0" if declaration check fails (HAVE_DECL_ACCEPT4 == 0)
+        # This matches: if test $ac_cv_have_decl_accept4 != yes; then HAVE_ACCEPT4=0; fi
+        macros.AC_SUBST(
+            "HAVE_ACCEPT4",
+            condition = "HAVE_DECL_ACCEPT4",
+            if_true = "1",  # If declaration exists, keep default "1" (or function exists)
+            if_false = "0",  # If declaration doesn't exist, set to "0"
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
+        "//gnulib/m4/sys_socket_h:defaults",  # AC_REQUIRE([gl_SYS_SOCKET_H_DEFAULTS]) - provides defaults (subst variables)
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         # (golden files include standard header checks even though not AC_REQUIREd)
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
