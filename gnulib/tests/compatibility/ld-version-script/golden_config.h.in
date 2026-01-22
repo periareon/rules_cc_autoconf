@@ -1,1 +1,3 @@
 /* config.h.in */
+/* #undef HAVE_LD_VERSION_SCRIPT_FALSE */
+/* #undef HAVE_LD_VERSION_SCRIPT_TRUE */

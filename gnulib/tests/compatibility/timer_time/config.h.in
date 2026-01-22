@@ -9,7 +9,6 @@
 #undef HAVE_SYS_TYPES_H
 #undef HAVE_UNISTD_H
 #undef HAVE_WCHAR_H
-#undef LIB_TIMER_TIME
 #undef STDC_HEADERS
 #undef TIMER_TIME_LIB
 #undef _ALL_SOURCE

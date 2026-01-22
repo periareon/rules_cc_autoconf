@@ -1,1 +1,10 @@
 /* subst.h.in */
+#define SUBST_CSHARPCOMPFLAGS "-O -g"
+#define SUBST_CSHARP_CHOICE "any"
+#define SUBST_HAVE_CSC ""
+#define SUBST_HAVE_CSC_IN_PATH ""
+#define SUBST_HAVE_DOTNET_CSC ""
+#define SUBST_HAVE_DOTNET_IN_PATH ""
+#define SUBST_HAVE_DOTNET_SDK ""
+#define SUBST_HAVE_MCS ""
+#define SUBST_HAVE_MCS_IN_PATH ""

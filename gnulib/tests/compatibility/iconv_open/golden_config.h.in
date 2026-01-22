@@ -1,0 +1,14 @@
+/* config.h.in */
+/* #undef AMDEPBACKSLASH */
+/* #undef AMDEP_FALSE */
+/* #undef AMDEP_TRUE */
+/* #undef ANSICXX_FALSE */
+/* #undef ANSICXX_TRUE */
+/* #undef CXXDEPMODE */
+/* #undef CXX_CHOICE */
+/* #undef DEPDIR */
+#define ICONV_CONST 
+/* #undef LTLIBICONV */
+/* #undef REPLACE_ICONV */
+/* #undef REPLACE_ICONV_OPEN */
+#define REPLACE_ICONV_UTF 1

@@ -90,11 +90,7 @@ SKIPPED_OUTPUT_VARIABLES = frozenset(
 )
 
 # Prefixes for variables that should be skipped
-SKIPPED_VARIABLE_PREFIXES = (
-    "PACKAGE_",
-    "GL_MODULE_INDICATOR_PREFIX_",
-    "GNULIB_TEST_"
-)
+SKIPPED_VARIABLE_PREFIXES = ("PACKAGE_", "GL_MODULE_INDICATOR_PREFIX_", "GNULIB_TEST_")
 
 
 def _should_skip_variable(name: str) -> bool:
@@ -125,23 +121,6 @@ def _parse_subst_placeholders(content: str) -> set[str]:
     """Extract @PLACEHOLDER@ patterns from gnulib_*.h.in (AC_SUBST targets)."""
     subst_pattern = re.compile(r"@([A-Za-z_][A-Za-z0-9_]*)@")
     return set(subst_pattern.findall(content))
-
-
-def _parse_ac_config_files_input(configure_ac_content: str) -> str | None:
-    """Parse configure.ac for AC_CONFIG_FILES input filename (the .h.in file).
-
-    Looks for patterns like:
-    - AC_CONFIG_FILES([output:input])
-    - AC_CONFIG_FILES([output.h:output.h.in])
-
-    Returns the input filename (after the colon), or None if not found.
-    """
-    # Match AC_CONFIG_FILES([output:input]) where input ends with .h.in
-    pattern = re.compile(r"AC_CONFIG_FILES\(\[([^:]+):([^\]]+\.h\.in)\]\)")
-    match = pattern.search(configure_ac_content)
-    if match:
-        return match.group(2)
-    return None
 
 
 def _extract_config_log_section(content: str, section_name: str) -> str:
@@ -221,6 +200,12 @@ def _parse_expected_variables_from_config_log(
         # Match #define MACRO patterns
         define_match = re.match(r"#define\s+([\w\d_]+)", line)
         if not define_match:
+            ifdef_match = re.match(r"#ifndef ", line)
+            if ifdef_match:
+                continue
+            enddef_match = re.match(r"#endif", line)
+            if enddef_match:
+                continue
             raise ValueError(f"Unexpected confdefs.h value: `{line}`")
 
         name = define_match.group(1)
@@ -354,7 +339,6 @@ class GnuAutoconfConfigureTest(unittest.TestCase):
         (cls.work_dir / "configure.ac").write_text(
             configure_ac_content, encoding="utf-8"
         )
-
 
         config_h_in_path = cls.work_dir / cls.config_h_in_path.name
         shutil.copy2(cls.config_h_in_path, config_h_in_path)
@@ -519,13 +503,13 @@ class GnuAutoconfConfigureTest(unittest.TestCase):
         errors = []
         if missing_in_config:
             errors.append(
-                f"config.log has {len(missing_in_config)} defines not found in `config.h.in`:\n"
+                f"({os.environ['TEST_TARGET']}) config.log has {len(missing_in_config)} defines not found in `config.h.in`:\n"
                 + "\n".join(f"  - {v}" for v in missing_in_config)
             )
 
         if missing_in_subst:
             errors.append(
-                f"config.log has {len(missing_in_subst)} substs not found in `subst.h.in`:\n"
+                f"({os.environ['TEST_TARGET']}) config.log has {len(missing_in_subst)} substs not found in `subst.h.in`:\n"
                 + "\n".join(f"  - {v}" for v in missing_in_subst)
             )
 
@@ -565,9 +549,7 @@ class GnuAutoconfConfigureTest(unittest.TestCase):
             file1_content=self.golden_subst_h_path.read_text(
                 encoding="utf-8"
             ).splitlines(),
-            file2_content=self.subst_h_path.read_text(
-                encoding="utf-8"
-            ).splitlines(),
+            file2_content=self.subst_h_path.read_text(encoding="utf-8").splitlines(),
             file1_name=self.golden_subst_h_name,
             file2_name=self.subst_h_path.name,
         )

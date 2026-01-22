@@ -1,1 +1,2 @@
 /* config.h.in */
+#define HAVE_VA_ARGS 1

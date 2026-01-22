@@ -1,1 +1,5 @@
 /* config.h.in */
+#undef HAVE_TERMINFO
+#undef INCTERMINFO
+#undef LIBTERMINFO
+#undef LTLIBTERMINFO

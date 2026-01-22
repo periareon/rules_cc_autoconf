@@ -1,1 +1,10 @@
 /* config.h.in */
+#undef GPGRT_CONFIG
+#undef HAVE_LIBGCRYPT
+#undef LIBGCRYPT
+#undef LIBGCRYPT_CFLAGS
+#undef LIBGCRYPT_CONFIG
+#undef LIBGCRYPT_LIBS
+#undef LIBGCRYPT_PREFIX
+#undef LIB_CRYPTO
+#undef LTLIBGCRYPT

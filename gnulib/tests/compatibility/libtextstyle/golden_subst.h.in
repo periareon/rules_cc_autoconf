@@ -1,0 +1,5 @@
+/* subst.h.in */
+#define SUBST_HAVE_LIBTEXTSTYLE "no"
+#define SUBST_LIBTEXTSTYLE ""
+#define SUBST_LIBTEXTSTYLE_PREFIX ""
+#define SUBST_LTLIBTEXTSTYLE ""

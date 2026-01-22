@@ -1,1 +1,17 @@
 /* config.h.in */
+/* #undef GETTEXT_MACRO_VERSION */
+/* #undef GMSGFMT */
+/* #undef GMSGFMT_015 */
+/* #undef INSTALL_DATA */
+/* #undef INSTALL_PROGRAM */
+/* #undef INSTALL_SCRIPT */
+/* #undef MKDIR_P */
+/* #undef MSGFMT */
+/* #undef MSGMERGE */
+/* #undef MSGMERGE_FOR_MSGFMT_OPTION */
+/* #undef SED */
+/* #undef SET_MAKE */
+/* #undef USE_NLS */
+/* #undef XGETTEXT */
+/* #undef XGETTEXT_015 */
+/* #undef XGETTEXT_EXTRA_OPTIONS */

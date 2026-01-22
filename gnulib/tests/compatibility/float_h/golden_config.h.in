@@ -1,1 +1,4 @@
 /* config.h.in */
+/* #undef NEXT_AS_FIRST_DIRECTIVE_FLOAT_H */
+/* #undef NEXT_FLOAT_H */
+/* #undef REPLACE_ITOLD */

@@ -1,1 +1,4 @@
 /* subst.h.in */
+#define SUBST_BISON_LOCALEDIR ""
+#define SUBST_BISON_LOCALEDIR_c """"
+#define SUBST_BISON_LOCALEDIR_c_make "\"$(BISON_LOCALEDIR)\""

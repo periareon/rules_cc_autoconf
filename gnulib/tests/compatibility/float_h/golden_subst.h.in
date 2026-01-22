@@ -1,1 +1,4 @@
 /* subst.h.in */
+#define SUBST_NEXT_AS_FIRST_DIRECTIVE_FLOAT_H "<float.h>"
+#define SUBST_NEXT_FLOAT_H "<float.h>"
+#define SUBST_REPLACE_ITOLD "0"

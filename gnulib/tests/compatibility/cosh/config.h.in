@@ -1,1 +1,3 @@
 /* config.h.in */
+#undef COSH_LIBM
+#undef POW_LIBM

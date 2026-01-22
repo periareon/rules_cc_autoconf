@@ -1,1 +1,3 @@
 /* config.h.in */
+/* #undef NEXT_AS_FIRST_DIRECTIVE_OMP_H */
+/* #undef NEXT_OMP_H */

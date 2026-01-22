@@ -1,1 +1,4 @@
 /* subst.h.in */
+#define SUBST_LDDPOSTPROC "2>/dev/null | sed -n -e 's,^  NEEDED *\([^ ].*\)$,\1,p'"
+#define SUBST_LDDPROG "LC_ALL=C objdump -p"
+#define SUBST_OBJDUMP "objdump"

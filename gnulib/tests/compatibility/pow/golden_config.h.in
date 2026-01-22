@@ -1,1 +1,2 @@
 /* config.h.in */
+/* #undef POW_LIBM */

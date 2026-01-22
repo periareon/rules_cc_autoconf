@@ -1,1 +1,10 @@
 /* config.h.in */
+/* #undef CSHARPCOMPFLAGS */
+/* #undef CSHARP_CHOICE */
+/* #undef HAVE_CSC */
+/* #undef HAVE_CSC_IN_PATH */
+/* #undef HAVE_DOTNET_CSC */
+/* #undef HAVE_DOTNET_IN_PATH */
+/* #undef HAVE_DOTNET_SDK */
+/* #undef HAVE_MCS */
+/* #undef HAVE_MCS_IN_PATH */

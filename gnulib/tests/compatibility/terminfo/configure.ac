@@ -3,7 +3,6 @@ AC_CONFIG_HEADERS([config.h])
 
 # Invoke macros from terminfo.m4
 gl_TERMINFO
-gl_TERMINFO_BODY
 
 AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

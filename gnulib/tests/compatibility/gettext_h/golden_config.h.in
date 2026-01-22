@@ -1,1 +1,3 @@
 /* config.h.in */
+/* #undef LIBINTL */
+/* #undef LTLIBINTL */

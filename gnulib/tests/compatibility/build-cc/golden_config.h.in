@@ -1,1 +1,5 @@
 /* config.h.in */
+/* #undef BUILD_CC */
+/* #undef BUILD_CFLAGS */
+/* #undef BUILD_CPPFLAGS */
+/* #undef BUILD_LDFLAGS */

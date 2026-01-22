@@ -12,5 +12,3 @@
 /* #undef REPLACE_ICONV */
 /* #undef REPLACE_ICONV_OPEN */
 /* #undef REPLACE_ICONV_UTF */
-/* #undef am__fastdepCXX_FALSE */
-/* #undef am__fastdepCXX_TRUE */

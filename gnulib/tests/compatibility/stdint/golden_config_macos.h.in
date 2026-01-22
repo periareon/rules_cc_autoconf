@@ -1,18 +1,18 @@
 /* config.h.in */
 /* #undef APPLE_UNIVERSAL_BUILD */
-#define BITSIZEOF_PTRDIFF_T 64
-#define BITSIZEOF_SIG_ATOMIC_T 32
-#define BITSIZEOF_SIZE_T 64
-#define BITSIZEOF_WCHAR_T 32
-#define BITSIZEOF_WINT_T 32
+/* #undef BITSIZEOF_PTRDIFF_T */
+/* #undef BITSIZEOF_SIG_ATOMIC_T */
+/* #undef BITSIZEOF_SIZE_T */
+/* #undef BITSIZEOF_WCHAR_T */
+/* #undef BITSIZEOF_WINT_T */
 /* #undef GNULIBHEADERS_OVERRIDE_WINT_T */
 /* #undef HAVE_C99_STDINT_H */
 #define HAVE_INTTYPES_H 1
 #define HAVE_LIMITS_H 1
 #define HAVE_LONG_LONG_INT 1
-#define HAVE_SIGNED_SIG_ATOMIC_T 1
-#define HAVE_SIGNED_WCHAR_T 1
-#define HAVE_SIGNED_WINT_T 1
+/* #undef HAVE_SIGNED_SIG_ATOMIC_T */
+/* #undef HAVE_SIGNED_WCHAR_T */
+/* #undef HAVE_SIGNED_WINT_T */
 #define HAVE_STDINT_H 1
 #define HAVE_STDIO_H 1
 #define HAVE_STDLIB_H 1
@@ -30,9 +30,9 @@
 /* #undef NEXT_AS_FIRST_DIRECTIVE_STDINT_H */
 /* #undef NEXT_LIMITS_H */
 /* #undef NEXT_STDINT_H */
-#define PTRDIFF_T_SUFFIX l
-#define SIG_ATOMIC_T_SUFFIX 
-#define SIZE_T_SUFFIX ul
+/* #undef PTRDIFF_T_SUFFIX */
+/* #undef SIG_ATOMIC_T_SUFFIX */
+/* #undef SIZE_T_SUFFIX */
 #define STDC_HEADERS 1
-#define WCHAR_T_SUFFIX 
-#define WINT_T_SUFFIX
+/* #undef WCHAR_T_SUFFIX */
+/* #undef WINT_T_SUFFIX */

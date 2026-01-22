@@ -1,0 +1,5 @@
+/* subst.h.in */
+#define SUBST_HAVE_LIBSIGSEGV "no"
+#define SUBST_LIBSIGSEGV ""
+#define SUBST_LIBSIGSEGV_PREFIX ""
+#define SUBST_LTLIBSIGSEGV ""

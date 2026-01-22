@@ -1,1 +1,2 @@
 /* config.h.in */
+#undef HAVE___HEADER_INLINE

@@ -1,0 +1,7 @@
+/* config.h.in */
+/* #undef HAVE_LIBSIGSEGV */
+/* #undef LIBCSTACK */
+/* #undef LIBSIGSEGV */
+/* #undef LIBSIGSEGV_PREFIX */
+/* #undef LTLIBCSTACK */
+/* #undef LTLIBSIGSEGV */

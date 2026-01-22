@@ -1,0 +1,25 @@
+/* config.h.in */
+/* #undef GETTEXT_MACRO_VERSION */
+/* #undef GMSGFMT */
+/* #undef GMSGFMT_015 */
+#define HAVE_CFLOCALECOPYPREFERREDLANGUAGES 1
+#define HAVE_CFPREFERENCESCOPYAPPVALUE 1
+/* #undef INSTALL_DATA */
+/* #undef INSTALL_PROGRAM */
+/* #undef INSTALL_SCRIPT */
+/* #undef INTLLIBS */
+/* #undef INTL_MACOSX_LIBS */
+/* #undef LIBINTL */
+/* #undef LTLIBICONV */
+/* #undef LTLIBINTL */
+/* #undef MKDIR_P */
+/* #undef MSGFMT */
+/* #undef MSGMERGE */
+/* #undef MSGMERGE_FOR_MSGFMT_OPTION */
+/* #undef POSUB */
+/* #undef SED */
+/* #undef SET_MAKE */
+/* #undef USE_NLS */
+/* #undef XGETTEXT */
+/* #undef XGETTEXT_015 */
+/* #undef XGETTEXT_EXTRA_OPTIONS */

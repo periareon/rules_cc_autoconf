@@ -1,1 +1,3 @@
 /* config.h.in */
+/* #undef FEGETROUND_LIBM */
+#define HAVE_FEGETROUND 1

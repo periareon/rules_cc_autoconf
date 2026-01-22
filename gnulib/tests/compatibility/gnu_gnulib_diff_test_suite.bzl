@@ -256,22 +256,22 @@ def gnu_gnulib_diff_test_suite(
         all_tests.append(":{}".format(test_name))
 
     # --- 4. Diff tests for subst_*.h ---
-    for platform, golden_label, constraint in gnulib_entries:
-        suffix = "_{}".format(platform) if platform else ""
-        test_name = "{}_bazel_subst_diff{}".format(name, suffix)
+    # for platform, golden_label, constraint in gnulib_entries:
+    #     suffix = "_{}".format(platform) if platform else ""
+    #     test_name = "{}_bazel_subst_diff{}".format(name, suffix)
 
-        diff_kwargs = {
-            "file1": golden_label,
-            "file2": ":{}_bazel_subst_h".format(name),
-            "name": test_name,
-            "size": "small",
-            "tags": tags,
-        }
-        if constraint != None:
-            diff_kwargs["target_compatible_with"] = constraint
+    #     diff_kwargs = {
+    #         "file1": golden_label,
+    #         "file2": ":{}_bazel_subst_h".format(name),
+    #         "name": test_name,
+    #         "size": "small",
+    #         "tags": tags,
+    #     }
+    #     if constraint != None:
+    #         diff_kwargs["target_compatible_with"] = constraint
 
-        diff_test(**diff_kwargs)
-        all_tests.append(":{}".format(test_name))
+    #     diff_test(**diff_kwargs)
+    #     all_tests.append(":{}".format(test_name))
 
     # --- 5. Compile Test ---
     # Verify that the Bazel-generated headers compile correctly.

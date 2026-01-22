@@ -1,0 +1,10 @@
+/* subst.h.in */
+#define SUBST_GPGRT_CONFIG ""
+#define SUBST_HAVE_LIBGCRYPT ""
+#define SUBST_LIBGCRYPT ""
+#define SUBST_LIBGCRYPT_CFLAGS ""
+#define SUBST_LIBGCRYPT_CONFIG ""
+#define SUBST_LIBGCRYPT_LIBS ""
+#define SUBST_LIBGCRYPT_PREFIX ""
+#define SUBST_LIB_CRYPTO ""
+#define SUBST_LTLIBGCRYPT ""

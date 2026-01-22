@@ -1,1 +1,3 @@
 /* subst.h.in */
+#define SUBST_INSTALLPREFIX "@INSTALLPREFIX@"
+#define SUBST_RELOCATABLE "@RELOCATABLE@"

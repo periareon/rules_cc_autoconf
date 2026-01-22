@@ -3,9 +3,6 @@ AC_CONFIG_HEADERS([config.h])
 
 # Invoke macros from manywarnings.m4
 gl_MANYWARN_COMPLEMENT
-gl_MANYWARN_ALL_GCC
-gl_MANYWARN_ALL_GCC(C)
-gl_MANYWARN_ALL_GCC(C++)
 
 AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

@@ -1,1 +1,3 @@
 /* subst.h.in */
+#define SUBST_NEXT_AS_FIRST_DIRECTIVE_OMP_H "<omp.h>"
+#define SUBST_NEXT_OMP_H "<omp.h>"

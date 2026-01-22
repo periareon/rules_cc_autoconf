@@ -1,1 +1,3 @@
 /* config.h.in */
+#define INSTALLPREFIX "/usr/local"
+/* #undef RELOCATABLE */

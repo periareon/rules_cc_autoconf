@@ -1,1 +1,5 @@
 /* subst.h.in */
+#define SUBST_BUILD_CC "gcc -std=gnu23"
+#define SUBST_BUILD_CFLAGS "-g -O2"
+#define SUBST_BUILD_CPPFLAGS ""
+#define SUBST_BUILD_LDFLAGS ""

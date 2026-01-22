@@ -1,1 +1,3 @@
 /* config.h.in */
+#undef HAVE_LD_OUTPUT_DEF_FALSE
+#undef HAVE_LD_OUTPUT_DEF_TRUE

@@ -1,0 +1,9 @@
+/* config.h.in */
+/* #undef GL_GENERATE_TEXTSTYLE_H_FALSE */
+/* #undef GL_GENERATE_TEXTSTYLE_H_TRUE */
+/* #undef HAVE_LIBTEXTSTYLE */
+#define HAVE_TCDRAIN 1
+/* #undef LIBTEXTSTYLE */
+/* #undef LIBTEXTSTYLE_PREFIX */
+/* #undef LTLIBTEXTSTYLE */
+/* #undef TEXTSTYLE_H */

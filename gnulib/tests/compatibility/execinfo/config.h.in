@@ -9,5 +9,4 @@
 #undef HAVE_SYS_STAT_H
 #undef HAVE_SYS_TYPES_H
 #undef HAVE_UNISTD_H
-#undef LIB_EXECINFO
 #undef STDC_HEADERS

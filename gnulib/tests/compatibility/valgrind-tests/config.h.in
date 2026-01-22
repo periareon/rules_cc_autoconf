@@ -1,1 +1,7 @@
 /* config.h.in */
+#undef AM_VALGRINDFLAGS
+#undef DEFAULT_VALGRINDFLAGS
+#undef LOG_VALGRIND
+#undef VALGRIND
+#undef VALGRINDFLAGS
+#undef VALGRIND_PROGRAM

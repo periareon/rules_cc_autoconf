@@ -1,1 +1,4 @@
 /* config.h.in */
+/* #undef LDDPOSTPROC */
+/* #undef LDDPROG */
+/* #undef OBJDUMP */

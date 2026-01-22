@@ -1,1 +1,4 @@
 /* subst.h.in */
+#define SUBST_M2C ""
+#define SUBST_M2FLAGS ""
+#define SUBST_ac_ct_M2C ""

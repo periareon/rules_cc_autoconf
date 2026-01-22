@@ -1,1 +1,4 @@
 /* subst.h.in */
+#define SUBST_LDDPOSTPROC "@LDDPOSTPROC@"
+#define SUBST_LDDPROG "@LDDPROG@"
+#define SUBST_OBJDUMP "@OBJDUMP@"

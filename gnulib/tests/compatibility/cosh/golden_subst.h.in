@@ -1,1 +1,3 @@
 /* subst.h.in */
+#define SUBST_COSH_LIBM ""
+#define SUBST_POW_LIBM ""

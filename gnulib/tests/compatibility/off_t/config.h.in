@@ -1,1 +1,2 @@
 /* config.h.in */
+#undef WINDOWS_64_BIT_OFF_T

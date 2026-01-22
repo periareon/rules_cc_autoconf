@@ -1,1 +1,5 @@
 /* config.h.in */
+/* #undef GPGRT_CONFIG */
+/* #undef LIBGCRYPT_CFLAGS */
+/* #undef LIBGCRYPT_CONFIG */
+/* #undef LIBGCRYPT_LIBS */

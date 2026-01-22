@@ -61,7 +61,6 @@
 /* #undef HAVE_UNLINKAT */
 /* #undef HAVE_USLEEP */
 #define HAVE_WCHAR_H 1
-/* #undef LIB_EACCESS */
 #define PREFER_NONREENTRANT_EUIDACCESS 1
 /* #undef REPLACE_ACCESS */
 /* #undef REPLACE_CHOWN */

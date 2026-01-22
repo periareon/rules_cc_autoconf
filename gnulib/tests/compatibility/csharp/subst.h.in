@@ -1,1 +1,2 @@
 /* subst.h.in */
+#define SUBST_CSHARP_CHOICE "@CSHARP_CHOICE@"

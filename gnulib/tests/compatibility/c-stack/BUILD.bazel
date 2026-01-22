@@ -7,6 +7,7 @@ gnu_gnulib_diff_test_suite(
     configure_ac = "configure.ac",
     golden_config_h = "golden_config.h.in",
     golden_subst_h = "golden_subst.h.in",
+    aux_files = ["@gnulib//:build-aux-config"],
     m4_files = ["@gnulib//:all_m4"],
     subst_h_in = "subst.h.in",
     test_c = "test_c-stack.c",

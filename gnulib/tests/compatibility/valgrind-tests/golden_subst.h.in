@@ -1,1 +1,7 @@
 /* subst.h.in */
+#define SUBST_AM_VALGRINDFLAGS ""
+#define SUBST_DEFAULT_VALGRINDFLAGS ""
+#define SUBST_LOG_VALGRIND ""
+#define SUBST_VALGRIND ""
+#define SUBST_VALGRINDFLAGS ""
+#define SUBST_VALGRIND_PROGRAM ""
