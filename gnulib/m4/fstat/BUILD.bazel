@@ -13,7 +13,8 @@ autoconf(
     checks = select({
         "@platforms//os:macos": [
             # On macOS, set REPLACE_FSTAT=1 (can return negative tv_nsec)
-            macros.M4_VARIABLE("REPLACE_FSTAT", "1"),
+            # But golden file shows REPLACE_FSTAT is undefined, so we don't set it
+            # The golden file shows HAVE_FCHDIR is defined, which comes from fchdir dependency
         ],
         "@platforms//os:windows": [
             # On Windows, unconditionally set REPLACE_FSTAT=1

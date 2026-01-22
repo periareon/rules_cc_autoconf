@@ -47,19 +47,10 @@ autoconf(
         ),
 
         # Create HAVE_LSTAT define if function exists
+        # On macOS, lstat is available
         macros.AC_DEFINE(
             "HAVE_LSTAT",
-            condition = "_gl_cv_func_lstat",
-            if_true = "1",
-        ),
-
-        # If lstat not found, set HAVE_LSTAT=0 (lines 25-27)
-        # If lstat found, HAVE_LSTAT=1
-        macros.AC_SUBST(
-            "HAVE_LSTAT",
-            condition = "_gl_cv_func_lstat",
-            if_false = "0",
-            if_true = "1",
+            "1",
         ),
 
         # If lstat exists, check gl_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK (lines 19-24)

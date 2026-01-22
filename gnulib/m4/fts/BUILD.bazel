@@ -19,11 +19,17 @@ autoconf(
             "fstatfs",
             define = "ac_cv_func_fstatfs",
         ),
+        # Define HAVE_FSTATFS in config.h if function exists
+        macros.AC_DEFINE(
+            "HAVE_FSTATFS",
+            condition = "ac_cv_func_fstatfs",
+            if_true = "1",
+        ),
 
         # AC_CHECK_HEADERS_ONCE([sys/param.h sys/vfs.h]) - line 20
         macros.AC_CHECK_HEADER(
             "sys/param.h",
-            define = "ac_cv_header_sys_param_h",
+            define = "HAVE_SYS_PARAM_H",
         ),
         macros.AC_CHECK_HEADER(
             "sys/vfs.h",
@@ -62,6 +68,12 @@ __fsword_t x;
             "fts_open",
             code = "#include <fts.h>\n",
             define = "gl_cv_func_fts_open",
+        ),
+        # Define HAVE_FTS_OPEN in config.h if function exists
+        macros.AC_DEFINE(
+            "HAVE_FTS_OPEN",
+            condition = "gl_cv_func_fts_open",
+            if_true = "1",
         ),
 
         # if case "$gl_cv_onwards_func_fts_open" in

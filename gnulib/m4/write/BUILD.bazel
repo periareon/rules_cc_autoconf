@@ -20,5 +20,6 @@ autoconf(
         "//gnulib/m4/msvc-inval",
         # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
         "//gnulib/m4/unistd_h",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

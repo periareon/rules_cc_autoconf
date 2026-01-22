@@ -1,11 +1,17 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/log2.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "log2",
     checks = [
-        # Note: log2.m4 may not exist in gnulib, or this module may not have checks
+        # gl_FUNC_LOG2 checks for log2 function
+        # On macOS, log2 is available
+        macros.AC_CHECK_FUNC(
+            "log2",
+            define = "HAVE_LOG2",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -14,5 +20,7 @@ autoconf(
         "//gnulib/m4/frexp",
         "//gnulib/m4/isnand",
         "//gnulib/m4/log",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

@@ -187,16 +187,22 @@ autoconf(
 )
 
 # gl_SNPRINTF_TRUNCATION_C99 from printf.m4
+# On macOS, snprintf follows C99 truncation behavior
 autoconf(
     name = "gl_SNPRINTF_TRUNCATION_C99",
-    checks = [],
+    checks = [
+        macros.AC_DEFINE("HAVE_SNPRINTF_TRUNCATION_C99", "1"),
+    ],
     visibility = ["//visibility:public"],
 )
 
 # gl_SNPRINTF_RETVAL_C99 from printf.m4
+# On macOS, snprintf returns the number of characters that would have been written (C99 behavior)
 autoconf(
     name = "gl_SNPRINTF_RETVAL_C99",
-    checks = [],
+    checks = [
+        macros.AC_DEFINE("HAVE_SNPRINTF_RETVAL_C99", "1"),
+    ],
     visibility = ["//visibility:public"],
 )
 

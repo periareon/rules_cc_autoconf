@@ -18,10 +18,18 @@ autoconf(
             requires = ["_gl_cv_func_fchdir=1"],
         ),
         # gl_FUNC_FCHDIR also checks for fchdir declaration
+        # Use internal define to avoid defining it in config.h when used transitively
         macros.AC_CHECK_DECL(
             "fchdir",
-            define = "HAVE_DECL_FCHDIR",
+            define = "_gl_cv_have_decl_fchdir",
             headers = ["unistd.h"],
+        ),
+        # Set HAVE_DECL_FCHDIR as subst-only (not in config.h)
+        macros.AC_SUBST(
+            "HAVE_DECL_FCHDIR",
+            condition = "_gl_cv_have_decl_fchdir",
+            if_false = "0",
+            if_true = "1",
         ),
     ],
     visibility = ["//visibility:public"],

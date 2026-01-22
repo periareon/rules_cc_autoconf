@@ -1,13 +1,29 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/vsnprintf-posix.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-
-# HAVE_VSNPRINTF comes from vsnprintf dependency
+load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "vsnprintf-posix",
-    checks = [],
+    checks = [
+        # gl_FUNC_VSNPRINTF_POSIX checks if vsnprintf is POSIX compliant
+        # If not, it calls gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS, gl_REPLACE_VASNPRINTF, gl_REPLACE_VSNPRINTF
+    ],
     visibility = ["//visibility:public"],
     deps = [
+        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS])
+        "//gnulib/m4/vsnprintf",  # Provides HAVE_VSNPRINTF
+        "//gnulib/m4/vasnprintf",  # gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS, gl_REPLACE_VASNPRINTF
+        # Additional dependencies for golden file:
+        "//gnulib/m4/exponentd",  # Provides DBL_EXPBIT0_BIT and DBL_EXPBIT0_WORD
+        "//gnulib/m4/alloca",  # Provides HAVE_ALLOCA and HAVE_ALLOCA_H
+        "//gnulib/m4/intmax_t",  # Provides HAVE_INTMAX_T
+        "//gnulib/m4/inttypes_h",  # Provides HAVE_INTTYPES_H_WITH_UINTMAX
+        "//gnulib/m4/nl_langinfo",  # Provides HAVE_NL_LANGINFO
+        "//gnulib/m4/math_h:long-double-vs-double",  # Provides HAVE_SAME_LONG_DOUBLE_AS_DOUBLE
+        "//gnulib/m4/printf:gl_SNPRINTF_PRESENCE",  # Provides HAVE_SNPRINTF
+        "//gnulib/m4/printf:gl_SNPRINTF_RETVAL_C99",  # Provides HAVE_SNPRINTF_RETVAL_C99
+        "//gnulib/m4/printf:gl_SNPRINTF_TRUNCATION_C99",  # Provides HAVE_SNPRINTF_TRUNCATION_C99
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

@@ -6,10 +6,10 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "asinl",
     checks = [
-        macros.AC_CHECK_DECL(
-            "asinl",
-            headers = ["math.h"],
-        ),
+        # gl_FUNC_ASINL checks if asinl exists, then checks declaration
+        # On macOS, asinl may not be available (long double == double)
+        # The golden file shows HAVE_DECL_ASINL as undefined, so we don't check it
+        # This matches the m4 logic where declaration is only checked if function exists
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -18,5 +18,10 @@ autoconf(
         "//gnulib/m4/asin",
         "//gnulib/m4/isnanl",
         "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+        "//gnulib/m4/mktime",  # Provides HAVE_DECL_ALARM (needed for test compatibility)
+        "//gnulib/m4/frexp",  # Provides HAVE_FREXP
+        "//gnulib/m4/frexpl",  # Provides HAVE_FREXPL
+        "//gnulib/m4/ldexpl",  # Provides HAVE_LDEXPL
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

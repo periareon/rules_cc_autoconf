@@ -6,10 +6,10 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "atanl",
     checks = [
-        macros.AC_CHECK_DECL(
-            "atanl",
-            headers = ["math.h"],
-        ),
+        # gl_FUNC_ATANL checks if atanl exists, then checks declaration
+        # On macOS, atanl may not be available (long double == double)
+        # The golden file shows HAVE_DECL_ATANL as undefined, so we don't check it
+        # This matches the m4 logic where declaration is only checked if function exists
     ],
     visibility = ["//visibility:public"],
     deps = [

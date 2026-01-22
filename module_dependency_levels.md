@@ -1,0 +1,295 @@
+# Module Dependency Levels
+
+Modules organized by dependency level (leaf nodes first). Port modules level by level, starting with Level 0.
+
+**Note**: Dependencies shown are only those within this list. Modules may also depend on external modules (e.g., `math_h`, `stdlib_h`, etc.).
+
+## Level 0 (240 modules)
+
+**Leaf nodes**: These modules have no dependencies on other modules in this list.
+
+- **acosl**
+- **asinl**
+- **asm-underscore**
+- **atanl**
+- **bison-i18n**
+- **c-bool**
+- **c-strtod**
+- **copy-file**
+- **dirent-safer**
+- **dirfd**
+- **dprintf**
+- **dprintf-gnu**
+- **dprintf-posix**
+- **eealloc**
+- **error**
+- **execute**
+- **execvpe**
+- **expl**
+- **exponentl**
+- **extensions-aix**
+- **extern-inline**
+- **fatal-signal**
+- **fbufmode**
+- **fcntl-safer**
+- **fdatasync**
+- **fegetround**
+- **fenv-environment**
+- **fenv-exceptions-state**
+- **fenv-exceptions-tracking-c23**
+- **fenv-exceptions-trapping**
+- **fenv_h**
+- **ffsll**
+- **fileblocks**
+- **flexmember**
+- **flock**
+- **fprintf-gnu**
+- **freadable**
+- **freelocale**
+- **fstat**
+- **fstypename**
+- **fsync**
+- **fts**
+- **fwritable**
+- **fwriting**
+- **gc-hmac-sha1**
+- **gc-hmac-sha256**
+- **gc-hmac-sha512**
+- **getentropy**
+- **getlocalename_l**
+- **getlogin_r**
+- **getndelim2**
+- **getpayload**
+- **getrusage**
+- **getsubopt**
+- **gettext**
+- **gl-openssl**
+- **gnulib-i18n**
+- **host-os**
+- **iconv_open**
+- **idpriv**
+- **imaxabs**
+- **imaxdiv**
+- **intl-thread-locale**
+- **intlmacosx**
+- **inttostr**
+- **isalnum_l**
+- **isalpha_l**
+- **isblank_l**
+- **iscntrl_l**
+- **isdigit_l**
+- **isgraph_l**
+- **islower_l**
+- **isprint_l**
+- **ispunct_l**
+- **isspace_l**
+- **isupper_l**
+- **iswdigit**
+- **iswpunct**
+- **iswxdigit**
+- **isxdigit_l**
+- **lcmessage**
+- **lib-link**
+- **libgmp**
+- **libtextstyle-optional**
+- **link-follow**
+- **localcharset**
+- **locale-ar**
+- **locale-en**
+- **locale-ja**
+- **locale-tr**
+- **locale-zh**
+- **localename**
+- **log10l**
+- **log2**
+- **login_tty**
+- **malloc-align**
+- **mbchar**
+- **mbfile**
+- **mbiter**
+- **mbsnrtowcs**
+- **mbstate_t**
+- **mbswidth**
+- **md4**
+- **md5**
+- **mgetgroups**
+- **mkdir-p**
+- **mkstemps**
+- **modfl**
+- **mtx**
+- **nstrftime**
+- **obstack-printf**
+- **obstack-printf-gnu**
+- **obstack-printf-posix**
+- **openat2**
+- **pagealign_alloc**
+- **parse-datetime**
+- **passfd**
+- **pclose**
+- **perror**
+- **popen**
+- **posix_memalign**
+- **posix_openpt**
+- **posix_spawn_faction_addchdir**
+- **pread**
+- **printf-frexp**
+- **printf-frexpl**
+- **printf-gnu**
+- **printf-with-n-directive**
+- **pselect**
+- **pthread-cond**
+- **pthread-mutex**
+- **pthread-once**
+- **pthread-spin**
+- **pthread-thread**
+- **pthread-tss**
+- **pthread_rwlock_rdlock**
+- **pthread_sigmask**
+- **ptsname_r**
+- **putenv**
+- **pwrite**
+- **qsort_r**
+- **random**
+- **relocatable-lib**
+- **rintl**
+- **rmdir**
+- **same**
+- **save-cwd**
+- **search_h**
+- **selinux-context-h**
+- **selinux-label-h**
+- **setlocale**
+- **setlocale_null**
+- **setpayload**
+- **setpayloadsig**
+- **settime**
+- **sha1**
+- **sha256**
+- **sha3**
+- **sha512**
+- **signal_h**
+- **sinl**
+- **sm3**
+- **snprintf-gnu**
+- **snprintf-posix**
+- **socklen**
+- **sockpfaf**
+- **sprintf-gnu**
+- **stat-size**
+- **stat-time**
+- **stdckdint_h**
+- **stdint**
+- **stdlib_h**
+- **stpncpy**
+- **strcasecmp**
+- **strcasecmp_l**
+- **strerror_l**
+- **strerrorname_np**
+- **strfmon_l**
+- **stringeq**
+- **strncasecmp**
+- **strncasecmp_l**
+- **strncat**
+- **strncpy**
+- **strndup**
+- **strtold**
+- **supersede**
+- **sys_file_h**
+- **tcgetattr**
+- **terminfo**
+- **tolower_l**
+- **totalorder**
+- **totalordermag**
+- **toupper_l**
+- **tss**
+- **tzname**
+- **unistd-safer**
+- **unistd_h**
+- **unlink**
+- **unlink-busy**
+- **unlinkdir**
+- **userspec**
+- **utimensat**
+- **utmp_h**
+- **va-args**
+- **vasnprintf-posix**
+- **vasnwprintf-gnu**
+- **vasnwprintf-posix**
+- **vasprintf-gnu**
+- **vdprintf-gnu**
+- **vfprintf-gnu**
+- **vprintf-gnu**
+- **vsnprintf-gnu**
+- **vsnprintf-posix**
+- **vsprintf-gnu**
+- **wcpcpy**
+- **wcpncpy**
+- **wcscasecmp**
+- **wcscat**
+- **wcschr**
+- **wcscmp**
+- **wcscoll**
+- **wcscpy**
+- **wcscspn**
+- **wcsftime**
+- **wcsncasecmp**
+- **wcsncat**
+- **wcsncmp**
+- **wcsncpy**
+- **wcsnlen**
+- **wcsnrtombs**
+- **wcspbrk**
+- **wcsrchr**
+- **wcsspn**
+- **wcsstr**
+- **wcstok**
+- **wcswidth**
+- **wctrans**
+- **write-any-file**
+- **xsize**
+- **xvasprintf**
+
+## Level 1 (23 modules)
+
+**Level 1**: These modules depend on modules from previous levels.
+
+- **close** → depends on: unistd_h
+- **cosl** → depends on: sinl
+- **environ** → depends on: unistd_h
+- **expm1l** → depends on: expl
+- **fma** → depends on: fegetround
+- **fmaf** → depends on: fegetround
+- **fpe-trapping** → depends on: fenv-exceptions-trapping
+- **gc-hmac-md5** → depends on: md5
+- **gc-md4** → depends on: md4
+- **gc-md5** → depends on: md5
+- **getcwd-abort-bug** → depends on: unistd_h
+- **getcwd-path-max** → depends on: unistd_h
+- **libunistring** → depends on: lib-link
+- **log2-ieee** → depends on: log2
+- **log2f** → depends on: log2
+- **log2l** → depends on: log2
+- **modfl-ieee** → depends on: modfl
+- **raise** → depends on: signal_h
+- **rmdir-errno** → depends on: unistd_h
+- **snan** → depends on: exponentl
+- **tanl** → depends on: sinl
+- **towctrans** → depends on: wctrans
+- **vasnprintf-gnu** → depends on: vasnprintf-posix
+
+## Level 2 (4 modules)
+
+**Level 2**: These modules depend on modules from previous levels.
+
+- **fmal** → depends on: fegetround, fma
+- **libunistring-base** → depends on: libunistring
+- **libunistring-optional** → depends on: libunistring
+- **log2f-ieee** → depends on: log2f
+
+## Dependency Graph Summary
+
+- Total modules: 267
+- Dependency levels: 3
+- Modules with dependencies: 27
+- Leaf modules (Level 0): 240
+

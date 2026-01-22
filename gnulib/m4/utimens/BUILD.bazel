@@ -10,28 +10,25 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "utimens",
     checks = [
+        # On macOS, futimes, lutimes, futimens, utimensat are available
         macros.AC_CHECK_FUNC(
             "futimes",
-            code = "#include <sys/time.h>",
-        ),
-        macros.AC_CHECK_FUNC(
-            "futimesat",
-            code = "#include <sys/time.h>",
+            define = "HAVE_FUTIMES",
         ),
         macros.AC_CHECK_FUNC(
             "lutimes",
-            code = "#include <sys/time.h>",
-        ),
-        macros.AC_CHECK_FUNC(
-            "utimensat",
-            code = "#include <sys/stat.h>",
+            define = "HAVE_LUTIMES",
         ),
         macros.AC_CHECK_FUNC(
             "futimens",
-            code = "#include <sys/stat.h>",
+            define = "HAVE_FUTIMENS",
         ),
-        macros.AC_CHECK_FUNC("utimens"),
-        macros.AC_CHECK_FUNC("lutimens"),
+        macros.AC_CHECK_FUNC(
+            "utimensat",
+            define = "HAVE_UTIMENSAT",
+        ),
+        # HAVE_WORKING_UTIMES is set by utimes module
+        macros.AC_DEFINE("HAVE_WORKING_UTIMES", "1"),
     ],
     visibility = ["//visibility:public"],
     deps = [

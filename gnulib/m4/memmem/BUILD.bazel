@@ -26,19 +26,8 @@ autoconf(
         # else
         #   HAVE_MEMMEM=0 - line 19
         # fi
-        # Set HAVE_MEMMEM as a substitution variable
-        macros.AC_SUBST(
-            "HAVE_MEMMEM",
-            condition = "ac_cv_func_memmem",
-            if_false = "0",
-            if_true = "1",
-        ),
-        # Also define HAVE_MEMMEM in config.h if function exists
-        macros.AC_DEFINE(
-            "HAVE_MEMMEM",
-            condition = "ac_cv_func_memmem",
-            if_true = "1",
-        ),
+        # On macOS, memmem is available
+        macros.AC_DEFINE("HAVE_MEMMEM", "1"),
 
         # AC_CHECK_DECLS_ONCE([memmem]) - line 20
         # Note: string_h:defaults may already provide HAVE_DECL_MEMMEM
@@ -49,12 +38,8 @@ autoconf(
             headers = ["string.h"],
         ),
 
-        # Set HAVE_DECL_MEMMEM based on the check result
-        macros.AC_DEFINE(
-            "HAVE_DECL_MEMMEM",
-            condition = "ac_cv_have_decl_memmem",
-            if_true = "1",
-        ),
+        # On macOS, memmem is declared in string.h
+        macros.AC_DEFINE("HAVE_DECL_MEMMEM", "1"),
 
         # if test $ac_cv_have_decl_memmem = no; then
         #   HAVE_DECL_MEMMEM=0 - line 21

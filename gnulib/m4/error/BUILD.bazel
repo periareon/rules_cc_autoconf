@@ -1,17 +1,28 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/error.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "error",
     checks = [
-        # gl_ERROR macro from error.m4 is empty
-        # gl_PREREQ_ERROR uses AC_FUNC_STRERROR_R which is a standard autoconf macro
-        # Note: AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
+        # gl_PREREQ_ERROR uses AC_FUNC_STRERROR_R
+        # AC_FUNC_STRERROR_R checks for strerror_r function and declaration
+        macros.AC_CHECK_FUNC(
+            "strerror_r",
+            define = "HAVE_STRERROR_R",
+        ),
+        macros.AC_CHECK_DECL(
+            "strerror_r",
+            define = "HAVE_DECL_STRERROR_R",
+            headers = ["string.h"],
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
         # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
         "//gnulib/m4/extensions",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

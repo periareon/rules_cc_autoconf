@@ -1,11 +1,23 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/pthread_sigmask.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "pthread_sigmask",
     checks = [
-        # Note: pthread_sigmask.m4 may not exist in gnulib, or this module may not have checks
+        # gl_FUNC_PTHREAD_SIGMASK checks for pthread_sigmask function
+        # On macOS, pthread_sigmask is available
+        macros.AC_CHECK_FUNC(
+            "pthread_sigmask",
+            define = "HAVE_PTHREAD_SIGMASK",
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/signal_h",  # AC_REQUIRE([gl_SIGNAL_H_DEFAULTS])
+        "//gnulib/m4/threadlib",  # AC_REQUIRE([gl_PTHREADLIB])
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

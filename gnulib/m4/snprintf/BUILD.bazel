@@ -23,17 +23,12 @@ autoconf(
         # REPLACE_SNPRINTF is set based on gl_cv_func_snprintf_usable (lines 49-59)
         # If snprintf is not usable, REPLACE_SNPRINTF=1
         # If snprintf is usable, REPLACE_SNPRINTF is not set (remains 0 from defaults)
-        # Based on golden files, REPLACE_SNPRINTF=1 on macOS (snprintf is not usable)
+        # Based on golden files, REPLACE_SNPRINTF is undefined (0) on macOS
         # Runtime checks (gl_SNPRINTF_SIZE1, gl_SNPRINTF_RETVAL_C99, gl_PRINTF_POSITIONS) can't be done in Bazel
         # So we use platform assumptions based on golden files
-    ] + select({
-        "@platforms//os:macos": [
-            macros.AC_SUBST("REPLACE_SNPRINTF", "1"),
-        ],
-        "//conditions:default": [
-            macros.AC_SUBST("REPLACE_SNPRINTF", "0"),
-        ],
-    }),
+        # On macOS, snprintf is usable, so REPLACE_SNPRINTF=0
+        macros.AC_SUBST("REPLACE_SNPRINTF", "0"),
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # AC_REQUIRE([gl_STDIO_H_DEFAULTS]) - line 47
@@ -87,9 +82,8 @@ autoconf(
             if_true = "1",
         ),
         # Define HAVE_DECL_SNPRINTF in config.h
-        # NOTE: This causes a conflict when snprintf is included transitively via vasnprintf.
-        # The fprintf-posix test expects HAVE_DECL_SNPRINTF to be undefined, but snprintf
-        # defines it. This is a known issue that needs to be resolved at a higher level.
+        # This is only defined when gl_FUNC_SNPRINTF is called directly (as in snprintf test)
+        # Modules that use snprintf transitively (like fprintf-gnu) don't get this define
         macros.AC_DEFINE(
             "HAVE_DECL_SNPRINTF",
             condition = "_gl_cv_have_decl_snprintf",
@@ -100,7 +94,7 @@ autoconf(
         # Note: gl_REPLACE_SNPRINTF is called if snprintf is not usable (lines 36-38)
         # This is handled via dependency, but REPLACE_SNPRINTF is set based on
         # gl_cv_func_snprintf_usable which depends on runtime tests.
-        # Based on golden files, REPLACE_SNPRINTF=1 on macOS (snprintf is not usable)
+        # Based on golden files, REPLACE_SNPRINTF is undefined (0) on macOS (snprintf is usable)
     ],
     visibility = ["//visibility:public"],
     deps = [

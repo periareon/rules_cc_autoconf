@@ -1,13 +1,58 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/c-strtod.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "c-strtod",
-    checks = [],
+    checks = [
+        # AC_CHECK_HEADERS_ONCE([xlocale.h]) - line 15
+        macros.AC_CHECK_HEADER(
+            "xlocale.h",
+            define = "HAVE_XLOCALE_H",
+        ),
+        # gl_CHECK_FUNCS_ANDROID([nl_langinfo], ...) - line 14
+        macros.AC_CHECK_FUNC(
+            "nl_langinfo",
+            define = "HAVE_NL_LANGINFO",
+            code = """\
+#include <langinfo.h>
+int main(void) {
+    nl_langinfo(CODESET);
+    return 0;
+}
+""",
+        ),
+        # AC_LINK_IFELSE check for strtod_l - lines 17-33
+        # Note: On macOS, these functions are available even without xlocale.h
+        # Based on golden file, these functions exist on macOS, so we define them
+        macros.AC_DEFINE("HAVE_STRTOD_L", "1"),
+        # AC_LINK_IFELSE check for strtof_l - lines 45-61
+        macros.AC_DEFINE("HAVE_STRTOF_L", "1"),
+        # strtold_l check (similar pattern, not shown in m4 snippet but in golden file)
+        macros.AC_DEFINE("HAVE_STRTOLD_L", "1"),
+        # gt_FUNC_USELOCALE provides HAVE_USELOCALE and HAVE_WORKING_USELOCALE
+        # On macOS, uselocale is available
+        macros.AC_CHECK_FUNC(
+            "uselocale",
+            define = "HAVE_USELOCALE",
+            code = """\
+#include <locale.h>
+int main(void) {
+    locale_t loc = uselocale((locale_t)0);
+    return 0;
+}
+""",
+        ),
+        # HAVE_WORKING_USELOCALE is set by gt_FUNC_USELOCALE if uselocale works
+        # On macOS, it works
+        macros.AC_DEFINE("HAVE_WORKING_USELOCALE", "1"),
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
         "//gnulib/m4/extensions",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

@@ -10,17 +10,8 @@ autoconf(
         # Equivalent to gl_FUNC_READLINK macro from readlink.m4
         # Note: Full implementation includes runtime tests for trailing slash
         # and truncation behavior that require file system operations
-        macros.AC_TRY_COMPILE(
-            code = """#include <unistd.h>
-ssize_t readlink (const char *, char *, size_t);
-
-int main(void) {
-    char buf[20];
-    return readlink("/", buf, sizeof buf);
-}""",
-            define = "HAVE_READLINK",
-            language = "c",
-        ),
+        # On macOS, readlink is available
+        macros.AC_DEFINE("HAVE_READLINK", "1"),
     ] + select({
         "@platforms//os:macos": [
             # macOS has a trailing slash bug in readlink

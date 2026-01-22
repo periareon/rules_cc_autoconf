@@ -23,7 +23,10 @@ autoconf(
         # This is provided by extensions dependency
 
         # AC_CHECK_HEADERS([linux/fs.h]) - line 20
-        macros.AC_CHECK_HEADER("linux/fs.h"),
+        macros.AC_CHECK_HEADER(
+            "linux/fs.h",
+            define = "HAVE_LINUX_FS_H",
+        ),
 
         # AC_CHECK_FUNCS_ONCE([renameat]) - line 21
         # Check for renameat function

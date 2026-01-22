@@ -11,14 +11,7 @@ autoconf(
             define = "HAVE_ARPA_INET_H",
             subst = True,
         ),
-        # Check for sys/socket.h for config.h (but not subst.h)
-        # sys_socket_h provides HAVE_SYS_SOCKET_H with subst=True, but arpa_inet_h
-        # should only have it as a placeholder in subst.h
-        macros.AC_CHECK_HEADER(
-            "sys/socket.h",
-            define = "HAVE_SYS_SOCKET_H",
-            subst = False,
-        ),
+        # Note: HAVE_SYS_SOCKET_H is provided by sys_socket_h dependency
     ],
     visibility = ["//visibility:public"],
     deps = [

@@ -6,7 +6,10 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "pathmax",
     checks = [
-        macros.AC_CHECK_HEADER("sys/param.h"),
+        macros.AC_CHECK_HEADER(
+            "sys/param.h",
+            define = "HAVE_SYS_PARAM_H",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [

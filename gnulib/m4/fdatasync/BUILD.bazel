@@ -1,11 +1,35 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fdatasync.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "fdatasync",
     checks = [
-        # Note: fdatasync.m4 may not exist in gnulib, or this module may not have checks
+        # AC_CHECK_DECLS_ONCE([fdatasync]) - line 15
+        macros.AC_CHECK_DECL(
+            "fdatasync",
+            define = "HAVE_DECL_FDATASYNC",
+            headers = ["unistd.h"],
+        ),
+        # gl_CHECK_FUNCS_ANDROID([fdatasync], ...) - line 22
+        # On macOS, fdatasync is available
+        macros.AC_CHECK_FUNC(
+            "fdatasync",
+            define = "HAVE_FDATASYNC",
+            code = """\
+#include <unistd.h>
+int main(void) {
+    fdatasync(0);
+    return 0;
+}
+""",
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

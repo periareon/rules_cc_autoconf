@@ -6,8 +6,18 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "log10l",
     checks = [
+        # gl_FUNC_LOG10L checks if log10l exists, then checks declaration
+        # On macOS, log10l exists (long double == double, but function is available)
+        macros.AC_CHECK_FUNC(
+            "log10l",
+            define = "HAVE_LOG10L",
+        ),
+        # Check for log10l declaration (only for subst, not config.h)
+        # The golden file shows HAVE_DECL_LOG10L should be undefined in config.h
+        # Use internal define to avoid defining it in config.h
         macros.AC_CHECK_DECL(
             "log10l",
+            define = "_gl_cv_have_decl_log10l",
             headers = ["math.h"],
         ),
     ],

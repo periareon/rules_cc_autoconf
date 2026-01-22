@@ -4,10 +4,19 @@ load("//autoconf:autoconf.bzl", "autoconf")
 
 autoconf(
     name = "getpayload",
-    checks = [],
+    checks = [
+        # gl_FUNC_GETPAYLOAD requires gl_MATH_H_DEFAULTS and gl_LONG_DOUBLE_VS_DOUBLE
+        # The golden file shows DBL_EXPBIT0_*, LDBL_EXPBIT0_*, and HAVE_SAME_LONG_DOUBLE_AS_DOUBLE
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
         "//gnulib/m4/extensions",
+        # gl_MATH_H_DEFAULTS and gl_LONG_DOUBLE_VS_DOUBLE
+        "//gnulib/m4/math_h:long-double-vs-double",  # Provides HAVE_SAME_LONG_DOUBLE_AS_DOUBLE
+        "//gnulib/m4/exponentd",  # Provides DBL_EXPBIT0_BIT and DBL_EXPBIT0_WORD
+        "//gnulib/m4/exponentl",  # Provides LDBL_EXPBIT0_BIT and LDBL_EXPBIT0_WORD
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

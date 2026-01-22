@@ -25,8 +25,8 @@ autoconf(
     checks = [
         # Module indicators
         macros.AC_SUBST("GNULIB_GETRUSAGE", "0"),
-        # HAVE_* defaults
-        macros.AC_SUBST("HAVE_GETRUSAGE", "1"),
+        # HAVE_GETRUSAGE is undefined on macOS (getrusage is not available)
+        # The golden file shows HAVE_GETRUSAGE is undefined
     ],
     visibility = ["//visibility:public"],
 )

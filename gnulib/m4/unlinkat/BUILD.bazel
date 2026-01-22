@@ -8,7 +8,11 @@ autoconf(
     name = "unlinkat",
     checks = [
         # AC_CHECK_FUNCS_ONCE([unlinkat])
-        macros.AC_CHECK_FUNC("unlinkat"),
+        # On macOS, unlinkat is available
+        macros.AC_CHECK_FUNC(
+            "unlinkat",
+            define = "HAVE_UNLINKAT",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [

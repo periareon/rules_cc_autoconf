@@ -6,9 +6,20 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "acosl",
     checks = [
+        # AC_CHECK_DECL([acosl], , [HAVE_DECL_ACOSL=0], [[#include <math.h>]])
+        # The m4 file sets HAVE_DECL_ACOSL=0 if not found, but doesn't define it in config.h
+        # So we only set it as subst variable, not in config.h
         macros.AC_CHECK_DECL(
             "acosl",
+            define = "_gl_cv_have_decl_acosl",
             headers = ["math.h"],
+        ),
+        # Set HAVE_DECL_ACOSL as subst variable only (not in config.h)
+        macros.AC_SUBST(
+            "HAVE_DECL_ACOSL",
+            condition = "_gl_cv_have_decl_acosl",
+            if_false = "0",
+            if_true = "1",
         ),
     ],
     visibility = ["//visibility:public"],
@@ -18,5 +29,10 @@ autoconf(
         "//gnulib/m4/acos",
         "//gnulib/m4/isnanl",
         "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+        # Additional dependencies for golden file:
+        "//gnulib/m4/frexp",  # Provides HAVE_FREXP
+        "//gnulib/m4/frexpl",  # Provides HAVE_FREXPL
+        "//gnulib/m4/ldexpl",  # Provides HAVE_LDEXPL
+        "//gnulib/m4/nanosleep",  # Provides HAVE_DECL_ALARM
     ],
 )

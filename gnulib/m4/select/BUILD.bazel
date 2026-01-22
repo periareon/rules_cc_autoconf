@@ -7,7 +7,11 @@ autoconf(
     name = "select",
     checks = [
         # HAVE_SELECT check (this module sets GNULIB_SELECT=1)
-        macros.AC_CHECK_FUNC("select"),
+        # On macOS, select is available
+        macros.AC_CHECK_FUNC(
+            "select",
+            define = "HAVE_SELECT",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [

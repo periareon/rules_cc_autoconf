@@ -1,11 +1,34 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/vdprintf-gnu.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "vdprintf-gnu",
     checks = [
-        # TODO: Add checks based on .m4 file
+        # gl_FUNC_VDPRINTF_GNU checks if vdprintf is GNU-compatible
+        # If not, it calls gl_PREREQ_VASNPRINTF_WITH_GNU_EXTRAS, gl_REPLACE_VASNPRINTF, gl_REPLACE_VDPRINTF
+        # Based on golden files, vdprintf is not GNU-compatible on macOS, so we always need these
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/vdprintf-posix",  # AC_REQUIRE([gl_FUNC_VDPRINTF_IS_POSIX])
+        "//gnulib/m4/printf:gl_PRINTF_DIRECTIVE_UPPERCASE_B",  # AC_REQUIRE([gl_PRINTF_DIRECTIVE_UPPERCASE_B])
+        # When vdprintf is not GNU-compatible (which is the case on macOS):
+        "//gnulib/m4/vasnprintf:gl_PREREQ_VASNPRINTF_WITH_GNU_EXTRAS",  # gl_PREREQ_VASNPRINTF_WITH_GNU_EXTRAS
+        "//gnulib/m4/vasnprintf:gl_REPLACE_VASNPRINTF",  # gl_REPLACE_VASNPRINTF
+        "//gnulib/m4/vdprintf:gl_REPLACE_VDPRINTF",  # gl_REPLACE_VDPRINTF
+        # Additional dependencies for the golden file:
+        "//gnulib/m4/exponentd",  # Provides DBL_EXPBIT0_BIT and DBL_EXPBIT0_WORD
+        "//gnulib/m4/alloca",  # Provides HAVE_ALLOCA and HAVE_ALLOCA_H
+        "//gnulib/m4/stdio_h",  # Provides HAVE_DECL__SNPRINTF
+        "//gnulib/m4/intmax_t",  # Provides HAVE_INTMAX_T
+        "//gnulib/m4/inttypes_h",  # Provides HAVE_INTTYPES_H_WITH_UINTMAX
+        "//gnulib/m4/nl_langinfo",  # Provides HAVE_NL_LANGINFO
+        "//gnulib/m4/math_h:long-double-vs-double",  # Provides HAVE_SAME_LONG_DOUBLE_AS_DOUBLE
+        "//gnulib/m4/printf:gl_SNPRINTF_PRESENCE",  # Provides HAVE_SNPRINTF (without HAVE_DECL_SNPRINTF)
+        "//gnulib/m4/printf:gl_SNPRINTF_RETVAL_C99",  # Provides HAVE_SNPRINTF_RETVAL_C99
+        "//gnulib/m4/printf:gl_SNPRINTF_TRUNCATION_C99",  # Provides HAVE_SNPRINTF_TRUNCATION_C99
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

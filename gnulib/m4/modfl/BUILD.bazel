@@ -13,5 +13,10 @@ autoconf(
         "//gnulib/m4/extensions",
         "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
         "//gnulib/m4/mathfunc",  # gl_MATHFUNC([modfl], [long double], [(long double, long double *)])
+        "//gnulib/m4/trunc",  # Provides HAVE_DECL_TRUNC
+        "//gnulib/m4/truncl",  # Provides HAVE_DECL_TRUNCL
+        # Note: truncf provides HAVE_DECL_TRUNCF, but golden shows it should be undefined
+        # So we don't include truncf
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

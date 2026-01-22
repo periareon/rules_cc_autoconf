@@ -12,7 +12,8 @@ autoconf(
     deps = [
         "//gnulib/m4/msvc-inval",
         "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
-        # Note: Conditional dependencies on gl_MSVC_INVAL, gl_PREREQ_SYS_H_WINSOCK2,
-        # and gl_FUNC_FCHDIR are handled via m4_ifdef
+        "//gnulib/m4/fchdir",  # Provides HAVE_FCHDIR (from gl_FUNC_FCHDIR)
+        "//gnulib/m4/sys_socket_h",  # Provides HAVE_SYS_SOCKET_H (from gl_PREREQ_SYS_H_WINSOCK2)
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

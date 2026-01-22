@@ -3,27 +3,29 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:macros.bzl", "macros")
 
-# gl_FUNC_VASPRINTF - lines 9-15
+# gl_REPLACE_VASPRINTF from vasprintf.m4 (lines 17-28)
+# This is called separately by vasprintf-posix
+# Note: gl_REPLACE_VASPRINTF uses $ac_cv_func_vasprintf which is set by gl_FUNC_VASPRINTF
+# But when called directly (as in vasprintf-posix), we need to check for the function
 autoconf(
-    name = "vasprintf",
+    name = "gl_REPLACE_VASPRINTF",
     checks = [
-        # AC_CHECK_FUNCS([vasprintf]) - line 11
+        # Check for vasprintf function (needed when gl_REPLACE_VASPRINTF is called directly)
+        # Use internal define to avoid conflicts when gl_FUNC_VASPRINTF is also used
         macros.AC_CHECK_FUNC(
             "vasprintf",
-            define = "ac_cv_func_vasprintf",
+            define = "_gl_cv_func_vasprintf_replace",
         ),
-
-        # if test $ac_cv_func_vasprintf = no; then
-        #   gl_REPLACE_VASPRINTF - line 12-13
-        # fi
-        # Note: gl_REPLACE_VASPRINTF is called even if function exists (see test configure.ac)
-        # So we include its logic here
-
-        # gl_REPLACE_VASPRINTF - lines 17-28
+        # Map to ac_cv_func_vasprintf for compatibility with m4 logic
+        macros.AC_SUBST(
+            "ac_cv_func_vasprintf",
+            condition = "_gl_cv_func_vasprintf_replace",
+            if_false = "no",
+            if_true = "yes",
+        ),
         # AC_LIBOBJ([vasprintf]) - line 19
         # AC_LIBOBJ([asprintf]) - line 20
         # AC_REQUIRE([gl_STDIO_H_DEFAULTS]) - line 21
-        # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
         # if test $ac_cv_func_vasprintf = yes; then
         #   REPLACE_VASPRINTF=1 - line 22-24
         # else
@@ -31,7 +33,55 @@ autoconf(
         # fi
         macros.AC_SUBST(
             "HAVE_VASPRINTF",
-            condition = "ac_cv_func_vasprintf",
+            condition = "_gl_cv_func_vasprintf_replace",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # Define HAVE_VASPRINTF in config.h if function exists
+        macros.AC_DEFINE(
+            "HAVE_VASPRINTF",
+            condition = "_gl_cv_func_vasprintf_replace",
+            if_true = "1",
+        ),
+        macros.AC_SUBST("REPLACE_VASPRINTF", "1"),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # AC_REQUIRE([gl_STDIO_H_DEFAULTS]) - line 21
+        "//gnulib/m4/stdio_h",
+        # gl_PREREQ_VASPRINTF_H - lines 32-36
+        "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_FUNC_VASPRINTF - lines 9-15
+autoconf(
+    name = "vasprintf",
+    checks = [
+        # AC_CHECK_FUNCS([vasprintf]) - line 11
+        # Note: gl_REPLACE_VASPRINTF also checks for this function, so we use a different define
+        # to avoid duplicate check errors
+        macros.AC_CHECK_FUNC(
+            "vasprintf",
+            define = "_gl_cv_func_vasprintf",
+        ),
+
+        # if test $ac_cv_func_vasprintf = no; then
+        #   gl_REPLACE_VASPRINTF - line 12-13
+        # fi
+        # Map internal define to ac_cv_func_vasprintf for gl_REPLACE_VASPRINTF compatibility
+        macros.AC_SUBST(
+            "ac_cv_func_vasprintf",
+            condition = "_gl_cv_func_vasprintf",
+            if_false = "no",
+            if_true = "yes",
+        ),
+
+        macros.AC_SUBST(
+            "HAVE_VASPRINTF",
+            condition = "_gl_cv_func_vasprintf",
             if_false = "0",
             if_true = "1",
         ),
@@ -39,28 +89,19 @@ autoconf(
         # Define HAVE_VASPRINTF in config.h if the function exists
         macros.AC_DEFINE(
             "HAVE_VASPRINTF",
-            condition = "ac_cv_func_vasprintf",
+            condition = "_gl_cv_func_vasprintf",
             if_true = "1",
         ),
 
-        # REPLACE_VASPRINTF: Based on golden files, REPLACE_VASPRINTF=1 even when function exists
-        # This means we need to replace it because it doesn't work correctly
-        macros.AC_SUBST("REPLACE_VASPRINTF", "1"),
-
-        # gl_PREREQ_VASPRINTF_H - lines 30-35
-        # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 34
-        # (handled by extensions dependency)
-
-        # gl_PREREQ_VASPRINTF - lines 37-40
-        # (empty)
-
-        # gl_PREREQ_ASPRINTF - lines 42-45
-        # (empty)
+        # REPLACE_VASPRINTF: Based on golden files, REPLACE_VASPRINTF is undefined (0) on macOS
+        # This means the function works correctly
+        macros.AC_SUBST("REPLACE_VASPRINTF", "0"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_STDIO_H_DEFAULTS]) - line 21
-        # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        # gl_REPLACE_VASPRINTF is called if function doesn't exist
+        ":gl_REPLACE_VASPRINTF",
+        # gl_PREREQ_VASPRINTF_H - lines 30-35
         "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],

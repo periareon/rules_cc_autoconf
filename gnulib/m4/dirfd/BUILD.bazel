@@ -6,13 +6,22 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "dirfd",
     checks = [
+        # AC_CHECK_FUNCS([dirfd]) - line 20
+        macros.AC_CHECK_FUNC(
+            "dirfd",
+            define = "HAVE_DIRFD",
+        ),
+        # AC_CHECK_DECLS([dirfd], ...) - lines 21-24
         macros.AC_CHECK_DECL(
             "dirfd",
+            define = "HAVE_DECL_DIRFD",
             headers = ["dirent.h"],
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/dirent_h",  # AC_REQUIRE([gl_DIRENT_H_DEFAULTS])
+        "//gnulib/m4/extensions",  # Provides extension defines (_ALL_SOURCE, _DARWIN_C_SOURCE, etc.)
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

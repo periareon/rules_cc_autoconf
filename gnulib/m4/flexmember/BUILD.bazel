@@ -27,8 +27,20 @@ int main(void) {
     p->d[0] = 0.0;
     return p->d != (double *) NULL;
 }""",
-            define = "FLEXIBLE_ARRAY_MEMBER",
+            define = "ac_cv_c_flexmember",
             language = "c",
+        ),
+        # If flexible array members are supported (ac_cv_c_flexmember=yes):
+        #   FLEXIBLE_ARRAY_MEMBER = [] (empty, shown as /**/ in config.h)
+        # If not supported (ac_cv_c_flexmember=no):
+        #   FLEXIBLE_ARRAY_MEMBER = 1
+        # On macOS, flexible array members are supported, so it should be empty
+        # The golden file shows /**/ which is an empty comment
+        macros.AC_DEFINE_UNQUOTED(
+            "FLEXIBLE_ARRAY_MEMBER",
+            condition = "ac_cv_c_flexmember",
+            if_true = "/**/",  # Supported = empty comment
+            if_false = "1",  # Not supported = 1
         ),
     ],
     visibility = ["//visibility:public"],

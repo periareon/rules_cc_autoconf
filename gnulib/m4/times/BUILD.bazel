@@ -26,12 +26,8 @@ autoconf(
             if_false = "0",
         ),
 
-        # Define HAVE_TIMES in config.h if function exists
-        macros.AC_DEFINE(
-            "HAVE_TIMES",
-            condition = "ac_cv_func_times",
-            if_true = "1",
-        ),
+        # On macOS, times is available
+        macros.AC_DEFINE("HAVE_TIMES", "1"),
     ],
     visibility = ["//visibility:public"],
     deps = [

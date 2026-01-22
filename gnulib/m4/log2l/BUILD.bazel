@@ -1,11 +1,26 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/log2l.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "log2l",
     checks = [
-        # Note: log2l.m4 may not exist in gnulib, or this module may not have checks
+        # gl_FUNC_LOG2L checks for log2l function
+        # On macOS, log2l may not be available (long double == double)
+        # The golden file shows HAVE_LOG2L should be undefined in config.h
+        # Check for the function, but don't define it in config.h if not found
+        macros.AC_CHECK_FUNC(
+            "log2l",
+            define = "_gl_cv_func_log2l",
+        ),
+        # Only define HAVE_LOG2L in config.h if function exists
+        # If it doesn't exist, it should be undefined (not 0)
+        macros.AC_DEFINE(
+            "HAVE_LOG2L",
+            condition = "_gl_cv_func_log2l",
+            if_true = "1",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [

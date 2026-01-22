@@ -12,5 +12,7 @@ autoconf(
         # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
         "//gnulib/m4/extensions",
         "//gnulib/m4/rint",
+        "//gnulib/m4/math_h:long-double-vs-double",  # Provides HAVE_SAME_LONG_DOUBLE_AS_DOUBLE
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

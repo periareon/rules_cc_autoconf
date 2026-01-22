@@ -18,5 +18,7 @@ autoconf(
     deps = [
         "//gnulib/m4/msvc-inval",  # m4_ifdef([gl_MSVC_INVAL], [AC_REQUIRE([gl_MSVC_INVAL])])
         "//gnulib/m4/signal_h",  # AC_REQUIRE([gl_SIGNAL_H_DEFAULTS])
+        "//gnulib/m4/signal_h:signal_h_sigset_t",  # Provides HAVE_SIGSET_T check (from gl_SIGNAL_H which calls gl_CHECK_TYPE_SIGSET_T)
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

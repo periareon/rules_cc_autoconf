@@ -18,6 +18,12 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
+        # gl_LONG_DOUBLE_EXPONENT_LOCATION requires gl_DOUBLE_EXPONENT_LOCATION
+        # which provides DBL_EXPBIT0_BIT and DBL_EXPBIT0_WORD
+        "//gnulib/m4/exponentd",  # Provides DBL_EXPBIT0_BIT and DBL_EXPBIT0_WORD
+        # gl_LONG_DOUBLE_EXPONENT_LOCATION also requires gl_LONG_DOUBLE_VS_DOUBLE
+        # which provides HAVE_SAME_LONG_DOUBLE_AS_DOUBLE
+        "//gnulib/m4/math_h:long-double-vs-double",  # Provides HAVE_SAME_LONG_DOUBLE_AS_DOUBLE
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],

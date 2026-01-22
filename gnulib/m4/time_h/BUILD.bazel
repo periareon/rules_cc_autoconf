@@ -7,7 +7,10 @@ autoconf(
     name = "time_h",
     checks = [
         # gl_TIME_H checks for time.h header
-        macros.AC_CHECK_HEADER("time.h"),
+        macros.AC_CHECK_HEADER(
+            "time.h",
+            define = "HAVE_TIME_H",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [

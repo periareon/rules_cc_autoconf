@@ -1,11 +1,17 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/log2f.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "log2f",
     checks = [
-        # Note: log2f.m4 may not exist in gnulib, or this module may not have checks
+        # gl_FUNC_LOG2F checks for log2f function
+        # On macOS, log2f is available
+        macros.AC_CHECK_FUNC(
+            "log2f",
+            define = "HAVE_LOG2F",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [

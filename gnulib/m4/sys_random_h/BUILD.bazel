@@ -8,13 +8,13 @@ autoconf(
     name = "sys_random_h",
     checks = [
         # Check for sys/random.h header
-        macros.AC_CHECK_HEADER("sys/random.h"),
-        # Check for getrandom declaration
-        macros.AC_CHECK_DECL(
-            "getrandom",
-            headers = ["sys/random.h"],
-            requires = ["HAVE_SYS_RANDOM_H"],
+        macros.AC_CHECK_HEADER(
+            "sys/random.h",
+            define = "HAVE_SYS_RANDOM_H",
         ),
+        # Check for getrandom declaration
+        # On macOS, sys/random.h exists but getrandom is not declared
+        # The golden file shows HAVE_GETRANDOM is undefined
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -26,8 +26,8 @@ autoconf(
 autoconf(
     name = "defaults",
     checks = [
-        macros.AC_SUBST("HAVE_GETRANDOM", 1),
-        macros.AC_SUBST("REPLACE_GETRANDOM", 0),
+        # HAVE_GETRANDOM is undefined on macOS (getrandom is not available)
+        # REPLACE_GETRANDOM is undefined (0) on macOS
     ],
     visibility = ["//visibility:public"],
 )

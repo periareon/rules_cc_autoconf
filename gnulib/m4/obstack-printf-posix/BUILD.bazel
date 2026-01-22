@@ -1,11 +1,42 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/obstack-printf-posix.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "obstack-printf-posix",
     checks = [
-        # Note: obstack-printf-posix.m4 may not exist in gnulib, or this module may not have checks
+        # gl_FUNC_OBSTACK_PRINTF_POSIX checks if obstack_printf is POSIX compliant
+        # If not, it calls gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS, gl_REPLACE_VASNPRINTF, gl_REPLACE_OBSTACK_PRINTF
+        # gl_DECL_OBSTACK_PRINTF checks for obstack_printf declaration
+        macros.AC_CHECK_DECL(
+            "obstack_printf",
+            define = "_gl_cv_have_decl_obstack_printf",
+            headers = ["stdio.h"],
+        ),
+        # Define HAVE_DECL_OBSTACK_PRINTF in config.h (as 0 if not found)
+        macros.AC_DEFINE(
+            "HAVE_DECL_OBSTACK_PRINTF",
+            condition = "_gl_cv_have_decl_obstack_printf",
+            if_false = "0",
+            if_true = "1",
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS])
+        "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
+        "//gnulib/m4/vasnprintf",  # gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS, gl_REPLACE_VASNPRINTF
+        # Additional dependencies for golden file:
+        "//gnulib/m4/exponentd",  # Provides DBL_EXPBIT0_BIT and DBL_EXPBIT0_WORD
+        "//gnulib/m4/alloca",  # Provides HAVE_ALLOCA and HAVE_ALLOCA_H
+        "//gnulib/m4/intmax_t",  # Provides HAVE_INTMAX_T
+        "//gnulib/m4/inttypes_h",  # Provides HAVE_INTTYPES_H_WITH_UINTMAX
+        "//gnulib/m4/nl_langinfo",  # Provides HAVE_NL_LANGINFO
+        "//gnulib/m4/math_h:long-double-vs-double",  # Provides HAVE_SAME_LONG_DOUBLE_AS_DOUBLE
+        "//gnulib/m4/printf:gl_SNPRINTF_PRESENCE",  # Provides HAVE_SNPRINTF
+        "//gnulib/m4/printf:gl_SNPRINTF_RETVAL_C99",  # Provides HAVE_SNPRINTF_RETVAL_C99
+        "//gnulib/m4/printf:gl_SNPRINTF_TRUNCATION_C99",  # Provides HAVE_SNPRINTF_TRUNCATION_C99
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

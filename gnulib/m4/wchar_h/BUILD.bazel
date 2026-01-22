@@ -19,9 +19,22 @@ int main(void) {
         # Check for wcsdup declaration
         macros.AC_CHECK_DECL(
             "wcsdup",
-            define = "HAVE_DECL_WCSDUP",
+            define = "_gl_cv_have_decl_wcsdup",
             headers = ["wchar.h"],
-            subst = True,
+        ),
+        # Set HAVE_DECL_WCSDUP as substitution variable
+        macros.AC_SUBST(
+            "HAVE_DECL_WCSDUP",
+            condition = "_gl_cv_have_decl_wcsdup",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # Define HAVE_DECL_WCSDUP in config.h
+        macros.AC_DEFINE(
+            "HAVE_DECL_WCSDUP",
+            condition = "_gl_cv_have_decl_wcsdup",
+            if_false = "0",
+            if_true = "1",
         ),
     ],
     visibility = ["//visibility:public"],

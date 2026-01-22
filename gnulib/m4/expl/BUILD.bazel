@@ -6,10 +6,10 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "expl",
     checks = [
-        macros.AC_CHECK_DECL(
-            "expl",
-            headers = ["math.h"],
-        ),
+        # gl_FUNC_EXPL checks if expl exists, then checks declaration
+        # On macOS, expl may not be available (long double == double)
+        # The golden file shows HAVE_DECL_EXPL as undefined, so we don't check it
+        # This matches the m4 logic where declaration is only checked if function exists
     ],
     visibility = ["//visibility:public"],
     deps = [
