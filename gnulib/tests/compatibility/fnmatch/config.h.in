@@ -59,5 +59,3 @@
 #undef __STDC_WANT_IEC_60559_TYPES_EXT__
 #undef __STDC_WANT_LIB_EXT2__
 #undef __STDC_WANT_MATH_SPEC_FUNCS__
-#undef am__fastdepCXX_FALSE
-#undef am__fastdepCXX_TRUE

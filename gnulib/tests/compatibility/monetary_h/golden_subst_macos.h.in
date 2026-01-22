@@ -23,5 +23,3 @@
 #define SUBST_NEXT_MONETARY_H "<monetary.h>"
 #define SUBST_REPLACE_STRFMON_L "0"
 #define SUBST_STDC_HEADERS "@STDC_HEADERS@"
-#define SUBST_am__fastdepCXX_FALSE ""
-#define SUBST_am__fastdepCXX_TRUE "#"

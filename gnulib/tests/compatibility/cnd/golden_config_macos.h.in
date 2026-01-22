@@ -13,11 +13,6 @@
 /* #undef HAVE_THREADS_H */
 /* #undef HAVE_THREAD_LOCAL */
 #define HAVE_UNISTD_H 1
-/* #undef LIBPMULTITHREAD */
-/* #undef LIBPTHREAD */
-/* #undef LIBSTDTHREAD */
-/* #undef LIBTHREADLOCAL */
-/* #undef LIB_SCHED_YIELD */
 /* #undef NEXT_AS_FIRST_DIRECTIVE_THREADS_H */
 /* #undef NEXT_THREADS_H */
 /* #undef REPLACE_CALL_ONCE */

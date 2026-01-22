@@ -1,57 +1,144 @@
 #!/usr/bin/env bash
 
-set -x
+git checkout gnulib/tests/compatibility/acos/golden_config.h.in \
+gnulib/tests/compatibility/acosf/golden_config.h.in \
+gnulib/tests/compatibility/aligned_alloc/golden_config.h.in \
+gnulib/tests/compatibility/argp/golden_subst.h.in \
+gnulib/tests/compatibility/asin/golden_config.h.in \
+gnulib/tests/compatibility/asinf/golden_config.h.in \
+gnulib/tests/compatibility/assert_h/golden_config.h.in \
+gnulib/tests/compatibility/atan/golden_config.h.in \
+gnulib/tests/compatibility/atan2/golden_config.h.in \
+gnulib/tests/compatibility/atan2f/golden_config.h.in \
+gnulib/tests/compatibility/atanf/golden_config.h.in \
+gnulib/tests/compatibility/btowc/golden_config.h.in \
+gnulib/tests/compatibility/cbrt/golden_config.h.in \
+gnulib/tests/compatibility/cbrtf/golden_config.h.in \
+gnulib/tests/compatibility/ceil/golden_config.h.in \
+gnulib/tests/compatibility/ceilf/golden_config.h.in \
+gnulib/tests/compatibility/cos/golden_config.h.in \
+gnulib/tests/compatibility/cosf/golden_config.h.in \
+gnulib/tests/compatibility/coshf/golden_config.h.in \
+gnulib/tests/compatibility/exp2f/golden_config.h.in \
+gnulib/tests/compatibility/expf/golden_config.h.in \
+gnulib/tests/compatibility/expm1f/golden_config.h.in \
+gnulib/tests/compatibility/fabs/golden_config.h.in \
+gnulib/tests/compatibility/fabsf/golden_config.h.in \
+gnulib/tests/compatibility/faccessat/golden_config.h.in \
+gnulib/tests/compatibility/filemode/golden_subst.h.in \
+gnulib/tests/compatibility/floorf/golden_config.h.in \
+gnulib/tests/compatibility/fmodf/golden_config.h.in \
+gnulib/tests/compatibility/free/golden_config.h.in \
+gnulib/tests/compatibility/fseeko/golden_config.h.in \
+gnulib/tests/compatibility/ftello/golden_config.h.in \
+gnulib/tests/compatibility/futimens/golden_config.h.in \
+gnulib/tests/compatibility/getline/golden_config.h.in \
+gnulib/tests/compatibility/group-member/golden_config.h.in \
+gnulib/tests/compatibility/hypotf/golden_config.h.in \
+gnulib/tests/compatibility/langinfo_h/golden_config.h.in \
+gnulib/tests/compatibility/log/golden_config.h.in \
+gnulib/tests/compatibility/log10f/golden_config.h.in \
+gnulib/tests/compatibility/log1p/golden_config.h.in \
+gnulib/tests/compatibility/log1pf/golden_config.h.in \
+gnulib/tests/compatibility/logb/golden_config.h.in \
+gnulib/tests/compatibility/logbf/golden_config.h.in \
+gnulib/tests/compatibility/logf/golden_config.h.in \
+gnulib/tests/compatibility/logl/golden_config.h.in \
+gnulib/tests/compatibility/logp1/golden_config.h.in \
+gnulib/tests/compatibility/logp1f/golden_config.h.in \
+gnulib/tests/compatibility/lstat/golden_config.h.in \
+gnulib/tests/compatibility/mbrlen/golden_config.h.in \
+gnulib/tests/compatibility/mbrtowc/golden_config.h.in \
+gnulib/tests/compatibility/mbsinit/golden_config.h.in \
+gnulib/tests/compatibility/mbsrtowcs/golden_config.h.in \
+gnulib/tests/compatibility/memmem/golden_config.h.in \
+gnulib/tests/compatibility/mntent_h/golden_config.h.in \
+gnulib/tests/compatibility/multiarch/golden_config.h.in \
+gnulib/tests/compatibility/nproc/golden_subst.h.in \
+gnulib/tests/compatibility/obstack/golden_config.h.in \
+gnulib/tests/compatibility/off64_t/golden_config.h.in \
+gnulib/tests/compatibility/open/golden_subst.h.in \
+gnulib/tests/compatibility/physmem/golden_subst.h.in \
+gnulib/tests/compatibility/powf/golden_config.h.in \
+gnulib/tests/compatibility/pthread_mutex_timedlock/golden_config.h.in \
+gnulib/tests/compatibility/readutmp/golden_subst.h.in \
+gnulib/tests/compatibility/rintf/golden_config.h.in \
+gnulib/tests/compatibility/sched_yield/golden_config.h.in \
+gnulib/tests/compatibility/semaphore/golden_config.h.in \
+gnulib/tests/compatibility/setenv/golden_config.h.in \
+gnulib/tests/compatibility/sethostname/golden_subst.h.in \
+gnulib/tests/compatibility/sigaction/golden_subst.h.in \
+gnulib/tests/compatibility/signal_h/golden_config.h.in \
+gnulib/tests/compatibility/sinf/golden_config.h.in \
+gnulib/tests/compatibility/sinhf/golden_config.h.in \
+gnulib/tests/compatibility/sqrt/golden_config.h.in \
+gnulib/tests/compatibility/sqrtf/golden_config.h.in \
+gnulib/tests/compatibility/stdlib_h/golden_config.h.in \
+gnulib/tests/compatibility/strcasestr/golden_config.h.in \
+gnulib/tests/compatibility/strerror_r/golden_subst.h.in \
+gnulib/tests/compatibility/strsignal/golden_subst.h.in \
+gnulib/tests/compatibility/symlink/golden_config.h.in \
+gnulib/tests/compatibility/symlinkat/golden_config.h.in \
+gnulib/tests/compatibility/sys_cdefs_h/golden_config.h.in \
+gnulib/tests/compatibility/sys_types_h/golden_config.h.in \
+gnulib/tests/compatibility/tanf/golden_config.h.in \
+gnulib/tests/compatibility/tanhf/golden_config.h.in \
+gnulib/tests/compatibility/thread/golden_config.h.in \
+gnulib/tests/compatibility/threadlib/golden_config.h.in \
+gnulib/tests/compatibility/wcrtomb/golden_config.h.in
 
-grep "_DEFAULTS" ~/Code/gnulib/m4/arpa_inet_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/assert_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/c32rtomb.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/call_once.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/cbrt.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/ceil.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/ceilf.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/chown.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/clock_time.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/cnd.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/copy.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/copysign.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/copysignf.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/copysignl.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/ctype_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/dirent_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/fcntl_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/fnmatch_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/glob_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/iconv_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/langinfo_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/locale_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/malloc_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/math_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/netdb_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/poll_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/pthread_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/raise.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/sched_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/signal_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/spawn_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/stdint.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/stdio_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/stdlib_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/string_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/strings_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/sys_ioctl_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/sys_resource_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/sys_select_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/sys_socket_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/sys_stat_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/sys_time_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/sys_times_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/sys_utsname_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/termios_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/time_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/uchar_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/unistd_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/wchar_h.m4
-grep "_DEFAULTS" ~/Code/gnulib/m4/wctype_h.m4
+# set -x
+
+# grep "_DEFAULTS" ~/Code/gnulib/m4/arpa_inet_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/assert_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/c32rtomb.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/call_once.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/cbrt.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/ceil.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/ceilf.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/chown.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/clock_time.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/cnd.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/copy.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/copysign.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/copysignf.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/copysignl.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/ctype_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/dirent_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/fcntl_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/fnmatch_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/glob_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/iconv_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/langinfo_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/locale_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/malloc_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/math_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/netdb_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/poll_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/pthread_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/raise.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/sched_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/signal_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/spawn_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/stdint.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/stdio_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/stdlib_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/string_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/strings_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/sys_ioctl_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/sys_resource_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/sys_select_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/sys_socket_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/sys_stat_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/sys_time_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/sys_times_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/sys_utsname_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/termios_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/time_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/uchar_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/unistd_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/wchar_h.m4
+# grep "_DEFAULTS" ~/Code/gnulib/m4/wctype_h.m4
 
 # bazel test -- //gnulib/tests/compatibility/exponentd/... \
 # //gnulib/tests/compatibility/extensions/... \

@@ -27,5 +27,3 @@
 #undef REPLACE_GLOB
 #undef REPLACE_GLOB_PATTERN_P
 #undef STDC_HEADERS
-#undef am__fastdepCXX_FALSE
-#undef am__fastdepCXX_TRUE

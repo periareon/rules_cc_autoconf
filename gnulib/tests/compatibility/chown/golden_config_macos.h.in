@@ -1,7 +1,4 @@
 /* config.h.in */
-/* #undef CHOWN_CHANGE_TIME_BUG */
-/* #undef CHOWN_FAILS_TO_HONOR_ID_OF_NEGATIVE_ONE */
-/* #undef CHOWN_MODIFIES_SYMLINK */
 #define CHOWN_TRAILING_SLASH_BUG 1
 #define HAVE_CHOWN 1
 /* #undef HAVE_COPY_FILE_RANGE */
@@ -51,8 +48,8 @@
 #define HAVE_STDINT_H 1
 #define HAVE_STDIO_H 1
 #define HAVE_STDLIB_H 1
-#define HAVE_STRING_H 1
 #define HAVE_STRINGS_H 1
+#define HAVE_STRING_H 1
 /* #undef HAVE_SYMLINK */
 /* #undef HAVE_SYMLINKAT */
 /* #undef HAVE_SYS_PARAM_H */

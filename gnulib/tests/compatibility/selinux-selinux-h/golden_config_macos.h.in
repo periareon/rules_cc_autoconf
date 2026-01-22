@@ -8,7 +8,6 @@
 #define HAVE_SYS_STAT_H 1
 #define HAVE_SYS_TYPES_H 1
 #define HAVE_UNISTD_H 1
-/* #undef LIB_SELINUX */
 /* #undef NEXT_AS_FIRST_DIRECTIVE_SELINUX_SELINUX_H */
 /* #undef NEXT_SELINUX_SELINUX_H */
 #define STDC_HEADERS 1

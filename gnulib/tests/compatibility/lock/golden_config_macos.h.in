@@ -13,12 +13,6 @@
 #define HAVE_SYS_TYPES_H 1
 #define HAVE_UNISTD_H 1
 #define HAVE_WCHAR_H 1
-/* #undef LIBMULTITHREAD */
-/* #undef LIBPMULTITHREAD */
-/* #undef LIBPTHREAD */
-/* #undef LIBSTDTHREAD */
-/* #undef LIBTHREAD */
-/* #undef LIB_SCHED_YIELD */
 /* #undef LTLIBMULTITHREAD */
 /* #undef LTLIBTHREAD */
 /* #undef SCHED_YIELD_LIB */

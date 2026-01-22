@@ -18,11 +18,6 @@
 #define HAVE_UNISTD_H 1
 #define HAVE_VISIBILITY 1
 #define HAVE_WCHAR_H 1
-/* #undef LIBPMULTITHREAD */
-/* #undef LIBPTHREAD */
-/* #undef LIB_NL_LANGINFO */
-/* #undef LIB_SCHED_YIELD */
-/* #undef LIB_SETLOCALE_NULL */
 /* #undef NEXT_AS_FIRST_DIRECTIVE_LANGINFO_H */
 /* #undef NEXT_LANGINFO_H */
 #define NL_LANGINFO_MTSAFE 0

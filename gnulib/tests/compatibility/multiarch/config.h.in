@@ -1,2 +1,2 @@
 /* config.h.in */
-/* #undef APPLE_UNIVERSAL_BUILD */
+#undef APPLE_UNIVERSAL_BUILD

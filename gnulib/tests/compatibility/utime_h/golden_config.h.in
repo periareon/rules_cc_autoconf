@@ -22,5 +22,3 @@
 /* #undef NEXT_UTIME_H */
 /* #undef REPLACE_UTIME */
 #define STDC_HEADERS 1
-/* #undef am__fastdepCXX_FALSE */
-/* #undef am__fastdepCXX_TRUE */

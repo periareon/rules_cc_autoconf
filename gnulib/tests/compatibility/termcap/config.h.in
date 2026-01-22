@@ -2,5 +2,4 @@
 #undef HAVE_TERMCAP
 #undef HAVE_TERMINFO
 #undef INCTERMCAP
-#undef LIBTERMCAP
 #undef LTLIBTERMCAP

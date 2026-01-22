@@ -23,5 +23,3 @@
 #undef NEXT_MONETARY_H
 #undef REPLACE_STRFMON_L
 #undef STDC_HEADERS
-#undef am__fastdepCXX_FALSE
-#undef am__fastdepCXX_TRUE

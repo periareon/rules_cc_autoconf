@@ -1,2 +1,1 @@
 /* config.h.in */
-#undef DOUBLE_SLASH_IS_DISTINCT_ROOT

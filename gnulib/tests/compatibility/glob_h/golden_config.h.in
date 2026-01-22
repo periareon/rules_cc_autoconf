@@ -24,5 +24,3 @@
 /* #undef REPLACE_GLOB */
 /* #undef REPLACE_GLOB_PATTERN_P */
 #define STDC_HEADERS 1
-/* #undef am__fastdepCXX_FALSE */
-/* #undef am__fastdepCXX_TRUE */

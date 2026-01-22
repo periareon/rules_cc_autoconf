@@ -1,5 +1,4 @@
 /* subst.h.in */
-#define SUBST_AWK "awk"
 #define SUBST_HAVE_CHOWN "1"
 #define SUBST_HAVE_COPY_FILE_RANGE "1"
 #define SUBST_HAVE_DECL_ENVIRON "1"

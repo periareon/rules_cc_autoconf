@@ -24,5 +24,3 @@
 #define SUBST_REPLACE_GLOB "0"
 #define SUBST_REPLACE_GLOB_PATTERN_P "0"
 #define SUBST_STDC_HEADERS "@STDC_HEADERS@"
-#define SUBST_am__fastdepCXX_FALSE ""
-#define SUBST_am__fastdepCXX_TRUE "#"

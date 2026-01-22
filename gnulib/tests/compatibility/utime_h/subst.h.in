@@ -22,5 +22,3 @@
 #define SUBST_NEXT_UTIME_H "@NEXT_UTIME_H@"
 #define SUBST_REPLACE_UTIME "@REPLACE_UTIME@"
 #define SUBST_STDC_HEADERS "@STDC_HEADERS@"
-#define SUBST_am__fastdepCXX_FALSE "@am__fastdepCXX_FALSE@"
-#define SUBST_am__fastdepCXX_TRUE "@am__fastdepCXX_TRUE@"

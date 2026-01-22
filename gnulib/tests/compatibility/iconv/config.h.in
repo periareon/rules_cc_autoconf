@@ -8,7 +8,6 @@
 #undef CXX_CHOICE
 #undef DEPDIR
 #undef ICONV_CONST
-#undef LIBICONV
 #undef LTLIBICONV
 #undef REPLACE_ICONV
 #undef REPLACE_ICONV_OPEN
