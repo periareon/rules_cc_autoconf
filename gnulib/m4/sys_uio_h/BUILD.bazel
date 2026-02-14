@@ -1,14 +1,51 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sys_uio_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
-# gl_SYS_UIO_H from sys_uio_h.m4
 autoconf(
     name = "sys_uio_h",
     checks = [
-        # Check for sys/uio.h header
-        macros.AC_CHECK_HEADER("sys/uio.h"),
+        checks.AC_CHECK_HEADER(
+            "sys/uio.h",
+            define = "HAVE_SYS_UIO_H",
+            subst = "HAVE_SYS_UIO_H",
+        ),
+        checks.AC_SUBST("NEXT_SYS_UIO_H", "<sys/uio.h>"),
+        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_SYS_UIO_H", "<sys/uio.h>"),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",
+
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Note: sys_uio_h has _DEFAULTS but no variables in it
+autoconf(
+    name = "gl_SYS_UIO_H_DEFAULTS",
+    checks = [
+    ],
+    visibility = ["//visibility:private"],
+)
+
+# Note: sys_uio_h has _REQUIRE_DEFAULTS but no GNULIB_* variables
+autoconf(
+    name = "gl_SYS_UIO_H_REQUIRE_DEFAULTS",
+    checks = [
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gl_SYS_UIO_H_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_SYS_UIO_H_REQUIRE_DEFAULTS",
+    ],
 )

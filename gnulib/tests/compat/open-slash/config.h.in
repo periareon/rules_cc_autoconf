@@ -1,0 +1,3 @@
+/* config.h.in */
+#undef HAVE_LSTAT
+#undef OPEN_TRAILING_SLASH_BUG

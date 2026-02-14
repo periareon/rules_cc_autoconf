@@ -1,0 +1,3 @@
+/* subst.h.in */
+#define SUBST_HAVE_MEMALIGN "0"
+#define SUBST_REPLACE_MEMALIGN "0"

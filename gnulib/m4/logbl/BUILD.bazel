@@ -1,14 +1,16 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/logbl.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "logbl",
     checks = [
-        # Note: logbl.m4 may not exist in gnulib, or this module may not have checks
+        checks.AC_SUBST("LOGBL_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//gnulib/m4/extensions",
         "//gnulib/m4/frexpl",
         "//gnulib/m4/isnanl",
         "//gnulib/m4/logb",

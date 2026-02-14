@@ -1,0 +1,20 @@
+"""AC_TYPE_UID_T - Autoconf builtin macro
+
+Checks if uid_t and gid_t types are defined.
+
+Defines:
+  - uid_t (if not defined, defined to int)
+  - gid_t (if not defined, defined to int)
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "AC_TYPE_UID_T",
+    checks = [
+        checks.AC_CHECK_TYPE("uid_t"),
+        checks.AC_CHECK_TYPE("gid_t"),
+    ],
+    visibility = ["//visibility:public"],
+)

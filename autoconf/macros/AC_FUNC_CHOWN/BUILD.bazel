@@ -1,0 +1,21 @@
+"""AC_FUNC_CHOWN - Autoconf builtin macro
+
+Checks if chown() follows POSIX semantics.
+
+Defines:
+  - HAVE_CHOWN (if chown works correctly)
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "AC_FUNC_CHOWN",
+    checks = [
+        checks.AC_CHECK_FUNC("chown"),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)

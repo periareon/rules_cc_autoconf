@@ -1,43 +1,52 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/htonl.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "htonl",
     checks = [
-        macros.AC_CHECK_DECL(
+
+        # This checks for HAVE_WINSOCK2_H (Windows-specific, not applicable on macOS)
+        # if test $HAVE_WINSOCK2_H = 1; then
+        # elif test $ac_cv_header_arpa_inet_h = yes; then
+        # fi
+        # Based on golden files, HTONL_LIB="" on macOS (not Windows)
+        checks.AC_SUBST("HTONL_LIB", ""),
+
+        # Only check if arpa/inet.h exists (which it does on macOS)
+        # But the declarations might not be found, leaving them undefined
+        # Use internal defines to avoid creating public defines if not found
+        checks.AC_CHECK_DECL(
             "htons",
-            define = "HAVE_DECL_HTONS",
-            headers = [
-                "arpa/inet.h",
-                "netinet/in.h",
-            ],
+            name = "ac_cv_have_decl_htons",
+            includes = ["#include <arpa/inet.h>"],
         ),
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "htonl",
-            define = "HAVE_DECL_HTONL",
-            headers = [
-                "arpa/inet.h",
-                "netinet/in.h",
-            ],
+            name = "ac_cv_have_decl_htonl",
+            includes = ["#include <arpa/inet.h>"],
         ),
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "ntohs",
-            define = "HAVE_DECL_NTOHS",
-            headers = [
-                "arpa/inet.h",
-                "netinet/in.h",
-            ],
+            name = "ac_cv_have_decl_ntohs",
+            includes = ["#include <arpa/inet.h>"],
         ),
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "ntohl",
-            define = "HAVE_DECL_NTOHL",
-            headers = [
-                "arpa/inet.h",
-                "netinet/in.h",
-            ],
+            name = "ac_cv_have_decl_ntohl",
+            includes = ["#include <arpa/inet.h>"],
         ),
+        # Note: The m4 file doesn't define these in config.h if not found
+        # They remain undefined (/* #undef */)
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # Use defaults to get substitution variable defaults, but don't create defines in config.h
+        "//gnulib/m4/arpa_inet_h",
+        # We need to pull it in to match golden file expectations
+        "//gnulib/m4/sys_socket_h:gl_SYS_SOCKET_H",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

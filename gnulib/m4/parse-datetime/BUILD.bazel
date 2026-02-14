@@ -1,15 +1,34 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/parse-datetime.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "parse-datetime",
     checks = [
-        # Note: parse-datetime.m4 may not exist in gnulib, or this module may not have checks
+        # gl_C_COMPOUND_LITERALS checks for compound literals support
+        # On macOS with modern compilers, compound literals are supported
+        checks.AC_TRY_COMPILE(
+            code = """\
+struct s { int i, j; };
+int main(void) {
+    struct s t = (struct s) { 3, 4 };
+    if (t.i != 0) return 0;
+    return 0;
+}
+""",
+            define = "HAVE_COMPOUND_LITERALS",
+            language = "c",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/bison",
         "//gnulib/m4/timespec",
+        "//gnulib/m4/clock_time",
+        "//gnulib/m4/tm_gmtoff",
+        "//gnulib/m4/extensions",  # Need extension defines
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

@@ -2,13 +2,15 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 
-# gl_WARN_ON_USE_PREPARE from warn-on-use.m4
-# This is a utility macro for preparing warning macros
-# No actual configure checks
 autoconf(
     name = "warn-on-use",
     checks = [
-        # No actual checks - utility macro for gnulib modules
+        # gl_WARN_ON_USE_PREPARE is empty - no checks needed
+        # The golden file is empty
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

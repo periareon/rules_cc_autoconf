@@ -1,0 +1,2 @@
+/* config.h.in */
+#undef _LINUX_SOURCE_COMPAT

@@ -1,11 +1,25 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/strtold.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "strtold",
     checks = [
-        # TODO: Add checks based on .m4 file
+        # gl_FUNC_STRTOLD checks for strtold function
+        checks.AC_CHECK_FUNC(
+            "strtold",
+            define = "HAVE_STRTOLD",
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # Note: gl_STDLIB_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
+        "//gnulib/m4/math_h:long-double-vs-double",
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//gnulib/m4/ldexpl",
+        "//gnulib/m4/c-strtod",
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

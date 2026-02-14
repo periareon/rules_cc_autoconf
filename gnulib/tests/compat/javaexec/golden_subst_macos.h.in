@@ -1,0 +1,9 @@
+/* subst.h.in */
+#define SUBST_CLASSPATH ""
+#define SUBST_CLASSPATH_SEPARATOR ":"
+#define SUBST_CONF_JAVA ""
+#define SUBST_HAVE_JAVA ""
+#define SUBST_HAVE_JAVA_ENVVAR ""
+#define SUBST_HAVE_JAVA_IN_PATH "yes"
+#define SUBST_HAVE_JRE ""
+#define SUBST_HAVE_JRE_IN_PATH ""

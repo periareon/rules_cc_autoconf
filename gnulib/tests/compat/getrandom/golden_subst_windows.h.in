@@ -1,0 +1,5 @@
+/* subst.h.in */
+#define SUBST_GETRANDOM_LIB ""
+#define SUBST_HAVE_GETRANDOM "0"
+#define SUBST_LIB_GETRANDOM ""
+#define SUBST_REPLACE_GETRANDOM "0"

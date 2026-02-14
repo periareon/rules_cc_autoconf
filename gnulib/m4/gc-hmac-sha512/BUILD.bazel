@@ -10,5 +10,9 @@ autoconf(
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/gc",
+        "//gnulib/m4/sha512",
+        "//gnulib/m4/memxor",
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

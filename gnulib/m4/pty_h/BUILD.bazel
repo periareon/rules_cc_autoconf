@@ -1,19 +1,98 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/pty_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks", "macros")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 # HAVE_TERMIOS_H comes from termios_h dependency
 
 autoconf(
-    name = "pty_h",
+    name = "gl_PTY_H",
     checks = [
-        macros.AC_CHECK_HEADER("libutil.h"),
-        macros.AC_CHECK_HEADER("util.h"),
-        macros.AC_CHECK_HEADER("pty.h"),
+        checks.AC_CHECK_HEADER(
+            "pty.h",
+        ),
+        checks.AC_DEFINE(
+            "HAVE_PTY_H",
+            requires = ["ac_cv_header_pty_h"],
+        ),
+        checks.AC_SUBST(
+            "HAVE_PTY_H",
+            condition = "ac_cv_header_pty_h",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # Custom cache var _gl_cv_header_pty_h above, so no conflict with GL_CHECK_NEXT_HEADERS
+    ] + gl_macros.GL_CHECK_NEXT_HEADERS(
+        ["pty.h"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",  # gl_CHECK_NEXT_HEADERS uses include_next
+        "//gnulib/m4/termios_h",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "gl_PTY_CHECK_UTIL_H",
+    checks = macros.AC_CHECK_HEADERS(
+        [
+            "libutil.h",
+            "util.h",
+        ],
+    ) + [
+        checks.AC_SUBST(
+            "HAVE_LIBUTIL_H",
+            condition = "ac_cv_header_libutil_h",
+        ),
+        checks.AC_SUBST(
+            "HAVE_UTIL_H",
+            condition = "ac_cv_header_util_h",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_PTY_H_REQUIRE_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("GNULIB_FORKPTY", 0),
+        checks.AC_SUBST("GNULIB_OPENPTY", 0),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/termios_h",
+        ":gl_PTY_H_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "gl_PTY_H_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("HAVE_UTIL_H", 0),
+        checks.AC_SUBST("HAVE_LIBUTIL_H", 0),
+        checks.AC_SUBST("HAVE_FORKPTY", 1),
+        checks.AC_SUBST("HAVE_OPENPTY", 1),
+        checks.AC_SUBST("REPLACE_FORKPTY", 0),
+        checks.AC_SUBST("REPLACE_OPENPTY", 0),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_PTY_H_REQUIRE_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "pty_h",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_PTY_CHECK_UTIL_H",
+        ":gl_PTY_H",
     ],
 )

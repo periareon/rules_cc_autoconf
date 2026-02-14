@@ -1,0 +1,9 @@
+/* config.h.in */
+#define HAVE_ICONV 1
+/* #undef HAVE_LIBUNISTRING */
+#define ICONV_CONST 
+/* #undef LIBUNISTRING */
+/* #undef LIBUNISTRING_PREFIX */
+/* #undef REPLACE_ICONV */
+/* #undef REPLACE_ICONV_OPEN */
+/* #undef REPLACE_ICONV_UTF */

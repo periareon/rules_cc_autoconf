@@ -1,15 +1,41 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/opendir.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "opendir",
     checks = [
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "opendir",
-            define = "HAVE_OPENDIR",
+            name = "_gl_cv_func_opendir",
+        ),
+
+        # Set HAVE_OPENDIR as define if function exists
+        checks.AC_DEFINE(
+            "HAVE_OPENDIR",
+            "1",
+            requires = ["_gl_cv_func_opendir==1"],
+        ),
+
+        # REPLACE_OPENDIR is set to 1 if:
+        # - DIR_HAS_FD_MEMBER = 0 (DIR structure doesn't have fd member, e.g., on Windows) - line 25
+        # Otherwise, REPLACE_OPENDIR=0 (default)
+        # DIR_HAS_FD_MEMBER is a substitution variable from dirent_h
+        # Based on golden file, REPLACE_OPENDIR=0 on macOS (DIR_HAS_FD_MEMBER=1 and HAVE_FCHDIR=1)
+        checks.AC_SUBST(
+            "REPLACE_OPENDIR",
+            "0",
         ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # Note: gl_DIRENT_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        # This comes from dirent_h module
+        "//gnulib/m4/dirent_h",
+        "//gnulib/m4/fchdir:gl_FUNC_FCHDIR_FOR_CLOSE",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

@@ -5,7 +5,13 @@ load("//autoconf:autoconf.bzl", "autoconf")
 autoconf(
     name = "sha256",
     checks = [
-        # TODO: Add checks based on .m4 file
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # Note: bigendian module may not exist or may be named differently
+        # "//gnulib/m4/bigendian",  # AC_REQUIRE([gl_BIGENDIAN])
+        "//gnulib/m4/gl-openssl",
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

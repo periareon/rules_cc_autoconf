@@ -1,11 +1,42 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/stdckdint_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "stdckdint_h",
     checks = [
-        # TODO: Add checks based on .m4 file
+        # gl_STDCKDINT_H checks for stdckdint.h header
+        # stdckdint.h is a C23 header, not available on Ubuntu 22.04 (glibc 2.35)
+        checks.AC_CHECK_HEADER(
+            "stdckdint.h",
+            name = "ac_cv_header_stdckdint_h",
+            define = "HAVE_STDCKDINT_H",
+            subst = "HAVE_STDCKDINT_H",
+        ),
+        # C++ version is rarely available
+        checks.AC_SUBST("HAVE_CXX_STDCKDINT_H", "0"),
+        checks.AC_SUBST("HAVE_WORKING_CXX_STDCKDINT_H", "0"),
+        # C version: depends on whether header exists
+        checks.AC_SUBST(
+            "HAVE_C_STDCKDINT_H",
+            condition = "ac_cv_header_stdckdint_h",
+            if_false = "0",
+            if_true = "1",
+        ),
+        checks.AC_SUBST(
+            "HAVE_WORKING_C_STDCKDINT_H",
+            condition = "ac_cv_header_stdckdint_h",
+            if_false = "0",
+            if_true = "1",
+        ),
+        checks.AC_SUBST("NEXT_STDCKDINT_H", "<stdckdint.h>"),
+        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_STDCKDINT_H", "<stdckdint.h>"),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",  # gl_CHECK_NEXT_HEADERS([stdckdint.h])
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

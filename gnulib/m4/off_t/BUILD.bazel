@@ -3,12 +3,21 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 
 autoconf(
-    name = "off_t",
+    name = "gl_TYPE_OFF_T",
     checks = [
-        # Note: off_t.m4 may not exist in gnulib, or this module may not have checks
+        # WINDOWS_64_BIT_OFF_T is set by the largefile dependency
+        # This target exists to provide the gl_TYPE_OFF_T entry point
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/largefile",
+        "//gnulib/m4/largefile",  # AC_REQUIRE([gl_LARGEFILE]) - sets WINDOWS_64_BIT_OFF_T
+    ],
+)
+
+autoconf(
+    name = "off_t",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_TYPE_OFF_T",
     ],
 )

@@ -1,15 +1,14 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/stdint_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 # gl_AC_HEADER_STDINT_H macro from stdint_h.m4
-# Check if <stdint.h> exists, doesn't clash with <sys/types.h>, and declares uintmax_t
 autoconf(
     name = "stdint_h",
     checks = [
         # AC_COMPILE_IFELSE with AC_LANG_PROGRAM to check stdint.h
-        macros.AC_TRY_COMPILE(
+        checks.AC_TRY_COMPILE(
             code = """\
 #include <sys/types.h>
 #include <stdint.h>

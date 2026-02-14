@@ -1,34 +1,47 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/aligned_alloc.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "aligned_alloc",
     checks = [
-        # Check for aligned_alloc function
-        # Equivalent to gl_FUNC_ALIGNED_ALLOC macro from aligned_alloc.m4
-        # Note: Full implementation includes runtime checks for small alignments
-        # and sizes that are not easily replicable in Bazel
-        macros.AC_TRY_COMPILE(
-            code = """#include <stdlib.h>
 
-#ifdef __cplusplus
-extern "C"
-#endif
-char aligned_alloc ();
-
-int main(void) {
-    return aligned_alloc();
-}""",
+        # On macOS, aligned_alloc exists but has bugs, so it needs replacement
+        checks.AC_CHECK_FUNC(
+            "aligned_alloc",
             define = "HAVE_ALIGNED_ALLOC",
-            language = "c",
+            subst = True,
         ),
-    ],
+
+        # if test $ac_cv_func_aligned_alloc = yes; then
+        #   case "$gl_cv_func_aligned_alloc_works" in
+        #     *yes) ;;
+        #     *) REPLACE_ALIGNED_ALLOC=1 ;;
+        #   esac
+        # else
+        #   case "$gl_cv_onwards_func_aligned_alloc" in
+        #     future*) REPLACE_ALIGNED_ALLOC=1 ;;
+        #   esac
+        # fi
+        # The runtime test checks if aligned_alloc works correctly for small alignments and sizes.
+        # On macOS, AIX, and Solaris, aligned_alloc has bugs, so REPLACE_ALIGNED_ALLOC=1.
+    ] + select({
+        # On Linux, aligned_alloc works correctly
+        "@platforms//os:linux": [
+            checks.AC_SUBST("REPLACE_ALIGNED_ALLOC", 0),
+        ],
+        # On macOS and other platforms, needs replacement
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_ALIGNED_ALLOC", 1),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/stdlib_h",  # AC_REQUIRE([gl_STDLIB_H_DEFAULTS])
-        # Note: AC_REQUIRE([AC_CANONICAL_HOST]) and AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
-        # are standard autoconf macros
+        # Note: gl_STDLIB_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
+        "//gnulib/m4/extensions",
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

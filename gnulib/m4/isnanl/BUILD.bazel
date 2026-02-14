@@ -1,40 +1,32 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/isnanl.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "isnanl",
     checks = [
-        # Check for isnan(long double) function
-        # Equivalent to gl_FUNC_ISNANL macro from isnanl.m4
-        # Note: Full implementation includes runtime checks for NaN handling
-        # and libm linking checks that are complex
-        macros.AC_TRY_COMPILE(
-            code = """#include <math.h>
-#if (__GNUC__ >= 4) || (__clang_major__ >= 4)
-# undef isnanl
-# define isnanl(x) __builtin_isnan ((long double)(x))
-#elif defined isnan
-# undef isnanl
-# define isnanl(x) isnan ((long double)(x))
-#endif
-
-long double x;
-
-int main(void) {
-    return isnanl(x);
-}""",
-            define = "HAVE_ISNANL",
-            language = "c",
+        # gl_FUNC_ISNANL checks for isnanl function
+        # On systems where isnanl is not available or broken, we provide a replacement
+        # Check without define - if found, it will be available for AC_SUBST, but we don't define HAVE_ISNANL
+        checks.AC_CHECK_FUNC(
+            "isnanl",
+            name = "_gl_cv_func_isnanl",
         ),
+        # HAVE_ISNANL_IN_LIBC: isnanl() is available in libc without -lm
+        # This is true on modern systems (macOS, Linux glibc) where isnanl would be in libc if available
+        # The golden file shows this is defined even when HAVE_ISNANL is undefined
+        checks.AC_DEFINE("HAVE_ISNANL_IN_LIBC", "1"),
+        # Canonical owner of ISNANL_LIBM (empty on macOS); asinl/atanl get it from here to avoid duplicate in //... build
+        checks.AC_SUBST("ISNANL_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
-        # Note: gl_LONG_DOUBLE_EXPONENT_LOCATION and gl_LONG_DOUBLE_VS_DOUBLE
-        # are used in prerequisites
-        # Note: AC_REQUIRE([AC_PROG_CC]) and AC_REQUIRE([AC_CANONICAL_HOST])
-        # are standard autoconf macros
+        "//gnulib/m4/math_h:long-double-vs-double",
+        "//gnulib/m4/exponentd",  # Provides DBL_EXPBIT0_BIT, DBL_EXPBIT0_WORD (needed for test compatibility)
+        "//gnulib/m4/exponentl",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

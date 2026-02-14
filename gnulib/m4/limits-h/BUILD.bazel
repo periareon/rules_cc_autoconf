@@ -1,14 +1,24 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/limits-h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "limits-h",
     checks = [
-        # Check for limits.h header features
-        # Equivalent to gl_LIMITS_H macro from limits-h.m4
-        macros.AC_TRY_COMPILE(
+        # This checks for limits.h header and sets NEXT_LIMITS_H and
+        # NEXT_AS_FIRST_DIRECTIVE_LIMITS_H via include_next dependency
+        checks.AC_CHECK_HEADER(
+            "limits.h",
+            define = "HAVE_LIMITS_H",
+        ),
+        # Golden expects NEXT_* "<limits.h>" (limits.h always present)
+        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_LIMITS_H", "<limits.h>"),
+        checks.AC_SUBST("NEXT_LIMITS_H", "<limits.h>"),
+
+        # AC_CACHE_CHECK([whether limits.h has WORD_BIT, BOOL_WIDTH etc.],
+        checks.AC_TRY_COMPILE(
+            name = "_gl_cv_header_limits_width",
             code = """#ifndef __STDC_WANT_IEC_60559_BFP_EXT__
 #define __STDC_WANT_IEC_60559_BFP_EXT__ 1
 #endif
@@ -19,17 +29,35 @@ int ullw = ULLONG_WIDTH;
 int bw = BOOL_WIDTH;
 int bm = BOOL_MAX;
 int mblm = MB_LEN_MAX;""",
-            define = "HAVE_LIMITS_H_WIDTH",
             language = "c",
         ),
-        macros.AC_TRY_COMPILE(
+
+        # AC_CACHE_CHECK([whether limits.h has SSIZE_MAX],
+        # Only checked if gl_cv_header_limits_width is yes
+        checks.AC_TRY_COMPILE(
+            name = "_gl_cv_header_limits_ssize_max",
             code = """#include <limits.h>
 #ifndef SSIZE_MAX
 #error "SSIZE_MAX is not defined"
 #endif""",
-            define = "HAVE_SSIZE_MAX",
             language = "c",
+            requires = ["_gl_cv_header_limits_width=1"],
         ),
+
+        # GL_GENERATE_LIMITS_H is set based on the checks above
+        # If gl_cv_header_limits_width is yes and gl_cv_header_limits_ssize_max is yes,
+        # then GL_GENERATE_LIMITS_H=false, otherwise GL_GENERATE_LIMITS_H=true
+        # This is a substitution variable, not a define in config.h
+        # Based on golden files, on macOS/Linux, GL_GENERATE_LIMITS_H is typically true
+        # (limits.h needs to be generated/replaced)
+        checks.AC_SUBST("GL_GENERATE_LIMITS_H", "true"),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # gl_CHECK_NEXT_HEADERS([limits.h]) requires include_next
+        "//gnulib/m4/include_next",
+
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

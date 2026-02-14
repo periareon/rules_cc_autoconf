@@ -1,0 +1,4 @@
+/* config.h.in */
+/* #undef M2C */
+/* #undef M2FLAGS */
+/* #undef ac_ct_M2C */

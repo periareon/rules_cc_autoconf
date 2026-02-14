@@ -10,13 +10,15 @@ namespace rules_cc_autoconf {
  * @brief Type of configuration check to perform.
  */
 enum class CheckType {
-    kHeader,      ///< Check for header file
+    kUnknown,     ///< An unknown check.
     kFunction,    ///< Check for function
     kLib,         ///< Check for function in library
-    kSymbol,      ///< Check for preprocessor symbol
     kType,        ///< Check for type
     kCompile,     ///< Check if code compiles
+    kLink,        ///< Check if code compiles and links
     kDefine,      ///< Directly apply the define with the given value
+    kM4Variable,  ///< M4_VARIABLE - compute value for requires but don't
+                  ///< generate output (can be subst)
     kSizeof,      ///< Determine size of type
     kAlignof,     ///< Determine alignment of type
     kComputeInt,  ///< Compute integer value
@@ -24,6 +26,20 @@ enum class CheckType {
     kDecl,        ///< Check for declaration
     kMember,      ///< Check for struct/union member
 };
+
+/**
+ * @brief Convert CheckType to string representation.
+ * @param type The CheckType enum value.
+ * @return String representation of the type (e.g., "subst", "header").
+ */
+std::string check_type_to_string(CheckType type);
+
+/**
+ * @brief Determine if a CheckType is a define (not kM4Variable).
+ * @param type The CheckType enum value.
+ * @return True if this is a define, false otherwise.
+ */
+bool check_type_is_define(CheckType type);
 
 /**
  * @brief Configuration check specification.
@@ -54,9 +70,10 @@ class Check {
 
     /**
      * @brief Get the preprocessor define name for this check.
-     * @return The define name (e.g., "HAVE_STDIO_H").
+     * @return Optional define name (e.g., "HAVE_STDIO_H"), or std::nullopt if
+     * not provided.
      */
-    const std::string& define() const { return define_; }
+    const std::optional<std::string>& define() const { return define_; }
 
     /**
      * @brief Get the programming language for this check.
@@ -112,22 +129,60 @@ class Check {
         return requires_;
     }
 
+    /**
+     * @brief Get the optional condition for conditional defines/substs.
+     * @return Optional string containing the name of the define to check,
+     * or std::nullopt if not a conditional check.
+     */
+    const std::optional<std::string>& condition() const { return condition_; }
+
+    /**
+     * @brief Get the optional list of compile_defines file paths to include in
+     * compilation.
+     * @return Optional vector of result file paths from previous checks to read
+     * and extract defines from, or std::nullopt if not provided.
+     */
+    const std::optional<std::vector<std::string>>& compile_defines() const {
+        return compile_defines_;
+    }
+
+    /**
+     * @brief Get the substitution variable name for this check.
+     * @return Optional subst name (e.g., "HAVE_PRINTF"), or std::nullopt if not
+     * a subst.
+     */
+    const std::optional<std::string>& subst() const { return subst_; }
+
+    /**
+     * @brief Get whether this is an unquoted define (AC_DEFINE_UNQUOTED).
+     * @return True if this is AC_DEFINE_UNQUOTED, false otherwise.
+     */
+    bool unquote() const { return unquote_; }
+
    private:
-    std::string name_{};                 /// Name (e.g., header/function name)
-    std::string define_{};               /// Preprocessor define name
-    std::string language_{};             /// Language ("c" or "cpp")
-    std::optional<std::string> code_{};  /// Optional custom code
+    std::string name_{};                   /// Name (e.g., header/function name)
+    std::optional<std::string> define_{};  /// Optional preprocessor define name
+    std::string language_{};               /// Language ("c" or "cpp")
+    std::optional<std::string> code_{};    /// Optional custom code
     std::optional<std::string> file_path_{};     /// Optional file path
     std::optional<std::string> define_value_{};  /// Value if check succeeds
     std::optional<std::string> define_value_fail_{};  /// Value if check fails
     std::optional<std::string> library_{};  /// Library name for lib checks
     std::optional<std::vector<std::string>> requires_{};  /// Required defines
-    CheckType type_{};                                    /// Type of check
+    std::optional<std::string>
+        condition_{};  /// Condition for conditional checks
+    std::optional<std::vector<std::string>>
+        compile_defines_{};  /// Defines to include in compilation code
+    CheckType type_{};       /// Type of check
+    std::optional<std::string>
+        subst_{};          /// Optional substitution variable name
+    bool unquote_{false};  /// Whether this is AC_DEFINE_UNQUOTED (affects empty
+                           /// value rendering)
 
     /**
      * @brief Private constructor (use from_json to create).
      */
-    Check(CheckType type, std::string name, std::string define,
+    Check(CheckType type, std::string name, std::optional<std::string> define,
           std::string language)
         : name_(std::move(name)),
           define_(std::move(define)),

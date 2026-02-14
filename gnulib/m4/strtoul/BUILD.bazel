@@ -1,15 +1,18 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/strtoul.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "strtoul",
     checks = [
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "strtoul",
             define = "HAVE_STRTOUL",
+            subst = True,
         ),
+        # strtoul module provides replacement; golden expects REPLACE_STRTOUL=1
+        checks.AC_SUBST("REPLACE_STRTOUL", "1"),
     ],
     visibility = ["//visibility:public"],
 )

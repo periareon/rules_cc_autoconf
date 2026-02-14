@@ -1,0 +1,68 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:checks.bzl", "checks")
+load("//autoconf:package_info.bzl", "package_info")
+load("//autoconf/tests:diff_test.bzl", "diff_test")
+load("//autoconf/tests:gnu_autoconf_configure_test.bzl", "gnu_autoconf_configure_test")
+
+package_info(
+    name = "package",
+    package_name = "test_defines",
+    package_version = "1.0.0",
+)
+
+autoconf(
+    name = "autoconf",
+    checks = [
+        checks.AC_DEFINE("CUSTOM_VALUE", 42),
+        checks.AC_DEFINE("ENABLE_FEATURE", 1),
+        checks.AC_DEFINE("ENABLE_FEATURE_STR", "1"),
+        checks.AC_DEFINE("ENABLE_FEATURE_QUOTED", "\"1\""),
+        checks.AC_DEFINE("PROJECT_YEAR", 2025),
+        checks.AC_DEFINE("HAVE_FOO", 1),
+        checks.AC_DEFINE("HAVE_FOO_STR", "1"),
+        checks.AC_DEFINE("HAVE_FOO_QUOTED", "\"1\""),
+        checks.AC_DEFINE("HAVE_BAR", True),
+        checks.AC_DEFINE("HAVE_BAR_STR", "True"),
+        checks.AC_DEFINE("HAVE_BAZ", False),
+        checks.AC_DEFINE("INDENTED_VALUE_1"),
+        checks.AC_DEFINE("INDENTED_VALUE_2"),
+        checks.AC_DEFINE("HAVE_BAZ_STR", "False"),
+        # Test AC_DEFINE with empty value - should create "#define EMPTY_VALUE /**/" (matching GNU autoconf)
+        checks.AC_DEFINE("EMPTY_VALUE", None),
+        # Test AC_DEFINE_UNQUOTED with regular value
+        checks.AC_DEFINE_UNQUOTED("UNQUOTED_VALUE", "test"),
+        # Test AC_DEFINE_UNQUOTED with empty value - should create "#define UNQUOTED_EMPTY " (trailing space, not /**/)
+        checks.AC_DEFINE_UNQUOTED("UNQUOTED_EMPTY", ""),
+    ],
+    deps = [":package"],
+)
+
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    template = "config.h.in",
+    deps = [":autoconf"],
+)
+
+diff_test(
+    name = "diff_test",
+    file1 = "golden_config.h.in",
+    file2 = ":config.h",
+)
+
+cc_test(
+    name = "test_defines",
+    srcs = [
+        "test_defines.c",
+        ":config.h",
+    ],
+)
+
+gnu_autoconf_configure_test(
+    name = "gnu_autoconf_configure_test",
+    config_h_in = "config.h.in",
+    configure_ac = "configure.ac",
+    golden_config_h = "golden_config.h.in",
+)

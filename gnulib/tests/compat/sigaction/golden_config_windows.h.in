@@ -1,0 +1,26 @@
+/* config.h.in */
+#define HAVE_INTTYPES_H 1
+/* #undef HAVE_POSIX_SIGNALBLOCKING */
+/* #undef HAVE_PTHREAD_SIGMASK */
+/* #undef HAVE_RAISE */
+/* #undef HAVE_SIG2STR */
+/* #undef HAVE_SIGACTION */
+/* #undef HAVE_SIGALTSTACK */
+/* #undef HAVE_SIGHANDLER_T */
+#define HAVE_SIGINFO_T 1
+/* #undef HAVE_SIGINTERRUPT */
+/* #undef HAVE_SIGSET_T */
+#define HAVE_STDINT_H 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+/* #undef HAVE_STR2SIG */
+/* #undef HAVE_STRINGS_H */
+#define HAVE_STRING_H 1
+/* #undef HAVE_STRUCT_SIGACTION_SA_SIGACTION */
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+/* #undef HAVE_TYPE_VOLATILE_SIG_ATOMIC_T */
+/* #undef HAVE_UNISTD_H */
+/* #undef REPLACE_PTHREAD_SIGMASK */
+/* #undef REPLACE_RAISE */
+#define STDC_HEADERS 1

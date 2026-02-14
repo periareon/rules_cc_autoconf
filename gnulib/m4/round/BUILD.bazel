@@ -1,11 +1,20 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/round.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "round",
     checks = [
-        # Note: round.m4 may not exist in gnulib, or this module may not have checks
+        # gl_MATHFUNC sets ROUND_LIBM; golden expects ""
+        checks.AC_SUBST("ROUND_LIBM", ""),
+        # Autoconf detects REPLACE_ROUND=0 on Linux (round works correctly)
+        checks.AC_SUBST("REPLACE_ROUND", 0),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/extensions",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

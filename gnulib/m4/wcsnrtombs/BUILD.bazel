@@ -1,11 +1,27 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/wcsnrtombs.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "wcsnrtombs",
     checks = [
-        # TODO: Add checks based on .m4 file
+        # gl_FUNC_WCSNRTOMBS checks for wcsnrtombs function
+        # On macOS, wcsnrtombs is available
+        checks.AC_CHECK_FUNC(
+            "wcsnrtombs",
+            define = "HAVE_WCSNRTOMBS",
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # Note: wchar_h provides HAVE_DECL_WCSDUP, but golden file expects it undefined
+        # "//gnulib/m4/wchar_h",  # AC_REQUIRE([gl_WCHAR_H_DEFAULTS]) - but pulls in HAVE_DECL_WCSDUP
+        "//gnulib/m4/locale-fr",
+        # Use mbrtowc_base: golden expects REPLACE_MBRTOWC=0 on Linux
+        "//gnulib/m4/mbrtowc:mbrtowc_base",
+        "//gnulib/m4/codeset",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

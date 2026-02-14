@@ -1,11 +1,32 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/inline.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
+# Requires AC_C_INLINE which already checks for HAVE_INLINE.
 autoconf(
     name = "inline",
     checks = [
-        # Note: inline.m4 may not exist in gnulib, or this module may not have checks
+        # AC_C_INLINE already checks for HAVE_INLINE
+        # We check if the compiler actually respects inline (effective inline)
+        # This checks if __NO_INLINE__ is not defined (meaning inline is effective)
+        # If inline is not effective, we don't override HAVE_INLINE (let AC_C_INLINE's value stand)
+        checks.AC_TRY_COMPILE(
+            name = "_gl_cv_c_inline_effective",
+            code = """\
+/* Test if compiler respects inline (not just if keyword exists) */
+#ifdef __NO_INLINE__
+#error "inline is not effective"
+#endif
+int main(void) { return 0; }
+""",
+            language = "c",
+        ),
+        # Note: HAVE_INLINE is already provided by AC_C_INLINE
+        # The upstream m4 also sets HAVE_INLINE=1 if inline is effective,
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_C_INLINE",  # AC_REQUIRE([AC_C_INLINE])
+    ],
 )

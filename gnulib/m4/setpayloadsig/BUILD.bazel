@@ -1,9 +1,48 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/setpayloadsig.m4"""
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/setpayloadsig.m4
+
+gl_FUNC_SETPAYLOADSIG:
+- AC_REQUIRE([gl_MATH_H_DEFAULTS])
+- AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+- gl_MATHFUNC([setpayloadsig], ...)
+- Sets HAVE_SETPAYLOADSIG=0 if function not found
+
+Note: setpayloadsig does NOT call gl_FUNC_GETPAYLOAD, so HAVE_GETPAYLOAD* should stay at defaults (1)
+"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "setpayloadsig",
-    checks = [],
+    checks = select({
+        # On Linux with glibc 2.31+: setpayloadsig functions exist
+        "@platforms//os:linux": [
+            checks.AC_SUBST("HAVE_SETPAYLOADSIG", "1"),
+            checks.AC_SUBST("HAVE_SETPAYLOADSIGF", "1"),
+            checks.AC_SUBST("HAVE_SETPAYLOADSIGL", "1"),
+        ],
+        # On macOS: setpayloadsig functions don't exist
+        "//conditions:default": [
+            checks.AC_SUBST("HAVE_SETPAYLOADSIG", "0"),
+            checks.AC_SUBST("HAVE_SETPAYLOADSIGF", "0"),
+            checks.AC_SUBST("HAVE_SETPAYLOADSIGL", "0"),
+        ],
+    }) + [
+        # AC_SUBST([SETPAYLOADSIG*_LIBM]) - no extra library needed
+        checks.AC_SUBST("SETPAYLOADSIG_LIBM", ""),
+        checks.AC_SUBST("SETPAYLOADSIGF_LIBM", ""),
+        checks.AC_SUBST("SETPAYLOADSIGL_LIBM", ""),
+    ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/math_h",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+        "//gnulib/m4/math_h:long-double-vs-double",
+        # Note: We do NOT depend on getpayload module - setpayloadsig.m4 doesn't require it
+        # The exponent values come from different modules
+        "//gnulib/m4/exponentd",
+        "//gnulib/m4/exponentl",
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

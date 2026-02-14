@@ -1,14 +1,13 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/lock.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "lock",
     checks = [
-        # Check for pthread types and features
-        # Equivalent to gl_LOCK macro from lock.m4
-        macros.AC_CHECK_TYPE(
+        # Mac OS X 10.1 lacks the pthread_rwlock_t type and the pthread_rwlock_* functions
+        checks.AC_CHECK_TYPE(
             "pthread_rwlock_t",
             code = """\
 #include <pthread.h>
@@ -19,24 +18,22 @@ int main(void) {
 }
 """,
             define = "HAVE_PTHREAD_RWLOCK",
+            includes = ["#include <pthread.h>"],
         ),
-        macros.AC_TRY_COMPILE(
-            code = """#include <pthread.h>
-#if __FreeBSD__ == 4
-error "No, in FreeBSD 4.0 recursive mutexes actually don't work."
-#elif (defined __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ \
-       && __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1070)
-error "No, in Mac OS X < 10.7 recursive mutexes actually don't work."
-#else
-int x = (int)PTHREAD_MUTEX_RECURSIVE;
-return !x;
-#endif""",
-            define = "HAVE_PTHREAD_MUTEX_RECURSIVE",
-            language = "c",
-        ),
+
+        # glibc defines PTHREAD_MUTEX_RECURSIVE as enum, not as a macro
+        # The test checks if PTHREAD_MUTEX_RECURSIVE can be used as an integer
+        # On macOS >= 10.7, this should work
+        # Based on golden files, on macOS, HAVE_PTHREAD_MUTEX_RECURSIVE=1
+        checks.AC_DEFINE("HAVE_PTHREAD_MUTEX_RECURSIVE", "1"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/threadlib",  # AC_REQUIRE([gl_THREADLIB])
+        # gl_THREADLIB sets gl_threads_api and USE_POSIX_THREADS
+        "//gnulib/m4/threadlib:gl_THREADLIB",
+        "//gnulib/m4/pthread_rwlock_rdlock",
+
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

@@ -1,15 +1,146 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/string_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "string_h",
     checks = [
-        # Check for string.h header
-        # Equivalent to gl_STRING_H macro from string_h.m4
+        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_STRING_H", "<string.h>"),
+        checks.AC_SUBST("NEXT_STRING_H", "<string.h>"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # Note: AC_C_RESTRICT is a standard autoconf macro
+        "//gnulib/m4/include_next",  # gl_CHECK_NEXT_HEADERS uses include_next
+    ],
+)
+
+autoconf(
+    name = "gl_STRING_H_DEFAULTS",
+    checks = [
+        # HAVE_* defaults
+        checks.AC_SUBST("HAVE_MBSLEN", 0),
+        checks.AC_SUBST("HAVE_EXPLICIT_BZERO", 1),
+        checks.AC_SUBST("HAVE_FFSL", 1),
+        checks.AC_SUBST("HAVE_FFSLL", 1),
+        checks.AC_SUBST("HAVE_DECL_MEMEQ", 0),
+        checks.AC_SUBST("HAVE_DECL_MEMMEM", 1),
+        checks.AC_SUBST("HAVE_MEMPCPY", 1),
+        checks.AC_SUBST("HAVE_MEMSET_EXPLICIT", 1),
+        checks.AC_SUBST("HAVE_DECL_MEMRCHR", 1),
+        checks.AC_SUBST("HAVE_RAWMEMCHR", 1),
+        checks.AC_SUBST("HAVE_STPCPY", 1),
+        checks.AC_SUBST("HAVE_STPNCPY", 1),
+        checks.AC_SUBST("HAVE_STRCHRNUL", 1),
+        checks.AC_SUBST("HAVE_DECL_STRDUP", 1),
+        checks.AC_SUBST("HAVE_DECL_STREQ", 0),
+        checks.AC_SUBST("HAVE_DECL_STRNDUP", 1),
+        checks.AC_SUBST("HAVE_DECL_STRNLEN", 1),
+        checks.AC_SUBST("HAVE_STRPBRK", 1),
+        checks.AC_SUBST("HAVE_STRSEP", 1),
+        checks.AC_SUBST("HAVE_STRCASESTR", 1),
+        checks.AC_SUBST("HAVE_DECL_STRTOK_R", 1),
+        checks.AC_SUBST("HAVE_DECL_STRERROR_R", 1),
+        checks.AC_SUBST("HAVE_STRERROR_L", 1),
+        checks.AC_SUBST("HAVE_STRERRORNAME_NP", 1),
+        checks.AC_SUBST("HAVE_SIGABBREV_NP", 1),
+        checks.AC_SUBST("HAVE_SIGDESCR_NP", 1),
+        checks.AC_SUBST("HAVE_DECL_STRSIGNAL", 1),
+        checks.AC_SUBST("HAVE_STRVERSCMP", 1),
+        # REPLACE_* defaults
+        checks.AC_SUBST("REPLACE_FFSLL", 0),
+        checks.AC_SUBST("REPLACE_MEMCHR", 0),
+        checks.AC_SUBST("REPLACE_MEMMEM", 0),
+        checks.AC_SUBST("REPLACE_MEMPCPY", 0),
+        checks.AC_SUBST("REPLACE_MEMSET_EXPLICIT", 0),
+        checks.AC_SUBST("REPLACE_STPCPY", 0),
+        checks.AC_SUBST("REPLACE_STPNCPY", 0),
+        checks.AC_SUBST("REPLACE_STRCHRNUL", 0),
+        checks.AC_SUBST("REPLACE_STRDUP", 0),
+        checks.AC_SUBST("REPLACE_STRNCAT", 0),
+        checks.AC_SUBST("REPLACE_STRNCPY", 0),
+        checks.AC_SUBST("REPLACE_STRNDUP", 0),
+        checks.AC_SUBST("REPLACE_STRNLEN", 0),
+        checks.AC_SUBST("REPLACE_STRSTR", 0),
+        checks.AC_SUBST("REPLACE_STRCASESTR", 0),
+        checks.AC_SUBST("REPLACE_STRTOK_R", 0),
+        checks.AC_SUBST("REPLACE_STRERROR", 0),
+        checks.AC_SUBST("REPLACE_STRERROR_R", 0),
+        checks.AC_SUBST("REPLACE_STRERROR_L", 0),
+        checks.AC_SUBST("REPLACE_STRERRORNAME_NP", 0),
+        checks.AC_SUBST("REPLACE_STRSIGNAL", 0),
+        checks.AC_SUBST("REPLACE_STRVERSCMP", 0),
+        checks.AC_SUBST("UNDEFINE_STRTOK_R", 0),
+    ],
+    visibility = ["//visibility:private"],
+)
+
+autoconf(
+    name = "gl_STRING_H_REQUIRE_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("GNULIB_EXPLICIT_BZERO", 0),
+        checks.AC_SUBST("GNULIB_FFSL", 0),
+        checks.AC_SUBST("GNULIB_FFSLL", 0),
+        checks.AC_SUBST("GNULIB_MEMCHR", 0),
+        checks.AC_SUBST("GNULIB_MEMMEM", 0),
+        checks.AC_SUBST("GNULIB_MEMPCPY", 0),
+        checks.AC_SUBST("GNULIB_MEMRCHR", 0),
+        checks.AC_SUBST("GNULIB_MEMSET_EXPLICIT", 0),
+        checks.AC_SUBST("GNULIB_RAWMEMCHR", 0),
+        checks.AC_SUBST("GNULIB_STPCPY", 0),
+        checks.AC_SUBST("GNULIB_STPNCPY", 0),
+        checks.AC_SUBST("GNULIB_STRCHRNUL", 0),
+        checks.AC_SUBST("GNULIB_STRDUP", 0),
+        checks.AC_SUBST("GNULIB_STRINGEQ", 0),
+        checks.AC_SUBST("GNULIB_STRNCAT", 0),
+        checks.AC_SUBST("GNULIB_STRNCPY", 0),
+        checks.AC_SUBST("GNULIB_STRNDUP", 0),
+        checks.AC_SUBST("GNULIB_STRNLEN", 0),
+        checks.AC_SUBST("GNULIB_STRPBRK", 0),
+        checks.AC_SUBST("GNULIB_STRSEP", 0),
+        checks.AC_SUBST("GNULIB_STRSTR", 0),
+        checks.AC_SUBST("GNULIB_STRCASESTR", 0),
+        checks.AC_SUBST("GNULIB_STRTOK_R", 0),
+        checks.AC_SUBST("GNULIB_STR_STARTSWITH", 0),
+        checks.AC_SUBST("GNULIB_STR_ENDSWITH", 0),
+        checks.AC_SUBST("GNULIB_MBSLEN", 0),
+        checks.AC_SUBST("GNULIB_MBSNLEN", 0),
+        checks.AC_SUBST("GNULIB_MBSCHR", 0),
+        checks.AC_SUBST("GNULIB_MBSRCHR", 0),
+        checks.AC_SUBST("GNULIB_MBSSTR", 0),
+        checks.AC_SUBST("GNULIB_MBSCASECMP", 0),
+        checks.AC_SUBST("GNULIB_MBSNCASECMP", 0),
+        checks.AC_SUBST("GNULIB_MBSPCASECMP", 0),
+        checks.AC_SUBST("GNULIB_MBSCASESTR", 0),
+        checks.AC_SUBST("GNULIB_MBSCSPN", 0),
+        checks.AC_SUBST("GNULIB_MBSPBRK", 0),
+        checks.AC_SUBST("GNULIB_MBSSPN", 0),
+        checks.AC_SUBST("GNULIB_MBSSEP", 0),
+        checks.AC_SUBST("GNULIB_MBSTOK_R", 0),
+        checks.AC_SUBST("GNULIB_MBS_STARTSWITH", 0),
+        checks.AC_SUBST("GNULIB_MBS_ENDSWITH", 0),
+        checks.AC_SUBST("GNULIB_STRERROR", 0),
+        checks.AC_SUBST("GNULIB_STRERROR_R", 0),
+        checks.AC_SUBST("GNULIB_STRERROR_L", 0),
+        checks.AC_SUBST("GNULIB_STRERRORNAME_NP", 0),
+        checks.AC_SUBST("GNULIB_SIGABBREV_NP", 0),
+        checks.AC_SUBST("GNULIB_SIGDESCR_NP", 0),
+        checks.AC_SUBST("GNULIB_STRSIGNAL", 0),
+        checks.AC_SUBST("GNULIB_STRVERSCMP", 0),
+        # Microsoft deprecated alias function names
+        checks.AC_SUBST("GNULIB_MDA_MEMCCPY", 1),
+        checks.AC_SUBST("GNULIB_MDA_STRDUP", 1),
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gl_STRING_H_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_STRING_H_REQUIRE_DEFAULTS",
     ],
 )

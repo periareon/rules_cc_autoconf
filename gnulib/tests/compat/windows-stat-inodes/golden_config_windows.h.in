@@ -1,0 +1,2 @@
+/* config.h.in */
+#define WINDOWS_STAT_INODES 1

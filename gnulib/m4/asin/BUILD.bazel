@@ -1,17 +1,21 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/asin.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "asin",
     checks = [
-        # Check for asin function
         # Equivalent to gl_FUNC_ASIN macro from asin.m4
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "asin",
             define = "HAVE_ASIN",
         ),
+        # Set ASIN_LIBM to empty string (subst-only)
+        # gl_COMMON_DOUBLE_MATHFUNC sets these based on whether the function needs libm
+        # On macOS, asin is in libc, so ASIN_LIBM=""
+        # Note: POW_LIBM is already provided by mathfunc dependency
+        checks.AC_SUBST("ASIN_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [

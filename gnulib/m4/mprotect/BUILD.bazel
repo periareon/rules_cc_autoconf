@@ -1,18 +1,31 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/mprotect.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "mprotect",
     checks = [
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "mprotect",
             define = "HAVE_MPROTECT",
         ),
-    ],
+    ] + select({
+        # Linux has a working mprotect implementation
+        "@platforms//os:linux": [
+            checks.AC_DEFINE("HAVE_WORKING_MPROTECT", "1"),
+        ],
+        # macOS has a working mprotect implementation
+        "@platforms//os:macos": [
+            checks.AC_DEFINE("HAVE_WORKING_MPROTECT", "1"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/mmap-anon",
+
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

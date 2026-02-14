@@ -1,21 +1,37 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sinl.m4"""
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sinl.m4
+
+gl_FUNC_SINL:
+- AC_REQUIRE([gl_MATH_H_DEFAULTS])
+- AC_REQUIRE([gl_FUNC_SIN])
+- AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+- AC_CHECK_DECLS([sinl])
+- AC_SUBST([SINL_LIBM])
+"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "sinl",
     checks = [
-        macros.AC_CHECK_DECL(
+        # The golden file shows HAVE_DECL_SINL should be undefined in config.h
+        # Use internal define to avoid defining it in config.h
+        checks.AC_CHECK_DECL(
             "sinl",
-            define = "HAVE_DECL_SINL",
+            name = "_gl_cv_have_decl_sinl",
+            includes = ["#include <math.h>"],
         ),
+        # SINL_LIBM is set based on SIN_LIBM (empty on macOS)
+        checks.AC_SUBST("SINL_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/floor",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
         "//gnulib/m4/floorl",
         "//gnulib/m4/isnanl",
-        "//gnulib/m4/sin",
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+        "//gnulib/m4/mktime",  # Provides HAVE_DECL_ALARM (needed for test compatibility)
+        "//gnulib/m4/sin",  # AC_REQUIRE([gl_FUNC_SIN])
     ],
 )

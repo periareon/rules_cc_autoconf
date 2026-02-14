@@ -1,31 +1,33 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/cosl.m4"""
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/cosl.m4
+
+gl_FUNC_COSL:
+- AC_REQUIRE([gl_MATH_H_DEFAULTS])
+- AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+- AC_CHECK_DECLS([cosl])
+- AC_SUBST([COSL_LIBM])
+"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "cosl",
     checks = [
-        # Check for cosl function and declaration
-        # Equivalent to gl_FUNC_COSL macro from cosl.m4
-        # Note: Full implementation includes library dependency checks
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_DECL(
             "cosl",
-            define = "HAVE_COSL",
+            name = "_gl_cv_have_decl_cosl",
+            includes = ["#include <math.h>"],
         ),
-        macros.AC_CHECK_DECL(
-            "cosl",
-            define = "HAVE_DECL_COSL",
-            headers = ["math.h"],
-        ),
+        # COSL_LIBM is empty on macOS
+        checks.AC_SUBST("COSL_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS]), AC_REQUIRE([gl_LONG_DOUBLE_VS_DOUBLE])
-        "//gnulib/m4/cos",  # AC_REQUIRE([gl_FUNC_COS]) - conditional
-        "//gnulib/m4/isnanl",  # AC_REQUIRE([gl_FUNC_ISNANL]) - conditional
-        "//gnulib/m4/floor",  # AC_REQUIRE([gl_FUNC_FLOOR]) - conditional
-        "//gnulib/m4/floorl",  # AC_REQUIRE([gl_FUNC_FLOORL]) - conditional
-        # Note: AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/cos",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+        "//gnulib/m4/mktime",  # Provides HAVE_DECL_ALARM (needed for test compatibility)
+        "//gnulib/m4/sinl",
     ],
 )

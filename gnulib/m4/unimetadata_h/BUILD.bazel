@@ -9,3 +9,30 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
 )
+
+# Note: unimetadata_h has _DEFAULTS but no variables in it
+autoconf(
+    name = "gl_UNIMETADATA_H_DEFAULTS",
+    checks = [
+    ],
+    visibility = ["//visibility:private"],
+)
+
+# Note: unimetadata_h has _REQUIRE_DEFAULTS but no GNULIB_* variables
+autoconf(
+    name = "gl_UNIMETADATA_H_REQUIRE_DEFAULTS",
+    checks = [
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gl_UNIMETADATA_H_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_UNIMETADATA_H_REQUIRE_DEFAULTS",
+    ],
+)

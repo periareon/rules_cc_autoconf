@@ -1,15 +1,94 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/wint_t.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
+# AC_CACHE_CHECK([for wint_t], [gt_cv_c_wint_t], ...)
+# Consumers (e.g. gl_WCHAR_H) use gt_cv_c_wint_t to set HAVE_WINT_T via AC_SUBST(condition=...).
 autoconf(
-    name = "wint_t",
+    name = "gt_TYPE_WINT_T",
     checks = [
-        macros.AC_CHECK_HEADER(
-            "crtdefs.h",
-            define = "HAVE_CRTDEFS_H",
+        checks.AC_TRY_COMPILE(
+            name = "gt_cv_c_wint_t",
+            code = """#include <wchar.h>
+wint_t foo = (wchar_t)'\\0';
+int main(void) { return 0; }
+""",
+            define = "HAVE_WINT_T",
+            language = "c",
+        ),
+        checks.AC_TRY_COMPILE(
+            name = "_gl_cv_type_wint_t_large_enough",
+            code = """#include <wchar.h>
+int verify[sizeof (wint_t) < sizeof (int) ? -1 : 1];
+int main(void) { return 0; }
+""",
+            language = "c",
+            requires = ["HAVE_WINT_T"],
+        ),
+        checks.AC_SUBST(
+            "GNULIBHEADERS_OVERRIDE_WINT_T",
+            condition = "_gl_cv_type_wint_t_large_enough",
+            if_false = 1,
+            if_true = 0,
         ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        ":gl_TYPE_WINT_T_PREREQ",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# An internal target for deduplicating checks
+autoconf(
+    name = "AC_SUBST_HAVE_WINT_T",
+    checks = [
+        checks.AC_SUBST(
+            "HAVE_WINT_T",
+            condition = "gt_cv_c_wint_t",
+            if_false = 0,
+            if_true = 1,
+        ),
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        ":gt_TYPE_WINT_T",
+    ],
+)
+
+# Prerequisites of the 'wint_t' override.
+autoconf(
+    name = "gl_TYPE_WINT_T_PREREQ",
+    checks = [
+        # Note: In the m4, this creates ac_cv_header_crtdefs_h cache variable,
+        # but does NOT create HAVE_CRTDEFS_H as a define in config.h.
+        # We need to check for the header without creating a define.
+        # Use a compile check with a custom define name to avoid conflict.
+        checks.AC_TRY_COMPILE(
+            name = "_gl_have_crtdefs_h",
+            code = """#include <crtdefs.h>
+int main(void) { return 0; }
+""",
+            language = "c",
+        ),
+        # This creates HAVE_CRTDEFS_H as a substitution variable (affects subst.h only).
+        # In the m4, it's set to 1 if ac_cv_header_crtdefs_h=yes, or 0 otherwise.
+        checks.AC_SUBST(
+            "HAVE_CRTDEFS_H",
+            condition = "_gl_have_crtdefs_h",
+            if_false = 0,
+            if_true = 1,
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# wint_t - main target: gt_TYPE_WINT_T + "whether wint_t is large enough" + GNULIBHEADERS_OVERRIDE_WINT_T
+autoconf(
+    name = "wint_t",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gt_TYPE_WINT_T",
+    ],
 )

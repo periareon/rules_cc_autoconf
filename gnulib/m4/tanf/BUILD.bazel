@@ -1,22 +1,30 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/tanf.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "tanf",
     checks = [
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "tanf",
             define = "HAVE_TANF",
         ),
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "tanf",
             define = "HAVE_DECL_TANF",
         ),
+        # gl_MATHFUNC sets TANF_LIBM based on whether tanf needs -lm
+        # On macOS/Linux, tanf is in libc, so TANF_LIBM is empty
+        checks.AC_SUBST("TANF_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/tan",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS,
+
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+        "//gnulib/m4/tan",  # AC_REQUIRE([gl_FUNC_TAN])
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

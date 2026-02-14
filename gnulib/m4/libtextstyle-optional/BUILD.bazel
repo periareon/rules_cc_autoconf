@@ -1,9 +1,23 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/libtextstyle-optional.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "libtextstyle-optional",
-    checks = [],
+    checks = [
+        checks.AC_CHECK_FUNC(
+            "tcdrain",
+            define = "HAVE_TCDRAIN",
+        ),
+        # HAVE_LIBTEXTSTYLE comes from libtextstyle dependency
+        # TEXTSTYLE_H is the fallback header to use when libtextstyle is not available
+        checks.AC_SUBST("TEXTSTYLE_H", "textstyle.h"),
+    ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/libtextstyle",
+        "//gnulib/m4/termios_h",
+    ],
 )

@@ -1,17 +1,28 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/strncasecmp.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
-
-# HAVE_STRNCASECMP comes from strings_h dependency
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "strncasecmp",
     checks = [
-        macros.AC_CHECK_DECL("strncasecmp"),
+        # gl_FUNC_STRNCASECMP checks for strncasecmp function
+        checks.AC_CHECK_FUNC(
+            "strncasecmp",
+            define = "HAVE_STRNCASECMP",
+        ),
+        # AC_CHECK_DECLS([strncasecmp])
+        checks.AC_CHECK_DECL(
+            "strncasecmp",
+            define = "HAVE_DECL_STRNCASECMP",
+            includes = ["#include <strings.h>"],
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/strings_h",  # Provides HAVE_STRNCASECMP
+        "//gnulib/m4/strings_h:gl_STRINGS_H_CORE",  # AC_REQUIRE([gl_STRINGS_H_DEFAULTS])
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST]) for gl_STRCASECMP_WORKS
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

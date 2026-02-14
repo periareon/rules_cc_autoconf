@@ -1,0 +1,2 @@
+/* config.h.in */
+#define HAVE_FEGETROUND 1

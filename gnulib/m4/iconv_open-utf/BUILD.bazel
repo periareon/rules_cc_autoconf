@@ -2,10 +2,32 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 
+# gl_FUNC_ICONV_OPEN_UTF
+# Empty macro: no checks, no deps.
+autoconf(
+    name = "gl_FUNC_ICONV_OPEN_UTF",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_FUNC_ICONV_OPEN_UTF_SUPPORT
+# Ensures iconv UTF support subst variables are available: ICONV_CONST (empty)
+# and REPLACE_* = 0 from iconv_h defaults. No config.h defines (unlike iconv),
+# so compatibility test golden stays #undef ICONV_CONST.
+autoconf(
+    name = "gl_FUNC_ICONV_OPEN_UTF_SUPPORT",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+    ],
+)
+
+# Public module target (main entry point)
 autoconf(
     name = "iconv_open-utf",
-    checks = [
-        # Note: iconv_open-utf.m4 may not exist in gnulib, or this module may not have checks
-    ],
     visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_ICONV_OPEN_UTF",
+        ":gl_FUNC_ICONV_OPEN_UTF_SUPPORT",
+    ],
 )

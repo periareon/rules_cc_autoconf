@@ -1,0 +1,17 @@
+/* config.h.in */
+#define HAVE_INTTYPES_H 1
+#define HAVE_STDINT_H 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+/* #undef HAVE_STRINGS_H */
+#define HAVE_STRING_H 1
+/* #undef HAVE_SYS_SEM_H */
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+/* #undef HAVE_UNISTD_H */
+/* #undef INCLUDE_NEXT */
+/* #undef INCLUDE_NEXT_AS_FIRST_DIRECTIVE */
+/* #undef NEXT_AS_FIRST_DIRECTIVE_SYS_SEM_H */
+/* #undef NEXT_SYS_SEM_H */
+/* #undef PRAGMA_SYSTEM_HEADER */
+#define STDC_HEADERS 1

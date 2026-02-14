@@ -9,7 +9,7 @@
   - [autoconf](./autoconf.md)
   - [autoconf_hdr](./autoconf_hdr.md)
   - [autoconf_srcs](./autoconf_srcs.md)
-  - [macros](./macros.md)
+  - [checks](./checks.md)
   - [package_info](./package_info.md)
 
 - [Gnulib](./gnulib.md)

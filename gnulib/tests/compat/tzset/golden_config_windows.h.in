@@ -1,0 +1,23 @@
+/* config.h.in */
+/* #undef HAVE_DECL_LOCALTIME_R */
+/* #undef HAVE_NANOSLEEP */
+/* #undef HAVE_STRPTIME */
+/* #undef HAVE_TIMEGM */
+/* #undef HAVE_TIMESPEC_GET */
+/* #undef HAVE_TIMESPEC_GETRES */
+/* #undef HAVE_TIMEZONE_T */
+/* #undef HAVE_TZALLOC */
+/* #undef REPLACE_CTIME */
+/* #undef REPLACE_GMTIME */
+/* #undef REPLACE_LOCALTIME */
+/* #undef REPLACE_LOCALTIME_R */
+/* #undef REPLACE_LOCALTIME_RZ */
+/* #undef REPLACE_MKTIME */
+/* #undef REPLACE_MKTIME_Z */
+/* #undef REPLACE_NANOSLEEP */
+/* #undef REPLACE_STRFTIME */
+/* #undef REPLACE_TIME */
+/* #undef REPLACE_TIMEGM */
+/* #undef REPLACE_TIMESPEC_GET */
+/* #undef REPLACE_TIMESPEC_GETRES */
+#define REPLACE_TZSET 1

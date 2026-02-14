@@ -1,0 +1,24 @@
+"""AC_CHECK_DECLS_ONCE([alarm]) - Shared check for alarm declaration
+
+This macro ensures the alarm declaration check is only done once,
+even when multiple modules need it.
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "AC_CHECK_DECLS_ONCE_ALARM",
+    checks = [
+        # AC_CHECK_DECLS_ONCE([alarm]) - shared check
+        checks.AC_CHECK_DECL(
+            "alarm",
+            define = "HAVE_DECL_ALARM",
+            includes = ["#include <unistd.h>"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)

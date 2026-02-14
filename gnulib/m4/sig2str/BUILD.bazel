@@ -1,11 +1,31 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sig2str.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 autoconf(
     name = "sig2str",
     checks = [
-        # TODO: Add checks based on .m4 file
+        # Note: On macOS, sig2str doesn't exist, so HAVE_SIG2STR=0
+    ] + gl_macros.GL_CHECK_FUNCS_ANDROID(
+        [
+            "sig2str",
+            "str2sig",
+        ],
+        includes = ["#include <signal.h>"],
+    ) + [
+        checks.AC_SUBST(
+            "HAVE_SIG2STR",
+            condition = "ac_cv_func_sig2str",
+        ),
+        checks.AC_SUBST(
+            "HAVE_STR2SIG",
+            condition = "ac_cv_func_str2sig",
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

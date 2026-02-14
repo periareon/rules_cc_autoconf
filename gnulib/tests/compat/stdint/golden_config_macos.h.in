@@ -1,0 +1,41 @@
+/* config.h.in */
+/* #undef APPLE_UNIVERSAL_BUILD */
+/* #undef BITSIZEOF_PTRDIFF_T */
+/* #undef BITSIZEOF_SIG_ATOMIC_T */
+/* #undef BITSIZEOF_SIZE_T */
+/* #undef BITSIZEOF_WCHAR_T */
+/* #undef BITSIZEOF_WINT_T */
+/* #undef GNULIBHEADERS_OVERRIDE_WINT_T */
+/* #undef HAVE_C99_STDINT_H */
+#define HAVE_INTTYPES_H 1
+#define HAVE_LIMITS_H 1
+#define HAVE_LONG_LONG_INT 1
+/* #undef HAVE_SIGNED_SIG_ATOMIC_T */
+/* #undef HAVE_SIGNED_WCHAR_T */
+/* #undef HAVE_SIGNED_WINT_T */
+#define HAVE_STDINT_H 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_STRING_H 1
+/* #undef HAVE_SYS_BITYPES_H */
+/* #undef HAVE_SYS_INTTYPES_H */
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+#define HAVE_UNSIGNED_LONG_LONG_INT 1
+#define HAVE_WCHAR_H 1
+#define HAVE_WINT_T 1
+/* #undef INCLUDE_NEXT */
+/* #undef INCLUDE_NEXT_AS_FIRST_DIRECTIVE */
+/* #undef NEXT_AS_FIRST_DIRECTIVE_LIMITS_H */
+/* #undef NEXT_AS_FIRST_DIRECTIVE_STDINT_H */
+/* #undef NEXT_LIMITS_H */
+/* #undef NEXT_STDINT_H */
+/* #undef PRAGMA_SYSTEM_HEADER */
+/* #undef PTRDIFF_T_SUFFIX */
+/* #undef SIG_ATOMIC_T_SUFFIX */
+/* #undef SIZE_T_SUFFIX */
+#define STDC_HEADERS 1
+/* #undef WCHAR_T_SUFFIX */
+/* #undef WINT_T_SUFFIX */

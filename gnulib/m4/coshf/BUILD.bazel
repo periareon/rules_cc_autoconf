@@ -1,23 +1,28 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/coshf.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "coshf",
     checks = [
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "coshf",
             define = "HAVE_COSHF",
         ),
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "coshf",
             define = "HAVE_DECL_COSHF",
-            headers = ["math.h"],
+            includes = ["#include <math.h>"],
         ),
+        # gl_MATHFUNC sets COSHF_LIBM based on whether coshf needs -lm
+        # On macOS/Linux, coshf is in libc, so COSHF_LIBM is empty
+        checks.AC_SUBST("COSHF_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/cosh",
+        "//gnulib/m4/extensions",
     ],
 )

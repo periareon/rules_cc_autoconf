@@ -1,16 +1,55 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sockpfaf.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-
-# HAVE_NETINET_IN_H comes from netinet_in_h dependency
-# HAVE_SYS_UN_H comes from sys_un_h dependency
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "sockpfaf",
-    checks = [],
+    checks = [
+        # gl_SOCKET_FAMILY_UNIX: Check for UNIX domain sockets
+        checks.AC_CHECK_HEADER(
+            "sys/un.h",
+            name = "ac_cv_header_sys_un_h",
+        ),
+
+        # Define HAVE_SYS_UN_H in config.h if header exists
+        checks.AC_DEFINE(
+            "HAVE_SYS_UN_H",
+            requires = ["ac_cv_header_sys_un_h"],
+        ),
+
+        # On macOS, UNIX domain sockets are available
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_socket_unix",
+            code = """\
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+
+int main(void) {
+    int x = AF_UNIX;
+    struct sockaddr_un y;
+    if (&x && &y) return 0;
+    return 1;
+}
+""",
+            language = "c",
+        ),
+
+        # fi
+        checks.AC_DEFINE(
+            "HAVE_UNIXSOCKET",
+            condition = "gl_cv_socket_unix",
+            if_true = 1,
+        ),
+    ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/netinet_in_h",
-        "//gnulib/m4/sys_un_h",  # Provides HAVE_SYS_UN_H
+        "//gnulib/m4/sys_socket_h:gl_SYS_SOCKET_H",
+        "//gnulib/m4/netinet_in_h:gl_HEADER_NETINET_IN",  # Header check without HAVE_NETINET_IN_H subst
+        "//gnulib/m4/inet_ntop",
+        # Note: AC_CHECK_HEADERS_ONCE([sys/un.h]) - line 55 - we check for it here to break cycle with sys_un_h
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

@@ -1,14 +1,72 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/largefile.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "gl_SET_LARGEFILE_SOURCE",
+    checks = [
+        # TODO: For `hpux*` hosts, set `_LARGEFILE_SOURCE=1`
+    ],
+    visibility = ["//visibility:public"],
+    deps = select({
+        # On Linux, include HAVE_FSEEKO from gl_PREREQ_FSEEKO
+        "@platforms//os:linux": [
+            "//gnulib/m4/fseeko:gl_FUNC_FSEEKO",
+            "//gnulib/m4/fseeko:gl_PREREQ_FSEEKO",
+        ],
+        # On macOS, don't include gl_PREREQ_FSEEKO (golden expects HAVE_FSEEKO undef)
+        "//conditions:default": [
+            "//gnulib/m4/fseeko:gl_FUNC_FSEEKO",
+        ],
+    }),
+)
+
+autoconf(
+    name = "gl_LARGEFILE",
+    checks = [
+        checks.AC_TRY_COMPILE(
+            name = "_gl_cv_type_off_t_64",
+            code = """\
+#include <sys/types.h>
+int verify_off_t_size[sizeof (off_t) >= 8 ? 1 : -1];
+int main(void) { return 0; }
+""",
+            language = "c",
+        ),
+        checks.AC_TRY_COMPILE(
+            name = "_gl_cv_member_st_size_64",
+            code = """\
+#include <sys/types.h>
+#include <sys/stat.h>
+int main(void) {
+    struct stat buf;
+    int verify_st_size_size[sizeof (buf.st_size) >= 8 ? 1 : -1];
+    return 0;
+}
+""",
+            language = "c",
+        ),
+    ] + select({
+        # On Windows, off_t and st_size are always 64-bit with MSVC.
+        # These platform variables were originally set by the largefile.m4 macro.
+        "@platforms//os:windows": [
+            checks.AC_SUBST("WINDOWS_64_BIT_OFF_T", "1"),
+            checks.AC_SUBST("WINDOWS_64_BIT_ST_SIZE", "1"),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST("WINDOWS_64_BIT_OFF_T", "0"),
+            checks.AC_SUBST("WINDOWS_64_BIT_ST_SIZE", "0"),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+)
 
 autoconf(
     name = "largefile",
-    checks = [
-        # gl_LARGEFILE macro from largefile.m4 sets WINDOWS_64_BIT_OFF_T and
-        # WINDOWS_64_BIT_ST_SIZE on Windows. This involves compile-time checks
-        # for off_t and st_size sizes that are complex to replicate in Bazel.
-        # Note: AC_SYS_LARGEFILE is a standard autoconf macro
-    ],
     visibility = ["//visibility:public"],
+    deps = [
+        ":gl_LARGEFILE",
+        ":gl_SET_LARGEFILE_SOURCE",
+    ],
 )

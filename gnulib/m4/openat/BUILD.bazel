@@ -1,22 +1,35 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/openat.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "openat",
     checks = [
-        # Check for openat function
-        # Equivalent to gl_FUNC_OPENAT macro from openat.m4
-        macros.AC_CHECK_FUNC(
+        # gl_FUNC_OPENAT checks for openat function
+        checks.AC_CHECK_FUNC(
             "openat",
             define = "HAVE_OPENAT",
+            subst = True,
         ),
-    ],
+    ] + select({
+        # Linux has a working openat implementation
+        "@platforms//os:linux": [
+            checks.AC_SUBST("REPLACE_OPENAT", 0),
+        ],
+        # macOS and other platforms may have bugs requiring replacement
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_OPENAT", 1),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/fcntl_h",  # AC_REQUIRE([gl_FCNTL_H_DEFAULTS])
-        "//gnulib/m4/lstat",  # AC_REQUIRE([gl_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK])
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+        "//gnulib/m4/fcntl_h",
+        "//gnulib/m4/lstat:gl_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK",  # AC_REQUIRE([gl_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK])
         "//gnulib/m4/open-cloexec",  # AC_REQUIRE([gl_PREPROC_O_CLOEXEC])
+        "//gnulib/m4/mode_t",  # Provides PROMOTED_MODE_T (needed for test compatibility)
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

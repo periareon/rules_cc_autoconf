@@ -5,7 +5,12 @@ load("//autoconf:autoconf.bzl", "autoconf")
 autoconf(
     name = "unlink-busy",
     checks = [
-        # TODO: Add checks based on .m4 file
+        # gl_UNLINK_BUSY requires gl_UNISTD_H_DEFAULTS
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

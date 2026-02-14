@@ -1,23 +1,34 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/codeset.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks", "utils")
 
 autoconf(
-    name = "codeset",
+    name = "AM_LANGINFO_CODESET",
     checks = [
-        # Check for nl_langinfo and CODESET
-        # Equivalent to AM_LANGINFO_CODESET macro from codeset.m4
-        macros.AC_TRY_COMPILE(
-            code = """#include <langinfo.h>
-
-int main(void) {
-    char* cs = nl_langinfo(CODESET);
-    return !cs;
-}""",
-            define = "HAVE_LANGINFO_CODESET",
-            language = "c",
+        # AM_LANGINFO_CODESET uses AC_LINK_IFELSE to check if nl_langinfo(CODESET) links
+        # This requires both the function and the CODESET constant to be available
+        checks.AC_TRY_LINK(
+            name = "am_cv_langinfo_codeset",
+            code = utils.AC_LANG_PROGRAM(
+                ["#include <langinfo.h>"],
+                "char* cs = nl_langinfo(CODESET); return !cs;",
+            ),
+        ),
+        # AC_DEFINE only (no subst) so golden @HAVE_LANGINFO_CODESET@ matches GNU output
+        checks.AC_DEFINE(
+            "HAVE_LANGINFO_CODESET",
+            1,
+            requires = ["am_cv_langinfo_codeset==1"],
         ),
     ],
     visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "codeset",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":AM_LANGINFO_CODESET",
+    ],
 )

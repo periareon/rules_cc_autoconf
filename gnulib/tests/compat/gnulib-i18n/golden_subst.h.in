@@ -1,0 +1,4 @@
+/* subst.h.in */
+#define SUBST_GNULIB_LOCALEDIR /* ${datarootdir}/locale */
+#define SUBST_GNULIB_LOCALEDIR_c /* "/usr/local/share/locale" */
+#define SUBST_GNULIB_LOCALEDIR_c_make /* \"$(GNULIB_LOCALEDIR)\" */

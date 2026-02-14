@@ -1,15 +1,56 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/tcgetsid.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "tcgetsid",
     checks = [
-        macros.AC_CHECK_DECL(
+        # Note: gl_TERMIOS_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        checks.AC_CHECK_DECL(
             "tcgetsid",
-            define = "HAVE_DECL_TCGETSID",
+            name = "ac_cv_have_decl_tcgetsid",
+            includes = ["#include <termios.h>"],
+        ),
+
+        # if test $ac_cv_have_decl_tcgetsid = no; then
+        # fi
+        # Define HAVE_DECL_TCGETSID in config.h if found
+        checks.AC_DEFINE(
+            "HAVE_DECL_TCGETSID",
+            condition = "ac_cv_have_decl_tcgetsid",
+            if_true = 1,
+        ),
+
+        # We can't use AC_CHECK_FUNC here, because tcgetsid() is defined as a
+        # static inline function when compiling for Android 4.4 or older.
+        checks.AC_TRY_LINK(
+            name = "gl_cv_func_tcgetsid",
+            code = """\
+#include <termios.h>
+int main(void) {
+    return tcgetsid(0);
+}
+""",
+        ),
+
+        # if test $gl_cv_func_tcgetsid = yes; then
+        # else
+        # fi
+        checks.AC_SUBST(
+            "HAVE_TCGETSID",
+            condition = "gl_cv_func_tcgetsid",
+            if_false = 0,
+            if_true = 1,
         ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # Note: gl_TERMIOS_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )
+
+# Prerequisites of lib/tcgetsid.c (empty)
+# No separate target needed as it's empty

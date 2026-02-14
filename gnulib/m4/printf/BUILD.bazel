@@ -1,40 +1,292 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/printf.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
-# printf.m4 contains many PRINTF checking macros
-# COMPLEX CASE: This is one of the most complex gnulib M4 files.
-# It contains many runtime tests for printf format specifiers:
-# - gl_PRINTF_SIZES_C99 (j, z, t, L specifiers)
-# - gl_PRINTF_SIZES_C23 (w8, w16, w32, w64, wf8, wf16, wf32, wf64 specifiers)
-# - gl_PRINTF_LONG_DOUBLE (long double printing)
-# - gl_PRINTF_INFINITE (infinite double/long double)
-# - gl_PRINTF_INFINITE_LONG_DOUBLE
-# - gl_PRINTF_DIRECTIVE_A (a and A directives)
-# - gl_PRINTF_DIRECTIVE_B (b and B directives)
-# - gl_PRINTF_DIRECTIVE_F (F directive)
-# - gl_PRINTF_DIRECTIVE_N (n directive)
-# - gl_PRINTF_DIRECTIVE_LS (ls directive)
-# - gl_PRINTF_DIRECTIVE_LC (lc directive)
-# - gl_PRINTF_POSITIONS (positional parameters)
-# - gl_PRINTF_FLAG_GROUPING (grouping flag)
-# - gl_PRINTF_FLAG_LEFTADJUST (left adjust flag)
-# - gl_PRINTF_FLAG_ZERO (zero flag)
-# - gl_PRINTF_PRECISION (large precisions)
-# - gl_PRINTF_ENOMEM (ENOMEM handling)
-#
-# These are ALL runtime tests that cannot be checked at compile time.
+# Individual AC_DEFUN* function targets (one target per AC_DEFUN in printf.m4)
+
 autoconf(
-    name = "printf",
+    name = "gl_SNPRINTF_PRESENCE",
     checks = [
-        # No direct compile-time checks possible - all require runtime tests
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_AC_HEADER_INTTYPES_H])
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/macros/AC_FUNC_SNPRINTF",
+    ],
+)
+
+# AC_RUN_IFELSE check for working swprintf; result is platform-specific
+autoconf(
+    name = "gl_SWPRINTF_WORKS",
+    checks = [
+        checks.AC_CHECK_FUNC(
+            "swprintf",
+            define = "HAVE_SWPRINTF",
+        ),
+    ] + select({
+        # On Linux with glibc: swprintf works correctly
+        "@platforms//os:linux": [
+            checks.AC_DEFINE("HAVE_WORKING_SWPRINTF", "1"),
+        ],
+        # On macOS: swprintf does not work correctly (golden shows #undef)
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# AC_REQUIRE([AC_PROG_CC]), gl_AC_HEADER_STDINT_H, gl_AC_HEADER_INTTYPES_H, AC_CANONICAL_HOST
+autoconf(
+    name = "gl_PRINTF_SIZES_C99",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
         "//gnulib/m4/inttypes_h",
-        "//gnulib/m4/multiarch",
-        # AC_REQUIRE([gl_AC_HEADER_STDINT_H])
         "//gnulib/m4/stdint_h",
+    ],
+)
+
+# AC_REQUIRE([AC_PROG_CC]), gl_AC_HEADER_STDINT_H, gl_AC_HEADER_INTTYPES_H, AC_CANONICAL_HOST
+autoconf(
+    name = "gl_PRINTF_SIZES_C23",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//gnulib/m4/inttypes_h",
+        "//gnulib/m4/stdint_h",
+    ],
+)
+
+autoconf(
+    name = "gl_PRINTF_LONG_DOUBLE",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+    ],
+)
+
+autoconf(
+    name = "gl_PRINTF_INFINITE",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+    ],
+)
+
+# AC_REQUIRE([gl_PRINTF_LONG_DOUBLE]), AC_REQUIRE([gl_BIGENDIAN]),
+autoconf(
+    name = "gl_PRINTF_INFINITE_LONG_DOUBLE",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_PRINTF_LONG_DOUBLE",
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//gnulib/m4/gnulib-common:gl_BIGENDIAN",
+        "//gnulib/m4/math_h:long-double-vs-double",
+    ],
+)
+
+autoconf(
+    name = "gl_PRINTF_DIRECTIVE_A",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+    ],
+)
+
+autoconf(
+    name = "gl_PRINTF_DIRECTIVE_B",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_PRINTF_DIRECTIVE_UPPERCASE_B",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_PRINTF_DIRECTIVE_F",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_PRINTF_DIRECTIVE_N",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_PRINTF_DIRECTIVE_LS",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_PRINTF_DIRECTIVE_LC",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_PRINTF_POSITIONS",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_PRINTF_FLAG_GROUPING",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_PRINTF_FLAG_GROUPING_INT_PRECISION",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_PRINTF_FLAG_GROUPING_MULTIBYTE",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_PRINTF_FLAG_LEFTADJUST",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_PRINTF_FLAG_ZERO",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_PRINTF_FLAG_ALT_PRECISION_ZERO",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_PRINTF_PRECISION",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_PRINTF_ENOMEM",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//gnulib/m4/multiarch",
+    ],
+)
+
+# On macOS, snprintf follows C99 truncation behavior
+autoconf(
+    name = "gl_SNPRINTF_TRUNCATION_C99",
+    checks = [
+        checks.AC_DEFINE("HAVE_SNPRINTF_TRUNCATION_C99", "1"),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# On macOS, snprintf returns the number of characters that would have been written (C99 behavior)
+autoconf(
+    name = "gl_SNPRINTF_RETVAL_C99",
+    checks = [
+        checks.AC_DEFINE("HAVE_SNPRINTF_RETVAL_C99", "1"),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_SNPRINTF_DIRECTIVE_N",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_SNPRINTF_SIZE1",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_VSNPRINTF_ZEROSIZE_C99",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_SWPRINTF_DIRECTIVE_LA",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_SWPRINTF_DIRECTIVE_LC",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "printf",
+    checks = [
+        # APPLE_UNIVERSAL_BUILD comes from multiarch dependency
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_SNPRINTF_PRESENCE",
+        ":gl_SWPRINTF_WORKS",
+        ":gl_PRINTF_SIZES_C99",
+        ":gl_PRINTF_SIZES_C23",
+        ":gl_PRINTF_LONG_DOUBLE",
+        ":gl_PRINTF_INFINITE",
+        ":gl_PRINTF_INFINITE_LONG_DOUBLE",
+        ":gl_PRINTF_DIRECTIVE_A",
+        ":gl_PRINTF_DIRECTIVE_B",
+        ":gl_PRINTF_DIRECTIVE_UPPERCASE_B",
+        ":gl_PRINTF_DIRECTIVE_F",
+        ":gl_PRINTF_DIRECTIVE_N",
+        ":gl_PRINTF_DIRECTIVE_LS",
+        ":gl_PRINTF_DIRECTIVE_LC",
+        ":gl_PRINTF_POSITIONS",
+        ":gl_PRINTF_FLAG_GROUPING",
+        ":gl_PRINTF_FLAG_GROUPING_INT_PRECISION",
+        ":gl_PRINTF_FLAG_GROUPING_MULTIBYTE",
+        ":gl_PRINTF_FLAG_LEFTADJUST",
+        ":gl_PRINTF_FLAG_ZERO",
+        ":gl_PRINTF_FLAG_ALT_PRECISION_ZERO",
+        ":gl_PRINTF_PRECISION",
+        ":gl_PRINTF_ENOMEM",
+        ":gl_SNPRINTF_TRUNCATION_C99",
+        ":gl_SNPRINTF_RETVAL_C99",
+        ":gl_SNPRINTF_DIRECTIVE_N",
+        ":gl_SNPRINTF_SIZE1",
+        ":gl_VSNPRINTF_ZEROSIZE_C99",
+        ":gl_SWPRINTF_DIRECTIVE_LA",
+        ":gl_SWPRINTF_DIRECTIVE_LC",
+        # Common dependencies required by multiple printf macros
+        "//gnulib/m4/inttypes_h",  # AC_REQUIRE([gl_AC_HEADER_INTTYPES_H])
+        "//gnulib/m4/math_h:long-double-vs-double",  # AC_REQUIRE([gl_LONG_DOUBLE_VS_DOUBLE])
+        "//gnulib/m4/multiarch",  # AC_REQUIRE([gl_MULTIARCH])
+        "//gnulib/m4/stdint_h",  # AC_REQUIRE([gl_AC_HEADER_STDINT_H])
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

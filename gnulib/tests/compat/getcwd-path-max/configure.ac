@@ -1,0 +1,15 @@
+AC_INIT([test_getcwd-path-max], [1.0])
+AC_CONFIG_HEADERS([config.h])
+
+gl_FUNC_GETCWD_PATH_MAX
+
+# Account for global Bazel defaults
+HAVE_DECL_GETCWD=1
+AC_SUBST([HAVE_DECL_GETCWD])
+HAVE_SYS_PARAM_H=1
+AC_SUBST([HAVE_SYS_PARAM_H])
+HAVE_UNISTD_H=1
+AC_SUBST([HAVE_UNISTD_H])
+
+AC_CONFIG_FILES([subst.h:subst.h.in])
+AC_OUTPUT

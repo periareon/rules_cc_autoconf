@@ -1,15 +1,45 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/selinux-selinux-h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "selinux-selinux-h",
     checks = [
-        macros.AC_CHECK_HEADER(
+        checks.AC_CHECK_HEADER(
             "selinux/selinux.h",
             define = "HAVE_SELINUX_SELINUX_H",
         ),
-    ],
+    ] + select({
+        "@platforms//os:linux": [
+            # SELinux header exists on Linux but is not always available
+            # Set USE_SELINUX_SELINUX_H to 0 (not undef)
+            checks.AC_DEFINE(
+                "USE_SELINUX_SELINUX_H",
+                "0",
+                subst = True,
+            ),
+            checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_SELINUX_SELINUX_H", ""),
+            checks.AC_SUBST("NEXT_SELINUX_SELINUX_H", ""),
+        ],
+        "@platforms//os:macos": [
+            # SELinux is not available on macOS - set to 0 (not undef)
+            checks.AC_DEFINE(
+                "USE_SELINUX_SELINUX_H",
+                "0",
+                subst = True,
+            ),
+            checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_SELINUX_SELINUX_H", ""),
+            checks.AC_SUBST("NEXT_SELINUX_SELINUX_H", ""),
+        ],
+        "//conditions:default": [],
+    }),
+    # Note: USE_SELINUX_SELINUX_H and LIB_SELINUX AC_SUBST are intentionally
+    # not set here because the gnulib m4 only sets them when SELinux is detected.
+    # On non-Linux platforms, the @VAR@ patterns remain unsubstituted in subst.h.
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/include_next",  # Required for INCLUDE_NEXT variables
+    ],
 )

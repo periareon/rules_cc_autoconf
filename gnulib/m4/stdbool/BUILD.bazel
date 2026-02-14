@@ -1,17 +1,32 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/stdbool.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 # gl_STDBOOL_H macro from stdbool.m4
-# Checks for stdbool.h that conforms to C99
 autoconf(
     name = "stdbool",
     checks = [
-        # AC_CHECK_TYPES([_Bool])
-        macros.AC_CHECK_TYPE("_Bool"),
+        checks.AC_CHECK_TYPE(
+            "_Bool",
+            name = "ac_cv_type__Bool",
+        ),
+        # AC_CHECK_TYPE only creates cache variable, need AC_DEFINE for config.h
+        checks.AC_DEFINE(
+            "HAVE__BOOL",
+            condition = "ac_cv_type__Bool",
+            if_true = 1,
+        ),
+        # Also set as substitution variable for subst.h
+        # if test "$ac_cv_type__Bool" = yes; then HAVE__BOOL=1 else HAVE__BOOL=0 fi
+        checks.AC_SUBST(
+            "HAVE__BOOL",
+            condition = "ac_cv_type__Bool",
+            if_false = 0,
+            if_true = 1,
+        ),
         # AC_CHECK_HEADER_STDBOOL - check stdbool.h conforms to C99 or later
-        macros.AC_TRY_COMPILE(
+        checks.AC_TRY_COMPILE(
             code = """\
 #include <stdbool.h>
 
@@ -64,4 +79,8 @@ int main(void) {
         ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

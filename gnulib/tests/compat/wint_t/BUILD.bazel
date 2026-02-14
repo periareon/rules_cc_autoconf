@@ -1,0 +1,26 @@
+load("//gnulib/tests:gnu_gnulib_diff_test_suite.bzl", "gnu_gnulib_diff_test_suite")
+
+gnu_gnulib_diff_test_suite(
+    name = "wint_t_test",
+    # Bazel autoconf target that implements this m4 module
+    bazel_autoconf_target = "//gnulib/m4/wint_t",
+    # Templates
+    config_h_in = "config.h.in",
+    configure_ac = "configure.ac",
+    # Golden files (expected output)
+    golden_config_h = select({
+        "@platforms//os:macos": "golden_config_macos.h.in",
+        "@platforms//os:windows": "golden_config_windows.h.in",
+        "//conditions:default": "golden_config.h.in",
+    }),
+    golden_subst_h = select({
+        "@platforms//os:macos": "golden_subst_macos.h.in",
+        "@platforms//os:windows": "golden_subst_windows.h.in",
+        "//conditions:default": "golden_subst.h.in",
+    }),
+    # All m4 files needed to run autoconf
+    m4_files = ["@gnulib//:all_m4"],
+    subst_h_in = "subst.h.in",
+    # Compile test
+    test_c = "test_wint_t.c",
+)

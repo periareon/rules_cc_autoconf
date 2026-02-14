@@ -1,27 +1,194 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sys_socket_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "sys_socket_h",
+    name = "HAVE_SYS_SOCKET_H",
     checks = [
-        macros.AC_CHECK_HEADER(
-            "winsock2.h",
-            define = "HAVE_WINSOCK2_H",
-        ),
-        macros.AC_CHECK_HEADER(
+        checks.AC_CHECK_HEADER(
             "sys/socket.h",
             define = "HAVE_SYS_SOCKET_H",
         ),
-        macros.AC_CHECK_FUNC(
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+)
+
+# gl_SYS_SOCKET_H (AC_DEFUN_ONCE)
+# Top-level sys/socket.h support: requires DEFAULTS, then prereqs and shutdown.
+autoconf(
+    name = "gl_SYS_SOCKET_H",
+    checks = [
+        # If shutdown exists, header should define SHUT_RD, SHUT_WR, SHUT_RDWR
+        checks.AC_CHECK_FUNC(
             "shutdown",
             define = "HAVE_SHUTDOWN",
         ),
-        macros.AC_CHECK_TYPE(
-            "struct sockaddr_storage, sa_family_t",
-            define = "HAVE_STRUCT_SOCKADDR_STORAGE,_SA_FAMILY_T",
+        checks.AC_SUBST(
+            "HAVE_SYS_SOCKET_H",
+            condition = "ac_cv_header_sys_socket_h",
+            if_false = 0,
+            if_true = 1,
         ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        ":gl_PREREQ_SYS_H_SOCKET",
+        ":gl_PREREQ_SYS_H_WINSOCK2",
+        ":gl_PREREQ_SYS_SA_FAMILY",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_PREREQ_SYS_H_SOCKET
+# gl_CHECK_NEXT_HEADERS([sys/socket.h]), HAVE_SYS_SOCKET_H, then gl_PREREQ_SYS_H_WS2TCPIP.
+autoconf(
+    name = "gl_PREREQ_SYS_H_SOCKET",
+    checks = [
+        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_SYS_SOCKET_H", "<sys/socket.h>"),
+        checks.AC_SUBST("NEXT_SYS_SOCKET_H", "<sys/socket.h>"),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":HAVE_SYS_SOCKET_H",
+        ":gl_PREREQ_SYS_H_WS2TCPIP",
+        "//gnulib/m4/include_next",
+    ],
+)
+
+# gl_PREREQ_SYS_H_WINSOCK2
+# AC_CHECK_HEADERS_ONCE([sys/socket.h]); if not present, check winsock2.h.
+# On Unix we have sys/socket.h, so HAVE_WINSOCK2_H=0.
+autoconf(
+    name = "gl_PREREQ_SYS_H_WINSOCK2",
+    checks = [
+        checks.AC_SUBST("HAVE_WINSOCK2_H", 0),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# gl_PREREQ_SYS_H_WS2TCPIP
+# HAVE_WS2TCPIP_H=0 when sys/socket.h present (Unix).
+autoconf(
+    name = "gl_PREREQ_SYS_H_WS2TCPIP",
+    checks = [
+        checks.AC_SUBST("HAVE_WS2TCPIP_H", 0),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# gl_PREREQ_SYS_SA_FAMILY
+# AC_CHECK_TYPES([struct sockaddr_storage, sa_family_t]) and ss_family member.
+autoconf(
+    name = "gl_PREREQ_SYS_SA_FAMILY",
+    checks = [
+        # struct sockaddr_storage
+        checks.AC_TRY_COMPILE(
+            code = """#include <sys/types.h>
+#include <sys/socket.h>
+
+int main(void) {
+    struct sockaddr_storage ss;
+    (void)ss;
+    return 0;
+}""",
+            define = "HAVE_STRUCT_SOCKADDR_STORAGE",
+            language = "c",
+            subst = True,
+        ),
+        # ss_family member
+        checks.AC_TRY_COMPILE(
+            code = """#include <sys/types.h>
+#include <sys/socket.h>
+
+int main(void) {
+    struct sockaddr_storage ss;
+    (void)ss.ss_family;
+    return 0;
+}""",
+            define = "HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY",
+            language = "c",
+            subst = True,
+        ),
+        # sa_family_t type
+        checks.AC_TRY_COMPILE(
+            code = """#include <sys/types.h>
+#include <sys/socket.h>
+
+int main(void) {
+    sa_family_t x;
+    (void)x;
+    return 0;
+}""",
+            define = "HAVE_SA_FAMILY_T",
+            language = "c",
+            subst = True,
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# gl_SYS_SOCKET_MODULE_INDICATOR([modulename])
+# Ensures defaults are expanded; sets GNULIB_<module> for the given module.
+# Other modules (e.g. sockets) depend on this and set their own GNULIB_* via
+# their BUILD; this target just pulls in gl_SYS_SOCKET_H_REQUIRE_DEFAULTS.
+autoconf(
+    name = "gl_SYS_SOCKET_MODULE_INDICATOR",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+    ],
+)
+
+# gl_SYS_SOCKET_H_REQUIRE_DEFAULTS
+autoconf(
+    name = "gl_SYS_SOCKET_H_REQUIRE_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("GNULIB_ACCEPT", 0),
+        checks.AC_SUBST("GNULIB_ACCEPT4", 0),
+        checks.AC_SUBST("GNULIB_BIND", 0),
+        checks.AC_SUBST("GNULIB_CONNECT", 0),
+        checks.AC_SUBST("GNULIB_GETPEERNAME", 0),
+        checks.AC_SUBST("GNULIB_GETSOCKNAME", 0),
+        checks.AC_SUBST("GNULIB_GETSOCKOPT", 0),
+        checks.AC_SUBST("GNULIB_LISTEN", 0),
+        checks.AC_SUBST("GNULIB_RECV", 0),
+        checks.AC_SUBST("GNULIB_RECVFROM", 0),
+        checks.AC_SUBST("GNULIB_SEND", 0),
+        checks.AC_SUBST("GNULIB_SENDTO", 0),
+        checks.AC_SUBST("GNULIB_SETSOCKOPT", 0),
+        checks.AC_SUBST("GNULIB_SHUTDOWN", 0),
+        checks.AC_SUBST("GNULIB_SOCKET", 0),
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gl_SYS_SOCKET_H_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "gl_SYS_SOCKET_H_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("HAVE_STRUCT_SOCKADDR_STORAGE", 1),
+        checks.AC_SUBST("HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY", 1),
+        checks.AC_SUBST("HAVE_ACCEPT4", 1),
+    ],
+    visibility = ["//visibility:private"],
+)
+
+# Public header target (main entry point)
+autoconf(
+    name = "sys_socket_h",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_SYS_SOCKET_H",
+    ],
+)
+
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_SYS_SOCKET_H_REQUIRE_DEFAULTS",
+    ],
 )

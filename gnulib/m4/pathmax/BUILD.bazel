@@ -1,17 +1,33 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/pathmax.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+
+autoconf(
+    name = "gl_PATHMAX",
+    checks = [
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/macros/HAVE_SYS_PARAM_H",
+    ],
+)
+
+autoconf(
+    name = "gl_PATHMAX_SNIPPET_PREREQ",
+    checks = [
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/macros/HAVE_SYS_PARAM_H",
+    ],
+)
 
 autoconf(
     name = "pathmax",
-    checks = [
-        # Check for sys/param.h header
-        # Equivalent to gl_PATHMAX macro from pathmax.m4
-        macros.AC_CHECK_HEADER(
-            "sys/param.h",
-            define = "HAVE_SYS_PARAM_H",
-        ),
-    ],
     visibility = ["//visibility:public"],
+    deps = [
+        ":gl_PATHMAX",
+        ":gl_PATHMAX_SNIPPET_PREREQ",
+    ],
 )

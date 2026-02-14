@@ -5,7 +5,13 @@ load("//autoconf:autoconf.bzl", "autoconf")
 autoconf(
     name = "unistd-safer",
     checks = [
-        # TODO: Add checks based on .m4 file
+        # gl_UNISTD_SAFER checks for pipe function
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
+        "//gnulib/m4/pipe",
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

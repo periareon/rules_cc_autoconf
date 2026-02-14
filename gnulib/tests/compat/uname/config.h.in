@@ -1,0 +1,3 @@
+/* config.h.in */
+#undef HAVE_STRUCT_UTSNAME
+#undef HAVE_UNAME

@@ -1,26 +1,37 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/memrchr.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "memrchr",
-    checks = [
-        # Check for memrchr function and declaration
-        # Equivalent to gl_FUNC_MEMRCHR macro from memrchr.m4
-        macros.AC_CHECK_DECL(
-            "memrchr",
-            define = "HAVE_DECL_MEMRCHR",
-            headers = ["string.h"],
-        ),
-        macros.AC_CHECK_FUNC(
-            "memrchr",
-            define = "HAVE_MEMRCHR",
-        ),
-    ],
+    checks = select({
+        # On Linux, memrchr is available in glibc with _GNU_SOURCE
+        "@platforms//os:linux": [
+            checks.AC_DEFINE("HAVE_DECL_MEMRCHR", 1),
+            checks.AC_SUBST("HAVE_DECL_MEMRCHR", "1"),
+            checks.AC_DEFINE("HAVE_MEMRCHR", 1),
+        ],
+        # On other platforms, check for it
+        "//conditions:default": [
+            checks.AC_CHECK_DECL(
+                "memrchr",
+                define = "HAVE_DECL_MEMRCHR",
+                includes = ["#include <string.h>"],
+                subst = True,
+            ),
+            checks.AC_CHECK_FUNC(
+                "memrchr",
+                define = "HAVE_MEMRCHR",
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/string_h",  # AC_REQUIRE([gl_STRING_H_DEFAULTS])
-        # Note: AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
+        # Provides system extension defines (_ALL_SOURCE, _DARWIN_C_SOURCE, etc.)
+        "//gnulib/m4/extensions",
+        # AC_REQUIRE([gl_STRING_H_DEFAULTS]) - line 16 (ignore, it's a _DEFAULTS function)
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

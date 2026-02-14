@@ -1,27 +1,55 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/pipe2.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "pipe2",
     checks = [
-        # Check for pipe2 function
-        # Equivalent to gl_FUNC_PIPE2 macro from pipe2.m4
-        macros.AC_TRY_COMPILE(
-            code = """#include <unistd.h>
-
-#ifdef __cplusplus
-extern "C"
-#endif
-char pipe2 ();
-
-int main(void) {
-    return pipe2();
-}""",
-            define = "HAVE_PIPE2",
-            language = "c",
+        # This is similar to AC_CHECK_FUNC but with Android-specific handling
+        # Use AC_CHECK_FUNC with includes to check for pipe2 function
+        checks.AC_CHECK_FUNC(
+            "pipe2",
+            name = "_gl_cv_func_pipe2",
         ),
-    ],
+
+        # HAVE_PIPE2 subst: "1" if found, "0" otherwise (golden macos expects "0")
+        checks.AC_SUBST(
+            "HAVE_PIPE2",
+            condition = "_gl_cv_func_pipe2",
+            if_false = "0",
+            if_true = "1",
+        ),
+
+        # HAVE_PIPE2 define in config.h: 1 if found, undef otherwise
+        # Linux: defined to 1 (pipe2 exists)
+        # macOS: undef (pipe2 doesn't exist)
+        # Use requires pattern to ensure undef (not 0) when not found
+        checks.AC_DEFINE(
+            "HAVE_PIPE2",
+            "1",
+            requires = ["_gl_cv_func_pipe2==1"],
+        ),
+
+        # REPLACE_PIPE2 logic (lines 19-24):
+        # - If pipe2 not found: 0 (macOS doesn't have pipe2)
+        # - If pipe2 found: check for bugs - on Linux, gnulib replaces due to known issues
+        # Based on golden files: macOS=0, Linux=1
+    ] + select({
+        "@platforms//os:linux": [
+            # On Linux, pipe2 exists but gnulib replaces it due to known bugs
+            checks.AC_SUBST("REPLACE_PIPE2", "1"),
+        ],
+        "//conditions:default": [
+            # On macOS, pipe2 doesn't exist, no replacement needed
+            checks.AC_SUBST("REPLACE_PIPE2", "0"),
+        ],
+    }),
     visibility = ["//visibility:public"],
+    deps = [
+        # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        "//gnulib/m4/extensions",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

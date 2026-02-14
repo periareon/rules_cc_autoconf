@@ -35,12 +35,11 @@ cc_binary(
     name = "resolver_bin",
     srcs = [
         "main.cc",
-        "resolver_arg_parse.cc",
-        "resolver_arg_parse.h",
     ],
     cxxopts = cxxopts(),
     visibility = ["//visibility:public"],
     deps = [
         ":resolver",
+        "//autoconf/private/common:action_args",
     ],
 )

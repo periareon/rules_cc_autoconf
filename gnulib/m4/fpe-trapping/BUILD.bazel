@@ -1,11 +1,12 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fpe-trapping.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "fpe-trapping",
     checks = [
-        # Note: fpe-trapping.m4 may not exist in gnulib, or this module may not have checks
+        checks.AC_SUBST("FPE_TRAPPING_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [

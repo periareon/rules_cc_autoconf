@@ -1,11 +1,25 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/mkstemps.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "mkstemps",
     checks = [
-        # Note: mkstemps.m4 may not exist in gnulib, or this module may not have checks
+        # gl_FUNC_MKSTEMPS checks for mkstemps function
+        # Use subst=True to automatically create both config.h define and subst.h entry
+        # This will override the default value from stdlib_h:defaults
+        checks.AC_CHECK_FUNC(
+            "mkstemps",
+            define = "HAVE_MKSTEMPS",
+            subst = True,
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
+        "//gnulib/m4/wchar_h:gl_WCHAR_H_CORE",
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

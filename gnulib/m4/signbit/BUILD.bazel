@@ -1,23 +1,25 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/signbit.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "signbit",
     checks = [
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "copysignf",
             define = "HAVE_DECL_COPYSIGNF",
         ),
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "copysign",
             define = "HAVE_DECL_COPYSIGN",
         ),
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "copysignl",
             define = "HAVE_DECL_COPYSIGNL",
         ),
+        # macOS golden expects REPLACE_SIGNBIT_USING_BUILTINS "1" (override math_h default 0)
+        checks.AC_SUBST("REPLACE_SIGNBIT_USING_BUILTINS", "1"),
     ],
     visibility = ["//visibility:public"],
 )

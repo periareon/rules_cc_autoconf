@@ -1,0 +1,3 @@
+/* config.h.in */
+/* #undef HAVE_STRUCT_TM_TM_ZONE */
+#define HAVE_TM_ZONE 0

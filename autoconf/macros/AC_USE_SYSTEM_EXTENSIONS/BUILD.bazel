@@ -1,0 +1,44 @@
+"""AC_USE_SYSTEM_EXTENSIONS - Autoconf builtin macro
+
+Enable extensions on systems that normally disable them,
+typically due to standards-conformance issues.
+
+This macro unconditionally defines feature test macros that
+enable platform-specific extensions.
+
+See: https://www.gnu.org/software/autoconf/manual/autoconf-2.72/html_node/Particular-Headers.html
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "AC_USE_SYSTEM_EXTENSIONS",
+    checks = [
+        # Feature test macros for system extensions
+        checks.AC_DEFINE("_ALL_SOURCE", 1),  # Integer, not string - renders as unquoted 1
+        checks.AC_DEFINE("_DARWIN_C_SOURCE", 1),  # Integer, not string - renders as unquoted 1
+        checks.AC_DEFINE("_GNU_SOURCE", 1),  # Integer, not string - renders as unquoted 1
+        checks.AC_DEFINE("_HPUX_ALT_XOPEN_SOCKET_API", 1),  # Integer, not string - renders as unquoted 1
+        checks.AC_DEFINE("_NETBSD_SOURCE", 1),  # Integer, not string - renders as unquoted 1
+        checks.AC_DEFINE("_OPENBSD_SOURCE", 1),  # Integer, not string - renders as unquoted 1
+        checks.AC_DEFINE("_POSIX_PTHREAD_SEMANTICS", 1),  # Integer, not string - renders as unquoted 1
+        checks.AC_DEFINE("__STDC_WANT_IEC_60559_ATTRIBS_EXT__", 1),  # Integer, not string - renders as unquoted 1
+        checks.AC_DEFINE("__STDC_WANT_IEC_60559_BFP_EXT__", 1),  # Integer, not string - renders as unquoted 1
+        checks.AC_DEFINE("__STDC_WANT_IEC_60559_DFP_EXT__", 1),  # Integer, not string - renders as unquoted 1
+        checks.AC_DEFINE("__STDC_WANT_IEC_60559_EXT__", 1),  # Integer, not string - renders as unquoted 1
+        checks.AC_DEFINE("__STDC_WANT_IEC_60559_FUNCS_EXT__", 1),  # Integer, not string - renders as unquoted 1
+        checks.AC_DEFINE("__STDC_WANT_IEC_60559_TYPES_EXT__", 1),  # Integer, not string - renders as unquoted 1
+        checks.AC_DEFINE("__STDC_WANT_LIB_EXT2__", 1),  # Integer, not string - renders as unquoted 1
+        checks.AC_DEFINE("__STDC_WANT_MATH_SPEC_FUNCS__", 1),  # Integer, not string - renders as unquoted 1
+        checks.AC_DEFINE("_TANDEM_SOURCE", 1),  # Integer, not string - renders as unquoted 1
+        # __EXTENSIONS__ is conditionally defined on Solaris
+        # On most systems, it's safe to define unconditionally
+        checks.AC_DEFINE("__EXTENSIONS__", 1),  # Integer, not string - renders as unquoted 1
+    ],
+    visibility = ["//visibility:public"],
+    # Note: AC_USE_SYSTEM_EXTENSIONS uses AC_BEFORE([$0], [AC_CHECK_INCLUDES_DEFAULT])
+    # which means it should run before AC_CHECK_INCLUDES_DEFAULT, but doesn't require it.
+    # We don't add AC_CHECK_INCLUDES_DEFAULT as a dependency to avoid conflicts with
+    # modules that depend on both extensions and specific header modules (e.g., stdlib_h).
+)

@@ -1,0 +1,24 @@
+/* config.h.in */
+/* #undef HAVE_ENDMNTENT */
+/* #undef HAVE_GETMNTENT */
+/* #undef HAVE_HASMNTOPT */
+#define HAVE_INTTYPES_H 1
+/* #undef HAVE_MNTENT_H */
+/* #undef HAVE_SETMNTENT */
+#define HAVE_STDINT_H 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_STRING_H 1
+#define HAVE_STRUCT_STATFS_F_FSTYPENAME 1
+#define HAVE_SYS_MOUNT_H 1
+#define HAVE_SYS_PARAM_H 1
+#define HAVE_SYS_STATVFS_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_SYS_UCRED_H 1
+#define HAVE_UNISTD_H 1
+/* #undef MAJOR_IN_SYSMACROS */
+/* #undef MOUNTED_GETMNTENT1 */
+#define MOUNTED_GETMNTINFO 1
+#define STDC_HEADERS 1

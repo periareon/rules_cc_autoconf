@@ -1,0 +1,5 @@
+load(":defaults_test_suite.bzl", "defaults_test_suite")
+
+defaults_test_suite(
+    name = "defaults_test_suite",
+)

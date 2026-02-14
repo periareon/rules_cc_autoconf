@@ -1,11 +1,51 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sys_file_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "sys_file_h",
     checks = [
-        # TODO: Add checks based on .m4 file
+        # gl_SYS_FILE_H checks for sys/file.h header
+        checks.AC_CHECK_HEADER(
+            "sys/file.h",
+            define = "HAVE_SYS_FILE_H",
+            subst = "HAVE_SYS_FILE_H",
+        ),
+        checks.AC_SUBST("NEXT_SYS_FILE_H", "<sys/file.h>"),
+        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_SYS_FILE_H", "<sys/file.h>"),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",  # gl_CHECK_NEXT_HEADERS([sys/file.h])
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "gl_SYS_FILE_H_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("HAVE_FLOCK", 1),
+    ],
+    visibility = ["//visibility:private"],
+)
+
+autoconf(
+    name = "gl_SYS_FILE_H_REQUIRE_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("GNULIB_FLOCK", 0),
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gl_SYS_FILE_H_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_SYS_FILE_H_REQUIRE_DEFAULTS",
+    ],
 )

@@ -1,0 +1,2 @@
+/* config.h.in */
+#define NEED_PRINTF_WITH_N_DIRECTIVE 1

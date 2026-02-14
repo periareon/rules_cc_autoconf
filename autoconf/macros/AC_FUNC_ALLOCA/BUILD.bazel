@@ -1,0 +1,43 @@
+"""AC_FUNC_ALLOCA - Autoconf builtin macro
+
+Checks for alloca() function and alloca.h header.
+
+Defines:
+  - HAVE_ALLOCA_H (if alloca.h exists)
+  - C_ALLOCA (if using alloca.c replacement)
+  - STACK_DIRECTION (stack growth direction)
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "AC_FUNC_ALLOCA",
+    checks = [
+        # Check for alloca.h header
+        # Set HAVE_ALLOCA_H as both define (for config.h) and subst (for subst.h)
+        checks.AC_CHECK_HEADER(
+            "alloca.h",
+            define = "HAVE_ALLOCA_H",
+        ),
+        # Check if alloca works (typically via compiler builtin)
+        checks.AC_TRY_COMPILE(
+            name = "ac_cv_func_alloca",
+            code = """#include <alloca.h>
+int main(void) {
+    void *p = alloca(1);
+    (void)p;
+    return 0;
+}""",
+        ),
+        # Define HAVE_ALLOCA in config.h if alloca works
+        checks.AC_DEFINE(
+            "HAVE_ALLOCA",
+            condition = "ac_cv_func_alloca",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)

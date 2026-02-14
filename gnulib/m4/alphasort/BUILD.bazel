@@ -1,20 +1,23 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/alphasort.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "alphasort",
     checks = [
-        # Check for alphasort function
-        # Equivalent to gl_FUNC_ALPHASORT macro from alphasort.m4
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "alphasort",
             define = "HAVE_ALPHASORT",
+            subst = True,
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/dirent_h",  # AC_REQUIRE([gl_DIRENT_H_DEFAULTS])
+        "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        # (golden files include standard header checks even though not AC_REQUIREd)
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

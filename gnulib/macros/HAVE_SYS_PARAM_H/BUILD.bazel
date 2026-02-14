@@ -1,0 +1,28 @@
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "ac_cv_header_sys_param_h",
+    checks = [
+        checks.AC_CHECK_HEADER("sys/param.h"),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "HAVE_SYS_PARAM_H",
+    checks = [
+        checks.AC_DEFINE(
+            "HAVE_SYS_PARAM_H",
+            requires = ["ac_cv_header_sys_param_h"],
+        ),
+        checks.AC_SUBST(
+            "HAVE_SYS_PARAM_H",
+            condition = "ac_cv_header_sys_param_h",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":ac_cv_header_sys_param_h",
+    ],
+)

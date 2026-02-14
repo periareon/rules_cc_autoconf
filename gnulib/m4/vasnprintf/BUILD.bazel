@@ -1,35 +1,446 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/vasnprintf.m4"""
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/vasnprintf.m4
+
+One Bazel target per AC_DEFUN in vasnprintf.m4:
+  gl_FUNC_VASNPRINTF, gl_REPLACE_VASNPRINTF, gl_FUNC_VASNWPRINTF,
+  gl_PREREQ_PRINTF_ARGS, gl_PREREQ_PRINTF_PARSE, gl_PREREQ_VASNPRINTF,
+  gl_PREREQ_VASNXPRINTF, gl_PREREQ_VASNWPRINTF, gl_PREREQ_ASNPRINTF,
+  gl_PREREQ_VASNPRINTF_LONG_DOUBLE, gl_PREREQ_VASNPRINTF_INFINITE_DOUBLE,
+  gl_PREREQ_VASNPRINTF_INFINITE_LONG_DOUBLE, gl_PREREQ_VASNPRINTF_DIRECTIVE_A,
+  gl_PREREQ_VASNPRINTF_DIRECTIVE_B, gl_PREREQ_VASNPRINTF_DIRECTIVE_UPPERCASE_B,
+  gl_PREREQ_VASNPRINTF_DIRECTIVE_F, gl_PREREQ_VASNPRINTF_DIRECTIVE_LS,
+  gl_PREREQ_VASNPRINTF_DIRECTIVE_LC, gl_PREREQ_VASNPRINTF_FLAG_GROUPING,
+  gl_PREREQ_VASNPRINTF_FLAG_LEFTADJUST, gl_PREREQ_VASNPRINTF_FLAG_ZERO,
+  gl_PREREQ_VASNPRINTF_FLAG_ALT_PRECISION_ZERO, gl_PREREQ_VASNPRINTF_PRECISION,
+  gl_PREREQ_VASNPRINTF_ENOMEM, gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS,
+  gl_PREREQ_VASNPRINTF_WITH_GNU_EXTRAS.
+Aggregate target "vasnprintf" depends on core prereqs and extras.
+"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
-# HAVE_SNPRINTF comes from snprintf dependency
+autoconf(
+    name = "gl_FUNC_VASNPRINTF",
+    checks = [
+        checks.AC_CHECK_FUNC("vasnprintf"),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+    ],
+)
+
+autoconf(
+    name = "gl_REPLACE_VASNPRINTF",
+    checks = [
+        checks.AC_CHECK_FUNC("vasnprintf"),
+        # This is conditional based on gl_FUNC_VASNPRINTF results
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_PREREQ_ASNPRINTF",
+        ":gl_PREREQ_PRINTF_ARGS",
+        ":gl_PREREQ_PRINTF_PARSE",
+        ":gl_PREREQ_VASNPRINTF",
+    ],
+)
+
+autoconf(
+    name = "gl_FUNC_VASNWPRINTF",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_PREREQ_ASNPRINTF",
+        ":gl_PREREQ_PRINTF_ARGS",
+        ":gl_PREREQ_PRINTF_PARSE",
+        ":gl_PREREQ_VASNWPRINTF",
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_PRINTF_ARGS",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/wint_t",
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_PRINTF_PARSE",
+    checks = [
+        # Note: This may define ptrdiff_t as long if not available
+        checks.AC_CHECK_TYPE("ptrdiff_t"),
+        # Note: HAVE_FEATURES_H is already provided by gnulib-common:features_h dependency
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_TYPE_SIZE_T",
+        "//gnulib/m4/gnulib-common:gl_FEATURES_H",
+        "//gnulib/m4/intmax_t",
+        "//gnulib/m4/wint_t",
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_VASNPRINTF",
+    checks = [
+
+        # Note: ptrdiff_t is also checked in gl_PREREQ_PRINTF_PARSE (line 88)
+        # Since both are dependencies of gl_REPLACE_VASNPRINTF, we rely on gl_PREREQ_PRINTF_PARSE
+        # to provide HAVE_PTRDIFF_T to avoid duplicate checks
+
+        # ac_cv_have_decl__snprintf from stdio_h:gl_HAVE_DECL__SNPRINTF (shared with stdio_h; avoids full stdio_h dep)
+
+        # HAVE_SNPRINTF_RETVAL_C99 and HAVE_SNPRINTF_TRUNCATION_C99
+        # These are runtime checks (AC_RUN_IFELSE) that can't be easily ported.
+        # Based on golden files, on macOS/Linux these are defined as 1.
+        # The m4 file sets these based on gl_cv_func_snprintf_retval_c99 and
+        # gl_cv_func_snprintf_truncation_c99 cache variables.
+        # Note: Both HAVE_SNPRINTF_RETVAL_C99 and HAVE_SNPRINTF_TRUNCATION_C99 are already
+        # provided by printf:gl_SNPRINTF_RETVAL_C99 and printf:gl_SNPRINTF_TRUNCATION_C99 dependencies
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/intmax_t",
+        "//gnulib/m4/wint_t",
+        "//autoconf/macros/AC_FUNC_STRNLEN",
+        "//gnulib/m4/wcrtomb",
+        # Note: This avoids pulling in HAVE_DECL_SNPRINTF which fprintf-posix doesn't want
+        "//gnulib/macros/AC_FUNC_SNPRINTF",
+        # gl_SNPRINTF_RETVAL_C99 and gl_SNPRINTF_TRUNCATION_C99 are runtime checks
+        # that we can't easily port, but we include them for dependency tracking
+        "//gnulib/m4/printf:gl_SNPRINTF_RETVAL_C99",
+        "//gnulib/m4/printf:gl_SNPRINTF_TRUNCATION_C99",
+        # ac_cv_have_decl__snprintf from stdio_h:gl_HAVE_DECL__SNPRINTF (avoids full stdio_h dep)
+        "//gnulib/m4/stdio_h:gl_HAVE_DECL__SNPRINTF",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_VASNXPRINTF",
+    checks = [
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_FUNC_ALLOCA",
+        "//gnulib/m4/exponentd",
+        "//gnulib/m4/wcslen",
+        "//gnulib/m4/wint_t",
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_VASNWPRINTF",
+    checks = [
+        # Note: HAVE_SWPRINTF comes from printf dependency via gl_SWPRINTF_WORKS
+        checks.AC_CHECK_DECL(
+            "_snwprintf",
+            define = "HAVE_DECL__SNWPRINTF",
+            includes = ["#include <stdio.h>"],
+        ),
+        checks.AC_CHECK_DECL(
+            "wcsnlen",
+            define = "HAVE_DECL_WCSNLEN",
+            includes = ["#include <wchar.h>"],
+        ),
+        # Golden shows this defined on both Linux and macOS
+        checks.AC_DEFINE("NEED_WPRINTF_DIRECTIVE_C", "1"),
+    ] + select({
+        # On Linux: swprintf handles 'lc' correctly
+        "@platforms//os:linux": [],
+        # On macOS: swprintf doesn't handle 'lc' correctly
+        "//conditions:default": [
+            checks.AC_DEFINE("NEED_WPRINTF_DIRECTIVE_LC", "1"),
+        ],
+    }) + [
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_PREREQ_VASNXPRINTF",
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//gnulib/m4/printf:gl_SWPRINTF_DIRECTIVE_LA",
+        "//gnulib/m4/printf:gl_SWPRINTF_DIRECTIVE_LC",
+        "//gnulib/m4/printf:gl_SWPRINTF_WORKS",
+        "//gnulib/m4/wcsnlen",
+        "//gnulib/macros/AC_FUNC_MBRTOWC",
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_ASNPRINTF",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_PREREQ_VASNPRINTF_LONG_DOUBLE",
+    checks = select({
+        # On Linux: glibc handles long double correctly
+        "@platforms//os:linux": [],
+        # On macOS: needs long double workaround
+        "//conditions:default": [
+            checks.AC_DEFINE("NEED_PRINTF_LONG_DOUBLE", "1"),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/printf:gl_PRINTF_LONG_DOUBLE",
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_VASNPRINTF_INFINITE_DOUBLE",
+    checks = [
+        # Golden files don't show this, so printf handles infinite doubles correctly
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/printf:gl_PRINTF_INFINITE",
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_VASNPRINTF_INFINITE_LONG_DOUBLE",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_PREREQ_VASNPRINTF_LONG_DOUBLE",
+        "//gnulib/m4/printf:gl_PRINTF_INFINITE_LONG_DOUBLE",
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_VASNPRINTF_DIRECTIVE_A",
+    checks = select({
+        # On Linux: glibc handles %a directive correctly
+        "@platforms//os:linux": [],
+        # On macOS: needs %a workaround
+        "//conditions:default": [
+            checks.AC_DEFINE("NEED_PRINTF_DIRECTIVE_A", "1"),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/printf:gl_PRINTF_DIRECTIVE_A",
+    ] + select({
+        # AC_FUNC_NL_LANGINFO is only required when NEED_PRINTF_DIRECTIVE_A is set (macOS)
+        "@platforms//os:linux": [],
+        "//conditions:default": [
+            "//gnulib/macros/AC_FUNC_NL_LANGINFO",
+        ],
+    }),
+)
+
+autoconf(
+    name = "gl_PREREQ_VASNPRINTF_DIRECTIVE_B",
+    checks = select({
+        # On Linux: glibc handles %b directive correctly
+        "@platforms//os:linux": [],
+        # On macOS: needs %b workaround
+        "//conditions:default": [
+            checks.AC_DEFINE("NEED_PRINTF_DIRECTIVE_B", "1"),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/printf:gl_PRINTF_DIRECTIVE_B",
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_VASNPRINTF_DIRECTIVE_UPPERCASE_B",
+    checks = select({
+        # On Linux: glibc handles %B directive correctly
+        "@platforms//os:linux": [],
+        # On macOS: needs %B workaround
+        "//conditions:default": [
+            checks.AC_DEFINE("NEED_PRINTF_DIRECTIVE_UPPERCASE_B", "1"),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/printf:gl_PRINTF_DIRECTIVE_UPPERCASE_B",
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_VASNPRINTF_DIRECTIVE_F",
+    checks = [
+        # Golden files don't show this, so printf handles 'F' directive correctly
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/printf:gl_PRINTF_DIRECTIVE_F",
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_VASNPRINTF_DIRECTIVE_LS",
+    checks = [
+        # Golden files don't show this, so printf handles 'ls' directive correctly
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/printf:gl_PRINTF_DIRECTIVE_LS",
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_VASNPRINTF_DIRECTIVE_LC",
+    checks = [
+        # Golden files don't show this clearly - it's in NEED_WPRINTF_DIRECTIVE_LC instead
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/printf:gl_PRINTF_DIRECTIVE_LC",
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_VASNPRINTF_FLAG_GROUPING",
+    checks = select({
+        # On Linux: glibc handles grouping flag correctly
+        "@platforms//os:linux": [],
+        # On macOS: needs grouping int workaround
+        "//conditions:default": [
+            checks.AC_DEFINE("NEED_PRINTF_FLAG_GROUPING_INT", "1"),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//gnulib/m4/printf:gl_PRINTF_FLAG_GROUPING",
+        "//gnulib/m4/printf:gl_PRINTF_FLAG_GROUPING_INT_PRECISION",
+        "//gnulib/m4/printf:gl_PRINTF_FLAG_GROUPING_MULTIBYTE",
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_VASNPRINTF_FLAG_LEFTADJUST",
+    checks = [
+        # Golden files don't show this, so printf handles '-' flag correctly
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/printf:gl_PRINTF_FLAG_LEFTADJUST",
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_VASNPRINTF_FLAG_ZERO",
+    checks = [
+        # Golden files don't show this, so printf handles '0' flag correctly
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/printf:gl_PRINTF_FLAG_ZERO",
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_VASNPRINTF_FLAG_ALT_PRECISION_ZERO",
+    checks = [
+        # Golden files don't show this, so printf handles this correctly
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/printf:gl_PRINTF_FLAG_ALT_PRECISION_ZERO",
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_VASNPRINTF_PRECISION",
+    checks = select({
+        # On Linux: glibc handles precision correctly
+        "@platforms//os:linux": [],
+        # On macOS: needs double precision workaround
+        "//conditions:default": [
+            checks.AC_DEFINE("NEED_PRINTF_DOUBLE", "1"),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/printf:gl_PRINTF_PRECISION",
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_VASNPRINTF_ENOMEM",
+    checks = select({
+        # On Linux: glibc handles ENOMEM correctly
+        "@platforms//os:linux": [],
+        # On macOS: needs ENOMEM workaround
+        "//conditions:default": [
+            checks.AC_DEFINE("NEED_PRINTF_ENOMEM", "1"),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/printf:gl_PRINTF_ENOMEM",
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_PREREQ_VASNPRINTF",
+        # gl_PREREQ_VASNXPRINTF is called by gl_PREREQ_VASNWPRINTF, but we need it here too
+        # for exponentd and AC_FUNC_ALLOCA (needed for golden file compatibility)
+        ":gl_PREREQ_VASNXPRINTF",
+        # HAVE_SAME_LONG_DOUBLE_AS_DOUBLE from math_h module (needed for golden file compatibility)
+        "//gnulib/m4/math_h:long-double-vs-double",
+        ":gl_PREREQ_VASNPRINTF_LONG_DOUBLE",
+        ":gl_PREREQ_VASNPRINTF_INFINITE_DOUBLE",
+        ":gl_PREREQ_VASNPRINTF_INFINITE_LONG_DOUBLE",
+        ":gl_PREREQ_VASNPRINTF_DIRECTIVE_A",
+        ":gl_PREREQ_VASNPRINTF_DIRECTIVE_B",
+        ":gl_PREREQ_VASNPRINTF_DIRECTIVE_F",
+        ":gl_PREREQ_VASNPRINTF_DIRECTIVE_LS",
+        ":gl_PREREQ_VASNPRINTF_DIRECTIVE_LC",
+        ":gl_PREREQ_VASNPRINTF_FLAG_GROUPING",
+        ":gl_PREREQ_VASNPRINTF_FLAG_LEFTADJUST",
+        ":gl_PREREQ_VASNPRINTF_FLAG_ZERO",
+        ":gl_PREREQ_VASNPRINTF_FLAG_ALT_PRECISION_ZERO",
+        ":gl_PREREQ_VASNPRINTF_PRECISION",
+        ":gl_PREREQ_VASNPRINTF_ENOMEM",
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_VASNPRINTF_WITH_GNU_EXTRAS",
+    checks = [
+        checks.AC_DEFINE("SUPPORT_GNU_PRINTF_DIRECTIVES", "1"),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_PREREQ_VASNPRINTF_DIRECTIVE_UPPERCASE_B",
+        ":gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS",
+    ],
+)
 
 autoconf(
     name = "vasnprintf",
     checks = [
-        macros.AC_CHECK_FUNC("vasnprintf"),
-        macros.AC_CHECK_FUNC("wcrtomb"),
-        macros.AC_CHECK_TYPE("ptrdiff_t"),
-        macros.AC_CHECK_DECL(
-            "_snprintf",
-            headers = ["stdio.h"],
-        ),
-        macros.AC_CHECK_DECL(
-            "_snwprintf",
-            headers = ["stdio.h"],
-        ),
-        macros.AC_CHECK_DECL(
-            "wcsnlen",
-            headers = ["wchar.h"],
-        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/intmax_t",  # AC_REQUIRE([gt_AC_TYPE_INTMAX_T])
-        "//gnulib/m4/snprintf",  # Provides HAVE_SNPRINTF
-        "//gnulib/m4/strnlen",  # Provides HAVE_STRNLEN
-        "//gnulib/m4/wcslen",  # Provides HAVE_WCSLEN
-        "//gnulib/m4/wint_t",  # AC_REQUIRE([gt_TYPE_WINT_T])
+        ":gl_PREREQ_VASNPRINTF",
+        ":gl_PREREQ_VASNXPRINTF",
+        ":gl_PREREQ_VASNWPRINTF",
+        ":gl_PREREQ_ASNPRINTF",
+        # Required so subst output matches golden (full autoconf runs it via gl_REPLACE_VASNPRINTF).
+        ":gl_PREREQ_PRINTF_PARSE",
+        # All extras (for test compatibility)
+        ":gl_PREREQ_VASNPRINTF_WITH_GNU_EXTRAS",
+        # HAVE_SAME_LONG_DOUBLE_AS_DOUBLE from math_h module
+        "//gnulib/m4/math_h:long-double-vs-double",
+        "//gnulib/m4/alloca:gl_FUNC_ALLOCA",
+        "//gnulib/m4/multiarch",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

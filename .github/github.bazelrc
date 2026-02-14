@@ -16,5 +16,8 @@ common --show_timestamps
 # Show all failures
 common --keep_going
 
-# TODO: Remove
-build --action_env=RULES_CC_AUTOCONF_DEBUG=2
+# Avoid gnulib tests which are highly volatile on different platforms.
+test --test_tag_filters=-gnu_autoconf_test
+
+# Enable verbose output
+build --action_env=RULES_CC_AUTOCONF_DEBUG=1

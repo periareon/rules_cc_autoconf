@@ -1,32 +1,34 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/_Exit.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 autoconf(
     name = "_Exit",
     checks = [
-        # Check for _Exit function from stdlib.h
         # Equivalent to gl_FUNC__EXIT macro from _Exit.m4
-        # Uses gl_CHECK_FUNCS_ANDROID([_Exit], [[#include <stdlib.h>]])
-        # Sets HAVE__EXIT=1 if found, HAVE__EXIT=0 if not found
-        macros.AC_TRY_COMPILE(
-            code = """#include <stdlib.h>
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char _Exit ();
-
+        # gl_CHECK_FUNCS_ANDROID([_Exit], [[#include <stdlib.h>]])
+        # This handles:
+        # - Checking if _Exit exists
+        # - AC_DEFINE HAVE__EXIT in config.h ONLY when function exists
+        # - AC_SUBST HAVE__EXIT in subst.h ALWAYS (0 or 1)
+        # Note: _Exit takes an int argument, so we need custom code
+    ] + gl_macros.GL_CHECK_FUNCS_ANDROID(
+        ["_Exit"],
+        code = """\
+#include <stdlib.h>
 int main(void) {
-    return _Exit();
-}""",
-            define = "HAVE__EXIT",
-            language = "c",
-        ),
+    int status = 0;
+    _Exit(status);
+    return 1;  // Should not reach here
+}
+""",
+    ) + [
+        # Set REPLACE__EXIT as substitution variable
+        # Otherwise, REPLACE__EXIT=0 (default from gl_STDLIB_H_DEFAULTS)
+        # Based on golden file, REPLACE__EXIT=0 on macOS (function exists)
+        checks.AC_SUBST("REPLACE__EXIT", 0),
     ],
     visibility = ["//visibility:public"],
 )

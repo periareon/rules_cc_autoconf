@@ -1,21 +1,49 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/explicit_bzero.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "explicit_bzero",
     checks = [
-        # Check for explicit_bzero function
-        # Equivalent to gl_FUNC_EXPLICIT_BZERO macro from explicit_bzero.m4
-        macros.AC_CHECK_FUNC(
-            "explicit_bzero",
-            define = "HAVE_EXPLICIT_BZERO",
+        # Note: gl_STRING_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+
+        # AC_CHECK_FUNCS_ONCE uses AC_TRY_COMPILE which only checks for compilation
+        # On macOS, explicit_bzero doesn't exist, so we need to use AC_TRY_LINK to ensure
+        # it's actually linkable (similar to euidaccess)
+        checks.AC_TRY_LINK(
+            name = "_gl_cv_func_explicit_bzero",
+            code = """\
+#include <string.h>
+
+#ifdef __cplusplus
+extern "C"
+#endif
+void explicit_bzero(void *, size_t);
+
+int main(void) {
+    char buf[10];
+    explicit_bzero(buf, sizeof(buf));
+    return 0;
+}
+""",
+            language = "c",
+        ),
+
+        # Create HAVE_EXPLICIT_BZERO define if function exists
+        checks.AC_DEFINE(
+            "HAVE_EXPLICIT_BZERO",
+            requires = ["_gl_cv_func_explicit_bzero"],
+        ),
+        checks.AC_SUBST(
+            "HAVE_EXPLICIT_BZERO",
+            condition = "_gl_cv_func_explicit_bzero",
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/string_h",  # AC_REQUIRE([gl_STRING_H_DEFAULTS])
-        # Note: AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
+        "//gnulib/m4/extensions",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

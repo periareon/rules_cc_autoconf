@@ -1,23 +1,50 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/group-member.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
+
+# Prerequisites of lib/group-member.c.
+autoconf(
+    name = "gl_PREREQ_GROUP_MEMBER",
+    checks = [
+        # Note: AC_FUNC_GETGROUPS is provided by AC_FUNC_GETGROUPS dependency
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_FUNC_GETGROUPS",
+    ],
+)
 
 autoconf(
     name = "group-member",
     checks = [
-        # Check for group_member function
-        # Equivalent to gl_FUNC_GROUP_MEMBER macro from group-member.m4
-        # Default behavior: HAVE_GROUP_MEMBER=1 if found, undefined if not found
-        macros.AC_CHECK_FUNC(
+        # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+
+        # Note: AC_USE_SYSTEM_EXTENSIONS is provided by extensions dependency
+
+        # If found, do nothing (HAVE_GROUP_MEMBER is not set, so it's undefined in config.h)
+        # Note: The m4 only sets HAVE_GROUP_MEMBER=0 when NOT found, it doesn't set it when found
+        checks.AC_CHECK_FUNC(
             "group_member",
-            define = "HAVE_GROUP_MEMBER",
+            name = "_gl_cv_func_group_member",
         ),
-    ],
+    ] + select({
+        # On Linux, group_member exists in glibc
+        "@platforms//os:linux": [
+            checks.AC_SUBST("HAVE_GROUP_MEMBER", "1"),
+        ],
+        # On macOS, group_member doesn't exist
+        "//conditions:default": [
+            checks.AC_SUBST("HAVE_GROUP_MEMBER", "0"),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
-        "//gnulib/m4/getgroups",  # AC_REQUIRE([AC_FUNC_GETGROUPS])
-        # Note: AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
+        # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
+        "//gnulib/m4/extensions",
+        ":gl_PREREQ_GROUP_MEMBER",
+        # Note: group-member doesn't need HAVE_DECL_EXECVPE (golden file shows it as undefined)
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

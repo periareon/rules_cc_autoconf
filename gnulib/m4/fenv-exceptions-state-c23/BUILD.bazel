@@ -1,11 +1,23 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fenv-exceptions-state-c23.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "fenv-exceptions-state-c23",
     checks = [
-        # Note: fenv-exceptions-state-c23.m4 may not exist in gnulib, or this module may not have checks
+        # gl_FENV_EXCEPTIONS_STATE_C23 uses gl_MATHFUNC([fetestexceptflag], ...)
+        # gl_MATHFUNC checks if fetestexceptflag exists
+        # If it doesn't exist (both no_libm and in_libm are not yes), then HAVE_FETESTEXCEPTFLAG=0
+        # On macOS, fetestexceptflag doesn't exist, so HAVE_FETESTEXCEPTFLAG should be 0
+        # Override the default from fenv_h:defaults (which sets it to 1)
+        checks.AC_SUBST("HAVE_FETESTEXCEPTFLAG", 0),
+        # gl_MATHFUNC sets FETESTEXCEPTFLAG_LIBM variable
+        # On macOS, fetestexceptflag doesn't need libm, so FETESTEXCEPTFLAG_LIBM should be empty string
+        checks.AC_SUBST("FETESTEXCEPTFLAG_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/fenv_h",
+    ],
 )

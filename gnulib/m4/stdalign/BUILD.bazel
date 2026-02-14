@@ -1,15 +1,13 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/stdalign.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
-# gl_ALIGNASOF from stdalign.m4
-# Check for alignas and alignof that conform to C23
 autoconf(
     name = "stdalign",
     checks = [
-        # Check for working alignas/alignof
-        macros.AC_TRY_COMPILE(
+        checks.AC_TRY_COMPILE(
             code = """\
 #include <stdint.h>
 #include <stddef.h>
@@ -23,8 +21,9 @@ int main(void) { return 0; }
 """,
             define = "HAVE_WORKING_ALIGNOF",
         ),
-        # Check with stdalign.h
-        macros.AC_TRY_COMPILE(
+        # Check with stdalign.h - functional check (alignof works correctly)
+        checks.AC_TRY_COMPILE(
+            name = "ac_cv_header_stdalign_h",
             code = """\
 #include <stdint.h>
 #include <stdalign.h>
@@ -34,8 +33,29 @@ char test_alignof[alignof (double) == _Alignof (double) ? 1 : -1];
 
 int main(void) { return 0; }
 """,
-            define = "HAVE_STDALIGN_H",
         ),
+        # GL_CHECK_NEXT_HEADERS only creates NEXT_* variables, not HAVE_* defines
+        # Need to add explicit AC_DEFINE to create HAVE_STDALIGN_H define in config.h
+        # Use the cache variable from AC_TRY_COMPILE above
+        checks.AC_DEFINE(
+            "HAVE_STDALIGN_H",
+            condition = "ac_cv_header_stdalign_h",
+            if_true = 1,
+        ),
+        # Also set as substitution variable for subst.h
+        # if test $ac_cv_header_stdalign_h = yes; then HAVE_STDALIGN_H=1 else HAVE_STDALIGN_H=0 fi
+        checks.AC_SUBST(
+            "HAVE_STDALIGN_H",
+            condition = "ac_cv_header_stdalign_h",
+            if_false = 0,
+            if_true = 1,
+        ),
+        #because AC_TRY_COMPILE above already creates ac_cv_header_stdalign_h
+    ] + gl_macros.GL_CHECK_NEXT_HEADERS(["stdalign.h"]) + [
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/include_next",  # gl_CHECK_NEXT_HEADERS requires include_next
+    ],
 )

@@ -1,11 +1,40 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/posix_memalign.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 autoconf(
     name = "posix_memalign",
-    checks = [
-        # Note: posix_memalign.m4 may not exist in gnulib, or this module may not have checks
-    ],
+    checks = gl_macros.GL_CHECK_FUNCS_ANDROID(
+        ["posix_memalign"],
+        includes = ["#include <stdlib.h>"],
+    ) + select({
+        # On Linux: posix_memalign needs replacement due to alignment issues
+        "@platforms//os:linux": [
+            checks.AC_SUBST("REPLACE_POSIX_MEMALIGN", 1),
+        ],
+        # On macOS: posix_memalign needs replacement
+        "@platforms//os:macos": [
+            checks.AC_SUBST("REPLACE_POSIX_MEMALIGN", 1),
+        ],
+        # On OpenBSD: posix_memalign works correctly
+        "@platforms//os:openbsd": [
+            checks.AC_SUBST("REPLACE_POSIX_MEMALIGN", 0),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST(
+                "REPLACE_POSIX_MEMALIGN",
+                condition = "!ac_cv_func_posix_memalign",
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
+    deps = [
+        # Note: gl_STDLIB_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

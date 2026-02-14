@@ -1,0 +1,2 @@
+/* config.h.in */
+/* #undef HAVE_MSVC_INVALID_PARAMETER_HANDLER */

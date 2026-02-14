@@ -1,0 +1,84 @@
+/* config.h.in */
+/* #undef HAVE_DECL_FCLOSEALL */
+/* #undef HAVE_DECL_FPURGE */
+/* #undef HAVE_DECL_FSEEKO */
+/* #undef HAVE_DECL_FTELLO */
+/* #undef HAVE_DECL_GETDELIM */
+/* #undef HAVE_DECL_GETLINE */
+/* #undef HAVE_DECL_GETW */
+#define HAVE_DECL_OBSTACK_PRINTF 0
+/* #undef HAVE_DECL_PUTW */
+/* #undef HAVE_DECL_SNPRINTF */
+/* #undef HAVE_DECL_VSNPRINTF */
+/* #undef HAVE_DPRINTF */
+/* #undef HAVE_FSEEKO */
+/* #undef HAVE_FTELLO */
+#define HAVE_INTTYPES_H 1
+/* #undef HAVE_OBSTACK_H */
+/* #undef HAVE_OBSTACK_PRINTF */
+/* #undef HAVE_PCLOSE */
+/* #undef HAVE_POPEN */
+/* #undef HAVE_RENAMEAT */
+#define HAVE_STDINT_H 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+/* #undef HAVE_STRINGS_H */
+#define HAVE_STRING_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+/* #undef HAVE_UNISTD_H */
+/* #undef HAVE_VASPRINTF */
+/* #undef HAVE_VDPRINTF */
+#define HAVE_WCHAR_H 1
+/* #undef REPLACE_DPRINTF */
+/* #undef REPLACE_FCLOSE */
+/* #undef REPLACE_FDOPEN */
+/* #undef REPLACE_FFLUSH */
+/* #undef REPLACE_FOPEN */
+/* #undef REPLACE_FOPEN_FOR_FOPEN_GNU */
+/* #undef REPLACE_FPRINTF */
+/* #undef REPLACE_FPURGE */
+/* #undef REPLACE_FREOPEN */
+/* #undef REPLACE_FSEEK */
+/* #undef REPLACE_FSEEKO */
+/* #undef REPLACE_FTELL */
+/* #undef REPLACE_FTELLO */
+/* #undef REPLACE_GETDELIM */
+/* #undef REPLACE_GETLINE */
+/* #undef REPLACE_OBSTACK */
+/* #undef REPLACE_OBSTACK_PRINTF */
+/* #undef REPLACE_PERROR */
+/* #undef REPLACE_POPEN */
+/* #undef REPLACE_PRINTF */
+/* #undef REPLACE_REMOVE */
+/* #undef REPLACE_RENAME */
+/* #undef REPLACE_RENAMEAT */
+/* #undef REPLACE_SNPRINTF */
+/* #undef REPLACE_SPRINTF */
+/* #undef REPLACE_STDIO_READ_FUNCS */
+/* #undef REPLACE_STDIO_WRITE_FUNCS */
+/* #undef REPLACE_TMPFILE */
+/* #undef REPLACE_VASPRINTF */
+/* #undef REPLACE_VDPRINTF */
+/* #undef REPLACE_VFPRINTF */
+/* #undef REPLACE_VPRINTF */
+/* #undef REPLACE_VSNPRINTF */
+/* #undef REPLACE_VSPRINTF */
+#define STDC_HEADERS 1
+#define _ALL_SOURCE 1
+#define _DARWIN_C_SOURCE 1
+#define _GNU_SOURCE 1
+#define _HPUX_ALT_XOPEN_SOCKET_API 1
+#define _NETBSD_SOURCE 1
+#define _OPENBSD_SOURCE 1
+#define _POSIX_PTHREAD_SEMANTICS 1
+#define _TANDEM_SOURCE 1
+#define __EXTENSIONS__ 1
+#define __STDC_WANT_IEC_60559_ATTRIBS_EXT__ 1
+#define __STDC_WANT_IEC_60559_BFP_EXT__ 1
+#define __STDC_WANT_IEC_60559_DFP_EXT__ 1
+#define __STDC_WANT_IEC_60559_EXT__ 1
+#define __STDC_WANT_IEC_60559_FUNCS_EXT__ 1
+#define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
+#define __STDC_WANT_LIB_EXT2__ 1
+#define __STDC_WANT_MATH_SPEC_FUNCS__ 1

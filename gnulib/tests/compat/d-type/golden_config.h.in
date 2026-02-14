@@ -1,0 +1,2 @@
+/* config.h.in */
+#define HAVE_STRUCT_DIRENT_D_TYPE 1

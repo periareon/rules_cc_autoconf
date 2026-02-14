@@ -1,11 +1,69 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/printf-posix.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
+# Main entry point: checks if printf is POSIX compliant and replaces if not.
+# if test $gl_cv_func_printf_posix = no; then
+# fi
 autoconf(
-    name = "printf-posix",
+    name = "gl_FUNC_PRINTF_POSIX",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_PRINTF_IS_POSIX",
+        ":gl_REPLACE_PRINTF",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/alloca:gl_FUNC_ALLOCA",
+        "//gnulib/m4/vasnprintf:gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS",
+        "//gnulib/m4/vasnprintf:gl_REPLACE_VASNPRINTF",
+    ],
+)
+
+# Tests whether printf is POSIX compliant.
+# gl_cv_func_printf_posix="$gl_cv_func_vfprintf_posix"
+# Result is a cache variable only — no AC_DEFINE or AC_SUBST output.
+autoconf(
+    name = "gl_FUNC_PRINTF_IS_POSIX",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# AC_REQUIRE([gl_STDIO_H_DEFAULTS]) - handled by _DEFAULTS toolchain
+# AC_LIBOBJ([printf])
+# REPLACE_PRINTF=1
+# AC_DEFINE([REPLACE_PRINTF_POSIX], [1], ...)
+# gl_PREREQ_PRINTF
+autoconf(
+    name = "gl_REPLACE_PRINTF",
     checks = [
-        # Note: printf-posix.m4 may not exist in gnulib, or this module may not have checks
+        checks.AC_SUBST("REPLACE_PRINTF", 1),
+        checks.AC_DEFINE("REPLACE_PRINTF_POSIX", "1"),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/asm-underscore",
+        ":gl_PREREQ_PRINTF",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# No-op: AC_DEFUN([gl_PREREQ_PRINTF], [:])
+autoconf(
+    name = "gl_PREREQ_PRINTF",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# Package-level aggregator
+autoconf(
+    name = "printf-posix",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_PRINTF_IS_POSIX",
+        ":gl_FUNC_PRINTF_POSIX",
+        ":gl_PREREQ_PRINTF",
+        ":gl_REPLACE_PRINTF",
+    ],
 )

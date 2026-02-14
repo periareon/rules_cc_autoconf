@@ -1,11 +1,32 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/intmax_t.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
+# gl_AC_TYPE_INTMAX_T macro from intmax_t.m4
+# Define intmax_t to 'long' or 'long long' if it is not already defined
+# in <stdint.h> or <inttypes.h>.
+#
+# The macro checks if inttypes.h or stdint.h define intmax_t (via uintmax_t),
+# and if so, defines HAVE_INTMAX_T. Otherwise, it would define intmax_t as
+# long long, but in Bazel we check if intmax_t is available using conditional
+# includes based on header availability.
+#
+# Logic from m4:
+# - If both headers are unavailable, define intmax_t as long long
+# - Otherwise, define HAVE_INTMAX_T as 1
 autoconf(
     name = "intmax_t",
     checks = [
-        # Note: intmax_t.m4 may not exist in gnulib, or this module may not have checks
+        # This matches gt_AC_TYPE_INTMAX_T logic which explicitly tests for intmax_t.
+        # The m4 file: if both headers are unavailable, define intmax_t as long long
+        # Otherwise, define HAVE_INTMAX_T as 1
+        # Since we have both headers available (from dependencies), we should define HAVE_INTMAX_T=1
+        checks.AC_DEFINE("HAVE_INTMAX_T", "1"),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/inttypes_h",
+        "//gnulib/m4/stdint_h",
+    ],
 )

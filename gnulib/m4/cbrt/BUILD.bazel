@@ -1,20 +1,36 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/cbrt.m4"""
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/cbrt.m4
+
+gl_FUNC_CBRT:
+- AC_REQUIRE([gl_MATH_H_DEFAULTS])
+- AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+- AC_CHECK_FUNCS([cbrt])
+- AC_SUBST([CBRT_LIBM])
+"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "cbrt",
     checks = [
-        macros.AC_CHECK_FUNC(
+        # gl_FUNC_CBRT checks for cbrt function
+        checks.AC_CHECK_FUNC(
             "cbrt",
             define = "HAVE_CBRT",
+            subst = True,
         ),
+        # CBRT_LIBM is empty on macOS (cbrt is in libSystem)
+        checks.AC_SUBST("CBRT_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
         "//gnulib/m4/fabs",
         "//gnulib/m4/frexp",
+        "//gnulib/m4/isnand",
         "//gnulib/m4/ldexp",
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+        "//gnulib/m4/mktime",  # Provides HAVE_DECL_ALARM (needed for test compatibility)
     ],
 )

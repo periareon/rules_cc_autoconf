@@ -1,35 +1,49 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/ftruncate.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks", "macros")
+
+autoconf(
+    name = "gl_FUNC_FTRUNCATE",
+    checks = [
+        checks.AC_CHECK_FUNC(
+            "ftruncate",
+            define = "HAVE_FTRUNCATE",
+            subst = True,
+        ),
+    ] + select({
+        "@platforms//os:windows": [
+            # On Windows, always replace ftruncate
+            checks.AC_SUBST("REPLACE_FTRUNCATE", 1),
+        ],
+        "//conditions:default": [
+            # On non-Windows, replace only if ftruncate doesn't exist
+            checks.AC_SUBST(
+                "REPLACE_FTRUNCATE",
+                condition = "HAVE_FTRUNCATE",
+                if_false = 1,  # Replace if function doesn't exist
+                if_true = 0,  # Don't replace if function exists
+            ),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
+        # Note: AC_REQUIRE([AC_CANONICAL_HOST]) is a standard autoconf macro
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_FTRUNCATE",
+    checks = macros.AC_CHECK_FUNCS(["_chsize"]),
+    visibility = ["//visibility:public"],
+)
 
 autoconf(
     name = "ftruncate",
-    checks = [
-        # Check for ftruncate function
-        # Equivalent to gl_FUNC_FTRUNCATE macro from ftruncate.m4
-        macros.AC_TRY_COMPILE(
-            code = """#include <unistd.h>
-
-#ifdef __cplusplus
-extern "C"
-#endif
-int ftruncate ();
-
-int main(void) {
-    return ftruncate();
-}""",
-            define = "HAVE_FTRUNCATE",
-            language = "c",
-        ),
-        macros.AC_CHECK_FUNC(
-            "_chsize",
-            define = "HAVE__CHSIZE",
-        ),
-    ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
-        # Note: AC_REQUIRE([AC_CANONICAL_HOST]) is a standard autoconf macro
+        ":gl_FUNC_FTRUNCATE",
+        ":gl_PREREQ_FTRUNCATE",
     ],
 )

@@ -1,0 +1,15 @@
+/* config.h.in */
+#define HAVE_INTTYPES_H 1
+#define HAVE_PTHREAD_API 0
+/* #undef HAVE_SCHED_YIELD */
+#define HAVE_STDINT_H 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+/* #undef HAVE_STRINGS_H */
+#define HAVE_STRING_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+/* #undef HAVE_UNISTD_H */
+/* #undef REPLACE_SCHED_YIELD */
+/* #undef SCHED_YIELD_LIB */
+#define STDC_HEADERS 1

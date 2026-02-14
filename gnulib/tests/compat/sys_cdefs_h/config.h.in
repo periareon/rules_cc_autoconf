@@ -1,0 +1,2 @@
+/* config.h.in */
+#undef HAVE_SYS_CDEFS_H

@@ -1,11 +1,24 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/mtx.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "mtx",
-    checks = [
-        # Note: mtx.m4 may not exist in gnulib, or this module may not have checks
-    ],
+    checks = select({
+        # On Linux with glibc 2.28+: C11 threads are available
+        "@platforms//os:linux": [
+            checks.AC_DEFINE("HAVE_MTX_INIT", "1"),
+        ],
+        "//conditions:default": [
+            # gl_FUNC_MTX_INIT requires gl_THREADS_H
+        ],
+    }),
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/include_next",  # Required for INCLUDE_NEXT variables
+        "//gnulib/m4/threadlib",
+        "//gnulib/m4/threads_h",
+    ],
 )

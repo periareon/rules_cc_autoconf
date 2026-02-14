@@ -1,11 +1,28 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fenv-rounding.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "gl_FENV_ROUNDING",
+    checks = [
+        # gl_FENV_ROUNDING uses gl_MATHFUNC([fesetround], ...) and gl_MATHFUNC([fpsetround], ...)
+        # gl_MATHFUNC sets FESETROUND_LIBM, FPSETROUND_LIBM, and FENV_ROUNDING_LIBM variables
+        # On macOS, these functions don't need libm, so all should be empty strings
+        checks.AC_SUBST("FENV_ROUNDING_LIBM", ""),
+        checks.AC_SUBST("FESETROUND_LIBM", ""),
+        checks.AC_SUBST("FPSETROUND_LIBM", ""),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/fenv_h",
+    ],
+)
 
 autoconf(
     name = "fenv-rounding",
-    checks = [
-        # Note: fenv-rounding.m4 may not exist in gnulib, or this module may not have checks
-    ],
     visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FENV_ROUNDING",
+    ],
 )

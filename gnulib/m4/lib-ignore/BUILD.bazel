@@ -5,9 +5,6 @@ load("//autoconf:autoconf.bzl", "autoconf")
 autoconf(
     name = "lib-ignore",
     checks = [
-        # gl_IGNORE_UNUSED_LIBRARIES macro from lib-ignore.m4 determines
-        # compiler flags to ignore unused libraries. This involves linker
-        # flag detection that is complex to replicate in Bazel.
     ],
     visibility = ["//visibility:public"],
 )

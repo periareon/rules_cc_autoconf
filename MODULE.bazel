@@ -14,3 +14,13 @@ bazel_dep(name = "rules_rust_mdbook", version = "0.66.0", dev_dependency = True)
 bazel_dep(name = "rules_shell", version = "0.5.1", dev_dependency = True)
 bazel_dep(name = "rules_venv", version = "0.7.0", dev_dependency = True)
 bazel_dep(name = "stardoc", version = "0.8.0", dev_dependency = True)
+
+register_toolchains(
+    "//gnulib/toolchain",
+)
+
+gnulib = use_extension("//gnulib/tests:deps.bzl", "gnulib", dev_dependency = True)
+use_repo(
+    gnulib,
+    "gnulib",
+)

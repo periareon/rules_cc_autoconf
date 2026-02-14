@@ -1,21 +1,148 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fsusage.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks", "macros", "utils")
 
-# HAVE_SYS_VFS_H comes from sys_vfs_h dependency
+autoconf(
+    name = "gl_FSUSAGE",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FILE_SYSTEM_USAGE",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/mountlist",
+        "//gnulib/macros/HAVE_SYS_PARAM_H:ac_cv_header_sys_param_h",
+        "//gnulib/macros/HAVE_SYS_VFS_H",
+    ],
+)
+
+_fu_cv_sys_stat_statvfs_include = """\
+#include <sys/types.h>
+#include <sys/statvfs.h>
+
+struct statvfs fsd;
+
+#if defined __APPLE__ && defined __MACH__
+#include <limits.h>
+/* On Mac OS X >= 10.5, f_blocks in 'struct statvfs' is a 32-bit quantity;
+   that commonly limits file systems to 4 TiB.  Whereas f_blocks in
+   'struct statfs' is a 64-bit type, thanks to the large-file support
+   that was enabled above.  In this case, don't use statvfs(); use statfs()
+   instead.  */
+int check_f_blocks_size[sizeof fsd.f_blocks * CHAR_BIT <= 32 ? -1 : 1];
+#endif
+"""
+
+_fu_cv_sys_stat_statvfs64_include = """\
+#include <sys/types.h>
+#include <sys/statvfs.h>
+struct statvfs64 fsd;
+int check_f_blocks_larger_in_statvfs64
+    [sizeof (((struct statvfs64 *) 0)->f_blocks)
+    > sizeof (((struct statvfs *) 0)->f_blocks)
+    ? 1 : -1];
+"""
+
+autoconf(
+    name = "gl_FILE_SYSTEM_USAGE",
+    checks = [
+        checks.AC_TRY_LINK(
+            name = "fu_cv_sys_stat_statvfs",
+            code = utils.AC_LANG_PROGRAM(
+                [_fu_cv_sys_stat_statvfs_include],
+                "statvfs (0, &fsd);",
+            ),
+        ),
+        checks.AC_TRY_LINK(
+            name = "fu_cv_sys_stat_statvfs64",
+            code = utils.AC_LANG_PROGRAM(
+                [_fu_cv_sys_stat_statvfs64_include],
+                "statvfs64 (0, &fsd);",
+            ),
+            requires = ["fu_cv_sys_stat_statvfs"],
+        ),
+        checks.AC_DEFINE(
+            "STAT_STATVFS64",
+            requires = [
+                "fu_cv_sys_stat_statvfs",
+                "fu_cv_sys_stat_statvfs64",
+            ],
+        ),
+        checks.AC_DEFINE(
+            "STAT_STATVFS",
+            requires = [
+                "fu_cv_sys_stat_statvfs",
+                "!fu_cv_sys_stat_statvfs64",
+            ],
+        ),
+        # macOS uses BSD-style statfs with f_bsize member (statvfs check fails)
+        checks.AC_DEFINE(
+            "STAT_STATFS2_BSIZE",
+            requires = ["!fu_cv_sys_stat_statvfs"],
+        ),
+    ] + select({
+        # Linux also has statfs with f_frsize member
+        "@platforms//os:linux": [
+            checks.AC_DEFINE("STAT_STATFS2_FRSIZE", 1),
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_SYS_LARGEFILE",
+    ],
+)
+
+autoconf(
+    name = "gl_STATFS_TRUNCATES",
+    checks = [
+        checks.AC_TRY_COMPILE(
+            name = "fu_cv_sys_truncating_statfs",
+            code = utils.AC_LANG_PROGRAM(
+                [
+                    "\n".join([
+                        "#if !defined(sun) && !defined(__sun)",
+                        "choke -- this is a workaround for a Sun-specific problem",
+                        "#endif",
+                        "#include <sys/types.h>",
+                        "#include <sys/vfs.h>",
+                    ]),
+                ],
+                "\n".join([
+                    "struct statfs t; long c = *(t.f_spare);",
+                    "if (c) return 0;",
+                ]),
+            ),
+        ),
+        checks.AC_DEFINE(
+            "STATFS_TRUNCATES_BLOCK_COUNTS",
+            requires = ["fu_cv_sys_truncating_statfs"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [],
+)
+
+autoconf(
+    name = "gl_PREREQ_FSUSAGE_EXTRA",
+    checks = macros.AC_CHECK_HEADERS(
+        [
+            "sys/fs/s5param.h",
+            "sys/statfs.h",
+        ],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_STATFS_TRUNCATES",
+    ],
+)
 
 autoconf(
     name = "fsusage",
-    checks = [
-        macros.AC_CHECK_HEADER("sys/statfs.h"),
-        macros.AC_CHECK_HEADER("sys/fs/s5param.h"),
-        macros.AC_CHECK_HEADER("sys/fs_types.h"),
-        macros.AC_CHECK_FUNC("statvfs"),
-    ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/pathmax",  # Provides HAVE_SYS_PARAM_H
-        "//gnulib/m4/sys_vfs_h",
+        ":gl_FILE_SYSTEM_USAGE",
+        ":gl_FSUSAGE",
+        ":gl_PREREQ_FSUSAGE_EXTRA",
+        ":gl_STATFS_TRUNCATES",
     ],
 )

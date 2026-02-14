@@ -1,0 +1,2 @@
+/* config.h.in */
+#define HAVE___INLINE 1

@@ -1,0 +1,105 @@
+/* config.h.in */
+/* #undef CFLAG_VISIBILITY */
+/* #undef HAVE_BTOWC */
+/* #undef HAVE_DECL_WCSDUP */
+/* #undef HAVE_DECL_WCWIDTH */
+#define HAVE_INTTYPES_H 1
+#define HAVE_LANGINFO_CODESET 1
+/* #undef HAVE_MBRLEN */
+#define HAVE_MBRTOWC 1
+#define HAVE_MBSINIT 1
+/* #undef HAVE_MBSNRTOWCS */
+/* #undef HAVE_MBSRTOWCS */
+#define HAVE_MBSTATE_T 1
+#define HAVE_PTHREAD_API 1
+#define HAVE_STDINT_H 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_STRING_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+/* #undef HAVE_THREADS_H */
+#define HAVE_UNISTD_H 1
+#define HAVE_VISIBILITY 1
+#define HAVE_WCHAR_H 1
+/* #undef HAVE_WCPCPY */
+/* #undef HAVE_WCPNCPY */
+/* #undef HAVE_WCRTOMB */
+/* #undef HAVE_WCSCASECMP */
+/* #undef HAVE_WCSCAT */
+/* #undef HAVE_WCSCHR */
+/* #undef HAVE_WCSCMP */
+/* #undef HAVE_WCSCOLL */
+/* #undef HAVE_WCSCPY */
+/* #undef HAVE_WCSCSPN */
+/* #undef HAVE_WCSDUP */
+/* #undef HAVE_WCSFTIME */
+/* #undef HAVE_WCSLEN */
+/* #undef HAVE_WCSNCASECMP */
+/* #undef HAVE_WCSNCAT */
+/* #undef HAVE_WCSNCMP */
+/* #undef HAVE_WCSNCPY */
+/* #undef HAVE_WCSNLEN */
+/* #undef HAVE_WCSNRTOMBS */
+/* #undef HAVE_WCSPBRK */
+/* #undef HAVE_WCSRCHR */
+/* #undef HAVE_WCSRTOMBS */
+/* #undef HAVE_WCSSPN */
+/* #undef HAVE_WCSSTR */
+/* #undef HAVE_WCSTOK */
+/* #undef HAVE_WCSWIDTH */
+/* #undef HAVE_WCSXFRM */
+/* #undef HAVE_WCTOB */
+/* #undef HAVE_WMEMCHR */
+/* #undef HAVE_WMEMCMP */
+/* #undef HAVE_WMEMCPY */
+/* #undef HAVE_WMEMMOVE */
+/* #undef HAVE_WMEMPCPY */
+/* #undef HAVE_WMEMSET */
+/* #undef HAVE_THREADS_H */
+/* #undef LOCALE_EN_UTF8 */
+/* #undef LOCALE_JA */
+/* #undef LOCALE_ZH_CN */
+/* #undef MBRTOWC_IN_C_LOCALE_MAYBE_EILSEQ */
+/* #undef MBRTOWC_LIB */
+/* #undef REPLACE_BTOWC */
+/* #undef REPLACE_MBRLEN */
+/* #undef REPLACE_MBRTOWC */
+/* #undef REPLACE_MBSINIT */
+/* #undef REPLACE_MBSNRTOWCS */
+/* #undef REPLACE_MBSRTOWCS */
+/* #undef REPLACE_MBSTATE_T */
+/* #undef REPLACE_WCRTOMB */
+/* #undef REPLACE_WCSCMP */
+/* #undef REPLACE_WCSFTIME */
+/* #undef REPLACE_WCSNCAT */
+/* #undef REPLACE_WCSNCMP */
+/* #undef REPLACE_WCSNRTOMBS */
+/* #undef REPLACE_WCSRTOMBS */
+/* #undef REPLACE_WCSSTR */
+/* #undef REPLACE_WCSTOK */
+/* #undef REPLACE_WCSWIDTH */
+/* #undef REPLACE_WCTOB */
+/* #undef REPLACE_WCWIDTH */
+/* #undef REPLACE_WMEMCMP */
+/* #undef REPLACE_WMEMPCPY */
+/* #undef SCHED_YIELD_LIB */
+#define STDC_HEADERS 1
+#define _ALL_SOURCE 1
+#define _DARWIN_C_SOURCE 1
+#define _GNU_SOURCE 1
+#define _HPUX_ALT_XOPEN_SOCKET_API 1
+#define _NETBSD_SOURCE 1
+#define _OPENBSD_SOURCE 1
+#define _POSIX_PTHREAD_SEMANTICS 1
+#define _TANDEM_SOURCE 1
+#define __EXTENSIONS__ 1
+#define __STDC_WANT_IEC_60559_ATTRIBS_EXT__ 1
+#define __STDC_WANT_IEC_60559_BFP_EXT__ 1
+#define __STDC_WANT_IEC_60559_DFP_EXT__ 1
+#define __STDC_WANT_IEC_60559_EXT__ 1
+#define __STDC_WANT_IEC_60559_FUNCS_EXT__ 1
+#define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
+#define __STDC_WANT_LIB_EXT2__ 1
+#define __STDC_WANT_MATH_SPEC_FUNCS__ 1

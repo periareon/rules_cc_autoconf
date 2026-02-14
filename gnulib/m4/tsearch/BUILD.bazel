@@ -1,7 +1,7 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/tsearch.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 # gl_FUNC_TSEARCH macro from tsearch.m4
 # COMPLEX CASE: Uses AC_RUN_IFELSE to test if tdelete() works correctly
@@ -10,28 +10,27 @@ autoconf(
     name = "tsearch",
     checks = [
         # gl_CHECK_FUNCS_ANDROID([tsearch], [[#include <search.h>]])
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "tsearch",
-            code = "#include <search.h>",
+            define = "HAVE_TSEARCH",
         ),
         # gl_CHECK_FUNCS_ANDROID([twalk], [[#include <search.h>]])
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "twalk",
-            code = "#include <search.h>",
+            define = "HAVE_TWALK",
         ),
         # Also check for related functions
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "tfind",
-            code = "#include <search.h>",
+            define = "HAVE_TFIND",
         ),
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "tdelete",
-            code = "#include <search.h>",
+            define = "HAVE_TDELETE",
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_SEARCH_H_DEFAULTS])
-        "//gnulib/m4/search_h",
+        "//gnulib/m4/search_h:gl_SEARCH_H_CORE",  # Use core to avoid HAVE_SEARCH_H subst
     ],
 )

@@ -1,0 +1,33 @@
+/* config.h.in */
+/* #undef FILE_HAS_ACL_LIB */
+/* #undef HAVE_ACL_COPY_EXT_NATIVE */
+/* #undef HAVE_ACL_CREATE_ENTRY_NP */
+/* #undef HAVE_ACL_DELETE_DEF_FILE */
+/* #undef HAVE_ACL_DELETE_FD_NP */
+/* #undef HAVE_ACL_DELETE_FILE_NP */
+/* #undef HAVE_ACL_FIRST_ENTRY */
+/* #undef HAVE_ACL_FREE */
+/* #undef HAVE_ACL_FROM_TEXT */
+/* #undef HAVE_ACL_GET_FD */
+/* #undef HAVE_ACL_GET_FILE */
+/* #undef HAVE_ACL_GET_LINK_NP */
+/* #undef HAVE_ACL_SET_FD */
+/* #undef HAVE_ACL_SET_FILE */
+/* #undef HAVE_ACL_TYPE_EXTENDED */
+#define HAVE_FCHMOD 1
+#define HAVE_INTTYPES_H 1
+#define HAVE_LINUX_XATTR_H 1
+#define HAVE_LISTXATTR 1
+#define HAVE_STDINT_H 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_STRING_H 1
+/* #undef HAVE_SYS_ACL_H */
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+/* #undef QCOPY_ACL_LIB */
+#define STDC_HEADERS 1
+#define USE_ACL 0
+#define USE_SELINUX_SELINUX_H 0

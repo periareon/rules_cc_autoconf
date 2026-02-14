@@ -1,11 +1,49 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fenv-exceptions-state.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
+#
+# This module does NOT call gl_FENV_EXCEPTIONS_TRAPPING (which checks if
+# feenableexcept exists and sets HAVE_FEENABLEEXCEPT=0 on macOS).
+# Instead, it uses defaults from gl_FENV_H_DEFAULTS (HAVE_FEENABLEEXCEPT=1).
+#
+# It only depends on FEENABLEEXCEPT_LIBM (the shared library linkage target).
+autoconf(
+    name = "gl_FENV_EXCEPTIONS_STATE",
+    checks = [
+        # FENV_EXCEPTIONS_STATE_LIBM - empty if fesetexceptflag exists without -lm
+        checks.AC_SUBST("FENV_EXCEPTIONS_STATE_LIBM", ""),
+
+        # FESETEXCEPTFLAG_LIBM - for linking with libm if needed
+        checks.AC_SUBST("FESETEXCEPTFLAG_LIBM", ""),
+    ] + select({
+        # On Linux, fesetexceptflag is non-trapping (glibc implementation)
+        "@platforms//os:linux": [
+            checks.AC_SUBST("REPLACE_FESETEXCEPTFLAG", "0"),
+        ],
+        # On macOS, fesetexceptflag may raise traps (not guaranteed non-trapping)
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_FESETEXCEPTFLAG", "1"),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//gnulib/m4/extensions",
+        # Provides FPSETSTICKY_LIBM
+        "//gnulib/m4/fenv-exceptions",
+        # Provides FEENABLEEXCEPT_LIBM (shared target, no HAVE_* checks)
+        "//gnulib/m4/fenv-exceptions-trapping:FEENABLEEXCEPT_LIBM",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Package-level aggregator target
 autoconf(
     name = "fenv-exceptions-state",
-    checks = [
-        # Note: fenv-exceptions-state.m4 may not exist in gnulib, or this module may not have checks
-    ],
     visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FENV_EXCEPTIONS_STATE",
+    ],
 )

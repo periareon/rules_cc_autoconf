@@ -13,6 +13,6 @@ autoconf(
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/sys_types_h",  # AC_REQUIRE([gl_SYS_TYPES_H])
-        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS]) - provides HAVE_UNISTD_H
+        # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency - provides HAVE_UNISTD_H
     ],
 )

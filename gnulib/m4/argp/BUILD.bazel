@@ -1,30 +1,78 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/argp.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
-
-# HAVE_DECL_PROGRAM_INVOCATION_NAME and HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME
-# come from getprogname dependency
+load("//autoconf:checks.bzl", "checks", "utils")
 
 autoconf(
-    name = "argp",
+    name = "gl_ARGP",
     checks = [
-        macros.AC_CHECK_FUNC("argp_parse"),
-        macros.AC_TRY_COMPILE(
-            code = """extern char *program_invocation_name;
-int main() { program_invocation_name = "test"; return 0; }""",
+        checks.AC_CHECK_FUNC(
+            "argp_parse",
+            define = "HAVE_ARGP_PARSE",
+        ),
+
+        # If NOT declared, define GNULIB_PROGRAM_INVOCATION_NAME=1
+        checks.AC_DEFINE(
+            "GNULIB_PROGRAM_INVOCATION_NAME",
+            requires = ["!ac_cv_have_decl_program_invocation_name"],
+        ),
+        # If NOT declared, define GNULIB_PROGRAM_INVOCATION_SHORT_NAME=1
+        checks.AC_DEFINE(
+            "GNULIB_PROGRAM_INVOCATION_SHORT_NAME",
+            requires = ["!ac_cv_have_decl_program_invocation_short_name"],
+        ),
+        checks.AC_TRY_LINK(
+            code = utils.AC_LANG_PROGRAM(
+                ["extern char *program_invocation_name;"],
+                'program_invocation_name = "test";',
+            ),
             define = "HAVE_PROGRAM_INVOCATION_NAME",
-            language = "c",
         ),
-        macros.AC_TRY_COMPILE(
-            code = """extern char *program_invocation_short_name;
-int main() { program_invocation_short_name = "test"; return 0; }""",
+        checks.AC_TRY_LINK(
+            code = utils.AC_LANG_PROGRAM(
+                ["extern char *program_invocation_short_name;"],
+                'program_invocation_short_name = "test";',
+            ),
             define = "HAVE_PROGRAM_INVOCATION_SHORT_NAME",
-            language = "c",
         ),
+        # Shared target to avoid duplicate with getdelim's gl_PREREQ_GETDELIM
+
+        # features.h: use shared target to avoid duplicate with gnulib-common in aggregates
+        checks.AC_CHECK_HEADER("linewrap.h"),
+        # HAVE_DECL_PROGRAM_INVOCATION_NAME and HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME
+        # subst values are provided by the getprogname dependency to avoid
+        # duplicate cache variables in aggregates (getprogname also substs these).
+
+        # Note: AC_CHECK_DECLS_ONCE for *_unlocked functions (lines 61-73)
+        # are provided by unlocked-io dependency
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/getprogname",  # Provides HAVE_DECL_PROGRAM_INVOCATION_*
+        "//autoconf/macros/AC_C_INLINE",
+        "//autoconf/macros/AC_C_RESTRICT",
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/gnulib-common:HAVE_FEATURES_H",
+        "//gnulib/m4/unlocked-io",
+        "//autoconf/macros/AC_FUNC_STRERROR_R",
+        # Shared decl checks for program_invocation_name/short_name (cache vars + config.h defines only, no AC_SUBST)
+        # argp.m4 only calls AC_CHECK_DECLS, NOT gl_FUNC_GETPROGNAME which would AC_SUBST these
+        "//gnulib/m4/getprogname:ac_cv_have_decl_program_invocation_name",
+        "//gnulib/macros/AC_CHECK_FUNCS_ONCE_flockfile",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "gl_REPLACE_GETOPT_ALWAYS",
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "argp",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_ARGP",
+        ":gl_REPLACE_GETOPT_ALWAYS",
     ],
 )

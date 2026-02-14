@@ -1,11 +1,30 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/strndup.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "strndup",
     checks = [
-        # TODO: Add checks based on .m4 file
+        # gl_FUNC_STRNDUP checks for strndup function
+        checks.AC_CHECK_FUNC(
+            "strndup",
+            define = "HAVE_STRNDUP",
+        ),
+        # AC_CHECK_DECLS_ONCE([strndup])
+        checks.AC_CHECK_DECL(
+            "strndup",
+            define = "HAVE_DECL_STRNDUP",
+            includes = ["#include <string.h>"],
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//gnulib/m4/string_h",  # AC_REQUIRE([gl_STRING_H_DEFAULTS])
+        "//gnulib/m4/wchar_h:gl_WCHAR_H_CORE",
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

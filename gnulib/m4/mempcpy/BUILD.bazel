@@ -1,32 +1,46 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/mempcpy.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 autoconf(
-    name = "mempcpy",
+    name = "HAVE_MEMPCPY",
+    checks = gl_macros.GL_CHECK_FUNCS_ANDROID(
+        ["mempcpy"],
+        includes = ["#include <string.h>"],
+    ),
+    visibility = ["//gnulib:__subpackages__"],
+)
+
+autoconf(
+    name = "gl_FUNC_MEMPCPY",
     checks = [
-        # Check for mempcpy function
-        # Equivalent to gl_FUNC_MEMPCPY macro from mempcpy.m4
-        macros.AC_TRY_COMPILE(
-            code = """#include <string.h>
-
-#ifdef __cplusplus
-extern "C"
-#endif
-void *mempcpy ();
-
-int main(void) {
-    return mempcpy();
-}""",
-            define = "HAVE_MEMPCPY",
-            language = "c",
+        checks.AC_SUBST(
+            "HAVE_MEMPCPY",
+            condition = "ac_cv_func_mempcpy",
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/string_h",  # AC_REQUIRE([gl_STRING_H_DEFAULTS])
-        # Note: AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) and
-        # AC_REQUIRE([AC_C_RESTRICT]) are standard autoconf macros
+        ":HAVE_MEMPCPY",
+        "//gnulib/m4/extensions",
+        "//autoconf/macros/AC_C_RESTRICT",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_MEMPCPY",
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "mempcpy",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_MEMPCPY",
+        ":gl_PREREQ_MEMPCPY",
     ],
 )

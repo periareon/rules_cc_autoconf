@@ -1,0 +1,18 @@
+"""AC_TYPE_MODE_T - Autoconf builtin macro
+
+Checks if mode_t type is defined.
+
+Defines:
+  - mode_t (if not defined, defined to int)
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "AC_TYPE_MODE_T",
+    checks = [
+        checks.AC_CHECK_TYPE("mode_t"),
+    ],
+    visibility = ["//visibility:public"],
+)

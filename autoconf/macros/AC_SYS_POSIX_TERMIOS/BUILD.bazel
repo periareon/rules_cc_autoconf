@@ -1,0 +1,21 @@
+"""AC_SYS_POSIX_TERMIOS - Autoconf builtin macro
+
+Checks if the system supports POSIX termios.
+
+Defines:
+  - HAVE_POSIX_TERMIOS (if supported)
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "AC_SYS_POSIX_TERMIOS",
+    checks = [
+        checks.AC_CHECK_HEADER("termios.h"),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)

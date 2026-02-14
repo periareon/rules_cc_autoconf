@@ -1,0 +1,38 @@
+/* config.h.in */
+/* #undef APPLE_UNIVERSAL_BUILD */
+#define HAVE_DECL_ALARM 0
+/* #undef HAVE_DECL_LOCALTIME_R */
+#define HAVE_INTTYPES_H 1
+/* #undef HAVE_NANOSLEEP */
+#define HAVE_STDINT_H 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+/* #undef HAVE_STRINGS_H */
+#define HAVE_STRING_H 1
+/* #undef HAVE_STRPTIME */
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+/* #undef HAVE_TIMEGM */
+/* #undef HAVE_TIMESPEC_GET */
+/* #undef HAVE_TIMESPEC_GETRES */
+/* #undef HAVE_TIMEZONE_T */
+/* #undef HAVE_TZALLOC */
+/* #undef HAVE_UNISTD_H */
+/* #undef NEED_MKTIME_INTERNAL */
+/* #undef NEED_MKTIME_WORKING */
+/* #undef REPLACE_CTIME */
+/* #undef REPLACE_GMTIME */
+/* #undef REPLACE_LOCALTIME */
+/* #undef REPLACE_LOCALTIME_R */
+/* #undef REPLACE_LOCALTIME_RZ */
+#define REPLACE_MKTIME 1
+/* #undef REPLACE_MKTIME_Z */
+/* #undef REPLACE_NANOSLEEP */
+/* #undef REPLACE_STRFTIME */
+/* #undef REPLACE_TIME */
+/* #undef REPLACE_TIMEGM */
+/* #undef REPLACE_TIMESPEC_GET */
+/* #undef REPLACE_TIMESPEC_GETRES */
+/* #undef REPLACE_TZSET */
+#define STDC_HEADERS 1
+#define TIME_T_IS_SIGNED 1

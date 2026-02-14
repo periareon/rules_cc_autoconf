@@ -1,0 +1,171 @@
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:checks.bzl", "checks")
+load("//autoconf:package_info.bzl", "package_info")
+load("//autoconf/tests:diff_test.bzl", "diff_test")
+load("//autoconf/tests:gnu_autoconf_configure_test.bzl", "gnu_autoconf_configure_test")
+
+package_info(
+    name = "package_info",
+    package_name = "test_subst_templates",
+    package_version = "2.3.4",
+)
+
+write_file(
+    name = "generated_file_h_in",
+    out = "generated_file.h.in",
+    content = """\
+#define FROM_GENERATED 1
+""".splitlines(),
+    newline = "unix",
+)
+
+autoconf(
+    name = "autoconf",
+    checks = [
+        checks.AC_DEFINE("SPECIAL_DEFINE"),
+        checks.AC_DEFINE(
+            "DEFINE_NONE",
+            None,
+            subst = True,
+        ),
+        checks.AC_SUBST("SUBST_VAR"),
+        checks.AC_SUBST("SUBST_TEXT", "Hello"),
+        checks.AC_SUBST("SUBST_TEXT_DOUBLE_QUOTE", "\"Hello\""),
+        checks.AC_SUBST("SUBST_EMPTY_STRING", ""),
+        checks.AC_SUBST(
+            "SUBST_CONDITIONAL_TRUE",
+            condition = "SPECIAL_DEFINE",
+            if_false = 0,  # Integer - renders as 0 (number) in C code
+            if_true = 1,  # Integer - renders as 1 (number) in C code
+        ),
+        checks.AC_SUBST(
+            "SUBST_CONDITIONAL_FALSE",
+            condition = "SPECIAL_DEFINE==0",
+            if_false = 0,  # Integer - renders as 0 (number) in C code
+            if_true = 1,  # Integer - renders as 1 (number) in C code
+        ),
+        # Test conditional AC_SUBST based on check result (regression test for bug)
+        # This checks that when a condition based on a check result is false,
+        # the subst variable is still created with the if_false value
+        checks.AC_CHECK_DECL(
+            "nonexistent_function_xyz",
+            name = "_test_cv_have_decl_nonexistent",
+            includes = ["#include <stdio.h>"],
+        ),
+        checks.AC_SUBST(
+            "SUBST_CONDITIONAL_CHECK_FALSE",
+            condition = "_test_cv_have_decl_nonexistent",
+            if_false = 0,  # Should be used when check fails (condition is false)
+            if_true = 1,  # Should be used when check succeeds (condition is true)
+        ),
+        # Test conditional AC_SUBST with check result - if_true case
+        # Use a function that exists (printf) so the check succeeds
+        checks.AC_CHECK_DECL(
+            "printf",
+            name = "_test_cv_have_decl_printf",
+            includes = ["#include <stdio.h>"],
+        ),
+        checks.AC_SUBST(
+            "SUBST_CONDITIONAL_CHECK_TRUE",
+            condition = "_test_cv_have_decl_printf",
+            if_false = 0,  # Should NOT be used (condition is true)
+            if_true = 1,  # Should be used (condition is true)
+        ),
+        # Simpler test: Use AC_DEFINE to create a condition result, then test both if_true and if_false
+        checks.AC_DEFINE("TEST_CONDITION_DEFINE"),
+        checks.AC_SUBST(
+            "SUBST_CONDITIONAL_DEFINE_TRUE",
+            condition = "TEST_CONDITION_DEFINE",
+            if_false = 0,  # Should NOT be used (condition is true)
+            if_true = 1,  # Should be used (condition is true)
+        ),
+        checks.AC_SUBST(
+            "SUBST_CONDITIONAL_DEFINE_FALSE",
+            condition = "TEST_CONDITION_DEFINE==0",  # Condition is false (TEST_CONDITION_DEFINE is 1, not 0)
+            if_false = 1,  # Should be used (condition is false) - matches configure.ac: else branch sets to 1
+            if_true = 0,  # Should NOT be used (condition is false)
+        ),
+        checks.AC_TRY_COMPILE(
+            code = "#error forced_fail_check",
+            define = "FORCED_TO_FAIL",
+            subst = True,
+        ),
+    ],
+    deps = [":package_info"],
+)
+
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    mode = "defines",
+    template = "config.h.in",
+    deps = [":autoconf"],
+)
+
+autoconf_hdr(
+    name = "subst",
+    out = "subst.h",
+    inlines = {
+        "/* inline generated */": ":generated_file.h.in",
+        "/* inline source */": "inlined_file.h.in",
+    },
+    mode = "subst",
+    substitutions = {
+        "@DIRECT_SUBST_NUMBER@": "42",
+        "@DIRECT_SUBST_VAR@": "direct_value",
+    },
+    template = "subst.h.in",
+    deps = [":autoconf"],
+)
+
+autoconf_hdr(
+    name = "subst_inline",
+    out = "subst_inline.h",
+    inlines = {
+        "/* inline generated */": ":generated_file.h.in",
+        "/* inline source */": "inlined_file.h.in",
+    },
+    mode = "subst",
+    template = "subst_inline.h.in",
+    deps = [":autoconf"],
+)
+
+diff_test(
+    name = "subst_diff_test",
+    file1 = "golden_subst.h.in",
+    file2 = ":subst.h",
+)
+
+diff_test(
+    name = "subst_inline_diff_test",
+    file1 = "golden_subst_inline.h.in",
+    file2 = ":subst_inline.h",
+)
+
+diff_test(
+    name = "config_diff_test",
+    file1 = "golden_config.h.in",
+    file2 = ":config.h",
+)
+
+cc_test(
+    name = "test_subst",
+    srcs = [
+        "test_subst.c",
+        ":config.h",
+        ":subst.h",
+        ":subst_inline.h",
+    ],
+)
+
+gnu_autoconf_configure_test(
+    name = "gnu_autoconf_configure_test",
+    config_h_in = "config.h.in",
+    configure_ac = "configure.ac",
+    golden_config_h = "golden_config.h.in",
+    golden_subst_h = "golden_subst.h.in",
+    subst_h_in = "subst.h.in",
+)

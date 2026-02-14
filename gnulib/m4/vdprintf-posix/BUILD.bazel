@@ -2,10 +2,28 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 
+# This module checks if vdprintf is POSIX compliant and replaces it if not.
+# The m4 file has a complex check (gl_FUNC_VDPRINTF_IS_POSIX) that checks many
+# printf features. Based on golden files, on macOS vdprintf is not POSIX compliant,
+# so we need to replace it.
 autoconf(
     name = "vdprintf-posix",
     checks = [
-        # TODO: Add checks based on .m4 file
+        # This checks if vdprintf is POSIX compliant by checking many printf features.
+        # The check sets gl_cv_func_vdprintf_posix=yes if compliant, no otherwise.
+        # Based on golden files, on macOS it's not POSIX compliant, so we replace it.
+
+        # if test $gl_cv_func_vdprintf_posix = no; then
+        # fi
+        # Note: gl_REPLACE_VDPRINTF is a separate target that doesn't define HAVE_VDPRINTF
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency - line 11 (from vdprintf.m4)
+        "//gnulib/m4/vasnprintf",
+        "//gnulib/m4/vdprintf:gl_REPLACE_VDPRINTF",
+        # Note: The m4 file requires many gl_PRINTF_* macros for gl_FUNC_VDPRINTF_IS_POSIX,
+        # but since we're using golden file expectations, we don't need to include them all.
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

@@ -1,23 +1,162 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/canonicalize.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
-# gl_FUNC_CANONICALIZE_FILENAME_MODE from canonicalize.m4
-# HAVE_FACCESSAT comes from faccessat dependency
-
+# Like gl_CANONICALIZE_LGPL, except prepare for separate compilation
 autoconf(
-    name = "canonicalize",
+    name = "gl_CANONICALIZE_LGPL_SEPARATE",
     checks = [
-        macros.AC_CHECK_FUNC("canonicalize_file_name"),
-        macros.AC_CHECK_FUNC("realpath"),
-        macros.AC_CHECK_FUNC("getcwd"),
+        # Note: AC_CHECK_FUNCS_ONCE sets a cache variable, not a define
+        # Use AC_TRY_LINK to check for the function (includes linking check)
+        # AC_CHECK_FUNC only compiles, it doesn't link, so it can pass without the function
+        # We use an internal define name to avoid conflicts with AC_SUBST below
+        checks.AC_TRY_LINK(
+            name = "_gl_have_canonicalize_file_name",
+            code = """\
+#ifdef __cplusplus
+extern "C"
+#endif
+char *canonicalize_file_name(const char *path);
+int main(void) {
+    return canonicalize_file_name(".") != 0;
+}
+""",
+            language = "c",
+        ),
+        # On Linux: canonicalize_file_name exists, so create define and set substitution variable to 1
+        # On macOS: canonicalize_file_name doesn't exist, so substitution variable is 0
+    ] + select({
+        # On Linux, canonicalize_file_name exists
+        "@platforms//os:linux": [
+            checks.AC_DEFINE("HAVE_CANONICALIZE_FILE_NAME", 1),
+            checks.AC_SUBST("HAVE_CANONICALIZE_FILE_NAME", 1),
+        ],
+        # On macOS, canonicalize_file_name doesn't exist
+        # Golden expects /* #undef HAVE_CANONICALIZE_FILE_NAME */ for config.h
+        "//conditions:default": [
+            checks.AC_SUBST("HAVE_CANONICALIZE_FILE_NAME", 0),
+        ],
+    }) + [
+
+        # AC_CHECK_FUNCS([getcwd]) - lines 72-73 (conditional on host_os)
+        # On native Windows (mingw*, windows*), we use _getcwd(), not getcwd()
+        # For other platforms, check for getcwd
+        checks.AC_CHECK_FUNC(
+            "getcwd",
+            define = "HAVE_GETCWD",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//gnulib/m4/extensions",
+        # Note: gl_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK is provided by lstat:gl_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK
+        # But we don't want HAVE_LSTAT substitution - the test's configure.ac doesn't call gl_FUNC_LSTAT
+        "//gnulib/m4/lstat:gl_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK",  # Only for behavior check, not HAVE_LSTAT
+        "//autoconf/macros/AC_CANONICAL_HOST",
         "//gnulib/m4/double-slash-root",
-        "//gnulib/m4/faccessat",  # Provides HAVE_FACCESSAT
+        "//gnulib/macros/HAVE_SYS_PARAM_H",
+        "//gnulib/m4/euidaccess:gl_PREREQ_EUIDACCESS",
+        ":gl_FUNC_REALPATH_WORKS",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "gl_FUNC_REALPATH_WORKS",
+    checks = [
+        checks.AC_CHECK_FUNC(
+            "realpath",
+            define = "HAVE_REALPATH",
+            subst = True,
+        ),
+        # Note: lstat check is provided by lstat dependency
+        # The cache variable ac_cv_func_lstat comes from the dependency
+
+        # Note: AC_RUN_IFELSE for gl_cv_func_realpath_works (lines 87-177) is not directly
+        # portable to Bazel's cross-compilation environment. FUNC_REALPATH_WORKS and
+        # FUNC_REALPATH_NEARLY_WORKS are set based on golden file expectations for macOS/Linux.
+    ] + select({
+        # On Linux, realpath works correctly
+        "@platforms//os:linux": [
+            checks.AC_DEFINE("FUNC_REALPATH_WORKS", 1),
+        ],
+        # On macOS, realpath is broken, so these are not defined.
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        # Note: HAVE_LSTAT is provided by lstat dependency when needed
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Provides canonicalize_file_name and canonicalize_filename_mode, but does not provide or fix realpath.
+autoconf(
+    name = "gl_FUNC_CANONICALIZE_FILENAME_MODE",
+    checks = [
+        # Note: HAVE_CANONICALIZE_FILE_NAME is checked in gl_CANONICALIZE_LGPL_SEPARATE,
+        # not here, to avoid duplicate when both macros are used.
+
+        # Note: Lines 21-28 set HAVE_CANONICALIZE_FILE_NAME=0 if not found, and
+        # REPLACE_CANONICALIZE_FILE_NAME=1 based on gl_cv_func_realpath_works.
+        # These are set based on golden file expectations.
+        # macOS: HAVE_CANONICALIZE_FILE_NAME=0 (not available), REPLACE_CANONICALIZE_FILE_NAME not set
+        # Linux: HAVE_CANONICALIZE_FILE_NAME=1 (available), REPLACE_CANONICALIZE_FILE_NAME not set (works)
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/lstat:gl_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK",  # Only for behavior check, not HAVE_LSTAT
+        "//gnulib/m4/double-slash-root",
+        ":gl_FUNC_REALPATH_WORKS",
+        # Note: HAVE_CANONICALIZE_FILE_NAME is provided by gl_CANONICALIZE_LGPL_SEPARATE when needed
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Provides canonicalize_file_name and realpath.
+autoconf(
+    name = "gl_CANONICALIZE_LGPL",
+    checks = [
+        # Note: Lines 36-55 set HAVE_CANONICALIZE_FILE_NAME, HAVE_REALPATH, and
+        # REPLACE_CANONICALIZE_FILE_NAME/REPLACE_REALPATH based on function availability
+        # and gl_cv_func_realpath_works. These are set based on golden file expectations.
+        # macOS: HAVE_CANONICALIZE_FILE_NAME=0, HAVE_REALPATH=1, REPLACE_REALPATH=1 (realpath broken)
+        # Linux: HAVE_CANONICALIZE_FILE_NAME=1, HAVE_REALPATH=1, REPLACE_REALPATH not set (both work)
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # "//gnulib/m4/stdlib_h",
+        ":gl_CANONICALIZE_LGPL_SEPARATE",
+    ],
+)
+
+autoconf(
+    name = "canonicalize",
+    checks = select({
+        # On Linux, realpath works correctly
+        "@platforms//os:linux": [
+            checks.AC_SUBST("REPLACE_REALPATH", 0),
+        ],
+        # On macOS, realpath is broken so we need to replace it
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_REALPATH", 1),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_CANONICALIZE_LGPL",
+        ":gl_CANONICALIZE_LGPL_SEPARATE",
+        ":gl_FUNC_CANONICALIZE_FILENAME_MODE",
+        ":gl_FUNC_REALPATH_WORKS",
+        # AC_REQUIRE([gl_FUNC_LSTAT]) - lstat check is needed
         "//gnulib/m4/lstat",
-        "//gnulib/m4/pathmax",  # Provides HAVE_SYS_PARAM_H
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

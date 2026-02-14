@@ -1,19 +1,31 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/eaccess.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "eaccess",
-    checks = [
-        # If eaccess is not found, define it as 'access'
-        macros.AC_CHECK_FUNC(
-            "eaccess",
-            define = "HAVE_EACCESS",
-            if_false = [
-                macros.AC_DEFINE("eaccess", "access"),
-            ],
-        ),
-    ],
+    checks = select({
+        # On Linux, eaccess exists in glibc
+        "@platforms//os:linux": [
+            checks.AC_DEFINE("HAVE_EACCESS", 1),
+        ],
+        "@platforms//os:macos": [
+            # macOS doesn't have eaccess, define it as 'access'
+            checks.AC_DEFINE("eaccess", "access"),
+        ],
+        "//conditions:default": [
+            # If eaccess is not found, define it as 'access'
+            checks.AC_CHECK_FUNC(
+                "eaccess",
+                define = "HAVE_EACCESS",
+            ),
+            checks.AC_DEFINE(
+                "eaccess",
+                "access",
+                requires = ["HAVE_EACCESS==0"],
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
 )

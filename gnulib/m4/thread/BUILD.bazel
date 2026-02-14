@@ -1,21 +1,23 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/thread.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
-# gl_THREAD from thread.m4
 autoconf(
     name = "thread",
     checks = [
         # gl_CHECK_FUNCS_ANDROID([pthread_atfork], [[#include <pthread.h>]])
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "pthread_atfork",
-            code = "#include <pthread.h>",
+            define = "HAVE_PTHREAD_ATFORK",
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_THREADLIB])
+        # AC_REQUIRE([gl_THREADLIB,
+
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//gnulib/m4/threadlib",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

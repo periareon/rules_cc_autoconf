@@ -1,17 +1,42 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/locale-ar.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
+# gt_LOCALE_AR - lines 13-end
+# Determines the name of an Arabic locale with traditional (ISO-8859-6) encoding.
+# Uses select() for platform-specific values instead of runtime checks.
 autoconf(
-    name = "locale-ar",
-    checks = [
-        # gt_LOCALE_AR macro from locale-ar.m4 determines the name of an Arabic
-        # locale with traditional encoding. This involves runtime locale testing
-        # that is complex to replicate in Bazel.
-    ],
+    name = "gt_LOCALE_AR",
+    checks = select({
+        # macOS: Arabic locale with ISO-8859-6 is typically not available
+        "@platforms//os:macos": [
+            checks.AC_SUBST("LOCALE_AR", "none"),
+        ],
+        # Windows: CP1256 is very different from ISO-8859-6, cannot be used
+        "@platforms//os:windows": [
+            checks.AC_SUBST("LOCALE_AR", "none"),
+        ],
+        # Linux and other Unix-like systems: may have ar_SA or ar_EG
+        # Default to "none" since Arabic ISO-8859-6 locales are uncommon
+        "//conditions:default": [
+            checks.AC_SUBST("LOCALE_AR", "none"),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        # Note: AC_REQUIRE([AC_CANONICAL_HOST]) and AC_REQUIRE([AM_LANGINFO_CODESET])
-        # are standard autoconf macros (AM_LANGINFO_CODESET is from gettext)
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        # Note: This provides HAVE_LANGINFO_CODESET as a define, not subst
+        "//gnulib/m4/codeset:AM_LANGINFO_CODESET",
+    ],
+)
+
+# Package-level aggregator target (matches package name)
+# No checks - just deps on all other targets
+autoconf(
+    name = "locale-ar",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gt_LOCALE_AR",
     ],
 )

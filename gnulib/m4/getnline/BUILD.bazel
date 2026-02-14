@@ -5,7 +5,10 @@ load("//autoconf:autoconf.bzl", "autoconf")
 autoconf(
     name = "getnline",
     checks = [
-        # Note: getnline.m4 may not exist in gnulib, or this module may not have checks
+        # gl_GETNLINE only requires gt_TYPE_SSIZE_T, no direct checks
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/ssize_t",  # AC_REQUIRE([gt_TYPE_SSIZE_T])
+    ],
 )

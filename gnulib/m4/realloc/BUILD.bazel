@@ -1,11 +1,70 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/realloc.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+# Test whether 'realloc' is POSIX compliant (sets errno to ENOMEM when it fails)
+autoconf(
+    name = "gl_FUNC_REALLOC_POSIX",
+    checks = [
+        # Note: gl_STDLIB_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+
+        # Uses AC_RUN_IFELSE which is not portable
+        # For cross-compilation, we guess based on platform
+        checks.AC_DEFINE("HAVE_REALLOC_POSIX", "1"),
+        # REPLACE_REALLOC_FOR_REALLOC_POSIX:
+        # - macOS: 0 (realloc is POSIX compliant)
+        # - Linux: 2 (realloc needs specific replacement mode per golden)
+    ] + select({
+        "@platforms//os:linux": [
+            checks.AC_SUBST("REPLACE_REALLOC_FOR_REALLOC_POSIX", "2"),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_REALLOC_FOR_REALLOC_POSIX", "0"),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/malloc:gl_FUNC_MALLOC_POSIX",
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Replace realloc if realloc (..., 0) returns null
+autoconf(
+    name = "gl_FUNC_REALLOC_0_NONNULL",
+    checks = [
+        # Note: gl_STDLIB_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+
+        # Uses AC_RUN_IFELSE which is not portable
+        # For cross-compilation, we guess based on platform
+        # On macOS, realloc(..., 0) returns nonnull
+        # On Linux, this is not guaranteed (golden shows undef)
+    ] + select({
+        "@platforms//os:linux": [
+            # On Linux, HAVE_REALLOC_0_NONNULL is undef (don't define)
+        ],
+        "//conditions:default": [
+            checks.AC_DEFINE("HAVE_REALLOC_0_NONNULL", "1"),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        ":gl_FUNC_REALLOC_POSIX",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
 
 autoconf(
     name = "realloc",
-    checks = [
-        # Note: realloc.m4 may not exist in gnulib, or this module may not have checks
-    ],
+    checks = [],
     visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_REALLOC_0_NONNULL",
+        ":gl_FUNC_REALLOC_POSIX",
+    ],
 )

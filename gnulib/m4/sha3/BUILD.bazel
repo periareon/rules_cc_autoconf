@@ -5,7 +5,14 @@ load("//autoconf:autoconf.bzl", "autoconf")
 autoconf(
     name = "sha3",
     checks = [
-        # TODO: Add checks based on .m4 file
+        # gl_SHA3 requires gl_BIGENDIAN and gl_CRYPTO_CHECK
+        # These are provided by dependencies
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # Note: bigendian module may not exist or may be named differently
+        # "//gnulib/m4/bigendian",  # AC_REQUIRE([gl_BIGENDIAN])
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

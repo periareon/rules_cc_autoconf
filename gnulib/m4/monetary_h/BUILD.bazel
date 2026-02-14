@@ -1,15 +1,81 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/monetary_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
+# NEXT_MONETARY_H, NEXT_AS_FIRST_DIRECTIVE_MONETARY_H, and GL_GENERATE_MONETARY_H
 autoconf(
-    name = "monetary_h",
+    name = "gl_MONETARY_H",
     checks = [
-        macros.AC_CHECK_HEADER("monetary.h"),
+        # Use internal define to avoid conflict with substitution variable
+        checks.AC_CHECK_HEADER(
+            "monetary.h",
+            name = "_gl_cv_header_monetary_h",
+        ),
+
+        # Set HAVE_MONETARY_H as define if header exists
+        checks.AC_DEFINE(
+            "HAVE_MONETARY_H",
+            requires = ["_gl_cv_header_monetary_h==1"],
+        ),
+        checks.AC_SUBST(
+            "HAVE_MONETARY_H",
+            condition = "_gl_cv_header_monetary_h",
+        ),
+        # gl_CHECK_NEXT_HEADERS([monetary.h]) - golden expects "<monetary.h>" when present
+        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_MONETARY_H", "<monetary.h>"),
+        checks.AC_SUBST("NEXT_MONETARY_H", "<monetary.h>"),
+
+        # Sets default values for HAVE_STRFMON_L and REPLACE_STRFMON_L
+        checks.AC_SUBST("HAVE_STRFMON_L", 1),
+        checks.AC_SUBST("REPLACE_STRFMON_L", 0),
+
+        # This is for runtime checks and is not directly portable
+        # The check for strfmon_l is handled by the defaults above
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/locale_h",  # Provides HAVE_XLOCALE_H
+        # AC_REQUIRE([gl_MONETARY_H_DEFAULTS]) - line 14 (ignore, it's a _DEFAULTS function)
+        "//gnulib/m4/include_next",
+        "//gnulib/m4/locale_h",
+        "//autoconf/macros/AC_C_RESTRICT",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "gl_MONETARY_H_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("HAVE_STRFMON_L", 1),
+        checks.AC_SUBST("REPLACE_STRFMON_L", 0),
+    ],
+    visibility = ["//visibility:private"],
+)
+
+autoconf(
+    name = "gl_MONETARY_H_REQUIRE_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("GNULIB_STRFMON_L", 0),
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gl_MONETARY_H_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_MONETARY_H_REQUIRE_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "monetary_h",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_MONETARY_H",
     ],
 )

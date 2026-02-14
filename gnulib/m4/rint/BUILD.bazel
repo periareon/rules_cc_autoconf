@@ -1,11 +1,16 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/rint.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "rint",
     checks = [
-        # Note: rint.m4 may not exist in gnulib, or this module may not have checks
+        # REPLACE_HUGE_VAL and REPLACE_NAN come from math_h:defaults via toolchain defaults
+        checks.AC_SUBST("RINT_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

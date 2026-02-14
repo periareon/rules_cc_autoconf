@@ -1,0 +1,2 @@
+/* subst.h.in */
+#define SUBST_HAVE_STDINT_H_WITH_UINTMAX "@HAVE_STDINT_H_WITH_UINTMAX@"

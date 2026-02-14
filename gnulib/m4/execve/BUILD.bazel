@@ -1,16 +1,19 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/execve.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "execve",
-    checks = [
-        # gl_FUNC_EXECVE macro from execve.m4 sets REPLACE_EXECVE on Windows.
-        # No direct checks needed.
-    ],
+    checks = select({
+        "@platforms//os:windows": [
+            checks.AC_SUBST("REPLACE_EXECVE", 1),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
+        # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
         # Note: AC_REQUIRE([AC_CANONICAL_HOST]) is a standard autoconf macro
     ],
 )

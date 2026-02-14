@@ -12,7 +12,6 @@ autoconf(
     visibility = ["//visibility:public"],
     deps = [
         # Note: AC_REQUIRE([AC_PROG_CC]), AC_REQUIRE([AC_CANONICAL_HOST]),
-        # AC_REQUIRE([AC_LIB_PREPARE_MULTILIB]), AC_REQUIRE([AC_LIB_PREPARE_PREFIX])
         # are standard autoconf macros or complex infrastructure
     ],
 )

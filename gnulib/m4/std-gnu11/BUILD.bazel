@@ -1,13 +1,13 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/std-gnu11.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "std-gnu11",
     checks = [
-        macros.AC_DEFINE("PROTOTYPES", "1"),
-        macros.AC_DEFINE("__PROTOTYPES", "1"),
+        checks.AC_DEFINE("PROTOTYPES", "1"),
+        checks.AC_DEFINE("__PROTOTYPES", "1"),
     ],
     visibility = ["//visibility:public"],
 )

@@ -1,0 +1,29 @@
+"""AC_HEADER_STAT - Autoconf builtin macro
+
+Checks for stat() and whether struct stat has st_blksize and st_blocks.
+
+Defines:
+  - HAVE_STAT_BLOCKS (if struct stat has st_blocks)
+  - HAVE_STRUCT_STAT_ST_BLKSIZE (if struct stat has st_blksize)
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "AC_HEADER_STAT",
+    checks = [
+        checks.AC_CHECK_MEMBER(
+            "struct stat.st_blksize",
+            includes = ["#include <sys/stat.h>"],
+        ),
+        checks.AC_CHECK_MEMBER(
+            "struct stat.st_blocks",
+            includes = ["#include <sys/stat.h>"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)

@@ -1,23 +1,26 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fmodl.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "fmodl",
     checks = [
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "fmodl",
             define = "HAVE_FMODL",
         ),
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "fmodl",
             define = "HAVE_DECL_FMODL",
-            headers = ["math.h"],
+            includes = ["#include <math.h>"],
         ),
+        checks.AC_SUBST("FMODL_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",
         "//gnulib/m4/fabsl",
         "//gnulib/m4/fmod",
         "//gnulib/m4/frexpl",

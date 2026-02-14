@@ -1,18 +1,31 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/select.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "select",
     checks = [
-        macros.AC_CHECK_HEADER(
-            "sys/select.h",
-            define = "HAVE_SYS_SELECT_H",
+        # HAVE_SELECT check (this module sets GNULIB_SELECT=1)
+        # On macOS, select is available
+        checks.AC_CHECK_FUNC(
+            "select",
+            define = "HAVE_SELECT",
+            subst = True,
         ),
+        # SELECT_LIB is set by gl_SOCKETLIB (from sockets -> socketlib)
+        # Based on golden file, SELECT_LIB="" on macOS (select is in libc)
+        checks.AC_SUBST("SELECT_LIB", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        # Depend on header only (not with_defaults since we override GNULIB_SELECT)
+        "//gnulib/m4/sys_select_h",
+        # Note: sockets -> socketlib -> sys_socket_h provides HAVE_SYS_SOCKET_H with subst=True
+        # But select expects it to remain unreplaced, so we check it directly above
         "//gnulib/m4/sockets",
+
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

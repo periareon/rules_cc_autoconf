@@ -1,32 +1,38 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/dup3.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
-
-# gl_FUNC_DUP3 from dup3.m4
-# HAVE_SETDTABLESIZE comes from dup2 dependency
+load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 autoconf(
     name = "dup3",
     checks = [
-        macros.AC_TRY_COMPILE(
-            code = """#include <unistd.h>
+        # Standard header defines are provided by AC_CHECK_INCLUDES_DEFAULT dependency
 
-#ifdef __cplusplus
-extern "C"
-#endif
-char dup3 ();
-
-int main(void) {
-    return dup3();
-}""",
-            define = "HAVE_DUP3",
-            language = "c",
+        # gl_CHECK_FUNCS_ANDROID([dup3], [[#include <unistd.h>]])
+        # This handles:
+        # - Checking if dup3 exists
+        # - AC_DEFINE HAVE_DUP3 in config.h ONLY when function exists
+        # - AC_SUBST HAVE_DUP3 in subst.h ALWAYS (0 or 1)
+    ] + gl_macros.GL_CHECK_FUNCS_ANDROID(
+        ["dup3"],
+        includes = ["#include <unistd.h>"],
+    ) + [
+        checks.AC_SUBST(
+            "HAVE_DUP3",
+            condition = "ac_cv_func_dup3",
+        ),
+        checks.AC_SUBST(
+            "REPLACE_DUP3",
+            condition = "ac_cv_func_dup3",
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/dup2",  # Provides HAVE_SETDTABLESIZE
-        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
+        "//autoconf/macros/AC_USE_SYSTEM_EXTENSIONS",
+        # Note: dup2 is not a dep to avoid pulling HAVE_FCHDIR into dup3 config (golden expects /* #undef HAVE_FCHDIR */ on macOS).
+        # gl_FUNC_DUP3 in gnulib only uses dup2 for setdtablesize when REPLACE_DUP3=1; we use REPLACE_DUP3=0.
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

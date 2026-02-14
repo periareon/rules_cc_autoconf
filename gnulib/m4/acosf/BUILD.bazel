@@ -1,22 +1,34 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/acosf.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "acosf",
     checks = [
-        macros.AC_CHECK_FUNC(
+        # AC_CHECK_FUNCS([acosf])
+        checks.AC_CHECK_FUNC(
             "acosf",
             define = "HAVE_ACOSF",
+            subst = True,
         ),
-        macros.AC_CHECK_DECL(
+        # AC_CHECK_DECLS([acosf], ..., [[#include <math.h>]])
+        checks.AC_CHECK_DECL(
             "acosf",
             define = "HAVE_DECL_ACOSF",
+            includes = ["#include <math.h>"],
         ),
+        # Set ACOSF_LIBM to empty string (subst-only)
+        # gl_COMMON_FLOAT_MATHFUNC sets this based on whether the function needs libm
+        # On macOS, acosf is in libc, so ACOSF_LIBM=""
+        checks.AC_SUBST("ACOSF_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/acos",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+        "//gnulib/m4/acos",  # AC_REQUIRE([gl_FUNC_ACOS])
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

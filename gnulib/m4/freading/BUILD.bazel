@@ -1,32 +1,34 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/freading.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
-
-# HAVE_STDIO_EXT_H comes from stdio_ext_h dependency
+load("//autoconf:checks.bzl", "checks", "utils")
 
 autoconf(
     name = "freading",
     checks = [
-        macros.AC_TRY_COMPILE(
-            code = """#include <stdio.h>
+        # Standard header defines are provided by AC_CHECK_INCLUDES_DEFAULT dependency
+        checks.AC_TRY_LINK(
+            name = "ac_cv_func___freading",
+            code = utils.AC_LANG_PROGRAM(
+                """\
+#include <stdio.h>
 #include <stdio_ext.h>
-
-#ifdef __cplusplus
-extern "C"
-#endif
-int __freading ();
-
-int main(void) {
-    return __freading();
-}""",
-            define = "HAVE___FREADING",
-            language = "c",
-            requires = ["HAVE_STDIO_EXT_H"],
+""",
+                """\
+FILE *f = 0;
+(void)__freading(f);
+""",
+            ),
+        ),
+        checks.AC_DEFINE(
+            "HAVE___FREADING",
+            requires = ["ac_cv_func___freading==1"],
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/stdio_ext_h",
+        "//gnulib/m4/fpurge",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

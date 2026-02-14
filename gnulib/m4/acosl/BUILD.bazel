@@ -1,20 +1,49 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/acosl.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "acosl",
+    name = "gl_FUNC_ACOSL",
     checks = [
-        macros.AC_CHECK_DECL(
+        # AC_CHECK_DECL([acosl], , [HAVE_DECL_ACOSL=0], [[#include <math.h>]])
+        # The m4 file sets HAVE_DECL_ACOSL=0 if not found, but doesn't define it in config.h
+        # So we only set it as subst variable, not in config.h
+        checks.AC_CHECK_DECL(
             "acosl",
-            define = "HAVE_DECL_ACOSL",
+            name = "_gl_cv_have_decl_acosl",
+            includes = ["#include <math.h>"],
         ),
+        # Set HAVE_DECL_ACOSL as subst variable only (not in config.h)
+        checks.AC_SUBST(
+            "HAVE_DECL_ACOSL",
+            condition = "_gl_cv_have_decl_acosl",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # LIBM vars for acosl golden: ACOSL_LIBM here; all others from asinl (avoid duplicate in //... build)
+        checks.AC_SUBST("ACOSL_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//gnulib/m4/extensions",
         "//gnulib/m4/acos",
-        "//gnulib/m4/asinl",
-        "//gnulib/m4/sqrtl",
+        "//gnulib/m4/asin",
+        "//gnulib/m4/asinl",  # Provides ASINL_LIBM (avoid duplicate in //... build)
+        "//gnulib/m4/isnanl",
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+        # Additional dependencies for golden file:
+        "//gnulib/m4/frexp",
+        "//gnulib/m4/frexpl",
+        "//gnulib/m4/ldexpl",
+        # SQRT_LIBM comes from asinl (asinl has it; avoid adding sqrt to prevent duplicate with asinl's sqrt)
+    ],
+)
+
+autoconf(
+    name = "acosl",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_ACOSL",
     ],
 )

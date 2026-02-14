@@ -1,19 +1,28 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/argz.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
+
+# From argz.m4:
+# AC_CHECK_TYPES([error_t],
+#
+# This means: if error_t is NOT found, define error_t=int and __error_t_defined=1
 
 autoconf(
     name = "argz",
     checks = [
-        # Check for argz functions and types
-        # Equivalent to gl_FUNC_ARGZ macro from argz.m4
-        macros.AC_CHECK_HEADER(
+        # Standard header defines are provided by AC_CHECK_INCLUDES_DEFAULT dependency
+        checks.AC_CHECK_HEADER(
             "argz.h",
-            define = "HAVE_ARGZ_H",
+            name = "ac_cv_header_argz_h",
         ),
-        macros.AC_CHECK_TYPE(
+        checks.AC_DEFINE(
+            "HAVE_ARGZ_H",
+            requires = ["ac_cv_header_argz_h==1"],
+        ),
+        checks.AC_CHECK_TYPE(
             "error_t",
+            name = "ac_cv_type_error_t",
             code = """\
 #include <argz.h>
 int main(void) {
@@ -22,21 +31,54 @@ int main(void) {
     return 1;
 }
 """,
-            define = "HAVE_ERROR_T",
+            requires = ["ac_cv_header_argz_h"],
         ),
-        # If argz_replace is not found, we need to generate argz.h
-        # Note: GL_GENERATE_ARGZ_H is handled as a shell variable in M4,
-        # but here we define a make variable or handle it via defines
-        macros.AC_CHECK_FUNC(
+        checks.AC_DEFINE(
+            "HAVE_ERROR_T",
+            requires = ["ac_cv_type_error_t==1"],
+        ),
+        # If error_t is NOT found, define it as int
+        checks.AC_DEFINE(
+            "error_t",
+            "int",
+            condition = "ac_cv_type_error_t",
+            if_false = "int",
+            if_true = None,
+        ),
+        checks.AC_DEFINE(
+            "__error_t_defined",
+            "1",
+            condition = "ac_cv_type_error_t",
+            if_false = "1",
+            if_true = None,
+        ),
+        checks.AC_CHECK_FUNC(
             "argz_replace",
-            define = "HAVE_ARGZ_REPLACE",
-            if_false = [
-                macros.AC_DEFINE("GL_GENERATE_ARGZ_H", "1"),
-            ],
+            name = "ac_cv_func_argz_replace",
         ),
-    ],
+        # HAVE_WORKING_ARGZ: Set if argz.h exists and argz_replace works
+        checks.AC_DEFINE(
+            "HAVE_WORKING_ARGZ",
+            requires = ["ac_cv_func_argz_replace==1"],
+        ),
+        # GL_GENERATE_ARGZ_H: Only needed if argz is broken/missing
+        checks.AC_DEFINE(
+            "GL_GENERATE_ARGZ_H",
+            condition = "ac_cv_func_argz_replace",
+            if_false = "1",
+            if_true = None,
+        ),
+    ] + select({
+        "@platforms//os:macos": [
+            # macOS doesn't have argz.h, so always define error_t as int
+            # The header check will fail, triggering the if_false conditions above
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        # Note: AC_C_RESTRICT and AC_CANONICAL_HOST are standard autoconf macros
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",  # AC_INCLUDES_DEFAULT used in m4
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        # Note: AC_C_RESTRICT is a standard autoconf macro
     ],
 )

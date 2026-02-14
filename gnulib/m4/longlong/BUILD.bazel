@@ -1,16 +1,19 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/longlong.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
+# AC_TYPE_LONG_LONG_INT and AC_TYPE_UNSIGNED_LONG_LONG_INT from longlong.m4
 autoconf(
     name = "longlong",
     checks = [
-        # Check for long long int and unsigned long long int types
-        # Equivalent to AC_TYPE_LONG_LONG_INT and AC_TYPE_UNSIGNED_LONG_LONG_INT
-        # macros from longlong.m4
-        macros.AC_TRY_COMPILE(
-            code = """/* Test literals.  */
+        # Uses AC_LINK_IFELSE with _AC_TYPE_LONG_LONG_SNIPPET
+        checks.AC_TRY_LINK(
+            code = """/* For now, do not test the preprocessor; as of 2007 there are too many
+   implementations with broken preprocessors.  Perhaps this can
+   be revisited in 2012.  In the meantime, code should not expect
+   #if to work with literals wider than 32 bits.  */
+/* Test literals.  */
 long long int ll = 9223372036854775807ll;
 long long int nll = -9223372036854775807LL;
 unsigned long long int ull = 18446744073709551615ULL;
@@ -19,31 +22,52 @@ typedef int a[((-9223372036854775807LL < 0 && 0 < 9223372036854775807ll)
              ? 1 : -1)];
 typedef int b[(18446744073709551615ULL <= (unsigned long long int) -1
              ? 1 : -1)];
-int i = 63;""",
+int i = 63;
+/* Test availability of runtime routines for shift and division.  */
+long long int llmax = 9223372036854775807ll;
+unsigned long long int ullmax = 18446744073709551615ull;
+int main(void) {
+    return ((ll << 63) | (ll >> 63) | (ll < i) | (ll > i)
+            | (llmax / ll) | (llmax % ll)
+            | (ull << 63) | (ull >> 63) | (ull << i) | (ull >> i)
+            | (ullmax / ull) | (ullmax % ull));
+}""",
             define = "HAVE_UNSIGNED_LONG_LONG_INT",
             language = "c",
         ),
-        macros.AC_TRY_COMPILE(
+
+        # Requires AC_TYPE_UNSIGNED_LONG_LONG_INT first
+        # Uses AC_RUN_IFELSE to catch a bug in Tandem NonStop Kernel (OSS) cc -O circa 2004
+        # The runtime check can't be easily ported, but based on golden files, on macOS,
+        # HAVE_LONG_LONG_INT should be defined
+        checks.AC_TRY_LINK(
             code = """#include <limits.h>
 #ifndef LLONG_MAX
 # define HALF \
           (1LL << (sizeof (long long int) * CHAR_BIT - 2))
 # define LLONG_MAX (HALF - 1 + HALF)
 #endif
-long long int n = 1;
-int i;
-for (i = 0; ; i++)
-  {
-    long long int m = n << i;
-    if (m >> i != n)
-      return 1;
-    if (LLONG_MAX / 2 < m)
-      break;
-  }
-return 0;""",
+int main(void) {
+    long long int n = 1;
+    int i;
+    for (i = 0; ; i++)
+      {
+        long long int m = n << i;
+        if (m >> i != n)
+          return 1;
+        if (LLONG_MAX / 2 < m)
+          break;
+      }
+    return 0;
+}""",
             define = "HAVE_LONG_LONG_INT",
             language = "c",
+            requires = ["HAVE_UNSIGNED_LONG_LONG_INT=1"],
         ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

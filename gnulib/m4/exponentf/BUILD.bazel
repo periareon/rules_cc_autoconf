@@ -1,11 +1,20 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/exponentf.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+# gl_FLOAT_EXPONENT_LOCATION determines where the exponent bits are in a float
+# For IEEE 754 single-precision on all systems:
+# - FLT_EXPBIT0_WORD = 0 (the only word of the 32-bit float)
+# - FLT_EXPBIT0_BIT = 23 (bit 23 is bit 0 of the exponent)
 
 autoconf(
     name = "exponentf",
     checks = [
-        # Note: exponentf.m4 may not exist in gnulib, or this module may not have checks
+        # Word index where the exponent of 'float' is found
+        checks.AC_DEFINE("FLT_EXPBIT0_WORD", "0"),
+        # Bit index in the word where bit 0 of the exponent is found
+        checks.AC_DEFINE("FLT_EXPBIT0_BIT", "23"),
     ],
     visibility = ["//visibility:public"],
 )

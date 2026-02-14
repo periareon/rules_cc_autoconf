@@ -1,0 +1,3 @@
+/* subst.h.in */
+#define SUBST_HOST_CPU "arm64"
+#define SUBST_HOST_CPU_C_ABI "arm64"

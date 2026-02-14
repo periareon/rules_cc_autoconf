@@ -5,7 +5,31 @@ load("//autoconf:autoconf.bzl", "autoconf")
 autoconf(
     name = "vprintf-gnu",
     checks = [
-        # TODO: Add checks based on .m4 file
+        # gl_FUNC_VPRINTF_GNU checks if vprintf is GNU-compatible
+        # If not, it calls gl_PREREQ_VASNPRINTF_WITH_GNU_EXTRAS, gl_REPLACE_VASNPRINTF, gl_REPLACE_VPRINTF
+        # Based on golden files, vprintf is not GNU-compatible on macOS, so we always need these
+
+        # Note: HAVE_DECL__SNPRINTF is already provided by vasnprintf:gl_PREREQ_VASNPRINTF dependency
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/vprintf-posix",  # AC_REQUIRE([gl_FUNC_VPRINTF_IS_POSIX]) and gl_REPLACE_VPRINTF
+        "//gnulib/m4/printf:gl_PRINTF_DIRECTIVE_UPPERCASE_B",  # AC_REQUIRE([gl_PRINTF_DIRECTIVE_UPPERCASE_B])
+        # When vprintf is not GNU-compatible (which is the case on macOS):
+        "//gnulib/m4/vasnprintf:gl_PREREQ_VASNPRINTF_WITH_GNU_EXTRAS",
+        "//gnulib/m4/vasnprintf:gl_REPLACE_VASNPRINTF",
+        # Additional dependencies for the golden file:
+        "//gnulib/m4/exponentd",
+        "//gnulib/m4/alloca",
+        # Note: HAVE_DECL__SNPRINTF is now checked directly in this module
+        "//gnulib/m4/intmax_t",
+        "//gnulib/m4/inttypes_h",
+        # Note: nl_langinfo removed to avoid duplicate HAVE_LANGINFO_CODESET (already provided by codeset via vasnprintf -> mbrtowc)
+        # HAVE_NL_LANGINFO is provided transitively via vasnprintf:gl_PREREQ_VASNPRINTF_WITH_GNU_EXTRAS -> AC_FUNC_NL_LANGINFO
+        "//gnulib/m4/math_h:long-double-vs-double",
+        "//gnulib/m4/printf:gl_SNPRINTF_PRESENCE",
+        "//gnulib/m4/printf:gl_SNPRINTF_RETVAL_C99",
+        "//gnulib/m4/printf:gl_SNPRINTF_TRUNCATION_C99",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

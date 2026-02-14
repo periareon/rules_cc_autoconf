@@ -1,7 +1,7 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/xattr.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 # gl_FUNC_XATTR macro from xattr.m4
 # COMPLEX CASE: This M4 file uses:
@@ -17,13 +17,11 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "xattr",
     checks = [
-        # Check for the xattr headers (Linux extended attributes)
-        macros.AC_CHECK_HEADER("attr/error_context.h"),
-        macros.AC_CHECK_HEADER("attr/libattr.h"),
-        # Check for libattr library
-        macros.AC_CHECK_LIB("attr", "attr_copy_fd"),
+        checks.AC_CHECK_HEADER("attr/error_context.h"),
+        checks.AC_CHECK_HEADER("attr/libattr.h"),
+        checks.AC_CHECK_LIB("attr", "attr_copy_fd"),
         # If all checks pass, define USE_XATTR
-        macros.AC_TRY_COMPILE(
+        checks.AC_TRY_COMPILE(
             code = """\
 #include <attr/error_context.h>
 #include <attr/libattr.h>

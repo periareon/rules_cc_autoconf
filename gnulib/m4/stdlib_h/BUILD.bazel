@@ -1,18 +1,270 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/stdlib_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+# stdlib_h - Header check and feature detection
 
 autoconf(
     name = "stdlib_h",
     checks = [
-        # Check for stdlib.h header
-        # Equivalent to gl_STDLIB_H macro from stdlib_h.m4
-        # Note: Full implementation includes checks for MB_CUR_MAX correctness
+        # gl_NEXT_HEADERS([stdlib.h]) sets NEXT_STDLIB_H and NEXT_AS_FIRST_DIRECTIVE_STDLIB_H
+        # On systems with include_next support, these are '<stdlib.h>'
+        # On systems without include_next, these are absolute paths
+        # For cross-compilation, we default to '<stdlib.h>' (most common case)
+        checks.AC_SUBST("NEXT_STDLIB_H", "<stdlib.h>"),
+        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_STDLIB_H", "<stdlib.h>"),
+
+        # These checks are in the main function, so they should be here
+        # Use internal cache variables - substitution variables are set from defaults
+        # Defines in config.h are created in stdlib_h_decls (only when primary target)
+        checks.AC_CHECK_DECL(
+            "ecvt",
+            name = "ac_cv_have_decl_ecvt",
+            includes = ["#include <stdlib.h>"],
+        ),
+        checks.AC_CHECK_DECL(
+            "fcvt",
+            name = "ac_cv_have_decl_fcvt",
+            includes = ["#include <stdlib.h>"],
+        ),
+        checks.AC_CHECK_DECL(
+            "gcvt",
+            name = "ac_cv_have_decl_gcvt",
+            includes = ["#include <stdlib.h>"],
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # Note: AC_C_RESTRICT and AC_CANONICAL_HOST are standard autoconf macros
-        # Note: gt_LOCALE_EN_UTF8 requires locale-en package (locale-en-utf8 doesn't exist)
-        "//gnulib/m4/locale-en",  # AC_REQUIRE([gt_LOCALE_EN_UTF8])
+        "//gnulib/m4/include_next",
+        "//gnulib/m4/extensions",
+        # Note: codeset removed to avoid duplicate HAVE_LANGINFO_CODESET (already provided by locale-en -> langinfo_h)
+        "//gnulib/m4/locale-en",  # Provides LOCALE_EN_UTF8 (needed for test compatibility) and HAVE_LANGINFO_CODESET via langinfo_h
+        # Note: stdlib_h_decls is NOT included here to avoid circular dependency
+        # stdlib_h_decls depends on stdlib_h, so we can't include it here
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
+
+# stdlib_h_decls - AC_CHECK_DECLS_ONCE checks for ecvt, fcvt, gcvt
+# Only included via with_defaults, not transitively
+
+autoconf(
+    name = "stdlib_h_decls",
+    checks = [
+        # Create defines in config.h from cache variables set by stdlib_h
+        # Note: stdlib_h already checks for these declarations
+        # Use AC_DEFINE to create defines from the dependency's cache variables
+        checks.AC_DEFINE(
+            "HAVE_DECL_ECVT",
+            condition = "ac_cv_have_decl_ecvt",  # From stdlib_h dependency
+            if_false = 0,
+            if_true = 1,
+            subst = True,
+        ),
+        checks.AC_DEFINE(
+            "HAVE_DECL_FCVT",
+            condition = "ac_cv_have_decl_fcvt",  # From stdlib_h dependency
+            if_false = 0,
+            if_true = 1,
+            subst = True,
+        ),
+        checks.AC_DEFINE(
+            "HAVE_DECL_GCVT",
+            condition = "ac_cv_have_decl_gcvt",  # From stdlib_h dependency
+            if_false = 0,
+            if_true = 1,
+            subst = True,
+        ),
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        # Depend on stdlib_h to get the cache variables from its checks
+        ":stdlib_h",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "gl_STDLIB_H_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("HAVE__EXIT", 1),
+        checks.AC_SUBST("HAVE_ALIGNED_ALLOC", 1),
+        checks.AC_SUBST("HAVE_ATOLL", 1),
+        checks.AC_SUBST("HAVE_CANONICALIZE_FILE_NAME", 1),
+        checks.AC_SUBST("HAVE_DECL_ECVT", 1),
+        checks.AC_SUBST("HAVE_DECL_FCVT", 1),
+        checks.AC_SUBST("HAVE_DECL_GCVT", 1),
+        checks.AC_SUBST("HAVE_DECL_GETLOADAVG", 1),
+        checks.AC_SUBST("HAVE_DECL_PROGRAM_INVOCATION_NAME", 1),
+        checks.AC_SUBST("HAVE_GETPROGNAME", 1),
+        checks.AC_SUBST("HAVE_GETSUBOPT", 1),
+        checks.AC_SUBST("HAVE_GRANTPT", 1),
+        checks.AC_SUBST("HAVE_INITSTATE", 1),
+        checks.AC_SUBST("HAVE_DECL_INITSTATE", 1),
+        checks.AC_SUBST("HAVE_MBTOWC", 1),
+        checks.AC_SUBST("HAVE_MKDTEMP", 1),
+        checks.AC_SUBST("HAVE_MKOSTEMP", 1),
+        checks.AC_SUBST("HAVE_MKOSTEMPS", 1),
+        checks.AC_SUBST("HAVE_MKSTEMP", 1),
+        checks.AC_SUBST("HAVE_MKSTEMPS", 1),
+        checks.AC_SUBST("HAVE_POSIX_MEMALIGN", 1),
+        checks.AC_SUBST("HAVE_POSIX_OPENPT", 1),
+        checks.AC_SUBST("HAVE_PTSNAME", 1),
+        checks.AC_SUBST("HAVE_PTSNAME_R", 1),
+        checks.AC_SUBST("HAVE_QSORT_R", 1),
+        checks.AC_SUBST("HAVE_RANDOM", 1),
+        checks.AC_SUBST("HAVE_RANDOM_R", 1),
+        checks.AC_SUBST("HAVE_REALLOCARRAY", 1),
+        checks.AC_SUBST("HAVE_REALPATH", 1),
+        checks.AC_SUBST("HAVE_RPMATCH", 1),
+        checks.AC_SUBST("HAVE_SECURE_GETENV", 1),
+        checks.AC_SUBST("HAVE_SETENV", 1),
+        checks.AC_SUBST("HAVE_DECL_SETENV", 1),
+        checks.AC_SUBST("HAVE_SETSTATE", 1),
+        checks.AC_SUBST("HAVE_DECL_SETSTATE", 1),
+        checks.AC_SUBST("HAVE_STRTOD", 1),
+        checks.AC_SUBST("HAVE_STRTOF", 1),
+        checks.AC_SUBST("HAVE_STRTOL", 1),
+        checks.AC_SUBST("HAVE_STRTOLD", 1),
+        checks.AC_SUBST("HAVE_STRTOLL", 1),
+        checks.AC_SUBST("HAVE_STRTOUL", 1),
+        checks.AC_SUBST("HAVE_STRTOULL", 1),
+        checks.AC_SUBST("HAVE_STRUCT_RANDOM_DATA", 1),
+        checks.AC_SUBST("HAVE_SYS_LOADAVG_H", 0),
+        checks.AC_SUBST("HAVE_UNLOCKPT", 1),
+        checks.AC_SUBST("HAVE_DECL_UNSETENV", 1),
+        checks.AC_SUBST("REPLACE__EXIT", 0),
+        checks.AC_SUBST("REPLACE_ABORT", 0),
+        checks.AC_SUBST("REPLACE_ALIGNED_ALLOC", 0),
+        checks.AC_SUBST("REPLACE_CALLOC_FOR_CALLOC_GNU", 0),
+        checks.AC_SUBST("REPLACE_CALLOC_FOR_CALLOC_POSIX", 0),
+        checks.AC_SUBST("REPLACE_CANONICALIZE_FILE_NAME", 0),
+        checks.AC_SUBST("REPLACE_FREE", 0),
+        checks.AC_SUBST("REPLACE_GETLOADAVG", 0),
+        checks.AC_SUBST("REPLACE_GETPROGNAME", 0),
+        checks.AC_SUBST("REPLACE_GETSUBOPT", 0),
+        checks.AC_SUBST("REPLACE_INITSTATE", 0),
+        checks.AC_SUBST("REPLACE_MALLOC_FOR_MALLOC_GNU", 0),
+        checks.AC_SUBST("REPLACE_MALLOC_FOR_MALLOC_POSIX", 0),
+        checks.AC_SUBST("REPLACE_MB_CUR_MAX", 0),
+        checks.AC_SUBST("REPLACE_MBSTOWCS", 0),
+        checks.AC_SUBST("REPLACE_MBTOWC", 0),
+        checks.AC_SUBST("REPLACE_MKOSTEMP", 0),
+        checks.AC_SUBST("REPLACE_MKOSTEMPS", 0),
+        checks.AC_SUBST("REPLACE_MKSTEMP", 0),
+        checks.AC_SUBST("REPLACE_POSIX_MEMALIGN", 0),
+        checks.AC_SUBST("REPLACE_POSIX_OPENPT", 0),
+        checks.AC_SUBST("REPLACE_PTSNAME", 0),
+        checks.AC_SUBST("REPLACE_PTSNAME_R", 0),
+        checks.AC_SUBST("REPLACE_PUTENV", 0),
+        checks.AC_SUBST("REPLACE_QSORT_R", 0),
+        checks.AC_SUBST("REPLACE_RAND", 0),
+        checks.AC_SUBST("REPLACE_RANDOM", 0),
+        checks.AC_SUBST("REPLACE_RANDOM_R", 0),
+        checks.AC_SUBST("REPLACE_REALLOC_FOR_REALLOC_POSIX", 0),
+        checks.AC_SUBST("REPLACE_REALLOCARRAY", 0),
+        checks.AC_SUBST("REPLACE_REALPATH", 0),
+        checks.AC_SUBST("REPLACE_SETENV", 0),
+        checks.AC_SUBST("REPLACE_SETSTATE", 0),
+        checks.AC_SUBST("REPLACE_STRTOD", 0),
+        checks.AC_SUBST("REPLACE_STRTOF", 0),
+        checks.AC_SUBST("REPLACE_STRTOL", 0),
+        checks.AC_SUBST("REPLACE_STRTOLD", 0),
+        checks.AC_SUBST("REPLACE_STRTOLL", 0),
+        checks.AC_SUBST("REPLACE_STRTOUL", 0),
+        checks.AC_SUBST("REPLACE_STRTOULL", 0),
+        checks.AC_SUBST("REPLACE_UNSETENV", 0),
+        checks.AC_SUBST("REPLACE_WCTOMB", 0),
+        checks.AC_SUBST("CAN_PRINT_STACK_TRACE", 0),
+    ],
+    visibility = ["//visibility:private"],
+)
+
+autoconf(
+    name = "gl_STDLIB_H_REQUIRE_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("GNULIB__EXIT", 0),
+        checks.AC_SUBST("GNULIB_ABORT_DEBUG", 0),
+        checks.AC_SUBST("GNULIB_ALIGNED_ALLOC", 0),
+        checks.AC_SUBST("GNULIB_ATOLL", 0),
+        checks.AC_SUBST("GNULIB_CALLOC_GNU", 0),
+        checks.AC_SUBST("GNULIB_CALLOC_POSIX", 0),
+        checks.AC_SUBST("GNULIB_CANONICALIZE_FILE_NAME", 0),
+        checks.AC_SUBST("GNULIB_FREE_POSIX", 0),
+        checks.AC_SUBST("GNULIB_GETLOADAVG", 0),
+        checks.AC_SUBST("GNULIB_GETPROGNAME", 0),
+        checks.AC_SUBST("GNULIB_GETSUBOPT", 0),
+        checks.AC_SUBST("GNULIB_GRANTPT", 0),
+        checks.AC_SUBST("GNULIB_MALLOC_GNU", 0),
+        checks.AC_SUBST("GNULIB_MALLOC_POSIX", 0),
+        checks.AC_SUBST("GNULIB_MBSTOWCS", 0),
+        checks.AC_SUBST("GNULIB_MBTOWC", 0),
+        checks.AC_SUBST("GNULIB_MKDTEMP", 0),
+        checks.AC_SUBST("GNULIB_MKOSTEMP", 0),
+        checks.AC_SUBST("GNULIB_MKOSTEMPS", 0),
+        checks.AC_SUBST("GNULIB_MKSTEMP", 0),
+        checks.AC_SUBST("GNULIB_MKSTEMPS", 0),
+        checks.AC_SUBST("GNULIB_POSIX_MEMALIGN", 0),
+        checks.AC_SUBST("GNULIB_POSIX_OPENPT", 0),
+        checks.AC_SUBST("GNULIB_PTSNAME", 0),
+        checks.AC_SUBST("GNULIB_PTSNAME_R", 0),
+        checks.AC_SUBST("GNULIB_PUTENV", 0),
+        checks.AC_SUBST("GNULIB_QSORT_R", 0),
+        checks.AC_SUBST("GNULIB_RAND", 0),
+        checks.AC_SUBST("GNULIB_RANDOM", 0),
+        checks.AC_SUBST("GNULIB_RANDOM_R", 0),
+        checks.AC_SUBST("GNULIB_REALLOCARRAY", 0),
+        checks.AC_SUBST("GNULIB_REALLOC_POSIX", 0),
+        checks.AC_SUBST("GNULIB_REALPATH", 0),
+        checks.AC_SUBST("GNULIB_RPMATCH", 0),
+        checks.AC_SUBST("GNULIB_SECURE_GETENV", 0),
+        checks.AC_SUBST("GNULIB_SETENV", 0),
+        checks.AC_SUBST("GNULIB_STACK_TRACE", 0),
+        checks.AC_SUBST("GNULIB_STRTOD", 0),
+        checks.AC_SUBST("GNULIB_STRTOF", 0),
+        checks.AC_SUBST("GNULIB_STRTOL", 0),
+        checks.AC_SUBST("GNULIB_STRTOLD", 0),
+        checks.AC_SUBST("GNULIB_STRTOLL", 0),
+        checks.AC_SUBST("GNULIB_STRTOUL", 0),
+        checks.AC_SUBST("GNULIB_STRTOULL", 0),
+        checks.AC_SUBST("GNULIB_SYSTEM_POSIX", 0),
+        checks.AC_SUBST("GNULIB_UNLOCKPT", 0),
+        checks.AC_SUBST("GNULIB_UNSETENV", 0),
+        checks.AC_SUBST("GNULIB_WCTOMB", 0),
+        # Microsoft deprecated alias function names
+        checks.AC_SUBST("GNULIB_MDA_ECVT", 1),
+        checks.AC_SUBST("GNULIB_MDA_FCVT", 1),
+        checks.AC_SUBST("GNULIB_MDA_GCVT", 1),
+        checks.AC_SUBST("GNULIB_MDA_MKTEMP", 1),
+        checks.AC_SUBST("GNULIB_MDA_PUTENV", 1),
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gl_STDLIB_H_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_STDLIB_H_REQUIRE_DEFAULTS",
+    ],
+)
+
+# stdlib_h_with_decls - For stdlib_h test that needs both stdlib_h and stdlib_h_decls
+
+autoconf(
+    name = "stdlib_h_with_decls",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":stdlib_h",
+        ":stdlib_h_decls",  # Adds defines in config.h for tests
+    ],
+)
+
+# with_defaults - For external consumers who don't use the toolchain

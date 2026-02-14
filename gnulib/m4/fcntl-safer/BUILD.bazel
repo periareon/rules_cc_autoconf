@@ -2,10 +2,16 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 
-# gl_FCNTL_SAFER from fcntl-safer.m4 - typically just a dependency module
-
 autoconf(
     name = "fcntl-safer",
-    checks = [],
+    checks = [
+        # gl_FCNTL_SAFER requires gl_PROMOTED_TYPE_MODE_T (from mode_t module)
+        # The golden file shows PROMOTED_MODE_T is defined as int
+    ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/mode_t",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

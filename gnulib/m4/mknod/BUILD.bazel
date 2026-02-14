@@ -1,25 +1,31 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/mknod.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "mknod",
     checks = [
-        # Check for mknod function
-        # Equivalent to gl_FUNC_MKNOD macro from mknod.m4
-        # Note: Full implementation includes runtime checks for root privileges
-        # that require file system operations
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "mknod",
             define = "HAVE_MKNOD",
         ),
-    ],
+    ] + select({
+        # On Linux: mknod has FIFO bug and needs replacement
+        "@platforms//os:linux": [
+            checks.AC_DEFINE("MKNOD_FIFO_BUG", "1"),
+            checks.AC_SUBST("REPLACE_MKNOD", "1"),
+        ],
+        # On macOS: mknod has issues so we need replacement
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_MKNOD", "1"),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/sys_stat_h",  # AC_REQUIRE([gl_SYS_STAT_H_DEFAULTS])
-        "//gnulib/m4/mkfifo",  # AC_REQUIRE([gl_FUNC_MKFIFO])
-        # Note: AC_REQUIRE([AC_CANONICAL_HOST]) and
-        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) are standard autoconf macros
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/mkfifo",
+        "//gnulib/m4/sys_stat_h",
     ],
 )

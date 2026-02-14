@@ -1,0 +1,22 @@
+"""Shared check for stdio_ext.h header.
+
+Multiple gnulib modules use AC_CHECK_HEADERS_ONCE([stdio_ext.h]).
+In autoconf, AC_CHECK_HEADERS_ONCE caches the result so it only runs once.
+In Bazel, we create a shared target that all modules depend on.
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "HAVE_STDIO_EXT_H",
+    checks = [
+        # AC_CHECK_HEADERS_ONCE([stdio_ext.h])
+        # Used by: fpurge, fbufmode, freadable, fwritable
+        checks.AC_CHECK_HEADER(
+            "stdio_ext.h",
+            define = "HAVE_STDIO_EXT_H",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

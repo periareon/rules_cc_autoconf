@@ -1,0 +1,4 @@
+/* subst.h.in */
+#define SUBST_GNULIB_LOCALEDIR /* @GNULIB_LOCALEDIR@ */
+#define SUBST_GNULIB_LOCALEDIR_c /* @GNULIB_LOCALEDIR_c@ */
+#define SUBST_GNULIB_LOCALEDIR_c_make /* @GNULIB_LOCALEDIR_c_make@ */

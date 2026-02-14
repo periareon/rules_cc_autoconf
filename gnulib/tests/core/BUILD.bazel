@@ -1,0 +1,4 @@
+# This BUILD file is kept for backward compatibility
+# All test targets have been moved to their respective subdirectories:
+# - //gnulib/tests/core/check_func_android:*
+# - //gnulib/tests/core/check_next_headers:*

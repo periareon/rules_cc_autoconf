@@ -1,15 +1,18 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/uname.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "macros")
+
+autoconf(
+    name = "gl_FUNC_UNAME",
+    checks = macros.AC_CHECK_FUNCS(["uname"]),
+    visibility = ["//visibility:public"],
+)
 
 autoconf(
     name = "uname",
-    checks = [
-        macros.AC_CHECK_FUNC(
-            "uname",
-            define = "HAVE_UNAME",
-        ),
-    ],
     visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_UNAME",
+    ],
 )

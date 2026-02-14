@@ -1,0 +1,4 @@
+/* subst.h.in */
+#define SUBST_GL_CFLAG_INHIBIT_WARNINGS "-w"
+#define SUBST_GL_CXXFLAG_INHIBIT_WARNINGS ""
+#define SUBST_WARN_CFLAGS " "

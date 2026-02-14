@@ -1,0 +1,12 @@
+AC_INIT([test_libunistring-base], [1.0])
+AC_CONFIG_HEADERS([config.h])
+
+# Invoke macros from libunistring-base.m4
+gl_LIBUNISTRING_MODULE
+gl_LIBUNISTRING_MODULE_WITH_VARIABLE
+gl_LIBUNISTRING_LIBHEADER
+gl_LIBUNISTRING_LIB_PREPARE
+gl_LIBUNISTRING_VERSION_CMP
+
+AC_CONFIG_FILES([subst.h:subst.h.in])
+AC_OUTPUT

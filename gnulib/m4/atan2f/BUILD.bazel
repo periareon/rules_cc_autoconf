@@ -1,22 +1,32 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/atan2f.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "atan2f",
     checks = [
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "atan2f",
             define = "HAVE_ATAN2F",
+            subst = True,
         ),
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "atan2f",
             define = "HAVE_DECL_ATAN2F",
         ),
+        # Set ATAN2F_LIBM to empty string (subst-only)
+        # gl_COMMON_FLOAT_MATHFUNC sets this based on whether the function needs libm
+        # On macOS, atan2f is in libc, so ATAN2F_LIBM=""
+        checks.AC_SUBST("ATAN2F_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/atan2",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS,
+
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+        "//gnulib/m4/atan2",  # AC_REQUIRE([gl_FUNC_ATAN2])
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

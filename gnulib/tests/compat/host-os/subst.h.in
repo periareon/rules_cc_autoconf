@@ -1,0 +1,2 @@
+/* subst.h.in */
+#define SUBST_HOST_OPERATING_SYSTEM "@HOST_OPERATING_SYSTEM@"

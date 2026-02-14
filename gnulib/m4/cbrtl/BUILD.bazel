@@ -1,20 +1,27 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/cbrtl.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "cbrtl",
     checks = [
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "cbrtl",
             define = "HAVE_CBRTL",
+            subst = True,
         ),
+        checks.AC_SUBST("CBRTL_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/cbrt",
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/fabsl",
         "//gnulib/m4/frexpl",
+        "//gnulib/m4/isnanl",
         "//gnulib/m4/ldexpl",
+        "//gnulib/m4/math_h",
     ],
 )

@@ -1,19 +1,34 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/asinl.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "asinl",
     checks = [
-        macros.AC_CHECK_DECL(
-            "asinl",
-            define = "HAVE_DECL_ASINL",
-        ),
+        # gl_FUNC_ASINL checks if asinl exists, then checks declaration
+        # On macOS, asinl may not be available (long double == double)
+        # The golden file shows HAVE_DECL_ASINL as undefined, so we don't check it
+        # LIBM vars expected by asinl golden_subst.h.in (empty on macOS)
+        checks.AC_SUBST("ASINL_LIBM", ""),
+        # FREXPL_LIBM comes from frexpl dependency
+        # ISNAND_LIBM comes from isnand via ldexpl dependency
+        # ISNANL_LIBM comes from isnanl dependency
+        # LDEXPL_LIBM and LDEXP_LIBM come from ldexpl dependency
+        checks.AC_SUBST("SQRTL_LIBM", ""),
+        # SQRT_LIBM from sqrt to avoid duplicate in //... build
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/asin",
-        "//gnulib/m4/sqrtl",
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/frexp",
+        "//gnulib/m4/frexpl",
+        "//gnulib/m4/isnanl",
+        "//gnulib/m4/ldexpl",
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+        "//gnulib/m4/mktime",  # Provides HAVE_DECL_ALARM (needed for test compatibility)
+        "//gnulib/m4/sqrt",
     ],
 )

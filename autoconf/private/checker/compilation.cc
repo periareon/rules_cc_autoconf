@@ -85,7 +85,6 @@ std::string quote_if_needed(const std::string& arg) {
  */
 std::string sanitize_for_filename(const std::string& define_name) {
     std::string result = define_name;
-    // Replace invalid filesystem characters with underscores
     for (char& c : result) {
         if (c == '/' || c == '\\' || c == ':' || c == '*' || c == '?' ||
             c == '"' || c == '<' || c == '>' || c == '|') {
@@ -94,403 +93,304 @@ std::string sanitize_for_filename(const std::string& define_name) {
     }
     return result;
 }
+
+/**
+ * @brief Check if a language string refers to C++.
+ */
+bool is_cpp(const std::string& language) {
+    return language == "cpp" || language == "c++";
+}
+
+/**
+ * @brief Build a shell command string from a vector of arguments.
+ *
+ * On Windows, the first argument (compiler/linker path) is converted to
+ * 8.3 short path format. All arguments with spaces are quoted.
+ *
+ * @param cmd Vector of command parts (program + arguments).
+ * @return The assembled shell command string.
+ */
+std::string build_command_string(const std::vector<std::string>& cmd) {
+    std::stringstream cmd_str;
+    for (size_t i = 0; i < cmd.size(); ++i) {
+        if (i > 0) cmd_str << " ";
+        if (i == 0) {
+#ifdef _WIN32
+            cmd_str << get_short_path(cmd[i]);
+#else
+            cmd_str << quote_if_needed(cmd[i]);
+#endif
+        } else {
+            cmd_str << quote_if_needed(cmd[i]);
+        }
+    }
+    return cmd_str.str();
+}
+
+/**
+ * @brief Execute a shell command, optionally suppressing output.
+ *
+ * If verbose debug is not enabled, stdout and stderr are redirected to
+ * /dev/null (or NUL on Windows).
+ *
+ * @param label A label for debug logging (e.g., "compile", "link").
+ * @param cmd Vector of command parts.
+ * @return The process exit code (already WEXITSTATUS-unwrapped on Unix).
+ */
+int run_command(const std::string& label, const std::vector<std::string>& cmd) {
+    std::string full_cmd = build_command_string(cmd);
+
+    if (!DebugLogger::is_verbose_debug_enabled()) {
+#ifdef _WIN32
+        full_cmd += " >NUL 2>&1";
+#else
+        full_cmd += " >/dev/null 2>&1";
+#endif
+    }
+
+    DebugLogger::debug("Executing " + label + " command: " + full_cmd);
+
+    int result = std::system(full_cmd.c_str());
+#ifdef _WIN32
+    return result;
+#else
+    return WEXITSTATUS(result);
+#endif
+}
+
+/**
+ * @brief RAII helper for creating a temporary build directory with a source
+ * file.
+ *
+ * Creates a uniquely-named temp directory on construction and removes it
+ * on destruction, ensuring cleanup even on early returns or exceptions.
+ */
+struct TempBuildDir {
+    std::filesystem::path dir;
+    std::string safe_id;
+
+    /**
+     * @brief Create a temp directory with a random name suffix.
+     * @param unique_id An identifier used in the directory/file names.
+     */
+    explicit TempBuildDir(const std::string& unique_id) {
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<> dis(100000, 999999);
+
+        safe_id = sanitize_for_filename(unique_id);
+        dir = std::filesystem::temp_directory_path() /
+              ("rules_cc_autoconf_" + std::to_string(dis(gen)));
+        std::filesystem::create_directory(dir);
+    }
+
+    ~TempBuildDir() { std::filesystem::remove_all(dir); }
+
+    /**
+     * @brief Write source code to a file inside the temp directory.
+     * @param code The source code to write.
+     * @param extension The file extension (e.g., ".c" or ".cpp").
+     * @return The path to the written source file, or nullopt on failure.
+     */
+    std::optional<std::filesystem::path> write_source(
+        const std::string& code, const std::string& extension) {
+        std::filesystem::path source_file = dir / (safe_id + extension);
+        std::ofstream source(source_file);
+        if (!source.is_open()) {
+            DebugLogger::warn("Failed to create source file");
+            return std::nullopt;
+        }
+        source << code;
+        source.close();
+        return source_file;
+    }
+
+    /** @brief Get the path for an object file. */
+    std::filesystem::path object_path(bool msvc) const {
+        return dir / (safe_id + (msvc ? ".obj" : ".o"));
+    }
+
+    /** @brief Get the path for an executable. */
+    std::filesystem::path executable_path() const {
+#ifdef _WIN32
+        return dir / (safe_id + ".exe");
+#else
+        return dir / safe_id;
+#endif
+    }
+
+    // Non-copyable, non-movable
+    TempBuildDir(const TempBuildDir&) = delete;
+    TempBuildDir& operator=(const TempBuildDir&) = delete;
+};
+
 }  // namespace
 
 std::vector<std::string> CheckRunner::filter_error_flags(
     const std::vector<std::string>& flags) {
     std::vector<std::string> filtered;
-
     for (const std::string& flag : flags) {
-        // Skip flags that promote warnings to errors
-        // Configuration checks need to allow warnings since we expect some
-        // checks to fail or produce warnings
         if (flag == "-Werror" || flag == "/WX" || flag == "-Werror=all") {
             continue;
         }
-        // Skip individual -Werror= flags
         if (flag.rfind("-Werror=", 0) == 0) {
             continue;
         }
-        // Skip -Wincompatible-library-redeclaration which fails on function
-        // checks
         if (flag == "-Wincompatible-library-redeclaration") {
             continue;
         }
         filtered.push_back(flag);
     }
-
     return filtered;
 }
 
 std::vector<std::string> CheckRunner::get_compiler_and_flags(
     const std::string& language) {
     std::vector<std::string> cmd;
-
-    if (language == "cpp" || language == "c++") {
+    if (is_cpp(language)) {
         DebugLogger::debug("C++ compiler path: [" + config_.cpp_compiler + "]");
         cmd.push_back(config_.cpp_compiler);
-        std::vector<std::string> filtered_flags =
+        std::vector<std::string> filtered =
             filter_error_flags(config_.cpp_flags);
-        cmd.insert(cmd.end(), filtered_flags.begin(), filtered_flags.end());
+        cmd.insert(cmd.end(), filtered.begin(), filtered.end());
     } else {
         DebugLogger::debug("C compiler path: [" + config_.c_compiler + "]");
         cmd.push_back(config_.c_compiler);
-        std::vector<std::string> filtered_flags =
-            filter_error_flags(config_.c_flags);
-        cmd.insert(cmd.end(), filtered_flags.begin(), filtered_flags.end());
+        std::vector<std::string> filtered = filter_error_flags(config_.c_flags);
+        cmd.insert(cmd.end(), filtered.begin(), filtered.end());
     }
-
     return cmd;
 }
 
 std::vector<std::string> CheckRunner::get_compiler_and_link_flags(
     const std::string& language) {
-    std::vector<std::string> cmd{};
-
-    if (language == "cpp" || language == "c++") {
+    std::vector<std::string> cmd;
+    if (is_cpp(language)) {
         DebugLogger::debug("C++ compiler path (for linking): [" +
                            config_.cpp_compiler + "]");
         cmd.push_back(config_.cpp_compiler);
-        std::vector<std::string> filtered_flags =
+        std::vector<std::string> filtered =
             filter_error_flags(config_.cpp_flags);
-        cmd.insert(cmd.end(), filtered_flags.begin(), filtered_flags.end());
-        // Add linker flags
-        std::vector<std::string> filtered_link_flags =
+        cmd.insert(cmd.end(), filtered.begin(), filtered.end());
+        std::vector<std::string> link_filtered =
             filter_error_flags(config_.cpp_link_flags);
-        cmd.insert(cmd.end(), filtered_link_flags.begin(),
-                   filtered_link_flags.end());
+        cmd.insert(cmd.end(), link_filtered.begin(), link_filtered.end());
     } else {
         DebugLogger::debug("C compiler path (for linking): [" +
                            config_.c_compiler + "]");
         cmd.push_back(config_.c_compiler);
-        std::vector<std::string> filtered_flags =
-            filter_error_flags(config_.c_flags);
-        cmd.insert(cmd.end(), filtered_flags.begin(), filtered_flags.end());
-        // Add linker flags
-        std::vector<std::string> filtered_link_flags =
+        std::vector<std::string> filtered = filter_error_flags(config_.c_flags);
+        cmd.insert(cmd.end(), filtered.begin(), filtered.end());
+        std::vector<std::string> link_filtered =
             filter_error_flags(config_.c_link_flags);
-        cmd.insert(cmd.end(), filtered_link_flags.begin(),
-                   filtered_link_flags.end());
+        cmd.insert(cmd.end(), link_filtered.begin(), link_filtered.end());
     }
-
     return cmd;
 }
 
 std::string CheckRunner::get_file_extension(const std::string& language) {
-    if (language == "cpp" || language == "c++") {
-        return ".cpp";
-    } else {
-        return ".c";
-    }
+    return is_cpp(language) ? ".cpp" : ".c";
 }
 
 bool CheckRunner::try_compile(const std::string& code,
                               const std::string& language,
                               const std::string& unique_id) {
-    // Create temporary directory with random name
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(100000, 999999);
+    TempBuildDir tmp(unique_id);
+    std::optional<std::filesystem::path> source_file =
+        tmp.write_source(code, get_file_extension(language));
+    if (!source_file) return false;
 
-    std::filesystem::path tmp_dir =
-        std::filesystem::temp_directory_path() /
-        ("rules_cc_autoconf_" + std::to_string(dis(gen)));
-
-    std::filesystem::create_directory(tmp_dir);
-
-    // Sanitize unique_id for use in filename
-    std::string safe_id = sanitize_for_filename(unique_id);
-
-    // Write source file
-    std::filesystem::path source_file =
-        tmp_dir / (safe_id + get_file_extension(language));
-    std::ofstream source(source_file);
-    if (!source.is_open()) {
-        DebugLogger::warn("Failed to create source file");
-        std::filesystem::remove_all(tmp_dir);
-        return false;
-    }
-    source << code;
-    source.close();
-
-    // Prepare compilation command
     std::vector<std::string> cmd = get_compiler_and_flags(language);
+    bool msvc = config_.compiler_type.rfind("msvc", 0) == 0;
 
-    // Check if using MSVC based on compiler_type
-    bool is_msvc = config_.compiler_type.rfind("msvc", 0) == 0;
-
-    if (is_msvc) {
-        // MSVC uses /c for compile-only and /Fo for object output
+    if (msvc) {
         cmd.push_back("/c");
-        std::filesystem::path obj_path = tmp_dir / (safe_id + ".obj");
-        cmd.push_back("/Fo" + obj_path.string());
-        cmd.push_back(source_file.string());
+        cmd.push_back("/Fo" + tmp.object_path(true).string());
+        cmd.push_back(source_file->string());
     } else {
-        // GCC/Clang style
         cmd.push_back("-c");
-        cmd.push_back(source_file.string());
+        cmd.push_back(source_file->string());
         cmd.push_back("-o");
-        cmd.push_back((tmp_dir / (safe_id + ".o")).string());
+        cmd.push_back(tmp.object_path(false).string());
     }
 
-    // Execute compilation with output capture
-    std::stringstream cmd_str;
-    for (size_t i = 0; i < cmd.size(); ++i) {
-        if (i > 0) cmd_str << " ";
-        // Special handling for the compiler path (first element) on Windows
-        if (i == 0) {
-#ifdef _WIN32
-            // On Windows, convert to short path (8.3 format) to avoid space
-            // issues with cmd.exe
-            cmd_str << get_short_path(cmd[i]);
-#else
-            cmd_str << quote_if_needed(cmd[i]);
-#endif
-        } else {
-            cmd_str << quote_if_needed(cmd[i]);
-        }
-    }
-
-    // Redirect stdout and stderr unless debug is enabled
-    std::string full_cmd = cmd_str.str();
-    if (!DebugLogger::is_verbose_debug_enabled()) {
-#ifdef _WIN32
-        full_cmd += " >NUL 2>&1";
-#else
-        full_cmd += " >/dev/null 2>&1";
-#endif
-    }
-
-    // Always log the command being executed for debugging
-    DebugLogger::debug("Executing compile command: " + full_cmd);
-
-    int result = std::system(full_cmd.c_str());
-
-    // Clean up
-    std::filesystem::remove_all(tmp_dir);
-
-    // On Windows, system() returns the exit code directly
-    // On Unix, system() returns a status that needs WEXITSTATUS
-#ifdef _WIN32
-    return result == 0;
-#else
-    return WEXITSTATUS(result) == 0;
-#endif
+    return run_command("compile", cmd) == 0;
 }
 
 bool CheckRunner::try_link(const std::filesystem::path& object_file,
                            const std::filesystem::path& executable,
                            const std::string& language) {
-    // Prepare linking command
     std::vector<std::string> cmd;
+    bool msvc = config_.compiler_type.rfind("msvc", 0) == 0;
 
-    // Check if using MSVC based on compiler_type
-    bool is_msvc = config_.compiler_type.rfind("msvc", 0) == 0;
-
-    if (is_msvc) {
-        // MSVC: always use link.exe (linker tool from cc_toolchain)
+    if (msvc) {
         cmd.push_back(config_.linker);
-
         DebugLogger::debug("Linker tool path: [" + config_.linker + "]");
-
-        // Get link flags (filtered for error flags only)
-        std::vector<std::string> filtered_link_flags;
-        if (language == "cpp" || language == "c++") {
-            filtered_link_flags = filter_error_flags(config_.cpp_link_flags);
-        } else {
-            filtered_link_flags = filter_error_flags(config_.c_link_flags);
-        }
-
-        // link.exe format: flags first, then /OUT:, then object files
-        // Add linker flags first
-        if (!filtered_link_flags.empty()) {
-            cmd.insert(cmd.end(), filtered_link_flags.begin(),
-                       filtered_link_flags.end());
-        }
-        // Add output file with /OUT:
+        std::vector<std::string> link_flags = filter_error_flags(
+            is_cpp(language) ? config_.cpp_link_flags : config_.c_link_flags);
+        cmd.insert(cmd.end(), link_flags.begin(), link_flags.end());
         cmd.push_back("/OUT:" + executable.string());
-        // Add the object file
         cmd.push_back(object_file.string());
     } else {
-        // GCC/Clang style - use linker tool if available, otherwise use
-        // compiler
         std::string link_tool =
             config_.linker.empty()
-                ? (language == "cpp" || language == "c++" ? config_.cpp_compiler
-                                                          : config_.c_compiler)
+                ? (is_cpp(language) ? config_.cpp_compiler : config_.c_compiler)
                 : config_.linker;
-
         if (!config_.linker.empty()) {
             DebugLogger::debug("Linker tool path: [" + config_.linker + "]");
         } else {
             DebugLogger::debug("Using compiler as linker: [" + link_tool + "]");
         }
-
         cmd.push_back(link_tool);
-
-        // Get link flags (filtered)
-        std::vector<std::string> filtered_link_flags;
-        if (language == "cpp" || language == "c++") {
-            filtered_link_flags = filter_error_flags(config_.cpp_link_flags);
-        } else {
-            filtered_link_flags = filter_error_flags(config_.c_link_flags);
-        }
-        cmd.insert(cmd.end(), filtered_link_flags.begin(),
-                   filtered_link_flags.end());
-
-        // Add the object file
+        std::vector<std::string> link_flags = filter_error_flags(
+            is_cpp(language) ? config_.cpp_link_flags : config_.c_link_flags);
+        cmd.insert(cmd.end(), link_flags.begin(), link_flags.end());
         cmd.push_back(object_file.string());
-
-        // Add output file
         cmd.push_back("-o");
         cmd.push_back(executable.string());
     }
 
-    // Execute linking command
-    std::stringstream cmd_str;
-    for (size_t i = 0; i < cmd.size(); ++i) {
-        if (i > 0) cmd_str << " ";
-        // Special handling for the compiler path (first element) on Windows
-        if (i == 0) {
-#ifdef _WIN32
-            // On Windows, convert to short path (8.3 format) to avoid space
-            // issues with cmd.exe
-            cmd_str << get_short_path(cmd[i]);
-#else
-            cmd_str << quote_if_needed(cmd[i]);
-#endif
-        } else {
-            cmd_str << quote_if_needed(cmd[i]);
-        }
-    }
-
-    // Redirect stdout and stderr unless debug is enabled
-    std::string full_cmd = cmd_str.str();
-    if (!DebugLogger::is_verbose_debug_enabled()) {
-#ifdef _WIN32
-        full_cmd += " >NUL 2>&1";
-#else
-        full_cmd += " >/dev/null 2>&1";
-#endif
-    }
-
-    // Always log the command being executed for debugging
-    DebugLogger::debug("Executing link command: " + full_cmd);
-
-    int result = std::system(full_cmd.c_str());
-    // On Windows, system() returns the exit code directly
-    // On Unix, system() returns a status that needs WEXITSTATUS
-#ifdef _WIN32
-    return result == 0;
-#else
-    return WEXITSTATUS(result) == 0;
-#endif
+    return run_command("link", cmd) == 0;
 }
 
 std::optional<int> CheckRunner::try_compile_and_run(
     const std::string& code, const std::string& language,
     const std::string& unique_id) {
-    // Create temporary directory with random name
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(100000, 999999);
+    TempBuildDir tmp(unique_id);
+    std::optional<std::filesystem::path> source_file =
+        tmp.write_source(code, get_file_extension(language));
+    if (!source_file) return std::nullopt;
 
-    std::filesystem::path tmp_dir = std::filesystem::temp_directory_path() /
-                                    ("autoconf_" + std::to_string(dis(gen)));
-
-    std::filesystem::create_directory(tmp_dir);
-
-    // Sanitize unique_id for use in filename
-    std::string safe_id = sanitize_for_filename(unique_id);
-
-    // Write source file
-    std::filesystem::path source_file =
-        tmp_dir / (safe_id + get_file_extension(language));
-    std::ofstream source(source_file);
-    if (!source.is_open()) {
-        DebugLogger::warn("Failed to create source file");
-        std::filesystem::remove_all(tmp_dir);
-        return std::nullopt;
-    }
-    source << code;
-    source.close();
-
-    // Step 1: Compile source to object file
+    // Step 1: Compile
     std::vector<std::string> cmd = get_compiler_and_flags(language);
+    bool msvc = config_.compiler_type.rfind("msvc", 0) == 0;
+    std::filesystem::path obj = tmp.object_path(msvc);
 
-    // Check if using MSVC based on compiler_type
-    bool is_msvc = config_.compiler_type.rfind("msvc", 0) == 0;
-
-    std::filesystem::path object_file;
-    if (is_msvc) {
-        // MSVC uses /c for compile-only and /Fo for object output
+    if (msvc) {
         cmd.push_back("/c");
-        object_file = tmp_dir / (safe_id + ".obj");
-        cmd.push_back("/Fo" + object_file.string());
-        cmd.push_back(source_file.string());
+        cmd.push_back("/Fo" + obj.string());
+        cmd.push_back(source_file->string());
     } else {
-        // GCC/Clang style
         cmd.push_back("-c");
-        cmd.push_back(source_file.string());
+        cmd.push_back(source_file->string());
         cmd.push_back("-o");
-        object_file = tmp_dir / (safe_id + ".o");
-        cmd.push_back(object_file.string());
+        cmd.push_back(obj.string());
     }
 
-    // Execute compilation
-    std::stringstream cmd_str;
-    for (size_t i = 0; i < cmd.size(); ++i) {
-        if (i > 0) cmd_str << " ";
-        // Special handling for the compiler path (first element) on Windows
-        if (i == 0) {
-#ifdef _WIN32
-            // On Windows, convert to short path (8.3 format) to avoid space
-            // issues with cmd.exe
-            cmd_str << get_short_path(cmd[i]);
-#else
-            cmd_str << quote_if_needed(cmd[i]);
-#endif
-        } else {
-            cmd_str << quote_if_needed(cmd[i]);
-        }
-    }
-
-    // Redirect stdout and stderr unless debug is enabled
-    std::string full_cmd = cmd_str.str();
-    if (!DebugLogger::is_verbose_debug_enabled()) {
-#ifdef _WIN32
-        full_cmd += " >NUL 2>&1";
-#else
-        full_cmd += " >/dev/null 2>&1";
-#endif
-    }
-
-    // Always log the command being executed for debugging
-    DebugLogger::debug("Executing compile command: " + full_cmd);
-
-    int compile_result = std::system(full_cmd.c_str());
-    if (compile_result != 0) {
+    if (run_command("compile", cmd) != 0) {
         DebugLogger::warn("Compilation failed");
-        std::filesystem::remove_all(tmp_dir);
         return std::nullopt;
     }
 
-    // Step 2: Link object file to executable
-#ifdef _WIN32
-    std::filesystem::path executable = tmp_dir / (safe_id + ".exe");
-#else
-    std::filesystem::path executable = tmp_dir / safe_id;
-#endif
-
-    bool link_result = try_link(object_file, executable, language);
-    if (!link_result) {
+    // Step 2: Link
+    std::filesystem::path exe = tmp.executable_path();
+    if (!try_link(obj, exe, language)) {
         DebugLogger::warn("Linking failed");
-        std::filesystem::remove_all(tmp_dir);
         return std::nullopt;
     }
 
-    // Step 3: Run the executable
-    std::string run_cmd = quote_if_needed(executable.string());
+    // Step 3: Run
+    std::string run_cmd = quote_if_needed(exe.string());
     if (!DebugLogger::is_verbose_debug_enabled()) {
 #ifdef _WIN32
         run_cmd += " >NUL 2>&1";
@@ -498,17 +398,9 @@ std::optional<int> CheckRunner::try_compile_and_run(
         run_cmd += " >/dev/null 2>&1";
 #endif
     }
-
     DebugLogger::debug("Executing run command: " + run_cmd);
 
     int run_result = std::system(run_cmd.c_str());
-
-    // Clean up
-    std::filesystem::remove_all(tmp_dir);
-
-    // Return exit code
-    // On Windows, system() returns the exit code directly
-    // On Unix, system() returns a status that needs WEXITSTATUS
 #ifdef _WIN32
     return run_result;
 #else
@@ -516,103 +408,72 @@ std::optional<int> CheckRunner::try_compile_and_run(
 #endif
 }
 
+bool CheckRunner::try_compile_and_link(const std::string& code,
+                                       const std::string& language,
+                                       const std::string& unique_id) {
+    TempBuildDir tmp(unique_id);
+    std::optional<std::filesystem::path> source_file =
+        tmp.write_source(code, get_file_extension(language));
+    if (!source_file) return false;
+
+    bool msvc = config_.compiler_type.rfind("msvc", 0) == 0;
+
+    if (msvc) {
+        // On MSVC, compile and link in one cl.exe invocation. Using cl.exe
+        // directly (instead of separate cl.exe /c + link.exe) ensures that
+        // default libraries are linked, including legacy_stdio_definitions.lib
+        // which provides linker symbols for UCRT inline functions like printf.
+        std::vector<std::string> cmd = get_compiler_and_link_flags(language);
+        std::filesystem::path exe = tmp.executable_path();
+        cmd.push_back("/Fe" + exe.string());
+        cmd.push_back(source_file->string());
+        return run_command("compile and link", cmd) == 0;
+    }
+
+    // GCC/Clang: compile then link separately
+    std::vector<std::string> cmd = get_compiler_and_flags(language);
+    std::filesystem::path obj = tmp.object_path(false);
+
+    cmd.push_back("-c");
+    cmd.push_back(source_file->string());
+    cmd.push_back("-o");
+    cmd.push_back(obj.string());
+
+    if (run_command("compile", cmd) != 0) {
+        DebugLogger::warn("Compilation failed");
+        return false;
+    }
+
+    // Step 2: Link
+    std::filesystem::path exe = tmp.executable_path();
+    return try_link(obj, exe, language);
+}
+
 bool CheckRunner::try_compile_and_link_with_lib(const std::string& code,
                                                 const std::string& library,
                                                 const std::string& language,
                                                 const std::string& unique_id) {
-    // Create temporary directory with random name
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(100000, 999999);
+    TempBuildDir tmp(unique_id);
+    std::optional<std::filesystem::path> source_file =
+        tmp.write_source(code, get_file_extension(language));
+    if (!source_file) return false;
 
-    std::filesystem::path tmp_dir =
-        std::filesystem::temp_directory_path() /
-        ("rules_cc_autoconf_" + std::to_string(dis(gen)));
-
-    std::filesystem::create_directory(tmp_dir);
-
-    // Sanitize unique_id for use in filename
-    std::string safe_id = sanitize_for_filename(unique_id);
-
-    // Write source file
-    std::filesystem::path source_file =
-        tmp_dir / (safe_id + get_file_extension(language));
-    std::ofstream source(source_file);
-    if (!source.is_open()) {
-        DebugLogger::warn("Failed to create source file");
-        std::filesystem::remove_all(tmp_dir);
-        return false;
-    }
-    source << code;
-    source.close();
-
-    // Prepare compilation and linking command
     std::vector<std::string> cmd = get_compiler_and_link_flags(language);
+    bool msvc = config_.compiler_type.rfind("msvc", 0) == 0;
 
-    // Check if using MSVC based on compiler_type
-    bool is_msvc = config_.compiler_type.rfind("msvc", 0) == 0;
-
-    std::filesystem::path executable;
-    if (is_msvc) {
-        // MSVC uses /Fe for executable output
-        executable = tmp_dir / (safe_id + ".exe");
-        cmd.push_back("/Fe" + executable.string());
-        cmd.push_back(source_file.string());
-        // Add library - MSVC uses .lib extension
+    if (msvc) {
+        std::filesystem::path exe = tmp.dir / (tmp.safe_id + ".exe");
+        cmd.push_back("/Fe" + exe.string());
+        cmd.push_back(source_file->string());
         cmd.push_back(library + ".lib");
     } else {
-        // GCC/Clang style - compile and link in one step
-        cmd.push_back(source_file.string());
+        cmd.push_back(source_file->string());
         cmd.push_back("-o");
-        executable = tmp_dir / safe_id;
-        cmd.push_back(executable.string());
-        // Add library with -l prefix
+        cmd.push_back((tmp.dir / tmp.safe_id).string());
         cmd.push_back("-l" + library);
     }
 
-    // Execute compilation and linking with output capture
-    std::stringstream cmd_str;
-    for (size_t i = 0; i < cmd.size(); ++i) {
-        if (i > 0) cmd_str << " ";
-        // Special handling for the compiler path (first element) on Windows
-        if (i == 0) {
-#ifdef _WIN32
-            // On Windows, convert to short path (8.3 format) to avoid space
-            // issues with cmd.exe
-            cmd_str << get_short_path(cmd[i]);
-#else
-            cmd_str << quote_if_needed(cmd[i]);
-#endif
-        } else {
-            cmd_str << quote_if_needed(cmd[i]);
-        }
-    }
-
-    // Redirect stdout and stderr unless debug is enabled
-    std::string full_cmd = cmd_str.str();
-    if (!DebugLogger::is_verbose_debug_enabled()) {
-#ifdef _WIN32
-        full_cmd += " >NUL 2>&1";
-#else
-        full_cmd += " >/dev/null 2>&1";
-#endif
-    }
-
-    // Always log the command being executed for debugging
-    DebugLogger::debug("Executing compile and link command: " + full_cmd);
-
-    int result = std::system(full_cmd.c_str());
-
-    // Clean up
-    std::filesystem::remove_all(tmp_dir);
-
-    // On Windows, system() returns the exit code directly
-    // On Unix, system() returns a status that needs WEXITSTATUS
-#ifdef _WIN32
-    return result == 0;
-#else
-    return WEXITSTATUS(result) == 0;
-#endif
+    return run_command("compile and link", cmd) == 0;
 }
 
 }  // namespace rules_cc_autoconf

@@ -1,22 +1,103 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/euidaccess.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
-# gl_FUNC_EUIDACCESS from euidaccess.m4
-# HAVE_EACCESS comes from eaccess, HAVE_FACCESSAT from faccessat
-
+# gl_FUNC_NONREENTRANT_EUIDACCESS - lines 9-19 (FIRST AC_DEFUN in M4)
+# Defines PREFER_NONREENTRANT_EUIDACCESS=1
 autoconf(
-    name = "euidaccess",
+    name = "gl_FUNC_NONREENTRANT_EUIDACCESS",
     checks = [
-        macros.AC_CHECK_FUNC("euidaccess"),
-        macros.AC_CHECK_DECL("setregid"),
-        macros.AC_CHECK_HEADER("libgen.h"),
+        checks.AC_CHECK_DECL(
+            "setregid",
+            define = "HAVE_DECL_SETREGID",
+        ),
+        checks.AC_DEFINE("PREFER_NONREENTRANT_EUIDACCESS", "1"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/eaccess",  # Provides HAVE_EACCESS
-        "//gnulib/m4/faccessat",  # Provides HAVE_FACCESSAT
-        "//gnulib/m4/unistd_h",
+        ":gl_FUNC_EUIDACCESS",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_FUNC_EUIDACCESS - lines 21-32 (SECOND AC_DEFUN)
+autoconf(
+    name = "gl_FUNC_EUIDACCESS",
+    checks = [
+        # We use AC_TRY_LINK to ensure it's actually linkable
+        checks.AC_TRY_LINK(
+            name = "ac_cv_func_euidaccess",
+            code = """\
+#include <unistd.h>
+
+#ifdef __cplusplus
+extern "C"
+#endif
+int euidaccess(const char *, int);
+
+int main(void) {
+    return euidaccess("", 0);
+}
+""",
+        ),
+
+        # HAVE_EUIDACCESS define (in config.h) - only defined when function exists
+        checks.AC_DEFINE(
+            "HAVE_EUIDACCESS",
+            requires = ["ac_cv_func_euidaccess==1"],
+        ),
+
+        # HAVE_EUIDACCESS subst (in subst.h) - always set to 0 or 1
+        checks.AC_SUBST(
+            "HAVE_EUIDACCESS",
+            condition = "ac_cv_func_euidaccess",
+            if_false = 0,
+            if_true = 1,
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # Note: _DEFAULTS functions are ignored per porting strategy
+        "//gnulib/m4/extensions",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_PREREQ_EUIDACCESS - lines 35-57 (THIRD AC_DEFUN)
+# Prerequisites of lib/euidaccess.c
+autoconf(
+    name = "gl_PREREQ_EUIDACCESS",
+    checks = [
+        checks.AC_CHECK_HEADER(
+            "libgen.h",
+            define = "HAVE_LIBGEN_H",
+        ),
+
+        # EUIDACCESS_LIBGEN is set to -lgen if eaccess is found in libgen, otherwise empty
+        # Since we can't easily check libraries in Bazel, default to empty
+        checks.AC_SUBST("EUIDACCESS_LIBGEN", ""),
+        checks.AC_SUBST("LIB_EACCESS", ""),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # Only need HAVE_FACCESSAT, not the full gl_FUNC_FACCESSAT replacement logic
+        "//gnulib/m4/faccessat:HAVE_FACCESSAT",
+        # Provides GETGROUPS_T and HAVE_GETGROUPS
+        "//autoconf/macros/AC_FUNC_GETGROUPS",
+        "//gnulib/m4/eaccess",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Package-level aggregator target (matches package name)
+# No checks - just deps on all other targets (excluding *_DEFAULTS)
+autoconf(
+    name = "euidaccess",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_EUIDACCESS",
+        ":gl_FUNC_NONREENTRANT_EUIDACCESS",
+        ":gl_PREREQ_EUIDACCESS",
     ],
 )

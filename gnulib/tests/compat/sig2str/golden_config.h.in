@@ -1,0 +1,14 @@
+/* config.h.in */
+/* #undef HAVE_POSIX_SIGNALBLOCKING */
+/* #undef HAVE_PTHREAD_SIGMASK */
+/* #undef HAVE_RAISE */
+/* #undef HAVE_SIG2STR */
+/* #undef HAVE_SIGACTION */
+/* #undef HAVE_SIGHANDLER_T */
+/* #undef HAVE_SIGINFO_T */
+/* #undef HAVE_SIGSET_T */
+/* #undef HAVE_STR2SIG */
+/* #undef HAVE_STRUCT_SIGACTION_SA_SIGACTION */
+/* #undef HAVE_TYPE_VOLATILE_SIG_ATOMIC_T */
+/* #undef REPLACE_PTHREAD_SIGMASK */
+/* #undef REPLACE_RAISE */

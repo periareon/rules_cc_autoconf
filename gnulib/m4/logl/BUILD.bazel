@@ -1,22 +1,27 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/logl.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "logl",
     checks = [
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_FUNC(
             "logl",
-            define = "HAVE_DECL_LOGL",
-            headers = ["math.h"],
+            name = "_gl_cv_func_logl",
         ),
+        checks.AC_SUBST("LOGL_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",
         "//gnulib/m4/floorl",
+        "//gnulib/m4/frexp",
         "//gnulib/m4/frexpl",
         "//gnulib/m4/isnanl",
         "//gnulib/m4/log",
+        "//gnulib/m4/math_h",
+        "//gnulib/m4/mathfunc",
     ],
 )

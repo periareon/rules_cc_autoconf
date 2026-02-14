@@ -1,0 +1,2 @@
+/* subst.h.in */
+#define SUBST_HAVE_MINMAX_IN_SYS_PARAM_H "@HAVE_MINMAX_IN_SYS_PARAM_H@"

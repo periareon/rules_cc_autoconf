@@ -1,20 +1,54 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sys_random_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
-# gl_SYS_RANDOM_H from sys_random_h.m4
 autoconf(
     name = "sys_random_h",
     checks = [
-        # Check for sys/random.h header
-        macros.AC_CHECK_HEADER("sys/random.h"),
-        # Check for getrandom declaration
-        macros.AC_CHECK_DECL(
-            "getrandom",
-            headers = ["sys/random.h"],
-            requires = ["HAVE_SYS_RANDOM_H"],
+        checks.AC_CHECK_HEADER(
+            "sys/random.h",
+            define = "HAVE_SYS_RANDOM_H",
+            subst = "HAVE_SYS_RANDOM_H",
         ),
+        checks.AC_SUBST("NEXT_SYS_RANDOM_H", "<sys/random.h>"),
+        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_SYS_RANDOM_H", "<sys/random.h>"),
+        # Golden expects UNISTD_H_HAVE_SYS_RANDOM_H "1" when this header exists
+        checks.AC_SUBST("UNISTD_H_HAVE_SYS_RANDOM_H", "1"),
+        # On macOS, sys/random.h exists but getrandom is not declared
+        # The golden file shows HAVE_GETRANDOM is undefined
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/include_next",  # Required for INCLUDE_NEXT variables
+    ],
+)
+
+autoconf(
+    name = "gl_SYS_RANDOM_H_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("HAVE_GETRANDOM", 1),
+        checks.AC_SUBST("REPLACE_GETRANDOM", 0),
+    ],
+    visibility = ["//visibility:private"],
+)
+
+autoconf(
+    name = "gl_SYS_RANDOM_H_REQUIRE_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("GNULIB_GETRANDOM", 0),
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gl_SYS_RANDOM_H_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_SYS_RANDOM_H_REQUIRE_DEFAULTS",
+    ],
 )

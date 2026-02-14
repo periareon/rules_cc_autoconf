@@ -1,29 +1,99 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/time_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
-
-# gl_TIME_H macro from time_h.m4
-# HAVE_SYS_TIME_H comes from sys_time_h dependency
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "time_h",
     checks = [
-        macros.AC_TRY_COMPILE(
-            code = """#include <time.h>
-static int x = TIME_UTC; x++;""",
-            define = "TIME_H_DEFINES_TIME_UTC",
-            language = "c",
+        # gl_TIME_H checks for time.h header
+        checks.AC_CHECK_HEADER(
+            "time.h",
+            define = "HAVE_TIME_H",
         ),
-        macros.AC_TRY_COMPILE(
-            code = """#include <time.h>
-static struct timespec x; x.tv_sec = x.tv_nsec;""",
-            define = "TIME_H_DEFINES_STRUCT_TIMESPEC",
-            language = "c",
-        ),
+        checks.AC_SUBST("NEXT_TIME_H", "<time.h>"),
+        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_TIME_H", "<time.h>"),
+        checks.AC_SUBST("PTHREAD_H_DEFINES_STRUCT_TIMESPEC", "0"),
+        checks.AC_SUBST("SYS_TIME_H_DEFINES_STRUCT_TIMESPEC", "0"),
+        checks.AC_SUBST("TIME_H_DEFINES_STRUCT_TIMESPEC", "1"),
+        checks.AC_SUBST("TIME_H_DEFINES_TIME_UTC", "1"),
+        checks.AC_SUBST("UNISTD_H_DEFINES_STRUCT_TIMESPEC", "0"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/sys_time_h",  # Provides HAVE_SYS_TIME_H
+        "//gnulib/m4/include_next",
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/sys_time_h",  # Provides HAVE_SYS_TIME_H (needed for test compatibility)
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "gl_TIME_H_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("HAVE_DECL_LOCALTIME_R", 1),
+        checks.AC_SUBST("HAVE_NANOSLEEP", 1),
+        checks.AC_SUBST("HAVE_STRPTIME", 1),
+        checks.AC_SUBST("HAVE_TIMEGM", 1),
+        checks.AC_SUBST("HAVE_TIMESPEC_GET", 1),
+        checks.AC_SUBST("HAVE_TIMESPEC_GETRES", 1),
+        checks.AC_SUBST("HAVE_TIMEZONE_T", 0),
+        checks.AC_SUBST("HAVE_TZALLOC", 0),
+        checks.AC_SUBST("REPLACE_CTIME", 0),
+        checks.AC_SUBST("REPLACE_GMTIME", 0),
+        checks.AC_SUBST("REPLACE_LOCALTIME", 0),
+        checks.AC_SUBST("REPLACE_LOCALTIME_R", 0),
+        checks.AC_SUBST("REPLACE_LOCALTIME_RZ", 0),
+        checks.AC_SUBST("REPLACE_MKTIME", 0),
+        checks.AC_SUBST("REPLACE_MKTIME_Z", 0),
+        checks.AC_SUBST("REPLACE_NANOSLEEP", 0),
+        checks.AC_SUBST("REPLACE_STRFTIME", 0),
+        checks.AC_SUBST("REPLACE_TIME", 0),
+        checks.AC_SUBST("REPLACE_TIMEGM", 0),
+        checks.AC_SUBST("REPLACE_TIMESPEC_GET", 0),
+        checks.AC_SUBST("REPLACE_TIMESPEC_GETRES", 0),
+        checks.AC_SUBST("REPLACE_TZSET", 0),
+    ],
+    visibility = ["//visibility:private"],
+)
+
+autoconf(
+    name = "gl_TIME_H_REQUIRE_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("GNULIB_ASCTIME", 0),
+        checks.AC_SUBST("GNULIB_ASCTIME_R", 0),
+        checks.AC_SUBST("GNULIB_CTIME", 0),
+        checks.AC_SUBST("GNULIB_CTIME_R", 0),
+        checks.AC_SUBST("GNULIB_GMTIME", 0),
+        checks.AC_SUBST("GNULIB_GMTIME_R", 0),
+        checks.AC_SUBST("GNULIB_LOCALTIME", 0),
+        checks.AC_SUBST("GNULIB_LOCALTIME_R", 0),
+        checks.AC_SUBST("GNULIB_MKTIME", 0),
+        checks.AC_SUBST("GNULIB_NANOSLEEP", 0),
+        checks.AC_SUBST("GNULIB_STRFTIME", 0),
+        checks.AC_SUBST("GNULIB_STRPTIME", 0),
+        checks.AC_SUBST("GNULIB_TIME", 0),
+        checks.AC_SUBST("GNULIB_TIMEGM", 0),
+        checks.AC_SUBST("GNULIB_TIMESPEC_GET", 0),
+        checks.AC_SUBST("GNULIB_TIMESPEC_GETRES", 0),
+        checks.AC_SUBST("GNULIB_TIME_R", 0),
+        checks.AC_SUBST("GNULIB_TIME_RZ", 0),
+        checks.AC_SUBST("GNULIB_TZNAME", 0),
+        checks.AC_SUBST("GNULIB_TZSET", 0),
+        # Microsoft deprecated alias function names
+        checks.AC_SUBST("GNULIB_MDA_TZSET", 1),
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gl_TIME_H_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_TIME_H_REQUIRE_DEFAULTS",
     ],
 )

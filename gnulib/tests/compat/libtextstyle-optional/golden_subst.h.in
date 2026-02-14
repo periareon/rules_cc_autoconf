@@ -1,0 +1,4 @@
+/* subst.h.in */
+#define SUBST_HAVE_LIBTEXTSTYLE "no"
+#define SUBST_HAVE_TCDRAIN "@HAVE_TCDRAIN@"
+#define SUBST_TEXTSTYLE_H "textstyle.h"

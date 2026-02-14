@@ -1,15 +1,95 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/getopt.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
+#    Sets gl_getopt_required=POSIX, requires gl_GETOPT_CHECK_HEADERS, sets
+#    REPLACE_GETOPT; when REPLACE_GETOPT=1 calls gl_GETOPT_SUBSTITUTE_HEADER.
+#    No checks here; only deps on re-implementation.
 autoconf(
-    name = "getopt",
+    name = "gl_FUNC_GETOPT_POSIX",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_GETOPT_CHECK_HEADERS",
+        # Include substitute header on both macOS and Linux
+        # (defines __GETOPT_PREFIX=rpl_ which golden expects)
+        ":gl_GETOPT_SUBSTITUTE_HEADER",
+    ],
+)
+
+#    Sets gl_getopt_required=GNU. No need to invoke gl_FUNC_GETOPT_POSIX here;
+#    done via module dependency getopt-gnu -> getopt-posix.
+autoconf(
+    name = "gl_FUNC_GETOPT_GNU",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_GETOPT_POSIX",
+    ],
+)
+
+#    getopt.h check, HAVE_GETOPT_H, NEXT_* subst, getopt_long_only, REPLACE_GETOPT.
+autoconf(
+    name = "gl_GETOPT_CHECK_HEADERS",
     checks = [
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_HEADER(
+            "getopt.h",
+            name = "_gl_cv_header_getopt_h",
+        ),
+        checks.AC_DEFINE(
+            "HAVE_GETOPT_H",
+            condition = "_gl_cv_header_getopt_h",
+        ),
+        checks.AC_SUBST(
+            "HAVE_GETOPT_H",
+            condition = "_gl_cv_header_getopt_h",
+        ),
+        checks.AC_SUBST(
+            "NEXT_AS_FIRST_DIRECTIVE_GETOPT_H",
+            condition = "_gl_cv_header_getopt_h",
+            if_false = "",
+            if_true = "<getopt.h>",
+        ),
+        checks.AC_SUBST(
+            "NEXT_GETOPT_H",
+            condition = "_gl_cv_header_getopt_h",
+            if_false = "",
+            if_true = "<getopt.h>",
+        ),
+        checks.AC_CHECK_FUNC(
             "getopt_long_only",
             define = "HAVE_GETOPT_LONG_ONLY",
         ),
+        checks.AC_SUBST("REPLACE_GETOPT", "0"),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/include_next",
+    ],
+)
+
+#    gl_CHECK_HEADER_SYS_CDEFS_H; AC_DEFINE __GETOPT_PREFIX rpl_
+autoconf(
+    name = "gl_GETOPT_SUBSTITUTE_HEADER",
+    checks = [
+        checks.AC_DEFINE("__GETOPT_PREFIX", "rpl_"),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/sys_cdefs_h",
+    ],
+)
+
+# Main target: getopt (no checks, only deps on gl_FUNC_GETOPT_POSIX).
+autoconf(
+    name = "getopt",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_GETOPT_POSIX",
+    ],
 )

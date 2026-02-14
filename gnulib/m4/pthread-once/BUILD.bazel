@@ -1,11 +1,23 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/pthread-once.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "pthread-once",
     checks = [
-        # Note: pthread-once.m4 may not exist in gnulib, or this module may not have checks
+        # gl_PTHREAD_ONCE requires gl_PTHREAD_H and gl_PTHREADLIB
+        # These are provided by dependencies
+        checks.AC_SUBST("PTHREAD_ONCE_LIB", ""),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/pthread_h",
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//gnulib/m4/threadlib",
+        "//gnulib/m4/extensions",  # Need extension defines
+        "//gnulib/m4/wchar_h:gl_WCHAR_H_CORE",
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

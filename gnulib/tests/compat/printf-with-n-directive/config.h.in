@@ -1,0 +1,2 @@
+/* config.h.in */
+#undef NEED_PRINTF_WITH_N_DIRECTIVE

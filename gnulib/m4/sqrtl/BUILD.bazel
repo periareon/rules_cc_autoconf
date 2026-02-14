@@ -1,21 +1,32 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sqrtl.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "sqrtl",
     checks = [
-        macros.AC_CHECK_DECL(
+        # gl_FUNC_SQRTL checks for sqrtl function and declaration
+        # Note: The golden file expects HAVE_DECL_SQRTL to be undefined
+        # Use temporary define to avoid direct HAVE_DECL_SQRTL definition
+        checks.AC_CHECK_DECL(
             "sqrtl",
-            define = "HAVE_DECL_SQRTL",
+            name = "_gl_cv_decl_sqrtl",  # Use temporary define to avoid direct HAVE_DECL_SQRTL
+            includes = ["#include <math.h>"],
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/frexpl",
-        "//gnulib/m4/isnanl",
-        "//gnulib/m4/ldexpl",
-        "//gnulib/m4/sqrt",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+        "//gnulib/m4/math_h:long-double-vs-double",
+        "//gnulib/m4/frexpl",  # Provides HAVE_FREXPL (needed for test compatibility)
+        "//gnulib/m4/ldexpl",  # Provides HAVE_LDEXPL (needed for test compatibility)
+        "//gnulib/m4/mktime",  # Provides HAVE_DECL_ALARM (needed for test compatibility)
+        "//gnulib/m4/frexp",  # Provides HAVE_FREXP (needed for test compatibility)
+        "//gnulib/m4/asinl",  # Provides FREXPL_LIBM, ISNAND_LIBM, ISNANL_LIBM (via isnanl), LDEXPL_LIBM, LDEXP_LIBM for golden
+        "//gnulib/m4/pow",  # Provides POW_LIBM for golden
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

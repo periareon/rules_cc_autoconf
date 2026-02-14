@@ -1,23 +1,40 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/timegm.m4"""
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/timegm.m4
+
+gl_FUNC_TIMEGM:
+- AC_REQUIRE([gl_TIME_H_DEFAULTS])
+- AC_REQUIRE([gl_FUNC_MKTIME_WORKS])
+- gl_CHECK_FUNCS_ANDROID([timegm])
+- If timegm exists but gl_cv_func_working_mktime != yes, sets REPLACE_TIMEGM=1
+
+Note: This requires gl_FUNC_MKTIME_WORKS (NOT gl_FUNC_MKTIME), so it should NOT
+bring in REPLACE_MKTIME. The test expects REPLACE_MKTIME to remain at default 0.
+"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
-# gl_FUNC_TIMEGM from timegm.m4
 autoconf(
     name = "timegm",
     checks = [
         # gl_CHECK_FUNCS_ANDROID([timegm], [[#include <time.h>]])
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "timegm",
-            code = "#include <time.h>",
+            define = "HAVE_TIMEGM",
         ),
-    ],
+    ] + select({
+        # On macOS: timegm exists, but gl_cv_func_working_mktime="guessing no"
+        # (due to Apple Universal Build), so REPLACE_TIMEGM=1
+        "@platforms//os:macos": [
+            checks.AC_SUBST("REPLACE_TIMEGM", "1"),
+        ],
+        # On Linux: timegm exists and mktime works, so REPLACE_TIMEGM=0 (default)
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_TIME_H_DEFAULTS])
-        "//gnulib/m4/time_h",
-        # AC_REQUIRE([gl_FUNC_MKTIME_WORKS])
-        "//gnulib/m4/mktime",
+        "//gnulib/m4/time_h",  # AC_REQUIRE([gl_TIME_H_DEFAULTS])
+        # AC_REQUIRE([gl_FUNC_MKTIME_WORKS]) - NOT gl_FUNC_MKTIME!
+        "//gnulib/m4/mktime:gl_FUNC_MKTIME_WORKS",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

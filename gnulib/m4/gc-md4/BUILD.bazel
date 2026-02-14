@@ -12,5 +12,7 @@ autoconf(
     deps = [
         "//gnulib/m4/gc",  # AC_REQUIRE([gl_GC])
         "//gnulib/m4/md4",  # gl_MD4 - conditional
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

@@ -2,7 +2,6 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 
-# gl_XSTRTOL from xstrtol.m4
 # Simple macro - only AC_REQUIRE([AC_C_RESTRICT]) and ':'
 autoconf(
     name = "xstrtol",
@@ -10,4 +9,7 @@ autoconf(
         # No actual checks - macro body is just ':' with AC_C_RESTRICT
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

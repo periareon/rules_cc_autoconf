@@ -1,0 +1,8 @@
+AC_INIT([test_execve], [1.0])
+AC_CONFIG_HEADERS([config.h])
+
+# Invoke macros from execve.m4
+gl_FUNC_EXECVE
+
+AC_CONFIG_FILES([subst.h:subst.h.in])
+AC_OUTPUT

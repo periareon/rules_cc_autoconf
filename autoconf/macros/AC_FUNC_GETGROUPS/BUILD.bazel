@@ -1,0 +1,27 @@
+"""AC_FUNC_GETGROUPS - Autoconf builtin macro
+
+Checks if getgroups() works correctly.
+
+Defines:
+  - GETGROUPS_T (type of getgroups array argument)
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "AC_FUNC_GETGROUPS",
+    checks = [
+        # AC_CHECK_FUNC([getgroups]) - defines HAVE_GETGROUPS
+        checks.AC_CHECK_FUNC(
+            "getgroups",
+            define = "HAVE_GETGROUPS",
+            subst = True,
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//autoconf/macros/AC_TYPE_GETGROUPS",
+    ],
+)

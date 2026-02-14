@@ -1,0 +1,12 @@
+/* config.h.in */
+#undef CLIX_PATH
+#undef CLIX_PATH_VAR
+#undef CSHARP_CHOICE
+#undef HAVE_CLIX
+#undef HAVE_CLIX_IN_PATH
+#undef HAVE_DOTNET
+#undef HAVE_DOTNET_IN_PATH
+#undef HAVE_MONO
+#undef HAVE_MONO_IN_PATH
+#undef MONO_PATH
+#undef MONO_PATH_SEPARATOR

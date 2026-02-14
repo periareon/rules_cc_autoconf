@@ -1,35 +1,35 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/inet_ntop.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
-
-# gl_FUNC_INET_NTOP macro from inet_ntop.m4
-# Note: Full implementation includes library search (nsl, resolv, network, ws2_32)
-# that is complex to replicate in Bazel
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "inet_ntop",
     checks = [
-        # HAVE_NETDB_H comes from netdb_h dependency
-        macros.AC_CHECK_FUNC("inet_ntop"),
-        macros.AC_CHECK_DECL(
+        # gl_FUNC_INET_NTOP checks for inet_ntop function
+        checks.AC_CHECK_FUNC(
             "inet_ntop",
-            headers = [
-                "arpa/inet.h",
-                "netdb.h",
+            name = "_gl_cv_func_inet_ntop",
+        ),
+        # gl_FUNC_INET_NTOP checks for inet_ntop declaration
+        checks.AC_CHECK_DECL(
+            "inet_ntop",
+            define = "HAVE_DECL_INET_NTOP",
+            includes = [
+                "#include <arpa/inet.h>",
+                "#include <netdb.h>",
             ],
         ),
-    ] + select({
-        # Windows uses stdcall which isn't POSIX-compliant
-        "@platforms//os:windows": [
-            macros.M4_DEFINE("REPLACE_INET_NTOP", "1"),
-        ],
-        "//conditions:default": [],
-    }),
+        # AC_SUBST([INET_NTOP_LIB]) - library needed for inet_ntop
+        # On macOS/Linux, inet_ntop is in libc, so INET_NTOP_LIB is empty
+        checks.AC_SUBST("INET_NTOP_LIB", ""),
+    ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/arpa_inet_h",  # AC_REQUIRE([gl_ARPA_INET_H_DEFAULTS])
-        "//gnulib/m4/netdb_h",  # AC_CHECK_HEADERS_ONCE([netdb.h]) - provides HAVE_NETDB_H
-        "//gnulib/m4/sys_socket_h",  # gl_PREREQ_SYS_H_WINSOCK2
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/netdb_h",
+        "//gnulib/m4/netinet_in_h:gl_HEADER_NETINET_IN",
+        "//gnulib/m4/sys_socket_h:gl_SYS_SOCKET_H",
     ],
 )

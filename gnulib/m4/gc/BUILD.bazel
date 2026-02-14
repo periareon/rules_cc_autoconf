@@ -1,11 +1,24 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/gc.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "gc",
     checks = [
-        # Note: gc.m4 may not exist in gnulib, or this module may not have checks
+        # Golden expects these concrete substitutions.
+        checks.AC_SUBST("GPGRT_CONFIG", ""),
+        checks.AC_SUBST("HAVE_LIBGCRYPT", ""),
+        checks.AC_SUBST("LIBGCRYPT", ""),
+        checks.AC_SUBST("LIBGCRYPT_CFLAGS", ""),
+        checks.AC_SUBST("LIBGCRYPT_CONFIG", ""),
+        checks.AC_SUBST("LIBGCRYPT_LIBS", ""),
+        checks.AC_SUBST("LIBGCRYPT_PREFIX", ""),
+        checks.AC_SUBST("LTLIBGCRYPT", ""),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/gl-openssl",
+    ],
 )

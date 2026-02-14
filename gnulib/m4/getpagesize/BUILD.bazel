@@ -1,38 +1,101 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/getpagesize.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
-# gl_FUNC_GETPAGESIZE from getpagesize.m4
-# HAVE_OS_H comes from readutmp dependency
-# HAVE_SYS_PARAM_H comes from pathmax dependency
-# On Windows (mingw/windows), REPLACE_GETPAGESIZE=1 is unconditionally set.
-
+# Tests whether the function getpagesize() exists.
+# Sets gl_cv_func_getpagesize.
 autoconf(
-    name = "getpagesize",
+    name = "gl_CHECK_FUNC_GETPAGESIZE",
     checks = [
-        macros.AC_TRY_COMPILE(
+        # We can't use AC_CHECK_FUNC here, because getpagesize() is defined as a
+        # static inline function when compiling for Android 4.4 or older.
+        # Use AC_TRY_LINK to check if getpagesize is linkable
+        checks.AC_TRY_LINK(
+            name = "gl_cv_func_getpagesize",
             code = """\
 #include <unistd.h>
 int main(void) { return getpagesize(); }
 """,
-            define = "HAVE_GETPAGESIZE",
             language = "c",
         ),
-        macros.AC_CHECK_DECL(
-            "getpagesize",
-            headers = ["unistd.h"],
-        ),
-    ] + select({
-        "@platforms//os:windows": [
-            macros.M4_DEFINE("REPLACE_GETPAGESIZE", "1"),
-        ],
-        "//conditions:default": [],
-    }),
+    ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/pathmax",  # Provides HAVE_SYS_PARAM_H
-        "//gnulib/m4/readutmp",  # Provides HAVE_OS_H
-        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "gl_FUNC_GETPAGESIZE",
+    checks = [
+        # Standard header defines are provided by AC_CHECK_INCLUDES_DEFAULT dependency
+        # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        # gl_CHECK_FUNC_GETPAGESIZE - line 14 (handled via dependency)
+
+        # fi
+        checks.AC_SUBST(
+            "HAVE_GETPAGESIZE",
+            condition = "gl_cv_func_getpagesize",
+            if_false = 0,
+            if_true = 1,
+        ),
+
+        #   fi
+        # fi
+        checks.AC_CHECK_HEADER(
+            "OS.h",
+            name = "_gl_cv_header_OS_h",
+            requires = ["gl_cv_func_getpagesize==0"],
+        ),
+        checks.AC_SUBST(
+            "HAVE_OS_H",
+            condition = "gl_cv_func_getpagesize",
+            if_false = "_gl_cv_header_OS_h",  # Use header check result if getpagesize not found
+            if_true = 0,  # If getpagesize found, HAVE_OS_H=0
+        ),
+
+        # Note: getpagesize only needs sys/param.h if getpagesize function is not found,
+
+        #   mingw* | windows*)
+        #     REPLACE_GETPAGESIZE=1
+        #     ;;
+        # esac
+    ] + select({
+        "@platforms//os:windows": [
+            checks.AC_SUBST("REPLACE_GETPAGESIZE", 1),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_GETPAGESIZE", 0),
+        ],
+    }) + [
+        checks.AC_CHECK_DECL(
+            "getpagesize",
+            name = "_gl_cv_have_decl_getpagesize",
+            includes = ["#include <unistd.h>"],
+        ),
+        # Set HAVE_DECL_GETPAGESIZE=0 as substitution variable if NOT declared
+        checks.AC_SUBST(
+            "HAVE_DECL_GETPAGESIZE",
+            condition = "_gl_cv_have_decl_getpagesize",
+            if_false = 0,
+            if_true = 1,
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_CHECK_FUNC_GETPAGESIZE",
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Top-level target that aggregates all AC_DEFUN functions
+autoconf(
+    name = "getpagesize",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_GETPAGESIZE",
     ],
 )

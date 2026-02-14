@@ -1,0 +1,79 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Define to 1 if you have the <nonexistent_header_xyz.h> header file. */
+/* #undef HAVE_NONEXISTENT_HEADER_XYZ_H */
+
+/* Define to 1 if you have the <stdio.h> header file. */
+#define HAVE_STDIO_H 1
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#define HAVE_STDLIB_H 1
+
+/* Define to 1 if you have the printf function. */
+#define HAVE_PRINTF 1
+
+/* Define to 1 if you have the malloc function. */
+#define HAVE_MALLOC 1
+
+/* Define to 1 if you have the some_func function. */
+/* #undef HAVE_SOME_FUNC */
+
+/* Define to 1 if the system has the type FILE. */
+#define HAVE_FILE 1
+
+/* Define to 1 if you have the NULL symbol. */
+#define HAVE_NULL 1
+
+/* M4 variable for testing value-based requires */
+#define REPLACE_FEATURE 1
+
+/* M4 variable for testing value-based requires */
+#define REPLACE_OTHER 0
+
+/* Define to 1 if you have the exit function (with REPLACE_FEATURE=1 requirement). */
+#define HAVE_EXIT_WITH_FEATURE 1
+
+/* Define to 1 if you have the exit function (with REPLACE_OTHER=1 requirement - should fail). */
+/* #undef HAVE_EXIT_WITH_OTHER */
+
+/* Define to 1 if you have the exit function (with REPLACE_OTHER=0 requirement). */
+#define HAVE_EXIT_WITH_OTHER_ZERO 1
+
+/* NEW: Test negated require with ! syntax */
+#define NEGATED_REQUIRE_TEST 1
+/* #undef NEGATED_REQUIRE_FAIL */
+
+/* NEW: Test == syntax */
+#define DOUBLE_EQUALS_TEST 1
+
+/* NEW: Test != syntax */
+#define NOT_EQUALS_TEST 1
+/* #undef NOT_EQUALS_FAIL */
+
+/* NEW: Test if_true/if_false with string.h */
+#define HAVE_STRING_H 1
+#define STRING_H_IF_TRUE 1
+#define STRING_H_IF_FALSE 1
+
+/* NEW: Test if_true/if_false with nonexistent header */
+/* #undef HAVE_ANOTHER_NONEXISTENT_XYZ_H */
+/* #undef NONEXISTENT2_IF_TRUE */
+#define NONEXISTENT2_IF_FALSE 1
+
+/* Define to the address where bug reports for this package should be sent. */
+#define PACKAGE_BUGREPORT ""
+
+/* Define to the full name of this package. */
+#define PACKAGE_NAME "test_requires"
+
+/* Define to the full name and version of this package. */
+#define PACKAGE_STRING "test_requires 1.0.0"
+
+/* Define to the one symbol short name of this package. */
+#define PACKAGE_TARNAME "test_requires"
+
+/* Define to the home page for this package. */
+#define PACKAGE_URL ""
+
+/* Define to the version of this package. */
+#define PACKAGE_VERSION "1.0.0"

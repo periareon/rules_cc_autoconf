@@ -1,0 +1,2 @@
+/* subst.h.in */
+#define SUBST_USE_NLS "@USE_NLS@"

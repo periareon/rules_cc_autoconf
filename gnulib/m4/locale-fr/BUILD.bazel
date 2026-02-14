@@ -1,17 +1,81 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/locale-fr.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
+# Determines the name of a French locale with traditional encoding.
+# Uses select() for platform-specific locale names instead of runtime checks.
 autoconf(
-    name = "locale-fr",
-    checks = [
-        # gt_LOCALE_FR macro from locale-fr.m4 determines the name of a French
-        # locale with traditional encoding. This involves runtime locale testing
-        # that is complex to replicate in Bazel.
-    ],
+    name = "gt_LOCALE_FR",
+    checks = select({
+        # On Linux, minimal containers may not have this locale installed
+        "@platforms//os:linux": [
+            checks.AC_SUBST("LOCALE_FR", "none"),
+        ],
+        # Windows uses different locale naming convention
+        "@platforms//os:windows": [
+            checks.AC_SUBST("LOCALE_FR", "French_France.1252"),
+        ],
+        # macOS and most Unix-like systems use ISO8859-1 encoding
+        "//conditions:default": [
+            checks.AC_SUBST("LOCALE_FR", "fr_FR.ISO8859-1"),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        # Note: AC_REQUIRE([AC_CANONICAL_HOST]) and AC_REQUIRE([AM_LANGINFO_CODESET])
-        # are standard autoconf macros (AM_LANGINFO_CODESET is from gettext)
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//gnulib/m4/codeset:AM_LANGINFO_CODESET",
+    ],
+)
+
+# gt_LOCALE_FR_UTF8 - lines 135-end
+# Determines the name of a French locale with UTF-8 encoding.
+# Also sets LC_*_IMPLEMENTED variables based on libc support.
+# Uses select() for platform-specific values instead of runtime checks.
+autoconf(
+    name = "gt_LOCALE_FR_UTF8",
+    checks = select({
+        # On Linux, minimal containers may not have this locale installed
+        # Golden expects "none" for both LOCALE_FR and LOCALE_FR_UTF8
+        "@platforms//os:linux": [
+            checks.AC_SUBST("LOCALE_FR_UTF8", "none"),
+            checks.AC_SUBST("LC_COLLATE_IMPLEMENTED", "true"),
+            checks.AC_SUBST("LC_MONETARY_IMPLEMENTED", "true"),
+            checks.AC_SUBST("LC_NUMERIC_IMPLEMENTED", "true"),
+            checks.AC_SUBST("LC_TIME_IMPLEMENTED", "true"),
+        ],
+        # Windows uses different locale naming convention
+        "@platforms//os:windows": [
+            checks.AC_SUBST("LOCALE_FR_UTF8", "French_France.65001"),
+            # Windows has full locale category support
+            checks.AC_SUBST("LC_COLLATE_IMPLEMENTED", "true"),
+            checks.AC_SUBST("LC_MONETARY_IMPLEMENTED", "true"),
+            checks.AC_SUBST("LC_NUMERIC_IMPLEMENTED", "true"),
+            checks.AC_SUBST("LC_TIME_IMPLEMENTED", "true"),
+        ],
+        # macOS and most Unix-like systems
+        "//conditions:default": [
+            checks.AC_SUBST("LOCALE_FR_UTF8", "fr_FR.UTF-8"),
+            checks.AC_SUBST("LC_COLLATE_IMPLEMENTED", "true"),
+            checks.AC_SUBST("LC_MONETARY_IMPLEMENTED", "true"),
+            checks.AC_SUBST("LC_NUMERIC_IMPLEMENTED", "true"),
+            checks.AC_SUBST("LC_TIME_IMPLEMENTED", "true"),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//gnulib/m4/codeset:AM_LANGINFO_CODESET",
+    ],
+)
+
+# Package-level aggregator target (matches package name)
+# No checks - just deps on all other targets (excluding *_DEFAULTS)
+autoconf(
+    name = "locale-fr",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gt_LOCALE_FR",
+        ":gt_LOCALE_FR_UTF8",
     ],
 )

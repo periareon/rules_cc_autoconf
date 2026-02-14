@@ -1,18 +1,82 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sched_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
-
-# gl_SCHED_H from sched_h.m4
+load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 autoconf(
     name = "sched_h",
     checks = [
-        macros.AC_CHECK_HEADER("sched.h"),
-        macros.AC_CHECK_TYPE(
-            "struct sched_param",
-            code = "#include <sched.h>",
+        checks.AC_CHECK_HEADER(
+            "sched.h",
+            define = "HAVE_SCHED_H",
         ),
-    ],
+        # Same behavior as upstream: AC_CHECK_TYPE([struct sched_param], ...) sets the shell
+        # variable and AC_SUBST([HAVE_STRUCT_SCHED_PARAM]) only — no AC_DEFINE, so not in config.h.
+        # Upstream config.h keeps #undef HAVE_STRUCT_SCHED_PARAM; value is only in subst.h.
+        checks.AC_TRY_COMPILE(
+            name = "ac_cv_type_struct_sched_param",
+            code = """\
+#if HAVE_SCHED_H
+                #if HAVE_SYS_CDEFS_H
+                    #include <sys/cdefs.h>
+                #endif
+                #include <sched.h>
+                int main(void) {
+                    if (sizeof(struct sched_param))
+                        return 0;
+                    return 1;
+                }
+            #else
+                #error Unhandled case
+            #endif
+            """,
+            compile_defines = [
+                "HAVE_SCHED_H",
+                "HAVE_SYS_CDEFS_H",
+            ],
+            language = "c",
+            subst = "HAVE_STRUCT_SCHED_PARAM",
+        ),
+        checks.AC_SUBST(
+            "HAVE_SCHED_H",
+            condition = "ac_cv_header_sched_h",
+        ),
+    ] + gl_macros.GL_NEXT_HEADERS(["sched.h"]),
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",
+        "//gnulib/m4/sys_cdefs_h",
+
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "gl_SCHED_H_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("HAVE_SCHED_YIELD", 1),
+        checks.AC_SUBST("REPLACE_SCHED_YIELD", 0),
+    ],
+    visibility = ["//visibility:private"],
+)
+
+autoconf(
+    name = "gl_SCHED_H_REQUIRE_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("GNULIB_SCHED_YIELD", 0),
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gl_SCHED_H_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_SCHED_H_REQUIRE_DEFAULTS",
+    ],
 )

@@ -1,27 +1,24 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/cosf.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "cosf",
     checks = [
-        # Check for cosf function and declaration
-        # Equivalent to gl_FUNC_COSF macro from cosf.m4
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "cosf",
             define = "HAVE_COSF",
         ),
-        macros.AC_CHECK_DECL(
-            "cosf",
-            define = "HAVE_DECL_COSF",
-            headers = ["math.h"],
-        ),
+        # gl_MATHFUNC sets COSF_LIBM based on whether cosf needs -lm
+        # On macOS/Linux, cosf is in libc, so COSF_LIBM is empty
+        checks.AC_SUBST("COSF_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
-        "//gnulib/m4/cos",  # AC_REQUIRE([gl_FUNC_COS])
-        # Note: AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/cos",
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/math_h",
     ],
 )

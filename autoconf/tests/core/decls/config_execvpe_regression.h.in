@@ -1,0 +1,7 @@
+/* config_execvpe_regression.h.in - Template for AC_CHECK_DECL(execvpe) + requires regression test */
+
+/* Regression: success=found (not always true) so requires fails when decl is not found.
+   On Linux (execvpe declared): ac_cv_have_decl_execvpe=1, HAVE_DECL_EXECVPE=1
+   On macOS (execvpe not declared): ac_cv_have_decl_execvpe=0, HAVE_DECL_EXECVPE undefined
+*/
+#undef HAVE_DECL_EXECVPE

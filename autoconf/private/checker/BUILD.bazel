@@ -4,12 +4,18 @@ load("//autoconf/private:cxxopts.bzl", "cxxopts")
 
 cc_library(
     name = "check_types",
+    srcs = [
+        "check_result.cc",
+    ],
     hdrs = [
         "check.h",
         "check_result.h",
     ],
     cxxopts = cxxopts(),
     visibility = ["//autoconf/private:__subpackages__"],
+    deps = [
+        "//autoconf/private/json",
+    ],
 )
 
 cc_library(
@@ -54,6 +60,21 @@ cc_library(
 )
 
 cc_library(
+    name = "condition_evaluator",
+    srcs = [
+        "condition_evaluator.cc",
+    ],
+    hdrs = ["condition_evaluator.h"],
+    cxxopts = cxxopts(),
+    visibility = ["//autoconf/private:__subpackages__"],
+    deps = [
+        ":check_types",
+        ":debug_logger",
+        "//autoconf/private/json",
+    ],
+)
+
+cc_library(
     name = "checker",
     srcs = [
         "checker.cc",
@@ -63,6 +84,7 @@ cc_library(
     visibility = ["//autoconf/private:__subpackages__"],
     deps = [
         ":check_runner",
+        ":condition_evaluator",
         "//autoconf/private/json",
     ],
 )
@@ -70,14 +92,13 @@ cc_library(
 cc_binary(
     name = "checker_bin",
     srcs = [
-        "checker_arg_parse.cc",
-        "checker_arg_parse.h",
         "main.cc",
     ],
     cxxopts = cxxopts(),
     visibility = ["//visibility:public"],
     deps = [
         ":checker",
+        "//autoconf/private/common:action_args",
         "//autoconf/private/json",
     ],
 )

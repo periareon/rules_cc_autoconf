@@ -1,44 +1,219 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/locale_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
+# HAVE_XLOCALE_H - isolated header check (can be shared by multiple modules)
+# This is used by gl_LOCALE_T and referenced by other modules
 autoconf(
-    name = "locale_h",
+    name = "HAVE_XLOCALE_H",
     checks = [
-        # Check for locale.h header features
-        # Equivalent to gl_LOCALE_H macro from locale_h.m4
-        macros.AC_TRY_COMPILE(
-            code = """#include <locale.h>
-_locale_t x;""",
-            define = "HAVE_WINDOWS_LOCALE_T",
-            language = "c",
-        ),
-        macros.AC_TRY_COMPILE(
-            code = """#include <locale.h>
-int x = LC_MESSAGES;
-int y = sizeof (((struct lconv *) 0)->decimal_point);""",
-            define = "HAVE_LOCALE_H_POSIX2001",
-            language = "c",
-        ),
-        macros.AC_TRY_COMPILE(
-            code = """#include <locale.h>
-struct lconv l;
-int x = sizeof (l.decimal_point);
-int y = sizeof (l.int_p_cs_precedes);""",
-            define = "HAVE_STRUCT_LCONV_OK",
-            language = "c",
-        ),
-        macros.AC_CHECK_HEADER(
+        checks.AC_CHECK_HEADER(
             "xlocale.h",
+            name = "ac_cv_header_xlocale_h",
             define = "HAVE_XLOCALE_H",
+        ),
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+)
+
+# Checks to determine whether the system has the locale_t type, and how to obtain it.
+# M4: HAVE_LOCALE_T=1 when xlocale.h exists OR locale.h defines locale_t.
+autoconf(
+    name = "gl_LOCALE_T",
+    checks = [
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_header_locale_has_locale_t",
+            code = """\
+#include <locale.h>
+locale_t x;
+""",
+            language = "c",
+        ),
+        # Set HAVE_XLOCALE_H based on xlocale.h check (from HAVE_XLOCALE_H target)
+        checks.AC_SUBST(
+            "HAVE_XLOCALE_H",
+            condition = "ac_cv_header_xlocale_h",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # Single compile that succeeds if we have locale_t from either xlocale.h or locale.h (lines 130-148).
+        # Avoids needing OR in condition evaluator: one check true on Linux (locale.h) and macOS (xlocale.h).
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_have_locale_t",
+            code = """\
+#if HAVE_XLOCALE_H
+# include <xlocale.h>
+#else
+# include <locale.h>
+#endif
+locale_t x;
+""",
+            compile_defines = ["HAVE_XLOCALE_H"],
+            language = "c",
+        ),
+        checks.AC_SUBST(
+            "HAVE_LOCALE_T",
+            condition = "gl_cv_have_locale_t",
+            if_false = "0",
+            if_true = "1",
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # Note: AC_REQUIRE([gl_LOCALE_H_DEFAULTS]) is defined in this module
-        # Note: AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
-        "//gnulib/m4/stddef_h",  # AC_REQUIRE([gl_STDDEF_H])
-        # Note: gl_LOCALE_T and AC_REQUIRE([AC_CANONICAL_HOST]) are standard
+        ":HAVE_XLOCALE_H",
+        "//gnulib/m4/extensions",
+    ],
+)
+
+# AC_DEFUN_ONCE([gl_LOCALE_H])
+autoconf(
+    name = "gl_LOCALE_H",
+    checks = [
+        # gl_CHECK_NEXT_HEADERS([locale.h]) - sets NEXT_LOCALE_H and NEXT_AS_FIRST_DIRECTIVE_LOCALE_H
+    ] + gl_macros.GL_CHECK_NEXT_HEADERS(["locale.h"]) + [
+        # gl_LOCALE_H checks for locale.h header
+        checks.AC_CHECK_HEADER(
+            "locale.h",
+            define = "HAVE_LOCALE_H",
+        ),
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_header_locale_has_windows_locale_t",
+            code = """\
+#include <locale.h>
+_locale_t x;
+""",
+            language = "c",
+        ),
+        # Set HAVE_WINDOWS_LOCALE_T as subst variable (0 on non-Windows, 1 on Windows)
+        checks.AC_SUBST(
+            "HAVE_WINDOWS_LOCALE_T",
+            condition = "gl_cv_header_locale_has_windows_locale_t",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # Define HAVE_WINDOWS_LOCALE_T in config.h if it exists
+        checks.AC_DEFINE(
+            "HAVE_WINDOWS_LOCALE_T",
+            "1",
+            requires = ["gl_cv_header_locale_has_windows_locale_t==1"],
+        ),
+        # Note: Solaris platform constraint may not exist in Bazel, so this uses a compile-time check
+        checks.AC_TRY_COMPILE(
+            name = "_gl_cv_solaris",
+            code = """\
+#if defined(__sun) && defined(__SVR4)
+  /* Solaris detected */
+#else
+  #error "Not Solaris"
+#endif
+int main(void) { return 0; }
+""",
+            language = "c",
+        ),
+        checks.AC_DEFINE(
+            "_LCONV_C99",
+            "1",
+            requires = ["_gl_cv_solaris==1"],
+        ),
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_header_locale_h_posix2001",
+            code = """\
+#include <locale.h>
+int x = LC_MESSAGES;
+int y = sizeof (((struct lconv *) 0)->decimal_point);
+""",
+            language = "c",
+        ),
+        checks.AC_DEFINE(
+            "HAVE_LOCALE_H_POSIX2001",
+            "1",
+            requires = ["gl_cv_header_locale_h_posix2001==1"],
+        ),
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_sys_struct_lconv_ok",
+            code = """\
+#include <locale.h>
+struct lconv l;
+int x = sizeof (l.decimal_point);
+int y = sizeof (l.int_p_cs_precedes);
+int main(void) { return 0; }
+""",
+            language = "c",
+        ),
+        # Set REPLACE_STRUCT_LCONV based on check result
+        # On native Windows with MSVC, don't replace (handled by macros)
+        checks.AC_SUBST(
+            "REPLACE_STRUCT_LCONV",
+            condition = "gl_cv_sys_struct_lconv_ok",
+            if_false = "1",
+            if_true = "0",
+        ),
+        # This macro prepares warnings for unused functions. In Bazel, this is typically
+        # handled at compile time, so we don't need to replicate it here.
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_LOCALE_T",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/include_next",  # For gl_CHECK_NEXT_HEADERS
+        "//gnulib/m4/stddef_h",
+    ],
+)
+
+autoconf(
+    name = "gl_LOCALE_H_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("HAVE_NEWLOCALE", 1),
+        checks.AC_SUBST("HAVE_DUPLOCALE", 1),
+        checks.AC_SUBST("HAVE_FREELOCALE", 1),
+        checks.AC_SUBST("HAVE_GETLOCALENAME_L", 1),
+        checks.AC_SUBST("REPLACE_LOCALECONV", 0),
+        checks.AC_SUBST("REPLACE_SETLOCALE", 0),
+        checks.AC_SUBST("REPLACE_NEWLOCALE", 0),
+        checks.AC_SUBST("REPLACE_DUPLOCALE", 0),
+        checks.AC_SUBST("REPLACE_FREELOCALE", 0),
+        checks.AC_SUBST("REPLACE_GETLOCALENAME_L", 0),
+        checks.AC_SUBST("REPLACE_STRUCT_LCONV", 0),
+        checks.AC_SUBST("LOCALENAME_ENHANCE_LOCALE_FUNCS", 0),
+    ],
+    visibility = ["//visibility:private"],
+)
+
+autoconf(
+    name = "gl_LOCALE_H_REQUIRE_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("GNULIB_LOCALECONV", 0),
+        checks.AC_SUBST("GNULIB_SETLOCALE", 0),
+        checks.AC_SUBST("GNULIB_SETLOCALE_NULL", 0),
+        checks.AC_SUBST("GNULIB_NEWLOCALE", 0),
+        checks.AC_SUBST("GNULIB_DUPLOCALE", 0),
+        checks.AC_SUBST("GNULIB_FREELOCALE", 0),
+        checks.AC_SUBST("GNULIB_GETLOCALENAME_L", 0),
+        checks.AC_SUBST("GNULIB_GETLOCALENAME_L_UNSAFE", 0),
+        checks.AC_SUBST("GNULIB_LOCALENAME_UNSAFE", 0),
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gl_LOCALE_H_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_LOCALE_H_REQUIRE_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "locale_h",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_LOCALE_H",
+        ":gl_LOCALE_T",
     ],
 )

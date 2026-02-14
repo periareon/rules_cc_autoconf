@@ -1,35 +1,84 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/physmem.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "physmem",
+    name = "gl_SYS__SYSTEM_CONFIGURATION",
     checks = [
-        macros.AC_CHECK_FUNC(
-            "pstat_getstatic",
-            define = "HAVE_PSTAT_GETSTATIC",
+        # AC_LINK_IFELSE checks for _system_configuration variable
+        checks.AC_TRY_LINK(
+            name = "gl_cv_var__system_configuration",
+            code = """#include <sys/systemcfg.h>
+int main(void) {
+    double x = _system_configuration.physmem;
+    if (x > 0.0) return 0;
+    return 1;
+}""",
+            language = "c",
         ),
-        macros.AC_CHECK_FUNC(
-            "pstat_getdynamic",
-            define = "HAVE_PSTAT_GETDYNAMIC",
-        ),
-        macros.AC_CHECK_FUNC(
-            "getsysinfo",
-            define = "HAVE_GETSYSINFO",
-        ),
-        macros.AC_CHECK_FUNC(
-            "sysctl",
-            define = "HAVE_SYSCTL",
-        ),
-        macros.AC_CHECK_FUNC(
-            "table",
-            define = "HAVE_TABLE",
-        ),
-        macros.AC_CHECK_FUNC(
-            "sysinfo",
-            define = "HAVE_SYSINFO",
+
+        # if test $gl_cv_var__system_configuration = yes; then
+        # fi
+        checks.AC_DEFINE(
+            "HAVE__SYSTEM_CONFIGURATION",
+            condition = "gl_cv_var__system_configuration",
+            if_true = 1,
         ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Prerequisites of lib/physmem.c
+autoconf(
+    name = "physmem",
+    checks = [
+        checks.AC_CHECK_HEADER(
+            "sys/sysinfo.h",
+            define = "HAVE_SYS_SYSINFO_H",
+        ),
+        checks.AC_CHECK_HEADER(
+            "machine/hal_sysinfo.h",
+            define = "HAVE_MACHINE_HAL_SYSINFO_H",
+        ),
+        checks.AC_CHECK_HEADER(
+            "sys/table.h",
+            define = "HAVE_SYS_TABLE_H",
+        ),
+        checks.AC_CHECK_HEADER(
+            "sys/systemcfg.h",
+            define = "HAVE_SYS_SYSTEMCFG_H",
+        ),
+        checks.AC_CHECK_FUNC(
+            "pstat_getstatic",
+            define = "HAVE_PSTAT_GETSTATIC",
+        ),
+        checks.AC_CHECK_FUNC(
+            "getsysinfo",
+            define = "HAVE_GETSYSINFO",
+        ),
+        checks.AC_CHECK_FUNC(
+            "table",
+            define = "HAVE_TABLE",
+        ),
+        checks.AC_CHECK_MEMBER(
+            "struct sysinfo.mem_unit",
+            define = "HAVE_STRUCT_SYSINFO_MEM_UNIT",
+            includes = ["#include <sys/sysinfo.h>"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_SYS__SYSTEM_CONFIGURATION",
+        "//gnulib/m4/nproc:gl_PREREQ_NPROC",
+        "//gnulib/macros/HAVE_SYS_PARAM_H",
+        "//gnulib/m4/readutmp",
+        "//gnulib/m4/getdomainname",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

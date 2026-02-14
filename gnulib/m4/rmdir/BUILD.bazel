@@ -2,14 +2,17 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 
-# gl_FUNC_RMDIR from rmdir.m4
-# HAVE_UNISTD_H comes from unistd_h dependency
-
 autoconf(
     name = "rmdir",
-    checks = [],
+    checks = [
+        # gl_FUNC_RMDIR is empty - no checks needed
+        # The golden file shows only standard headers
+        # HAVE_DECL_EXECVPE comes from unistd_h:defaults via toolchain defaults
+        # (AC_REQUIRE([gl_UNISTD_H_DEFAULTS]) in rmdir.m4 line 11)
+    ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/unistd_h",  # Provides HAVE_UNISTD_H
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

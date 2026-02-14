@@ -1,0 +1,19 @@
+"""AC_SYS_LONG_FILE_NAMES - Autoconf builtin macro
+
+Checks if the system supports long file names.
+
+Defines:
+  - HAVE_LONG_FILE_NAMES (if supported)
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "AC_SYS_LONG_FILE_NAMES",
+    checks = [
+        # Modern systems support long file names
+        checks.AC_DEFINE("HAVE_LONG_FILE_NAMES", "1"),
+    ],
+    visibility = ["//visibility:public"],
+)

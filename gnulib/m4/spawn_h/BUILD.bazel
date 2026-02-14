@@ -1,19 +1,160 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/spawn_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
+
+# spawn_h - Split by AC_DEFUN to allow selective dependencies
 
 autoconf(
-    name = "spawn_h",
+    name = "gl_SPAWN_H",
     checks = [
-        macros.AC_CHECK_TYPE(
-            "posix_spawnattr_t",
-            define = "HAVE_POSIX_SPAWNATTR_T",
+        # gl_SPAWN_H checks for spawn.h header
+        checks.AC_CHECK_HEADER(
+            "spawn.h",
+            define = "HAVE_SPAWN_H",
+            subst = True,  # Also create substitution variable
         ),
-        macros.AC_CHECK_TYPE(
+        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_SPAWN_H", "<spawn.h>"),
+        checks.AC_SUBST("NEXT_SPAWN_H", "<spawn.h>"),
+        checks.AC_CHECK_TYPE(
+            "posix_spawnattr_t",
+            name = "_gl_cv_type_posix_spawnattr_t",
+            code = """\
+#include <spawn.h>
+int main(void) {
+    posix_spawnattr_t attr;
+    (void)attr;
+    return 0;
+}
+""",
+        ),
+        checks.AC_CHECK_TYPE(
             "posix_spawn_file_actions_t",
-            define = "HAVE_POSIX_SPAWN_FILE_ACTIONS_T",
+            name = "_gl_cv_type_posix_spawn_file_actions_t",
+            code = """\
+#include <spawn.h>
+int main(void) {
+    posix_spawn_file_actions_t actions;
+    (void)actions;
+    return 0;
+}
+""",
+        ),
+        # Define these types when they exist
+        checks.AC_DEFINE(
+            "HAVE_POSIX_SPAWNATTR_T",
+            requires = ["_gl_cv_type_posix_spawnattr_t==1"],
+            subst = True,
+        ),
+        checks.AC_DEFINE(
+            "HAVE_POSIX_SPAWN_FILE_ACTIONS_T",
+            requires = ["_gl_cv_type_posix_spawn_file_actions_t==1"],
+            subst = True,
         ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",
+        "//autoconf/macros/AC_TYPE_PID_T",  # AC_REQUIRE([AC_TYPE_PID_T])
+        "//autoconf/macros/AC_TYPE_MODE_T",  # AC_REQUIRE([AC_TYPE_MODE_T])
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "gl_HAVE_POSIX_SPAWN",
+    checks = [
+        # gl_CHECK_FUNCS_ANDROID([posix_spawn], [[#include <spawn.h>]])
+        # Use extern declaration trick - don't include header to avoid conflicts
+        # The function check uses linking, so it will detect the function even without header
+        checks.AC_CHECK_FUNC(
+            "posix_spawn",
+            define = "HAVE_POSIX_SPAWN",
+            # Don't include spawn.h - use extern declaration trick instead
+            # This matches gl_CHECK_FUNCS_ANDROID behavior
+            subst = True,
+        ),
+        # POSIX_SPAWN_LIB and LIB_POSIX_SPAWN substitution variables
+        # AC_SEARCH_LIBS([posix_spawn], [rt], ...) - typically empty on macOS/Linux
+        checks.AC_SUBST("POSIX_SPAWN_LIB", ""),
+        checks.AC_SUBST("LIB_POSIX_SPAWN", ""),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Top-level spawn_h target - aggregates all AC_DEFUN functions
+autoconf(
+    name = "spawn_h",
+    checks = [],  # Empty - just aggregates dependencies
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_HAVE_POSIX_SPAWN",
+        ":gl_SPAWN_H",
+    ],
+)
+
+# defaults - All default AC_SUBST values. Added to gnulib_toolchain.
+
+autoconf(
+    name = "gl_SPAWN_H_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("HAVE_POSIX_SPAWN", 1),
+        checks.AC_SUBST("HAVE_POSIX_SPAWNATTR_T", 1),
+        checks.AC_SUBST("HAVE_POSIX_SPAWN_FILE_ACTIONS_T", 1),
+        checks.AC_SUBST("HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR", 1),
+        checks.AC_SUBST("HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR", 1),
+        checks.AC_SUBST("REPLACE_POSIX_SPAWN", 0),
+        checks.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR", 0),
+        checks.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDCLOSE", 0),
+        checks.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDDUP2", 0),
+        checks.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR", 0),
+        checks.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDOPEN", 0),
+    ],
+    visibility = ["//visibility:private"],
+)
+
+autoconf(
+    name = "gl_SPAWN_H_REQUIRE_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("GNULIB_POSIX_SPAWN", 0),
+        checks.AC_SUBST("GNULIB_POSIX_SPAWNP", 0),
+        checks.AC_SUBST("GNULIB_POSIX_SPAWN_FILE_ACTIONS_INIT", 0),
+        checks.AC_SUBST("GNULIB_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR", 0),
+        checks.AC_SUBST("GNULIB_POSIX_SPAWN_FILE_ACTIONS_ADDCLOSE", 0),
+        checks.AC_SUBST("GNULIB_POSIX_SPAWN_FILE_ACTIONS_ADDDUP2", 0),
+        checks.AC_SUBST("GNULIB_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR", 0),
+        checks.AC_SUBST("GNULIB_POSIX_SPAWN_FILE_ACTIONS_ADDOPEN", 0),
+        checks.AC_SUBST("GNULIB_POSIX_SPAWN_FILE_ACTIONS_DESTROY", 0),
+        checks.AC_SUBST("GNULIB_POSIX_SPAWNATTR_INIT", 0),
+        checks.AC_SUBST("GNULIB_POSIX_SPAWNATTR_GETFLAGS", 0),
+        checks.AC_SUBST("GNULIB_POSIX_SPAWNATTR_SETFLAGS", 0),
+        checks.AC_SUBST("GNULIB_POSIX_SPAWNATTR_GETPGROUP", 0),
+        checks.AC_SUBST("GNULIB_POSIX_SPAWNATTR_SETPGROUP", 0),
+        checks.AC_SUBST("GNULIB_POSIX_SPAWNATTR_GETSCHEDPARAM", 0),
+        checks.AC_SUBST("GNULIB_POSIX_SPAWNATTR_SETSCHEDPARAM", 0),
+        checks.AC_SUBST("GNULIB_POSIX_SPAWNATTR_GETSCHEDPOLICY", 0),
+        checks.AC_SUBST("GNULIB_POSIX_SPAWNATTR_SETSCHEDPOLICY", 0),
+        checks.AC_SUBST("GNULIB_POSIX_SPAWNATTR_GETSIGDEFAULT", 0),
+        checks.AC_SUBST("GNULIB_POSIX_SPAWNATTR_SETSIGDEFAULT", 0),
+        checks.AC_SUBST("GNULIB_POSIX_SPAWNATTR_GETSIGMASK", 0),
+        checks.AC_SUBST("GNULIB_POSIX_SPAWNATTR_SETSIGMASK", 0),
+        checks.AC_SUBST("GNULIB_POSIX_SPAWNATTR_DESTROY", 0),
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gl_SPAWN_H_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_SPAWN_H_REQUIRE_DEFAULTS",
+    ],
 )

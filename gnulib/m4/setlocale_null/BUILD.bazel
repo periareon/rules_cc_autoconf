@@ -1,15 +1,37 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/setlocale_null.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-
-# gl_FUNC_SETLOCALE_NULL macro from setlocale_null.m4
-# HAVE_THREADS_H comes from threadlib dependency
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "setlocale_null",
-    checks = [],
+    checks = select({
+        # On Linux (glibc): Both SETLOCALE_NULL_ALL_MTSAFE and SETLOCALE_NULL_ONE_MTSAFE are 1
+        "@platforms//os:linux": [
+            checks.AC_DEFINE("SETLOCALE_NULL_ALL_MTSAFE", "1"),
+            checks.AC_DEFINE("SETLOCALE_NULL_ONE_MTSAFE", "1"),
+        ],
+        # On macOS: SETLOCALE_NULL_ALL_MTSAFE=0, SETLOCALE_NULL_ONE_MTSAFE=1
+        "//conditions:default": [
+            checks.AC_DEFINE("SETLOCALE_NULL_ALL_MTSAFE", "0"),
+            checks.AC_DEFINE("SETLOCALE_NULL_ONE_MTSAFE", "1"),
+        ],
+    }) + [
+        # SETLOCALE_NULL_LIB defaults to empty
+        checks.AC_SUBST("SETLOCALE_NULL_LIB", ""),
+        # For backward compatibility
+        checks.AC_SUBST("LIB_SETLOCALE_NULL", ""),
+    ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/threadlib",  # Provides HAVE_THREADS_H
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//gnulib/m4/threadlib:gl_PTHREADLIB",
+        # Note: threads.h check is provided by threadlib:gl_STDTHREADLIB_BODY dependency
+        "//gnulib/m4/threadlib:gl_STDTHREADLIB_BODY",
+        # We include it for completeness, though we can't fully check weak symbols
+        "//gnulib/m4/threadlib:gl_WEAK_SYMBOLS",
+        "//gnulib/m4/visibility",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

@@ -1,0 +1,3 @@
+/* subst.h.in */
+#define SUBST_M2C "@M2C@"
+#define SUBST_M2FLAGS "@M2FLAGS@"

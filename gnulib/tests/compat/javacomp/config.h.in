@@ -1,0 +1,4 @@
+/* config.h.in */
+#undef CONF_JAVAC
+#undef HAVE_JAVAC
+#undef HAVE_JAVAC_ENVVAR

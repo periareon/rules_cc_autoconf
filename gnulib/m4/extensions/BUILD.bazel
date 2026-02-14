@@ -1,11 +1,22 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/extensions.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "extensions",
     checks = [
-        # Note: extensions.m4 sets feature test macros, not compile-time checks
-    ],
+        # Standard header defines are provided by AC_CHECK_INCLUDES_DEFAULT dependency
+    ] + select({
+        # OpenBSD-specific: enable ISO C 11 declarations
+        "@platforms//os:openbsd": [
+            checks.AC_DEFINE("_ISOC11_SOURCE", "1"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//autoconf/macros/AC_USE_SYSTEM_EXTENSIONS",
+    ],
 )

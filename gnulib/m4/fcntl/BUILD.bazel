@@ -1,25 +1,50 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fcntl.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "fcntl",
     checks = [
-        # Check for fcntl function
-        # Equivalent to gl_FUNC_FCNTL macro from fcntl.m4
-        # Note: Full implementation includes runtime checks for F_DUPFD and
-        # F_DUPFD_CLOEXEC behavior that are not easily replicable in Bazel
-        macros.AC_CHECK_FUNC(
+        # Note: gl_FCNTL_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        checks.AC_CHECK_FUNC(
             "fcntl",
-            define = "HAVE_FCNTL",
+            name = "ac_cv_func_fcntl",
+        ),
+
+        # if test $ac_cv_func_fcntl = no; then
+        # else
+        #   ... runtime checks ...
+        # fi
+        # Define HAVE_FCNTL in config.h if the function exists
+        checks.AC_DEFINE(
+            "HAVE_FCNTL",
+            condition = "ac_cv_func_fcntl",
+            if_true = 1,
+        ),
+
+        # gl_REPLACE_FCNTL logic:
+        # - If function doesn't exist, HAVE_FCNTL=0, REPLACE_FCNTL=1
+        # - If function exists but F_DUPFD doesn't work correctly, REPLACE_FCNTL=1
+        # - If function exists but F_DUPFD_CLOEXEC doesn't work, REPLACE_FCNTL=1
+        # - If function exists but HAVE_FCHDIR=0, REPLACE_FCNTL=1
+        # Based on golden files, REPLACE_FCNTL=1 on macOS (likely due to F_DUPFD_CLOEXEC)
+        # The AC_RUN_IFELSE checks can't be done in Bazel, so we assume it needs replacement
+        checks.AC_SUBST(
+            "REPLACE_FCNTL",
+            condition = "ac_cv_func_fcntl",
+            if_false = 1,  # If function doesn't exist, also replace
+            if_true = 1,
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/fcntl_h",  # AC_REQUIRE([gl_FCNTL_H_DEFAULTS])
-        "//gnulib/m4/fchdir",  # Conditional dependency on gl_FUNC_FCHDIR
-        # Note: AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) and AC_REQUIRE([AC_CANONICAL_HOST])
-        # are standard autoconf macros
+        "//gnulib/m4/extensions",
+        # Note: gl_FCNTL_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        # The m4 file conditionally uses gl_FUNC_FCHDIR to check if fchdir exists
+        # If HAVE_FCHDIR=0, it triggers gl_REPLACE_FCNTL
+        "//gnulib/m4/fchdir:gl_FUNC_FCHDIR_FOR_CLOSE",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

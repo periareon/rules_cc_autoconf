@@ -1,0 +1,79 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Define to 1 if you have the <nonexistent_header_xyz.h> header file. */
+#undef HAVE_NONEXISTENT_HEADER_XYZ_H
+
+/* Define to 1 if you have the <stdio.h> header file. */
+#undef HAVE_STDIO_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the printf function. */
+#undef HAVE_PRINTF
+
+/* Define to 1 if you have the malloc function. */
+#undef HAVE_MALLOC
+
+/* Define to 1 if you have the some_func function. */
+#undef HAVE_SOME_FUNC
+
+/* Define to 1 if the system has the type FILE. */
+#undef HAVE_FILE
+
+/* Define to 1 if you have the NULL symbol. */
+#undef HAVE_NULL
+
+/* M4 variable for testing value-based requires */
+#undef REPLACE_FEATURE
+
+/* M4 variable for testing value-based requires */
+#undef REPLACE_OTHER
+
+/* Define to 1 if you have the exit function (with REPLACE_FEATURE=1 requirement). */
+#undef HAVE_EXIT_WITH_FEATURE
+
+/* Define to 1 if you have the exit function (with REPLACE_OTHER=1 requirement - should fail). */
+#undef HAVE_EXIT_WITH_OTHER
+
+/* Define to 1 if you have the exit function (with REPLACE_OTHER=0 requirement). */
+#undef HAVE_EXIT_WITH_OTHER_ZERO
+
+/* NEW: Test negated require with ! syntax */
+#undef NEGATED_REQUIRE_TEST
+#undef NEGATED_REQUIRE_FAIL
+
+/* NEW: Test == syntax */
+#undef DOUBLE_EQUALS_TEST
+
+/* NEW: Test != syntax */
+#undef NOT_EQUALS_TEST
+#undef NOT_EQUALS_FAIL
+
+/* NEW: Test if_true/if_false with string.h */
+#undef HAVE_STRING_H
+#undef STRING_H_IF_TRUE
+#undef STRING_H_IF_FALSE
+
+/* NEW: Test if_true/if_false with nonexistent header */
+#undef HAVE_ANOTHER_NONEXISTENT_XYZ_H
+#undef NONEXISTENT2_IF_TRUE
+#undef NONEXISTENT2_IF_FALSE
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION

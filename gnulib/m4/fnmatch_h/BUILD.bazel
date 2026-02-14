@@ -1,15 +1,75 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fnmatch_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "fnmatch_h",
     checks = [
-        macros.AC_CHECK_HEADER(
+        # gl_FNMATCH_H checks for fnmatch.h header
+        checks.AC_CHECK_HEADER(
             "fnmatch.h",
             define = "HAVE_FNMATCH_H",
         ),
+        # gl_CHECK_NEXT_HEADERS([fnmatch.h]) - golden expects "<fnmatch.h>"
+        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_FNMATCH_H", "<fnmatch.h>"),
+        checks.AC_SUBST("NEXT_FNMATCH_H", "<fnmatch.h>"),
+        checks.AC_SUBST("HAVE_FNMATCH_H", "1"),  # golden expects 1
+        # GNU extension checks (from gl_FNMATCH_H)
+        checks.AC_TRY_COMPILE(
+            code = "int x = FNM_CASEFOLD; (void)x;",
+            define = "HAVE_FNM_CASEFOLD",
+            includes = ["#include <fnmatch.h>"],
+        ),
+        checks.AC_TRY_COMPILE(
+            code = "int x = FNM_EXTMATCH; (void)x;",
+            define = "HAVE_FNM_EXTMATCH",
+            includes = ["#include <fnmatch.h>"],
+        ),
+        checks.AC_TRY_COMPILE(
+            code = "int x = FNM_FILE_NAME; (void)x;",
+            define = "HAVE_FNM_FILE_NAME",
+            includes = ["#include <fnmatch.h>"],
+        ),
+        checks.AC_TRY_COMPILE(
+            code = "int x = FNM_LEADING_DIR; (void)x;",
+            define = "HAVE_FNM_LEADING_DIR",
+            includes = ["#include <fnmatch.h>"],
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",
+        "//gnulib/m4/extensions",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "gl_FNMATCH_H_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("HAVE_FNMATCH", 1),
+        checks.AC_SUBST("REPLACE_FNMATCH", 0),
+    ],
+    visibility = ["//visibility:private"],
+)
+
+autoconf(
+    name = "gl_FNMATCH_H_REQUIRE_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("GNULIB_FNMATCH", 0),
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gl_FNMATCH_H_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FNMATCH_H_REQUIRE_DEFAULTS",
+    ],
 )

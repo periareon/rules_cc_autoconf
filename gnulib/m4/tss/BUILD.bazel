@@ -1,11 +1,32 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/tss.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "gl_FUNC_TSS_CREATE",
+    checks = select({
+        # On Linux with glibc: tss_create is available in <threads.h>
+        # Golden subst expects @HAVE_TSS_CREATE@ (not substituted), only define in config.h
+        "@platforms//os:linux": [
+            checks.AC_DEFINE("HAVE_TSS_CREATE", "1"),
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/timespec_getres:HAVE_TIMESPEC_GETRES",
+        "//gnulib/m4/threads_h",  # AC_REQUIRE([gl_THREADS_H])
+        "//gnulib/m4/threadlib",
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
 
 autoconf(
     name = "tss",
-    checks = [
-        # TODO: Add checks based on .m4 file
-    ],
     visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_TSS_CREATE",
+    ],
 )

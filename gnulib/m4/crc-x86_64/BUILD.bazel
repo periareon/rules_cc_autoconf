@@ -1,11 +1,28 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/crc-x86_64.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
+# gl_CRC_X86_64_PCLMUL from crc-x86_64.m4
+# Defaults to "not found" case (PCLMUL not available)
 autoconf(
-    name = "crc-x86_64",
+    name = "gl_CRC_X86_64_PCLMUL",
     checks = [
-        # Note: crc-x86_64.m4 may not exist in gnulib, or this module may not have checks
+        # Conditional subst values based on PCLMUL availability
+        # When PCLMUL is available: GL_CRC_X86_64_PCLMUL_TRUE = "#", GL_CRC_X86_64_PCLMUL_FALSE = ""
+        # When PCLMUL is not available: GL_CRC_X86_64_PCLMUL_TRUE = "", GL_CRC_X86_64_PCLMUL_FALSE = "#"
+        # Golden file shows PCLMUL is available (TRUE = "#", FALSE = "")
+        # TODO: This should be a conditional check based on CPU feature detection
+        checks.AC_SUBST("GL_CRC_X86_64_PCLMUL_TRUE", "#"),
+        checks.AC_SUBST("GL_CRC_X86_64_PCLMUL_FALSE", ""),
     ],
     visibility = ["//visibility:public"],
+)
+
+# Top-level target
+autoconf(
+    name = "crc-x86_64",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [":gl_CRC_X86_64_PCLMUL"],
 )

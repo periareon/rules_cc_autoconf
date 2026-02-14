@@ -1,16 +1,68 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sigaltstack.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
+# HAVE_SIGALTSTACK - Shared check for sigaltstack function existence
+# Used by modules that need HAVE_SIGALTSTACK without the full module logic.
+# Matches AC_CHECK_FUNCS_ONCE([sigaltstack]) behavior - define only, no subst.
+autoconf(
+    name = "HAVE_SIGALTSTACK",
+    checks = [
+        checks.AC_CHECK_FUNC(
+            "sigaltstack",
+            define = "HAVE_SIGALTSTACK",
+            # NO subst=True - matches AC_CHECK_FUNCS_ONCE behavior
+        ),
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Full sigaltstack module with all checks and subst.
 autoconf(
     name = "sigaltstack",
     checks = [
-        macros.AC_CHECK_TYPE(
+        checks.AC_CHECK_FUNC(
+            "setrlimit",
+            define = "HAVE_SETRLIMIT",
+        ),
+
+        # If stack_t doesn't exist, define it as struct sigaltstack
+        checks.AC_CHECK_TYPE(
             "stack_t",
             define = "HAVE_STACK_T",
+            includes = ["#include <signal.h>"],
         ),
-        macros.AC_DEFINE("stack_t", "struct sigaltstack"),
-    ],
+        # Define stack_t as struct sigaltstack if type doesn't exist
+        checks.AC_DEFINE(
+            "stack_t",
+            condition = "HAVE_STACK_T==0",  # Only define if stack_t doesn't exist
+            if_true = "struct sigaltstack",
+        ),
+    ] + select({
+        # AC_RUN_IFELSE is skipped - runtime checks can't be done in Bazel
+        # On macOS, if it compiles, it works (line 36-41)
+        "@platforms//os:macos": [
+            checks.AC_DEFINE("HAVE_WORKING_SIGALTSTACK", "1"),
+        ],
+        "//conditions:default": [
+            # On other platforms, assume it works if function exists
+            # Based on golden files, Linux also has working sigaltstack
+            checks.AC_DEFINE(
+                "HAVE_WORKING_SIGALTSTACK",
+                condition = "HAVE_SIGALTSTACK",
+                if_true = 1,
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
+    deps = [
+        # HAVE_SIGALTSTACK check
+        ":HAVE_SIGALTSTACK",
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

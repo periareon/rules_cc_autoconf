@@ -1,55 +1,127 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/getpass.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks", "macros", "utils")
 
-# HAVE_STDIO_EXT_H comes from stdio_ext_h dependency
-# HAVE_DECL_PUTC_UNLOCKED and related come from unlocked-io dependency
-
+# Provide a getpass() function if the system doesn't have it.
 autoconf(
-    name = "getpass",
+    name = "gl_FUNC_GETPASS",
     checks = [
-        macros.AC_CHECK_FUNC("getpass"),
-        macros.AC_TRY_COMPILE(
-            code = """#include <stdio_ext.h>
-
-#ifdef __cplusplus
-extern "C"
-#endif
-int __fsetlocking ();
-
-int main(void) {
-    return __fsetlocking();
-}""",
-            define = "HAVE___FSETLOCKING",
-            language = "c",
-            requires = ["HAVE_STDIO_EXT_H"],
-        ),
-        macros.AC_CHECK_DECL(
-            "__fsetlocking",
-            headers = [
-                "stdio.h",
-                "stdio_ext.h",
-            ],
-            requires = ["HAVE_STDIO_EXT_H"],
-        ),
-        macros.AC_TRY_COMPILE(
-            code = """#include <termios.h>
-
-struct termios x;
-
-int main(void) {
-    return tcsetattr(0, 0, &x);
-}""",
-            define = "HAVE_TCSETATTR",
-            language = "c",
+        # AC_REQUIRE([gl_UNISTD_H_DEFAULTS]) - line 13; not tracked
+        # AC_DEFINE([NO_INLINE_GETPASS], [1], ...) - line 19 (Android)
+        checks.AC_DEFINE("NO_INLINE_GETPASS", "1"),
+    ] + macros.AC_CHECK_FUNCS(["getpass"]) + [
+        checks.AC_SUBST(
+            "HAVE_GETPASS",
+            condition = "ac_cv_func_getpass",
+            if_false = 0,
+            if_true = 1,
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/stdio_ext_h",
-        "//gnulib/m4/termios_h",  # Provides HAVE_TERMIOS_H
-        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
-        "//gnulib/m4/unlocked-io",  # Provides HAVE_DECL_PUTC_UNLOCKED etc.
+        "//gnulib/m4/extensions",
+    ],
+)
+
+# Provide the GNU getpass() implementation (passwords of arbitrary length).
+# Only runs when getpass exists; sets REPLACE_GETPASS_FOR_GETPASS_GNU=1 if
+# getpass is not GNU getpass (glibc >= 2). We use platform select: Linux glibc = 0, else 1.
+autoconf(
+    name = "gl_FUNC_GETPASS_GNU",
+    checks = select({
+        "@platforms//os:linux": [
+            checks.AC_SUBST("REPLACE_GETPASS_FOR_GETPASS_GNU", 0),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_GETPASS_FOR_GETPASS_GNU", 1),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_GETPASS",
+    ],
+)
+
+# Prerequisites of lib/getpass.c.
+autoconf(
+    name = "gl_PREREQ_GETPASS",
+    checks = [
+        # AC_CHECK_HEADERS_ONCE([stdio_ext.h termios.h]) - line 57; via fpurge, termios_h deps
+        # Use AC_TRY_LINK (like Android/inline handling); sets ac_cv_func___fsetlocking
+        checks.AC_TRY_LINK(
+            name = "gl_cv_func___fsetlocking",
+            code = utils.AC_LANG_PROGRAM(
+                ["#include <stdio_ext.h>"],
+                "return __fsetlocking(0);",
+            ),
+        ),
+    ] + select({
+        # On Linux with glibc, __fsetlocking is available in stdio_ext.h
+        "@platforms//os:linux": [
+            checks.AC_DEFINE("HAVE___FSETLOCKING", "1"),
+        ],
+        # On macOS and other platforms, __fsetlocking is not available
+        "//conditions:default": [],
+    }) + [
+        # Upstream uses conditional include (stdio.h; if HAVE_STDIO_EXT_H then stdio_ext.h).
+        # Run unconditionally so we get HAVE_DECL___FSETLOCKING=0 when decl missing (e.g. macOS).
+        checks.AC_CHECK_DECL(
+            "__fsetlocking",
+            define = "HAVE_DECL___FSETLOCKING",
+            includes = [
+                "#include <stdio.h>",
+                "#include <stdio_ext.h>",
+            ],
+        ),
+        checks.AC_CHECK_DECL(
+            "flockfile",
+            define = "HAVE_DECL_FLOCKFILE",
+            includes = ["#include <stdio.h>"],
+            subst = True,
+        ),
+        checks.AC_CHECK_DECL(
+            "funlockfile",
+            define = "HAVE_DECL_FUNLOCKFILE",
+            includes = ["#include <stdio.h>"],
+            subst = True,
+        ),
+        # gl_HAVE_TCGETATTR - line 69; via tcgetattr dep
+        checks.AC_TRY_LINK(
+            name = "gl_cv_func_tcsetattr",
+            code = utils.AC_LANG_PROGRAM(
+                [
+                    "#include <termios.h>",
+                    "struct termios x;",
+                ],
+                "return tcsetattr(0, 0, &x);",
+            ),
+            requires = ["HAVE_TERMIOS_H"],
+        ),
+        checks.AC_DEFINE(
+            "HAVE_TCSETATTR",
+            condition = "gl_cv_func_tcsetattr",
+            if_false = 0,
+            if_true = 1,
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/fpurge",
+        "//gnulib/m4/tcgetattr",
+        "//gnulib/m4/termios_h",
+        "//gnulib/m4/unlocked-io",
+    ],
+)
+
+autoconf(
+    name = "getpass",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_GETPASS",
+        ":gl_FUNC_GETPASS_GNU",
+        ":gl_PREREQ_GETPASS",
     ],
 )

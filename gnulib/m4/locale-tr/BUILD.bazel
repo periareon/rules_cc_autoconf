@@ -1,17 +1,43 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/locale-tr.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
+# gt_LOCALE_TR_UTF8 - lines 13-end
+# Determines the name of a Turkish locale with UTF-8 encoding.
+# Uses select() for platform-specific values instead of runtime checks.
+# Note: Turkish locale requires special upper/lowercase mappings (dotted I).
 autoconf(
-    name = "locale-tr",
-    checks = [
-        # gt_LOCALE_TR_UTF8 macro from locale-tr.m4 determines the name of a
-        # Turkish locale with UTF-8 encoding. This involves runtime locale testing
-        # that is complex to replicate in Bazel.
-    ],
+    name = "gt_LOCALE_TR_UTF8",
+    checks = select({
+        # macOS: Turkish locale with proper case mappings may not be fully supported
+        # The golden file expects "none" on macOS
+        "@platforms//os:macos": [
+            checks.AC_SUBST("LOCALE_TR_UTF8", "none"),
+        ],
+        # Windows uses different locale naming convention
+        "@platforms//os:windows": [
+            checks.AC_SUBST("LOCALE_TR_UTF8", "Turkish_Turkey.65001"),
+        ],
+        # Linux and other Unix-like systems: tr_TR.UTF-8
+        "//conditions:default": [
+            checks.AC_SUBST("LOCALE_TR_UTF8", "tr_TR.UTF-8"),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        # Note: AC_REQUIRE([AC_CANONICAL_HOST]) and AC_REQUIRE([AM_LANGINFO_CODESET])
-        # are standard autoconf macros (AM_LANGINFO_CODESET is from gettext)
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        # Note: This provides HAVE_LANGINFO_CODESET as a define, not subst
+        "//gnulib/m4/codeset:AM_LANGINFO_CODESET",
+    ],
+)
+
+# Package-level aggregator target (matches package name)
+# No checks - just deps on all other targets
+autoconf(
+    name = "locale-tr",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gt_LOCALE_TR_UTF8",
     ],
 )

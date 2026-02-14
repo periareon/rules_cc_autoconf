@@ -1,14 +1,43 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/round-ieee.m4"""
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/round-ieee.m4
+
+gl_FUNC_ROUND_IEEE:
+- m4_divert_text([INIT_PREPARE], [gl_round_required=ieee])
+- AC_REQUIRE([gl_FUNC_ROUND])
+
+The divert_text sets gl_round_required=ieee BEFORE gl_FUNC_ROUND runs, causing it to
+also run the IEEE compliance test (round(-0.0) sign bit preservation). On Linux glibc,
+round(-0.0) returns +0.0 (loses sign bit), so REPLACE_ROUND=1.
+"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "gl_FUNC_ROUND_IEEE",
+    checks = [
+        checks.AC_SUBST("ROUND_LIBM", ""),
+    ] + select({
+        # On Linux: glibc's round(-0.0) returns +0.0 (loses sign bit),
+        # failing the IEEE compliance test → REPLACE_ROUND=1
+        "@platforms//os:linux": [
+            checks.AC_SUBST("REPLACE_ROUND", 1),
+        ],
+        # On macOS: round passes IEEE compliance test
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_ROUND", 0),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",
+    ],
+)
 
 autoconf(
     name = "round-ieee",
-    checks = [
-        # Note: round-ieee.m4 may not exist in gnulib, or this module may not have checks
-    ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/round",
+        ":gl_FUNC_ROUND_IEEE",
     ],
 )

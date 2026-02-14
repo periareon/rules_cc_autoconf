@@ -3,10 +3,21 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 
 autoconf(
-    name = "stat-size",
-    checks = [],
+    name = "gl_STAT_SIZE",
+    checks = [
+    ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/pathmax",  # Provides HAVE_SYS_PARAM_H
+        "//gnulib/macros/HAVE_SYS_PARAM_H",
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "stat-size",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_STAT_SIZE",
     ],
 )

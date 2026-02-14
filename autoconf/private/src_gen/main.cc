@@ -26,7 +26,14 @@ struct ResultEntry {
 };
 
 struct SrcsArgs {
-    std::vector<std::string> results_paths{};
+    struct DepMapping {
+        std::string lookup_name{};
+        std::string file_path{};
+
+        DepMapping() : lookup_name(), file_path() {}
+    };
+
+    std::vector<DepMapping> dep_mappings{};
     struct SrcMapping {
         std::string input_path{};
         std::string define{};
@@ -38,14 +45,15 @@ struct SrcsArgs {
     std::vector<SrcMapping> srcs{};
     bool show_help = false;
 
-    SrcsArgs() : results_paths(), srcs(), show_help(false) {}
+    SrcsArgs() : dep_mappings(), srcs(), show_help(false) {}
 };
 
 void print_usage(const char* program_name) {
     std::cout << "Usage: " << program_name << " [options]\n";
     std::cout << "Options:\n";
-    std::cout << "  --results <file>      Path to JSON results file (can be "
-                 "specified multiple times)\n";
+    std::cout
+        << "  --dep <name>=<file>   Mapping of lookup name to JSON result file "
+           "(can be specified multiple times)\n";
     std::cout
         << "  --src <in>=<DEFINE>=<out>  Input path, associated define, and "
            "output path (may be repeated)\n";
@@ -62,11 +70,22 @@ bool parse_args(int argc, char* argv[], SrcsArgs* out_args) {
             args.show_help = true;
             *out_args = args;
             return true;
-        } else if (arg == "--results") {
+        } else if (arg == "--dep") {
             if (i + 1 < argc) {
-                args.results_paths.push_back(argv[++i]);
+                std::string value = argv[++i];
+                std::size_t eq = value.find('=');
+                if (eq == std::string::npos || eq == 0 ||
+                    eq >= value.size() - 1) {
+                    std::cerr << "Error: --dep value must be of the form "
+                              << "{name}={file}, got: " << value << std::endl;
+                    return false;
+                }
+                SrcsArgs::DepMapping m;
+                m.lookup_name = value.substr(0, eq);
+                m.file_path = value.substr(eq + 1);
+                args.dep_mappings.push_back(m);
             } else {
-                std::cerr << "Error: --results requires a file path"
+                std::cerr << "Error: --dep requires a name=file argument"
                           << std::endl;
                 return false;
             }
@@ -104,8 +123,8 @@ bool parse_args(int argc, char* argv[], SrcsArgs* out_args) {
         }
     }
 
-    if (args.results_paths.empty()) {
-        std::cerr << "Error: At least one --results is required" << std::endl;
+    if (args.dep_mappings.empty()) {
+        std::cerr << "Error: At least one --dep is required" << std::endl;
         return false;
     }
 
@@ -113,44 +132,53 @@ bool parse_args(int argc, char* argv[], SrcsArgs* out_args) {
     return true;
 }
 
-void load_results(const std::vector<std::string>& paths,
-                  std::unordered_map<std::string, ResultEntry>* results) {
-    std::unordered_map<std::string, ResultEntry> merged_results;
-
-    // Load and merge all results files
-    for (const std::string& path : paths) {
-        std::ifstream file(path);
-        if (!file.is_open()) {
-            throw std::runtime_error("Failed to open results file: " + path);
+std::unordered_map<std::string, std::string> build_dep_map(
+    const std::vector<SrcsArgs::DepMapping>& mappings) {
+    std::unordered_map<std::string, std::string> out;
+    for (const SrcsArgs::DepMapping& m : mappings) {
+        if (m.lookup_name.empty() || m.file_path.empty()) {
+            throw std::runtime_error(
+                "Invalid --dep mapping (empty name or path)");
         }
-
-        nlohmann::json j{};
-        file >> j;
-        file.close();
-
-        // Handle null or empty JSON - treat as empty results
-        if (j.is_null() || !j.is_object()) {
-            continue;
+        std::unordered_map<std::string, std::string>::iterator it =
+            out.find(m.lookup_name);
+        if (it != out.end() && it->second != m.file_path) {
+            throw std::runtime_error("Duplicate --dep mapping for name '" +
+                                     m.lookup_name + "' with different files");
         }
+        out[m.lookup_name] = m.file_path;
+    }
+    return out;
+}
 
-        for (nlohmann::json::iterator it = j.begin(); it != j.end(); ++it) {
-            const std::string key = it.key();
-            const nlohmann::json& val = it.value();
-            ResultEntry entry;
-            nlohmann::json::const_iterator value_it = val.find("value");
-            if (value_it != val.end() && !value_it->is_null()) {
-                entry.value = value_it->get<std::string>();
-            }
-            nlohmann::json::const_iterator success_it = val.find("success");
-            entry.success =
-                (success_it != val.end()) ? success_it->get<bool>() : false;
-            // Merge results (later files override earlier ones for duplicate
-            // keys)
-            merged_results[key] = entry;
-        }
+ResultEntry load_single_result_from_file(const std::string& path) {
+    std::ifstream file(path);
+    if (!file.is_open()) {
+        throw std::runtime_error("Failed to open results file: " + path);
     }
 
-    *results = merged_results;
+    nlohmann::json j{};
+    file >> j;
+    file.close();
+
+    if (j.is_null() || !j.is_object() || j.empty()) {
+        // Treat empty/invalid as unsuccessful.
+        return ResultEntry{};
+    }
+
+    // Each results file produced by these rules is expected to contain exactly
+    // one entry. We take the first entry regardless of its key.
+    nlohmann::json::iterator it = j.begin();
+    const nlohmann::json& val = it.value();
+
+    ResultEntry entry;
+    nlohmann::json::const_iterator value_it = val.find("value");
+    if (value_it != val.end() && !value_it->is_null()) {
+        entry.value = value_it->dump();  // JSON-encoded string
+    }
+    nlohmann::json::const_iterator success_it = val.find("success");
+    entry.success = (success_it != val.end()) ? success_it->get<bool>() : false;
+    return entry;
 }
 
 bool generate_wrapped_source(
@@ -223,22 +251,45 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-    std::unordered_map<std::string, ResultEntry> results;
+    std::unordered_map<std::string, std::string> dep_map;
+    std::unordered_map<std::string, ResultEntry> result_cache;
     try {
-        load_results(args.results_paths, &results);
+        dep_map = build_dep_map(args.dep_mappings);
     } catch (const std::exception& ex) {
         std::cerr << "Error: " << ex.what() << std::endl;
         return 1;
     }
 
-    for (std::vector<SrcsArgs::SrcMapping>::const_iterator it =
-             args.srcs.begin();
-         it != args.srcs.end(); ++it) {
-        const std::filesystem::path out_path(it->output_path);
-        const std::filesystem::path orig_path(it->input_path);
-        const std::string& define = it->define;
+    for (const SrcsArgs::SrcMapping& mapping : args.srcs) {
+        const std::filesystem::path out_path(mapping.output_path);
+        const std::filesystem::path orig_path(mapping.input_path);
+        const std::string& define = mapping.define;
 
-        if (!generate_wrapped_source(out_path, orig_path, define, results)) {
+        std::unordered_map<std::string, std::string>::iterator dep_it =
+            dep_map.find(define);
+        if (dep_it == dep_map.end()) {
+            std::cerr << "Error: No --dep mapping provided for '" << define
+                      << "'" << std::endl;
+            return 1;
+        }
+
+        // Load result once per referenced file.
+        std::unordered_map<std::string, ResultEntry>::iterator cached =
+            result_cache.find(define);
+        if (cached == result_cache.end()) {
+            try {
+                result_cache[define] =
+                    load_single_result_from_file(dep_it->second);
+            } catch (const std::exception& ex) {
+                std::cerr << "Error: " << ex.what() << std::endl;
+                return 1;
+            }
+        }
+
+        // Generate the wrapper using the resolved (namespace-agnostic) result.
+        std::unordered_map<std::string, ResultEntry> one;
+        one[define] = result_cache[define];
+        if (!generate_wrapped_source(out_path, orig_path, define, one)) {
             return 1;
         }
     }

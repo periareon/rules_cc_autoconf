@@ -1,14 +1,13 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/af_alg.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "af_alg",
     checks = [
-        # Check for linux/if_alg.h with struct sockaddr_alg
         # Equivalent to gl_AF_ALG macro from af_alg.m4
-        macros.AC_TRY_COMPILE(
+        checks.AC_TRY_COMPILE(
             code = """#include <sys/socket.h>
 #include <linux/if_alg.h>
 
@@ -24,10 +23,16 @@ int main(void) {
             define = "HAVE_LINUX_IF_ALG_H",
             language = "c",
         ),
+        # USE_LINUX_CRYPTO_API defaults to 0 unless --with-linux-crypto is passed
+        # Since we can't replicate the --with-linux-crypto flag behavior,
+        # we default to 0 (disabled)
+        checks.AC_DEFINE("USE_LINUX_CRYPTO_API", "0"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/sys_socket_h",  # AC_REQUIRE([gl_SYS_SOCKET_H])
-        # Note: AC_REQUIRE([AC_C_INLINE]) is a standard autoconf macro
+        "//gnulib/m4/sys_socket_h:gl_SYS_SOCKET_H",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        # (golden files include standard header checks even though not AC_REQUIREd)
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

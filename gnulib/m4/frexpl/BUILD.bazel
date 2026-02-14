@@ -1,37 +1,34 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/frexpl.m4"""
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/frexpl.m4
+
+gl_FUNC_FREXPL:
+- AC_REQUIRE([gl_MATH_H_DEFAULTS])
+- AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+- AC_REQUIRE([gl_FUNC_FREXP])
+- AC_CHECK_FUNCS([frexpl])
+- AC_SUBST([FREXPL_LIBM])
+"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "frexpl",
     checks = [
-        # Check for frexpl function and declaration
-        # Equivalent to gl_FUNC_FREXPL macro from frexpl.m4
-        # Note: Full implementation includes runtime checks for finite numbers,
-        # denormalized numbers, and infinite numbers that are not easily replicable in Bazel
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_FUNC(
             "frexpl",
-            define = "HAVE_DECL_FREXPL",
-            headers = ["math.h"],
-        ),
-        macros.AC_TRY_COMPILE(
-            code = """#include <math.h>
-
-int main(void) {
-    long double x = 0.0L;
-    int e;
-    return frexpl(x, &e) > 0;
-}""",
             define = "HAVE_FREXPL",
-            language = "c",
         ),
+        # HAVE_FREXPL_IN_LIBC: frexpl() is available in libc without -lm
+        checks.AC_DEFINE("HAVE_FREXPL_IN_LIBC", "1"),
+        # FREXPL_LIBM is empty on macOS
+        checks.AC_SUBST("FREXPL_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS]), AC_REQUIRE([gl_LONG_DOUBLE_VS_DOUBLE])
-        "//gnulib/m4/frexp",  # AC_REQUIRE([gl_FUNC_FREXP]) - conditional
-        # Note: AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]), AC_REQUIRE([AC_PROG_CC]),
-        # and AC_REQUIRE([AC_CANONICAL_HOST]) are standard autoconf macros
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+        "//gnulib/m4/frexp",  # AC_REQUIRE([gl_FUNC_FREXP])
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+        "//gnulib/m4/mktime",
     ],
 )

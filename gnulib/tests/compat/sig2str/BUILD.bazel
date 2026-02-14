@@ -1,0 +1,19 @@
+load("//gnulib/tests:gnu_gnulib_diff_test_suite.bzl", "gnu_gnulib_diff_test_suite")
+
+gnu_gnulib_diff_test_suite(
+    name = "sig2str_test",
+    bazel_autoconf_target = "//gnulib/m4/sig2str",
+    config_h_in = "config.h.in",
+    configure_ac = "configure.ac",
+    golden_config_h = select({
+        "@platforms//os:macos": "golden_config_macos.h.in",
+        "//conditions:default": "golden_config.h.in",
+    }),
+    golden_subst_h = select({
+        "@platforms//os:macos": "golden_subst_macos.h.in",
+        "//conditions:default": "golden_subst.h.in",
+    }),
+    m4_files = ["@gnulib//:all_m4"],
+    subst_h_in = "subst.h.in",
+    test_c = "test_sig2str.c",
+)

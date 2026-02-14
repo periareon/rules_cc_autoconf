@@ -1,0 +1,3 @@
+/* subst.h.in */
+#define SUBST_GNU_MAKE_FALSE "#"
+#define SUBST_GNU_MAKE_TRUE ""

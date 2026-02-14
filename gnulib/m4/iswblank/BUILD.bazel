@@ -1,39 +1,38 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/iswblank.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 autoconf(
     name = "iswblank",
     checks = [
-        # Check for iswblank function and declaration
-        # Equivalent to gl_FUNC_ISWBLANK macro from iswblank.m4
-        macros.AC_TRY_COMPILE(
-            code = """#include <wctype.h>
-
-#ifdef __cplusplus
-extern "C"
-#endif
-int iswblank ();
-
-int main(void) {
-    return iswblank();
-}""",
-            define = "HAVE_ISWBLANK",
-            language = "c",
-        ),
-        macros.AC_CHECK_DECL(
+        # This handles:
+        # - Checking if iswblank exists
+        # - AC_DEFINE HAVE_ISWBLANK in config.h ONLY when function exists
+        # - AC_SUBST HAVE_ISWBLANK in subst.h ALWAYS (0 or 1)
+    ] + gl_macros.GL_CHECK_FUNCS_ANDROID(
+        ["iswblank"],
+        # Don't use code parameter - use default extern declaration trick
+    ) + [
+        checks.AC_CHECK_DECL(
             "iswblank",
             define = "HAVE_DECL_ISWBLANK",
-            headers = [
-                "wchar.h",
-                "wctype.h",
+            includes = [
+                "#include <wchar.h>",
+                "#include <wctype.h>",
             ],
         ),
+
+        # Note: REPLACE_ISWBLANK is already provided by wctype_h:defaults dependency
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/wctype_h",  # AC_REQUIRE([gl_WCTYPE_H_DEFAULTS]), AC_REQUIRE([gl_WCTYPE_H])
-        # Note: AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
+        # Note: gl_WCTYPE_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        "//gnulib/m4/wctype_h",
+        "//gnulib/m4/extensions",
+
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

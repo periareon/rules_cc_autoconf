@@ -1,11 +1,22 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/javacomp.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "javacomp",
     checks = [
-        # Note: javacomp.m4 may not exist in gnulib, or this module may not have checks
-    ],
+        checks.AC_SUBST("CONF_JAVAC", ""),
+        checks.AC_SUBST("CLASSPATH", ""),
+        checks.AC_SUBST("HAVE_JAVAC_ENVVAR", ""),
+        checks.AC_SUBST("HAVE_JAVAC", ""),
+    ] + select({
+        "@platforms//os:windows": [
+            checks.AC_SUBST("CLASSPATH_SEPARATOR", ";"),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST("CLASSPATH_SEPARATOR", ":"),
+        ],
+    }),
     visibility = ["//visibility:public"],
 )

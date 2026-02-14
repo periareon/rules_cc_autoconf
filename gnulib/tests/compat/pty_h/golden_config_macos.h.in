@@ -1,0 +1,24 @@
+/* config.h.in */
+/* #undef HAVE_FORKPTY */
+#define HAVE_INTTYPES_H 1
+/* #undef HAVE_LIBUTIL_H */
+/* #undef HAVE_OPENPTY */
+/* #undef HAVE_PTY_H */
+#define HAVE_STDINT_H 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_STRING_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_TERMIOS_H 1
+#define HAVE_UNISTD_H 1
+#define HAVE_UTIL_H 1
+/* #undef INCLUDE_NEXT */
+/* #undef INCLUDE_NEXT_AS_FIRST_DIRECTIVE */
+/* #undef NEXT_AS_FIRST_DIRECTIVE_PTY_H */
+/* #undef NEXT_PTY_H */
+/* #undef PRAGMA_SYSTEM_HEADER */
+/* #undef REPLACE_FORKPTY */
+/* #undef REPLACE_OPENPTY */
+#define STDC_HEADERS 1

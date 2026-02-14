@@ -1,7 +1,7 @@
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
 load("@rules_cc_autoconf//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
-load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
+load("@rules_cc_autoconf//autoconf:checks.bzl", "macros")
 load("@rules_cc_autoconf//autoconf:package_info.bzl", "package_info")
 
 package_info(
@@ -11,16 +11,16 @@ package_info(
 
 autoconf(
     name = "autoconf",
-    checks = [
-        # Check for common standard library functions
-        macros.AC_CHECK_FUNC("malloc"),
-        macros.AC_CHECK_FUNC("free"),
-        macros.AC_CHECK_FUNC("printf"),
-        # Check for standard headers
-        macros.AC_CHECK_HEADER("stdio.h"),
-        macros.AC_CHECK_HEADER("stdlib.h"),
-        macros.AC_CHECK_HEADER("string.h"),
-    ],
+    # Plural forms (AC_CHECK_FUNCS, AC_CHECK_HEADERS) automatically create
+    # HAVE_* defines matching GNU autoconf conventions.
+    checks = macros.AC_CHECK_FUNCS([
+        "malloc",
+        "free",
+    ]) + macros.AC_CHECK_HEADERS([
+        "stdio.h",
+        "stdlib.h",
+        "string.h",
+    ]),
     deps = [":package"],
 )
 

@@ -1,0 +1,20 @@
+"""AC_SYS_YEAR2038 - Autoconf builtin macro
+
+Enables 64-bit time_t support for year 2038 and beyond.
+
+Defines:
+  - _TIME_BITS (set to 64)
+  - _DARWIN_C_SOURCE (on macOS)
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "AC_SYS_YEAR2038",
+    checks = [
+        # Enable 64-bit time_t
+        checks.AC_DEFINE("_TIME_BITS", "64"),
+    ],
+    visibility = ["//visibility:public"],
+)

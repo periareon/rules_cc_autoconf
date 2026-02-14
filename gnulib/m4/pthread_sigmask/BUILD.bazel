@@ -1,11 +1,28 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/pthread_sigmask.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "pthread_sigmask",
     checks = [
-        # Note: pthread_sigmask.m4 may not exist in gnulib, or this module may not have checks
+        # gl_FUNC_PTHREAD_SIGMASK checks for pthread_sigmask function
+        # On macOS, pthread_sigmask is available
+        checks.AC_CHECK_FUNC(
+            "pthread_sigmask",
+            define = "HAVE_PTHREAD_SIGMASK",
+        ),
+        # AC_SUBST([LIB_PTHREAD_SIGMASK]) - library needed for pthread_sigmask
+        # On macOS/Linux, pthread_sigmask is in libc, so no extra library needed
+        checks.AC_SUBST("LIB_PTHREAD_SIGMASK", ""),
+        checks.AC_SUBST("PTHREAD_SIGMASK_LIB", ""),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # Note: signal_h provides HAVE_SIGSET_T, but golden file expects it undefined
+        # "//gnulib/m4/signal_h",  # AC_REQUIRE([gl_SIGNAL_H_DEFAULTS]) - provides HAVE_SIGSET_T (but golden expects undefined)
+        "//gnulib/m4/threadlib",  # AC_REQUIRE([gl_PTHREADLIB])
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

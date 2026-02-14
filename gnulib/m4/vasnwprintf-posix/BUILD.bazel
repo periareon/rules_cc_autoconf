@@ -1,11 +1,41 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/vasnwprintf-posix.m4"""
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/vasnwprintf-posix.m4
+
+gl_FUNC_VASNWPRINTF_POSIX:
+- AC_REQUIRE([gl_FUNC_VASNWPRINTF_IS_POSIX])
+- If not posix compliant, calls gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS and gl_FUNC_VASNWPRINTF
+
+Note: This does NOT require gl_WCHAR_H, so we should NOT bring in wchar_h which would
+AC_SUBST HAVE_WINT_T. The test expects HAVE_WINT_T to remain unsubstituted.
+"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
 
 autoconf(
     name = "vasnwprintf-posix",
     checks = [
-        # TODO: Add checks based on .m4 file
+        # gl_FUNC_VASNWPRINTF_POSIX macro from vasnwprintf-posix.m4 checks for POSIX
+        # compatibility of vasnwprintf. Complex logic that depends on printf
+        # directive checks.
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/vasnprintf",  # gl_FUNC_VASNWPRINTF, gl_FUNC_VASNWPRINTF_IS_POSIX
+        "//gnulib/m4/getpayload",
+        "//gnulib/m4/math_h:long-double-vs-double",
+        "//gnulib/m4/alloca",
+        # Note: We do NOT depend on wchar_h - it would AC_SUBST HAVE_WINT_T which the test doesn't expect
+        # HAVE_WINT_T as a define (in config.h) comes from wint_t:gt_TYPE_WINT_T via vasnprintf deps
+        "//gnulib/m4/mbrtowc",
+        "//gnulib/m4/wcrtomb",
+        "//gnulib/m4/wcslen",
+        "//gnulib/m4/wcsnlen",
+        "//gnulib/m4/strnlen",
+        "//gnulib/m4/snprintf",
+        # Note: c-strtod removed - it transitively pulls in AC_FUNC_NL_LANGINFO which defines
+        # HAVE_NL_LANGINFO in config.h, but vasnwprintf golden expects it undefined on Linux.
+        # HAVE_NL_LANGINFO on macOS comes from vasnprintf's gl_PREREQ_VASNPRINTF_DIRECTIVE_A.
+        "//gnulib/m4/intmax_t",
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

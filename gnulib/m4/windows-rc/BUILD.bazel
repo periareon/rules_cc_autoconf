@@ -1,14 +1,14 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/windows-rc.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 # gl_WINDOWS_RC from windows-rc.m4
-# Checks for Windows resource compiler (windres) - only on Windows
+# AC_CHECK_TOOL([WINDRES], [windres]) on Windows; when not Windows, empty
 autoconf(
     name = "windows-rc",
     checks = [
-        # No actual checks - only AC_CHECK_TOOL([WINDRES], [windres]) on Windows
-        # This is a toolchain check which is handled differently in Bazel
+        checks.AC_SUBST("WINDRES", ""),
     ],
     visibility = ["//visibility:public"],
 )

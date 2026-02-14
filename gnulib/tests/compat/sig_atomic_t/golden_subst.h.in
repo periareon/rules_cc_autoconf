@@ -1,0 +1,2 @@
+/* subst.h.in */
+#define SUBST_HAVE_SIG_ATOMIC_T "@HAVE_SIG_ATOMIC_T@"

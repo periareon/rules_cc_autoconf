@@ -5,7 +5,15 @@ load("//autoconf:autoconf.bzl", "autoconf")
 autoconf(
     name = "pthread-thread",
     checks = [
-        # Note: pthread-thread.m4 may not exist in gnulib, or this module may not have checks
+        # gl_PTHREAD_THREAD is empty - no checks needed
+        # The golden file shows HAVE_PTHREAD_H, HAVE_PTHREAD_API, HAVE_PTHREAD_T, USE_POSIX_THREADS
+        # These come from pthread_h and threadlib dependencies
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/pthread_h",
+        "//gnulib/m4/threadlib",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

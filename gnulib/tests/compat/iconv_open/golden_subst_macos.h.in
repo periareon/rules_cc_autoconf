@@ -1,0 +1,6 @@
+/* subst.h.in */
+#define SUBST_HAVE_ICONV "@HAVE_ICONV@"
+#define SUBST_ICONV_CONST ""
+#define SUBST_REPLACE_ICONV "1"
+#define SUBST_REPLACE_ICONV_OPEN "1"
+#define SUBST_REPLACE_ICONV_UTF "1"

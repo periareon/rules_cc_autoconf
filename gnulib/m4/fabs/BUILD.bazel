@@ -1,14 +1,14 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fabs.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "fabs",
     checks = [
-        # Check for fabs function
+        checks.AC_SUBST("FABS_LIBM", ""),  # golden (macos) expects ""
         # Equivalent to gl_FUNC_FABS macro from fabs.m4
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "fabs",
             define = "HAVE_FABS",
         ),

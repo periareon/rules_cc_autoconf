@@ -1,11 +1,20 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fmod.m4"""
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fmod.m4
+
+gl_FUNC_FMOD:
+- AC_REQUIRE([gl_MATH_H_DEFAULTS])
+- AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+- AC_CHECK_FUNCS([fmod])
+- AC_SUBST([FMOD_LIBM])
+"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "fmod",
     checks = [
-        # Note: fmod.m4 may not exist in gnulib, or this module may not have checks
+        # FMOD_LIBM is empty on macOS
+        checks.AC_SUBST("FMOD_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [

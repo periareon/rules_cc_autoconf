@@ -1,29 +1,54 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fchdir.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
+# gl_HAVE_FCHDIR - shared fchdir function check (ac_cv_func_fchdir, HAVE_FCHDIR)
+# Used by both fchdir and gl_FUNC_FCHDIR_FOR_CLOSE to avoid duplicate
 autoconf(
-    name = "fchdir",
+    name = "gl_HAVE_FCHDIR",
     checks = [
-        # Check for fchdir function and declaration
-        # Equivalent to gl_FUNC_FCHDIR macro from fchdir.m4
-        # Note: Full implementation includes runtime checks for open() on directories
-        # that are not easily replicable in Bazel
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "fchdir",
             define = "HAVE_FCHDIR",
-        ),
-        macros.AC_CHECK_DECL(
-            "fchdir",
-            define = "HAVE_DECL_FCHDIR",
-            headers = ["unistd.h"],
+            subst = True,
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
-        "//gnulib/m4/dirent_h",  # AC_REQUIRE([gl_DIRENT_H_DEFAULTS])
-        # Note: AC_REQUIRE([AC_CANONICAL_HOST]) is a standard autoconf macro
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "fchdir",
+    checks = [
+        # ac_cv_func_fchdir and HAVE_FCHDIR from gl_HAVE_FCHDIR dependency
+        checks.AC_CHECK_DECL(
+            "fchdir",
+            define = "HAVE_DECL_FCHDIR",
+            includes = ["#include <unistd.h>"],
+            subst = True,
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_HAVE_FCHDIR",
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/dirent_h",
+    ],
+)
+
+# This target is used by modules like close, dup, dup2 that need HAVE_FCHDIR but not HAVE_DECL_FCHDIR
+autoconf(
+    name = "gl_FUNC_FCHDIR_FOR_CLOSE",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_HAVE_FCHDIR",
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

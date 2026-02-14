@@ -1,23 +1,22 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/copysignf.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "copysignf",
     checks = [
-        # Check for copysignf function
-        # Equivalent to gl_FUNC_COPYSIGNF macro from copysignf.m4
-        macros.AC_CHECK_FUNC(
-            "copysignf",
-            define = "HAVE_COPYSIGNF",
-        ),
+        # gl_FUNC_COPYSIGNF uses gl_MATHFUNC which does complex checking
+        # Similar to copysign, we rely on defaults from math_h
+        checks.AC_SUBST("COPYSIGNF_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
-        "//gnulib/m4/mathfunc",  # Uses gl_MATHFUNC([copysignf, ...])
-        # Note: AC_REQUIRE([AC_CANONICAL_HOST]) and AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
-        # are standard autoconf macros
+        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS,
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/copysign",
+        "//gnulib/m4/math_h",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

@@ -1,0 +1,3 @@
+/* config.h.in */
+/* #undef HAVE_FLOCKFILE */
+/* #undef HAVE_FUNLOCKFILE */

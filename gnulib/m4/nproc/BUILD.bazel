@@ -1,17 +1,77 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/nproc.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
-
-# HAVE_PSTAT_GETDYNAMIC and HAVE_SYSCTL come from physmem dependency
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "nproc",
+    name = "gl_NPROC",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_PREREQ_NPROC",
+    ],
+)
+
+# Prerequisites of lib/nproc.c
+autoconf(
+    name = "gl_PREREQ_NPROC",
     checks = [
-        macros.AC_CHECK_FUNC("sched_getaffinity_np"),
+        checks.AC_CHECK_HEADER(
+            "sys/pstat.h",
+            define = "HAVE_SYS_PSTAT_H",
+        ),
+
+        # Provided by //gnulib/m4/hasmntopt:HAVE_SETMNTENT (link check + define/subst)
+        checks.AC_CHECK_FUNC(
+            "sched_getaffinity_np",
+            define = "HAVE_SCHED_GETAFFINITY_NP",
+        ),
+        checks.AC_CHECK_FUNC(
+            "pstat_getdynamic",
+            define = "HAVE_PSTAT_GETDYNAMIC",
+        ),
+        checks.AC_CHECK_FUNC(
+            "sched_getaffinity",
+            define = "HAVE_SCHED_GETAFFINITY",
+        ),
+
+        # if test $ac_cv_func_sched_getaffinity = yes; then
+        # fi
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_func_sched_getaffinity3",
+            code = """#include <errno.h>
+#include <sched.h>
+int main(void) {
+    sched_getaffinity(0, 0, (cpu_set_t *)0);
+    return 0;
+}""",
+            language = "c",
+            requires = ["HAVE_SCHED_GETAFFINITY"],
+        ),
+
+        # if test $gl_cv_func_sched_getaffinity3 = yes; then
+        # fi
+        checks.AC_DEFINE(
+            "HAVE_SCHED_GETAFFINITY_LIKE_GLIBC",
+            requires = ["gl_cv_func_sched_getaffinity3"],
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/physmem",  # Provides HAVE_PSTAT_GETDYNAMIC, HAVE_SYSCTL
+        "//gnulib/m4/extensions",
+        "//gnulib/macros/HAVE_SYS_PARAM_H",
+        "//gnulib/m4/mntent_h",
+        "//gnulib/m4/readutmp:gl_PREREQ_READUTMP_H",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/hasmntopt:HAVE_SETMNTENT_DEFINE",
+    ],
+)
+
+autoconf(
+    name = "nproc",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_NPROC",
+        ":gl_PREREQ_NPROC",
     ],
 )

@@ -1,11 +1,36 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/pthread-mutex.m4"""
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/pthread-mutex.m4
+
+gl_PTHREAD_MUTEX:
+- AC_REQUIRE([gl_PTHREAD_H])
+- AC_REQUIRE([AC_CANONICAL_HOST])
+- AC_CACHE_CHECK for pthread_mutexattr_getrobust
+  - If exists: HAVE_PTHREAD_MUTEXATTR_GETROBUST=1, HAVE_PTHREAD_MUTEXATTR_SETROBUST=1
+  - If not: HAVE_*=0, AC_DEFINE PTHREAD_MUTEXATTR_ROBUST_UNIMPLEMENTED
+"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "pthread-mutex",
-    checks = [
-        # Note: pthread-mutex.m4 may not exist in gnulib, or this module may not have checks
-    ],
+    checks = select({
+        # On Linux: pthread_mutexattr_getrobust exists in glibc
+        "@platforms//os:linux": [
+            checks.AC_SUBST("HAVE_PTHREAD_MUTEXATTR_GETROBUST", "1"),
+            checks.AC_SUBST("HAVE_PTHREAD_MUTEXATTR_SETROBUST", "1"),
+        ],
+        # On macOS: pthread_mutexattr_getrobust does NOT exist
+        "//conditions:default": [
+            checks.AC_SUBST("HAVE_PTHREAD_MUTEXATTR_GETROBUST", "0"),
+            checks.AC_SUBST("HAVE_PTHREAD_MUTEXATTR_SETROBUST", "0"),
+            checks.AC_DEFINE("PTHREAD_MUTEXATTR_ROBUST_UNIMPLEMENTED", "1"),
+        ],
+    }),
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",  # For test compatibility
+        "//gnulib/m4/pthread_h",  # AC_REQUIRE([gl_PTHREAD_H])
+        "//gnulib/m4/threadlib",
+    ],
 )

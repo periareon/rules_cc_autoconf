@@ -5,7 +5,20 @@ load("//autoconf:autoconf.bzl", "autoconf")
 autoconf(
     name = "xvasprintf",
     checks = [
-        # TODO: Add checks based on .m4 file
+        # xvasprintf depends on vasprintf
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/vasprintf",
+    ] + select({
+        # On Linux: include strerrorname_np for HAVE_STRERRORNAME_NP and HAVE_WORKING_STRERRORNAME_NP
+        "@platforms//os:linux": [
+            "//gnulib/m4/strerrorname_np",
+        ],
+        # On macOS: don't include strerrorname_np (test expects HAVE_STRERRORNAME_NP="1" from defaults)
+        "//conditions:default": [],
+    }) + [
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

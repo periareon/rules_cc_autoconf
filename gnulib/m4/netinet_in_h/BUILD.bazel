@@ -1,16 +1,93 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/netinet_in_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
+# Core checks without module-specific AC_SUBSTs
+# This can be used by modules that just need the header/type checks
+# Core netinet/in.h checks without HAVE_NETINET_IN_H subst
 autoconf(
-    name = "netinet_in_h",
+    name = "gl_HEADER_NETINET_IN",
     checks = [
-        macros.AC_CHECK_HEADER(
+        checks.AC_CHECK_HEADER(
             "netinet/in.h",
             define = "HAVE_NETINET_IN_H",
         ),
-        # Note: netinet_in_h.m4 may not exist in gnulib, or this module may not have checks
+        checks.AC_TRY_COMPILE(
+            code = "struct sockaddr_in sa; (void)sa;",
+            define = "HAVE_NETINET_IN_H_SELFCONTAINED",
+            includes = ["#include <netinet/in.h>"],
+        ),
+        # Type checks
+        checks.AC_CHECK_TYPE(
+            "struct sockaddr_in",
+            define = "HAVE_STRUCT_SOCKADDR_IN",
+            includes = ["#include <netinet/in.h>"],
+        ),
+        checks.AC_CHECK_TYPE(
+            "struct sockaddr_in6",
+            define = "HAVE_STRUCT_SOCKADDR_IN6",
+            includes = ["#include <netinet/in.h>"],
+        ),
+        checks.AC_CHECK_TYPE(
+            "in_addr_t",
+            define = "HAVE_IN_ADDR_T",
+            includes = ["#include <netinet/in.h>"],
+        ),
+        checks.AC_CHECK_TYPE(
+            "in_port_t",
+            define = "HAVE_IN_PORT_T",
+            includes = ["#include <netinet/in.h>"],
+        ),
+        # Constants check
+        checks.AC_TRY_COMPILE(
+            code = "int x = INET_ADDRSTRLEN; (void)x;",
+            define = "HAVE_INET_ADDRSTRLEN",
+            includes = ["#include <netinet/in.h>"],
+        ),
+        checks.AC_TRY_COMPILE(
+            code = "int x = INET6_ADDRSTRLEN; (void)x;",
+            define = "HAVE_INET6_ADDRSTRLEN",
+            includes = ["#include <netinet/in.h>"],
+        ),
+        # IPv4/IPv6 support (shared by inet_ntop and inet_pton)
+        checks.AC_TRY_COMPILE(
+            code = """#include <netinet/in.h>
+int main(void) {
+    struct sockaddr_in sa;
+    (void)sa;
+    return 0;
+}""",
+            define = "HAVE_IPV4",
+        ),
+        checks.AC_TRY_COMPILE(
+            code = """#include <netinet/in.h>
+int main(void) {
+    struct sockaddr_in6 sa;
+    (void)sa;
+    return 0;
+}""",
+            define = "HAVE_IPV6",
+        ),
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/include_next",
+    ],
+)
+
+# Full netinet_in_h module with AC_SUBSTs for test compatibility
+autoconf(
+    name = "netinet_in_h",
+    checks = [
+        # Golden expects empty string for HAVE_* and NEXT_* on both macOS and Linux
+        checks.AC_SUBST("HAVE_NETINET_IN_H", ""),
+        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_NETINET_IN_H", ""),
+        checks.AC_SUBST("NEXT_NETINET_IN_H", ""),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        ":gl_HEADER_NETINET_IN",
+    ],
 )

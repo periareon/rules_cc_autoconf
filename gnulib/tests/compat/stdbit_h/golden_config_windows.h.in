@@ -1,0 +1,25 @@
+/* config.h.in */
+/* #undef GL_STDC_BIT_CEIL */
+/* #undef GL_STDC_BIT_FLOOR */
+/* #undef GL_STDC_BIT_WIDTH */
+/* #undef GL_STDC_COUNT_ONES */
+/* #undef GL_STDC_COUNT_ZEROS */
+/* #undef GL_STDC_FIRST_LEADING_ONE */
+/* #undef GL_STDC_FIRST_LEADING_ZERO */
+/* #undef GL_STDC_FIRST_TRAILING_ONE */
+/* #undef GL_STDC_FIRST_TRAILING_ZERO */
+/* #undef GL_STDC_HAS_SINGLE_BIT */
+/* #undef GL_STDC_LEADING_ONES */
+/* #undef GL_STDC_LEADING_ZEROS */
+/* #undef GL_STDC_TRAILING_ONES */
+/* #undef GL_STDC_TRAILING_ZEROS */
+#define HAVE_INTTYPES_H 1
+#define HAVE_STDINT_H 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+/* #undef HAVE_STRINGS_H */
+#define HAVE_STRING_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+/* #undef HAVE_UNISTD_H */
+#define STDC_HEADERS 1

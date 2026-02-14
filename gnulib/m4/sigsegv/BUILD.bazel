@@ -1,12 +1,25 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sigsegv.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "sigsegv",
+    name = "gl_SIGSEGV",
     checks = [
         # gl_SIGSEGV macro from sigsegv.m4 handles --with-libsigsegv option
         # and conditionally calls gl_LIBSIGSEGV. No direct checks needed.
+        checks.M4_VARIABLE("gl_sigsegv_uses_libsigsegv", "no"),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/libsigsegv:gl_LIBSIGSEGV",
+    ],
+)
+
+autoconf(
+    name = "sigsegv",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_SIGSEGV",
+    ],
 )

@@ -1,31 +1,28 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/frexp.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
-
-# gl_FUNC_FREXP macro from frexp.m4
-# HAVE_DECL_ALARM comes from mktime dependency
-# Note: Full implementation includes runtime checks for denormalized numbers,
-# infinite numbers, and negative zero that are not easily replicable in Bazel
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "frexp",
     checks = [
-        macros.AC_TRY_COMPILE(
-            code = """#include <math.h>
-
-int main(void) {
-    double x = 0.0;
-    int e;
-    return frexp(x, &e) > 0;
-}""",
+        # gl_FUNC_FREXP checks for frexp function
+        checks.AC_CHECK_FUNC(
+            "frexp",
             define = "HAVE_FREXP",
-            language = "c",
         ),
+        # HAVE_FREXP_IN_LIBC: frexp() is available in libc without -lm
+        # This is true on modern systems (macOS, Linux glibc)
+        checks.AC_DEFINE("HAVE_FREXP_IN_LIBC", "1"),
+        # Canonical owner of FREXP_LIBM (empty on macOS); asinl/acosl get it from here to avoid duplicate in //... build
+        checks.AC_SUBST("FREXP_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
         "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
-        "//gnulib/m4/mktime",  # Provides HAVE_DECL_ALARM
+        "//gnulib/m4/mktime",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

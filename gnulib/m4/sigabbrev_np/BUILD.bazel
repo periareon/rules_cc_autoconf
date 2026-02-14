@@ -1,15 +1,34 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sigabbrev_np.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "sigabbrev_np",
     checks = [
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "sigabbrev_np",
-            define = "HAVE_SIGABBREV_NP",
+            name = "_gl_cv_func_sigabbrev_np",
         ),
-    ],
+    ] + select({
+        # On Linux: sigabbrev_np is available in glibc 2.32+
+        "@platforms//os:linux": [
+            checks.AC_DEFINE("HAVE_SIGABBREV_NP", "1"),
+            checks.AC_SUBST("HAVE_SIGABBREV_NP", 1),
+        ],
+        # On macOS and other platforms: not available
+        "//conditions:default": [
+            checks.AC_SUBST(
+                "HAVE_SIGABBREV_NP",
+                condition = "_gl_cv_func_sigabbrev_np",
+                if_false = 0,
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
+        "//gnulib/m4/string_h",  # AC_REQUIRE([gl_STRING_H_DEFAULTS])
+    ],
 )

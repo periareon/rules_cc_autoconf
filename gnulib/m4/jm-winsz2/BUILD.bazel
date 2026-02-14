@@ -1,11 +1,17 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/jm-winsz2.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "jm-winsz2",
-    checks = [
-        # Note: jm-winsz2.m4 may not exist in gnulib, or this module may not have checks
-    ],
+    checks = select({
+        # On Linux, TIOCGWINSZ is in sys/ioctl.h
+        "@platforms//os:linux": [
+            checks.AC_DEFINE("GWINSZ_IN_SYS_IOCTL", 1),
+        ],
+        # On macOS, TIOCGWINSZ is in termios.h, not sys/ioctl.h
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
 )

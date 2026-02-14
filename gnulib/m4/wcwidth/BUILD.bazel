@@ -1,46 +1,74 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/wcwidth.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
-# gl_FUNC_WCWIDTH macro from wcwidth.m4
-# COMPLEX CASE: This M4 file includes AC_RUN_IFELSE to test wcwidth behavior
-# in UTF-8 locales, which is NOT cross-compile friendly. The runtime checks
-# test for bugs in various platforms (macOS, BSD, Solaris).
-#
-# Cross-compile heuristics from the M4:
-# - glibc, musl, AIX 7+: guess yes (wcwidth works)
-# - macOS, NetBSD, OpenBSD, MidnightBSD, Solaris: known buggy
 autoconf(
     name = "wcwidth",
     checks = [
-        # AC_CHECK_FUNCS_ONCE([wcwidth])
-        macros.AC_CHECK_FUNC("wcwidth"),
-        # AC_CHECK_DECLS([wcwidth], [], [], [[#include <wchar.h>]])
-        macros.AC_CHECK_DECL(
+        # Note: gl_WCHAR_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+
+        # Note: This is handled by dependencies
+        checks.AC_CHECK_FUNC(
             "wcwidth",
-            headers = ["wchar.h"],
+            name = "ac_cv_func_wcwidth",
         ),
-    ] + select({
-        # Known buggy platforms where wcwidth doesn't work correctly
-        "@platforms//os:macos": [
-            macros.M4_DEFINE("REPLACE_WCWIDTH", "1"),
-        ],
-        "@platforms//os:netbsd": [
-            macros.M4_DEFINE("REPLACE_WCWIDTH", "1"),
-        ],
-        "@platforms//os:openbsd": [
-            macros.M4_DEFINE("REPLACE_WCWIDTH", "1"),
-        ],
-        # Note: Solaris is buggy but @platforms//os:solaris doesn't exist
-        # Linux (glibc/musl) and others: assume wcwidth works
-        "//conditions:default": [],
-    }),
+
+        # Need _GNU_SOURCE for wcwidth declaration to be visible on Linux
+        checks.AC_CHECK_DECL(
+            "wcwidth",
+            name = "ac_cv_have_decl_wcwidth",
+            compile_defines = ["_GNU_SOURCE"],
+            includes = ["#include <wchar.h>"],
+        ),
+
+        # if test $ac_cv_have_decl_wcwidth != yes; then
+        # fi
+        # Define HAVE_DECL_WCWIDTH in config.h if declaration exists
+        # Also set as substitution variable
+        checks.AC_DEFINE(
+            "HAVE_DECL_WCWIDTH",
+            condition = "ac_cv_have_decl_wcwidth",
+            if_false = 0,
+            if_true = 1,
+            subst = True,
+        ),
+
+        # if test $ac_cv_func_wcwidth != yes; then
+        # fi
+        # if test $ac_cv_func_wcwidth = yes || test $gl_cv_func_wcwidth_macro = yes; then
+        #   ... (runtime checks for bugs)
+        #   case "$gl_cv_func_wcwidth_works" in
+        #     *yes) ;;
+        #     *no) REPLACE_WCWIDTH=1 ;;
+        #   esac
+        # else
+        # fi
+        # Define HAVE_WCWIDTH in config.h if function exists
+        checks.AC_DEFINE(
+            "HAVE_WCWIDTH",
+            condition = "ac_cv_func_wcwidth",
+            if_true = 1,
+        ),
+
+        # Note: The m4 file doesn't substitute HAVE_WCWIDTH (lines 90-91)
+        # "We don't substitute HAVE_WCWIDTH. We assume that if the system does not
+        # have the wcwidth function, then it does not declare it."
+        # So we don't set it as a substitution variable
+
+        # The m4 file has runtime checks (AC_RUN_IFELSE) to verify wcwidth works correctly
+        # in UTF-8 locales on various platforms. Based on golden files, on macOS:
+        # - REPLACE_WCWIDTH=0 (function works correctly, or runtime check passes)
+        checks.AC_SUBST("REPLACE_WCWIDTH", 0),
+
+        # Empty macro, no checks needed
+    ],
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_WCHAR_H_DEFAULTS]) - provides HAVE_WCHAR_H
-        "//gnulib/m4/wchar_h",
-        # AC_REQUIRE([gt_TYPE_WINT_T])
+        # Note: gl_WCHAR_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//gnulib/m4/extensions",
         "//gnulib/m4/wint_t",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

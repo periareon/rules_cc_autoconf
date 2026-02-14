@@ -2,13 +2,20 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 
-# HAVE_SYS_MMAN_H comes from mmap-anon dependency
-
 autoconf(
     name = "strncat",
-    checks = [],
+    checks = [
+        # gl_FUNC_STRNCAT checks for prerequisites for memory fence checks
+        # AC_CHECK_FUNCS_ONCE([mprotect])
+    ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/mmap-anon",  # Provides HAVE_SYS_MMAN_H
+        "//gnulib/m4/string_h",  # AC_REQUIRE([gl_STRING_H_DEFAULTS])
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//gnulib/m4/mmap-anon",
+        "//gnulib/m4/mprotect",
+        "//gnulib/m4/wchar_h:gl_WCHAR_H_CORE",
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

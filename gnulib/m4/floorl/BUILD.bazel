@@ -1,19 +1,76 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/floorl.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
+
+# Determines the libraries needed to get the floorl() function.
+autoconf(
+    name = "gl_FUNC_FLOORL_LIBS",
+    checks = [
+        # First try linking without -lm
+        checks.AC_TRY_LINK(
+            name = "_gl_cv_func_floorl_libm_no_lm",
+            code = """\
+#ifndef __NO_MATH_INLINES
+# define __NO_MATH_INLINES 1 /* for glibc */
+#endif
+#include <math.h>
+long double (*funcptr) (long double) = floorl;
+long double x;
+int main(void) {
+    x = funcptr (x) + floorl(x);
+    return 0;
+}
+""",
+            language = "c",
+        ),
+        # Note: AC_TRY_LINK with linkopts can't easily test both cases
+        # On macOS, floorl is typically in libc, so FLOORL_LIBM is empty
+        # On systems where -lm is needed, it would be "-lm"
+        # We default to empty string for macOS
+        checks.AC_SUBST("FLOORL_LIBM", ""),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
 
 autoconf(
     name = "floorl",
     checks = [
-        macros.AC_CHECK_DECL(
+        # Note: gl_MATH_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        checks.AC_CHECK_DECL(
             "floorl",
             define = "HAVE_DECL_FLOORL",
-            headers = ["math.h"],
+            includes = ["#include <math.h>"],
+            subst = True,
         ),
+
+        # gl_FUNC_FLOORL_LIBS is called via dependency
+        # We assume floorl works correctly on macOS, so REPLACE_FLOORL=0
+
+        # This is handled by AC_CHECK_DECL automatically
+
+        # REPLACE_FLOORL is set to 1 if:
+        # - FLOORL_LIBM="?" (floorl declared but not linkable)
+        # - Otherwise, REPLACE_FLOORL=0 (default)
+        checks.AC_SUBST("REPLACE_FLOORL", 0),
+
+        # FLOORL_LIBM is set based on:
+        # Since HAVE_SAME_LONG_DOUBLE_AS_DOUBLE is 1 on macOS, FLOORL_LIBM should be FLOOR_LIBM
+        # But since we're not checking FLOOR_LIBM in this module, we default to empty string
+        # The actual value will be set by gl_FUNC_FLOORL_LIBS
     ],
     visibility = ["//visibility:public"],
     deps = [
+        # Note: gl_MATH_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        "//gnulib/m4/math_h:long-double-vs-double",
+        "//gnulib/m4/extensions",
+        ":gl_FUNC_FLOORL_LIBS",
         "//gnulib/m4/floor",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

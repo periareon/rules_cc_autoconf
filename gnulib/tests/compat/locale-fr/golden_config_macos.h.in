@@ -1,0 +1,8 @@
+/* config.h.in */
+#define HAVE_LANGINFO_CODESET 1
+/* #undef LC_COLLATE_IMPLEMENTED */
+/* #undef LC_MONETARY_IMPLEMENTED */
+/* #undef LC_NUMERIC_IMPLEMENTED */
+/* #undef LC_TIME_IMPLEMENTED */
+/* #undef LOCALE_FR */
+/* #undef LOCALE_FR_UTF8 */

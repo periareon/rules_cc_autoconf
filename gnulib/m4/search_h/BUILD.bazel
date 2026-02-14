@@ -1,11 +1,66 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/search_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+# Core search_h checks without HAVE_SEARCH_H subst
+autoconf(
+    name = "gl_SEARCH_H_CORE",
+    checks = [
+        # gl_SEARCH_H checks for search.h header
+        checks.AC_CHECK_HEADER(
+            "search.h",
+            define = "HAVE_SEARCH_H",
+        ),
+        checks.AC_SUBST("HAVE_TYPE_VISIT", "1"),
+        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_SEARCH_H", "<search.h>"),
+        checks.AC_SUBST("NEXT_SEARCH_H", "<search.h>"),
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/include_next",
+    ],
+)
 
 autoconf(
     name = "search_h",
     checks = [
-        # TODO: Add checks based on .m4 file
+        # Golden expects HAVE_SEARCH_H "1"
+        checks.AC_SUBST("HAVE_SEARCH_H", "1"),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        ":gl_SEARCH_H_CORE",
+    ],
+)
+
+autoconf(
+    name = "gl_SEARCH_H_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("HAVE_TSEARCH", 1),
+        checks.AC_SUBST("HAVE_TWALK", 1),
+        checks.AC_SUBST("REPLACE_TSEARCH", 0),
+        checks.AC_SUBST("REPLACE_TWALK", 0),
+    ],
+    visibility = ["//visibility:private"],
+)
+
+autoconf(
+    name = "gl_SEARCH_H_REQUIRE_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("GNULIB_TSEARCH", 0),
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gl_SEARCH_H_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_SEARCH_H_REQUIRE_DEFAULTS",
+    ],
 )

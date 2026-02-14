@@ -1,15 +1,12 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/stdarg.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
-# gl_STDARG_H from stdarg.m4
-# Checks for working va_copy in combination with <stdarg.h>
 autoconf(
     name = "stdarg",
     checks = [
-        # Check for va_copy
-        macros.AC_TRY_COMPILE(
+        checks.AC_TRY_COMPILE(
             code = """\
 #include <stdarg.h>
 #ifndef va_copy
@@ -19,6 +16,12 @@ int main(void) { return 0; }
 """,
             define = "HAVE_VA_COPY",
         ),
+        # NEXT_STDARG_H and NEXT_AS_FIRST_DIRECTIVE_STDARG_H are set by gl_STDARG_H
+        checks.AC_SUBST("NEXT_STDARG_H", "<stdarg.h>"),
+        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_STDARG_H", ""),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",  # Required for INCLUDE_NEXT variables
+    ],
 )

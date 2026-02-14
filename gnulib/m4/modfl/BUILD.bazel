@@ -1,15 +1,25 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/modfl.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "modfl",
     checks = [
-        # TODO: Add checks based on .m4 file
+        # gl_MATHFUNC sets MODFL_LIBM; golden expects ""
+        checks.AC_SUBST("MODFL_LIBM", ""),
+        # MODF_LIBM comes from modf dependency
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//gnulib/m4/extensions",
         "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
         "//gnulib/m4/mathfunc",  # gl_MATHFUNC([modfl], [long double], [(long double, long double *)])
+        "//gnulib/m4/modf",
+        "//gnulib/m4/trunc",
+        "//gnulib/m4/truncl",
+        # Note: truncf provides HAVE_DECL_TRUNCF, but golden shows it should be undefined
+        # So we don't include truncf
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

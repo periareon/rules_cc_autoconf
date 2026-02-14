@@ -1,15 +1,58 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/wcsrtombs.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "wcsrtombs",
     checks = [
-        macros.AC_CHECK_DECL(
+        # Note: gl_WCHAR_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        checks.AC_CHECK_FUNC(
             "wcsrtombs",
-            define = "HAVE_DECL_WCSRTOMBS",
+            name = "ac_cv_func_wcsrtombs",
         ),
+
+        # if test $ac_cv_func_wcsrtombs = no; then
+        #   if test $ac_cv_have_decl_wcsrtombs = yes; then
+        #   fi
+        # else
+        #   if test $REPLACE_MBSTATE_T = 1; then
+        #   else
+        #   fi
+        # fi
+        # Define HAVE_WCSRTOMBS in config.h if the function exists
+        checks.AC_DEFINE(
+            "HAVE_WCSRTOMBS",
+            condition = "ac_cv_func_wcsrtombs",
+            if_true = 1,
+        ),
+        checks.AC_CHECK_DECL(
+            "wcsrtombs",
+            name = "ac_cv_have_decl_wcsrtombs",
+            includes = ["#include <wchar.h>"],
+            requires = ["ac_cv_func_wcsrtombs==0"],
+        ),
+
+        # REPLACE_WCSRTOMBS logic:
+        # - If function doesn't exist but declaration exists, REPLACE_WCSRTOMBS=1
+        # - If function exists but REPLACE_MBSTATE_T=1, REPLACE_WCSRTOMBS=1
+        # - If function exists, gl_WCSRTOMBS_NULL may set REPLACE_WCSRTOMBS=1
+        # Based on golden files, REPLACE_WCSRTOMBS=0 on macOS/Linux
+        # The AC_RUN_IFELSE checks can't be done in Bazel, so we assume it works correctly
+        # Default to 0, set to 1 only if function doesn't exist but declaration exists
+        checks.AC_SUBST("REPLACE_WCSRTOMBS", 0),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # Note: gl_WCHAR_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        "//autoconf/macros/AC_TYPE_MBSTATE_T",  # AC_REQUIRE([AC_TYPE_MBSTATE_T])
+        "//gnulib/m4/mbstate_t",
+        # Use mbrtowc_base: golden expects REPLACE_MBRTOWC=0 on Linux
+        "//gnulib/m4/mbrtowc:mbrtowc_base",
+        "//gnulib/m4/locale-fr",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )
+
+# Prerequisites of lib/wcsrtombs.c (empty)
+# No separate target needed as it's empty

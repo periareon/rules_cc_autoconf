@@ -1,0 +1,84 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:checks.bzl", "checks")
+load("//autoconf:package_info.bzl", "package_info")
+load("//autoconf/tests:diff_test.bzl", "diff_test")
+
+package_info(
+    name = "package",
+    package_name = "test_compile_defines",
+    package_version = "1.0.0",
+)
+
+# Define a target that provides feature flags
+autoconf(
+    name = "features",
+    checks = [
+        checks.AC_DEFINE("_ENABLE_FEATURE_A", 1),
+        # Define a failed check
+        checks.AC_CHECK_FUNC(
+            "doesnotexist",
+            name = "_ENABLE_FEATURE_B",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# Test that compile_defines allows checks to use defines from dependencies
+autoconf(
+    name = "autoconf",
+    checks = [
+        # This check tries to compile code that requires _ENABLE_FEATURE_A
+        # It should pass because _ENABLE_FEATURE_A is defined in features
+        checks.AC_TRY_COMPILE(
+            code = """
+#ifdef _ENABLE_FEATURE_A
+int feature_a_enabled = 1;
+#else
+#error "_ENABLE_FEATURE_A not defined"
+#endif
+""",
+            compile_defines = ["_ENABLE_FEATURE_A"],
+            define = "HAVE_FEATURE_A",
+        ),
+        # This check tries to compile code that requires _ENABLE_FEATURE_B
+        # It should fail because _ENABLE_FEATURE_B is a failed check
+        checks.AC_TRY_COMPILE(
+            code = """
+#ifndef _ENABLE_FEATURE_B
+int feature_b_enabled = 1;
+#else
+#error "_ENABLE_FEATURE_B is defined"
+#endif
+""",
+            compile_defines = ["_ENABLE_FEATURE_B"],
+            define = "HAVE_FEATURE_B",
+        ),
+    ],
+    deps = [
+        ":features",
+        ":package",
+    ],
+)
+
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    template = "config.h.in",
+    deps = [":autoconf"],
+)
+
+diff_test(
+    name = "diff_test",
+    file1 = "golden_config.h.in",
+    file2 = ":config.h",
+)
+
+cc_test(
+    name = "test_compile_defines",
+    srcs = [
+        "test_compile_defines.c",
+        ":config.h",
+    ],
+)

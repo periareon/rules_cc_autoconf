@@ -1,0 +1,32 @@
+"""https://www.gnu.org/savannah-checkouts/gnu/autoconf/manual/autoconf-2.72/autoconf.html#index-AC_005fC_005fRESTRICT"""
+
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("//autoconf/private:cxxopts.bzl", "cxxopts")
+load(":restrict.bzl", "ac_c_restrict")
+
+# Resolver tool that combines the three keyword compile-check results
+# into a single "restrict" define following the autoconf fallback chain.
+cc_binary(
+    name = "restrict_resolver",
+    srcs = ["restrict_resolver.cc"],
+    cxxopts = cxxopts(),
+    deps = [
+        "//autoconf/private/json",
+    ],
+)
+
+# Detect the C restrict keyword variant supported by the compiler.
+#
+# The original autoconf AC_C_RESTRICT macro tries keywords in order:
+#   1. restrict      (C99)        — no #define needed
+#   2. __restrict__  (GCC/Clang)  — #define restrict __restrict__
+#   3. __restrict    (MSVC)       — #define restrict __restrict
+#   4. (none)                     — #define restrict /**/
+#
+# This uses a custom rule because the fallback chain produces a single
+# define from multiple compile checks, which the core autoconf rule
+# does not support (it rejects duplicate defines for the same name).
+ac_c_restrict(
+    name = "AC_C_RESTRICT",
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,15 @@
+AC_INIT([test_argp], [1.0])
+AC_CONFIG_HEADERS([config.h])
+
+# Invoke macros from argp.m4
+gl_ARGP
+gl_REPLACE_GETOPT_ALWAYS
+
+# Account for global Bazel defaults
+HAVE_DECL_PROGRAM_INVOCATION_NAME=1
+AC_SUBST([HAVE_DECL_PROGRAM_INVOCATION_NAME])
+HAVE_DECL_STRERROR_R=1
+AC_SUBST([HAVE_DECL_STRERROR_R])
+
+AC_CONFIG_FILES([subst.h:subst.h.in])
+AC_OUTPUT

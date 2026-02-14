@@ -1,0 +1,13 @@
+/* config.h.in - should only contain defines, NOT subst variables */
+
+/* Define to 1 if you have the <stdio.h> header file. */
+#define HAVE_STDIO_H 1
+
+/* Define to 1 if feature is available. */
+#define HAVE_FEATURE 1
+
+/* SUBST_VAR should NOT appear here (it's a subst variable) */
+/* #undef SUBST_VAR */
+
+/* ANOTHER_SUBST should NOT appear here (it's a subst variable) */
+/* #undef ANOTHER_SUBST */

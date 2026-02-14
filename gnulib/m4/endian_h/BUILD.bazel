@@ -1,19 +1,57 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/endian_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "endian_h",
     checks = [
-        macros.AC_CHECK_HEADER(
+        # Standard header defines are provided by AC_CHECK_INCLUDES_DEFAULT dependency
+        checks.AC_CHECK_HEADER(
             "endian.h",
-            define = "HAVE_ENDIAN_H",
+            name = "ac_cv_header_endian_h",
         ),
-        macros.AC_CHECK_HEADER(
+        checks.AC_CHECK_HEADER(
             "sys/endian.h",
-            define = "HAVE_SYS_ENDIAN_H",
+            name = "ac_cv_header_sys_endian_h",
         ),
+        # HAVE_ENDIAN_H derives from the header check result
+        checks.AC_DEFINE(
+            "HAVE_ENDIAN_H",
+            requires = ["ac_cv_header_endian_h==1"],
+        ),
+        checks.AC_SUBST(
+            "HAVE_ENDIAN_H",
+            condition = "ac_cv_header_endian_h",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # HAVE_SYS_ENDIAN_H derives from the sys/endian.h check
+        checks.AC_SUBST(
+            "HAVE_SYS_ENDIAN_H",
+            condition = "ac_cv_header_sys_endian_h",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # ENDIAN_H_JUST_MISSING_STDINT: When endian.h exists but doesn't include stdint types.
+        # Linux's endian.h includes stdint.h, so if HAVE_ENDIAN_H=1, this is 1.
+        # If no endian.h, this is 0.
+        checks.AC_SUBST(
+            "ENDIAN_H_JUST_MISSING_STDINT",
+            condition = "ac_cv_header_endian_h",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # gl_CHECK_NEXT_HEADERS([endian.h]) - line 15 of m4
+        # Set NEXT_* variables directly based on expected values
+        checks.AC_SUBST("NEXT_ENDIAN_H", "<endian.h>"),
+        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_ENDIAN_H", "<endian.h>"),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # gl_CHECK_NEXT_HEADERS requires gl_INCLUDE_NEXT which is defined in include_next module
+        "//gnulib/m4/include_next",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

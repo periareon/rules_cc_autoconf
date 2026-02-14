@@ -1,11 +1,20 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/ilogb.m4"""
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/ilogb.m4
+
+gl_FUNC_ILOGB:
+- AC_REQUIRE([gl_MATH_H_DEFAULTS])
+- AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+- AC_CHECK_FUNCS([ilogb])
+- AC_SUBST([ILOGB_LIBM])
+"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "ilogb",
     checks = [
-        # Note: ilogb.m4 may not exist in gnulib, or this module may not have checks
+        # ILOGB_LIBM is empty on macOS
+        checks.AC_SUBST("ILOGB_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
