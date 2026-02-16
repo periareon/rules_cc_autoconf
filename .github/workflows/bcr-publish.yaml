@@ -30,11 +30,14 @@ jobs:
     with:
       attest: false
       tag_name: ${{ inputs.release_version }}
+      author_name: periareon-bot
+      author_email: 260522848+periareon-bot@users.noreply.github.com
       # Tags don't include a "v" prefix
       tag_prefix: ""
       # GitHub repository which is a fork of the upstream where the Pull Request will be opened.
       registry_fork: periareon/bazel-central-registry
       templates_ref: ${{ inputs.templates_ref || inputs.release_version }}
+      draft: false
     permissions:
       contents: write
     secrets:
