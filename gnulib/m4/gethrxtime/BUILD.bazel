@@ -1,16 +1,88 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/gethrxtime.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "gl_ARITHMETIC_HRTIME_T",
+    checks = [
+
+        # AC_COMPILE_IFELSE checks if hrtime_t is an arithmetic type
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_arithmetic_hrtime_t",
+            code = """#include <time.h>
+hrtime_t x = 0;
+int main(void) { return x/x; }""",
+            language = "c",
+        ),
+
+        # if test $gl_cv_arithmetic_hrtime_t = yes; then
+        # fi
+        checks.AC_DEFINE(
+            "HAVE_ARITHMETIC_HRTIME_T",
+            condition = "gl_cv_arithmetic_hrtime_t",
+            if_true = 1,
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/extensions",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Prerequisites of lib/xtime.h (empty)
+autoconf(
+    name = "gl_XTIME",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
 
 autoconf(
     name = "gethrxtime",
     checks = [
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "gethrtime",
-            define = "HAVE_DECL_GETHRTIME",
-            headers = ["sys/time.h"],
+            name = "ac_cv_have_decl_gethrtime",
+            includes = ["#include <time.h>"],
+        ),
+        checks.AC_DEFINE(
+            "HAVE_DECL_GETHRTIME",
+            condition = "ac_cv_have_decl_gethrtime",
+            if_false = 0,
+            if_true = 1,
+        ),
+
+        # if test $ac_cv_have_decl_gethrtime = no \
+        #    || test $gl_cv_arithmetic_hrtime_t = no; then
+        #   ... checks for microuptime, nanouptime, CLOCK_MONOTONIC/CLOCK_REALTIME ...
+        # fi
+        # Based on golden files, GETHRXTIME_LIB="" on macOS
+        checks.AC_SUBST("GETHRXTIME_LIB", ""),
+
+        # For backward compatibility
+        checks.AC_SUBST("LIB_GETHRXTIME", ""),
+
+        # CLOCK_TIME_LIB from clock_time dependency (avoids duplicate)
+
+        # These are BSD-specific functions, not available on macOS
+        checks.AC_CHECK_FUNC(
+            "microuptime",
+            name = "ac_cv_func_microuptime",
+        ),
+        checks.AC_CHECK_FUNC(
+            "nanouptime",
+            name = "ac_cv_func_nanouptime",
         ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        ":gl_ARITHMETIC_HRTIME_T",
+        "//gnulib/m4/extensions",
+        ":gl_XTIME",
+        "//gnulib/m4/clock_time",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

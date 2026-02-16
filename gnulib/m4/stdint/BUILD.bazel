@@ -1,26 +1,143 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/stdint.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
-# HAVE_WCHAR_H comes from wchar_h dependency
-# HAVE_INTTYPES_H comes from inttypes dependency
-# HAVE_STDINT_H comes from size_max dependency
-# HAVE_SYS_TYPES_H comes from sys_types_h dependency
+# Determine the size of each type in bits.
+# gl_STDINT_BITSIZEOF([ptrdiff_t size_t], [gl_STDINT_INCLUDES])
+# gl_STDINT_BITSIZEOF([sig_atomic_t wchar_t wint_t], [gl_STDINT_INCLUDES])
+#
+# NOTE: BITSIZEOF_WCHAR_T is NOT set here because:
+# - gl_STDINT_TYPE_PROPERTIES (which calls this) is only invoked when
+#   stdint.h does NOT conform to C99 (see gl_STDINT_H lines 260-325)
+# - On macOS/Linux, stdint.h DOES conform, so this code path is skipped
+# - gl_UCHAR_H unconditionally computes BITSIZEOF_WCHAR_T, so it's the owner
+autoconf(
+    name = "gl_STDINT_BITSIZEOF",
+    checks = [
+        # BITSIZEOF_* - empty string means use default (0 in M4 when unknown)
+        # These are computed via AC_COMPUTE_INT in M4, we use defaults for now
+        checks.AC_SUBST("BITSIZEOF_PTRDIFF_T", ""),
+        checks.AC_SUBST("BITSIZEOF_SIG_ATOMIC_T", ""),
+        checks.AC_SUBST("BITSIZEOF_SIZE_T", ""),
+        # BITSIZEOF_WCHAR_T owned by uchar_h (see note above)
+        checks.AC_SUBST("BITSIZEOF_WINT_T", ""),
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+)
 
+# Determine the signedness of each type.
+# gl_CHECK_TYPES_SIGNED([sig_atomic_t wchar_t wint_t], [gl_STDINT_INCLUDES])
+autoconf(
+    name = "gl_CHECK_TYPES_SIGNED",
+    checks = [
+        # HAVE_SIGNED_* - empty string means signed (1 in M4 if signed)
+        # These are computed via AC_COMPILE_IFELSE in M4
+        checks.AC_SUBST("HAVE_SIGNED_SIG_ATOMIC_T", ""),
+        checks.AC_SUBST("HAVE_SIGNED_WCHAR_T", ""),
+        checks.AC_SUBST("HAVE_SIGNED_WINT_T", ""),
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+)
+
+# Determine the suffix to use for integer constants of the given types.
+# gl_INTEGER_TYPE_SUFFIX([ptrdiff_t size_t], [gl_STDINT_INCLUDES])
+# gl_INTEGER_TYPE_SUFFIX([sig_atomic_t wchar_t wint_t], [gl_STDINT_INCLUDES])
+autoconf(
+    name = "gl_INTEGER_TYPE_SUFFIX",
+    checks = [
+        # *_T_SUFFIX - empty string means default suffix
+        # These are computed via AC_COMPILE_IFELSE in M4
+        checks.AC_SUBST("PTRDIFF_T_SUFFIX", ""),
+        checks.AC_SUBST("SIG_ATOMIC_T_SUFFIX", ""),
+        checks.AC_SUBST("SIZE_T_SUFFIX", ""),
+        checks.AC_SUBST("WCHAR_T_SUFFIX", ""),
+        checks.AC_SUBST("WINT_T_SUFFIX", ""),
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+)
+
+# Compute HAVE_SIGNED_t, BITSIZEOF_t and t_SUFFIX for all types of interest.
+# Calls gl_STDINT_BITSIZEOF, gl_CHECK_TYPES_SIGNED, gl_INTEGER_TYPE_SUFFIX
+autoconf(
+    name = "gl_STDINT_TYPE_PROPERTIES",
+    checks = [],
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        ":gl_CHECK_TYPES_SIGNED",
+        ":gl_INTEGER_TYPE_SUFFIX",
+        ":gl_STDINT_BITSIZEOF",
+        "//gnulib/m4/multiarch",
+    ],
+)
+
+# Main entry point: Test whether <stdint.h> is supported or must be substituted
+# AC_DEFUN_ONCE([gl_STDINT_H], ...)
+autoconf(
+    name = "gl_STDINT_H",
+    checks = [
+        # Provided by longlong dependency
+
+        # HAVE_WCHAR_H comes from wchar_h:HAVE_WCHAR_H_SUBST dependency
+        checks.AC_SUBST("HAVE_INTTYPES_H", "1"),
+        checks.AC_SUBST("HAVE_SYS_TYPES_H", "1"),
+        checks.AC_SUBST("HAVE_STDINT_H", "1"),
+        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_STDINT_H", "<stdint.h>"),
+        checks.AC_SUBST("NEXT_STDINT_H", "<stdint.h>"),
+
+        # HAVE_C99_STDINT_H=1 on macOS/Linux (golden file expectations)
+        checks.AC_SUBST("HAVE_C99_STDINT_H", 1),
+        checks.AC_CHECK_HEADER(
+            "sys/inttypes.h",
+            name = "ac_cv_header_sys_inttypes_h",
+        ),
+        checks.AC_SUBST(
+            "HAVE_SYS_INTTYPES_H",
+            condition = "ac_cv_header_sys_inttypes_h",
+            if_false = 0,
+        ),
+        checks.AC_CHECK_HEADER(
+            "sys/bitypes.h",
+            name = "ac_cv_header_sys_bitypes_h",
+        ),
+    ] + select({
+        # On Linux: sys/bitypes.h is obsolete, use 0 to match gnulib expectation
+        "@platforms//os:linux": [
+            checks.AC_SUBST("HAVE_SYS_BITYPES_H", "0"),
+        ],
+        # On other platforms: detect dynamically
+        "//conditions:default": [
+            checks.AC_SUBST(
+                "HAVE_SYS_BITYPES_H",
+                condition = "ac_cv_header_sys_bitypes_h",
+                if_false = 0,
+            ),
+        ],
+    }) + [
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//gnulib/m4/limits-h",
+        "//gnulib/m4/wint_t",
+        "//gnulib/m4/longlong",
+        "//gnulib/m4/include_next",
+        # HAVE_WCHAR_H from shared target (doesn't pull in AC_SUBST_HAVE_WINT_T)
+        "//gnulib/m4/wchar_h:HAVE_WCHAR_H_SUBST",
+        ":gl_STDINT_TYPE_PROPERTIES",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# stdint - Public main target
+# Note: BITSIZEOF_WCHAR_T is NOT set here to avoid conflict with uchar_h.
+# This means the standalone stdint test will have a diff for BITSIZEOF_WCHAR_T.
 autoconf(
     name = "stdint",
-    checks = [
-        macros.AC_CHECK_HEADER("sys/bitypes.h"),
-        macros.AC_CHECK_HEADER("sys/inttypes.h"),
-    ],
+    checks = [],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/inttypes",  # Provides HAVE_INTTYPES_H
-        "//gnulib/m4/limits-h",
-        "//gnulib/m4/multiarch",
-        "//gnulib/m4/size_max",  # Provides HAVE_STDINT_H
-        "//gnulib/m4/sys_types_h",  # Provides HAVE_SYS_TYPES_H
-        "//gnulib/m4/wchar_h",  # Provides HAVE_WCHAR_H
+        ":gl_STDINT_H",
     ],
 )

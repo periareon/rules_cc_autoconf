@@ -1,14 +1,17 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/xnanosleep.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 # gl_XNANOSLEEP macro from xnanosleep.m4
 autoconf(
     name = "xnanosleep",
     checks = [
         # AC_CHECK_FUNCS_ONCE([pause])
-        macros.AC_CHECK_FUNC("pause"),
+        checks.AC_CHECK_FUNC(
+            "pause",
+            define = "HAVE_PAUSE",
+        ),
     ],
     visibility = ["//visibility:public"],
 )

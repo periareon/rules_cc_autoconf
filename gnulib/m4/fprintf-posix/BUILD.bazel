@@ -1,17 +1,84 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fprintf-posix.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+# Prerequisites of lib/fprintf.c (empty)
+autoconf(
+    name = "gl_PREREQ_FPRINTF",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_REPLACE_FPRINTF",
+    checks = [
+        # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        # This is handled in the source code, not via autoconf defines
+        checks.AC_SUBST("REPLACE_FPRINTF", 1),
+        checks.AC_DEFINE("REPLACE_FPRINTF_POSIX", "1"),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        ":gl_PREREQ_FPRINTF",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Test whether fprintf is POSIX compliant.
+# Result is gl_cv_func_fprintf_posix.
+# Note: The m4 file performs many complex runtime checks that can't be easily replicated in Bazel.
+# Based on golden files, fprintf is not POSIX compliant on macOS/Linux, so we always replace it.
+autoconf(
+    name = "gl_FUNC_FPRINTF_IS_POSIX",
+    checks = [
+        # The m4 file checks many printf features and sets gl_cv_func_fprintf_posix=yes only if all pass.
+        # Since we can't replicate all these checks, we assume fprintf is not POSIX compliant.
+        # This will cause gl_FUNC_FPRINTF_POSIX to call gl_REPLACE_FPRINTF.
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # All the printf-related dependencies are listed but not used since we can't replicate the checks
+        "//gnulib/m4/printf:gl_PRINTF_SIZES_C99",
+        "//gnulib/m4/printf:gl_PRINTF_SIZES_C23",
+        "//gnulib/m4/printf:gl_PRINTF_LONG_DOUBLE",
+        "//gnulib/m4/printf:gl_PRINTF_INFINITE",
+        "//gnulib/m4/printf:gl_PRINTF_INFINITE_LONG_DOUBLE",
+        "//gnulib/m4/printf:gl_PRINTF_DIRECTIVE_A",
+        "//gnulib/m4/printf:gl_PRINTF_DIRECTIVE_B",
+        "//gnulib/m4/printf:gl_PRINTF_DIRECTIVE_F",
+        "//gnulib/m4/printf:gl_PRINTF_DIRECTIVE_LS",
+        "//gnulib/m4/printf:gl_PRINTF_DIRECTIVE_LC",
+        "//gnulib/m4/printf:gl_PRINTF_POSITIONS",
+        "//gnulib/m4/printf:gl_PRINTF_FLAG_GROUPING",
+        "//gnulib/m4/printf:gl_PRINTF_FLAG_GROUPING_INT_PRECISION",
+        "//gnulib/m4/printf:gl_PRINTF_FLAG_GROUPING_MULTIBYTE",
+        "//gnulib/m4/printf:gl_PRINTF_FLAG_LEFTADJUST",
+        "//gnulib/m4/printf:gl_PRINTF_FLAG_ZERO",
+        "//gnulib/m4/printf:gl_PRINTF_FLAG_ALT_PRECISION_ZERO",
+        "//gnulib/m4/printf:gl_PRINTF_PRECISION",
+        "//gnulib/m4/printf:gl_PRINTF_ENOMEM",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
 
 autoconf(
     name = "fprintf-posix",
     checks = [
-        # gl_FUNC_FPRINTF_POSIX macro from fprintf-posix.m4 checks for POSIX compliance
-        # of fprintf. This involves many printf feature checks that are complex.
+        # APPLE_UNIVERSAL_BUILD comes from multiarch dependency
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/printf",  # Multiple gl_PRINTF_* macros
-        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS])
-        "//gnulib/m4/vasnprintf",  # gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS, gl_REPLACE_VASNPRINTF
+        ":gl_FUNC_FPRINTF_IS_POSIX",
+        # If gl_cv_func_fprintf_posix = no (line 12-16):
+        # Based on golden files, fprintf is not POSIX compliant, so we always need these
+        "//gnulib/m4/vasnprintf:gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS",
+        "//gnulib/m4/vasnprintf:gl_REPLACE_VASNPRINTF",
+        ":gl_REPLACE_FPRINTF",
+        # APPLE_UNIVERSAL_BUILD comes from multiarch
+        "//gnulib/m4/multiarch",
+        "//gnulib/m4/alloca:gl_FUNC_ALLOCA",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

@@ -1,0 +1,3 @@
+/* config.h.in */
+#define HAVE_FSEEKO 1
+/* #undef HAVE_THRD_CREATE */

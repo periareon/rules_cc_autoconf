@@ -1,0 +1,75 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:checks.bzl", "checks")
+load("//autoconf/tests:diff_test.bzl", "diff_test")
+load("//autoconf/tests:gnu_autoconf_configure_test.bzl", "gnu_autoconf_configure_test")
+load("//gnulib:macros.bzl", gl_macros = "macros")
+
+# Test GL_CHECK_FUNCS_ANDROID
+autoconf(
+    name = "autoconf",
+    checks = gl_macros.GL_CHECK_FUNCS_ANDROID(
+        ["printf"],
+        includes = ["#include <stdio.h>"],
+    ) + gl_macros.GL_CHECK_FUNCS_ANDROID(
+        ["doesntexist"],
+        includes = ["#include <unistd.h>"],
+    ) + [
+        checks.AC_SUBST(
+            "HAVE_PRINTF",
+            condition = "ac_cv_func_printf",
+        ),
+        checks.AC_SUBST(
+            "HAVE_DOESNTEXIST",
+            condition = "ac_cv_func_doesntexist",
+        ),
+    ],
+)
+
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    mode = "defines",
+    template = "config.h.in",
+    deps = [":autoconf"],
+)
+
+autoconf_hdr(
+    name = "subst",
+    out = "subst.h",
+    mode = "subst",
+    template = "subst.h.in",
+    deps = [":autoconf"],
+)
+
+diff_test(
+    name = "config_diff",
+    file1 = "golden_config.h.in",
+    file2 = ":config",
+)
+
+diff_test(
+    name = "subst_diff",
+    file1 = "golden_subst.h.in",
+    file2 = ":subst",
+)
+
+cc_test(
+    name = "test",
+    srcs = [
+        "test.c",
+        ":config",
+        ":subst",
+    ],
+)
+
+gnu_autoconf_configure_test(
+    name = "gnu_autoconf_configure_test",
+    config_h_in = "config.h.in",
+    configure_ac = "configure.ac",
+    golden_config_h = "golden_config.h.in",
+    golden_subst_h = "golden_subst.h.in",
+    m4_files = ["@gnulib//:all_m4"],
+    subst_h_in = "subst.h.in",
+)

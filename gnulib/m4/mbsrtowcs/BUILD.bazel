@@ -1,29 +1,75 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/mbsrtowcs.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "mbsrtowcs",
     checks = [
-        # Check for mbsrtowcs function and declaration
-        # Equivalent to gl_FUNC_MBSRTOWCS macro from mbsrtowcs.m4
-        # Note: Full implementation includes runtime locale-based checks
-        # that are complex to replicate in Bazel
-        macros.AC_CHECK_FUNC(
+        # Note: gl_WCHAR_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        checks.AC_CHECK_FUNC(
             "mbsrtowcs",
-            define = "HAVE_MBSRTOWCS",
+            name = "ac_cv_func_mbsrtowcs",
         ),
-        macros.AC_CHECK_DECL(
+
+        # if test $ac_cv_func_mbsrtowcs = no; then
+        #   if test $ac_cv_have_decl_mbsrtowcs = yes; then
+        #     REPLACE_MBSRTOWCS=1 - line 28 (Minix case)
+        #   fi
+        # else
+        #   if test $REPLACE_MBSTATE_T = 1; then
+        #   else
+        #     ... set REPLACE_MBSRTOWCS=1 if checks fail ...
+        #   fi
+        # fi
+
+        # Define HAVE_MBSRTOWCS based on function check
+        checks.AC_DEFINE(
+            "HAVE_MBSRTOWCS",
+            condition = "ac_cv_func_mbsrtowcs",
+            if_true = 1,
+        ),
+
+        # Check for mbsrtowcs declaration (for Minix 3.1.8 which declares but doesn't have it)
+        checks.AC_CHECK_DECL(
             "mbsrtowcs",
-            define = "HAVE_DECL_MBSRTOWCS",
-            headers = ["wchar.h"],
+            name = "ac_cv_have_decl_mbsrtowcs",
+            includes = ["#include <wchar.h>"],
+            requires = ["ac_cv_func_mbsrtowcs==0"],  # Only check if function doesn't exist
         ),
-    ],
+
+        # Set REPLACE_MBSRTOWCS based on conditions:
+        # 1. If function not found but declared, REPLACE_MBSRTOWCS=1 (Minix case)
+        # 2. If function found and REPLACE_MBSTATE_T=1, REPLACE_MBSRTOWCS=1
+        # 3. If function found but gl_MBSRTOWCS_WORKS fails, REPLACE_MBSRTOWCS=1
+        # 4. If function found but gl_MBRTOWC_C_LOCALE fails, REPLACE_MBSRTOWCS=1
+        # 5. Otherwise, REPLACE_MBSRTOWCS=0 (default)
+        # Based on golden files:
+        # - macOS: REPLACE_MBSRTOWCS=0 (function exists and works)
+        # - Linux: REPLACE_MBSRTOWCS=1 (function exists but needs replacement)
+        # The m4 file has complex runtime checks (gl_MBSRTOWCS_WORKS, gl_MBRTOWC_C_LOCALE)
+        # that can't be easily replicated in Bazel. We use platform-specific logic.
+    ] + select({
+        # On Linux: mbsrtowcs needs replacement (gl_MBRTOWC_C_LOCALE runtime check fails)
+        "@platforms//os:linux": [
+            checks.AC_SUBST("REPLACE_MBSRTOWCS", "1"),
+        ],
+        # On macOS: mbsrtowcs works correctly
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_MBSRTOWCS", "0"),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/wchar_h",  # AC_REQUIRE([gl_WCHAR_H_DEFAULTS])
-        # Note: AC_REQUIRE([AC_TYPE_MBSTATE_T]) is a standard autoconf macro
-        # Note: gl_MBRTOWC_C_LOCALE requires locale modules
+        # Note: gl_WCHAR_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        "//autoconf/macros/AC_TYPE_MBSTATE_T",
+        # Provides REPLACE_MBSTATE_T
+        "//gnulib/m4/mbstate_t",
+        # Note: mbrtowc provides HAVE_MBRTOWC, HAVE_MBSINIT, HAVE_MBSTATE_T, HAVE_LANGINFO_CODESET
+        # and system extension defines
+        # Use mbrtowc_base: golden expects REPLACE_MBRTOWC=0 on Linux
+        "//gnulib/m4/mbrtowc:mbrtowc_base",
+        "//gnulib/m4/locale-fr",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

@@ -1,18 +1,58 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/gnulib-common.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
-
-# gnulib-common.m4 contains utility macros and common definitions.
-# The only actual AC_CHECK is gl_FEATURES_H which checks for features.h
+load("//autoconf:checks.bzl", "checks", "macros")
 
 autoconf(
-    name = "gnulib-common",
+    name = "HAVE_FEATURES_H",
+    checks = macros.AC_CHECK_HEADERS(["features.h"]),
+    visibility = ["//gnulib:__subpackages__"],
+)
+
+# Test whether <features.h> exists. Set HAVE_FEATURES_H.
+# Uses shared target to avoid duplicate with argp in aggregates.
+
+autoconf(
+    name = "gl_FEATURES_H",
     checks = [
-        macros.AC_CHECK_HEADER("features.h"),
+        checks.AC_SUBST(
+            "HAVE_FEATURES_H",
+            condition = "ac_cv_header_features_h",
+            if_false = 0,
+            if_true = 1,
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        ":HAVE_FEATURES_H",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_BIGENDIAN - like AC_C_BIGENDIAN, can be AC_REQUIREd
+autoconf(
+    name = "gl_BIGENDIAN",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = ["//autoconf/macros/AC_C_BIGENDIAN"],
+)
+
+# AC_C_RESTRICT - defined in gnulib-common.m4 (overrides Autoconf 2.60-2.70)
+# Re-export from autoconf macro so modules can depend on gnulib-common for it.
+autoconf(
+    name = "AC_C_RESTRICT",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = ["//autoconf/macros/AC_C_RESTRICT"],
+)
+
+# gnulib-common - top-level
+autoconf(
+    name = "gnulib-common",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FEATURES_H",
         "//gnulib/m4/00gnulib",
         "//gnulib/m4/zzgnulib",
     ],

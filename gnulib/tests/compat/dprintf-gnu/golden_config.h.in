@@ -1,0 +1,92 @@
+/* config.h.in */
+/* #undef ALLOCA */
+/* #undef APPLE_UNIVERSAL_BUILD */
+#define DBL_EXPBIT0_BIT 20
+#define DBL_EXPBIT0_WORD 1
+/* #undef GNULIBHEADERS_OVERRIDE_WINT_T */
+#define HAVE_ALLOCA 1
+#define HAVE_ALLOCA_H 1
+/* #undef HAVE_DECL_FCLOSEALL */
+/* #undef HAVE_DECL_FPURGE */
+/* #undef HAVE_DECL_FSEEKO */
+/* #undef HAVE_DECL_FTELLO */
+/* #undef HAVE_DECL_GETDELIM */
+/* #undef HAVE_DECL_GETLINE */
+/* #undef HAVE_DECL_GETW */
+/* #undef HAVE_DECL_OBSTACK_PRINTF */
+/* #undef HAVE_DECL_PUTW */
+/* #undef HAVE_DECL_SNPRINTF */
+/* #undef HAVE_DECL_VSNPRINTF */
+#define HAVE_DECL__SNPRINTF 0
+#define HAVE_DPRINTF 1
+#define HAVE_FEATURES_H 1
+/* #undef HAVE_FSEEKO */
+/* #undef HAVE_FTELLO */
+#define HAVE_INTMAX_T 1
+#define HAVE_INTTYPES_H 1
+#define HAVE_INTTYPES_H_WITH_UINTMAX 1
+/* #undef HAVE_NL_LANGINFO */
+/* #undef HAVE_PCLOSE */
+/* #undef HAVE_POPEN */
+/* #undef HAVE_RENAMEAT */
+/* #undef HAVE_SAME_LONG_DOUBLE_AS_DOUBLE */
+#define HAVE_SNPRINTF 1
+#define HAVE_SNPRINTF_RETVAL_C99 1
+#define HAVE_SNPRINTF_TRUNCATION_C99 1
+#define HAVE_STDINT_H 1
+#define HAVE_STDINT_H_WITH_UINTMAX 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_STRING_H 1
+#define HAVE_STRNLEN 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+/* #undef HAVE_VASPRINTF */
+/* #undef HAVE_VDPRINTF */
+#define HAVE_WCRTOMB 1
+#define HAVE_WCSLEN 1
+#define HAVE_WINT_T 1
+/* #undef NEED_PRINTF_DIRECTIVE_A */
+/* #undef NEED_PRINTF_DIRECTIVE_B */
+/* #undef NEED_PRINTF_DIRECTIVE_UPPERCASE_B */
+/* #undef NEED_PRINTF_DOUBLE */
+/* #undef NEED_PRINTF_ENOMEM */
+/* #undef NEED_PRINTF_FLAG_GROUPING_INT */
+/* #undef NEED_PRINTF_LONG_DOUBLE */
+/* #undef REPLACE_DPRINTF */
+/* #undef REPLACE_FCLOSE */
+/* #undef REPLACE_FDOPEN */
+/* #undef REPLACE_FFLUSH */
+/* #undef REPLACE_FOPEN */
+/* #undef REPLACE_FOPEN_FOR_FOPEN_GNU */
+/* #undef REPLACE_FPRINTF */
+/* #undef REPLACE_FPURGE */
+/* #undef REPLACE_FREOPEN */
+/* #undef REPLACE_FSEEK */
+/* #undef REPLACE_FSEEKO */
+/* #undef REPLACE_FTELL */
+/* #undef REPLACE_FTELLO */
+/* #undef REPLACE_GETDELIM */
+/* #undef REPLACE_GETLINE */
+/* #undef REPLACE_OBSTACK_PRINTF */
+/* #undef REPLACE_PERROR */
+/* #undef REPLACE_POPEN */
+/* #undef REPLACE_PRINTF */
+/* #undef REPLACE_REMOVE */
+/* #undef REPLACE_RENAME */
+/* #undef REPLACE_RENAMEAT */
+/* #undef REPLACE_SNPRINTF */
+/* #undef REPLACE_SPRINTF */
+/* #undef REPLACE_STDIO_READ_FUNCS */
+/* #undef REPLACE_STDIO_WRITE_FUNCS */
+/* #undef REPLACE_TMPFILE */
+/* #undef REPLACE_VASPRINTF */
+/* #undef REPLACE_VDPRINTF */
+/* #undef REPLACE_VFPRINTF */
+/* #undef REPLACE_VPRINTF */
+/* #undef REPLACE_VSNPRINTF */
+/* #undef REPLACE_VSPRINTF */
+#define STDC_HEADERS 1
+#define SUPPORT_GNU_PRINTF_DIRECTIVES 1

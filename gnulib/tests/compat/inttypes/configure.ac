@@ -1,0 +1,12 @@
+AC_INIT([test_inttypes], [1.0])
+AC_CONFIG_HEADERS([config.h])
+
+# Invoke macros from inttypes.m4
+gl_INTTYPES_H
+gl_INTTYPES_INCOMPLETE
+gl_INTTYPES_PRI_SCN
+gl_INTTYPES_CHECK_LONG_LONG_INT_CONDITION
+gl_INTTYPES_MODULE_INDICATOR
+
+AC_CONFIG_FILES([subst.h:subst.h.in])
+AC_OUTPUT

@@ -1,31 +1,61 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/newlocale.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
+# HAVE_NEWLOCALE check - just checks if the function exists
+# Used by modules that only need HAVE_NEWLOCALE without REPLACE_NEWLOCALE
+autoconf(
+    name = "HAVE_NEWLOCALE",
+    checks = [
+        # gl_CHECK_FUNCS_ANDROID([newlocale], [[#include <locale.h>]])
+        checks.AC_TRY_LINK(
+            name = "_gl_cv_func_newlocale",
+            code = """#include <locale.h>
+int main(void) {
+    locale_t loc = newlocale(LC_TIME_MASK, "en_US.UTF-8", NULL);
+    return loc != NULL ? 0 : 1;
+}""",
+            language = "c",
+        ),
+        # Set HAVE_NEWLOCALE as define if function exists
+        checks.AC_DEFINE(
+            "HAVE_NEWLOCALE",
+            "1",
+            requires = ["_gl_cv_func_newlocale==1"],
+        ),
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/locale_h",
+    ],
+)
+
+# and REPLACE_NEWLOCALE
 autoconf(
     name = "newlocale",
     checks = [
-        # Check for newlocale function
-        # Equivalent to gl_FUNC_NEWLOCALE macro from newlocale.m4
-        # Note: Full implementation includes runtime tests for NULL base argument handling
-        macros.AC_TRY_COMPILE(
-            code = """#include <locale.h>
-
-#ifdef __cplusplus
-extern "C"
-#endif
-locale_t newlocale (int, const char *, locale_t);
-
-int main(void) {
-    return newlocale(0, "C", NULL) != NULL ? 0 : 1;
-}""",
-            define = "HAVE_NEWLOCALE",
-            language = "c",
-        ),
+    ] + select({
+        # On macOS: newlocale with NULL base doesn't work correctly (line 39)
+        "@platforms//os:macos": [
+            checks.AC_SUBST("REPLACE_NEWLOCALE", "1"),
+        ],
+        # On Linux: newlocale works correctly
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_NEWLOCALE", "0"),
+        ],
+    }) + [
+        # HAVE_NL_LANGINFO_L comes from nl_langinfo_l dependency
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/locale_h",  # AC_REQUIRE([gl_LOCALE_H_DEFAULTS])
+        ":HAVE_NEWLOCALE",
+        "//gnulib/m4/nl_langinfo:nl_langinfo_l",
+        # AC_REQUIRE([gl_LOCALE_H_DEFAULTS]) - line 14 (ignore, it's a _DEFAULTS function)
+        "//gnulib/m4/locale_h",
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

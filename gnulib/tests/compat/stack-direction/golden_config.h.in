@@ -1,0 +1,2 @@
+/* config.h.in */
+#define STACK_DIRECTION -1

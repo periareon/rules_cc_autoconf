@@ -1,0 +1,80 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* =================================================================
+ * Base condition checks
+ * ================================================================= */
+
+/* Compile check that succeeds */
+#undef CONDITION_SUCCEEDS
+
+/* Compile check that fails */
+#undef CONDITION_FAILS
+
+/* Header check that succeeds */
+#undef HAVE_STDIO_H
+
+/* Header check that fails */
+#undef HAVE_NONEXISTENT_CONDITION_TEST_H
+
+/* =================================================================
+ * AC_SUBST with condition tests
+ * ================================================================= */
+
+/* Test 1: condition succeeds -> if_true value */
+#undef SUBST_COND_SUCCESS
+
+/* Test 2: condition fails -> if_false value */
+#undef SUBST_COND_FAILURE
+
+/* Test 3: numeric value when condition succeeds */
+#undef REPLACE_WHEN_SUCCESS
+
+/* Test 4: numeric value when condition fails */
+#undef REPLACE_WHEN_FAILURE
+
+/* Test 5: header exists as condition */
+#undef SUBST_HEADER_EXISTS
+
+/* Test 6: header missing as condition */
+#undef SUBST_HEADER_MISSING
+
+/* =================================================================
+ * AC_DEFINE with condition tests
+ * ================================================================= */
+
+/* Test 7: condition succeeds -> if_true value */
+#undef DEFINE_COND_SUCCESS
+
+/* Test 8: condition fails -> if_false value */
+#undef DEFINE_COND_FAILURE
+
+/* Test 9: condition succeeds, no if_false -> defined */
+#undef DEFINE_ONLY_IF_TRUE
+
+/* Test 10: condition fails, no if_false -> not defined */
+#undef DEFINE_SKIP_IF_FALSE
+
+/* Test 11: condition fails, if_false = 0 -> defined as 0 */
+#undef DEFINE_ZERO_IF_FALSE
+
+/* =================================================================
+ * Package information
+ * ================================================================= */
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION

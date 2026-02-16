@@ -1,23 +1,49 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/getlogin.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
+
+# Shared AC_CHECK_DECL(getlogin) used by getlogin and getlogin_r.
+autoconf(
+    name = "gl_HAVE_DECL_GETLOGIN",
+    checks = [
+        checks.AC_CHECK_DECL(
+            "getlogin",
+            define = "HAVE_DECL_GETLOGIN",
+            includes = ["#include <unistd.h>"],
+            subst = True,
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
 
 autoconf(
     name = "getlogin",
     checks = [
-        # Check for getlogin function and declaration
+        # Standard header defines are provided by AC_CHECK_INCLUDES_DEFAULT dependency
         # Equivalent to gl_FUNC_GETLOGIN macro from getlogin.m4
-        # Note: Full implementation includes runtime checks for musl libc behavior
-        macros.AC_CHECK_DECL(
-            "getlogin",
-            define = "HAVE_DECL_GETLOGIN",
-            headers = ["unistd.h"],
-        ),
-        macros.AC_CHECK_FUNC(
+        # ac_cv_have_decl_getlogin from gl_HAVE_DECL_GETLOGIN (shared with getlogin_r)
+        checks.AC_CHECK_FUNC(
             "getlogin",
             define = "HAVE_GETLOGIN",
+            subst = True,
         ),
+        # gl_LIB_GETLOGIN sets GETLOGIN_LIB and LIB_GETLOGIN
+        # On Windows: GETLOGIN_LIB='-ladvapi32', otherwise empty
+        # On macOS (non-Windows): empty string
+        checks.AC_SUBST("GETLOGIN_LIB", ""),
+        checks.AC_SUBST("LIB_GETLOGIN", ""),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        ":gl_HAVE_DECL_GETLOGIN",
+        # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency,
+
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

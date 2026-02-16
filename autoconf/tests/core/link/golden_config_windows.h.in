@@ -1,0 +1,28 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Define to 1 if nl_langinfo(CODESET) links successfully. */
+/* #undef HAVE_LANGINFO_CODESET */
+
+/* Define to 1 if printf links successfully. */
+#define HAVE_PRINTF_LINK 1
+
+/* Define to 1 if malloc links with extern declaration pattern. */
+#define HAVE_MALLOC_EXTERN_PATTERN 1
+
+/* Define to the address where bug reports for this package should be sent. */
+#define PACKAGE_BUGREPORT ""
+
+/* Define to the full name of this package. */
+#define PACKAGE_NAME "test_link"
+
+/* Define to the full name and version of this package. */
+#define PACKAGE_STRING "test_link 1.0.0"
+
+/* Define to the one symbol short name of this package. */
+#define PACKAGE_TARNAME "test_link"
+
+/* Define to the home page for this package. */
+#define PACKAGE_URL ""
+
+/* Define to the version of this package. */
+#define PACKAGE_VERSION "1.0.0"

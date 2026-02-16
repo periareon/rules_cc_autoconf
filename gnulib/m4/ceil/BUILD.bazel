@@ -1,19 +1,20 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/ceil.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "ceil",
     checks = [
-        # Check for ceil function
         # Equivalent to gl_FUNC_CEIL macro from ceil.m4
-        # Note: Full implementation includes library dependency checks and
-        # IEEE compliance tests that are not easily replicable in Bazel
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "ceil",
             define = "HAVE_CEIL",
+            subst = True,
         ),
+        # gl_MATHFUNC sets CEIL_LIBM based on whether ceil needs -lm
+        # On macOS/Linux, ceil is in libc, so CEIL_LIBM is empty
+        checks.AC_SUBST("CEIL_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [

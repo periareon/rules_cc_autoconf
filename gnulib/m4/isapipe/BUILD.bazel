@@ -1,17 +1,27 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/isapipe.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "isapipe",
     checks = [
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "isapipe",
             define = "HAVE_ISAPIPE",
         ),
-        # Note: HAVE_FIFO_PIPES and PIPE_LINK_COUNT_MAX are set based on runtime checks
-        # that are not easily replicable in Bazel
-    ],
+    ] + select({
+        "@platforms//os:linux": [
+            # Linux has FIFO pipes, PIPE_LINK_COUNT_MAX is 1
+            checks.AC_DEFINE("HAVE_FIFO_PIPES", "1"),
+            checks.AC_DEFINE_UNQUOTED("PIPE_LINK_COUNT_MAX", "(1)"),
+        ],
+        "@platforms//os:macos": [
+            # macOS has FIFO-like pipes, PIPE_LINK_COUNT_MAX is 0
+            checks.AC_DEFINE("HAVE_FIFO_PIPES", "1"),
+            checks.AC_DEFINE_UNQUOTED("PIPE_LINK_COUNT_MAX", "(0)"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
 )

@@ -25,9 +25,8 @@ std::unique_ptr<Config> Config::from_file(
 
     // List of required fields
     const std::vector<std::string> required_fields = {
-        "c_compiler", "c_flags",        "c_link_flags",
-        "checks",     "compiler_type",  "cpp_compiler",
-        "cpp_flags",  "cpp_link_flags", "linker"};
+        "c_compiler",   "c_flags",   "c_link_flags",   "compiler_type",
+        "cpp_compiler", "cpp_flags", "cpp_link_flags", "linker"};
 
     // Validate all required fields are present
     for (const std::string& field : required_fields) {
@@ -101,18 +100,6 @@ std::unique_ptr<Config> Config::from_file(
             "Invalid 'compiler_type' field: must be a string");
     }
     config->compiler_type = doc["compiler_type"].get<std::string>();
-
-    // Parse checks (required, must be array)
-    if (!doc["checks"].is_array()) {
-        throw std::runtime_error("Invalid 'checks' field: must be an array");
-    }
-
-    for (const nlohmann::json& check_json : doc["checks"]) {
-        std::optional<Check> check_opt = Check::from_json(&check_json);
-        if (check_opt.has_value()) {
-            config->checks.push_back(*check_opt);
-        }
-    }
 
     return config;
 }

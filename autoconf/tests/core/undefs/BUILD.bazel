@@ -1,0 +1,66 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:checks.bzl", "checks")
+load("//autoconf:package_info.bzl", "package_info")
+load("//autoconf/tests:diff_test.bzl", "diff_test")
+load("//autoconf/tests:gnu_autoconf_configure_test.bzl", "gnu_autoconf_configure_test")
+
+package_info(
+    name = "package",
+    package_name = "test_undefs",
+    package_version = "1.0.0",
+)
+
+autoconf(
+    name = "autoconf",
+    checks = [
+        # These should pass (headers exist)
+        checks.AC_CHECK_HEADER(
+            "stdio.h",
+            define = "HAVE_STDIO_H",
+        ),
+        checks.AC_CHECK_HEADER(
+            "stdlib.h",
+            define = "HAVE_STDLIB_H",
+        ),
+        # These should fail (headers don't exist)
+        checks.AC_CHECK_HEADER(
+            "nonexistent_header_abc.h",
+            define = "HAVE_NONEXISTENT_HEADER_ABC_H",
+        ),
+        checks.AC_CHECK_HEADER(
+            "nonexistent_header_def.h",
+            define = "HAVE_NONEXISTENT_HEADER_DEF_H",
+        ),
+    ],
+    deps = [":package"],
+)
+
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    template = "config.h.in",
+    deps = [":autoconf"],
+)
+
+diff_test(
+    name = "diff_test",
+    file1 = "golden_config.h.in",
+    file2 = ":config.h",
+)
+
+cc_test(
+    name = "test_undefs",
+    srcs = [
+        "test_undefs.c",
+        ":config.h",
+    ],
+)
+
+gnu_autoconf_configure_test(
+    name = "gnu_autoconf_configure_test",
+    config_h_in = "config.h.in",
+    configure_ac = "configure.ac",
+    golden_config_h = "golden_config.h.in",
+)

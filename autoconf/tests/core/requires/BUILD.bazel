@@ -1,0 +1,179 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:checks.bzl", "checks")
+load("//autoconf:package_info.bzl", "package_info")
+load("//autoconf/tests:diff_test.bzl", "diff_test")
+
+package_info(
+    name = "package",
+    package_name = "test_requires",
+    package_version = "1.0.0",
+)
+
+# First autoconf rule with base checks (no package_info to avoid duplicates)
+autoconf(
+    name = "base_autoconf",
+    checks = [
+        checks.AC_CHECK_HEADER(
+            "stdio.h",
+            define = "HAVE_STDIO_H",
+        ),
+        checks.AC_CHECK_HEADER(
+            "stdlib.h",
+            define = "HAVE_STDLIB_H",
+        ),
+        checks.AC_CHECK_HEADER(
+            "nonexistent_header_xyz.h",
+            define = "HAVE_NONEXISTENT_HEADER_XYZ_H",
+        ),
+        # AC_DEFINE for values that should appear in config.h and be used in requires
+        checks.AC_DEFINE("REPLACE_FEATURE", 1),  # Value is "1"
+        checks.AC_DEFINE("REPLACE_OTHER", 0),  # Value is "0"
+    ],
+)
+
+# Second autoconf rule that depends on base_autoconf and uses requires
+autoconf(
+    name = "autoconf",
+    checks = [
+        # This should succeed because HAVE_STDIO_H is successful
+        checks.AC_CHECK_FUNC(
+            "printf",
+            define = "HAVE_PRINTF",
+            requires = ["HAVE_STDIO_H"],
+        ),
+        # This should succeed because HAVE_STDLIB_H is successful
+        checks.AC_CHECK_FUNC(
+            "malloc",
+            define = "HAVE_MALLOC",
+            requires = ["HAVE_STDLIB_H"],
+        ),
+        # This should fail because HAVE_NONEXISTENT_HEADER_XYZ_H is not successful
+        checks.AC_CHECK_FUNC(
+            "some_func",
+            requires = ["HAVE_NONEXISTENT_HEADER_XYZ_H"],
+        ),
+        # This should succeed because both requirements are met
+        checks.AC_CHECK_TYPE(
+            "FILE",
+            define = "HAVE_FILE",
+            requires = ["HAVE_STDIO_H"],
+        ),
+        # Multiple requirements - both must succeed
+        checks.AC_TRY_COMPILE(
+            code = "#include <stdio.h>\n#include <stdlib.h>",
+            define = "HAVE_NULL",
+            requires = [
+                "HAVE_STDIO_H",
+                "HAVE_STDLIB_H",
+            ],
+        ),
+        # Value-based requirement - should succeed because REPLACE_FEATURE=1
+        checks.AC_CHECK_FUNC(
+            "exit",
+            name = "HAVE_EXIT_WITH_FEATURE",
+            define = True,
+            requires = ["REPLACE_FEATURE=1"],
+        ),
+        # Value-based requirement - should FAIL because REPLACE_OTHER=0, not 1
+        checks.AC_CHECK_FUNC(
+            "exit",
+            name = "HAVE_EXIT_WITH_OTHER",
+            define = True,
+            requires = ["REPLACE_OTHER=1"],
+        ),
+        # Value-based requirement with correct value - should succeed
+        checks.AC_CHECK_FUNC(
+            "exit",
+            name = "HAVE_EXIT_WITH_OTHER_ZERO",
+            define = True,
+            requires = ["REPLACE_OTHER=0"],
+        ),
+        # NEW: Test negated require with ! - should succeed because nonexistent header failed
+        checks.AC_DEFINE(
+            "NEGATED_REQUIRE_TEST",
+            1,
+            requires = ["!HAVE_NONEXISTENT_HEADER_XYZ_H"],
+        ),
+        # NEW: Test negated require with ! - should FAIL because stdio.h exists
+        checks.AC_DEFINE(
+            "NEGATED_REQUIRE_FAIL",
+            1,
+            requires = ["!HAVE_STDIO_H"],
+        ),
+        # NEW: Test == syntax - should succeed because REPLACE_FEATURE==1
+        checks.AC_DEFINE(
+            "DOUBLE_EQUALS_TEST",
+            1,
+            requires = ["REPLACE_FEATURE==1"],
+        ),
+        # NEW: Test != syntax - should succeed because REPLACE_OTHER != 1
+        checks.AC_DEFINE(
+            "NOT_EQUALS_TEST",
+            1,
+            requires = ["REPLACE_OTHER!=1"],
+        ),
+        # NEW: Test != syntax - should FAIL because REPLACE_FEATURE == 1
+        checks.AC_DEFINE(
+            "NOT_EQUALS_FAIL",
+            1,
+            requires = ["REPLACE_FEATURE!=1"],
+        ),
+        # Test conditional defines using requires
+        checks.AC_CHECK_HEADER(
+            "string.h",
+            define = "HAVE_STRING_H",
+        ),
+        checks.AC_DEFINE(
+            "STRING_H_IF_TRUE",
+            condition = "HAVE_STRING_H",
+            if_true = 1,
+        ),
+        checks.AC_DEFINE(
+            "STRING_H_IF_FALSE",
+            condition = "HAVE_STRING_H",
+            if_false = 1,
+        ),
+        # Test conditional defines when header doesn't exist
+        checks.AC_CHECK_HEADER(
+            "another_nonexistent_xyz.h",
+            define = "HAVE_ANOTHER_NONEXISTENT_XYZ_H",
+        ),
+        checks.AC_DEFINE(
+            "NONEXISTENT2_IF_FALSE",
+            condition = "HAVE_ANOTHER_NONEXISTENT_XYZ_H",
+            if_false = 1,
+        ),
+        checks.AC_DEFINE(
+            "NONEXISTENT2_IF_TRUE",
+            if_true = 1,
+            requires = ["HAVE_ANOTHER_NONEXISTENT_XYZ_H"],
+        ),
+    ],
+    deps = [
+        ":base_autoconf",
+        ":package",
+    ],
+)
+
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    template = "config.h.in",
+    deps = [":autoconf"],
+)
+
+diff_test(
+    name = "diff_test",
+    file1 = "golden_config.h.in",
+    file2 = ":config.h",
+)
+
+cc_test(
+    name = "test_requires",
+    srcs = [
+        "test_requires.c",
+        ":config.h",
+    ],
+)

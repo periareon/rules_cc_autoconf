@@ -1,0 +1,5 @@
+/* config.h.in */
+#undef HAVE_STRFTIME_L
+#undef HAVE_STRUCT_TM_TM_GMTOFF
+#undef HAVE_STRUCT_TM_TM_ZONE
+#undef HAVE_TM_GMTOFF

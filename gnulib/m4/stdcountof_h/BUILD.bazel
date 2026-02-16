@@ -1,15 +1,24 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/stdcountof_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "stdcountof_h",
     checks = [
-        macros.AC_CHECK_HEADER(
+        checks.AC_CHECK_HEADER(
             "stdcountof.h",
             define = "HAVE_STDCOUNTOF_H",
         ),
+        # Golden expects header not found (0) and NEXT_* for replacement header
+        checks.AC_SUBST("CXX_HAVE_STDCOUNTOF_H", "0"),
+        checks.AC_SUBST("HAVE_STDCOUNTOF_H", "0"),
+        checks.AC_SUBST("NEXT_STDCOUNTOF_H", "<stdcountof.h>"),
+        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_STDCOUNTOF_H", "<stdcountof.h>"),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/include_next",  # Required for INCLUDE_NEXT variables
+    ],
 )

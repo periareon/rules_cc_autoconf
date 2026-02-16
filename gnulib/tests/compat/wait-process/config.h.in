@@ -1,0 +1,3 @@
+/* config.h.in */
+#undef HAVE_SIG_ATOMIC_T
+#undef HAVE_WAITID

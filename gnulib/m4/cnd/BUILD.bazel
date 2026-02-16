@@ -1,15 +1,19 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/cnd.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "cnd",
-    checks = [
-        # Check for cnd_init function
-        # Equivalent to gl_FUNC_CND_INIT macro from cnd.m4
-        macros.AC_TRY_COMPILE(
-            code = """#include <threads.h>
+    checks = select({
+        # On Linux with glibc 2.28+: C11 threads are available
+        "@platforms//os:linux": [
+            checks.AC_DEFINE("HAVE_CND_INIT", "1"),
+        ],
+        # On other platforms: Use AC_TRY_COMPILE to check
+        "//conditions:default": [
+            checks.AC_TRY_COMPILE(
+                code = """#include <threads.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -19,12 +23,15 @@ char cnd_init ();
 int main(void) {
     return cnd_init();
 }""",
-            define = "HAVE_CND_INIT",
-            language = "c",
-        ),
-    ],
+                define = "HAVE_CND_INIT",
+                language = "c",
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/threads_h",  # AC_REQUIRE([gl_THREADS_H])
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/include_next",  # Required for INCLUDE_NEXT variables
+        "//gnulib/m4/threads_h",
     ],
 )

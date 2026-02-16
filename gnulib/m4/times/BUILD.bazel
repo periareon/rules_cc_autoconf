@@ -1,20 +1,28 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/times.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "times",
     checks = [
-        # Check for times function
-        # Equivalent to gl_FUNC_TIMES macro from times.m4
-        macros.AC_CHECK_FUNC(
+        # Note: gl_SYS_TIMES_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        checks.AC_CHECK_FUNC(
             "times",
-            define = "HAVE_TIMES",
+            name = "ac_cv_func_times",
         ),
+
+        # if test $ac_cv_func_times = no; then
+        # fi
+        # If function not found, set HAVE_TIMES=0 as substitution variable
+        # If function found, HAVE_TIMES remains default (from defaults, which is "1")
+        # On macOS, times is available
+        checks.AC_DEFINE("HAVE_TIMES", 1),  # Integer, not string - renders as unquoted 1
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/sys_times_h",  # AC_REQUIRE([gl_SYS_TIMES_H_DEFAULTS])
+        # Note: gl_SYS_TIMES_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        # HAVE_STRUCT_TMS comes from defaults via the toolchain
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

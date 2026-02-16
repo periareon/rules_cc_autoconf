@@ -1,35 +1,13 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/flexmember.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "flexmember",
     checks = [
-        # Check for flexible array member support
-        # Equivalent to AC_C_FLEXIBLE_ARRAY_MEMBER macro from flexmember.m4
-        macros.AC_TRY_COMPILE(
-            code = """#include <stdlib.h>
-#include <stdio.h>
-#include <stddef.h>
-
-struct m { struct m *next, **list; char name[]; };
-struct s { struct s *p; struct m *m; int n; double d[]; };
-
-int main(void) {
-    int m = getchar();
-    size_t nbytes = offsetof(struct s, d) + m * sizeof(double);
-    nbytes += sizeof(struct s) - 1;
-    nbytes -= nbytes % sizeof(struct s);
-    struct s *p = malloc(nbytes);
-    p->p = p;
-    p->m = NULL;
-    p->d[0] = 0.0;
-    return p->d != (double *) NULL;
-}""",
-            define = "FLEXIBLE_ARRAY_MEMBER",
-            language = "c",
-        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_C_FLEXIBLE_ARRAY_MEMBER",
+    ],
 )

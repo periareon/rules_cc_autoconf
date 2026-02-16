@@ -1,14 +1,20 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/rintl.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "rintl",
     checks = [
-        # Note: rintl.m4 may not exist in gnulib, or this module may not have checks
+        # AC_SUBST([RINTL_LIBM]) - library needed for rintl
+        # On macOS/Linux, rintl is in libc, so RINTL_LIBM is empty
+        checks.AC_SUBST("RINTL_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/math_h:long-double-vs-double",
         "//gnulib/m4/rint",
     ],
 )

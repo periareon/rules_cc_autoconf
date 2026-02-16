@@ -1,0 +1,4 @@
+/* subst.h.in */
+#define SUBST_HAVE_LSTAT "@HAVE_LSTAT@"
+#define SUBST_HAVE_UTIME "@HAVE_UTIME@"
+#define SUBST_REPLACE_UTIME "@REPLACE_UTIME@"

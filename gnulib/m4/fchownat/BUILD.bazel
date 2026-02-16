@@ -1,23 +1,30 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fchownat.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "fchownat",
     checks = [
-        # Check for fchownat function
         # Equivalent to gl_FUNC_FCHOWNAT macro from fchownat.m4
         # Note: Full implementation includes runtime checks for AT_SYMLINK_NOFOLLOW
         # and empty filename behavior that are not easily replicable in Bazel
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "fchownat",
             define = "HAVE_FCHOWNAT",
+            subst = True,
         ),
-    ],
+    ] + select({
+        "@platforms//os:macos": [
+            # Golden expects REPLACE_FCHOWNAT "1" on macOS (replace needed)
+            checks.AC_SUBST("REPLACE_FCHOWNAT", "1"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
+        "//gnulib/m4/extensions",
+        # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
         "//gnulib/m4/chown",  # AC_REQUIRE([gl_FUNC_CHOWN])
         # Note: AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
     ],

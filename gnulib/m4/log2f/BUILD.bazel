@@ -1,14 +1,20 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/log2f.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "log2f",
     checks = [
-        # Note: log2f.m4 may not exist in gnulib, or this module may not have checks
+        checks.AC_CHECK_FUNC(
+            "log2f",
+            define = "HAVE_LOG2F",
+        ),
+        checks.AC_SUBST("LOG2F_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//gnulib/m4/extensions",
         "//gnulib/m4/frexpf",
         "//gnulib/m4/isnanf",
         "//gnulib/m4/log2",

@@ -1,11 +1,30 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/va-args.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "va-args",
     checks = [
-        # TODO: Add checks based on .m4 file
+        # gl_VA_ARGS checks for variadic macro support
+        # On modern compilers (macOS, Linux), __VA_ARGS__ is supported
+        checks.AC_TRY_COMPILE(
+            code = """\
+#include <stdio.h>
+#define a(func, arg, ...) func (arg, __VA_ARGS__)
+#define b(...) a (__VA_ARGS__)
+int main(void) {
+    b (printf, "%s", "test");
+    return 0;
+}
+""",
+            define = "HAVE_VA_ARGS",
+            language = "c",
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

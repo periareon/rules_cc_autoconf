@@ -1,47 +1,92 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sigaction.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
+# Determine if sigaction interface is present
 autoconf(
-    name = "sigaction",
+    name = "gl_SIGACTION",
     checks = [
-        # Check for sigaction function
-        # Equivalent to gl_SIGACTION macro from sigaction.m4
-        macros.AC_CHECK_FUNC(
+        # Note: gl_SIGNAL_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        checks.AC_CHECK_FUNC(
             "sigaction",
             define = "HAVE_SIGACTION",
+            subst = True,
         ),
-        # AC_CHECK_MEMBER equivalent for struct sigaction.sa_sigaction
-        macros.AC_CHECK_MEMBER(
-            "struct sigaction",
-            "sa_sigaction",
-            headers = ["signal.h"],
-        ),
-        macros.AC_CHECK_FUNC(
-            "sigaltstack",
-            define = "HAVE_SIGALTSTACK",
-        ),
-        macros.AC_CHECK_FUNC(
-            "siginterrupt",
-            define = "HAVE_SIGINTERRUPT",
-        ),
-        macros.AC_CHECK_TYPE(
-            "siginfo_t",
-            code = """\
-#include <signal.h>
-int main(void) {
-    if (sizeof(siginfo_t))
-        return 0;
-    return 1;
-}
-""",
-            define = "HAVE_SIGINFO_T",
+
+        # if test $ac_cv_func_sigaction = yes; then
+        #   if test $ac_cv_member_struct_sigaction_sa_sigaction = no; then
+        #   fi
+        # else
+        # fi
+        checks.AC_CHECK_MEMBER(
+            "struct sigaction.sa_sigaction",
+            define = "HAVE_STRUCT_SIGACTION_SA_SIGACTION",
+            includes = ["#include <signal.h>"],
+            requires = ["HAVE_SIGACTION==1"],
+            subst = True,
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # Note: AC_C_RESTRICT and AC_TYPE_UID_T are standard autoconf macros
-        "//gnulib/m4/signal_h",  # AC_REQUIRE([gl_SIGNAL_H_DEFAULTS])
+        # Note: gl_SIGNAL_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        # Do not pull in signal_h_sigset_t: macOS golden expects /* #undef HAVE_SIGSET_T */
+    ],
+)
+
+# Prerequisites of the part of lib/signal.in.h and of lib/sigaction.c
+autoconf(
+    name = "gl_PREREQ_SIGACTION",
+    checks = [
+        # Note: gl_SIGNAL_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        checks.AC_CHECK_FUNC(
+            "siginterrupt",
+            define = "HAVE_SIGINTERRUPT",
+            # Note: subst=False because golden expects @HAVE_SIGINTERRUPT@ (unsubstituted)
+        ),
+
+        # siginfo_t exists on macOS, so we can set it directly
+        checks.AC_CHECK_TYPE(
+            "siginfo_t",
+            code = """\
+#include <signal.h>
+""",
+            define = "HAVE_SIGINFO_T",
+            subst = True,
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # Note: gl_SIGNAL_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        # Do not pull in signal_h_sigset_t: macOS golden expects /* #undef HAVE_SIGSET_T */
+        "//autoconf/macros/AC_C_RESTRICT",
+        "//autoconf/macros/AC_TYPE_UID_T",
+        ":gl_PREREQ_SIG_HANDLER_H",
+        # HAVE_SIGALTSTACK check only (not full module) - matches AC_CHECK_FUNCS_ONCE behavior
+        # sigaction's gl_PREREQ_SIGACTION uses AC_CHECK_FUNCS_ONCE([sigaltstack ...])
+        # which only defines HAVE_SIGALTSTACK, it does NOT subst it
+        "//gnulib/m4/sigaltstack:HAVE_SIGALTSTACK",
+    ],
+)
+
+# Prerequisites of lib/sig-handler.h
+autoconf(
+    name = "gl_PREREQ_SIG_HANDLER_H",
+    checks = [
+        # Empty - no prerequisites
+    ],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "sigaction",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_PREREQ_SIGACTION",
+        ":gl_PREREQ_SIG_HANDLER_H",
+        ":gl_SIGACTION",
+        # Standard header checks - golden expects HAVE_INTTYPES_H, HAVE_STDINT_H, etc.
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

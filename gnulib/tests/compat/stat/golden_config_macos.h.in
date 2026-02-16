@@ -1,0 +1,44 @@
+/* config.h.in */
+/* #undef HAVE_FCHMODAT */
+/* #undef HAVE_FSTATAT */
+/* #undef HAVE_FUTIMENS */
+/* #undef HAVE_GETUMASK */
+#define HAVE_INTTYPES_H 1
+/* #undef HAVE_LCHMOD */
+#define HAVE_LSTAT 1
+/* #undef HAVE_MKDIRAT */
+/* #undef HAVE_MKFIFO */
+/* #undef HAVE_MKFIFOAT */
+/* #undef HAVE_MKNOD */
+/* #undef HAVE_MKNODAT */
+#define HAVE_STDINT_H 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_STRING_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+/* #undef HAVE_UTIMENSAT */
+/* #undef INCLUDE_NEXT */
+/* #undef INCLUDE_NEXT_AS_FIRST_DIRECTIVE */
+/* #undef NEXT_AS_FIRST_DIRECTIVE_SYS_STAT_H */
+/* #undef NEXT_SYS_STAT_H */
+/* #undef PRAGMA_SYSTEM_HEADER */
+/* #undef REPLACE_CHMOD */
+/* #undef REPLACE_FCHMODAT */
+/* #undef REPLACE_FSTAT */
+/* #undef REPLACE_FSTATAT */
+#define REPLACE_FUNC_STAT_FILE 1
+/* #undef REPLACE_FUTIMENS */
+/* #undef REPLACE_LSTAT */
+/* #undef REPLACE_MKDIR */
+/* #undef REPLACE_MKFIFO */
+/* #undef REPLACE_MKFIFOAT */
+/* #undef REPLACE_MKNOD */
+/* #undef REPLACE_MKNODAT */
+/* #undef REPLACE_STAT */
+/* #undef REPLACE_UTIMENSAT */
+#define STDC_HEADERS 1
+/* #undef WINDOWS_64_BIT_ST_SIZE */
+/* #undef WINDOWS_STAT_TIMESPEC */

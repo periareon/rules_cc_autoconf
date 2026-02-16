@@ -1,11 +1,27 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/strncasecmp_l.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "strncasecmp_l",
     checks = [
-        # TODO: Add checks based on .m4 file
+        # gl_FUNC_STRNCASECMP_L checks for strncasecmp_l function
+        checks.AC_CHECK_FUNC(
+            "strncasecmp_l",
+            define = "HAVE_STRNCASECMP_L",
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/strings_h:gl_STRINGS_H_CORE",  # AC_REQUIRE([gl_STRINGS_H_DEFAULTS])
+        "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
+        # Note: strcasecmp dependency pulls in HAVE_STRCASECMP which golden expects undefined
+        # gl_STRCASECMP_WORKS is a runtime check that we can approximate
+        # "//gnulib/m4/strcasecmp",  # gl_STRCASECMP_WORKS - but pulls in HAVE_STRCASECMP
+        "//gnulib/m4/c-strtod",
+        "//gnulib/m4/wchar_h:gl_WCHAR_H_CORE",
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

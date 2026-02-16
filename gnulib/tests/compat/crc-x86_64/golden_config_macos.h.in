@@ -1,0 +1,4 @@
+/* config.h.in */
+/* #undef GL_CRC_X86_64_PCLMUL */
+/* #undef GL_CRC_X86_64_PCLMUL_FALSE */
+/* #undef GL_CRC_X86_64_PCLMUL_TRUE */

@@ -1,15 +1,34 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/stdbit_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "stdbit_h",
     checks = [
-        macros.AC_CHECK_HEADER(
+        checks.AC_CHECK_HEADER(
             "stdbit.h",
             define = "HAVE_STDBIT_H",
         ),
+        # Golden expects all GL_STDC_* "0" (stdbit.h not available on target)
+        checks.AC_SUBST("GL_STDC_BIT_CEIL", "0"),
+        checks.AC_SUBST("GL_STDC_BIT_FLOOR", "0"),
+        checks.AC_SUBST("GL_STDC_BIT_WIDTH", "0"),
+        checks.AC_SUBST("GL_STDC_COUNT_ONES", "0"),
+        checks.AC_SUBST("GL_STDC_COUNT_ZEROS", "0"),
+        checks.AC_SUBST("GL_STDC_FIRST_LEADING_ONE", "0"),
+        checks.AC_SUBST("GL_STDC_FIRST_LEADING_ZERO", "0"),
+        checks.AC_SUBST("GL_STDC_FIRST_TRAILING_ONE", "0"),
+        checks.AC_SUBST("GL_STDC_FIRST_TRAILING_ZERO", "0"),
+        checks.AC_SUBST("GL_STDC_HAS_SINGLE_BIT", "0"),
+        checks.AC_SUBST("GL_STDC_LEADING_ONES", "0"),
+        checks.AC_SUBST("GL_STDC_LEADING_ZEROS", "0"),
+        checks.AC_SUBST("GL_STDC_TRAILING_ONES", "0"),
+        checks.AC_SUBST("GL_STDC_TRAILING_ZEROS", "0"),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

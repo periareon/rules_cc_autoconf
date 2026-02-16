@@ -1,14 +1,25 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/settime.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "settime",
     checks = [
-        # TODO: Add checks based on .m4 file
+        # gl_SETTIME checks for settimeofday and stime functions
+        # On macOS, settimeofday is available
+        checks.AC_CHECK_FUNC(
+            "settimeofday",
+            define = "HAVE_SETTIMEOFDAY",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/timespec",
+        "//gnulib/m4/clock_time",
+        "//gnulib/m4/timespec",  # AC_REQUIRE([gl_TIMESPEC])
+        "//gnulib/m4/extensions",  # Need extension defines
+        "//gnulib/m4/wchar_h:gl_WCHAR_H_CORE",
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

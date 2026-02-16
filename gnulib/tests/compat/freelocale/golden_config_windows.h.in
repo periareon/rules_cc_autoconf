@@ -1,0 +1,43 @@
+/* config.h.in */
+/* #undef HAVE_DUPLOCALE */
+#define HAVE_FREELOCALE 1
+/* #undef HAVE_GETLOCALENAME_L */
+#define HAVE_INTTYPES_H 1
+/* #undef HAVE_LOCALE_T */
+/* #undef HAVE_NEWLOCALE */
+#define HAVE_STDINT_H 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+/* #undef HAVE_STRINGS_H */
+#define HAVE_STRING_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+/* #undef HAVE_UNISTD_H */
+#define HAVE_WCHAR_H 1
+/* #undef HAVE_XLOCALE_H */
+/* #undef LOCALENAME_ENHANCE_LOCALE_FUNCS */
+/* #undef REPLACE_DUPLOCALE */
+/* #undef REPLACE_FREELOCALE */
+/* #undef REPLACE_GETLOCALENAME_L */
+/* #undef REPLACE_LOCALECONV */
+/* #undef REPLACE_NEWLOCALE */
+/* #undef REPLACE_SETLOCALE */
+/* #undef REPLACE_STRUCT_LCONV */
+#define STDC_HEADERS 1
+#define _ALL_SOURCE 1
+#define _DARWIN_C_SOURCE 1
+#define _GNU_SOURCE 1
+#define _HPUX_ALT_XOPEN_SOCKET_API 1
+#define _NETBSD_SOURCE 1
+#define _OPENBSD_SOURCE 1
+#define _POSIX_PTHREAD_SEMANTICS 1
+#define _TANDEM_SOURCE 1
+#define __EXTENSIONS__ 1
+#define __STDC_WANT_IEC_60559_ATTRIBS_EXT__ 1
+#define __STDC_WANT_IEC_60559_BFP_EXT__ 1
+#define __STDC_WANT_IEC_60559_DFP_EXT__ 1
+#define __STDC_WANT_IEC_60559_EXT__ 1
+#define __STDC_WANT_IEC_60559_FUNCS_EXT__ 1
+#define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
+#define __STDC_WANT_LIB_EXT2__ 1
+#define __STDC_WANT_MATH_SPEC_FUNCS__ 1

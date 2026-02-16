@@ -1,11 +1,100 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/hasmntopt.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
+
+autoconf(
+    name = "ac_cv_func_setmntent",
+    checks = [
+        checks.AC_CHECK_FUNC("setmntent"),
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+)
+
+# Use this when the SUBST comes from mntent_h defaults (unconditional "1")
+autoconf(
+    name = "HAVE_SETMNTENT_DEFINE",
+    checks = [
+        checks.AC_DEFINE(
+            "HAVE_SETMNTENT",
+            requires = ["ac_cv_func_setmntent"],
+        ),
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        ":ac_cv_func_setmntent",
+    ],
+)
+
+# The SUBST value is based on the actual check result
+autoconf(
+    name = "HAVE_SETMNTENT_SUBST",
+    checks = [
+        # AC_SUBST - provide substitution based on check result (1 if found, 0 if not)
+        checks.AC_SUBST(
+            "HAVE_SETMNTENT",
+            condition = "ac_cv_func_setmntent",
+        ),
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        ":ac_cv_func_setmntent",
+    ],
+)
+
+autoconf(
+    name = "HAVE_SETMNTENT",
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        ":HAVE_SETMNTENT_DEFINE",
+        ":HAVE_SETMNTENT_SUBST",
+    ],
+)
+
+autoconf(
+    name = "HAVE_HASMNTOPT_DEFINE",
+    checks = gl_macros.GL_CHECK_FUNCS_ANDROID(
+        ["hasmntopt"],
+        includes = ["#include <stdio.h>\n#include <mntent.h>"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "HAVE_HASMNTOPT",
+    checks = [
+        # AC_SUBST - provide substitution based on check result (1 if found, 0 if not)
+        checks.AC_SUBST(
+            "HAVE_HASMNTOPT",
+            condition = "ac_cv_func_hasmntopt",
+            if_false = "0",
+            if_true = "1",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":HAVE_HASMNTOPT_DEFINE",
+    ],
+)
+
+autoconf(
+    name = "gl_FUNC_HASMNTOPT",
+    checks = [
+        # REPLACE_HASMNTOPT is 0 on all platforms (no known bugs requiring replacement)
+        checks.AC_SUBST("REPLACE_HASMNTOPT", "0"),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":HAVE_HASMNTOPT",
+        ":HAVE_SETMNTENT",
+    ],
+)
 
 autoconf(
     name = "hasmntopt",
-    checks = [
-        # Note: hasmntopt.m4 may not exist in gnulib, or this module may not have checks
-    ],
     visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_HASMNTOPT",
+    ],
 )

@@ -7,7 +7,6 @@ load("//autoconf:autoconf.bzl", "autoconf")
 # The M4 checks if ffs can be linked (might be static inline on Android).
 # If not found, it sets HAVE_FFS=0.
 #
-# Since strings_h already provides HAVE_FFS via AC_CHECK_FUNC, this module
 # just needs to depend on strings_h for the HAVE_FFS define.
 
 autoconf(
@@ -15,6 +14,6 @@ autoconf(
     checks = [],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/strings_h",  # AC_REQUIRE([gl_STRINGS_H_DEFAULTS]) - provides HAVE_FFS
+        "//gnulib/m4/strings_h",
     ],
 )

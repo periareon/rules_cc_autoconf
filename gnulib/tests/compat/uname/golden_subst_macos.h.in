@@ -1,0 +1,3 @@
+/* subst.h.in */
+#define SUBST_HAVE_STRUCT_UTSNAME "1"
+#define SUBST_HAVE_UNAME "1"

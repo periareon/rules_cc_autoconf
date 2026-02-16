@@ -1,15 +1,14 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/utimes.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "utimes",
     checks = [
-        # Check for utimes function
         # Equivalent to gl_FUNC_UTIMES macro from utimes.m4
         # Note: Full implementation includes runtime tests for proper utimes behavior
-        macros.AC_TRY_COMPILE(
+        checks.AC_TRY_COMPILE(
             code = """#include <sys/time.h>
 #include <utime.h>
 
@@ -24,7 +23,17 @@ int main(void) {
             define = "HAVE_UTIMES",
             language = "c",
         ),
-    ],
+    ] + select({
+        "@platforms//os:linux": [
+            # Linux utimes works correctly
+            checks.AC_DEFINE("HAVE_WORKING_UTIMES", "1"),
+        ],
+        "@platforms//os:macos": [
+            # macOS utimes works correctly
+            checks.AC_DEFINE("HAVE_WORKING_UTIMES", "1"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
     ],

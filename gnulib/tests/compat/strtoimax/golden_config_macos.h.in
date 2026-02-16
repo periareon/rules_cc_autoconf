@@ -1,0 +1,29 @@
+/* config.h.in */
+/* #undef HAVE_DECL_IMAXABS */
+/* #undef HAVE_DECL_IMAXDIV */
+#define HAVE_DECL_STRTOIMAX 1
+#define HAVE_DECL_STRTOLL 1
+/* #undef HAVE_DECL_STRTOUMAX */
+/* #undef HAVE_IMAXABS */
+/* #undef HAVE_IMAXDIV */
+/* #undef HAVE_IMAXDIV_T */
+#define HAVE_INTTYPES_H 1
+#define HAVE_STDINT_H 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_STRING_H 1
+#define HAVE_STRTOIMAX 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+/* #undef INT32_MAX_LT_INTMAX_MAX */
+/* #undef INT64_MAX_EQ_LONG_MAX */
+/* #undef PRIPTR_PREFIX */
+/* #undef REPLACE_IMAXABS */
+/* #undef REPLACE_IMAXDIV */
+/* #undef REPLACE_STRTOIMAX */
+/* #undef REPLACE_STRTOUMAX */
+#define STDC_HEADERS 1
+/* #undef UINT32_MAX_LT_UINTMAX_MAX */
+/* #undef UINT64_MAX_EQ_ULONG_MAX */

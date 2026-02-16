@@ -1,0 +1,2 @@
+/* config.h.in */
+#define HAVE_LC_MESSAGES 1

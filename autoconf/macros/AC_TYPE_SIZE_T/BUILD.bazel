@@ -1,0 +1,19 @@
+"""AC_TYPE_SIZE_T - Autoconf builtin macro
+
+Checks if size_t type is defined.
+
+Defines:
+  - size_t (if not defined, defined to unsigned int)
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "AC_TYPE_SIZE_T",
+    checks = [
+        # AC_CHECK_TYPE includes standard headers by default
+        checks.AC_CHECK_TYPE("size_t"),
+    ],
+    visibility = ["//visibility:public"],
+)

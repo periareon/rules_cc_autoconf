@@ -1,0 +1,24 @@
+"""AC_STRUCT_TIMEZONE - Autoconf builtin macro
+
+Checks for struct timezone and whether it's in sys/time.h.
+
+Defines:
+  - HAVE_STRUCT_TIMEZONE (if struct timezone exists)
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "AC_STRUCT_TIMEZONE",
+    checks = [
+        checks.AC_CHECK_TYPE(
+            "struct timezone",
+            includes = ["#include <sys/time.h>"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)

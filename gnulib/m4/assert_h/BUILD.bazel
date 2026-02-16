@@ -1,14 +1,14 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/assert_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 autoconf(
-    name = "assert_h",
+    name = "gl_ASSERT_H",
     checks = [
-        # Check for static_assert support
         # Equivalent to gl_ASSERT_H macro from assert_h.m4
-        macros.AC_TRY_COMPILE(
+        checks.AC_TRY_COMPILE(
             code = """#if defined __clang__ && __STDC_VERSION__ < 202311
 #pragma clang diagnostic error "-Wc2x-extensions"
 #pragma clang diagnostic error "-Wc++1z-extensions"
@@ -25,6 +25,31 @@ int main(void) {
             define = "HAVE_C_STATIC_ASSERT",
             language = "c",
         ),
-    ],
+
+        # Platform-specific values:
+        # - macOS: NEXT_ASSERT_H = "<assert.h>"
+        # - Linux: NEXT_ASSERT_H = "" (empty)
+    ] + select({
+        "@platforms//os:linux": gl_macros.GL_CHECK_NEXT_HEADERS(
+            ["assert.h"],
+            value = "",
+        ),
+        "//conditions:default": gl_macros.GL_CHECK_NEXT_HEADERS(["assert.h"]),
+    }),
     visibility = ["//visibility:public"],
+    deps = [
+        # gl_NEXT_HEADERS requires gl_INCLUDE_NEXT which is defined in include_next module
+        "//gnulib/m4/include_next",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        # (golden files include standard header checks even though not AC_REQUIREd)
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "assert_h",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_ASSERT_H",
+    ],
 )

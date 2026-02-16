@@ -1,0 +1,3 @@
+/* config.h.in */
+#undef FLT_EXPBIT0_BIT
+#undef FLT_EXPBIT0_WORD

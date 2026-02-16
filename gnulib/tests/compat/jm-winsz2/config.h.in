@@ -1,0 +1,4 @@
+/* config.h.in */
+#undef GWINSZ_IN_SYS_IOCTL
+#undef HAVE_CND_INIT
+#undef HAVE_THRD_CREATE

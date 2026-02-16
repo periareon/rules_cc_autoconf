@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <map>
 #include <sstream>
@@ -11,7 +12,6 @@
 #include "autoconf/private/checker/check.h"
 #include "autoconf/private/checker/check_result.h"
 #include "autoconf/private/checker/checker.h"
-#include "autoconf/private/checker/config.h"
 #include "autoconf/private/checker/debug_logger.h"
 #include "autoconf/private/json/json.h"
 #include "autoconf/private/resolver/source_generator.h"
@@ -39,23 +39,19 @@ std::vector<CheckResult> load_results_from_file(
         j = nlohmann::json::object();
     }
 
+    // Use CheckResult::from_json() to parse each result
     for (nlohmann::json::iterator it = j.begin(); it != j.end(); ++it) {
-        const std::string define = it.key();
-        const nlohmann::json& val = it.value();
+        const std::string name = it.key();
+        const nlohmann::json& json_value = it.value();
 
-        std::string value;
-        nlohmann::json::const_iterator value_it = val.find("value");
-        if (value_it != val.end() && !value_it->is_null()) {
-            value = value_it->get<std::string>();
+        std::optional<CheckResult> result =
+            CheckResult::from_json(name, &json_value);
+        if (!result.has_value()) {
+            throw std::runtime_error("Failed to parse CheckResult from file: " +
+                                     path.string());
         }
 
-        bool success = false;
-        nlohmann::json::const_iterator success_it = val.find("success");
-        if (success_it != val.end()) {
-            success = success_it->get<bool>();
-        }
-
-        loaded_results.emplace_back(define, value, success);
+        loaded_results.push_back(*result);
     }
 
     return loaded_results;
@@ -64,87 +60,131 @@ std::vector<CheckResult> load_results_from_file(
 }  // namespace
 
 int Resolver::resolve_and_generate(
-    const std::vector<std::filesystem::path>& results_paths,
-    const std::optional<std::filesystem::path>& template_path,
+    const std::vector<std::filesystem::path>& cache_results_paths,
+    const std::vector<std::filesystem::path>& define_results_paths,
+    const std::vector<std::filesystem::path>& subst_results_paths,
+    const std::filesystem::path& template_path,
     const std::filesystem::path& output_path,
-    const std::map<std::string, std::filesystem::path>& inlines) {
+    const std::map<std::string, std::filesystem::path>& inlines,
+    const std::map<std::string, std::string>& substitutions, Mode mode) {
     try {
-        // Load and merge all results (preserve order while deduplicating by
-        // define name, keeping first occurrence to preserve autoconf results
-        // over template checks)
-        std::unordered_map<std::string, CheckResult> results_map{};
-        std::vector<std::string>
-            define_order{};  // Preserve order of first occurrence
-        for (const std::filesystem::path& results_path : results_paths) {
-            if (!std::filesystem::exists(results_path)) {
-                throw std::runtime_error("Results file does not exist: " +
-                                         results_path.string());
-            }
-            std::vector<CheckResult> loaded =
-                load_results_from_file(results_path);
-            // Only add results that haven't been seen yet, or verify they match
-            for (const CheckResult& result : loaded) {
-                std::unordered_map<std::string, CheckResult>::const_iterator
-                    existing_it = results_map.find(result.define);
-                if (existing_it == results_map.end()) {
-                    results_map.emplace(result.define, result);
-                    define_order.push_back(result.define);
-                } else {
-                    // Duplicate define found - check if values match
-                    const CheckResult& existing = existing_it->second;
-                    if (existing.success != result.success ||
-                        existing.value != result.value) {
-                        std::cerr << "Error: Duplicate define '"
-                                  << result.define
-                                  << "' with conflicting values:\n";
-                        std::cerr << "  First:  success="
-                                  << (existing.success ? "true" : "false")
-                                  << ", value=\"" << existing.value << "\"\n";
-                        std::cerr << "  Second: success="
-                                  << (result.success ? "true" : "false")
-                                  << ", value=\"" << result.value << "\""
-                                  << std::endl;
-                        return 1;
+        // Helper function to load and merge results from a list of paths
+        std::function<std::vector<CheckResult>(
+            const std::vector<std::filesystem::path>&)>
+            load_and_merge_results = [](const std::vector<
+                                         std::filesystem::path>& paths) {
+                std::unordered_map<std::string, CheckResult> results_map{};
+                std::vector<std::string>
+                    order{};  // Preserve order of first occurrence
+                for (const std::filesystem::path& results_path : paths) {
+                    if (!std::filesystem::exists(results_path)) {
+                        throw std::runtime_error(
+                            "Results file does not exist: " +
+                            results_path.string());
                     }
-                    // Values match, silently ignore duplicate
+                    std::vector<CheckResult> loaded =
+                        load_results_from_file(results_path);
+                    // Only add results that haven't been seen yet, or verify
+                    // they match
+                    for (const CheckResult& result : loaded) {
+                        std::unordered_map<std::string, CheckResult>::iterator
+                            existing_it = results_map.find(result.name);
+                        if (existing_it != results_map.end()) {
+                            // Duplicate cache variable found - check if values
+                            // match
+                            const CheckResult& existing = existing_it->second;
+                            if (existing.success != result.success ||
+                                existing.value != result.value) {
+                                std::cerr << "Error: Duplicate result '"
+                                          << result.name
+                                          << "' with conflicting values:\n";
+                                std::cerr
+                                    << "  First:  success="
+                                    << (existing.success ? "true" : "false")
+                                    << ", value=\""
+                                    << existing.value.value_or("") << "\"\n";
+                                std::cerr << "  Second: success="
+                                          << (result.success ? "true" : "false")
+                                          << ", value=\""
+                                          << result.value.value_or("") << "\""
+                                          << std::endl;
+                                throw std::runtime_error(
+                                    "Conflicting result values");
+                            }
+                            // Values match, silently ignore duplicate
+                        } else {
+                            results_map.emplace(result.name, result);
+                            order.push_back(result.name);
+                        }
+                    }
                 }
-            }
-        }
-        // Convert map to vector preserving order
-        std::vector<CheckResult> results;
-        results.reserve(define_order.size());
-        for (const std::string& define : define_order) {
-            std::unordered_map<std::string, CheckResult>::const_iterator it =
-                results_map.find(define);
-            if (it != results_map.end()) {
-                results.push_back(it->second);
-            }
-        }
+                // Convert map to vector preserving order
+                std::vector<CheckResult> results;
+                results.reserve(order.size());
+                for (const std::string& name : order) {
+                    std::unordered_map<std::string, CheckResult>::iterator it =
+                        results_map.find(name);
+                    if (it != results_map.end()) {
+                        results.push_back(it->second);
+                    }
+                }
+                return results;
+            };
 
-        std::unique_ptr<Config> config = std::make_unique<Config>();
+        // Load results from all three buckets
+        // Note: Results are loaded from files, but we need to route them to the
+        // correct bucket based on their is_define and is_subst flags. However,
+        // since we're passing separate file lists for each bucket, we assume
+        // files in cache_results_paths contain cache results, files in
+        // define_results_paths contain define results, and files in
+        // subst_results_paths contain subst results. This matches how
+        // autoconf.bzl writes the files.
+        std::vector<CheckResult> cache_results =
+            load_and_merge_results(cache_results_paths);
+        std::vector<CheckResult> define_results =
+            load_and_merge_results(define_results_paths);
+        std::vector<CheckResult> subst_results =
+            load_and_merge_results(subst_results_paths);
 
-        // Log all check results sorted by define name
+        // Merge all results for logging and backward compatibility
+        std::vector<CheckResult> all_results;
+        all_results.reserve(cache_results.size() + define_results.size() +
+                            subst_results.size());
+        all_results.insert(all_results.end(), cache_results.begin(),
+                           cache_results.end());
+        all_results.insert(all_results.end(), define_results.begin(),
+                           define_results.end());
+        all_results.insert(all_results.end(), subst_results.begin(),
+                           subst_results.end());
+
+        // Log only define values (config.h defines), not cache or subst results
         if (DebugLogger::is_debug_enabled()) {
-            // Sort results by define name for readable debug output
-            std::vector<CheckResult> sorted_results = results;
-            std::sort(sorted_results.begin(), sorted_results.end(),
+            std::vector<CheckResult> sorted_defines = define_results;
+            std::sort(sorted_defines.begin(), sorted_defines.end(),
                       [](const CheckResult& a, const CheckResult& b) {
-                          return a.define < b.define;
+                          std::string a_define =
+                              a.define.has_value() ? *a.define : a.name;
+                          std::string b_define =
+                              b.define.has_value() ? *b.define : b.name;
+                          return a_define < b_define;
                       });
-            for (const CheckResult& result : sorted_results) {
+            for (const CheckResult& result : sorted_defines) {
                 std::string status = result.success ? "yes" : "no";
-                DebugLogger::log("checking " + result.define + "... " + status);
+                std::string define_name =
+                    result.define.has_value() ? *result.define : result.name;
+                DebugLogger::log("checking " + define_name + "... " + status);
             }
         }
 
-        // Generate header
-        SourceGenerator generator(results);
+        // Generate header with three separate buckets
+        SourceGenerator generator(cache_results, define_results, subst_results,
+                                  mode);
 
         std::string template_content{};
-        std::ifstream template_file(*template_path);
+        std::ifstream template_file(template_path);
         if (!template_file.is_open()) {
             std::cerr << "Error: Failed to open template file: "
-                      << *template_path << std::endl;
+                      << template_path << std::endl;
             return 1;
         }
         std::stringstream buffer{};
@@ -152,8 +192,8 @@ int Resolver::resolve_and_generate(
         template_content = buffer.str();
         template_file.close();
 
-        generator.generate_config_header(output_path, template_content,
-                                         inlines);
+        generator.generate_config_header(output_path, template_content, inlines,
+                                         substitutions);
 
         return 0;
     } catch (const std::exception& ex) {

@@ -1,42 +1,76 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fflush.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
-# gl_FUNC_FFLUSH / gl_FUNC_FFLUSH_STDIN
-#
-# This macro uses AC_RUN_IFELSE to test if fflush works on input streams.
-# Since Bazel can't run test binaries, we use the cross-compile heuristics:
-# - NetBSD, OpenBSD, mingw, windows: fflush is known broken (FUNC_FFLUSH_STDIN=0)
-# - Linux, macOS, etc.: assume fflush works (FUNC_FFLUSH_STDIN=1)
-#
-# REPLACE_FFLUSH=1 is set when fflush needs replacement (broken platforms).
-# FUNC_FFLUSH_STDIN: 1=works, 0=broken, -1=unknown
+# gl_FUNC_FFLUSH_STDIN - Determine whether fflush works on input streams.
+# Upstream uses AC_RUN_IFELSE which actually runs a test.
+# Based on the golden file for fclose test, on macOS the test found fflush doesn't work (FUNC_FFLUSH_STDIN=0).
+# This is a complex runtime behavior test that gnulib considers "broken" on many platforms.
+autoconf(
+    name = "gl_FUNC_FFLUSH_STDIN",
+    checks = select({
+        "@platforms//os:linux": [
+            # glibc fflush test returns "no" per golden file (step 7 fails)
+            checks.M4_VARIABLE("gl_cv_func_fflush_stdin", 0),  # broken
+        ],
+        "@platforms//os:macos": [
+            # macOS fflush test returns "no" per golden file
+            checks.M4_VARIABLE("gl_cv_func_fflush_stdin", 0),  # broken
+        ],
+        "@platforms//os:netbsd": [
+            checks.M4_VARIABLE("gl_cv_func_fflush_stdin", 0),  # broken
+        ],
+        "@platforms//os:openbsd": [
+            checks.M4_VARIABLE("gl_cv_func_fflush_stdin", 0),  # broken
+        ],
+        "@platforms//os:windows": [
+            checks.M4_VARIABLE("gl_cv_func_fflush_stdin", 0),  # broken
+        ],
+        # Other platforms: assume broken (conservative)
+        "//conditions:default": [
+            checks.M4_VARIABLE("gl_cv_func_fflush_stdin", 0),
+        ],
+    }) + [
+        # FUNC_FFLUSH_STDIN: 1 if fflush works on stdin, 0 if not
+        checks.AC_DEFINE_UNQUOTED(
+            "FUNC_FFLUSH_STDIN",
+            condition = "gl_cv_func_fflush_stdin",
+            if_false = 0,
+            if_true = 1,
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_FUNC_FFLUSH - Set REPLACE_FFLUSH=1 when fflush does not work on input streams.
+# Upstream: case "$gl_cv_func_fflush_stdin" in *yes) ;; *) REPLACE_FFLUSH=1 ;; esac
+# Since gl_cv_func_fflush_stdin is 0 on most platforms, REPLACE_FFLUSH=1 on most platforms
+autoconf(
+    name = "gl_FUNC_FFLUSH",
+    checks = [
+        checks.AC_SUBST(
+            "REPLACE_FFLUSH",
+            condition = "gl_cv_func_fflush_stdin",
+            if_false = 1,  # broken -> replace
+            if_true = 0,  # works -> don't replace
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_FFLUSH_STDIN",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
 
 autoconf(
     name = "fflush",
-    checks = select({
-        "@platforms//os:netbsd": [
-            macros.M4_DEFINE("REPLACE_FFLUSH", "1"),
-            macros.AC_DEFINE("FUNC_FFLUSH_STDIN", "0"),
-        ],
-        "@platforms//os:openbsd": [
-            macros.M4_DEFINE("REPLACE_FFLUSH", "1"),
-            macros.AC_DEFINE("FUNC_FFLUSH_STDIN", "0"),
-        ],
-        # Known broken platforms: fflush doesn't work on input streams
-        "@platforms//os:windows": [
-            macros.M4_DEFINE("REPLACE_FFLUSH", "1"),
-            macros.AC_DEFINE("FUNC_FFLUSH_STDIN", "0"),
-        ],
-        # Linux and other platforms: assume fflush works
-        "//conditions:default": [
-            macros.AC_DEFINE("FUNC_FFLUSH_STDIN", "1"),
-        ],
-    }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS])
-        "//gnulib/m4/unistd_h",  # AC_CHECK_HEADERS_ONCE([unistd.h])
+        ":gl_FUNC_FFLUSH",
+        ":gl_FUNC_FFLUSH_STDIN",
     ],
 )

@@ -5,7 +5,14 @@ load("//autoconf:autoconf.bzl", "autoconf")
 autoconf(
     name = "mbfile",
     checks = [
-        # Note: mbfile.m4 may not exist in gnulib, or this module may not have checks
+        # gl_MBFILE requires AC_TYPE_MBSTATE_T
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/mbstate_t",
+        "//gnulib/m4/wchar_h:gl_WCHAR_H_CORE",
+        "//gnulib/m4/extensions",  # Need extension defines (_ALL_SOURCE, etc.)
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

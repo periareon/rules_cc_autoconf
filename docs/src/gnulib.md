@@ -23,7 +23,7 @@ Instead of manually writing checks, you can add gnulib reusable targets as depen
 ```python
 load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
 load("@rules_cc_autoconf//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
-load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
 load("@rules_cc_autoconf//autoconf:package_info.bzl", "package_info")
 
 package_info(
@@ -36,7 +36,7 @@ autoconf(
     name = "autoconf",
     checks = [
         # Only add custom checks that aren't available in gnulib
-        macros.AC_DEFINE("CUSTOM_FEATURE", "1"),
+        checks.AC_DEFINE("CUSTOM_FEATURE", "1"),
     ],
     deps = [
         ":package",

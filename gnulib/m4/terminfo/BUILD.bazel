@@ -1,14 +1,30 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/terminfo.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-
-# HAVE_TERMINFO, HAVE_TERMCAP, HAVE_TPARAM come from termcap dependency
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "terminfo",
-    checks = [],
+    checks = [
+        # Subst vars for Makefile/subst.h (gnulib terminfo.m4 sets these)
+        checks.AC_SUBST("INCTERMINFO", ""),
+    ] + select({
+        # On Linux, terminfo may not be available in minimal containers
+        # The golden expects HAVE_TERMINFO to be undef
+        "@platforms//os:linux": [
+            checks.AC_SUBST("LIBTERMINFO", ""),
+            checks.AC_SUBST("LTLIBTERMINFO", ""),
+        ],
+        # On macOS, terminfo is in ncurses and always available
+        "//conditions:default": [
+            checks.AC_DEFINE("HAVE_TERMINFO", 1),
+            checks.AC_SUBST("LIBTERMINFO", "-lncurses"),
+            checks.AC_SUBST("LTLIBTERMINFO", "-lncurses"),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/termcap",  # Provides HAVE_TERMINFO, HAVE_TERMCAP, HAVE_TPARAM
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

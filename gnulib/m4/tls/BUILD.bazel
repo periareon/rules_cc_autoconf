@@ -11,7 +11,6 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_THREADLIB])
         "//gnulib/m4/threadlib",
     ],
 )

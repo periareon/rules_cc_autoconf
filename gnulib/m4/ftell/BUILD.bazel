@@ -10,7 +10,9 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/ftello",  # AC_REQUIRE([gl_FUNC_FTELLO])
-        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS])
+        "//gnulib/m4/ftello:gl_FUNC_FTELLO_FOR_FTELL",
+        # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
+        "//gnulib/m4/extensions",  # Need extension defines (_ALL_SOURCE, etc.)
+        "//gnulib/m4/sys_types_h",  # Need _USE_STD_STAT
     ],
 )

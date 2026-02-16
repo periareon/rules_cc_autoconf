@@ -1,15 +1,20 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/float_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 autoconf(
     name = "float_h",
     checks = [
-        # gl_FLOAT_H macro from float_h.m4 has complex platform-specific checks
-        # for float.h completeness and ISO C23 conformance, including runtime
-        # checks that are not easily replicable in Bazel
-        # Note: AC_REQUIRE([AC_PROG_CC]) and AC_REQUIRE([AC_CANONICAL_HOST])
-        # are standard autoconf macros, not gnulib modules
+    ] + gl_macros.GL_CHECK_NEXT_HEADERS(["float.h"]) + [
+        # REPLACE_ITOLD is set to 0 on macOS (float.h is complete)
+        checks.AC_SUBST("REPLACE_ITOLD", 0),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/include_next",  # gl_CHECK_NEXT_HEADERS requires include_next
+    ],
 )

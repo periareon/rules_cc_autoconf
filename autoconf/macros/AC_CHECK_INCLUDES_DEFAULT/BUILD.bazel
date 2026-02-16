@@ -1,0 +1,74 @@
+"""AC_CHECK_INCLUDES_DEFAULT - Autoconf builtin macro
+
+Checks for standard C headers and defines STDC_HEADERS.
+
+This is essentially what AC_HEADER_STDC does - it checks for standard
+C89 headers and defines STDC_HEADERS if they're all available.
+
+Defines:
+  - HAVE_INTTYPES_H
+  - HAVE_STDINT_H
+  - HAVE_STDIO_H
+  - HAVE_STDLIB_H
+  - HAVE_STRINGS_H
+  - HAVE_STRING_H
+  - HAVE_SYS_STAT_H
+  - HAVE_SYS_TYPES_H
+  - HAVE_UNISTD_H
+  - HAVE_WCHAR_H
+  - STDC_HEADERS
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "AC_CHECK_INCLUDES_DEFAULT",
+    checks = [
+        # Standard C headers checked by AC_CHECK_INCLUDES_DEFAULT
+        # Using explicit define parameters to create HAVE_* defines
+        checks.AC_CHECK_HEADER(
+            "inttypes.h",
+            define = "HAVE_INTTYPES_H",
+        ),
+        checks.AC_CHECK_HEADER(
+            "stdint.h",
+            define = "HAVE_STDINT_H",
+        ),
+        checks.AC_CHECK_HEADER(
+            "stdio.h",
+            define = "HAVE_STDIO_H",
+        ),
+        checks.AC_CHECK_HEADER(
+            "stdlib.h",
+            define = "HAVE_STDLIB_H",
+        ),
+        checks.AC_CHECK_HEADER(
+            "strings.h",
+            define = "HAVE_STRINGS_H",
+        ),
+        checks.AC_CHECK_HEADER(
+            "string.h",
+            define = "HAVE_STRING_H",
+        ),
+        checks.AC_CHECK_HEADER(
+            "sys/stat.h",
+            define = "HAVE_SYS_STAT_H",
+        ),
+        checks.AC_CHECK_HEADER(
+            "sys/types.h",
+            define = "HAVE_SYS_TYPES_H",
+        ),
+        checks.AC_CHECK_HEADER(
+            "unistd.h",
+            define = "HAVE_UNISTD_H",
+        ),  # HAVE_UNISTD_H is provided by unistd_h module when needed
+        checks.AC_CHECK_HEADER(
+            "wchar.h",
+            define = "HAVE_WCHAR_H",
+        ),
+        # STDC_HEADERS is defined if standard C headers are available
+        checks.AC_DEFINE("STDC_HEADERS", 1),  # Integer, not string - renders as unquoted 1
+    ],
+    visibility = ["//visibility:public"],
+)

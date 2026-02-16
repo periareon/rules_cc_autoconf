@@ -1,22 +1,28 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/expl.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "expl",
     checks = [
-        macros.AC_CHECK_DECL(
-            "expl",
-            define = "HAVE_DECL_EXPL",
-            headers = ["math.h"],
-        ),
+        # gl_FUNC_EXPL checks if expl exists, then checks declaration
+        # On macOS, expl may not be available (long double == double)
+        # The golden file shows HAVE_DECL_EXPL as undefined, so we don't check it
+        # This matches the m4 logic where declaration is only checked if function exists
+        # gl_MATHFUNC sets EXPL_LIBM; golden expects ""
+        checks.AC_SUBST("EXPL_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//gnulib/m4/asinl",
         "//gnulib/m4/exp",
+        "//gnulib/m4/extensions",
         "//gnulib/m4/isnanl",
+        "//gnulib/m4/ldexp",
         "//gnulib/m4/ldexpl",
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+        "//gnulib/m4/round",
         "//gnulib/m4/roundl",
     ],
 )

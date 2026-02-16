@@ -1,0 +1,17 @@
+"""https://www.gnu.org/savannah-checkouts/gnu/autoconf/manual/autoconf-2.72/autoconf.html#index-AC_005fC_005fINLINE-1"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "AC_C_INLINE",
+    checks = [
+        # Check if inline keyword is supported
+        checks.AC_TRY_COMPILE(
+            code = """inline int test(void) { return 0; }
+int main(void) { return test(); }""",
+            define = "HAVE_INLINE",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

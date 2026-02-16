@@ -4,11 +4,12 @@ load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
 
 def _package_info_impl(ctx):
     results = {
-        "PACKAGE_BUGREPORT": ctx.actions.declare_file("{}/{}.json".format(ctx.label.name, "PACKAGE_BUGREPORT")),
-        "PACKAGE_NAME": ctx.actions.declare_file("{}/{}.json".format(ctx.label.name, "PACKAGE_NAME")),
-        "PACKAGE_STRING": ctx.actions.declare_file("{}/{}.json".format(ctx.label.name, "PACKAGE_STRING")),
-        "PACKAGE_URL": ctx.actions.declare_file("{}/{}.json".format(ctx.label.name, "PACKAGE_URL")),
-        "PACKAGE_VERSION": ctx.actions.declare_file("{}/{}.json".format(ctx.label.name, "PACKAGE_VERSION")),
+        "PACKAGE_BUGREPORT": ctx.actions.declare_file("{}/{}.results.json".format(ctx.label.name, "PACKAGE_BUGREPORT")),
+        "PACKAGE_NAME": ctx.actions.declare_file("{}/{}.results.json".format(ctx.label.name, "PACKAGE_NAME")),
+        "PACKAGE_STRING": ctx.actions.declare_file("{}/{}.results.json".format(ctx.label.name, "PACKAGE_STRING")),
+        "PACKAGE_TARNAME": ctx.actions.declare_file("{}/{}.results.json".format(ctx.label.name, "PACKAGE_TARNAME")),
+        "PACKAGE_URL": ctx.actions.declare_file("{}/{}.results.json".format(ctx.label.name, "PACKAGE_URL")),
+        "PACKAGE_VERSION": ctx.actions.declare_file("{}/{}.results.json".format(ctx.label.name, "PACKAGE_VERSION")),
     }
 
     if ctx.attr.module_bazel:
@@ -16,17 +17,26 @@ def _package_info_impl(ctx):
         args.add("--out-name", results["PACKAGE_NAME"])
         args.add("--out-version", results["PACKAGE_VERSION"])
         args.add("--out-string", results["PACKAGE_STRING"])
+        args.add("--out-tarname", results["PACKAGE_TARNAME"])
         args.add("--module-bazel", ctx.file.module_bazel)
 
         if ctx.attr.package_name:
-            args.add("--forced-name", ctx.attr.package_name)
+            args.add("--force-name", ctx.attr.package_name)
 
         if ctx.attr.package_version:
-            args.add("--forced-name", ctx.attr.package_version)
+            args.add("--force-version", ctx.attr.package_version)
+
+        if ctx.attr.package_tarname:
+            args.add("--force-tarname", ctx.attr.package_tarname)
 
         ctx.actions.run(
             mnemonic = "ModuleBazelParse",
-            outputs = [results["PACKAGE_NAME"], results["PACKAGE_VERSION"], results["PACKAGE_STRING"]],
+            outputs = [
+                results["PACKAGE_NAME"],
+                results["PACKAGE_VERSION"],
+                results["PACKAGE_STRING"],
+                results["PACKAGE_TARNAME"],
+            ],
             executable = ctx.executable._parser,
             arguments = [args],
             inputs = depset([ctx.file.module_bazel]),
@@ -34,6 +44,7 @@ def _package_info_impl(ctx):
 
     else:
         # Write JSON files in check result format for PACKAGE_NAME
+        # Use regular string (not json.encode) so it goes through .dump() in check.cc
         ctx.actions.write(
             output = results["PACKAGE_NAME"],
             content = json.encode_indent({
@@ -67,6 +78,18 @@ def _package_info_impl(ctx):
             }, indent = " " * 4) + "\n",
         )
 
+        ctx.actions.write(
+            output = results["PACKAGE_TARNAME"],
+            content = json.encode_indent({
+                "PACKAGE_TARNAME": {
+                    "success": True,
+                    "value": json.encode(
+                        ctx.attr.package_tarname if ctx.attr.package_tarname else ctx.attr.package_name,
+                    ),
+                },
+            }, indent = " " * 4) + "\n",
+        )
+
     ctx.actions.write(
         output = results["PACKAGE_BUGREPORT"],
         content = json.encode_indent({
@@ -87,11 +110,15 @@ def _package_info_impl(ctx):
         }, indent = " " * 4) + "\n",
     )
 
+    # Package info creates defines (for config.h), so put them in define_results
+    # They're not cache variables or subst values
     return [
         CcAutoconfInfo(
             owner = ctx.label,
             deps = depset(),
-            results = results,
+            cache_results = {},
+            define_results = results,
+            subst_results = {},
         ),
     ]
 
@@ -136,6 +163,10 @@ autoconf(
         ),
         "package_name": attr.string(
             doc = "The package name. Must be provided together with `package_version` if `module_bazel` is not provided.",
+        ),
+        "package_tarname": attr.string(
+            doc = "Exactly tarname, possibly generated from package.",
+            default = "",
         ),
         "package_url": attr.string(
             doc = "The package home page URL. Used to populate `PACKAGE_URL` define.",

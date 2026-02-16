@@ -1,18 +1,31 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/exp2f.m4"""
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/exp2f.m4
+
+gl_FUNC_EXP2F:
+- AC_REQUIRE([gl_MATH_H_DEFAULTS])
+- AC_REQUIRE([gl_FUNC_EXP2])
+- AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+- AC_CHECK_FUNCS([exp2f])
+- AC_SUBST([EXP2F_LIBM])
+"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "exp2f",
     checks = [
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "exp2f",
             define = "HAVE_EXP2F",
         ),
+        # EXP2F_LIBM is set to EXP2_LIBM (empty on macOS)
+        checks.AC_SUBST("EXP2F_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/exp2",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/exp2",  # AC_REQUIRE([gl_FUNC_EXP2])
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
     ],
 )

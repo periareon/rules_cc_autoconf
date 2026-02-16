@@ -2,13 +2,13 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 
+# gl_FUNC_TOWCTRANS: AC_REQUIRE([gl_WCTYPE_H_DEFAULTS]), AC_REQUIRE([gl_WCTYPE_H]), AC_REQUIRE([gl_FUNC_WCTRANS])
 autoconf(
     name = "towctrans",
-    checks = [
-        # TODO: Add checks based on .m4 file
-    ],
+    checks = [],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/wctrans",
+        "//gnulib/m4/wctype_h",
     ],
 )

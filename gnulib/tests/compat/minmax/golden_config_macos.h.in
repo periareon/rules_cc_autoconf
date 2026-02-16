@@ -1,0 +1,2 @@
+/* config.h.in */
+#define HAVE_MINMAX_IN_SYS_PARAM_H 1

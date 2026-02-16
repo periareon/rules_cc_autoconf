@@ -1,0 +1,21 @@
+/* config.h.in */
+/* #undef HAVE_DECL_TCGETSID */
+#define HAVE_INTTYPES_H 1
+#define HAVE_STDINT_H 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+/* #undef HAVE_STRINGS_H */
+#define HAVE_STRING_H 1
+/* #undef HAVE_SYS_IOCTL_H */
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_TERMIOS_H 0
+/* #undef HAVE_UNISTD_H */
+/* #undef INCLUDE_NEXT */
+/* #undef INCLUDE_NEXT_AS_FIRST_DIRECTIVE */
+/* #undef NEXT_AS_FIRST_DIRECTIVE_TERMIOS_H */
+/* #undef NEXT_TERMIOS_H */
+/* #undef PRAGMA_SYSTEM_HEADER */
+#define STDC_HEADERS 1
+/* #undef SYS_IOCTL_H_DEFINES_STRUCT_WINSIZE */
+/* #undef TERMIOS_H_DEFINES_STRUCT_WINSIZE */

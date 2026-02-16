@@ -1,18 +1,22 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/acos.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "acos",
     checks = [
-        # Check for acos function
         # Equivalent to gl_FUNC_ACOS macro from acos.m4
         # Note: Uses gl_COMMON_DOUBLE_MATHFUNC which determines library dependencies
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "acos",
             define = "HAVE_ACOS",
         ),
+        # Set ACOS_LIBM to empty string (subst-only)
+        # gl_COMMON_DOUBLE_MATHFUNC sets these based on whether the function needs libm
+        # On macOS, acos is in libc, so ACOS_LIBM=""
+        # Note: POW_LIBM is already provided by mathfunc dependency
+        checks.AC_SUBST("ACOS_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [

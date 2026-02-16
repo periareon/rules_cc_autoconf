@@ -1,0 +1,26 @@
+AC_INIT([test_gnulib-tool], [1.0])
+AC_CONFIG_HEADERS([config.h])
+
+# Invoke macros from gnulib-tool.m4
+gl_LOCAL_DIR
+gl_MODULES
+gl_AVOID
+gl_SOURCE_BASE
+gl_M4_BASE
+gl_PO_BASE
+gl_DOC_BASE
+gl_TESTS_BASE
+gl_WITH_TESTS
+gl_LIB
+gl_LGPL
+gl_GPL
+gl_MAKEFILE_NAME
+gl_TESTS_MAKEFILE_NAME
+gl_AUTOMAKE_SUBDIR
+gl_LIBTOOL
+gl_MACRO_PREFIX
+gl_PO_DOMAIN
+gl_VC_FILES
+
+AC_CONFIG_FILES([subst.h:subst.h.in])
+AC_OUTPUT

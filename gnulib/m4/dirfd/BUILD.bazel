@@ -1,30 +1,25 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/dirfd.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "dirfd",
     checks = [
-        # Check for dirfd function and declaration
-        # Equivalent to gl_FUNC_DIRFD macro from dirfd.m4
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "dirfd",
             define = "HAVE_DIRFD",
         ),
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "dirfd",
             define = "HAVE_DECL_DIRFD",
-            headers = [
-                "sys/types.h",
-                "dirent.h",
-            ],
+            includes = ["#include <dirent.h>"],
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/dirent_h",  # AC_REQUIRE([gl_DIRENT_H_DEFAULTS])
-        # Note: AC_REQUIRE([AC_CANONICAL_HOST]) and AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
-        # are standard autoconf macros
+        "//gnulib/m4/extensions",
     ],
 )

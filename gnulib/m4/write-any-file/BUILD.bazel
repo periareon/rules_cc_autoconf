@@ -5,7 +5,12 @@ load("//autoconf:autoconf.bzl", "autoconf")
 autoconf(
     name = "write-any-file",
     checks = [
-        # TODO: Add checks based on .m4 file
+        # gl_WRITE_ANY_FILE checks for geteuid function
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/idpriv",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

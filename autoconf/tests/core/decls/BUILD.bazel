@@ -1,0 +1,124 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:checks.bzl", "checks")
+load("//autoconf:package_info.bzl", "package_info")
+load("//autoconf/tests:diff_test.bzl", "diff_test")
+load("//autoconf/tests:gnu_autoconf_configure_test.bzl", "gnu_autoconf_configure_test")
+
+package_info(
+    name = "package",
+    package_name = "test_decls",
+    package_version = "1.0.0",
+)
+
+autoconf(
+    name = "autoconf",
+    checks = [
+        checks.AC_CHECK_DECL(
+            "NULL",
+            define = "HAVE_DECL_NULL",
+            includes = ["#include <stddef.h>"],
+        ),
+        checks.AC_CHECK_DECL(
+            "stdout",
+            define = "HAVE_DECL_STDOUT",
+            includes = ["#include <stdio.h>"],
+        ),
+        checks.AC_CHECK_DECL(
+            "nonexistent_symbol",
+            define = "HAVE_DECL_NONEXISTENT_SYMBOL",
+            includes = ["#include <stdio.h>"],
+        ),
+        # Test AC_CHECK_DECL for non-existent function - should create "/* #undef HAVE_DECL_NONEXISTENT_FUNCTION */"
+        checks.AC_CHECK_DECL(
+            "nonexistent_function",
+            define = "HAVE_DECL_NONEXISTENT_FUNCTION",
+            includes = ["#include <stdio.h>"],
+        ),
+    ],
+    deps = [":package"],
+)
+
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    template = "config.h.in",
+    deps = [":autoconf"],
+)
+
+diff_test(
+    name = "diff_test",
+    file1 = "golden_config.h.in",
+    file2 = ":config.h",
+)
+
+cc_test(
+    name = "test_decls",
+    srcs = [
+        "test_decls.c",
+        ":config.h",
+    ],
+)
+
+gnu_autoconf_configure_test(
+    name = "gnu_autoconf_configure_test",
+    config_h_in = "config.h.in",
+    configure_ac = "configure.ac",
+    golden_config_h = "golden_config.h.in",
+)
+
+# -----------------------------------------------------------------------------
+# Cross-platform regression test for AC_CHECK_DECL success=found fix.
+# execvpe is declared on Linux but not on macOS; requires must fail when not found.
+# See CHOWN_TEST_FAILURE_ROOT_CAUSE.md and CHECK_DECL_SUCCESS_BUG_SCOPE.md.
+# -----------------------------------------------------------------------------
+autoconf(
+    name = "autoconf_execvpe_regression",
+    checks = [
+        checks.AC_CHECK_DECL(
+            "execvpe",
+            name = "ac_cv_have_decl_execvpe",
+            # _GNU_SOURCE is required for execvpe to be visible on Linux
+            compile_defines = ["_GNU_SOURCE"],
+            includes = ["#include <unistd.h>"],
+        ),
+        checks.AC_DEFINE(
+            "HAVE_DECL_EXECVPE",
+            1,
+            requires = ["ac_cv_have_decl_execvpe"],
+        ),
+    ],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        # Provides _GNU_SOURCE define for Linux
+        "//autoconf/macros/AC_USE_SYSTEM_EXTENSIONS",
+    ],
+)
+
+autoconf_hdr(
+    name = "config_execvpe_regression",
+    out = "config_execvpe_regression.h",
+    template = "config_execvpe_regression.h.in",
+    deps = [":autoconf_execvpe_regression"],
+)
+
+diff_test(
+    name = "diff_test_execvpe_linux",
+    file1 = "golden_config_execvpe_linux.h.in",
+    file2 = ":config_execvpe_regression",
+    target_compatible_with = select({
+        "@platforms//os:linux": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
+
+diff_test(
+    name = "diff_test_execvpe_macos",
+    file1 = "golden_config_execvpe_macos.h.in",
+    file2 = ":config_execvpe_regression",
+    target_compatible_with = select({
+        "@platforms//os:macos": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)

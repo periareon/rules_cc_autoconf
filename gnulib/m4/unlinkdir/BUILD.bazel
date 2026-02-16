@@ -1,14 +1,21 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/unlinkdir.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-
-# HAVE_PRIV_H comes from priv-set dependency
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "unlinkdir",
-    checks = [],
+    checks = select({
+        # On Linux: unprivileged processes cannot unlink directories
+        "@platforms//os:linux": [
+            checks.AC_DEFINE("UNLINK_CANNOT_UNLINK_DIR", "1"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/priv-set",  # Provides HAVE_PRIV_H
+        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

@@ -1,20 +1,30 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/ldexpl.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "ldexpl",
     checks = [
-        macros.AC_CHECK_DECL(
+        # gl_FUNC_LDEXPL checks for ldexpl function
+        checks.AC_CHECK_FUNC(
             "ldexpl",
-            define = "HAVE_DECL_LDEXPL",
-            headers = ["math.h"],
+            define = "HAVE_LDEXPL",
         ),
+        # HAVE_LDEXPL_IN_LIBC: ldexpl() is available in libc without -lm
+        checks.AC_DEFINE("HAVE_LDEXPL_IN_LIBC", "1"),
+        # AC_SUBST([LDEXPL_LIBM]) - library needed for ldexpl
+        # On macOS/Linux, ldexpl is in libc, so LDEXPL_LIBM is empty
+        checks.AC_SUBST("LDEXPL_LIBM", ""),
+        # LDEXP_LIBM comes from ldexp dependency
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/isnand",
         "//gnulib/m4/isnanl",
         "//gnulib/m4/ldexp",
+        "//gnulib/m4/math_h",
     ],
 )

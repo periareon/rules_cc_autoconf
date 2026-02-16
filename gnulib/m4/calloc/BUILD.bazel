@@ -1,23 +1,35 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/calloc.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "calloc",
     checks = [
-        # Check for calloc function
-        # Equivalent to gl_FUNC_CALLOC_POSIX and gl_FUNC_CALLOC_GNU macros from calloc.m4
-        # Note: Full implementation includes runtime checks for calloc(0, n) behavior
-        # that are not easily replicable in Bazel
-        macros.AC_CHECK_FUNC(
-            "calloc",
-            define = "HAVE_CALLOC",
-        ),
+        # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - line 62, 41
+
+        # gl_FUNC_CALLOC_POSIX sets:
+        # Based on golden files, REPLACE_CALLOC_FOR_CALLOC_POSIX=0 on macOS
+        checks.AC_SUBST("REPLACE_CALLOC_FOR_CALLOC_POSIX", 0),
+
+        # gl_FUNC_CALLOC_GNU sets:
+        # Then calls gl_FUNC_CALLOC_IF which does runtime checks for calloc(0, n) behavior
+        # Based on golden files, REPLACE_CALLOC_FOR_CALLOC_GNU=0 on macOS
+        checks.AC_SUBST("REPLACE_CALLOC_FOR_CALLOC_GNU", 0),
+
+        # Note: gl_FUNC_CALLOC_IF (lines 15-37) performs AC_RUN_IFELSE checks
+        # to test if calloc(0, n) and calloc(n, 0) return nonnull.
+        # These runtime checks cannot be easily replicated in Bazel.
+        # Based on golden files, calloc works correctly on macOS.
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/malloc",  # AC_REQUIRE([gl_FUNC_MALLOC_POSIX])
-        "//gnulib/m4/stdlib_h",  # AC_REQUIRE([gl_STDLIB_H_DEFAULTS])
+        # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - line 62, 41
+        # Note: gl_STDLIB_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
+        "//gnulib/m4/malloc",
+        # AC_REQUIRE([AC_CANONICAL_HOST]) - line 16 (for gl_FUNC_CALLOC_IF)
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

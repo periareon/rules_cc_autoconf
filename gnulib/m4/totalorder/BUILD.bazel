@@ -1,9 +1,87 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/totalorder.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
+autoconf(
+    name = "gl_FUNC_TOTALORDERF",
+    checks = select({
+        # On Linux with glibc 2.25+, totalorderf is available
+        "@platforms//os:linux": [
+            checks.AC_SUBST("HAVE_TOTALORDERF", "1"),
+            checks.AC_SUBST("TOTALORDERF_LIBM", ""),
+        ],
+        # On macOS, totalorderf is not available
+        "//conditions:default": [
+            checks.AC_SUBST("HAVE_TOTALORDERF", "0"),
+            checks.AC_SUBST("TOTALORDERF_LIBM", "$(ISNANF_LIBM)"),
+        ],
+    }),
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        "//gnulib/m4/extensions",
+    ],
+)
+
+autoconf(
+    name = "gl_FUNC_TOTALORDER",
+    checks = select({
+        # On Linux with glibc 2.25+, totalorder is available
+        "@platforms//os:linux": [
+            checks.AC_SUBST("HAVE_TOTALORDER", "1"),
+            checks.AC_SUBST("TOTALORDER_LIBM", ""),
+        ],
+        # On macOS, totalorder is not available
+        "//conditions:default": [
+            checks.AC_SUBST("HAVE_TOTALORDER", "0"),
+            checks.AC_SUBST("TOTALORDER_LIBM", "$(ISNAND_LIBM)"),
+        ],
+    }),
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        "//gnulib/m4/extensions",
+    ],
+)
+
+autoconf(
+    name = "gl_FUNC_TOTALORDERL",
+    checks = select({
+        # On Linux with glibc 2.25+, totalorderl is available
+        # No LDBL_SIGNBIT_* defines needed when function is available
+        "@platforms//os:linux": [
+            checks.AC_SUBST("HAVE_TOTALORDERL", "1"),
+            checks.AC_SUBST("TOTALORDERL_LIBM", ""),
+        ],
+        # On macOS, totalorderl is not available
+        "//conditions:default": [
+            checks.AC_SUBST("HAVE_TOTALORDERL", "0"),
+            checks.AC_SUBST("TOTALORDERL_LIBM", "$(ISNAND_LIBM)"),
+        ],
+    }),
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/math_h:long-double-vs-double",
+    ] + select({
+        # Only include signbit defines on non-Linux (when function is not available)
+        "@platforms//os:linux": [],
+        "//conditions:default": [
+            "//gnulib/m4/totalordermag:gl_SIGNBIT_DEFINES",
+        ],
+    }),
+)
+
+# totalorder - Public combined target
+# Note: Does NOT depend on gl_MATH_H_DEFAULTS directly to avoid conflicts
+# when both are in the same build (gl_MATH_H_DEFAULTS sets HAVE_TOTALORDER*=1)
+# HAVE_TOTALORDERMAG* comes from totalordermag module in combined builds
 autoconf(
     name = "totalorder",
     checks = [],
     visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_TOTALORDER",
+        ":gl_FUNC_TOTALORDERF",
+        ":gl_FUNC_TOTALORDERL",
+    ],
 )

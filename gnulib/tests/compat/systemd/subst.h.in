@@ -1,0 +1,2 @@
+/* subst.h.in */
+#define SUBST_SYSTEMD_CHOICE "@SYSTEMD_CHOICE@"

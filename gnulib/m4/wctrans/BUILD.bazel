@@ -5,7 +5,14 @@ load("//autoconf:autoconf.bzl", "autoconf")
 autoconf(
     name = "wctrans",
     checks = [
-        # TODO: Add checks based on .m4 file
+        # gl_FUNC_WCTRANS checks for wctrans_t type
+        # On macOS, wctrans_t is not available
+        # The golden file shows HAVE_WCTRANS_T is undefined
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/wctype_h",  # AC_REQUIRE([gl_WCTYPE_H_DEFAULTS])
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

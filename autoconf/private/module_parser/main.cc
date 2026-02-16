@@ -105,6 +105,9 @@ struct ModuleParserArgs {
     /** Path to output JSON file for PACKAGE_STRING (optional) */
     std::string out_string{};
 
+    /** Path to output JSON file for PACKAGE_TARNAME (optional) */
+    std::string out_tarname{};
+
     /** An optional override name to use instead of what's parsed from
      * `module_bazel` (optional) */
     std::string forced_name{};
@@ -112,6 +115,10 @@ struct ModuleParserArgs {
     /** An optional override version to use instead of what's parsed from
      * `module_bazel` (optional) */
     std::string forced_version{};
+
+    /** An optional override tarname to use instead of defaulting to name
+     * (optional) */
+    std::string forced_tarname{};
 
     /** Whether to show help */
     bool show_help = false;
@@ -140,11 +147,17 @@ void print_usage(const char* program_name) {
     std::cout << "  --out-string <file>        Path to output JSON file for "
                  "PACKAGE_STRING (optional)"
               << std::endl;
+    std::cout << "  --out-tarname <file>       Path to output JSON file for "
+                 "PACKAGE_TARNAME (optional)"
+              << std::endl;
     std::cout << "  --force-name <string>      A name to use instead over that "
                  "from `--module-bazel`"
               << std::endl;
     std::cout << "  --force-version <string>   A version to use instead over "
-                 "that from `--module-bazel` PACKAGE_STRING (optional)"
+                 "that from `--module-bazel`"
+              << std::endl;
+    std::cout << "  --force-tarname <string>   A tarname to use instead of "
+                 "defaulting to name"
               << std::endl;
     std::cout << "  --help                 Show this help message" << std::endl;
 }
@@ -198,6 +211,14 @@ std::optional<ModuleParserArgs> parse_args(int argc, char* argv[]) {
                           << std::endl;
                 return std::nullopt;
             }
+        } else if (arg == "--out-tarname") {
+            if (i + 1 < argc) {
+                args.out_tarname = argv[++i];
+            } else {
+                std::cerr << "Error: --out-tarname requires a file path"
+                          << std::endl;
+                return std::nullopt;
+            }
         } else if (arg == "--force-name") {
             if (i + 1 < argc) {
                 args.forced_name = argv[++i];
@@ -211,6 +232,14 @@ std::optional<ModuleParserArgs> parse_args(int argc, char* argv[]) {
                 args.forced_version = argv[++i];
             } else {
                 std::cerr << "Error: --force-version requires a value"
+                          << std::endl;
+                return std::nullopt;
+            }
+        } else if (arg == "--force-tarname") {
+            if (i + 1 < argc) {
+                args.forced_tarname = argv[++i];
+            } else {
+                std::cerr << "Error: --force-tarname requires a value"
                           << std::endl;
                 return std::nullopt;
             }
@@ -235,6 +264,34 @@ std::optional<ModuleParserArgs> parse_args(int argc, char* argv[]) {
     }
 
     return args;
+}
+
+/**
+ * @brief Write a check result JSON file for a package define.
+ *
+ * Writes JSON in the format: { "DEFINE_NAME": { "value": "\"...\""", "success":
+ * true } }
+ *
+ * @param path Path to the output file.
+ * @param define_name The define name (e.g., "PACKAGE_NAME").
+ * @param value The string value (will be quoted in JSON).
+ * @return true on success, false on failure (error printed to stderr).
+ */
+bool write_package_json(const std::string& path, const std::string& define_name,
+                        const std::string& value) {
+    std::ofstream out(path);
+    if (!out.is_open()) {
+        std::cerr << "Error: Could not open output file: " << path << std::endl;
+        return false;
+    }
+    nlohmann::json j = nlohmann::json::object();
+    j[define_name] = {
+        {"value", "\"" + value + "\""},
+        {"success", true},
+    };
+    out << j.dump(4) << std::endl;
+    out.close();
+    return true;
 }
 
 int main(int argc, char* argv[]) {
@@ -279,63 +336,27 @@ int main(int argc, char* argv[]) {
         name = args.forced_name;
     }
     if (!args.forced_version.empty()) {
-        name = args.forced_version;
+        version = args.forced_version;
     }
 
-    // Write PACKAGE_NAME JSON file in check result format
-    std::ofstream out_name(args.out_name);
-    if (!out_name.is_open()) {
-        std::cerr << "Error: Could not open output file: " << args.out_name
-                  << std::endl;
+    // Compute tarname: use forced_tarname if provided, otherwise default to
+    // name
+    std::string tarname =
+        args.forced_tarname.empty() ? name : args.forced_tarname;
+
+    if (!write_package_json(args.out_name, "PACKAGE_NAME", name)) return 1;
+    if (!write_package_json(args.out_version, "PACKAGE_VERSION", version))
         return 1;
-    }
-    // Format matches check result JSON: { "DEFINE_NAME": { "value": "...",
-    // "success": true } }
-    // Ensure value is explicitly a JSON string (will be properly escaped and
-    // quoted)
-    nlohmann::json name_json = nlohmann::json::object();
-    name_json["PACKAGE_NAME"] = {
-        {"value", "\"" + name + "\""},
-        {"success", true},
-    };
-    out_name << name_json.dump(4) << std::endl;
-    out_name.close();
 
-    // Write PACKAGE_VERSION JSON file in check result format
-    std::ofstream out_version(args.out_version);
-    if (!out_version.is_open()) {
-        std::cerr << "Error: Could not open output file: " << args.out_version
-                  << std::endl;
-        return 1;
-    }
-    // Format matches check result JSON: { "DEFINE_NAME": { "value": "...",
-    // "success": true } }
-    nlohmann::json version_json = nlohmann::json::object();
-    version_json["PACKAGE_VERSION"] = {
-        {"value", "\"" + version + "\""},
-        {"success", true},
-    };
-    out_version << version_json.dump(4) << std::endl;
-    out_version.close();
-
-    // Write PACKAGE_STRING JSON file if requested
     if (!args.out_string.empty()) {
-        std::string package_string = name + " " + version;
-        std::ofstream out_string(args.out_string);
-        if (!out_string.is_open()) {
-            std::cerr << "Error: Could not open output file: "
-                      << args.out_string << std::endl;
+        if (!write_package_json(args.out_string, "PACKAGE_STRING",
+                                name + " " + version))
             return 1;
-        }
-        // Format matches check result JSON: { "DEFINE_NAME": { "value": "...",
-        // "success": true } }
-        nlohmann::json string_json = nlohmann::json::object();
-        string_json["PACKAGE_STRING"] = {
-            {"value", "\"" + package_string + "\""},
-            {"success", true},
-        };
-        out_string << string_json.dump(4) << std::endl;
-        out_string.close();
+    }
+
+    if (!args.out_tarname.empty()) {
+        if (!write_package_json(args.out_tarname, "PACKAGE_TARNAME", tarname))
+            return 1;
     }
 
     return 0;

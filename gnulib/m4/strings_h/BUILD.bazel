@@ -1,39 +1,77 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/strings_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
-# gl_STRINGS_H from strings_h.m4
+# Core strings_h checks without HAVE_STRINGS_H subst
+autoconf(
+    name = "gl_STRINGS_H_CORE",
+    checks = [
+        # HAVE_STRINGS_H is already checked by AC_CHECK_INCLUDES_DEFAULT
+        # Just provide the NEXT_* substs
+        checks.AC_SUBST("NEXT_STRINGS_H", "<strings.h>"),
+        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_STRINGS_H", "<strings.h>"),
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/include_next",
+    ],
+)
+
+# Configure a replacement for <strings.h>
 autoconf(
     name = "strings_h",
     checks = [
-        # Check for strings.h header
-        macros.AC_CHECK_HEADER("strings.h"),
-        # Check for functions in strings.h
-        macros.AC_CHECK_FUNC(
-            "ffs",
-            code = """\
-#include <sys/types.h>
-#include <strings.h>
-""",
-            requires = ["HAVE_STRINGS_H"],
-        ),
-        macros.AC_CHECK_FUNC(
-            "strcasecmp",
-            code = """\
-#include <sys/types.h>
-#include <strings.h>
-""",
-            requires = ["HAVE_STRINGS_H"],
-        ),
-        macros.AC_CHECK_FUNC(
-            "strncasecmp",
-            code = """\
-#include <sys/types.h>
-#include <strings.h>
-""",
-            requires = ["HAVE_STRINGS_H"],
-        ),
+        checks.AC_SUBST("HAVE_STRINGS_H", "1"),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        ":gl_STRINGS_H_CORE",
+    ],
 )
+
+# defaults - Default AC_SUBST values. Added to gnulib_toolchain.
+
+autoconf(
+    name = "gl_STRINGS_H_DEFAULTS",
+    checks = [
+        # Assume proper GNU behavior unless another module says otherwise
+        checks.AC_SUBST("HAVE_FFS", 1),
+        checks.AC_SUBST("HAVE_STRCASECMP", 1),
+        checks.AC_SUBST("HAVE_STRCASECMP_L", 1),
+        checks.AC_SUBST("HAVE_STRNCASECMP", 1),
+        checks.AC_SUBST("HAVE_STRNCASECMP_L", 1),
+        checks.AC_SUBST("HAVE_DECL_STRNCASECMP", 1),
+        checks.AC_SUBST("REPLACE_STRCASECMP", 0),
+        checks.AC_SUBST("REPLACE_STRCASECMP_L", 0),
+        checks.AC_SUBST("REPLACE_STRNCASECMP", 0),
+        checks.AC_SUBST("REPLACE_STRNCASECMP_L", 0),
+    ],
+    visibility = ["//visibility:private"],
+)
+
+autoconf(
+    name = "gl_STRINGS_H_REQUIRE_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("GNULIB_FFS", 0),
+        checks.AC_SUBST("GNULIB_STRCASECMP", 0),
+        checks.AC_SUBST("GNULIB_STRCASECMP_L", 0),
+        checks.AC_SUBST("GNULIB_STRNCASECMP", 0),
+        checks.AC_SUBST("GNULIB_STRNCASECMP_L", 0),
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gl_STRINGS_H_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_STRINGS_H_REQUIRE_DEFAULTS",
+    ],
+)
+
+# with_defaults - For external consumers who don't use the toolchain

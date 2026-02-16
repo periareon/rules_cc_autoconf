@@ -1,24 +1,48 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/dup.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "dup",
+    name = "gl_FUNC_DUP",
     checks = [
-        # Check for dup function
-        # Equivalent to gl_FUNC_DUP macro from dup.m4
-        # Note: Full implementation includes runtime checks that are not easily
-        # replicable in Bazel
-        macros.AC_CHECK_FUNC(
-            "dup",
-            define = "HAVE_DUP",
+        # Note: dup only needs the function check (not declaration), but we use fchdir's cache variable
+
+        # REPLACE_DUP is set to 1 if:
+        # - HAVE_MSVC_INVALID_PARAMETER_HANDLER = 1 (MSVC invalid parameter handler available)
+        # - HAVE_FCHDIR = 0 (fchdir function not available)
+        # - gl_cv_func_dup_works != yes (dup doesn't work correctly, e.g., on Windows/OS/2)
+        # Otherwise, REPLACE_DUP=0 (default)
+        # Note: gl_cv_func_dup_works is determined by AC_RUN_IFELSE which checks if dup
+        # works on directory fds. On Windows, it's "guessing no", on others it's "guessing yes".
+        # Since AC_RUN_IFELSE isn't portable to cross-compilation, we default REPLACE_DUP=0
+        # (will be set to 1 if gl_MSVC_INVAL is included and HAVE_MSVC_INVALID_PARAMETER_HANDLER=1,
+        # or if HAVE_FCHDIR=0)
+        # Default to 0 - will be set to 1 only if conditions are met
+        checks.AC_SUBST(
+            "REPLACE_DUP",
+            condition = "ac_cv_func_fchdir==0",  # If fchdir not available, replace dup (from fchdir module)
+            if_false = 0,
+            if_true = 1,
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
-        # Note: Conditional dependencies on gl_MSVC_INVAL and gl_FUNC_FCHDIR
-        # Note: AC_REQUIRE([AC_CANONICAL_HOST]) is a standard autoconf macro
+        "//gnulib/m4/msvc-inval:gl_MSVC_INVAL",
+        # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        # "//gnulib/m4/unistd_h",  # Ignored - _DEFAULTS function
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        # Note: dup only needs the function check (not declaration), so use gl_FUNC_FCHDIR_FOR_CLOSE
+        "//gnulib/m4/fchdir:gl_FUNC_FCHDIR_FOR_CLOSE",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "dup",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_DUP",
     ],
 )

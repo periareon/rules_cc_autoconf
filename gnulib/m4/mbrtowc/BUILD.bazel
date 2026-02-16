@@ -1,29 +1,231 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/mbrtowc.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
+# Main function: check mbrtowc, set REPLACE_MBRTOWC, MBRTOWC_LIB, and
+# MBRTOWC_*_BUG defines based on results of runtime sub-checks.
+# Since the sub-checks use AC_RUN_IFELSE (not cross-compile safe), the
+# actual results are baked into select() per platform.
 autoconf(
-    name = "mbrtowc",
+    name = "gl_FUNC_MBRTOWC",
+    checks = select({
+        # On Linux (glibc):
+        #   gl_MBRTOWC_C_LOCALE → no (EILSEQ in C locale) → MBRTOWC_IN_C_LOCALE_MAYBE_EILSEQ
+        #   gl_MBRTOWC_EMPTY_INPUT → no on glibc → MBRTOWC_EMPTY_INPUT_BUG
+        #   Both trigger REPLACE_MBRTOWC=1
+        "@platforms//os:linux": [
+            checks.AC_SUBST("REPLACE_MBRTOWC", "1"),
+            checks.AC_DEFINE("MBRTOWC_IN_C_LOCALE_MAYBE_EILSEQ", "1"),
+        ],
+        # On macOS: all runtime checks pass → no bugs, no replacement needed
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        # Shared base checks (HAVE_MBSINIT, MBRTOWC_LIB, etc.)
+        ":mbrtowc_base",
+        ":gl_MBSTATE_T_BROKEN",
+        # Runtime sub-checks called from lines 34-78
+        ":gl_MBRTOWC_NULL_ARG1",
+        ":gl_MBRTOWC_RETVAL",
+        ":gl_MBRTOWC_NUL_RETVAL",
+        ":gl_MBRTOWC_STORES_INCOMPLETE",
+        ":gl_MBRTOWC_EMPTY_INPUT",
+        ":gl_MBRTOWC_C_LOCALE",
+    ],
+)
+
+# gl_MBSTATE_T_BROKEN - lines 106-139 (AC_DEFUN_ONCE)
+# Test whether mbsinit()/mbrtowc() need overriding due to broken mbstate_t.
+# Sets REPLACE_MBSTATE_T. On Linux/macOS this is 0 (mbstate_t works).
+autoconf(
+    name = "gl_MBSTATE_T_BROKEN",
+    # REPLACE_MBSTATE_T=0 on Linux/macOS (both pass incomplete_state + sanitycheck)
+    # On Solaris 8 / AIX it would be 1
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        ":gl_MBRTOWC_INCOMPLETE_STATE",
+        ":gl_MBRTOWC_SANITYCHECK",
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//autoconf/macros/AC_TYPE_MBSTATE_T",
+        "//gnulib/macros/AC_FUNC_MBRTOWC",
+    ],
+)
+
+# Runtime check (AC_RUN_IFELSE): mbrtowc handles incomplete characters.
+# On Linux/macOS: yes (no bug). Cross-compile guess: yes (except AIX).
+autoconf(
+    name = "gl_MBRTOWC_INCOMPLETE_STATE",
+    # AC_RUN_IFELSE — result baked into gl_MBSTATE_T_BROKEN logic
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//gnulib/m4/locale-en",
+        "//gnulib/m4/locale-ja",
+    ],
+)
+
+# Runtime check: mbrtowc works as well as mbtowc.
+# On Linux/macOS: yes. Cross-compile guess: yes (except Solaris 8).
+autoconf(
+    name = "gl_MBRTOWC_SANITYCHECK",
+    # AC_RUN_IFELSE — result baked into gl_MBSTATE_T_BROKEN logic
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//gnulib/m4/locale-zh",
+    ],
+)
+
+# Runtime check: mbrtowc handles NULL pwc argument.
+# On Linux/macOS: yes. Cross-compile guess: yes (except Solaris).
+autoconf(
+    name = "gl_MBRTOWC_NULL_ARG1",
+    # AC_RUN_IFELSE — result baked into gl_FUNC_MBRTOWC's select()
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//gnulib/m4/locale-en",
+    ],
+)
+
+# Runtime check: mbrtowc returns correct byte count for continuation.
+# On Linux/macOS: yes. Cross-compile guess: yes (except HP-UX, Solaris, Windows).
+autoconf(
+    name = "gl_MBRTOWC_RETVAL",
+    # AC_RUN_IFELSE — result baked into gl_FUNC_MBRTOWC's select()
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//gnulib/m4/locale-en",
+        "//gnulib/m4/locale-ja",
+    ],
+)
+
+# Runtime check: mbrtowc returns 0 when parsing NUL character.
+# On Linux/macOS: yes. Cross-compile guess: yes (except Solaris 8/9).
+autoconf(
+    name = "gl_MBRTOWC_NUL_RETVAL",
+    # AC_RUN_IFELSE — result baked into gl_FUNC_MBRTOWC's select()
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//gnulib/m4/locale-zh",
+    ],
+)
+
+# Runtime check: mbrtowc does NOT store a wchar when input is incomplete.
+# On Linux/macOS: no (correct — no bug). Cross-compile guess: no (except Windows).
+autoconf(
+    name = "gl_MBRTOWC_STORES_INCOMPLETE",
+    # AC_RUN_IFELSE — result baked into gl_FUNC_MBRTOWC's select()
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//gnulib/m4/locale-en",
+    ],
+)
+
+# Runtime check: mbrtowc returns (size_t)-2 for empty input.
+# On Linux (glibc): NO → MBRTOWC_EMPTY_INPUT_BUG, triggers REPLACE_MBRTOWC.
+# On macOS: yes. Cross-compile guess: no on glibc/AIX/Android/Windows.
+autoconf(
+    name = "gl_MBRTOWC_EMPTY_INPUT",
+    # AC_RUN_IFELSE — result baked into gl_FUNC_MBRTOWC's select()
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+    ],
+)
+
+# Runtime check: C locale is free of encoding errors.
+# On Linux (glibc): NO → MBRTOWC_IN_C_LOCALE_MAYBE_EILSEQ, triggers REPLACE_MBRTOWC.
+#   See https://sourceware.org/PR19932
+# On macOS: yes. Cross-compile guess: yes on Windows, guessing otherwise.
+autoconf(
+    name = "gl_MBRTOWC_C_LOCALE",
+    # AC_RUN_IFELSE — result baked into gl_FUNC_MBRTOWC's select()
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+    ],
+)
+
+# Prerequisites of lib/mbrtowc.c and lib/lc-charset-dispatch.c.
+autoconf(
+    name = "gl_PREREQ_MBRTOWC",
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        "//autoconf/macros/AC_C_INLINE",
+    ],
+)
+
+# Prerequisites of lib/mbtowc-lock.c.
+autoconf(
+    name = "gl_PREREQ_MBTOWC_LOCK",
+    # gl_VISIBILITY
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        "//gnulib/m4/visibility",
+    ],
+)
+
+# Already provided by //gnulib/macros/AC_FUNC_MBRTOWC
+# Defines HAVE_MBRTOWC, sets ac_cv_func_mbrtowc cache variable.
+
+# mbrtowc_base — Shared checks without Linux-specific REPLACE_MBRTOWC override.
+# For modules (e.g. mbsnrtowcs, mbsinit, wcrtomb) whose configure.ac does NOT
+# call gl_FUNC_MBRTOWC and therefore should NOT get REPLACE_MBRTOWC=1 on Linux.
+autoconf(
+    name = "mbrtowc_base",
     checks = [
-        # Check for mbrtowc function and declaration
-        # Equivalent to gl_FUNC_MBRTOWC macro from mbrtowc.m4
-        # Note: Full implementation includes runtime checks for various bugs
-        # that are complex to replicate in Bazel
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_DECL(
             "mbrtowc",
-            define = "HAVE_MBRTOWC",
+            includes = ["#include <wchar.h>"],
         ),
-        macros.AC_CHECK_DECL(
-            "mbrtowc",
-            define = "HAVE_DECL_MBRTOWC",
-            headers = ["wchar.h"],
+        # AC_CHECK_FUNCS_ONCE([mbsinit]) - from gl_MBSTATE_T_BROKEN line 115
+        checks.AC_CHECK_FUNC(
+            "mbsinit",
+            define = "HAVE_MBSINIT",
+            subst = True,
         ),
+        # On macOS/Linux, mbrtowc is in libc, so MBRTOWC_LIB is empty
+        checks.AC_SUBST("MBRTOWC_LIB", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/wchar_h",  # AC_REQUIRE([gl_WCHAR_H_DEFAULTS])
-        "//gnulib/m4/threadlib",  # AC_REQUIRE([gl_PTHREADLIB])
-        # Note: AC_REQUIRE([AC_TYPE_MBSTATE_T]) is a standard autoconf macro
+        "//gnulib/m4/threadlib",
+        # gl_VISIBILITY (from gl_PREREQ_MBTOWC_LOCK)
+        "//gnulib/m4/visibility",
+        "//gnulib/m4/codeset",
+        "//autoconf/macros/AC_TYPE_MBSTATE_T",
+        "//gnulib/macros/AC_FUNC_MBRTOWC",
+        # Locale modules for runtime sub-checks
+        "//gnulib/m4/locale-en",
+        "//gnulib/m4/locale-ja",
+        "//gnulib/m4/locale-zh",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# mbrtowc — Package-level aggregator (matches package name).
+# No checks — just deps on all other targets (excluding *_DEFAULTS).
+autoconf(
+    name = "mbrtowc",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_MBRTOWC",
+        ":gl_MBRTOWC_C_LOCALE",
+        ":gl_MBRTOWC_EMPTY_INPUT",
+        ":gl_MBRTOWC_INCOMPLETE_STATE",
+        ":gl_MBRTOWC_NULL_ARG1",
+        ":gl_MBRTOWC_NUL_RETVAL",
+        ":gl_MBRTOWC_RETVAL",
+        ":gl_MBRTOWC_SANITYCHECK",
+        ":gl_MBRTOWC_STORES_INCOMPLETE",
+        ":gl_MBSTATE_T_BROKEN",
+        ":gl_PREREQ_MBRTOWC",
+        ":gl_PREREQ_MBTOWC_LOCK",
     ],
 )

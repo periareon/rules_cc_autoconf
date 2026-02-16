@@ -1,11 +1,59 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/isupper_l.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "isupper_l",
-    checks = [
-        # Note: isupper_l.m4 may not exist in gnulib, or this module may not have checks
-    ],
+    checks = select({
+        # On Linux, isupper_l is in <ctype.h> with _GNU_SOURCE
+        "@platforms//os:linux": [
+            checks.AC_TRY_LINK(
+                name = "_gl_cv_func_isupper_l",
+                code = """\
+#define _GNU_SOURCE 1
+#include <ctype.h>
+#include <locale.h>
+int main(void) {
+    isupper_l('A', (locale_t)0);
+    return 0;
+}
+""",
+            ),
+            checks.AC_DEFINE(
+                "HAVE_ISUPPER_L",
+                "1",
+                requires = ["_gl_cv_func_isupper_l==1"],
+                subst = True,
+            ),
+        ],
+        # On macOS/BSD, isupper_l is in <xlocale.h>
+        "//conditions:default": [
+            checks.AC_TRY_LINK(
+                name = "_gl_cv_func_isupper_l",
+                code = """\
+#include <xlocale.h>
+#include <ctype.h>
+#include <locale.h>
+int main(void) {
+    isupper_l('A', (locale_t)0);
+    return 0;
+}
+""",
+            ),
+            checks.AC_DEFINE(
+                "HAVE_ISUPPER_L",
+                "1",
+                requires = ["_gl_cv_func_isupper_l==1"],
+                subst = True,
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/c-strtod",
+        "//gnulib/m4/ctype_h",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - needed for isupper_l to be declared
+    ],
 )

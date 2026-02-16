@@ -1,0 +1,41 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Define to `__restrict' or empty if this compiler does not support
+   restrict. */
+#define restrict restrict
+
+/* Define to `__inline__' or `__inline' if that's what the C compiler calls
+   it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
+#define inline inline
+#endif
+
+/* Define to 1 if compiler supports -Wall. */
+#define HAVE_FLAG__WALL 1
+
+/* Define to 1 if compiler supports -std=c99. */
+#define HAVE_FLAG__STD_C99 1
+
+/* Define to 1 if compiler supports -std=c++17. */
+#define HAVE_FLAG__STD_C__17 1
+
+/* Define to the address where bug reports for this package should be sent. */
+#define PACKAGE_BUGREPORT ""
+
+/* Define to the full name of this package. */
+#define PACKAGE_NAME "test_compiler_capabilities"
+
+/* Define to the full name and version of this package. */
+#define PACKAGE_STRING "test_compiler_capabilities 1.0.0"
+
+/* Define to the one symbol short name of this package. */
+#define PACKAGE_TARNAME "test_compiler_capabilities"
+
+/* Define to the home page for this package. */
+#define PACKAGE_URL ""
+
+/* Define to the version of this package. */
+#define PACKAGE_VERSION "1.0.0"
+
+/* Define to 1 if the C compiler doesn't accept -c and -o together. */
+/* #undef NO_MINUS_C_MINUS_O */

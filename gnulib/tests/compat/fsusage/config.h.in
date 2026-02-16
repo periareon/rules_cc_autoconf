@@ -1,0 +1,18 @@
+/* config.h.in */
+#undef HAVE_INTTYPES_H
+#undef HAVE_STDINT_H
+#undef HAVE_STDIO_H
+#undef HAVE_STDLIB_H
+#undef HAVE_STRINGS_H
+#undef HAVE_STRING_H
+#undef HAVE_SYS_MOUNT_H
+#undef HAVE_SYS_PARAM_H
+#undef HAVE_SYS_STATFS_H
+#undef HAVE_SYS_STAT_H
+#undef HAVE_SYS_TYPES_H
+#undef HAVE_SYS_VFS_H
+#undef HAVE_UNISTD_H
+#undef STAT_STATFS2_BSIZE
+#undef STAT_STATFS2_FRSIZE
+#undef STAT_STATVFS
+#undef STDC_HEADERS

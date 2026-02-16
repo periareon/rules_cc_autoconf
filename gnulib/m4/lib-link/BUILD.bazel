@@ -1,20 +1,22 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/lib-link.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "lib-link",
     checks = [
-        # AC_LIB_LINKFLAGS, AC_LIB_HAVE_LINKFLAGS, AC_LIB_RPATH macros
-        # from lib-link.m4 provide library linking infrastructure.
-        # These involve complex path searching, rpath handling, and library
-        # dependency resolution that is handled differently in Bazel.
+        # AC_LIB_LINKFLAGS sets HAVE_LIB and AC_SUBSTs for subst.h
+        checks.AC_DEFINE("HAVE_LIB", "1"),
+        checks.AC_SUBST("HAVE_LIB", "yes"),
+        checks.AC_SUBST("LIB", ""),
+        checks.AC_SUBST("LIB_PREFIX", ""),
+        checks.AC_SUBST("LTLIB", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/lib-ld",  # AC_REQUIRE([AC_LIB_PROG_LD])
-        # Note: AC_REQUIRE([AC_PROG_CC]), AC_REQUIRE([AC_CANONICAL_HOST]),
-        # AC_REQUIRE([AC_LIB_PREPARE_PREFIX]), AC_REQUIRE([AC_LIB_RPATH])
-        # are standard autoconf macros or complex infrastructure
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

@@ -1,11 +1,20 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/wcsncpy.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "wcsncpy",
     checks = [
-        # TODO: Add checks based on .m4 file
+        checks.AC_CHECK_FUNC(
+            "wcsncpy",
+            define = "HAVE_WCSNCPY",
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # Note: wchar_h provides HAVE_DECL_WCSDUP, but golden file expects it undefined
+        # "//gnulib/m4/wchar_h",  # AC_REQUIRE([gl_WCHAR_H_DEFAULTS]) - but pulls in HAVE_DECL_WCSDUP
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

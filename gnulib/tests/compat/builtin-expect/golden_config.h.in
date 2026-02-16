@@ -1,0 +1,2 @@
+/* config.h.in */
+#define HAVE___BUILTIN_EXPECT 1

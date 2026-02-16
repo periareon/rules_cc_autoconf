@@ -1,29 +1,45 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/chown.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "chown",
     checks = [
-        # Check for chown and fchown functions
-        # Equivalent to gl_FUNC_CHOWN macro from chown.m4
-        # Note: Full implementation includes runtime checks for chown behavior
-        # with -1 IDs, trailing slashes, and ctime updates that are not easily
-        # replicable in Bazel
-        macros.AC_CHECK_FUNC(
+        # Standard header defines are provided by AC_CHECK_INCLUDES_DEFAULT dependency
+        # AC_FUNC_CHOWN checks for chown function
+        checks.AC_CHECK_FUNC(
             "chown",
-            define = "HAVE_CHOWN",
+            name = "ac_cv_func_chown",
         ),
-        macros.AC_CHECK_FUNC(
+        checks.AC_DEFINE(
+            "HAVE_CHOWN",
+            requires = ["ac_cv_func_chown==1"],
+            subst = True,
+        ),
+        checks.AC_CHECK_FUNC(
             "fchown",
-            define = "HAVE_FCHOWN",
+            name = "ac_cv_func_fchown",
         ),
-    ],
+        checks.AC_DEFINE(
+            "HAVE_FCHOWN",
+            requires = ["ac_cv_func_fchown==1"],
+        ),
+    ] + select({
+        "@platforms//os:macos": [
+            # macOS has the trailing slash bug (gl_FUNC_CHOWN_FOLLOWS_SYMLINK)
+            checks.AC_DEFINE("CHOWN_TRAILING_SLASH_BUG", 1),
+            # REPLACE_CHOWN=1 on macOS due to trailing slash bug
+            checks.AC_SUBST("REPLACE_CHOWN", 1),
+        ],
+        "//conditions:default": [
+            # Linux with glibc handles trailing slashes correctly
+            checks.AC_SUBST("REPLACE_CHOWN", 0),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
-        # Note: AC_REQUIRE([AC_TYPE_UID_T]) and AC_REQUIRE([AC_CANONICAL_HOST])
-        # are standard autoconf macros
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

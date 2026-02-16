@@ -1,7 +1,7 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fclose.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 # gl_FUNC_FCLOSE macro from fclose.m4
 #
@@ -24,26 +24,32 @@ autoconf(
     checks = select({
         # glibc: fflush works but fclose_stdin doesn't
         "@platforms//os:linux": [
-            macros.M4_DEFINE("REPLACE_FCLOSE", "1"),
+            checks.AC_SUBST("REPLACE_FCLOSE", 1),
+        ],
+        # macOS: Based on golden file, REPLACE_FCLOSE=1
+        "@platforms//os:macos": [
+            checks.AC_SUBST("REPLACE_FCLOSE", 1),
         ],
         # NetBSD/OpenBSD: fflush broken → fclose needs replacement
         "@platforms//os:netbsd": [
-            macros.M4_DEFINE("REPLACE_FCLOSE", "1"),
+            checks.AC_SUBST("REPLACE_FCLOSE", 1),
         ],
         "@platforms//os:openbsd": [
-            macros.M4_DEFINE("REPLACE_FCLOSE", "1"),
+            checks.AC_SUBST("REPLACE_FCLOSE", 1),
         ],
         # Windows: both fflush and fclose are broken
         "@platforms//os:windows": [
-            macros.M4_DEFINE("REPLACE_FCLOSE", "1"),
+            checks.AC_SUBST("REPLACE_FCLOSE", 1),
         ],
         # musl and other platforms: assume fclose works
         "//conditions:default": [],
     }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/close",  # AC_REQUIRE([gl_FUNC_CLOSE]) - provides HAVE_UNISTD_H transitively
-        "//gnulib/m4/fflush",  # Uses gl_FUNC_FFLUSH_STDIN
-        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS])
+        "//gnulib/m4/close",
+        # gl_FUNC_FCLOSE calls gl_FUNC_FFLUSH_STDIN (NOT gl_FUNC_FFLUSH)
+        # This is important: gl_FUNC_FFLUSH would set REPLACE_FFLUSH, but that shouldn't happen for fclose
+        "//gnulib/m4/fflush:gl_FUNC_FFLUSH_STDIN",
+        # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
     ],
 )

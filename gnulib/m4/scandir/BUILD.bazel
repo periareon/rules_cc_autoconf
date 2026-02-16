@@ -1,15 +1,36 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/scandir.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "scandir",
     checks = [
-        macros.AC_CHECK_FUNC(
+        # Note: gl_DIRENT_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        checks.AC_CHECK_FUNC(
             "scandir",
             define = "HAVE_SCANDIR",
+            subst = True,
         ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # Note: gl_DIRENT_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        "//gnulib/m4/extensions",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Prerequisites of lib/scandir.c
+autoconf(
+    name = "gl_PREREQ_SCANDIR",
+    checks = [
+        # Empty - no prerequisites
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

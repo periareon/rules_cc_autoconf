@@ -1,29 +1,197 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/readutmp.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
-
-# HAVE_SYSCTL comes from physmem dependency
+load("//autoconf:checks.bzl", "checks", "macros", "utils")
 
 autoconf(
-    name = "readutmp",
+    name = "gl_READUTMP",
     checks = [
-        macros.AC_CHECK_HEADER("systemd/sd-login.h"),
-        macros.AC_CHECK_HEADER("utmp.h"),
-        macros.AC_CHECK_HEADER("utmpx.h"),
-        macros.AC_CHECK_HEADER("OS.h"),
-        macros.AC_CHECK_DECL(
-            "endutent",
-            headers = ["utmp.h"],
+        checks.AC_CHECK_HEADER("systemd/sd-login.h"),
+        checks.AC_TRY_LINK(
+            name = "gl_cv_lib_readutmp_systemd",
+            code = utils.AC_LANG_PROGRAM(
+                [
+                    "#include <stdint.h>",
+                    "#include <systemd/sd-login.h>",
+                ],
+                "\n".join([
+                    "uint64_t st;",
+                    "sd_session_get_start_time (\"1\", &st);",
+                ]),
+            ),
         ),
-        macros.AC_CHECK_DECL(
-            "sysinfo",
-            headers = ["sys/sysinfo.h"],
+        checks.AC_DEFINE(
+            "READUTMP_USE_SYSTEMD",
+            requires = ["gl_cv_lib_readutmp_systemd==1"],
         ),
+        checks.AC_SUBST("READUTMP_LIB", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/pathmax",  # Provides HAVE_SYS_PARAM_H
-        "//gnulib/m4/physmem",  # Provides HAVE_SYSCTL
+        ":gl_PREREQ_READUTMP_H",
+        "//gnulib/m4/systemd:gl_SYSTEMD_CHOICE",
+    ],
+)
+
+UTMP_INCLUDES = utils.AC_INCLUDES_DEFAULT + """
+#ifdef HAVE_UTMPX_H
+# include <utmpx.h>
+#endif
+#ifdef HAVE_UTMP_H
+# if defined _THREAD_SAFE && defined UTMP_DATA_INIT
+   /* When including both utmp.h and utmpx.h on AIX 4.3, with _THREAD_SAFE
+      defined, work around the duplicate struct utmp_data declaration.  */
+#  define utmp_data gl_aix_4_3_workaround_utmp_data
+# endif
+# include <utmp.h>
+#endif
+"""
+
+ENDUTENT_INCLUDES = """\
+/* <sys/types.h> is a prerequisite of <utmp.h> on FreeBSD 8.0, OpenBSD 4.6.  */
+#include <sys/types.h>
+#ifdef HAVE_UTMP_H
+# include <utmp.h>
+#endif
+"""
+
+# Prerequisites of readutmp.h and boot-time-aux.h
+autoconf(
+    name = "gl_PREREQ_READUTMP_H",
+    checks = macros.AC_CHECK_HEADERS(
+        [
+            # Provided by `//gnulib/m4/utmp_h:HAVE_UTMP_H`
+            # "utmp.h",
+            "utmpx.h",
+        ],
+    ) + macros.AC_CHECK_FUNCS([
+        "utmpname",
+        "utmpxname",
+    ]) + macros.AC_CHECK_DECLS(
+        ["endutent"],
+        compile_defines = ["HAVE_UTMP_H"],
+        includes = [ENDUTENT_INCLUDES],
+        # TODO: requires = ["ac_cv_header_utmp_h || ac_cv_header_utmpx_h"]
+        requires = ["ac_cv_header_utmp_h"],
+    ) + macros.AC_CHECK_MEMBERS(
+        [
+            "struct utmpx.ut_user",
+            "struct utmp.ut_user",
+            "struct utmpx.ut_name",
+            "struct utmp.ut_name",
+            "struct utmpx.ut_type",
+            "struct utmp.ut_type",
+            "struct utmpx.ut_pid",
+            "struct utmp.ut_pid",
+            "struct utmp.ut_tv",
+            "struct utmpx.ut_host",
+            "struct utmp.ut_host",
+            "struct utmpx.ut_id",
+            "struct utmp.ut_id",
+            "struct utmpx.ut_session",
+            "struct utmp.ut_session",
+            "struct utmpx.ut_exit",
+            "struct utmp.ut_exit",
+        ],
+        compile_defines = [
+            "HAVE_UTMPX_H",
+            "HAVE_UTMP_H",
+        ],
+        includes = [UTMP_INCLUDES],
+        # TODO: requires = ["ac_cv_header_utmp_h || ac_cv_header_utmpx_h"]
+        requires = ["ac_cv_header_utmp_h"],
+    ) + [
+        # Nested struct members need explicit TRY_COMPILE checks
+        # because offsetof with nested members can be problematic
+        checks.AC_TRY_COMPILE(
+            name = "ac_cv_member_struct_utmpx_ut_exit_e_exit",
+            code = """\
+#define _GNU_SOURCE 1
+#include <utmpx.h>
+int main(void) {
+    struct utmpx u;
+    (void)u.ut_exit.e_exit;
+    return 0;
+}
+""",
+        ),
+        checks.AC_DEFINE(
+            "HAVE_STRUCT_UTMPX_UT_EXIT_E_EXIT",
+            "1",
+            requires = ["ac_cv_member_struct_utmpx_ut_exit_e_exit==1"],
+        ),
+        checks.AC_TRY_COMPILE(
+            name = "ac_cv_member_struct_utmp_ut_exit_e_exit",
+            code = """\
+#define _GNU_SOURCE 1
+#include <utmp.h>
+int main(void) {
+    struct utmp u;
+    (void)u.ut_exit.e_exit;
+    return 0;
+}
+""",
+        ),
+        checks.AC_DEFINE(
+            "HAVE_STRUCT_UTMP_UT_EXIT_E_EXIT",
+            "1",
+            requires = ["ac_cv_member_struct_utmp_ut_exit_e_exit==1"],
+        ),
+        checks.AC_TRY_COMPILE(
+            name = "ac_cv_member_struct_utmpx_ut_exit_e_termination",
+            code = """\
+#define _GNU_SOURCE 1
+#include <utmpx.h>
+int main(void) {
+    struct utmpx u;
+    (void)u.ut_exit.e_termination;
+    return 0;
+}
+""",
+        ),
+        checks.AC_DEFINE(
+            "HAVE_STRUCT_UTMPX_UT_EXIT_E_TERMINATION",
+            "1",
+            requires = ["ac_cv_member_struct_utmpx_ut_exit_e_termination==1"],
+        ),
+        checks.AC_TRY_COMPILE(
+            name = "ac_cv_member_struct_utmp_ut_exit_e_termination",
+            code = """\
+#define _GNU_SOURCE 1
+#include <utmp.h>
+int main(void) {
+    struct utmp u;
+    (void)u.ut_exit.e_termination;
+    return 0;
+}
+""",
+        ),
+        checks.AC_DEFINE(
+            "HAVE_STRUCT_UTMP_UT_EXIT_E_TERMINATION",
+            "1",
+            requires = ["ac_cv_member_struct_utmp_ut_exit_e_termination==1"],
+        ),
+    ] + macros.AC_CHECK_DECLS(
+        ["sysinfo"],
+        includes = ["#include <sys/sysinfo.h>"],
+    ) + macros.AC_CHECK_HEADERS(["sys/sysctl.h"]) + macros.AC_CHECK_FUNCS(["sysctl"]) + macros.AC_CHECK_HEADERS(
+        ["OS.h"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/utmp_h:HAVE_UTMP_H",
+        "//gnulib/macros/HAVE_SYS_PARAM_H",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "readutmp",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_PREREQ_READUTMP_H",
+        ":gl_READUTMP",
     ],
 )

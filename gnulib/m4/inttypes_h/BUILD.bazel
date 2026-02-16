@@ -1,11 +1,53 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/inttypes_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
+# gl_AC_HEADER_INTTYPES_H macro from inttypes_h.m4
+# doesn't clash with <sys/types.h>, and declares uintmax_t.
 autoconf(
     name = "inttypes_h",
     checks = [
-        # Note: inttypes_h.m4 may not exist in gnulib, or this module may not have checks
+        # AC_COMPILE_IFELSE checks if inttypes.h exists, doesn't clash with
+        # sys/types.h, and declares uintmax_t. This matches the original m4
+        # logic which includes both headers to check for clashes.
+        checks.AC_TRY_COMPILE(
+            code = """\
+#include <sys/types.h>
+#include <inttypes.h>
+
+int main(void) {
+    uintmax_t i = (uintmax_t) -1;
+    return !i;
+}
+""",
+            define = "HAVE_INTTYPES_H_WITH_UINTMAX",
+            language = "c",
+        ),
     ],
     visibility = ["//visibility:public"],
+)
+
+# gl_INTTYPES_H_DEFAULTS from inttypes.m4 (not inttypes_h.m4)
+autoconf(
+    name = "gl_INTTYPES_H_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("HAVE_DECL_IMAXABS", 1),
+        checks.AC_SUBST("HAVE_DECL_IMAXDIV", 1),
+        checks.AC_SUBST("HAVE_DECL_STRTOIMAX", 1),
+        checks.AC_SUBST("HAVE_DECL_STRTOUMAX", 1),
+        checks.AC_SUBST("HAVE_IMAXDIV_T", 1),
+        checks.AC_SUBST("HAVE_IMAXABS", 1),
+        checks.AC_SUBST("HAVE_IMAXDIV", 1),
+        checks.AC_SUBST("REPLACE_IMAXABS", 0),
+        checks.AC_SUBST("REPLACE_IMAXDIV", 0),
+        checks.AC_SUBST("REPLACE_STRTOIMAX", 0),
+        checks.AC_SUBST("REPLACE_STRTOUMAX", 0),
+        checks.AC_SUBST("INT32_MAX_LT_INTMAX_MAX", 1),
+        checks.AC_SUBST("INT64_MAX_EQ_LONG_MAX", "defined _LP64"),
+        checks.AC_SUBST("PRIPTR_PREFIX", "__PRIPTR_PREFIX"),
+        checks.AC_SUBST("UINT32_MAX_LT_UINTMAX_MAX", 1),
+        checks.AC_SUBST("UINT64_MAX_EQ_ULONG_MAX", "defined _LP64"),
+    ],
+    visibility = ["//visibility:private"],
 )

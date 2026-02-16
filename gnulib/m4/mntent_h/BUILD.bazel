@@ -1,15 +1,74 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/mntent_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks", "macros")
 
 autoconf(
-    name = "mntent_h",
-    checks = [
-        macros.AC_CHECK_HEADER(
-            "mntent.h",
-            define = "HAVE_MNTENT_H",
+    name = "gl_MNTENT_H",
+    # From mntent_h.m4:
+    #   if test $ac_cv_header_mntent_h = yes; then
+    #     gl_CHECK_NEXT_HEADERS([mntent.h])
+    #   fi
+    # This means:
+    # - Check if mntent.h exists
+    # - Set NEXT_* to "<mntent.h>" if header exists (Linux)
+    # - Set NEXT_* to "" if header doesn't exist (macOS)
+    checks = macros.AC_CHECK_HEADERS(["mntent.h"]) + [
+        # Use conditional AC_SUBST: "<mntent.h>" when exists, "" when doesn't
+        checks.AC_SUBST(
+            "NEXT_MNTENT_H",
+            condition = "ac_cv_header_mntent_h",
+            if_false = "",
+            if_true = "<mntent.h>",
+        ),
+        checks.AC_SUBST(
+            "NEXT_AS_FIRST_DIRECTIVE_MNTENT_H",
+            condition = "ac_cv_header_mntent_h",
+            if_false = "",
+            if_true = "<mntent.h>",
         ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/include_next",  # Required for INCLUDE_NEXT variables
+    ],
+)
+
+# From mntent_h.m4: "Assume proper GNU behavior unless another module says otherwise"
+autoconf(
+    name = "gl_MNTENT_H_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("HAVE_HASMNTOPT", 1),
+        checks.AC_SUBST("HAVE_SETMNTENT", 1),
+        checks.AC_SUBST("REPLACE_HASMNTOPT", 0),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_MNTENT_H_REQUIRE_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("GNULIB_HASMNTOPT", 0),
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gl_MNTENT_H_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_MNTENT_H_REQUIRE_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "mntent_h",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_MNTENT_H",
+    ],
 )

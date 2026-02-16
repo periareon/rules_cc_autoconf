@@ -1,11 +1,37 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/getlogin_r.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "getlogin_r",
     checks = [
-        # Note: getlogin_r.m4 may not exist in gnulib, or this module may not have checks
-    ],
+        # gl_FUNC_GETLOGIN_R checks for getlogin_r function and declarations
+        checks.AC_CHECK_FUNC(
+            "getlogin_r",
+            define = "HAVE_GETLOGIN_R",
+        ),
+        checks.AC_CHECK_DECL(
+            "getlogin_r",
+            define = "HAVE_DECL_GETLOGIN_R",
+            includes = ["#include <unistd.h>"],
+            subst = True,
+        ),
+    ] + select({
+        # Gnulib replaces getlogin_r on macOS (truncation bug workaround); golden expects REPLACE_GETLOGIN_R "1"
+        "@platforms//os:macos": [
+            checks.AC_SUBST("REPLACE_GETLOGIN_R", "1"),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_GETLOGIN_R", "0"),
+        ],
+    }),
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/extensions",
+        # ac_cv_have_decl_getlogin from getlogin:gl_HAVE_DECL_GETLOGIN
+        "//gnulib/m4/getlogin:gl_HAVE_DECL_GETLOGIN",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

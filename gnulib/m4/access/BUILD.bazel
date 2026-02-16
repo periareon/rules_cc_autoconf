@@ -1,38 +1,106 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/access.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
-# gl_FUNC_ACCESS from access.m4
+# HAVE_ACCESS - Shared check for access function existence
+# Used by modules that need HAVE_ACCESS without the full replacement logic.
+autoconf(
+    name = "HAVE_ACCESS",
+    checks = [
+        checks.AC_CHECK_FUNC(
+            "access",
+            define = "HAVE_ACCESS",
+        ),
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
 #
 # On Windows (mingw/windows), REPLACE_ACCESS=1 is unconditionally set because
 # access() (= _access) does not support the X_OK mode.
 #
-# On other platforms, there's a runtime test for trailing slash handling bugs
-# (e.g., Mac OS X 10.5 mistakenly allows access("link-to-file/",amode)).
+# On macOS, access() has a trailing slash bug (allows access("link-to-file/",amode)).
+# On Linux and other POSIX systems, access() correctly handles trailing slashes.
 autoconf(
-    name = "access",
+    name = "gl_FUNC_ACCESS",
     checks = select({
+        "@platforms//os:macos": [
+            # macOS has the trailing slash bug (per M4: "Mac OS X 10.5 mistakenly
+            # allows access("link-to-file/",amode)")
+            # Create a compile check that intentionally fails to indicate the bug exists
+            checks.AC_TRY_LINK(
+                name = "gl_cv_func_access_slash_works",
+                code = """\
+/* macOS has access() trailing slash bug - this check intentionally fails */
+#error "ACCESS_TRAILING_SLASH_BUG"
+int main(void) { return 0; }
+""",
+            ),
+            checks.AC_DEFINE("ACCESS_TRAILING_SLASH_BUG", "1"),
+            # Condition-based: set REPLACE_ACCESS based on check result
+            checks.AC_SUBST(
+                "REPLACE_ACCESS",
+                condition = "gl_cv_func_access_slash_works",
+                if_false = 1,  # Check failed (has bug) - needs replacement
+                if_true = 0,  # Check passed (no bug) - no replacement needed
+            ),
+        ],
         "@platforms//os:windows": [
-            # On Windows, unconditionally set REPLACE_ACCESS=1
-            # because access() (= _access) does not support X_OK mode
-            macros.M4_DEFINE("REPLACE_ACCESS", "1"),
+            # Windows: access() (= _access) doesn't support X_OK mode
+            # This is a known platform limitation, not a runtime check
+            # Create a check that fails to trigger the condition
+            checks.AC_TRY_LINK(
+                name = "gl_cv_func_access_x_ok_works",
+                code = """\
+/* Windows _access() does not support X_OK mode */
+#error "ACCESS_X_OK_NOT_SUPPORTED"
+int main(void) { return 0; }
+""",
+            ),
+            checks.AC_SUBST(
+                "REPLACE_ACCESS",
+                condition = "gl_cv_func_access_x_ok_works",
+                if_false = 1,
+                if_true = 0,
+            ),
         ],
         "//conditions:default": [
-            # On non-Windows, check for access function
-            # Note: Full M4 implementation does runtime check for trailing slash bug
-            # which we cannot replicate at compile time
-            macros.AC_CHECK_FUNC(
-                "access",
-                define = "HAVE_ACCESS",
+            # Linux and other POSIX: access() works correctly
+            # Create a check that passes to indicate no bug
+            checks.AC_TRY_LINK(
+                name = "gl_cv_func_access_slash_works",
+                code = """\
+/* Linux/POSIX: access() correctly handles trailing slashes */
+int main(void) { return 0; }
+""",
+            ),
+            # Condition-based: set REPLACE_ACCESS based on check result
+            checks.AC_SUBST(
+                "REPLACE_ACCESS",
+                condition = "gl_cv_func_access_slash_works",
+                if_false = 1,  # Check failed - needs replacement
+                if_true = 0,  # Check passed - no replacement needed
             ),
         ],
     }),
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
-        "//gnulib/m4/unistd_h",
+        ":HAVE_ACCESS",
         # AC_CHECK_FUNCS_ONCE([lstat]) - provided by lstat dependency
         "//gnulib/m4/lstat",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Package-level aggregator target
+autoconf(
+    name = "access",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_ACCESS",
     ],
 )

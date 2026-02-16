@@ -1,15 +1,26 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sysexits.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 autoconf(
     name = "sysexits",
-    checks = [
-        macros.AC_CHECK_HEADER(
+    checks = gl_macros.GL_CHECK_NEXT_HEADERS(["sysexits.h"]) + [
+        checks.AC_CHECK_HEADER(
             "sysexits.h",
             define = "HAVE_SYSEXITS_H",
         ),
+        checks.AC_SUBST(
+            "HAVE_SYSEXITS_H",
+            condition = "ac_cv_header_sysexits_h",
+            if_false = "0",
+            if_true = "1",
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/include_next",
+    ],
 )

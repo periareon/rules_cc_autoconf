@@ -1,11 +1,59 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/random.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "random",
     checks = [
-        # Note: random.m4 may not exist in gnulib, or this module may not have checks
-    ],
+        # gl_FUNC_RANDOM checks for random, initstate, and setstate functions
+        # On macOS, random() exists but the golden file shows HAVE_RANDOM is undefined
+        # (likely because it's not used or there's a replacement)
+        # Note: random() is checked via AC_LINK_IFELSE, but we don't define HAVE_RANDOM
+        # checks.AC_CHECK_FUNC(
+        #     "random",
+        #     define = "HAVE_RANDOM",
+        # ),
+        checks.AC_CHECK_FUNC(
+            "initstate",
+            define = "HAVE_INITSTATE",
+        ),
+        checks.AC_CHECK_FUNC(
+            "setstate",
+            define = "HAVE_SETSTATE",
+        ),
+        checks.AC_CHECK_DECL(
+            "initstate",
+            define = "HAVE_DECL_INITSTATE",
+            includes = ["#include <stdlib.h>"],
+        ),
+        checks.AC_CHECK_DECL(
+            "setstate",
+            define = "HAVE_DECL_SETSTATE",
+            includes = ["#include <stdlib.h>"],
+        ),
+    ] + select({
+        # On Linux: random functions work correctly, no replacement needed
+        "@platforms//os:linux": [
+            checks.AC_SUBST("REPLACE_INITSTATE", "0"),
+            checks.AC_SUBST("REPLACE_RANDOM", "0"),
+            checks.AC_SUBST("REPLACE_SETSTATE", "0"),
+        ],
+        # On macOS and other platforms: random functions need replacement
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_INITSTATE", "1"),
+            checks.AC_SUBST("REPLACE_RANDOM", "1"),
+            checks.AC_SUBST("REPLACE_SETSTATE", "1"),
+        ],
+    }),
     visibility = ["//visibility:public"],
+    deps = [
+        # Note: stdlib_h defaults provides HAVE_INITSTATE, HAVE_SETSTATE, HAVE_DECL_INITSTATE, HAVE_DECL_SETSTATE as subst
+        # We need them in config.h, so we check for them directly
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//gnulib/m4/extensions",  # Need extension defines
+        "//gnulib/m4/wchar_h:gl_WCHAR_H_CORE",
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

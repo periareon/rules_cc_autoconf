@@ -1,9 +1,48 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/setpayload.m4"""
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/setpayload.m4
+
+gl_FUNC_SETPAYLOAD:
+- AC_REQUIRE([gl_MATH_H_DEFAULTS])
+- AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+- gl_MATHFUNC([setpayload], ...)
+- Sets HAVE_SETPAYLOAD=0 if function not found
+
+Note: setpayload does NOT call gl_FUNC_GETPAYLOAD, so HAVE_GETPAYLOAD* should stay at defaults (1)
+"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "setpayload",
-    checks = [],
+    checks = select({
+        # On Linux with glibc 2.31+: setpayload functions exist
+        "@platforms//os:linux": [
+            checks.AC_SUBST("HAVE_SETPAYLOAD", "1"),
+            checks.AC_SUBST("HAVE_SETPAYLOADF", "1"),
+            checks.AC_SUBST("HAVE_SETPAYLOADL", "1"),
+        ],
+        # On macOS: setpayload functions don't exist
+        "//conditions:default": [
+            checks.AC_SUBST("HAVE_SETPAYLOAD", "0"),
+            checks.AC_SUBST("HAVE_SETPAYLOADF", "0"),
+            checks.AC_SUBST("HAVE_SETPAYLOADL", "0"),
+        ],
+    }) + [
+        # AC_SUBST([SETPAYLOAD*_LIBM]) - no extra library needed
+        checks.AC_SUBST("SETPAYLOAD_LIBM", ""),
+        checks.AC_SUBST("SETPAYLOADF_LIBM", ""),
+        checks.AC_SUBST("SETPAYLOADL_LIBM", ""),
+    ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/math_h",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+        "//gnulib/m4/math_h:long-double-vs-double",
+        # Note: We do NOT depend on getpayload module - setpayload.m4 doesn't require it
+        # The exponent values come from different modules
+        "//gnulib/m4/exponentd",
+        "//gnulib/m4/exponentl",
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

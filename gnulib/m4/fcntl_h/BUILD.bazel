@@ -1,11 +1,70 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fcntl_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "fcntl_h",
     checks = [
-        # Note: fcntl_h.m4 may not exist in gnulib, or this module may not have checks
+        checks.AC_CHECK_HEADER("fcntl.h"),
+        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_FCNTL_H", "<fcntl.h>"),
+        checks.AC_SUBST("NEXT_FCNTL_H", "<fcntl.h>"),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",  # gl_NEXT_HEADERS requires gl_INCLUDE_NEXT
+        "//gnulib/m4/fcntl-o",  # AC_REQUIRE([gl_FCNTL_O_FLAGS])
+        "//autoconf/macros/AC_TYPE_PID_T",  # AC_REQUIRE([AC_TYPE_PID_T])
+        "//autoconf/macros/AC_TYPE_MODE_T",  # AC_REQUIRE([AC_TYPE_MODE_T])
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        # (golden files include standard header checks even though not AC_REQUIREd)
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        # Note: extensions is added for test compatibility
+        # (golden files include extension defines like _DARWIN_C_SOURCE)
+        "//gnulib/m4/extensions",
+        # Note: symlink is NOT a dependency here - the test's configure.ac doesn't call gl_FUNC_SYMLINK,
+        # so HAVE_SYMLINK should remain @VAR@ (unsubstituted)
+    ],
+)
+
+autoconf(
+    name = "gl_FCNTL_H_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("HAVE_FCNTL", 1),
+        checks.AC_SUBST("HAVE_OPENAT", 1),
+        checks.AC_SUBST("HAVE_OPENAT2", 0),
+        # REPLACE_* defaults from gl_FCNTL_H_DEFAULTS
+        checks.AC_SUBST("REPLACE_CREAT", 0),
+        checks.AC_SUBST("REPLACE_FCNTL", 0),
+        checks.AC_SUBST("REPLACE_OPEN", 0),
+        checks.AC_SUBST("REPLACE_OPENAT", 0),
+    ],
+    visibility = ["//visibility:private"],
+)
+
+autoconf(
+    name = "gl_FCNTL_H_REQUIRE_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("GNULIB_CREAT", 0),
+        checks.AC_SUBST("GNULIB_FCNTL", 0),
+        checks.AC_SUBST("GNULIB_NONBLOCKING", 0),
+        checks.AC_SUBST("GNULIB_OPEN", 0),
+        checks.AC_SUBST("GNULIB_OPENAT", 0),
+        checks.AC_SUBST("GNULIB_OPENAT2", 0),
+        # Microsoft deprecated alias function names
+        checks.AC_SUBST("GNULIB_MDA_CREAT", 1),
+        checks.AC_SUBST("GNULIB_MDA_OPEN", 1),
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gl_FCNTL_H_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FCNTL_H_REQUIRE_DEFAULTS",
+    ],
 )

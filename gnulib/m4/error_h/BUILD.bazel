@@ -1,16 +1,70 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/error_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 autoconf(
     name = "error_h",
     checks = [
-        macros.AC_CHECK_DECL(
-            "error_at_line",
-            define = "HAVE_DECL_ERROR_AT_LINE",
-            headers = ["error.h"],
+        # Standard header defines are provided by AC_CHECK_INCLUDES_DEFAULT dependency
+        # Platform-specific NEXT_* values:
+        # - macOS: "<error.h>"
+        # - Linux: "" (empty)
+        # gl_CHECK_NEXT_HEADERS([error.h]) - both macOS and Linux use <error.h>
+    ] + gl_macros.GL_CHECK_NEXT_HEADERS(["error.h"]) + select({
+        # On Linux with glibc, error.h exists
+        "@platforms//os:linux": [
+            checks.AC_DEFINE("HAVE_ERROR_H", 1),
+            checks.AC_SUBST("HAVE_ERROR_H", 1),
+        ],
+        # On macOS, error.h doesn't exist
+        "//conditions:default": [
+            checks.AC_SUBST("HAVE_ERROR_H", 0),
+        ],
+    }) + [
+        # Note: On macOS, error.h doesn't exist, so HAVE_ERROR=0
+    ] + gl_macros.GL_CHECK_FUNCS_ANDROID(
+        ["error"],
+        includes = ["#include <error.h>"],
+    ) + [
+        # GL_CHECK_FUNCS_ANDROID defines HAVE_ERROR but doesn't subst it
+        checks.AC_SUBST(
+            "HAVE_ERROR",
+            condition = "ac_cv_func_error",
+            if_false = 0,
+            if_true = 1,
         ),
+        checks.AC_CHECK_DECL(
+            "error_at_line",
+            name = "ac_cv_have_decl_error_at_line",
+            includes = ["#include <error.h>"],
+        ),
+        # Note: On macOS, error_at_line doesn't exist, so HAVE_ERROR_AT_LINE=0
+        checks.AC_TRY_LINK(
+            name = "ac_cv_lib_error_at_line",
+            code = """\
+#include <error.h>
+int main(void) {
+    error_at_line(0, 0, "", 0, "an error occurred");
+    return 0;
+}
+""",
+        ),
+        checks.AC_SUBST(
+            "HAVE_ERROR_AT_LINE",
+            condition = "ac_cv_lib_error_at_line",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # REPLACE_ERROR and REPLACE_ERROR_AT_LINE are set to 0 on macOS
+        checks.AC_SUBST("REPLACE_ERROR", 0),
+        checks.AC_SUBST("REPLACE_ERROR_AT_LINE", 0),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/include_next",  # gl_CHECK_NEXT_HEADERS requires include_next
+    ],
 )

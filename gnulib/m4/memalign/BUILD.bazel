@@ -1,11 +1,26 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/memalign.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "memalign",
-    checks = [
-        # Note: memalign.m4 may not exist in gnulib, or this module may not have checks
-    ],
+    checks = select({
+        # On Linux, memalign exists
+        "@platforms//os:linux": [
+            checks.AC_DEFINE("HAVE_MEMALIGN", 1),
+            checks.AC_SUBST("HAVE_MEMALIGN", 1),
+        ],
+        # On macOS, memalign doesn't exist (it's a GNU extension, requires malloc.h)
+        "//conditions:default": [
+            checks.AC_SUBST("HAVE_MEMALIGN", 0),
+        ],
+    }),
     visibility = ["//visibility:public"],
+    deps = [
+        # Note: gl_MALLOC_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

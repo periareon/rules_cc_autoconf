@@ -1,0 +1,46 @@
+"""AC_FUNC_STRNLEN - Autoconf builtin macro
+
+Checks for strnlen function and whether it works correctly.
+
+Defines:
+  - HAVE_STRNLEN (if strnlen function exists and works)
+  - HAVE_DECL_STRNLEN (if strnlen is declared)
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "AC_FUNC_STRNLEN",
+    checks = [
+        # Check if strnlen is declared
+        checks.AC_CHECK_DECL(
+            "strnlen",
+            name = "ac_cv_have_decl_strnlen",
+            includes = ["#include <string.h>"],
+        ),
+        # Check for strnlen function
+        checks.AC_CHECK_FUNC(
+            "strnlen",
+            name = "ac_cv_func_strnlen",
+        ),
+        # Define HAVE_DECL_STRNLEN if declared
+        checks.AC_DEFINE(
+            "HAVE_DECL_STRNLEN",
+            condition = "ac_cv_have_decl_strnlen",
+            if_true = "1",
+        ),
+        # Define HAVE_STRNLEN if function exists
+        # Note: Full AC_FUNC_STRNLEN also does runtime tests for bugs,
+        # but we assume it works on modern platforms
+        checks.AC_DEFINE(
+            "HAVE_STRNLEN",
+            condition = "ac_cv_func_strnlen",
+            if_true = "1",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)

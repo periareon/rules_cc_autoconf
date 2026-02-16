@@ -1,0 +1,81 @@
+/* config.h.in */
+/* #undef HAVE_DECL_MEMEQ */
+/* #undef HAVE_DECL_MEMMEM */
+#define HAVE_DECL_MEMRCHR 1
+/* #undef HAVE_DECL_STRDUP */
+/* #undef HAVE_DECL_STREQ */
+/* #undef HAVE_DECL_STRERROR_R */
+/* #undef HAVE_DECL_STRNDUP */
+/* #undef HAVE_DECL_STRNLEN */
+/* #undef HAVE_DECL_STRSIGNAL */
+/* #undef HAVE_DECL_STRTOK_R */
+/* #undef HAVE_EXPLICIT_BZERO */
+/* #undef HAVE_FFSL */
+/* #undef HAVE_FFSLL */
+#define HAVE_INTTYPES_H 1
+/* #undef HAVE_MBSLEN */
+/* #undef HAVE_MEMPCPY */
+#define HAVE_MEMRCHR 1
+/* #undef HAVE_MEMSET_EXPLICIT */
+/* #undef HAVE_RAWMEMCHR */
+/* #undef HAVE_SIGABBREV_NP */
+/* #undef HAVE_SIGDESCR_NP */
+#define HAVE_STDINT_H 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+/* #undef HAVE_STPCPY */
+/* #undef HAVE_STPNCPY */
+/* #undef HAVE_STRCASESTR */
+/* #undef HAVE_STRCHRNUL */
+/* #undef HAVE_STRERRORNAME_NP */
+/* #undef HAVE_STRERROR_L */
+#define HAVE_STRINGS_H 1
+#define HAVE_STRING_H 1
+/* #undef HAVE_STRPBRK */
+/* #undef HAVE_STRSEP */
+/* #undef HAVE_STRVERSCMP */
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+#define HAVE_WCHAR_H 1
+/* #undef REPLACE_FFSLL */
+/* #undef REPLACE_MEMCHR */
+/* #undef REPLACE_MEMMEM */
+/* #undef REPLACE_MEMPCPY */
+/* #undef REPLACE_MEMSET_EXPLICIT */
+/* #undef REPLACE_STPCPY */
+/* #undef REPLACE_STPNCPY */
+/* #undef REPLACE_STRCASESTR */
+/* #undef REPLACE_STRCHRNUL */
+/* #undef REPLACE_STRDUP */
+/* #undef REPLACE_STRERROR */
+/* #undef REPLACE_STRERRORNAME_NP */
+/* #undef REPLACE_STRERROR_L */
+/* #undef REPLACE_STRERROR_R */
+/* #undef REPLACE_STRNCAT */
+/* #undef REPLACE_STRNCPY */
+/* #undef REPLACE_STRNDUP */
+/* #undef REPLACE_STRNLEN */
+/* #undef REPLACE_STRSIGNAL */
+/* #undef REPLACE_STRSTR */
+/* #undef REPLACE_STRTOK_R */
+/* #undef REPLACE_STRVERSCMP */
+#define STDC_HEADERS 1
+/* #undef UNDEFINE_STRTOK_R */
+#define _ALL_SOURCE 1
+#define _DARWIN_C_SOURCE 1
+#define _GNU_SOURCE 1
+#define _HPUX_ALT_XOPEN_SOCKET_API 1
+#define _NETBSD_SOURCE 1
+#define _OPENBSD_SOURCE 1
+#define _POSIX_PTHREAD_SEMANTICS 1
+#define _TANDEM_SOURCE 1
+#define __EXTENSIONS__ 1
+#define __STDC_WANT_IEC_60559_ATTRIBS_EXT__ 1
+#define __STDC_WANT_IEC_60559_BFP_EXT__ 1
+#define __STDC_WANT_IEC_60559_DFP_EXT__ 1
+#define __STDC_WANT_IEC_60559_EXT__ 1
+#define __STDC_WANT_IEC_60559_FUNCS_EXT__ 1
+#define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
+#define __STDC_WANT_LIB_EXT2__ 1
+#define __STDC_WANT_MATH_SPEC_FUNCS__ 1

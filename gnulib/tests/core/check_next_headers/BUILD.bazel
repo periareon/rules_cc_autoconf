@@ -1,0 +1,55 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:package_info.bzl", "package_info")
+load("//autoconf/tests:diff_test.bzl", "diff_test")
+load("//autoconf/tests:gnu_autoconf_configure_test.bzl", "gnu_autoconf_configure_test")
+load("//gnulib:macros.bzl", gl_macros = "macros")
+
+package_info(
+    name = "package_info",
+    package_name = "test_gnulib_macros",
+    package_version = "1.0.0",
+)
+
+# Test GL_CHECK_NEXT_HEADERS
+autoconf(
+    name = "autoconf",
+    checks = gl_macros.GL_CHECK_NEXT_HEADERS(["assert.h"]) + gl_macros.GL_CHECK_NEXT_HEADERS(["sys/stat.h"]),
+    deps = [
+        ":package_info",
+        "//gnulib/m4/include_next",
+    ],
+)
+
+autoconf_hdr(
+    name = "subst",
+    out = "subst.h",
+    mode = "subst",
+    template = "subst.h.in",
+    deps = [":autoconf"],
+)
+
+diff_test(
+    name = "subst_diff",
+    file1 = "golden_subst.h.in",
+    file2 = ":subst",
+)
+
+cc_test(
+    name = "test",
+    srcs = [
+        "test.c",
+        ":subst",
+    ],
+)
+
+gnu_autoconf_configure_test(
+    name = "gnu_autoconf_configure_test",
+    config_h_in = "config.h.in",
+    configure_ac = "configure.ac",
+    golden_config_h = "golden_config.h.in",
+    golden_subst_h = "golden_subst.h.in",
+    m4_files = ["@gnulib//:all_m4"],
+    subst_h_in = "subst.h.in",
+)

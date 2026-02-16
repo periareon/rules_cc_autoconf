@@ -1,24 +1,35 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/log10l.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "log10l",
     checks = [
-        macros.AC_CHECK_FUNC(
+        # gl_FUNC_LOG10L checks if log10l exists, then checks declaration
+        # On macOS, log10l exists (long double == double, but function is available)
+        checks.AC_CHECK_FUNC(
             "log10l",
             define = "HAVE_LOG10L",
         ),
-        macros.AC_CHECK_DECL(
+        # The golden file shows HAVE_DECL_LOG10L should be undefined in config.h
+        # Use internal define to avoid defining it in config.h
+        checks.AC_CHECK_DECL(
             "log10l",
-            define = "HAVE_DECL_LOG10L",
-            headers = ["math.h"],
+            name = "_gl_cv_have_decl_log10l",
+            includes = ["#include <math.h>"],
         ),
+        checks.AC_SUBST("LOG10L_LIBM", ""),
+        # LOGL_LIBM comes from logl dependency
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//gnulib/m4/asinl",  # Provides FREXPL_LIBM for golden
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/isnanl",
+        "//gnulib/m4/log",  # Provides LOG_LIBM for golden (canonical owner)
         "//gnulib/m4/log10",
         "//gnulib/m4/logl",
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
     ],
 )

@@ -1,0 +1,3 @@
+/* config.h.in */
+#undef HAVE_READLINK
+#undef LINK_FOLLOWS_SYMLINKS

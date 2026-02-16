@@ -1,23 +1,31 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/clock_time.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "clock_time",
     checks = [
-        macros.AC_CHECK_FUNC(
+        checks.AC_SUBST("CLOCK_TIME_LIB", ""),  # golden expects empty
+        checks.AC_CHECK_FUNC(
             "clock_getres",
             define = "HAVE_CLOCK_GETRES",
         ),
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "clock_gettime",
             define = "HAVE_CLOCK_GETTIME",
         ),
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "clock_settime",
             define = "HAVE_CLOCK_SETTIME",
         ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS,
+
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//gnulib/m4/extensions",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

@@ -1,0 +1,4 @@
+/* config.h.in */
+#define HAVE_LIB 1
+/* #undef LIB */
+/* #undef LIB_PREFIX */

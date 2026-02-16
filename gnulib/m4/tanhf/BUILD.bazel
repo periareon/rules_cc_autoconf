@@ -1,22 +1,30 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/tanhf.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "tanhf",
     checks = [
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "tanhf",
             define = "HAVE_TANHF",
         ),
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "tanhf",
             define = "HAVE_DECL_TANHF",
         ),
+        # gl_MATHFUNC sets TANHF_LIBM based on whether tanhf needs -lm
+        # On macOS/Linux, tanhf is in libc, so TANHF_LIBM is empty
+        checks.AC_SUBST("TANHF_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS,
+
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//gnulib/m4/extensions",
         "//gnulib/m4/tanh",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

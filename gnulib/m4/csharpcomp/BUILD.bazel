@@ -3,9 +3,17 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 
 autoconf(
-    name = "csharpcomp",
+    name = "gt_CSHARPCOMP",
     checks = [
-        # Note: csharpcomp.m4 may not exist in gnulib, or this module may not have checks
+        # TODO: `AC_CHECK_PROG` has `PATH` reliance. A hermetic interface is required.
     ],
     visibility = ["//visibility:public"],
+)
+
+# Top-level target
+autoconf(
+    name = "csharpcomp",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [":gt_CSHARPCOMP"],
 )

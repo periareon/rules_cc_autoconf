@@ -1,18 +1,26 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/socklen.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
-
-# HAVE_SYS_SOCKET_H comes from sys_socket_h dependency
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "socklen",
     checks = [
-        macros.AC_CHECK_HEADER("ws2tcpip.h"),
-        macros.AC_CHECK_TYPE("socklen_t"),
+        # gl_TYPE_SOCKLEN_T checks for socklen_t type
+        # Note: HAVE_WS2TCPIP_H is provided by sys_socket_h
+        checks.AC_CHECK_TYPE(
+            "socklen_t",
+            code = """\
+#include <sys/types.h>
+#include <sys/socket.h>
+""",
+            define = "HAVE_SOCKLEN_T",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/sys_socket_h",  # Provides HAVE_SYS_SOCKET_H
+        "//gnulib/m4/sys_socket_h:gl_SYS_SOCKET_H",
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

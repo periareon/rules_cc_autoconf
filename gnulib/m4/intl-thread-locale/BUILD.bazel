@@ -1,12 +1,66 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/intl-thread-locale.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
+# Tests whether uselocale() exists and is usable. Sets gt_working_uselocale and defines HAVE_WORKING_USELOCALE.
+# M4 uses AC_RUN_IFELSE for "whether uselocale works"; we use select() for cross-compile safety.
 autoconf(
-    name = "intl-thread-locale",
-    checks = [],
+    name = "gt_FUNC_USELOCALE",
+    checks = [
+    ] + gl_macros.GL_CHECK_FUNCS_ANDROID(
+        ["uselocale"],
+        includes = ["#include <locale.h>"],
+    ) + [
+        # HAVE_WORKING_USELOCALE: M4 uses AC_RUN_IFELSE to test if uselocale works; we use select().
+        # Define on Linux and macOS; golden expects subst placeholders left unsubstituted.
+    ] + select({
+        "@platforms//os:linux": [
+            checks.AC_DEFINE("HAVE_WORKING_USELOCALE", "1"),
+        ],
+        "@platforms//os:macos": [
+            checks.AC_DEFINE("HAVE_WORKING_USELOCALE", "1"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/locale_h",  # Provides HAVE_XLOCALE_H
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
+        "//gnulib/m4/locale_h:HAVE_XLOCALE_H",  # AC_CHECK_HEADERS_ONCE([xlocale.h]); avoid full locale_h so subst stays unsubstituted
+    ],
+)
+
+# Check how to retrieve the name of a per-thread locale. Sets gt_nameless_locales, HAVE_GOOD_USELOCALE, etc.
+# M4 uses AC_RUN_IFELSE for fake locale detection; we use select() for OpenBSD/Android.
+autoconf(
+    name = "gt_INTL_THREAD_LOCALE_NAME",
+    checks = select({
+        # On Linux and macOS: working=yes, fake=no -> good=yes. Golden expects subst placeholders.
+        "@platforms//os:linux": [
+            checks.AC_DEFINE("HAVE_GOOD_USELOCALE", "1"),
+        ],
+        "@platforms//os:macos": [
+            checks.AC_DEFINE("HAVE_GOOD_USELOCALE", "1"),
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gt_FUNC_USELOCALE",
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//gnulib/m4/extensions",
+    ],
+)
+
+# Package-level aggregator (matches package name)
+autoconf(
+    name = "intl-thread-locale",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gt_FUNC_USELOCALE",
+        ":gt_INTL_THREAD_LOCALE_NAME",
     ],
 )

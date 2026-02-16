@@ -1,19 +1,48 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/gettime.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "gettime",
+    name = "gl_GETTIME",
     checks = [
-        macros.AC_CHECK_DECL(
+        # gl_CHECK_FUNC_TIMESPEC_GET: check for timespec_get (C11)
+        checks.AC_CHECK_FUNC(
             "timespec_get",
-            define = "HAVE_DECL_TIMESPEC_GET",
-            headers = ["time.h"],
+            define = "HAVE_TIMESPEC_GET",
+            subst = "HAVE_TIMESPEC_GET",
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/timespec",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/clock_time",  # gl_CLOCK_TIME: HAVE_CLOCK_GETRES, HAVE_CLOCK_GETTIME, HAVE_CLOCK_SETTIME, CLOCK_TIME_LIB
+        "//gnulib/m4/extensions",
+    ],
+)
+
+autoconf(
+    name = "gl_CHECK_FUNC_TIMESPEC_GET",
+    visibility = ["//visibility:public"],
+)
+
+# gl_GETTIME_RES: M4 uses gl_CHECK_FUNCS_ANDROID([timespec_getres], [[#include <time.h>]]).
+# Use the actual check via timespec_getres:gl_FUNC_TIMESPEC_GETRES (do not use select()+AC_DEFINE).
+autoconf(
+    name = "gl_GETTIME_RES",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/timespec_getres:gl_FUNC_TIMESPEC_GETRES",
+    ],
+)
+
+autoconf(
+    name = "gettime",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_CHECK_FUNC_TIMESPEC_GET",
+        ":gl_GETTIME",
+        ":gl_GETTIME_RES",
     ],
 )

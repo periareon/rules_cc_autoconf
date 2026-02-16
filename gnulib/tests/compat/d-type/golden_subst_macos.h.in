@@ -1,0 +1,2 @@
+/* subst.h.in */
+#define SUBST_HAVE_STRUCT_DIRENT_D_TYPE "@HAVE_STRUCT_DIRENT_D_TYPE@"

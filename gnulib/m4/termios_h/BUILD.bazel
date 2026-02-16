@@ -1,14 +1,134 @@
-"""Common module for termios.h header check"""
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/termios_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
-# Provides HAVE_TERMIOS_H for modules that need termios.h
+autoconf(
+    name = "gl_TERMIOS_H",
+    checks = [
+        checks.AC_CHECK_HEADER(
+            "termios.h",
+            name = "ac_cv_header_termios_h",
+        ),
+        checks.AC_SUBST("NEXT_TERMIOS_H", "<termios.h>"),
+        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_TERMIOS_H", "<termios.h>"),
+
+        # Define HAVE_TERMIOS_H in config.h if header exists
+        checks.AC_DEFINE(
+            "HAVE_TERMIOS_H",
+            condition = "ac_cv_header_termios_h",
+            if_true = 1,
+        ),
+
+        #   HAVE_TERMIOS_H=0
+        # fi
+        # Note: HAVE_TERMIOS_H is set to 1 in defaults, so we only need to handle the case where it's 0
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_struct_winsize_in_termios_h",
+            code = """\
+#include <termios.h>
+
+int main(void) {
+    static struct winsize x;
+    x.ws_row = x.ws_col;
+    return 0;
+}
+""",
+            language = "c",
+            requires = ["ac_cv_header_termios_h"],
+        ),
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_struct_winsize_in_sys_ioctl_h",
+            code = """\
+#include <sys/ioctl.h>
+
+int main(void) {
+    static struct winsize x;
+    x.ws_row = x.ws_col;
+    return 0;
+}
+""",
+            language = "c",
+            requires = ["ac_cv_header_sys_ioctl_h"],  # From sys_ioctl_h dependency
+        ),
+
+        #    || test "$gl_cv_struct_winsize_in_sys_ioctl_h" != yes; then
+        #   fi
+        # fi
+        # Based on golden files, on macOS:
+        # - TERMIOS_H_DEFINES_STRUCT_WINSIZE=1 in subst.h (struct winsize is in termios.h)
+        # - SYS_IOCTL_H_DEFINES_STRUCT_WINSIZE=0 in subst.h
+        # - Both are undefined in config.h (they're substitution variables only)
+        # The logic: if struct winsize is in termios.h, set TERMIOS_H_DEFINES_STRUCT_WINSIZE=1, else if in sys/ioctl.h, set SYS_IOCTL_H_DEFINES_STRUCT_WINSIZE=1
+        # Based on golden files, on macOS struct winsize is in termios.h, so TERMIOS_H_DEFINES_STRUCT_WINSIZE=1 and SYS_IOCTL_H_DEFINES_STRUCT_WINSIZE=0
+        checks.AC_SUBST(
+            "TERMIOS_H_DEFINES_STRUCT_WINSIZE",
+            condition = "gl_cv_struct_winsize_in_termios_h",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # SYS_IOCTL_H_DEFINES_STRUCT_WINSIZE is 1 only if struct winsize is in sys/ioctl.h but not in termios.h
+        # On macOS: struct winsize is in termios.h, so this is 0
+        # On Linux: struct winsize is in sys/ioctl.h (and not in termios.h), so this is 1
+        # We need two checks:
+        # 1. If termios.h has it, always 0
+        # 2. If termios.h doesn't have it and sys/ioctl.h has it, then 1
+    ] + select({
+        # On Linux, termios.h doesn't have struct winsize, so check sys/ioctl.h
+        "@platforms//os:linux": [
+            checks.AC_SUBST(
+                "SYS_IOCTL_H_DEFINES_STRUCT_WINSIZE",
+                condition = "gl_cv_struct_winsize_in_sys_ioctl_h",
+                if_false = 0,
+                if_true = 1,
+            ),
+        ],
+        # On macOS, termios.h has struct winsize, so SYS_IOCTL_H_DEFINES_STRUCT_WINSIZE=0
+        "//conditions:default": [
+            checks.AC_SUBST("SYS_IOCTL_H_DEFINES_STRUCT_WINSIZE", 0),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//autoconf/macros/AC_TYPE_PID_T",
+        "//gnulib/m4/include_next",
+        "//gnulib/m4/sys_ioctl_h:ac_cv_header_sys_ioctl_h",
+    ],
+)
+
+autoconf(
+    name = "gl_TERMIOS_H_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("HAVE_DECL_TCGETSID", 1),
+        checks.AC_SUBST("HAVE_TERMIOS_H", 1),
+    ],
+    visibility = ["//visibility:private"],
+)
+
+autoconf(
+    name = "gl_TERMIOS_H_REQUIRE_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("GNULIB_TCGETSID", 0),
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gl_TERMIOS_H_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_TERMIOS_H_REQUIRE_DEFAULTS",
+    ],
+)
 
 autoconf(
     name = "termios_h",
-    checks = [
-        macros.AC_CHECK_HEADER("termios.h"),
-    ],
     visibility = ["//visibility:public"],
+    deps = [
+        ":gl_TERMIOS_H",
+    ],
 )

@@ -1,0 +1,229 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:checks.bzl", "checks")
+load("//autoconf:package_info.bzl", "package_info")
+load("//autoconf/tests:diff_test.bzl", "diff_test")
+
+package_info(
+    name = "package",
+    package_name = "test_conditions",
+    package_version = "1.0.0",
+)
+
+# Base autoconf rule with condition checks (compile tests that succeed or fail)
+autoconf(
+    name = "base_autoconf",
+    checks = [
+        # Condition that SUCCEEDS - compile check passes
+        checks.AC_TRY_COMPILE(
+            code = """
+int main(void) { return 0; }
+""",
+            define = "CONDITION_SUCCEEDS",
+            language = "c",
+        ),
+        # Condition that FAILS - compile check fails
+        checks.AC_TRY_COMPILE(
+            code = """
+#error "This compile check intentionally fails"
+int main(void) { return 0; }
+""",
+            define = "CONDITION_FAILS",
+            language = "c",
+        ),
+        # A header check that succeeds (stdio.h exists)
+        # Create both cache variable and define for condition tests
+        checks.AC_CHECK_HEADER(
+            "stdio.h",
+            define = "HAVE_STDIO_H",
+        ),
+        # A header check that fails (nonexistent header)
+        checks.AC_CHECK_HEADER(
+            "nonexistent_condition_test.h",
+            define = "HAVE_NONEXISTENT_CONDITION_TEST_H",
+        ),
+    ],
+)
+
+# Second autoconf rule that uses condition parameter
+autoconf(
+    name = "autoconf",
+    checks = [
+        # =================================================================
+        # AC_DEFINE with condition tests (for config.h #define values)
+        # These use AC_DEFINE which replaces #undef in config.h
+        # =================================================================
+
+        # Test 1: AC_DEFINE_UNQUOTED where condition SUCCEEDS -> use if_true value
+        # Also test as subst variable to validate conditional behavior in both modes
+        checks.AC_DEFINE_UNQUOTED(
+            "SUBST_COND_SUCCESS",
+            condition = "CONDITION_SUCCEEDS",
+            if_false = "no_it_failed",
+            if_true = "yes_it_worked",
+            subst = True,
+        ),
+
+        # Test 2: AC_DEFINE_UNQUOTED where condition FAILS -> use if_false value
+        # Also test as subst variable to validate conditional behavior in both modes
+        checks.AC_DEFINE_UNQUOTED(
+            "SUBST_COND_FAILURE",
+            condition = "CONDITION_FAILS",
+            if_false = "no_it_failed",
+            if_true = "yes_it_worked",
+            subst = True,
+        ),
+
+        # Test 3: AC_DEFINE with numeric values (common pattern for REPLACE_*)
+        # Also test as subst variable to validate conditional behavior in both modes
+        checks.AC_DEFINE(
+            "REPLACE_WHEN_SUCCESS",
+            condition = "CONDITION_SUCCEEDS",
+            if_false = 1,  # Integer - renders as 1 (number) in C code
+            if_true = 0,  # Integer - renders as 0 (number) in C code
+            subst = True,
+        ),
+
+        # Test 4: AC_DEFINE with numeric values when condition fails
+        # Also test as subst variable to validate conditional behavior in both modes
+        checks.AC_DEFINE(
+            "REPLACE_WHEN_FAILURE",
+            condition = "CONDITION_FAILS",
+            if_false = 1,  # Integer - renders as 1 (number) in C code
+            if_true = 0,  # Integer - renders as 0 (number) in C code
+            subst = True,
+        ),
+
+        # Test 5: AC_DEFINE_UNQUOTED using header check as condition
+        # Also test as subst variable to validate conditional behavior in both modes
+        checks.AC_DEFINE_UNQUOTED(
+            "SUBST_HEADER_EXISTS",
+            condition = "HAVE_STDIO_H",
+            if_false = "missing",
+            if_true = "found",
+            subst = True,
+        ),
+
+        # Test 6: AC_DEFINE_UNQUOTED using missing header check as condition
+        # Also test as subst variable to validate conditional behavior in both modes
+        checks.AC_DEFINE_UNQUOTED(
+            "SUBST_HEADER_MISSING",
+            condition = "HAVE_NONEXISTENT_CONDITION_TEST_H",
+            if_false = "missing",
+            if_true = "found",
+            subst = True,
+        ),
+
+        # =================================================================
+        # AC_DEFINE with condition tests
+        # =================================================================
+
+        # Test 7: AC_DEFINE_UNQUOTED where condition SUCCEEDS -> use if_true value
+        # Note: In GNU Autoconf, AC_DEFINE with identifier values (like SUCCESS_VALUE)
+        # are not quoted, so we use AC_DEFINE_UNQUOTED to match that behavior
+        # Also test as subst variable to validate conditional behavior in both modes
+        checks.AC_DEFINE_UNQUOTED(
+            "DEFINE_COND_SUCCESS",
+            condition = "CONDITION_SUCCEEDS",
+            if_false = "FAILURE_VALUE",
+            if_true = "SUCCESS_VALUE",
+            subst = True,
+        ),
+
+        # Test 8: AC_DEFINE_UNQUOTED where condition FAILS -> use if_false value
+        # Note: In GNU Autoconf, AC_DEFINE with identifier values (like FAILURE_VALUE)
+        # are not quoted, so we use AC_DEFINE_UNQUOTED to match that behavior
+        # Also test as subst variable to validate conditional behavior in both modes
+        checks.AC_DEFINE_UNQUOTED(
+            "DEFINE_COND_FAILURE",
+            condition = "CONDITION_FAILS",
+            if_false = "FAILURE_VALUE",
+            if_true = "SUCCESS_VALUE",
+            subst = True,
+        ),
+
+        # Test 9: AC_DEFINE where condition succeeds, if_false is None
+        # (should define with if_true value)
+        # Also test as subst variable to validate conditional behavior in both modes
+        checks.AC_DEFINE(
+            "DEFINE_ONLY_IF_TRUE",
+            condition = "CONDITION_SUCCEEDS",
+            if_true = 1,  # Integer - renders as 1 (number) in C code
+            subst = True,
+        ),
+
+        # Test 10: AC_DEFINE where condition fails, if_false is None
+        # (should NOT be defined at all)
+        # Note: Not testing as subst variable since this tests the "not defined" case
+        checks.AC_DEFINE(
+            "DEFINE_SKIP_IF_FALSE",
+            condition = "CONDITION_FAILS",
+            if_true = 1,
+            requires = ["CONDITION_FAILS"],
+        ),
+
+        # Test 11: AC_DEFINE where condition fails, if_false = 0
+        # (should be defined as 0 - this tests the bug fix for HAVE_DECL_EXECVPE pattern)
+        checks.AC_DEFINE(
+            "DEFINE_ZERO_IF_FALSE",
+            condition = "CONDITION_FAILS",
+            if_false = 0,  # Integer - should create #define DEFINE_ZERO_IF_FALSE 0
+            if_true = 1,  # Integer - should NOT be used (condition fails)
+            subst = True,
+        ),
+    ],
+    deps = [
+        ":base_autoconf",
+        ":package",
+    ],
+)
+
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    mode = "defines",
+    template = "config.h.in",
+    deps = [":autoconf"],
+)
+
+# Test conditional behavior in defines mode (config.h)
+diff_test(
+    name = "config_diff_test",
+    file1 = "golden_config.h.in",
+    file2 = ":config.h",
+)
+
+# Test conditional behavior in subst mode (subst.h)
+autoconf_hdr(
+    name = "subst",
+    out = "subst.h",
+    mode = "subst",
+    template = "subst.h.in",
+    deps = [":autoconf"],
+)
+
+diff_test(
+    name = "subst_diff_test",
+    file1 = "golden_subst.h.in",
+    file2 = ":subst.h",
+)
+
+cc_test(
+    name = "test_conditions",
+    srcs = [
+        "test_conditions.c",
+        ":config.h",
+    ],
+)
+
+# Note: This test will fail until the `unquote` field is implemented for AC_DEFINE_UNQUOTED.
+# GNU Autoconf renders AC_DEFINE_UNQUOTED values as unquoted (e.g., `yes_it_worked`),
+# but our current implementation renders them as quoted (e.g., `"yes_it_worked"`).
+# Once `unquote` field is implemented, this test should pass.
+# gnu_autoconf_configure_test(
+#     name = "gnu_autoconf_configure_test",
+#     config_h_in = "config.h.in",
+#     configure_ac = "configure.ac",
+#     golden_config_h = "golden_config.h.in",
+# )

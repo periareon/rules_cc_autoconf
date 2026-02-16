@@ -1,30 +1,47 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/localeconv.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "localeconv",
+    name = "gl_FUNC_LOCALECONV",
     checks = [
-        # Check for localeconv function and struct lconv members
-        # Equivalent to gl_FUNC_LOCALECONV macro from localeconv.m4
-        # Note: Full implementation includes runtime checks for localeconv behavior
-        # AC_CHECK_MEMBER equivalent for struct lconv.decimal_point
-        macros.AC_CHECK_MEMBER(
-            "struct lconv",
-            "decimal_point",
-            headers = ["locale.h"],
-        ),
-        # AC_CHECK_MEMBER equivalent for struct lconv.int_p_cs_precedes
-        macros.AC_CHECK_MEMBER(
-            "struct lconv",
-            "int_p_cs_precedes",
-            headers = ["locale.h"],
-        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/locale_h",  # AC_REQUIRE([gl_LOCALE_H_DEFAULTS]), AC_REQUIRE([gl_LOCALE_H])
-        # Note: AC_REQUIRE([AC_CANONICAL_HOST]) is a standard autoconf macro
+        "//gnulib/m4/locale_h:gl_LOCALE_H",
+        "//gnulib/m4/monetary_h",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_LOCALECONV",
+    checks = [
+        # Equivalent to gl_FUNC_LOCALECONV macro from localeconv.m4
+        # Note: Full implementation includes runtime checks for localeconv behavior
+        # AC_CHECK_MEMBER equivalent for struct lconv.decimal_point
+        checks.AC_CHECK_MEMBER(
+            "struct lconv.decimal_point",
+            define = "HAVE_STRUCT_LCONV_DECIMAL_POINT",
+            includes = ["#include <locale.h>"],
+        ),
+        # AC_CHECK_MEMBER equivalent for struct lconv.int_p_cs_precedes
+        checks.AC_CHECK_MEMBER(
+            "struct lconv.int_p_cs_precedes",
+            define = "HAVE_STRUCT_LCONV_INT_P_CS_PRECEDES",
+            includes = ["#include <locale.h>"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "localeconv",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_LOCALECONV",
+        ":gl_PREREQ_LOCALECONV",
     ],
 )

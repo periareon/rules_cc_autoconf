@@ -1,19 +1,68 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/alloca.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "alloca",
+    name = "gl_FUNC_ALLOCA",
     checks = [
-        # Check for alloca
-        # Equivalent to gl_FUNC_ALLOCA macro from alloca.m4
-        macros.AC_CHECK_HEADER(
-            "alloca.h",
-            define = "HAVE_ALLOCA_H",
+        #   - ac_cv_working_alloca_h (cache variable for alloca.h header)
+        #   - ac_cv_func_alloca_works (cache variable for alloca function)
+        #   - HAVE_ALLOCA_H (define and subst if header exists)
+
+        # AC_EGREP_CPP checks if __GNUC__, _AIX, or _MSC_VER is defined
+        # If any of these are defined, alloca is a compiler builtin
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_rpl_alloca",
+            code = """\
+#if defined __GNUC__ || defined _AIX || defined _MSC_VER
+/* Need own alloca */
+#else
+/* Not a compiler builtin */
+#endif
+int main(void) { return 0; }
+""",
+            language = "c",
+        ),
+
+        # Note: AC_FUNC_ALLOCA already creates HAVE_ALLOCA via AC_DEFINE with condition ac_cv_func_alloca
+        # gl_FUNC_ALLOCA should not recreate it - it relies on AC_FUNC_ALLOCA's result
+
+        # Standard header defines are provided by AC_CHECK_INCLUDES_DEFAULT dependency
+
+        # Set ALLOCA to empty string (subst-only) - alloca is a compiler builtin
+        checks.AC_SUBST("ALLOCA", ""),
+        checks.AC_SUBST(
+            "HAVE_ALLOCA_H",
+            condition = "ac_cv_header_alloca_h",
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/macros/AC_FUNC_ALLOCA",
+        # For standard headers (HAVE_INTTYPES_H, etc.)
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Prerequisites of lib/alloca.c - empty in this case
+autoconf(
+    name = "gl_PREREQ_ALLOCA",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# Top-level target that aggregates all AC_DEFUN functions
+autoconf(
+    name = "alloca",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_ALLOCA",
+        ":gl_PREREQ_ALLOCA",
+        # Ensure AC_FUNC_ALLOCA's defines are included
+        "//autoconf/macros/AC_FUNC_ALLOCA",
+        # Ensure standard headers are included
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

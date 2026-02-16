@@ -1,17 +1,40 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/msvc-inval.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
+
+# gl_MSVC_INVAL macro from msvc-inval.m4
+# - On Windows with MSVC: checks for _set_invalid_parameter_handler
+#   - If found: HAVE_MSVC_INVALID_PARAMETER_HANDLER=1 (AC_DEFINE + AC_SUBST)
+#   - If not: HAVE_MSVC_INVALID_PARAMETER_HANDLER=0 (AC_SUBST only)
+# - On non-Windows: HAVE_MSVC_INVALID_PARAMETER_HANDLER=0 (AC_SUBST only)
+
+autoconf(
+    name = "gl_MSVC_INVAL",
+    checks = select({
+        "@platforms//os:windows": [
+            # If found, defines HAVE_MSVC_INVALID_PARAMETER_HANDLER=1
+            # The check produces success=true with value "1" or success=false with value "0"
+            checks.AC_CHECK_FUNC(
+                "_set_invalid_parameter_handler",
+                define = "HAVE_MSVC_INVALID_PARAMETER_HANDLER",
+            ),
+            # AC_SUBST - always exports the variable (value set by AC_CHECK_FUNC)
+            checks.AC_SUBST("HAVE_MSVC_INVALID_PARAMETER_HANDLER", 1),
+        ],
+        "//conditions:default": [
+            # On non-Windows, the function doesn't exist
+            # AC_SUBST exports HAVE_MSVC_INVALID_PARAMETER_HANDLER=0
+            checks.AC_SUBST("HAVE_MSVC_INVALID_PARAMETER_HANDLER", 0),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+)
 
 autoconf(
     name = "msvc-inval",
-    checks = [
-        # Check for _set_invalid_parameter_handler function
-        # Equivalent to gl_MSVC_INVAL macro from msvc-inval.m4
-        macros.AC_CHECK_FUNC(
-            "_set_invalid_parameter_handler",
-            define = "HAVE_MSVC_INVALID_PARAMETER_HANDLER",
-        ),
-    ],
     visibility = ["//visibility:public"],
+    deps = [
+        ":gl_MSVC_INVAL",
+    ],
 )

@@ -1,0 +1,19 @@
+/* config.h.in */
+#define HAVE_INTTYPES_H 1
+#define HAVE_STDINT_H 1
+/* #undef HAVE_STDIO_EXT_H */
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_STRING_H 1
+#define HAVE_STRUCT_SYSINFO_MEM_UNIT 1
+/* #undef HAVE_SYSCTL */
+#define HAVE_SYSINFO 1
+#define HAVE_SYS_PARAM_H 1
+#define HAVE_SYS_STAT_H 1
+/* #undef HAVE_SYS_SYSCTL_H */
+#define HAVE_SYS_SYSINFO_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+/* #undef HAVE___FWRITING */
+#define STDC_HEADERS 1

@@ -1,11 +1,29 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/tcgetattr.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "tcgetattr",
     checks = [
-        # TODO: Add checks based on .m4 file
+        # gl_HAVE_TCGETATTR checks for tcgetattr function
+        # We can't use AC_CHECK_FUNC here, because tcgetattr() is defined as a
+        # static inline function when compiling for Android 4.4 or older.
+        checks.AC_TRY_LINK(
+            code = """\
+#include <termios.h>
+struct termios x;
+int main(void) {
+    return tcgetattr(0, &x);
+}
+""",
+            define = "HAVE_TCGETATTR",
+            language = "c",
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

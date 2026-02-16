@@ -1,23 +1,33 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/tm_gmtoff.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
-# gl_TM_GMTOFF from tm_gmtoff.m4
-# Checks for tm_gmtoff and tm_zone in struct tm
 autoconf(
     name = "tm_gmtoff",
     checks = [
         # AC_CHECK_MEMBERS([struct tm.tm_gmtoff, struct tm.tm_zone])
-        macros.AC_CHECK_MEMBER(
-            "struct tm",
-            "tm_gmtoff",
-            headers = ["time.h"],
+        checks.AC_CHECK_MEMBER(
+            "struct tm.tm_gmtoff",
+            define = "HAVE_STRUCT_TM_TM_GMTOFF",
+            includes = ["#include <time.h>"],
         ),
-        macros.AC_CHECK_MEMBER(
-            "struct tm",
-            "tm_zone",
-            headers = ["time.h"],
+        checks.AC_CHECK_MEMBER(
+            "struct tm.tm_zone",
+            define = "HAVE_STRUCT_TM_TM_ZONE",
+            includes = ["#include <time.h>"],
+        ),
+        # Backward compatibility: define HAVE_TM_GMTOFF if tm_gmtoff member exists
+        checks.AC_DEFINE(
+            "HAVE_TM_GMTOFF",
+            condition = "HAVE_STRUCT_TM_TM_GMTOFF",
+            if_true = 1,
+        ),
+        # Backward compatibility: define HAVE_TM_ZONE if tm_zone member exists
+        checks.AC_DEFINE(
+            "HAVE_TM_ZONE",
+            condition = "HAVE_STRUCT_TM_TM_ZONE",
+            if_true = 1,
         ),
     ],
     visibility = ["//visibility:public"],

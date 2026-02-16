@@ -1,25 +1,85 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/gethostname.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
-# gl_FUNC_GETHOSTNAME macro from gethostname.m4
-# HAVE_SYS_SOCKET_H comes from sys_socket_h dependency
-# HAVE_SYS_PARAM_H comes from pathmax dependency
-# HAVE_NETDB_H comes from netdb_h dependency
-# HAVE_UNAME comes from uname dependency
-
+# Provide HOST_NAME_MAX when <limits.h> lacks it.
 autoconf(
-    name = "gethostname",
+    name = "gl_PREREQ_HOST_NAME_MAX",
+    checks = select({
+        # On Linux, HOST_NAME_MAX is defined in limits.h, don't redefine
+        "@platforms//os:linux": [],
+        # On macOS, HOST_NAME_MAX is not in limits.h, so we define it as 256
+        "//conditions:default": [
+            checks.AC_DEFINE("HOST_NAME_MAX", 256),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/macros/HAVE_SYS_PARAM_H",
+        # Deduplicate globally AC_CHECK_HEADERS_ONCE([sys/socket.h])
+        "//gnulib/m4/sys_socket_h:HAVE_SYS_SOCKET_H",
+        "//gnulib/m4/sys_socket_h:gl_PREREQ_SYS_H_WINSOCK2",
+        "//gnulib/m4/netdb_h",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Prerequisites of lib/gethostname.c.
+autoconf(
+    name = "gl_PREREQ_GETHOSTNAME",
     checks = [
-        macros.AC_CHECK_FUNC("gethostname"),
+        # Standard header defines are provided by AC_CHECK_INCLUDES_DEFAULT dependency
+        # AC_CHECK_FUNCS([uname]) - line 107 (only if not Windows)
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/netdb_h",  # Provides HAVE_NETDB_H
-        "//gnulib/m4/pathmax",  # Provides HAVE_SYS_PARAM_H
-        "//gnulib/m4/sys_socket_h",  # Provides HAVE_SYS_SOCKET_H
-        "//gnulib/m4/uname",  # Provides HAVE_UNAME
-        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
+        "//gnulib/m4/uname",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Ensure the gethostname() function and HOST_NAME_MAX macro.
+autoconf(
+    name = "gl_FUNC_GETHOSTNAME",
+    checks = [
+        # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        # gl_PREREQ_SYS_H_WINSOCK2 - line 15 (not ported, likely Windows-specific)
+
+        # This creates ac_cv_func_gethostname cache variable and HAVE_GETHOSTNAME define
+        checks.AC_CHECK_FUNC(
+            "gethostname",
+            define = "HAVE_GETHOSTNAME",
+            subst = True,
+        ),
+
+        # On modern systems, gethostname is in libc, so GETHOSTNAME_LIB is empty
+        # On Windows, it might be in -lws2_32, but we don't handle that here
+        checks.AC_SUBST("GETHOSTNAME_LIB", ""),
+
+        # Note: gl_PREREQ_HOST_NAME_MAX sets HAVE_SYS_PARAM_H subst variable
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
+        # This sets HOST_NAME_MAX and checks for sys/param.h, sys/socket.h, netdb.h
+        ":gl_PREREQ_HOST_NAME_MAX",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Top-level target that aggregates all AC_DEFUN functions
+autoconf(
+    name = "gethostname",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_GETHOSTNAME",
+        # gl_PREREQ_GETHOSTNAME is not called by gl_FUNC_GETHOSTNAME,
+        # but may be called directly in configure.ac, so include it
+        ":gl_PREREQ_GETHOSTNAME",
     ],
 )

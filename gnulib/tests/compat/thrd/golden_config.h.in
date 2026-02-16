@@ -1,0 +1,48 @@
+/* config.h.in */
+/* #undef BROKEN_THRD_JOIN */
+/* #undef BROKEN_THRD_START_T */
+#define HAVE_INTTYPES_H 1
+#define HAVE_PTHREAD_API 1
+#define HAVE_STDINT_H 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_STRING_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_THRD_CREATE 1
+#define HAVE_THREADS_H 1
+/* #undef HAVE_THREAD_LOCAL */
+#define HAVE_UNISTD_H 1
+/* #undef INCLUDE_NEXT */
+/* #undef INCLUDE_NEXT_AS_FIRST_DIRECTIVE */
+/* #undef NEXT_AS_FIRST_DIRECTIVE_THREADS_H */
+/* #undef NEXT_THREADS_H */
+/* #undef PRAGMA_SYSTEM_HEADER */
+/* #undef REPLACE_CALL_ONCE */
+/* #undef REPLACE_CND_BROADCAST */
+/* #undef REPLACE_CND_DESTROY */
+/* #undef REPLACE_CND_INIT */
+/* #undef REPLACE_CND_SIGNAL */
+/* #undef REPLACE_CND_TIMEDWAIT */
+/* #undef REPLACE_CND_WAIT */
+/* #undef REPLACE_MTX_DESTROY */
+/* #undef REPLACE_MTX_INIT */
+/* #undef REPLACE_MTX_LOCK */
+/* #undef REPLACE_MTX_TIMEDLOCK */
+/* #undef REPLACE_MTX_TRYLOCK */
+/* #undef REPLACE_MTX_UNLOCK */
+/* #undef REPLACE_THRD_CREATE */
+/* #undef REPLACE_THRD_CURRENT */
+/* #undef REPLACE_THRD_DETACH */
+/* #undef REPLACE_THRD_EQUAL */
+/* #undef REPLACE_THRD_EXIT */
+/* #undef REPLACE_THRD_JOIN */
+/* #undef REPLACE_THRD_SLEEP */
+/* #undef REPLACE_THRD_YIELD */
+/* #undef REPLACE_TSS_CREATE */
+/* #undef REPLACE_TSS_DELETE */
+/* #undef REPLACE_TSS_GET */
+/* #undef REPLACE_TSS_SET */
+/* #undef SCHED_YIELD_LIB */
+#define STDC_HEADERS 1

@@ -1,30 +1,45 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/thrd.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 autoconf(
-    name = "thrd",
+    name = "HAVE_THRD_CREATE",
+    checks = gl_macros.GL_CHECK_FUNCS_ANDROID(
+        ["thrd_create"],
+        includes = ["#include <threads.h>"],
+    ),
+    visibility = ["//gnulib:__subpackages__"],
+)
+
+autoconf(
+    name = "gl_FUNC_THRD_CREATE",
     checks = [
-        # Check for thrd_create function
-        # Equivalent to gl_FUNC_THRD_CREATE macro from thrd.m4
-        macros.AC_TRY_COMPILE(
-            code = """#include <threads.h>
-
-#ifdef __cplusplus
-extern "C"
-#endif
-char thrd_create ();
-
-int main(void) {
-    return thrd_create();
-}""",
-            define = "HAVE_THRD_CREATE",
-            language = "c",
-        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/threads_h",  # AC_REQUIRE([gl_THREADS_H])
+        ":HAVE_THRD_CREATE",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/threads_h:gl_THREADS_H",
+    ],
+)
+
+autoconf(
+    name = "gl_FUNC_THRD_JOIN",
+    checks = [
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/threads_h:gl_THREADS_H",
+    ],
+)
+
+autoconf(
+    name = "thrd",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_THRD_CREATE",
+        ":gl_FUNC_THRD_JOIN",
     ],
 )

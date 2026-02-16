@@ -1,0 +1,4 @@
+/* config.h.in */
+#define HAVE_SETRLIMIT 1
+#define HAVE_SIGALTSTACK 1
+#define HAVE_WORKING_SIGALTSTACK 1

@@ -1,31 +1,34 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/mkostemp.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "mkostemp",
     checks = [
-        # Check for mkostemp function
-        # Equivalent to gl_FUNC_MKOSTEMP macro from mkostemp.m4
-        macros.AC_TRY_COMPILE(
-            code = """#include <stdlib.h>
-
-#ifdef __cplusplus
-extern "C"
-#endif
-int mkostemp ();
-
-int main(void) {
-    return mkostemp();
-}""",
-            define = "HAVE_MKOSTEMP",
-            language = "c",
+        # gl_CHECK_FUNCS_ANDROID is similar to AC_CHECK_FUNC but with Android-specific handling
+        # Use internal define to avoid conflict with substitution variable
+        checks.AC_CHECK_FUNC(
+            "mkostemp",
+            name = "_gl_cv_func_mkostemp",
         ),
+
+        # Set HAVE_MKOSTEMP as define if function exists
+        checks.AC_DEFINE(
+            "HAVE_MKOSTEMP",
+            "1",
+            requires = ["_gl_cv_func_mkostemp==1"],
+        ),
+
+        # Otherwise, REPLACE_MKOSTEMP=0 (default)
+        # Based on golden file, REPLACE_MKOSTEMP=0 on macOS
+        checks.AC_SUBST("REPLACE_MKOSTEMP", 0),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/stdlib_h",  # AC_REQUIRE([gl_STDLIB_H_DEFAULTS])
-        # Note: AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
+        # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - line 12 (ignore, it's a _DEFAULTS function)
+        "//gnulib/m4/extensions",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

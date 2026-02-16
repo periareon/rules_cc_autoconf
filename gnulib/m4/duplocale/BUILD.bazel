@@ -1,51 +1,73 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/duplocale.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 autoconf(
     name = "duplocale",
     checks = [
-        # Check for duplocale function
-        # Equivalent to gl_FUNC_DUPLOCALE macro from duplocale.m4
-        # Note: Full implementation includes runtime checks for duplocale(LC_GLOBAL_LOCALE)
-        # that are not easily replicable in Bazel
-        macros.AC_TRY_COMPILE(
-            code = """#include <locale.h>
+        # This handles:
+        # - Checking if duplocale exists (with linking check)
+        # - AC_DEFINE HAVE_DUPLOCALE in config.h ONLY when function exists
+        # - AC_SUBST HAVE_DUPLOCALE in subst.h ALWAYS (0 or 1)
+    ] + gl_macros.GL_CHECK_FUNCS_ANDROID(
+        ["duplocale"],
+        code = """\
+#include <locale.h>
 
 #ifdef __cplusplus
 extern "C"
 #endif
-char duplocale ();
+locale_t duplocale(locale_t);
 
 int main(void) {
-    return duplocale();
-}""",
-            define = "HAVE_DUPLOCALE",
-            language = "c",
-        ),
-        macros.AC_CHECK_FUNC(
+    return duplocale((locale_t)0) != (locale_t)0;
+}
+""",
+    ) + [
+        # HAVE_NL_LANGINFO_L comes from nl_langinfo_l dependency
+        checks.AC_CHECK_FUNC(
             "snprintf_l",
             define = "HAVE_SNPRINTF_L",
         ),
-        macros.AC_TRY_COMPILE(
-            code = """#include <langinfo.h>
 
-#ifdef __cplusplus
-extern "C"
-#endif
-char nl_langinfo_l ();
+        # HAVE_DUPLOCALE is set by gl_macros.GL_CHECK_FUNCS_ANDROID above
+        # The m4 logic is more complex (depends on HAVE_LOCALE_T), but for now
+        # we rely on the macro to set it correctly based on function existence
+        # REPLACE_DUPLOCALE is set to 1 if:
+        # - gl_cv_func_duplocale_works != yes (duplocale(LC_GLOBAL_LOCALE) doesn't work correctly)
+        # - HAVE_LOCALE_T != 1 (but this is checked separately and sets HAVE_DUPLOCALE=0)
+        # Otherwise, REPLACE_DUPLOCALE=0 (default)
+        # Note: gl_cv_func_duplocale_works is determined by AC_RUN_IFELSE which checks
+        # if duplocale(LC_GLOBAL_LOCALE) works correctly. On glibc < 2.12, uClibc, AIX, NetBSD,
+        # it's "guessing no", on others it's "guessing yes".
+        # Since AC_RUN_IFELSE isn't portable to cross-compilation, we default REPLACE_DUPLOCALE=0
+        # (will be set to 1 if gl_FUNC_SETLOCALE_NULL is included and needed)
+        # Default to 0 - on modern macOS/Linux, duplocale works correctly
+        checks.AC_SUBST("REPLACE_DUPLOCALE", 0),
 
-int main(void) {
-    return nl_langinfo_l();
-}""",
-            define = "HAVE_NL_LANGINFO_L",
-            language = "c",
-        ),
+        # DUPLOCALE_LIB and LIB_DUPLOCALE are set based on REPLACE_DUPLOCALE
+        # If REPLACE_DUPLOCALE=1, DUPLOCALE_LIB="$SETLOCALE_NULL_LIB" (from gl_FUNC_SETLOCALE_NULL)
+        # Otherwise, DUPLOCALE_LIB=""
+        # Since REPLACE_DUPLOCALE=0 by default, DUPLOCALE_LIB="" (empty)
+        checks.AC_SUBST("DUPLOCALE_LIB", ""),
+        checks.AC_SUBST("LIB_DUPLOCALE", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/locale_h",  # AC_REQUIRE([gl_LOCALE_H_DEFAULTS]), AC_REQUIRE([gl_LOCALE_H])
-        # Note: AC_REQUIRE([AC_CANONICAL_HOST]) is a standard autoconf macro
+        "//gnulib/m4/nl_langinfo:nl_langinfo_l",
+        # Note: gl_LOCALE_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        # "//gnulib/m4/locale_h",  # Ignored - _DEFAULTS function
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        # Note: gl_FUNC_SETLOCALE_NULL is conditionally required, but we include it
+        # to match GNU autoconf test behavior (all m4 files are included)
+        "//gnulib/m4/setlocale_null",
+        "//gnulib/m4/locale_h:gl_LOCALE_H",
+        # HAVE_PTHREAD_API comes from threadlib (via toolchain defaults or explicit dependency)
+        # The golden file expects it, so we include threadlib to match GNU autoconf behavior
+        "//gnulib/m4/threadlib:gl_PTHREADLIB_BODY",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

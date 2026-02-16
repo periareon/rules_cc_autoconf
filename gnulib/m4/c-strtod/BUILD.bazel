@@ -1,12 +1,112 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/c-strtod.m4"""
+"""Clean port of gnulib m4/c-strtod.m4 (serial 21).
+
+gl_C_STRTOD: AC_REQUIRE(extensions, gt_FUNC_USELOCALE), nl_langinfo check,
+AC_CHECK_HEADERS_ONCE(xlocale.h), AC_LINK_IFELSE for strtod_l → HAVE_STRTOD_L 0/1.
+gl_C_STRTOF: Same for strtof_l → HAVE_STRTOF_L.
+gl_C_STRTOLD: Same deps, gl_CHECK_FUNCS_ANDROID(strtold_l) → HAVE_STRTOLD_L.
+"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks", "utils")
+
+# Prologue used by M4 for strtod_l/strtof_l: stdlib.h, locale.h, optional xlocale.h, locale_t.
+_STRTOD_PROLOGUE = [
+    "#include <stdlib.h>",
+    "#include <locale.h>",
+    "#if HAVE_XLOCALE_H",
+    "# include <xlocale.h>",
+    "#endif",
+    "locale_t loc;",
+]
+
+autoconf(
+    name = "gl_C_STRTOD",
+    checks = [
+        # AC_CACHE_CHECK([for strtod_l], [gl_cv_func_strtod_l], AC_LINK_IFELSE(...))
+        checks.AC_TRY_LINK(
+            name = "gl_cv_func_strtod_l",
+            code = utils.AC_LANG_PROGRAM(
+                _STRTOD_PROLOGUE,
+                "char *end; return strtod_l(\"0\", &end, loc) < 0.0;",
+            ),
+            compile_defines = ["HAVE_XLOCALE_H"],
+        ),
+        # if test $gl_cv_func_strtod_l = yes; then HAVE_STRTOD_L=1; else HAVE_STRTOD_L=0; fi
+        # AC_DEFINE_UNQUOTED([HAVE_STRTOD_L], [$HAVE_STRTOD_L], ...)
+        checks.AC_DEFINE(
+            "HAVE_STRTOD_L",
+            condition = "gl_cv_func_strtod_l",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/intl-thread-locale:gt_FUNC_USELOCALE",
+        "//gnulib/m4/locale_h:HAVE_XLOCALE_H",
+        "//gnulib/macros/AC_FUNC_NL_LANGINFO",
+    ],
+)
+
+autoconf(
+    name = "gl_C_STRTOF",
+    checks = [
+        checks.AC_TRY_LINK(
+            name = "gl_cv_func_strtof_l",
+            code = utils.AC_LANG_PROGRAM(
+                _STRTOD_PROLOGUE,
+                "char *end; return strtof_l(\"0\", &end, loc) < 0.0f;",
+            ),
+            compile_defines = ["HAVE_XLOCALE_H"],
+        ),
+        checks.AC_DEFINE(
+            "HAVE_STRTOF_L",
+            condition = "gl_cv_func_strtof_l",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/intl-thread-locale:gt_FUNC_USELOCALE",
+        "//gnulib/m4/locale_h:HAVE_XLOCALE_H",
+        "//gnulib/macros/AC_FUNC_NL_LANGINFO",
+    ],
+)
+
+autoconf(
+    name = "gl_C_STRTOLD",
+    checks = [
+        # gl_CHECK_FUNCS_ANDROID([strtold_l], [[#include <stdlib.h>]]) - link check for strtold_l
+        checks.AC_TRY_LINK(
+            name = "gl_cv_func_strtold_l",
+            code = utils.AC_LANG_PROGRAM(
+                _STRTOD_PROLOGUE,
+                "char *end; return strtold_l(\"0\", &end, loc) < 0.0L;",
+            ),
+            compile_defines = ["HAVE_XLOCALE_H"],
+        ),
+        checks.AC_DEFINE(
+            "HAVE_STRTOLD_L",
+            condition = "gl_cv_func_strtold_l",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/intl-thread-locale:gt_FUNC_USELOCALE",
+        "//gnulib/m4/locale_h:HAVE_XLOCALE_H",
+        "//gnulib/macros/AC_FUNC_NL_LANGINFO",
+    ],
+)
 
 autoconf(
     name = "c-strtod",
-    checks = [],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/locale_h",  # Provides HAVE_XLOCALE_H
+        ":gl_C_STRTOD",
+        ":gl_C_STRTOF",
+        ":gl_C_STRTOLD",
     ],
 )

@@ -1,17 +1,83 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/strsignal.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "strsignal",
     checks = [
-        macros.AC_CHECK_FUNC("strsignal"),
-        macros.AC_CHECK_DECL("sys_siglist"),
-        macros.AC_CHECK_DECL("_sys_siglist"),
+        # Note: gl_STRING_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        checks.AC_CHECK_DECL(
+            "strsignal",
+            name = "ac_cv_have_decl_strsignal",
+            includes = [
+                "#include <signal.h>",
+                "#include <string.h>",
+            ],
+        ),
+
+        # if test $ac_cv_have_decl_strsignal = no; then
+        # fi
+        # Define HAVE_DECL_STRSIGNAL in config.h if found
+        checks.AC_DEFINE(
+            "HAVE_DECL_STRSIGNAL",
+            condition = "ac_cv_have_decl_strsignal",
+            if_true = 1,
+        ),
+        checks.AC_CHECK_FUNC(
+            "strsignal",
+            name = "ac_cv_func_strsignal",
+        ),
+
+        # if test $ac_cv_func_strsignal = yes; then
+        #   if test "$gl_cv_func_working_strsignal" = no; then
+        #   fi
+        # else
+        # fi
+        # Define HAVE_STRSIGNAL in config.h if the function exists
+        checks.AC_DEFINE(
+            "HAVE_STRSIGNAL",
+            condition = "ac_cv_func_strsignal",
+            if_true = 1,
+        ),
+
+        # REPLACE_STRSIGNAL: Based on golden files, REPLACE_STRSIGNAL=0 on macOS/Linux
+        # The AC_RUN_IFELSE check can't be done in Bazel, so we assume it works correctly
+        # on our target platforms (macOS/Linux)
+        checks.AC_SUBST("REPLACE_STRSIGNAL", 0),
+
+        # Note: unistd.h is already checked by AC_CHECK_INCLUDES_DEFAULT
+        checks.AC_CHECK_DECL(
+            "sys_siglist",
+            name = "ac_cv_have_decl_sys_siglist",
+            includes = ["#include <signal.h>"],
+        ),
+        checks.AC_CHECK_DECL(
+            "_sys_siglist",
+            name = "ac_cv_have_decl__sys_siglist",
+            includes = ["#include <signal.h>"],
+        ),
+
+        # Set substitution variables
+        # Define in config.h
+        checks.AC_DEFINE(
+            "HAVE_DECL_SYS_SIGLIST",
+            condition = "ac_cv_have_decl_sys_siglist",
+            if_false = 0,
+            if_true = 1,
+        ),
+        checks.AC_DEFINE(
+            "HAVE_DECL__SYS_SIGLIST",
+            condition = "ac_cv_have_decl__sys_siglist",
+            if_false = 0,
+            if_true = 1,
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/unistd_h",  # Provides HAVE_UNISTD_H
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
+        "//gnulib/m4/string_h",  # AC_REQUIRE([gl_STRING_H_DEFAULTS])
     ],
 )

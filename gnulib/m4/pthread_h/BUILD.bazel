@@ -1,19 +1,309 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/pthread_h.m4"""
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/pthread_h.m4
+
+gl_PTHREAD_H_PART1:
+  - AC_REQUIRE([gl_PTHREAD_H_DEFAULTS])
+  - gl_CHECK_NEXT_HEADERS([pthread.h]) → NEXT_PTHREAD_H, NEXT_AS_FIRST_DIRECTIVE_PTHREAD_H
+  - if ac_cv_header_pthread_h = yes: HAVE_PTHREAD_H=1, else HAVE_PTHREAD_H=0
+  - AC_SUBST([HAVE_PTHREAD_H])
+  - AC_CHECK_TYPES([pthread_t, pthread_spinlock_t])
+  - if ac_cv_type_pthread_t != yes: HAVE_PTHREAD_T=0
+  - if ac_cv_type_pthread_spinlock_t != yes: HAVE_PTHREAD_SPINLOCK_T=0
+
+gl_PTHREAD_H:
+  - AC_REQUIRE([gl_PTHREAD_H_PART1])
+  - gl_PTHREAD_SPIN (sets HAVE_PTHREAD_SPIN_* and REPLACE_PTHREAD_SPIN_*)
+  - AC_CACHE_CHECK for PTHREAD_CREATE_DETACHED, PTHREAD_MUTEX_RECURSIVE, PTHREAD_MUTEX_ROBUST, PTHREAD_PROCESS_SHARED
+  - sets HAVE_*=0 if not found
+"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
+
+# gl_PTHREAD_H_DEFAULTS - Default values for AC_SUBSTed shell variables
+autoconf(
+    name = "gl_PTHREAD_H_DEFAULTS",
+    checks = [
+        # HAVE_* defaults - initialized to 1, may be overridden by checks
+        checks.AC_SUBST("HAVE_PTHREAD_T", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_SPINLOCK_T", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_CREATE_DETACHED", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_MUTEX_RECURSIVE", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_MUTEX_ROBUST", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_PROCESS_SHARED", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_CREATE", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_ATTR_INIT", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_ATTR_GETDETACHSTATE", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_ATTR_SETDETACHSTATE", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_ATTR_DESTROY", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_SELF", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_EQUAL", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_DETACH", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_JOIN", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_EXIT", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_ONCE", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_MUTEX_INIT", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_MUTEXATTR_INIT", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_MUTEXATTR_GETTYPE", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_MUTEXATTR_SETTYPE", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_MUTEXATTR_GETROBUST", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_MUTEXATTR_SETROBUST", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_MUTEXATTR_DESTROY", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_MUTEX_LOCK", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_MUTEX_TRYLOCK", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_MUTEX_TIMEDLOCK", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_MUTEX_UNLOCK", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_MUTEX_DESTROY", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_RWLOCK_INIT", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_RWLOCKATTR_INIT", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_RWLOCKATTR_DESTROY", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_RWLOCK_RDLOCK", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_RWLOCK_WRLOCK", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_RWLOCK_TRYRDLOCK", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_RWLOCK_TRYWRLOCK", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_RWLOCK_TIMEDRDLOCK", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_RWLOCK_TIMEDWRLOCK", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_RWLOCK_UNLOCK", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_RWLOCK_DESTROY", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_COND_INIT", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_CONDATTR_INIT", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_CONDATTR_DESTROY", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_COND_WAIT", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_COND_TIMEDWAIT", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_COND_SIGNAL", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_COND_BROADCAST", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_COND_DESTROY", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_KEY_CREATE", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_SETSPECIFIC", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_GETSPECIFIC", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_KEY_DELETE", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_SPIN_INIT", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_SPIN_LOCK", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_SPIN_TRYLOCK", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_SPIN_UNLOCK", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_SPIN_DESTROY", 1),
+        # REPLACE_* defaults - all 0
+        checks.AC_SUBST("REPLACE_PTHREAD_CREATE", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_ATTR_INIT", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_ATTR_GETDETACHSTATE", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_ATTR_SETDETACHSTATE", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_ATTR_DESTROY", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_SELF", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_EQUAL", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_DETACH", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_JOIN", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_EXIT", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_ONCE", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_MUTEX_INIT", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_MUTEXATTR_INIT", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_MUTEXATTR_GETTYPE", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_MUTEXATTR_SETTYPE", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_MUTEXATTR_GETROBUST", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_MUTEXATTR_SETROBUST", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_MUTEXATTR_DESTROY", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_MUTEX_LOCK", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_MUTEX_TRYLOCK", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_MUTEX_TIMEDLOCK", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_MUTEX_UNLOCK", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_MUTEX_DESTROY", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_RWLOCK_INIT", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_RWLOCKATTR_INIT", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_RWLOCKATTR_DESTROY", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_RWLOCK_RDLOCK", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_RWLOCK_WRLOCK", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_RWLOCK_TRYRDLOCK", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_RWLOCK_TRYWRLOCK", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_RWLOCK_TIMEDRDLOCK", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_RWLOCK_TIMEDWRLOCK", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_RWLOCK_UNLOCK", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_RWLOCK_DESTROY", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_COND_INIT", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_CONDATTR_INIT", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_CONDATTR_DESTROY", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_COND_WAIT", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_COND_TIMEDWAIT", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_COND_SIGNAL", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_COND_BROADCAST", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_COND_DESTROY", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_KEY_CREATE", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_SETSPECIFIC", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_GETSPECIFIC", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_KEY_DELETE", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_SPIN_INIT", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_SPIN_LOCK", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_SPIN_TRYLOCK", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_SPIN_UNLOCK", 0),
+        checks.AC_SUBST("REPLACE_PTHREAD_SPIN_DESTROY", 0),
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+)
+
+# gl_PTHREAD_H_REQUIRE_DEFAULTS - Module indicator variables (GNULIB_*)
+autoconf(
+    name = "gl_PTHREAD_H_REQUIRE_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("GNULIB_PTHREAD_THREAD", 0),
+        checks.AC_SUBST("GNULIB_PTHREAD_ONCE", 0),
+        checks.AC_SUBST("GNULIB_PTHREAD_MUTEX", 0),
+        checks.AC_SUBST("GNULIB_PTHREAD_RWLOCK", 0),
+        checks.AC_SUBST("GNULIB_PTHREAD_COND", 0),
+        checks.AC_SUBST("GNULIB_PTHREAD_TSS", 0),
+        checks.AC_SUBST("GNULIB_PTHREAD_SPIN", 0),
+        checks.AC_SUBST("GNULIB_PTHREAD_MUTEX_TIMEDLOCK", 0),
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        ":gl_PTHREAD_H_DEFAULTS",
+    ],
+)
 
 autoconf(
-    name = "pthread_h",
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_PTHREAD_H_REQUIRE_DEFAULTS",
+    ],
+)
+
+# gl_PTHREAD_H_PART1 - First part of pthread.h checks (without PTHREAD_MUTEX_ROBUST etc)
+#
+# This is used by gl_PTHREAD_SPIN which only requires PART1, not the full gl_PTHREAD_H.
+# Provides:
+# - HAVE_PTHREAD_H (define + subst)
+# - HAVE_PTHREAD_T (define + subst, overrides default if check fails)
+# - HAVE_PTHREAD_SPINLOCK_T (subst, overrides default if type doesn't exist)
+# - HAVE_PTHREAD_SPIN_* (subst, set to 0 if HAVE_PTHREAD_SPINLOCK_T=0)
+# - NEXT_PTHREAD_H, NEXT_AS_FIRST_DIRECTIVE_PTHREAD_H (subst)
+autoconf(
+    name = "gl_PTHREAD_H_PART1",
     checks = [
-        macros.AC_CHECK_TYPE(
+        # gl_CHECK_NEXT_HEADERS([pthread.h]) - pthread.h exists on macOS
+        checks.AC_SUBST("NEXT_PTHREAD_H", "<pthread.h>"),
+        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_PTHREAD_H", "<pthread.h>"),
+
+        # HAVE_PTHREAD_H - use AC_DEFINE referencing cache var from threadlib
+        checks.AC_DEFINE(
+            "HAVE_PTHREAD_H",
+            condition = "ac_cv_header_pthread_h",
+            if_true = 1,
+        ),
+        checks.AC_SUBST("HAVE_PTHREAD_H", "1"),
+
+        # AC_CHECK_TYPES([pthread_t]) - macOS has pthread_t
+        checks.AC_CHECK_TYPE(
             "pthread_t",
+            code = """\
+#include <pthread.h>
+pthread_t x;
+""",
             define = "HAVE_PTHREAD_T",
         ),
-        macros.AC_CHECK_TYPE(
+        checks.AC_SUBST("HAVE_PTHREAD_T", "1"),
+
+        # AC_CHECK_TYPES([pthread_spinlock_t]) - macOS does NOT have pthread_spinlock_t
+        checks.AC_CHECK_TYPE(
             "pthread_spinlock_t",
-            define = "HAVE_PTHREAD_SPINLOCK_T",
+            name = "ac_cv_type_pthread_spinlock_t",
+            code = """\
+#include <pthread.h>
+pthread_spinlock_t x;
+""",
+        ),
+    ] + select({
+        # On Linux: pthread_spinlock_t exists in glibc's pthread.h
+        "@platforms//os:linux": [
+            checks.AC_DEFINE("HAVE_PTHREAD_SPINLOCK_T", "1"),
+            checks.AC_SUBST("HAVE_PTHREAD_SPINLOCK_T", "1"),
+        ],
+        # On macOS: pthread_spinlock_t doesn't exist
+        "//conditions:default": [
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_SPINLOCK_T",
+                condition = "ac_cv_type_pthread_spinlock_t",
+                if_false = "0",
+                if_true = "1",
+            ),
+        ],
+    }) + [
+
+        # gl_PTHREAD_SPIN logic: if HAVE_PTHREAD_SPINLOCK_T=0, set HAVE_PTHREAD_SPIN_*=0
+        # On macOS, pthread_spinlock_t doesn't exist, so all spin functions are unavailable
+        checks.AC_SUBST(
+            "HAVE_PTHREAD_SPIN_INIT",
+            condition = "ac_cv_type_pthread_spinlock_t",
+            if_false = "0",
+            if_true = "1",
+        ),
+        checks.AC_SUBST(
+            "HAVE_PTHREAD_SPIN_LOCK",
+            condition = "ac_cv_type_pthread_spinlock_t",
+            if_false = "0",
+            if_true = "1",
+        ),
+        checks.AC_SUBST(
+            "HAVE_PTHREAD_SPIN_TRYLOCK",
+            condition = "ac_cv_type_pthread_spinlock_t",
+            if_false = "0",
+            if_true = "1",
+        ),
+        checks.AC_SUBST(
+            "HAVE_PTHREAD_SPIN_UNLOCK",
+            condition = "ac_cv_type_pthread_spinlock_t",
+            if_false = "0",
+            if_true = "1",
+        ),
+        checks.AC_SUBST(
+            "HAVE_PTHREAD_SPIN_DESTROY",
+            condition = "ac_cv_type_pthread_spinlock_t",
+            if_false = "0",
+            if_true = "1",
+        ),
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",  # For test compatibility
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/include_next",
+        # gl_PTHREAD_H_PART1 only requires gl_PTHREADLIB (M4); not gl_STDTHREADLIB.
+        # gl_THREADLIB_BODY and gl_STDTHREADLIB_BODY needed to match golden (golden cannot be changed).
+        "//gnulib/m4/threadlib:gl_PTHREADLIB",
+        "//gnulib/m4/threadlib:gl_STDTHREADLIB_BODY",
+        "//gnulib/m4/threadlib:gl_THREADLIB_BODY",
+    ],
+)
+
+# gl_PTHREAD_H - Full pthread.h checks including PTHREAD_MUTEX_ROBUST
+#
+# This adds the PTHREAD_MUTEX_ROBUST check on top of PART1.
+# Use this for modules that call gl_PTHREAD_H (not just gl_PTHREAD_SPIN).
+autoconf(
+    name = "gl_PTHREAD_H",
+    checks = [
+        # AC_CACHE_CHECK for PTHREAD_MUTEX_ROBUST - macOS does NOT have this constant
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_const_PTHREAD_MUTEX_ROBUST",
+            code = """\
+#include <pthread.h>
+int x = PTHREAD_MUTEX_ROBUST;
+""",
+        ),
+        checks.AC_SUBST(
+            "HAVE_PTHREAD_MUTEX_ROBUST",
+            condition = "gl_cv_const_PTHREAD_MUTEX_ROBUST",
+            if_false = "0",
+            if_true = "1",
         ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        ":gl_PTHREAD_H_PART1",
+    ],
+)
+
+# Public pthread_h target
+autoconf(
+    name = "pthread_h",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_PTHREAD_H",
+    ],
 )

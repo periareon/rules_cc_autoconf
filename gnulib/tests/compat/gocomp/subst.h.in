@@ -1,0 +1,4 @@
+/* subst.h.in */
+#define SUBST_GO "@GO@"
+#define SUBST_GOCOMPFLAGS "@GOCOMPFLAGS@"
+#define SUBST_GO_CHOICE "@GO_CHOICE@"

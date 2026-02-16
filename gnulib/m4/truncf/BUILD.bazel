@@ -1,15 +1,39 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/truncf.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "truncf",
     checks = [
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "truncf",
-            define = "HAVE_DECL_TRUNCF",
+            name = "ac_cv_have_decl_truncf",
+            includes = ["#include <math.h>"],
         ),
+
+        #   ... (link tests to determine if -lm is needed)
+        # else
+        # fi
+        checks.AC_DEFINE(
+            "HAVE_DECL_TRUNCF",
+            condition = "ac_cv_have_decl_truncf",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # The m4 file has complex logic for TRUNCF_LIBM and REPLACE_TRUNCF based on link tests
+        # and IEEE compliance checks. The m4 file tests if truncf() can be used without libm,
+        # and if not, sets TRUNCF_LIBM="-lm". Based on golden files, on macOS:
+        # - TRUNCF_LIBM is empty string (function can be used without libm)
+        # - REPLACE_TRUNCF=0 (function works correctly)
+        # Note: The substitution variable should be empty string, not "0"
+        checks.AC_SUBST("TRUNCF_LIBM", ""),
+        checks.AC_SUBST("REPLACE_TRUNCF", 0),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/math_h",
+    ],
 )

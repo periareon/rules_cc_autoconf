@@ -1,0 +1,40 @@
+"""AC_FUNC_MBRTOWC - Bazel-specific shared macro
+
+Checks for mbrtowc function. This is a Bazel-specific macro to deduplicate
+the mbrtowc check across many gnulib modules.
+
+Defines:
+  - HAVE_MBRTOWC (if mbrtowc function exists)
+  - ac_cv_func_mbrtowc (cache variable)
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "AC_FUNC_MBRTOWC",
+    checks = [
+        # Check for mbrtowc function
+        checks.AC_CHECK_FUNC(
+            "mbrtowc",
+            name = "ac_cv_func_mbrtowc",
+        ),
+        # Define HAVE_MBRTOWC if function exists
+        checks.AC_DEFINE(
+            "HAVE_MBRTOWC",
+            condition = "ac_cv_func_mbrtowc",
+            if_true = "1",
+        ),
+        # Subst HAVE_MBRTOWC so mbrtowc and btowc don't duplicate
+        checks.AC_SUBST(
+            "HAVE_MBRTOWC",
+            condition = "ac_cv_func_mbrtowc",
+            if_false = "0",
+            if_true = "1",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)

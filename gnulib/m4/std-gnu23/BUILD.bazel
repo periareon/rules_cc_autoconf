@@ -9,6 +9,5 @@ autoconf(
     checks = [],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/std-gnu11",  # Provides PROTOTYPES, __PROTOTYPES
     ],
 )

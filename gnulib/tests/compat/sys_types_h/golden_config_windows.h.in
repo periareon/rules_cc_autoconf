@@ -1,0 +1,41 @@
+/* config.h.in */
+/* #undef HAVE_BLKCNT_T */
+/* #undef HAVE_BLKSIZE_T */
+#define HAVE_INTTYPES_H 1
+/* #undef HAVE_OFF64_T */
+#define HAVE_STDINT_H 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+/* #undef HAVE_STRINGS_H */
+#define HAVE_STRING_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+/* #undef HAVE_UNISTD_H */
+#define HAVE_WCHAR_H 1
+/* #undef INCLUDE_NEXT */
+/* #undef INCLUDE_NEXT_AS_FIRST_DIRECTIVE */
+/* #undef MAJOR_IN_SYSMACROS */
+/* #undef NEXT_AS_FIRST_DIRECTIVE_SYS_TYPES_H */
+/* #undef NEXT_SYS_TYPES_H */
+/* #undef PRAGMA_SYSTEM_HEADER */
+#define STDC_HEADERS 1
+/* #undef WINDOWS_64_BIT_OFF_T */
+#define WINDOWS_STAT_INODES 1
+#define _ALL_SOURCE 1
+#define _DARWIN_C_SOURCE 1
+#define _GNU_SOURCE 1
+#define _HPUX_ALT_XOPEN_SOCKET_API 1
+#define _NETBSD_SOURCE 1
+#define _OPENBSD_SOURCE 1
+#define _POSIX_PTHREAD_SEMANTICS 1
+#define _TANDEM_SOURCE 1
+#define _USE_STD_STAT 1
+#define __EXTENSIONS__ 1
+#define __STDC_WANT_IEC_60559_ATTRIBS_EXT__ 1
+#define __STDC_WANT_IEC_60559_BFP_EXT__ 1
+#define __STDC_WANT_IEC_60559_DFP_EXT__ 1
+#define __STDC_WANT_IEC_60559_EXT__ 1
+#define __STDC_WANT_IEC_60559_FUNCS_EXT__ 1
+#define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
+#define __STDC_WANT_LIB_EXT2__ 1
+#define __STDC_WANT_MATH_SPEC_FUNCS__ 1

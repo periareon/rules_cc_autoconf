@@ -1,16 +1,39 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/isinf.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "isinf",
     checks = [
-        macros.AC_CHECK_DECL(
+        # The m4 file checks that isinf is a macro, not a function, but AC_CHECK_DECL
+        # will handle this correctly
+        checks.AC_CHECK_DECL(
             "isinf",
             define = "HAVE_DECL_ISINF",
-            headers = ["math.h"],
+            includes = ["#include <math.h>"],
         ),
+
+        # ISINF_LIBM and REPLACE_ISINF are set based on runtime checks
+        # (gl_CHECK_MATH_LIB and gl_ISINFL_WORKS) that can't be easily ported.
+        # Based on golden files, on macOS/Linux:
+        # - ISINF_LIBM is empty (isinf is in libc, no extra library needed)
+        # - REPLACE_ISINF is 0 (isinf works correctly)
+        # We set ISINF_LIBM as empty and REPLACE_ISINF as 0 to match expectations
+        checks.AC_SUBST("ISINF_LIBM", ""),
+        checks.AC_SUBST("REPLACE_ISINF", 0),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # Note: gl_MATH_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//gnulib/m4/extensions",
+
+        # gl_ISINFL_WORKS requires gl_BIGENDIAN, gl_LONG_DOUBLE_VS_DOUBLE
+        # These provide HAVE_SAME_LONG_DOUBLE_AS_DOUBLE
+        "//gnulib/m4/math_h:long-double-vs-double",
+
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

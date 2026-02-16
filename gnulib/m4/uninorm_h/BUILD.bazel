@@ -2,7 +2,6 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 
-# gl_UNINORM_H from uninorm_h.m4
 # This is a defaults-only macro - no actual checks
 autoconf(
     name = "uninorm_h",
@@ -10,4 +9,31 @@ autoconf(
         # No actual checks - just initializes defaults
     ],
     visibility = ["//visibility:public"],
+)
+
+# Note: uninorm_h has _DEFAULTS but no variables in it
+autoconf(
+    name = "gl_UNINORM_H_DEFAULTS",
+    checks = [
+    ],
+    visibility = ["//visibility:private"],
+)
+
+# Note: uninorm_h has _REQUIRE_DEFAULTS but no GNULIB_* variables
+autoconf(
+    name = "gl_UNINORM_H_REQUIRE_DEFAULTS",
+    checks = [
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gl_UNINORM_H_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_UNINORM_H_REQUIRE_DEFAULTS",
+    ],
 )

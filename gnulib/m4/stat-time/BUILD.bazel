@@ -1,15 +1,58 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/stat-time.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 # gl_STAT_TIME macro from stat-time.m4
-# HAVE_SYS_TIME_H comes from sys_time_h dependency
-
 autoconf(
     name = "stat-time",
-    checks = [],
+    checks = [
+        # AC_CHECK_HEADERS_ONCE([sys/time.h])
+        # AC_CHECK_MEMBERS([struct stat.st_atim.tv_nsec], ...)
+        checks.AC_CHECK_MEMBER(
+            "struct stat.st_atim.tv_nsec",
+            name = "ac_cv_member_struct_stat_st_atim_tv_nsec",
+            includes = ["#include <sys/stat.h>"],
+        ),
+        # AC_CHECK_MEMBERS([struct stat.st_atimespec.tv_nsec], ...)
+        checks.AC_CHECK_MEMBER(
+            "struct stat.st_atimespec.tv_nsec",
+            name = "ac_cv_member_struct_stat_st_atimespec_tv_nsec",
+            includes = ["#include <sys/stat.h>"],
+        ),
+        # AC_CHECK_MEMBERS([struct stat.st_birthtimespec], ...)
+        checks.AC_CHECK_MEMBER(
+            "struct stat.st_birthtimespec",
+            name = "ac_cv_member_struct_stat_st_birthtimespec",
+            includes = ["#include <sys/stat.h>"],
+        ),
+    ] + select({
+        # On Linux: uses st_atim (POSIX), not st_atimespec (BSD)
+        "@platforms//os:linux": [
+            checks.AC_DEFINE("HAVE_STRUCT_STAT_ST_ATIM_TV_NSEC", "1"),
+            checks.AC_DEFINE("TYPEOF_STRUCT_STAT_ST_ATIM_IS_STRUCT_TIMESPEC", "1"),
+        ],
+        # On macOS/BSD: uses st_atimespec and st_birthtimespec
+        "//conditions:default": [
+            checks.AC_DEFINE(
+                "HAVE_STRUCT_STAT_ST_ATIMESPEC_TV_NSEC",
+                condition = "ac_cv_member_struct_stat_st_atimespec_tv_nsec",
+                if_true = 1,
+            ),
+            checks.AC_DEFINE(
+                "HAVE_STRUCT_STAT_ST_BIRTHTIMESPEC_TV_NSEC",
+                condition = "ac_cv_member_struct_stat_st_birthtimespec",
+                if_true = 1,
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/sys_time_h",  # Provides HAVE_SYS_TIME_H
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/sys_stat_h",  # Need sys/stat.h for struct stat checks
+        "//gnulib/m4/sys_time_h",
+        "//gnulib/m4/wchar_h:gl_WCHAR_H_CORE",
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

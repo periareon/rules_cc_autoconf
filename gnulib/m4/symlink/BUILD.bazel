@@ -1,19 +1,40 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/symlink.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
+
+# Core symlink checks without REPLACE_SYMLINK subst
+# Use this for modules that only need the symlink function check
+autoconf(
+    name = "gl_FUNC_SYMLINK_CORE",
+    checks = [
+        checks.AC_CHECK_FUNC(
+            "symlink",
+            define = "HAVE_SYMLINK",
+            subst = True,
+        ),
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
 
 autoconf(
     name = "symlink",
-    checks = [
-        # Check for symlink function
-        # Equivalent to gl_FUNC_SYMLINK macro from symlink.m4
-        # Note: Full implementation includes runtime checks for trailing slash
-        # handling that require file system operations
-        macros.AC_CHECK_FUNC(
-            "symlink",
-            define = "HAVE_SYMLINK",
-        ),
-    ],
+    checks = select({
+        # On Linux, symlink works correctly
+        "@platforms//os:linux": [
+            checks.AC_SUBST("REPLACE_SYMLINK", 0),
+        ],
+        # On macOS, symlink has some issues with trailing slashes, so REPLACE_SYMLINK=1
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_SYMLINK", 1),
+        ],
+    }),
     visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_SYMLINK_CORE",
+    ],
 )

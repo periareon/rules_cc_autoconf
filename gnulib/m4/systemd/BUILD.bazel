@@ -1,11 +1,21 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/systemd.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "gl_SYSTEMD_CHOICE",
+    checks = [
+        # gl_SYSTEMD_CHOICE sets SYSTEMD_CHOICE to 'yes' or 'no'
+        checks.AC_SUBST("SYSTEMD_CHOICE", "no"),
+    ],
+    visibility = ["//visibility:public"],
+)
 
 autoconf(
     name = "systemd",
-    checks = [
-        # TODO: Add checks based on .m4 file
-    ],
     visibility = ["//visibility:public"],
+    deps = [
+        ":gl_SYSTEMD_CHOICE",
+    ],
 )

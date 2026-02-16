@@ -1,0 +1,3 @@
+/* config.h.in */
+/* #undef HOST_CPU */
+/* #undef HOST_CPU_C_ABI */

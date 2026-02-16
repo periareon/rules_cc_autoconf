@@ -1,0 +1,11 @@
+/* config.h.in */
+/* #undef HAVE_DECL_STRNCASECMP */
+/* #undef HAVE_FFS */
+#define HAVE_STRCASECMP 1
+/* #undef HAVE_STRCASECMP_L */
+/* #undef HAVE_STRNCASECMP */
+/* #undef HAVE_STRNCASECMP_L */
+/* #undef REPLACE_STRCASECMP */
+/* #undef REPLACE_STRCASECMP_L */
+/* #undef REPLACE_STRNCASECMP */
+/* #undef REPLACE_STRNCASECMP_L */

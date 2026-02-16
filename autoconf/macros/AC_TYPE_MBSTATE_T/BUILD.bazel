@@ -1,0 +1,33 @@
+"""AC_TYPE_MBSTATE_T - Autoconf builtin macro
+
+Checks if mbstate_t type is defined.
+
+Defines:
+  - mbstate_t (if not defined, defined to int)
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "AC_TYPE_MBSTATE_T",
+    checks = [
+        # AC_CHECK_TYPE checks if mbstate_t is defined
+        # mbstate_t is defined in wchar.h
+        checks.AC_CHECK_TYPE(
+            "mbstate_t",
+            name = "ac_cv_type_mbstate_t",
+            includes = ["#include <wchar.h>"],
+        ),
+        # Define HAVE_MBSTATE_T if type exists
+        checks.AC_DEFINE(
+            "HAVE_MBSTATE_T",
+            condition = "ac_cv_type_mbstate_t",
+            if_true = 1,
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)

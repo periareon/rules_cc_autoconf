@@ -1,26 +1,124 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/inttypes.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
+# gl_INTTYPES_H (AC_DEFUN_ONCE)
+# Top-level inttypes.h support: requires gl_INTTYPES_INCOMPLETE then gl_INTTYPES_PRI_SCN.
 autoconf(
-    name = "inttypes",
+    name = "gl_INTTYPES_H",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_INTTYPES_INCOMPLETE",
+        ":gl_INTTYPES_PRI_SCN",
+    ],
+)
+
+# gl_INTTYPES_INCOMPLETE
+# AC_CHECK_HEADERS_ONCE(inttypes.h), gl_INTTYPES_H_DEFAULTS,
+# gl_CHECK_NEXT_HEADERS(inttypes.h), gl_MULTIARCH, gl_WARN_ON_USE_PREPARE.
+# Not depending on imaxabs/imaxdiv/strtoimax/strtoumax here to avoid duplicate
+# REPLACE_* substs; those modules provide REPLACE_* when used.
+autoconf(
+    name = "gl_INTTYPES_INCOMPLETE",
+    checks = gl_macros.GL_CHECK_NEXT_HEADERS(["inttypes.h"]),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",
+        "//gnulib/m4/multiarch",
+        "//gnulib/m4/stdint_h",
+    ],
+)
+
+# gl_INTTYPES_PRI_SCN
+# Ensures PRI* and SCN* format macros are defined. PRIPTR_PREFIX comes from
+# gl_INTTYPES_H_DEFAULTS; condition vars from gl_INTTYPES_CHECK_LONG_LONG_INT_CONDITION.
+# Depends on stdint for types. No local checks to avoid duplicate subst.
+autoconf(
+    name = "gl_INTTYPES_PRI_SCN",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_INTTYPES_CHECK_LONG_LONG_INT_CONDITION",
+        "//gnulib/m4/stdint_h",
+    ],
+)
+
+# gl_INTTYPES_CHECK_LONG_LONG_INT_CONDITION
+# Helper: sets INT32/64 and UINT32/64 condition variables (1/0 or string).
+# In m4 this uses AC_COMPILE_IFELSE; here we use default values.
+autoconf(
+    name = "gl_INTTYPES_CHECK_LONG_LONG_INT_CONDITION",
     checks = [
-        # Check for inttypes.h header
-        # Equivalent to gl_INTTYPES_H macro from inttypes.m4
-        # Note: Full implementation includes PRI* and SCN* macro checks
-        # that are complex to replicate in Bazel
-        macros.AC_CHECK_HEADER(
-            "inttypes.h",
-            define = "HAVE_INTTYPES_H",
-        ),
+        checks.AC_SUBST("INT32_MAX_LT_INTMAX_MAX", 1),
+        checks.AC_SUBST("INT64_MAX_EQ_LONG_MAX", "defined _LP64"),
+        checks.AC_SUBST("UINT32_MAX_LT_UINTMAX_MAX", 1),
+        checks.AC_SUBST("UINT64_MAX_EQ_ULONG_MAX", "defined _LP64"),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# gl_INTTYPES_H_REQUIRE_DEFAULTS
+# Ensures default settings are expanded once; sets GNULIB_* module indicator
+# defaults to 0. Invoked by gl_INTTYPES_MODULE_INDICATOR.
+# Pulls in DEFAULTS + CHECK_LONG_LONG_INT_CONDITION so "defaults" gets all substs.
+autoconf(
+    name = "gl_INTTYPES_H_REQUIRE_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("GNULIB_IMAXABS", 0),
+        checks.AC_SUBST("GNULIB_IMAXDIV", 0),
+        checks.AC_SUBST("GNULIB_STRTOIMAX", 0),
+        checks.AC_SUBST("GNULIB_STRTOUMAX", 0),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/multiarch",  # AC_REQUIRE([gl_MULTIARCH])
-        "//gnulib/m4/stdint_h",  # AC_REQUIRE([gl_STDINT_H])
-        "//gnulib/m4/inttypes_h",  # AC_REQUIRE([gl_INTTYPES_H_DEFAULTS])
-        # Note: AC_REQUIRE([gl_MULTIARCH]) and AC_REQUIRE([AC_C_RESTRICT])
-        # are standard autoconf macros
+        ":gl_INTTYPES_H_DEFAULTS",
+    ],
+)
+
+# gl_INTTYPES_H_DEFAULTS
+# PRI/SCN condition vars (INT32_*, etc.) are in gl_INTTYPES_CHECK_LONG_LONG_INT_CONDITION.
+# Must not be AC_REQUIREd; only invoked outside or in non-AC_REQUIREd macros.
+autoconf(
+    name = "gl_INTTYPES_H_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("HAVE_DECL_IMAXABS", 1),
+        checks.AC_SUBST("HAVE_DECL_IMAXDIV", 1),
+        checks.AC_SUBST("HAVE_DECL_STRTOIMAX", 1),
+        checks.AC_SUBST("HAVE_DECL_STRTOUMAX", 1),
+        checks.AC_SUBST("HAVE_IMAXDIV_T", 1),
+        checks.AC_SUBST("HAVE_IMAXABS", 1),
+        checks.AC_SUBST("HAVE_IMAXDIV", 1),
+        checks.AC_SUBST("REPLACE_IMAXABS", 0),
+        checks.AC_SUBST("REPLACE_IMAXDIV", 0),
+        checks.AC_SUBST("REPLACE_STRTOIMAX", 0),
+        checks.AC_SUBST("REPLACE_STRTOUMAX", 0),
+        checks.AC_SUBST("INT32_MAX_LT_INTMAX_MAX", 1),
+        checks.AC_SUBST("INT64_MAX_EQ_LONG_MAX", "defined _LP64"),
+        checks.AC_SUBST("PRIPTR_PREFIX", "__PRIPTR_PREFIX"),
+        checks.AC_SUBST("UINT32_MAX_LT_UINTMAX_MAX", 1),
+        checks.AC_SUBST("UINT64_MAX_EQ_ULONG_MAX", "defined _LP64"),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# inttypes - main module (public target)
+autoconf(
+    name = "inttypes",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_INTTYPES_H",
+    ],
+)
+
+# defaults - backward-compatible alias for tests that need all default substs
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_INTTYPES_H_REQUIRE_DEFAULTS",
     ],
 )

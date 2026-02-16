@@ -1,0 +1,80 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* =================================================================
+ * Base condition checks
+ * ================================================================= */
+
+/* Compile check that succeeds */
+#define CONDITION_SUCCEEDS 1
+
+/* Compile check that fails */
+/* #undef CONDITION_FAILS */
+
+/* Header check that succeeds */
+#define HAVE_STDIO_H 1
+
+/* Header check that fails */
+/* #undef HAVE_NONEXISTENT_CONDITION_TEST_H */
+
+/* =================================================================
+ * AC_SUBST with condition tests
+ * ================================================================= */
+
+/* Test 1: condition succeeds -> if_true value */
+#define SUBST_COND_SUCCESS yes_it_worked
+
+/* Test 2: condition fails -> if_false value */
+#define SUBST_COND_FAILURE no_it_failed
+
+/* Test 3: numeric value when condition succeeds */
+#define REPLACE_WHEN_SUCCESS 0
+
+/* Test 4: numeric value when condition fails */
+#define REPLACE_WHEN_FAILURE 1
+
+/* Test 5: header exists as condition */
+#define SUBST_HEADER_EXISTS found
+
+/* Test 6: header missing as condition */
+#define SUBST_HEADER_MISSING missing
+
+/* =================================================================
+ * AC_DEFINE with condition tests
+ * ================================================================= */
+
+/* Test 7: condition succeeds -> if_true value */
+#define DEFINE_COND_SUCCESS SUCCESS_VALUE
+
+/* Test 8: condition fails -> if_false value */
+#define DEFINE_COND_FAILURE FAILURE_VALUE
+
+/* Test 9: condition succeeds, no if_false -> defined */
+#define DEFINE_ONLY_IF_TRUE 1
+
+/* Test 10: condition fails, no if_false -> not defined */
+/* #undef DEFINE_SKIP_IF_FALSE */
+
+/* Test 11: condition fails, if_false = 0 -> defined as 0 */
+#define DEFINE_ZERO_IF_FALSE 0
+
+/* =================================================================
+ * Package information
+ * ================================================================= */
+
+/* Define to the address where bug reports for this package should be sent. */
+#define PACKAGE_BUGREPORT ""
+
+/* Define to the full name of this package. */
+#define PACKAGE_NAME "test_conditions"
+
+/* Define to the full name and version of this package. */
+#define PACKAGE_STRING "test_conditions 1.0.0"
+
+/* Define to the one symbol short name of this package. */
+#define PACKAGE_TARNAME "test_conditions"
+
+/* Define to the home page for this package. */
+#define PACKAGE_URL ""
+
+/* Define to the version of this package. */
+#define PACKAGE_VERSION "1.0.0"

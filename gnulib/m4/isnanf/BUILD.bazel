@@ -1,39 +1,26 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/isnanf.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "isnanf",
     checks = [
-        # Check for isnan(float) function
-        # Equivalent to gl_FUNC_ISNANF macro from isnanf.m4
-        # Note: Full implementation includes runtime checks for Infinity handling
-        # and libm linking checks that are complex
-        macros.AC_TRY_COMPILE(
-            code = """#include <math.h>
-#if (__GNUC__ >= 4) || (__clang_major__ >= 4)
-# undef isnanf
-# define isnanf(x) __builtin_isnan ((float)(x))
-#elif defined isnan
-# undef isnanf
-# define isnanf(x) isnan ((float)(x))
-#endif
-
-float x;
-
-int main(void) {
-    return isnanf(x);
-}""",
-            define = "HAVE_ISNANF",
-            language = "c",
+        # gl_FUNC_ISNANF checks for isnanf function
+        checks.AC_CHECK_FUNC(
+            "isnanf",
+            name = "_gl_cv_func_isnanf",
         ),
+        # HAVE_ISNANF_IN_LIBC: isnanf() is available in libc without -lm
+        checks.AC_DEFINE("HAVE_ISNANF_IN_LIBC", "1"),
+        # AC_SUBST([ISNANF_LIBM]) - library needed for isnanf
+        # On macOS/Linux, if isnanf exists, it's in libc, so ISNANF_LIBM is empty
+        checks.AC_SUBST("ISNANF_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
-        # Note: gl_FLOAT_EXPONENT_LOCATION is used in prerequisites
-        # Note: AC_REQUIRE([AC_PROG_CC]) and AC_REQUIRE([AC_CANONICAL_HOST])
-        # are standard autoconf macros
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/exponentf",
+        "//gnulib/m4/math_h",
     ],
 )

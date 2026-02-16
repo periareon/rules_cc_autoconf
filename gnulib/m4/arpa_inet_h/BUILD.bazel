@@ -1,19 +1,85 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/arpa_inet_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
+# gl_ARPA_INET_H (AC_DEFUN_ONCE)
+# Top-level arpa/inet.h support: requires defaults, then header check.
 autoconf(
-    name = "arpa_inet_h",
+    name = "gl_ARPA_INET_H",
     checks = [
-        # Check for arpa/inet.h header
-        # Equivalent to gl_ARPA_INET_H macro from arpa_inet_h.m4
-        macros.AC_CHECK_HEADER(
+        checks.AC_CHECK_HEADER(
             "arpa/inet.h",
             define = "HAVE_ARPA_INET_H",
+            subst = True,
         ),
+        # gl_CHECK_NEXT_HEADERS([arpa/inet.h]) - subst for next header
+        checks.AC_SUBST("NEXT_ARPA_INET_H", "<arpa/inet.h>"),
+        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_ARPA_INET_H", "<arpa/inet.h>"),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/gnulib-common:gl_FEATURES_H",
+        "//gnulib/m4/include_next",
+        "//gnulib/m4/sys_socket_h:gl_SYS_SOCKET_H",
+    ],
+)
+
+# gl_ARPA_INET_MODULE_INDICATOR([modulename])
+# Ensures defaults are expanded; sets GNULIB_<module> for the given module.
+# Other modules depend on this and pull in arpa_inet defaults.
+autoconf(
+    name = "gl_ARPA_INET_MODULE_INDICATOR",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+    ],
+)
+
+# gl_ARPA_INET_H_REQUIRE_DEFAULTS
+autoconf(
+    name = "gl_ARPA_INET_H_REQUIRE_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("GNULIB_INET_NTOP", 0),
+        checks.AC_SUBST("GNULIB_INET_PTON", 0),
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gl_ARPA_INET_H_DEFAULTS",
+    ],
+)
+
+# gl_ARPA_INET_H_DEFAULTS
+autoconf(
+    name = "gl_ARPA_INET_H_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("HAVE_DECL_HTONL", 1),
+        checks.AC_SUBST("HAVE_DECL_HTONS", 1),
+        checks.AC_SUBST("HAVE_DECL_INET_NTOP", 1),
+        checks.AC_SUBST("HAVE_DECL_INET_PTON", 1),
+        checks.AC_SUBST("HAVE_DECL_NTOHL", 1),
+        checks.AC_SUBST("HAVE_DECL_NTOHS", 1),
+        checks.AC_SUBST("REPLACE_INET_NTOP", 0),
+        checks.AC_SUBST("REPLACE_INET_PTON", 0),
+    ],
+    visibility = ["//visibility:private"],
+)
+
+# Public header target (main entry point; backward compatibility)
+autoconf(
+    name = "arpa_inet_h",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_ARPA_INET_H",
+    ],
+)
+
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_ARPA_INET_H_REQUIRE_DEFAULTS",
     ],
 )

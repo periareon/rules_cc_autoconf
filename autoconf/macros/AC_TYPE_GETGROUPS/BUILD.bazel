@@ -1,0 +1,22 @@
+"""AC_TYPE_GETGROUPS - Autoconf builtin macro
+
+Checks the type of the array argument to getgroups().
+
+Defines:
+  - GETGROUPS_T (type of getgroups array argument)
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "AC_TYPE_GETGROUPS",
+    checks = [
+        # Check getgroups signature - typically gid_t or int
+        # On modern systems (Linux, macOS, BSD), GETGROUPS_T is gid_t
+        # AC_TYPE_GETGROUPS determines the type and defines GETGROUPS_T
+        # Use AC_DEFINE_UNQUOTED to render as unquoted gid_t (not "gid_t")
+        checks.AC_DEFINE_UNQUOTED("GETGROUPS_T", "gid_t"),
+    ],
+    visibility = ["//visibility:public"],
+)

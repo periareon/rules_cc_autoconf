@@ -1,12 +1,20 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/strstr.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "strstr",
-    checks = [
-        # TODO: Add checks based on .m4 file
-    ],
+    checks = select({
+        # On Linux: strstr works correctly, no replacement needed
+        "@platforms//os:linux": [
+            checks.AC_SUBST("REPLACE_STRSTR", "0"),
+        ],
+        # On macOS: strstr needs replacement (runtime test fails)
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_STRSTR", "1"),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/memchr",

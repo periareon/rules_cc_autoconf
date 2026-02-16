@@ -1,25 +1,138 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/lstat.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
-# gl_FUNC_LSTAT from lstat.m4
-# On darwin and solaris (or when symlink trailing slash test fails), REPLACE_LSTAT=1.
+# HAVE_LSTAT - Check for lstat function existence and define HAVE_LSTAT
+# Single source of truth for HAVE_LSTAT define.
 autoconf(
-    name = "lstat",
+    name = "HAVE_LSTAT",
     checks = [
-        # Check for lstat function
-        macros.AC_CHECK_FUNC("lstat"),
-    ] + select({
+        checks.AC_CHECK_FUNC("lstat"),
+        checks.AC_DEFINE(
+            "HAVE_LSTAT",
+            requires = ["ac_cv_func_lstat==1"],
+        ),
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Creates cache variable gl_cv_func_lstat_dereferences_slashed_symlink.
+#
+# Based on actual autoconf runtime test results:
+# - macOS: gl_cv_func_lstat_dereferences_slashed_symlink=no (lstat has bug)
+# - Linux: gl_cv_func_lstat_dereferences_slashed_symlink=yes (lstat works)
+# - Windows: gl_cv_func_lstat_dereferences_slashed_symlink=no (lstat has bug)
+autoconf(
+    name = "gl_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK",
+    checks = select({
         "@platforms//os:macos": [
-            # On macOS, unconditionally set REPLACE_LSTAT=1
-            macros.M4_DEFINE("REPLACE_LSTAT", "1"),
+            # macOS: lstat does NOT correctly handle trailing slash (per autoconf log)
+            # Create a check that fails
+            checks.AC_TRY_LINK(
+                name = "gl_cv_func_lstat_dereferences_slashed_symlink",
+                code = """\
+/* macOS lstat does not correctly handle trailing slash */
+#error "LSTAT_SLASHED_SYMLINK_BUG"
+int main(void) { return 0; }
+""",
+            ),
+            # LSTAT_FOLLOWS_SLASHED_SYMLINK is NOT defined on macOS
         ],
-        # Note: Solaris would need a custom constraint
-        "//conditions:default": [],
+        "@platforms//os:windows": [
+            # Windows: lstat has issues with slashed symlinks
+            checks.AC_TRY_LINK(
+                name = "gl_cv_func_lstat_dereferences_slashed_symlink",
+                code = """\
+/* Windows lstat does not correctly handle trailing slash */
+#error "LSTAT_SLASHED_SYMLINK_BUG"
+int main(void) { return 0; }
+""",
+            ),
+            # LSTAT_FOLLOWS_SLASHED_SYMLINK is NOT defined on Windows
+        ],
+        "//conditions:default": [
+            # Linux and other POSIX: lstat correctly handles slashed symlinks
+            checks.AC_TRY_LINK(
+                name = "gl_cv_func_lstat_dereferences_slashed_symlink",
+                code = """\
+/* Linux: lstat correctly handles trailing slash */
+int main(void) { return 0; }
+""",
+            ),
+            # LSTAT_FOLLOWS_SLASHED_SYMLINK=1 when check passes
+            checks.AC_DEFINE(
+                "LSTAT_FOLLOWS_SLASHED_SYMLINK",
+                requires = ["gl_cv_func_lstat_dereferences_slashed_symlink==1"],
+            ),
+        ],
     }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/sys_stat_h",  # AC_REQUIRE([gl_SYS_STAT_H_DEFAULTS])
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+#
+# REPLACE_LSTAT is set based on:
+# - darwin* (macOS): ALWAYS replace (regardless of test result)
+# - solaris*: ALWAYS replace
+# - Other systems: Replace only if gl_cv_func_lstat_dereferences_slashed_symlink=no
+autoconf(
+    name = "gl_FUNC_LSTAT",
+    checks = select({
+        "@platforms//os:macos": [
+            checks.AC_TRY_LINK(
+                name = "gl_cv_func_lstat_darwin_override",
+                code = """\
+/* darwin always replaces lstat */
+#error "DARWIN_LSTAT_REPLACEMENT"
+int main(void) { return 0; }
+""",
+            ),
+            checks.AC_SUBST(
+                "REPLACE_LSTAT",
+                condition = "gl_cv_func_lstat_darwin_override",
+                if_false = 1,
+                if_true = 0,
+            ),
+        ],
+        "@platforms//os:windows": [
+            checks.AC_SUBST(
+                "REPLACE_LSTAT",
+                condition = "gl_cv_func_lstat_dereferences_slashed_symlink",
+                if_false = 1,
+                if_true = 0,
+            ),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST(
+                "REPLACE_LSTAT",
+                condition = "gl_cv_func_lstat_dereferences_slashed_symlink",
+                if_false = 1,
+                if_true = 0,
+            ),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        ":HAVE_LSTAT",
+        ":gl_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK",
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Package-level aggregator target
+autoconf(
+    name = "lstat",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_LSTAT",
+        ":gl_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK",
     ],
 )

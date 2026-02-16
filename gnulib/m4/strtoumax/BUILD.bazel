@@ -1,15 +1,51 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/strtoumax.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "strtoumax",
     checks = [
-        macros.AC_CHECK_DECL(
+        # gl_FUNC_STRTOUMAX: Check if strtoumax exists and is declared
+        checks.AC_CHECK_FUNC(
+            "strtoumax",
+            name = "ac_cv_func_strtoumax",
+        ),
+        checks.AC_CHECK_DECL(
+            "strtoumax",
+            name = "ac_cv_have_decl_strtoumax",
+            includes = ["#include <inttypes.h>"],
+        ),
+
+        #   fi
+        # else
+        # fi
+        # Define HAVE_STRTOUMAX in config.h if function exists
+        checks.AC_DEFINE(
+            "HAVE_STRTOUMAX",
+            condition = "ac_cv_func_strtoumax",
+            if_true = 1,
+        ),
+        # Define HAVE_DECL_STRTOUMAX in config.h if declaration exists
+        checks.AC_DEFINE(
+            "HAVE_DECL_STRTOUMAX",
+            condition = "ac_cv_have_decl_strtoumax",
+            if_true = 1,
+        ),
+        # Set REPLACE_STRTOUMAX if declaration exists but function doesn't
+        # Based on golden files, REPLACE_STRTOUMAX=0 on macOS (both function and declaration exist)
+        checks.AC_SUBST("REPLACE_STRTOUMAX", 0),
+
+        # gl_PREREQ_STRTOUMAX: Prerequisites
+        checks.AC_CHECK_DECL(
             "strtoull",
             define = "HAVE_DECL_STRTOULL",
+            includes = ["#include <stdlib.h>"],
         ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/inttypes_h",
+    ],
 )

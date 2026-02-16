@@ -1,0 +1,3 @@
+/* config.h.in */
+/* #undef CFLAG_VISIBILITY */
+#define HAVE_VISIBILITY 1

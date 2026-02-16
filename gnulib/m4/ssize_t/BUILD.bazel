@@ -1,14 +1,13 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/ssize_t.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "ssize_t",
     checks = [
-        # Check for ssize_t type
         # Equivalent to gt_TYPE_SSIZE_T macro from ssize_t.m4
-        macros.AC_CHECK_TYPE(
+        checks.AC_CHECK_TYPE(
             "ssize_t",
             code = """\
 #include <sys/types.h>

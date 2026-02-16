@@ -1,21 +1,26 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/cbrtf.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "cbrtf",
     checks = [
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "cbrtf",
             define = "HAVE_CBRTF",
+            subst = True,
         ),
+        checks.AC_SUBST("CBRTF_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/cbrt",
+        "//gnulib/m4/extensions",
         "//gnulib/m4/fabsf",
         "//gnulib/m4/frexpf",
         "//gnulib/m4/ldexpf",
+        "//gnulib/m4/math_h",
     ],
 )

@@ -1,0 +1,37 @@
+"""AC_CHECK_DECLS_ONCE([_putenv]) - Shared check for _putenv declaration
+
+This macro ensures the _putenv declaration check is only done once,
+even when multiple modules need it.
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "AC_CHECK_DECLS_ONCE_PUTENV",
+    checks = [
+        # AC_CHECK_DECLS_ONCE([_putenv]) - shared check
+        checks.AC_CHECK_DECL(
+            "_putenv",
+            name = "ac_cv_have_decl__putenv",
+            includes = ["#include <stdlib.h>"],
+        ),
+        # setenv golden expects #define HAVE_DECL__PUTENV 0 when not found
+        checks.AC_SUBST(
+            "HAVE_DECL__PUTENV",
+            condition = "ac_cv_have_decl__putenv",
+            if_false = 0,
+            if_true = 1,
+        ),
+        checks.AC_DEFINE(
+            "HAVE_DECL__PUTENV",
+            condition = "ac_cv_have_decl__putenv",
+            if_false = 0,
+            if_true = 1,
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)

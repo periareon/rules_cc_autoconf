@@ -1,0 +1,53 @@
+"""AC_C_FLEXIBLE_ARRAY_MEMBER - Autoconf builtin macro
+
+Checks for flexible array member support (C99 feature).
+
+Defines:
+  - FLEXIBLE_ARRAY_MEMBER (empty if supported, 1 if not)
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "AC_C_FLEXIBLE_ARRAY_MEMBER",
+    checks = [
+        # Check for flexible array member support
+        checks.AC_TRY_COMPILE(
+            name = "ac_cv_c_flexible_array_member",
+            code = """#include <stdlib.h>
+#include <stdio.h>
+#include <stddef.h>
+
+struct m { struct m *next, **list; char name[]; };
+struct s { struct s *p; struct m *m; int n; double d[]; };
+
+int main(void) {
+    int m = getchar();
+    size_t nbytes = offsetof(struct s, d) + m * sizeof(double);
+    nbytes += sizeof(struct s) - 1;
+    nbytes -= nbytes % sizeof(struct s);
+    struct s *p = malloc(nbytes);
+    p->p = p;
+    p->m = NULL;
+    p->d[0] = 0.0;
+    return p->d != (double *) NULL;
+}""",
+            language = "c",
+        ),
+        # If flexible array members are supported:
+        #   FLEXIBLE_ARRAY_MEMBER = [] (empty, shown as /**/ in config.h)
+        # If not supported:
+        #   FLEXIBLE_ARRAY_MEMBER = 1
+        checks.AC_DEFINE_UNQUOTED(
+            "FLEXIBLE_ARRAY_MEMBER",
+            condition = "ac_cv_c_flexible_array_member",
+            if_false = 1,  # Not supported = 1
+            if_true = "/**/",  # Supported = empty comment
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)

@@ -1,35 +1,116 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sys_types_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "gl_SYS_TYPES_H",
+    checks = [
+        # gl_SYS_TYPES_H checks for sys/types.h header
+
+        # AC_HEADER_MAJOR checks where major/minor/makedev are defined
+        # On modern Linux (glibc), they're in sys/sysmacros.h
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_major_in_sysmacros",
+            code = """\
+#include <sys/sysmacros.h>
+int main(void) {
+    int d = makedev(1, 2);
+    int M = major(d);
+    int m = minor(d);
+    return M + m;
+}
+""",
+        ),
+
+        # Use requires pattern to ensure undef (not 0) when not found
+        checks.AC_DEFINE(
+            "MAJOR_IN_SYSMACROS",
+            "1",
+            requires = ["gl_cv_major_in_sysmacros==1"],
+        ),
+
+        # AC_CHECK_TYPE checks for blksize_t and blkcnt_t types
+        checks.AC_CHECK_TYPE(
+            "blksize_t",
+            name = "ac_cv_type_blksize_t",
+        ),
+        # AC_CHECK_TYPE only creates substitution variables, not config.h defines
+        checks.AC_SUBST(
+            "HAVE_BLKSIZE_T",
+            condition = "ac_cv_type_blksize_t",
+            if_false = 0,
+            if_true = 1,
+        ),
+        checks.AC_CHECK_TYPE(
+            "blkcnt_t",
+            name = "ac_cv_type_blkcnt_t",
+        ),
+        # AC_CHECK_TYPE only creates substitution variables, not config.h defines
+        checks.AC_SUBST(
+            "HAVE_BLKCNT_T",
+            condition = "ac_cv_type_blkcnt_t",
+            if_false = 0,
+            if_true = 1,
+        ),
+
+        # Use sane struct stat types in OpenVMS 8.2 and later
+        checks.AC_DEFINE("_USE_STD_STAT", "1"),
+        checks.AC_SUBST("NEXT_SYS_TYPES_H", "<sys/types.h>"),
+        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_SYS_TYPES_H", "<sys/types.h>"),
+    ] + select({
+        # AC_SUBST([WINDOWS_STAT_INODES]) is in gl_SYS_TYPES_H in the real m4.
+        # gl_WINDOWS_STAT_INODES only sets the shell variable; sys_types_h does the subst.
+        "@platforms//os:windows": [
+            checks.AC_SUBST("WINDOWS_STAT_INODES", "1"),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST("WINDOWS_STAT_INODES", "0"),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/largefile:gl_LARGEFILE",  # WINDOWS_64_BIT_OFF_T (leaf target, no cycle)
+        "//gnulib/m4/off64_t",  # HAVE_OFF64_T (single definition for duplicates graph)
+        "//gnulib/m4/windows-stat-inodes",  # AC_DEFINE WINDOWS_STAT_INODES for config.h on Windows
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Note: sys_types_h has _DEFAULTS but no variables in it
+autoconf(
+    name = "gl_SYS_TYPES_H_DEFAULTS",
+    checks = [
+    ],
+    visibility = ["//visibility:private"],
+)
+
+# Note: sys_types_h has _REQUIRE_DEFAULTS but no GNULIB_* variables
+autoconf(
+    name = "gl_SYS_TYPES_H_REQUIRE_DEFAULTS",
+    checks = [
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gl_SYS_TYPES_H_DEFAULTS",
+    ],
+)
 
 autoconf(
     name = "sys_types_h",
-    checks = [
-        macros.AC_CHECK_HEADER(
-            "sys/types.h",
-            define = "HAVE_SYS_TYPES_H",
-        ),
-        macros.AC_CHECK_HEADER(
-            "sys/mkdev.h",
-            define = "HAVE_SYS_MKDEV_H",
-        ),
-        macros.AC_CHECK_HEADER(
-            "sys/sysmacros.h",
-            define = "HAVE_SYS_SYSMACROS_H",
-        ),
-        macros.AC_CHECK_TYPE(
-            "blksize_t",
-            define = "HAVE_BLKSIZE_T",
-        ),
-        macros.AC_CHECK_TYPE(
-            "blkcnt_t",
-            define = "HAVE_BLKCNT_T",
-        ),
-        macros.AC_DEFINE("_USE_STD_STAT", "1"),
-    ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/windows-stat-inodes",
+        ":gl_SYS_TYPES_H",
+    ],
+)
+
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_SYS_TYPES_H_REQUIRE_DEFAULTS",
     ],
 )

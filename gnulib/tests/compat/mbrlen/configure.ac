@@ -1,0 +1,13 @@
+AC_INIT([test_mbrlen], [1.0])
+AC_CONFIG_HEADERS([config.h])
+
+# Invoke macros from mbrlen.m4
+gl_FUNC_MBRLEN
+gl_MBRLEN_INCOMPLETE_STATE
+gl_MBRLEN_RETVAL
+gl_MBRLEN_NUL_RETVAL
+gl_MBRLEN_EMPTY_INPUT
+gl_PREREQ_MBRLEN
+
+AC_CONFIG_FILES([subst.h:subst.h.in])
+AC_OUTPUT

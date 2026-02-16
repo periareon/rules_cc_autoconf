@@ -1,21 +1,51 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/wmempcpy.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
-# gl_FUNC_WMEMPCPY from wmempcpy.m4
 autoconf(
     name = "wmempcpy",
     checks = [
-        # gl_CHECK_FUNCS_ANDROID([wmempcpy], [[#include <wchar.h>]])
-        macros.AC_CHECK_FUNC(
-            "wmempcpy",
-            code = "#include <wchar.h>",
+        # Note: gl_WCHAR_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+
+        # Use AC_TRY_LINK to check if the function actually links (not just declared)
+        checks.AC_TRY_LINK(
+            name = "ac_cv_func_wmempcpy",
+            code = """#include <wchar.h>
+int main(void) {
+    wchar_t *dst, *src;
+    size_t n = 0;
+    return wmempcpy(dst, src, n) != NULL ? 0 : 1;
+}""",
         ),
-    ],
+
+        # if test $ac_cv_func_wmempcpy = no; then
+        #   case "$gl_cv_onwards_func_wmempcpy" in
+        #   esac
+        # fi
+        # Set HAVE_WMEMPCPY as substitution variable
+        # Define HAVE_WMEMPCPY in config.h if function exists
+        # Based on golden files, on Linux it's defined as "1", on macOS it's undefined
+        checks.AC_DEFINE(
+            "HAVE_WMEMPCPY",
+            requires = ["ac_cv_func_wmempcpy==1"],
+        ),
+
+        # Based on golden files, REPLACE_WMEMPCPY=0 on macOS/Linux
+        # (function doesn't exist on macOS, but it's not a future function)
+        checks.AC_SUBST("REPLACE_WMEMPCPY", 0),
+    ] + select({
+        "@platforms//os:macos": [
+            # Golden expects HAVE_WMEMPCPY "0" on macOS (no native wmempcpy)
+            checks.AC_SUBST("HAVE_WMEMPCPY", "0"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_WCHAR_H_DEFAULTS])
-        "//gnulib/m4/wchar_h",
+        # Note: gl_WCHAR_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        "//gnulib/m4/extensions",
+        "//autoconf/macros/AC_C_RESTRICT",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

@@ -2,7 +2,6 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 
-# gl_XGETCWD from xgetcwd.m4
 # This macro body is just ':' - a no-op
 autoconf(
     name = "xgetcwd",

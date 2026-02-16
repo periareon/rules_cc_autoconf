@@ -1,0 +1,4 @@
+/* config.h.in */
+#define D_INO_IN_DIRENT 1
+#define HAVE_LONG_FILE_NAMES 1
+#define HAVE_PATHCONF 1

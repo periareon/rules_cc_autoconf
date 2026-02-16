@@ -1,32 +1,71 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/nl_langinfo.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
-# gl_FUNC_NL_LANGINFO macro from nl_langinfo.m4
-# HAVE_THREADS_H comes from setlocale_null dependency
-
+# This is an internal target for providing common definitions
 autoconf(
-    name = "nl_langinfo",
-    checks = [
-        macros.AC_TRY_COMPILE(
-            code = """#include <langinfo.h>
-
-#ifdef __cplusplus
-extern "C"
-#endif
-char *nl_langinfo (nl_item);
-
-int main(void) {
-    return nl_langinfo(CODESET) != NULL ? 0 : 1;
-}""",
-            define = "HAVE_NL_LANGINFO",
-            language = "c",
+    name = "nl_langinfo_l",
+    checks = gl_macros.GL_CHECK_FUNCS_ANDROID(
+        ["nl_langinfo_l"],
+        includes = ["#include <langinfo.h>"],
+    ) + [
+        checks.AC_SUBST(
+            "HAVE_NL_LANGINFO_L",
+            condition = "ac_cv_func_nl_langinfo_l",
         ),
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+)
+
+# REPLACE_NL_LANGINFO, and LIB_NL_LANGINFO
+autoconf(
+    name = "gl_FUNC_NL_LANGINFO",
+    checks = [
+        # We need to also set it in subst.h (GL_CHECK_FUNCS_ANDROID pattern)
+        checks.AC_SUBST(
+            "HAVE_NL_LANGINFO",
+            condition = "ac_cv_func_nl_langinfo",  # From AC_FUNC_NL_LANGINFO dependency
+            if_false = "0",
+            if_true = "1",
+        ),
+        # If nl_langinfo doesn't have required features or is not MTSAFE, REPLACE_NL_LANGINFO=1
+        # Based on golden file, REPLACE_NL_LANGINFO=1 on both Linux and macOS
+        checks.AC_DEFINE("REPLACE_NL_LANGINFO", 1),
+        checks.AC_SUBST("REPLACE_NL_LANGINFO", 1),
+    ] + select({
+        # On Linux with glibc: nl_langinfo is multithread-safe
+        "@platforms//os:linux": [
+            checks.AC_DEFINE_UNQUOTED("NL_LANGINFO_MTSAFE", "1"),
+        ],
+        # On macOS and others: nl_langinfo is not multithread-safe
+        "//conditions:default": [
+            checks.AC_DEFINE_UNQUOTED("NL_LANGINFO_MTSAFE", "0"),
+        ],
+    }) + [
+        # Based on golden file, LIB_NL_LANGINFO="" (empty string) on macOS
+        checks.AC_SUBST("LIB_NL_LANGINFO", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/langinfo_h",  # AC_REQUIRE([gl_LANGINFO_H])
-        "//gnulib/m4/setlocale_null",  # Provides HAVE_THREADS_H
+        # AC_REQUIRE([gl_LANGINFO_H_DEFAULTS]) - line 14 (ignore, it's a _DEFAULTS function)
+        "//gnulib/m4/langinfo_h",
+        "//gnulib/macros/AC_FUNC_NL_LANGINFO",
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//gnulib/m4/setlocale_null",
+        "//gnulib/m4/threadlib",
+        "//gnulib/m4/visibility",
+        # This is handled by the dependencies
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "nl_langinfo",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_NL_LANGINFO",
     ],
 )

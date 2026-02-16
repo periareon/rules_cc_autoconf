@@ -1,15 +1,75 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/time_r.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "time_r",
     checks = [
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "localtime_r",
-            define = "HAVE_DECL_LOCALTIME_R",
+            name = "ac_cv_have_decl_localtime_r",
+            includes = ["#include <time.h>"],
         ),
+
+        #   HAVE_DECL_LOCALTIME_R=0
+        # fi
+        checks.AC_DEFINE(
+            "HAVE_DECL_LOCALTIME_R",
+            condition = "ac_cv_have_decl_localtime_r",
+            if_false = 0,
+            if_true = 1,
+        ),
+        checks.AC_CHECK_FUNC(
+            "localtime_r",
+            name = "ac_cv_func_localtime_r",
+        ),
+
+        #   fi
+        # else
+        #   fi
+        # fi
+        checks.AC_DEFINE(
+            "HAVE_LOCALTIME_R",
+            condition = "ac_cv_func_localtime_r",
+            if_true = 1,
+        ),
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_time_r_posix",
+            code = """\
+/* mingw's <time.h> provides the functions asctime_r, ctime_r,
+   gmtime_r, localtime_r only if <unistd.h> or <pthread.h> has
+   been included before.  */
+#if defined __MINGW32__
+# include <unistd.h>
+#endif
+#include <time.h>
+
+int main(void) {
+    /* We don't need to append 'restrict's to the argument types,
+       even though the POSIX signature has the 'restrict's,
+       since C99 says they can't affect type compatibility.  */
+    struct tm * (*ptr) (time_t const *, struct tm *) = localtime_r;
+    if (ptr) return 0;
+    /* Check the return type is a pointer.
+       On HP-UX 10 it is 'int'.  */
+    *localtime_r (0, 0);
+    return 0;
+}
+""",
+            language = "c",
+            requires = ["ac_cv_func_localtime_r"],
+        ),
+
+        # Set REPLACE_LOCALTIME_R if localtime_r is not POSIX-compatible or is inline
+        # Based on golden files, REPLACE_LOCALTIME_R=0 on macOS (function exists and is POSIX-compatible)
+        checks.AC_SUBST("REPLACE_LOCALTIME_R", 0),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//autoconf/macros/AC_C_RESTRICT",
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/time_h",
+    ],
 )

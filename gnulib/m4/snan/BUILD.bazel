@@ -2,7 +2,6 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 
-# gl_SNAN from snan.m4
 # Prerequisites for lib/snan.h
 # This macro only has AC_REQUIRE dependencies for exponent location macros
 autoconf(

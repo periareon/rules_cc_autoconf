@@ -1,0 +1,4 @@
+/* config.h.in */
+/* #undef GL_CFLAG_INHIBIT_WARNINGS */
+/* #undef GL_CXXFLAG_INHIBIT_WARNINGS */
+/* #undef WARN_CFLAGS */

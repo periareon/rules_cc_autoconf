@@ -1,28 +1,17 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/alignalloc.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
 
 autoconf(
     name = "alignalloc",
     checks = [
-        # Check for posix_memalign function
-        # Equivalent to gl_ALIGNALLOC macro from alignalloc.m4
-        # Note: AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
-        macros.AC_TRY_COMPILE(
-            code = """#include <stdlib.h>
-
-#ifdef __cplusplus
-extern "C"
-#endif
-char posix_memalign ();
-
-int main(void) {
-    return posix_memalign();
-}""",
-            define = "HAVE_POSIX_MEMALIGN",
-            language = "c",
-        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
+        "//gnulib/m4/posix_memalign",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        # (golden files include standard header checks even though not AC_REQUIREd)
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

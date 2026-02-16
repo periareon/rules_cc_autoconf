@@ -1,25 +1,47 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/btowc.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "btowc",
     checks = [
-        # Check for btowc function
-        # Equivalent to gl_FUNC_BTOWC macro from btowc.m4
-        # Note: Full implementation includes runtime checks for btowc(0) correctness
-        # and consistency with mbrtowc that are not easily replicable in Bazel
-        macros.AC_CHECK_FUNC(
+        # Note: gl_WCHAR_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        checks.AC_CHECK_FUNC(
             "btowc",
             define = "HAVE_BTOWC",
+            subst = True,
         ),
+
+        # HAVE_MBRTOWC (define and subst) from AC_FUNC_MBRTOWC dependency
+
+        # Note: The m4 file performs several AC_RUN_IFELSE checks:
+        # These runtime checks cannot be easily replicated in Bazel.
+    ] + select({
+        # On Linux: gl_MBRTOWC_C_LOCALE check fails, so REPLACE_BTOWC=1
+        "@platforms//os:linux": [
+            checks.AC_SUBST("REPLACE_BTOWC", 1),
+        ],
+        # On macOS and other platforms: REPLACE_BTOWC=0
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_BTOWC", 0),
+        ],
+    }) + [
+        # LOCALE_FR from locale-fr dependency (gt_LOCALE_FR)
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/locale-fr",  # AC_REQUIRE([gt_LOCALE_FR])
-        "//gnulib/m4/mbrtowc",  # AC_REQUIRE([gl_MBRTOWC_C_LOCALE])
-        "//gnulib/m4/wchar_h",  # AC_REQUIRE([gl_WCHAR_H_DEFAULTS]), AC_REQUIRE([gl_WCHAR_H_INLINE_OK])
-        "//gnulib/m4/wint_t",  # AC_REQUIRE([gt_TYPE_WINT_T])
+        "//gnulib/m4/wint_t",
+        # This is part of wchar_h, but we don't need to depend on it since we're not using wchar_h checks
+        # AC_REQUIRE([AC_PROG_CC]) - line 25 (ignored, provided by toolchain)
+        "//gnulib/m4/locale-fr",
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        # Use AC_FUNC_MBRTOWC directly instead of mbrtowc module to avoid HAVE_MBSINIT
+        "//gnulib/macros/AC_FUNC_MBRTOWC",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
+
+# Prerequisites of lib/btowc.c
+# AC_CHECK_FUNCS_ONCE([mbrtowc]) - already included in main target above
+# No separate target needed

@@ -2,7 +2,6 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 
-# gl_TIMESPEC from timespec.m4
 # This macro body is just [:] - a no-op
 autoconf(
     name = "timespec",

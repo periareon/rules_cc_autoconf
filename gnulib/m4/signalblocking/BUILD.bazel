@@ -1,19 +1,54 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/signalblocking.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "signalblocking",
+    name = "gl_SIGNALBLOCKING",
     checks = [
-        # If sigprocmask is found, set HAVE_POSIX_SIGNALBLOCKING=1
-        macros.AC_CHECK_FUNC(
+        # HAVE_POSIX_SIGNALBLOCKING=0 - line 17 (default)
+        # if test "$gl_cv_type_sigset_t" = yes; then
+        checks.AC_CHECK_FUNC(
             "sigprocmask",
-            define = "HAVE_SIGPROCMASK",
-            if_true = [
-                macros.AC_DEFINE("HAVE_POSIX_SIGNALBLOCKING", "1"),
-            ],
+            define = "HAVE_SIGNALBLOCKING",
+            requires = ["gl_cv_type_sigset_t==1"],
+        ),
+        # Set HAVE_POSIX_SIGNALBLOCKING based on sigprocmask check
+        # Since defaults already set it to "1", we need to override it conditionally
+        # Only set to "1" if sigprocmask exists, otherwise it stays at defaults "1"
+        # Actually wait - the m4 sets it to "0" first, then "1" if sigprocmask exists
+        # So we should set it to "0" by default, then "1" if condition is met
+        checks.AC_SUBST(
+            "HAVE_POSIX_SIGNALBLOCKING",
+            condition = "HAVE_SIGNALBLOCKING",
+            if_false = 0,  # Set to "0" if sigprocmask doesn't exist (overrides defaults "1")
+            if_true = 1,
         ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # Note: gl_SIGNALBLOCKING sets HAVE_POSIX_SIGNALBLOCKING itself, so we can't
+        # depend on signal_h:defaults which also sets it. The m4 file requires defaults
+        # but doesn't use HAVE_POSIX_SIGNALBLOCKING from defaults - it sets it itself.
+        "//gnulib/m4/signal_h:signal_h_sigset_t",  # AC_REQUIRE([gl_CHECK_TYPE_SIGSET_T])
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Prerequisites of lib/sigprocmask.c (empty)
+autoconf(
+    name = "gl_PREREQ_SIGPROCMASK",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# Backward compatibility: signalblocking target for tests
+# This is the main target that combines gl_SIGNALBLOCKING
+autoconf(
+    name = "signalblocking",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_SIGNALBLOCKING",
+    ],
 )

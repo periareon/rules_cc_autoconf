@@ -1,0 +1,4 @@
+/* config.h.in */
+#undef GNULIB_LOCALEDIR
+#undef GNULIB_LOCALEDIR_c
+#undef GNULIB_LOCALEDIR_c_make

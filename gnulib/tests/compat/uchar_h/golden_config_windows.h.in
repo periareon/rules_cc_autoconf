@@ -1,0 +1,31 @@
+/* config.h.in */
+#define BITSIZEOF_WCHAR_T 32
+/* #undef CXX_HAS_CHAR8_TYPE */
+/* #undef CXX_HAS_UCHAR_TYPES */
+/* #undef CXX_HAVE_UCHAR_H */
+/* #undef GNULIBHEADERS_OVERRIDE_CHAR16_T */
+/* #undef GNULIBHEADERS_OVERRIDE_CHAR32_T */
+/* #undef GNULIBHEADERS_OVERRIDE_CHAR8_T */
+/* #undef HAVE_C32RTOMB */
+#define HAVE_INTTYPES_H 1
+/* #undef HAVE_MBRTOC16 */
+/* #undef HAVE_MBRTOC32 */
+#define HAVE_STDINT_H 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+/* #undef HAVE_STRINGS_H */
+#define HAVE_STRING_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+/* #undef HAVE_UCHAR_H */
+/* #undef HAVE_UNISTD_H */
+/* #undef INCLUDE_NEXT */
+/* #undef INCLUDE_NEXT_AS_FIRST_DIRECTIVE */
+/* #undef NEXT_AS_FIRST_DIRECTIVE_UCHAR_H */
+/* #undef NEXT_UCHAR_H */
+/* #undef PRAGMA_SYSTEM_HEADER */
+/* #undef REPLACE_C32RTOMB */
+/* #undef REPLACE_MBRTOC16 */
+/* #undef REPLACE_MBRTOC32 */
+/* #undef SMALL_WCHAR_T */
+#define STDC_HEADERS 1

@@ -1,0 +1,20 @@
+"""AC_SYS_LARGEFILE - Autoconf builtin macro
+
+Enables large file support (64-bit file offsets).
+
+Defines:
+  - _FILE_OFFSET_BITS (set to 64)
+  - _LARGE_FILES (if needed)
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "AC_SYS_LARGEFILE",
+    checks = [
+        # Enable large file support
+        checks.AC_DEFINE("_FILE_OFFSET_BITS", "64"),
+    ],
+    visibility = ["//visibility:public"],
+)

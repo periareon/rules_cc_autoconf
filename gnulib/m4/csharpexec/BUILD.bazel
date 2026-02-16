@@ -1,11 +1,40 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/csharpexec.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
+# gt_CSHARPEXEC from csharpexec.m4
+# Detects C# execution environments and sets subst values
+autoconf(
+    name = "gt_CSHARPEXEC",
+    checks = [
+        checks.AC_SUBST("MONO_PATH", ""),
+        checks.AC_SUBST("CLIX_PATH_VAR", ""),
+        checks.AC_SUBST("CLIX_PATH", ""),
+        checks.AC_SUBST("HAVE_MONO", ""),
+        checks.AC_SUBST("HAVE_DOTNET", ""),
+        checks.AC_SUBST("HAVE_CLIX", ""),
+        checks.AC_SUBST("HAVE_MONO_IN_PATH", ""),
+        checks.AC_SUBST("HAVE_DOTNET_IN_PATH", ""),
+        checks.AC_SUBST("HAVE_CLIX_IN_PATH", ""),
+    ] + select({
+        "@platforms//os:windows": [
+            checks.AC_SUBST("MONO_PATH_SEPARATOR", ";"),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST("MONO_PATH_SEPARATOR", ":"),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/csharp:gt_CSHARP_CHOICE",
+    ],
+)
+
+# Top-level target
 autoconf(
     name = "csharpexec",
-    checks = [
-        # Note: csharpexec.m4 may not exist in gnulib, or this module may not have checks
-    ],
+    checks = [],
     visibility = ["//visibility:public"],
+    deps = [":gt_CSHARPEXEC"],
 )

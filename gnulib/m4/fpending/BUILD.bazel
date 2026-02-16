@@ -1,21 +1,41 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fpending.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
-
-# HAVE_STDIO_EXT_H comes from stdio_ext_h dependency
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "fpending",
     checks = [
-        macros.AC_CHECK_DECL(
+        # Standard header defines are provided by AC_CHECK_INCLUDES_DEFAULT dependency
+        checks.AC_TRY_LINK(
+            name = "gl_cv_func___fpending",
+            code = """#include <stdio.h>
+#if HAVE_STDIO_EXT_H
+# include <stdio_ext.h>
+#endif
+
+int main(void) {
+    return ! __fpending (stdin);
+}""",
+            language = "c",
+        ),
+
+        # if test $gl_cv_func___fpending = yes; then
+        # fi
+        checks.AC_CHECK_DECL(
             "__fpending",
-            headers = ["stdio_ext.h"],
-            requires = ["HAVE_STDIO_EXT_H"],
+            name = "HAVE_DECL___FPENDING",
+            includes = [
+                "#include <stdio.h>",
+                "#include <stdio_ext.h>",
+            ],
+            requires = ["gl_cv_func___fpending"],
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/stdio_ext_h",
+        "//gnulib/m4/fpurge",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

@@ -1,11 +1,41 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/pthread-spin.m4"""
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/pthread-spin.m4
+
+gl_PTHREAD_SPIN:
+- AC_REQUIRE([gl_PTHREAD_H_PART1]) - Note: requires PART1, not full gl_PTHREAD_H
+- AC_REQUIRE([AC_CANONICAL_HOST])
+- Windows (mingw/windows) with windows threads: REPLACE_PTHREAD_SPIN_*=1
+- Else if HAVE_PTHREAD_H=0 || HAVE_PTHREAD_SPINLOCK_T=0: HAVE_PTHREAD_SPIN_*=0
+- Else if threadlib in use: check if pthread_spin_init exists, if not set HAVE_*=0 and REPLACE_*=1
+
+gl_PTHREAD_H_PART1 provides:
+- HAVE_PTHREAD_H (define + subst)
+- HAVE_PTHREAD_T (define + subst)
+- HAVE_PTHREAD_SPINLOCK_T (check + subst)
+- HAVE_PTHREAD_SPIN_* (subst based on spinlock_t check)
+- NEXT_PTHREAD_H, NEXT_AS_FIRST_DIRECTIVE_PTHREAD_H
+"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
 
 autoconf(
     name = "pthread-spin",
     checks = [
-        # Note: pthread-spin.m4 may not exist in gnulib, or this module may not have checks
+        # All checks are handled by gl_PTHREAD_H_PART1 which provides:
+        # - HAVE_PTHREAD_H (define + subst)
+        # - HAVE_PTHREAD_SPINLOCK_T (check + subst)
+        # - HAVE_PTHREAD_SPIN_* (subst based on spinlock_t check)
+        # - NEXT_PTHREAD_H, NEXT_AS_FIRST_DIRECTIVE_PTHREAD_H
+        #
+        # Note: We depend on PART1, not full gl_PTHREAD_H, because gl_PTHREAD_SPIN
+        # only AC_REQUIREs gl_PTHREAD_H_PART1. The full gl_PTHREAD_H adds
+        # PTHREAD_MUTEX_ROBUST check which is not needed here.
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",  # For test compatibility
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/pthread_h:gl_PTHREAD_H_PART1",
+        "//gnulib/m4/threadlib",
+    ],
 )

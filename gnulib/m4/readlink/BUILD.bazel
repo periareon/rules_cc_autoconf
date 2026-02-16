@@ -1,29 +1,31 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/readlink.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "readlink",
     checks = [
-        # Check for readlink function
-        # Equivalent to gl_FUNC_READLINK macro from readlink.m4
-        # Note: Full implementation includes runtime tests for trailing slash
-        # and truncation behavior that require file system operations
-        macros.AC_TRY_COMPILE(
-            code = """#include <unistd.h>
-ssize_t readlink (const char *, char *, size_t);
-
-int main(void) {
-    char buf[20];
-    return readlink("/", buf, sizeof buf);
-}""",
-            define = "HAVE_READLINK",
-            language = "c",
+        # We need it in subst.h too
+        checks.AC_SUBST(
+            "HAVE_READLINK",
+            condition = "ac_cv_func_readlink",  # From AC_FUNC_READLINK dependency
+            if_false = "0",
+            if_true = "1",
         ),
-    ],
+        # HAVE_DECL_EXECVPE comes from unistd_h:defaults via toolchain defaults
+    ] + select({
+        "@platforms//os:macos": [
+            # macOS has a trailing slash bug in readlink
+            checks.AC_DEFINE("READLINK_TRAILING_SLASH_BUG", "1"),
+            checks.AC_SUBST("REPLACE_READLINK", 1),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//gnulib/macros/AC_FUNC_READLINK",
+        # Note: gl_UNISTD_H_DEFAULTS is provided by unistd_h:defaults via toolchain defaults
     ],
 )

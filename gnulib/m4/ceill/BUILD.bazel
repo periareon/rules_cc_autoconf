@@ -1,19 +1,24 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/ceill.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "ceill",
     checks = [
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "ceill",
             define = "HAVE_DECL_CEILL",
-            headers = ["math.h"],
+            includes = ["#include <math.h>"],
         ),
+        # AC_SUBST([CEILL_LIBM]) - on macOS, no extra library needed
+        checks.AC_SUBST("CEILL_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/ceil",
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/isnanl",
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
     ],
 )

@@ -1,18 +1,17 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/ioctl.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "ioctl",
     checks = [
-        # Check for ioctl function
         # Equivalent to gl_FUNC_IOCTL macro from ioctl.m4
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "ioctl",
             define = "HAVE_IOCTL",
         ),
-        macros.AC_TRY_COMPILE(
+        checks.AC_TRY_COMPILE(
             code = """#include <sys/ioctl.h>
 #include <unistd.h>
 
@@ -28,10 +27,14 @@ int main(void) {
             define = "HAVE_IOCTL_POSIX_SIGNATURE",
             language = "c",
         ),
+        # REPLACE_IOCTL: on macOS, ioctl signature uses 'unsigned long' for request
+        # instead of POSIX 'int', so we need REPLACE_IOCTL=1
+        checks.AC_SUBST("REPLACE_IOCTL", "1"),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/sys_ioctl_h",  # AC_REQUIRE([gl_SYS_IOCTL_H_DEFAULTS])
-        "//gnulib/m4/sys_socket_h",  # AC_REQUIRE([gl_SYS_SOCKET_H])
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/sys_ioctl_h",
+        "//gnulib/m4/sys_socket_h:gl_SYS_SOCKET_H",
     ],
 )

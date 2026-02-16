@@ -1,0 +1,7 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+cc_library(
+    name = "action_args",
+    hdrs = ["action_args.h"],
+    visibility = ["//autoconf/private:__subpackages__"],
+)

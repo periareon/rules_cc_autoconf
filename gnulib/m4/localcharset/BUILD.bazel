@@ -5,11 +5,9 @@ load("//autoconf:autoconf.bzl", "autoconf")
 autoconf(
     name = "localcharset",
     checks = [
-        # gl_LOCALCHARSET macro from localcharset.m4 only has prerequisites
-        # No actual checks needed
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # Note: AC_REQUIRE([AM_LANGINFO_CODESET]) is from gettext, not gnulib
+        "//gnulib/m4/codeset:AM_LANGINFO_CODESET",
     ],
 )

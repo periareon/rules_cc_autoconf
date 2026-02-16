@@ -1,0 +1,6 @@
+/* config.h.in */
+/* #undef HAVE_ICONV */
+#define ICONV_CONST 
+/* #undef REPLACE_ICONV */
+/* #undef REPLACE_ICONV_OPEN */
+#define REPLACE_ICONV_UTF 1

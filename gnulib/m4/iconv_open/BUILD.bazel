@@ -1,11 +1,32 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/iconv_open.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "iconv_open",
     checks = [
-        # Note: iconv_open.m4 may not exist in gnulib, or this module may not have checks
-    ],
+        # gl_ICONV_OPEN_UTF sets REPLACE_ICONV_UTF
+        # REPLACE_ICONV_OPEN is always needed (to normalize encoding names)
+        checks.AC_SUBST("REPLACE_ICONV_OPEN", "1"),
+    ] + select({
+        "@platforms//os:macos": [
+            # macOS needs iconv replacements
+            checks.AC_DEFINE("REPLACE_ICONV_UTF", 1),
+            checks.AC_SUBST("REPLACE_ICONV", "1"),
+            checks.AC_SUBST("REPLACE_ICONV_UTF", "1"),
+        ],
+        "//conditions:default": [
+            # Linux glibc iconv works correctly
+            checks.AC_SUBST("REPLACE_ICONV", "0"),
+            checks.AC_SUBST("REPLACE_ICONV_UTF", "0"),
+        ],
+    }),
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/iconv",
+        "//gnulib/m4/iconv:AM_ICONV_LINKFLAGS_BODY",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

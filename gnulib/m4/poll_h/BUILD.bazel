@@ -1,15 +1,72 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/poll_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "poll_h",
     checks = [
-        macros.AC_CHECK_HEADER(
+        # Check for poll.h header using internal define to avoid conflict
+        checks.AC_CHECK_HEADER(
             "poll.h",
-            define = "HAVE_POLL_H",
+            name = "_gl_cv_header_poll_h",
         ),
+
+        # Set HAVE_POLL_H as define if header is found
+        checks.AC_DEFINE(
+            "HAVE_POLL_H",
+            "1",
+            requires = ["_gl_cv_header_poll_h==1"],
+        ),
+
+        # If header found: HAVE_POLL_H=1, else HAVE_POLL_H=0
+        # These are provided by include_next dependency
+
+        # This checks for HAVE_WINSOCK2_H (for Windows)
+        # It's handled by include_next dependency through AC_CHECK_INCLUDES_DEFAULT
+
+        # This is a warning/preparation macro, not a check that needs to be ported
+        # AC_SUBST for HAVE_POLL_H, NEXT_POLL_H, NEXT_AS_FIRST_DIRECTIVE_POLL_H
+        checks.AC_SUBST("HAVE_POLL_H", "1"),
+        checks.AC_SUBST("NEXT_POLL_H", "<poll.h>"),
+        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_POLL_H", "<poll.h>"),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",
+        # gl_PREREQ_SYS_H_WINSOCK2 might need sys/socket.h
+        # Actually, AC_CHECK_INCLUDES_DEFAULT should provide HAVE_SYS_SOCKET_H
+        # But let's add sockets dependency to ensure it's available
+        "//gnulib/m4/sockets",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "gl_POLL_H_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("HAVE_POLL", 1),
+        checks.AC_SUBST("REPLACE_POLL", 0),
+    ],
+    visibility = ["//visibility:private"],
+)
+
+autoconf(
+    name = "gl_POLL_H_REQUIRE_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("GNULIB_POLL", 0),
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gl_POLL_H_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_POLL_H_REQUIRE_DEFAULTS",
+    ],
 )

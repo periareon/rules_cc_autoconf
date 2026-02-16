@@ -1,0 +1,3 @@
+/* config.h.in */
+#define MALLOC_0_IS_NONNULL 1
+#define REALLOC_0_IS_NONNULL 1

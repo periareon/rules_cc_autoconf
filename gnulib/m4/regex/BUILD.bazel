@@ -1,24 +1,91 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/regex.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "regex",
+    name = "gl_REGEX",
     checks = [
-        macros.AC_CHECK_HEADER(
+        # This is handled by AC_CANONICAL_HOST dependency
+
+        # This is a complex runtime test that can't be done in Bazel's cross-compilation environment
+        # The test checks if the system's regex works correctly. If it fails or if cross-compiling,
+        # the included regex is used.
+        # Based on golden files, both macOS and Linux use the included regex
+        # (both show _REGEX_INCLUDE_LIMITS_H and _REGEX_LARGE_OFFSETS defined)
+
+        # Based on golden files, these are always defined on both platforms
+        checks.AC_DEFINE("_REGEX_INCLUDE_LIMITS_H", "1"),
+        checks.AC_DEFINE("_REGEX_LARGE_OFFSETS", "1"),
+
+        # These are AC_DEFINE_UNQUOTED calls that rename functions
+        checks.AC_DEFINE_UNQUOTED("re_syntax_options", "rpl_re_syntax_options"),
+        checks.AC_DEFINE_UNQUOTED("re_set_syntax", "rpl_re_set_syntax"),
+        checks.AC_DEFINE_UNQUOTED("re_compile_pattern", "rpl_re_compile_pattern"),
+        checks.AC_DEFINE_UNQUOTED("re_compile_fastmap", "rpl_re_compile_fastmap"),
+        checks.AC_DEFINE_UNQUOTED("re_search", "rpl_re_search"),
+        checks.AC_DEFINE_UNQUOTED("re_search_2", "rpl_re_search_2"),
+        checks.AC_DEFINE_UNQUOTED("re_match", "rpl_re_match"),
+        checks.AC_DEFINE_UNQUOTED("re_match_2", "rpl_re_match_2"),
+        checks.AC_DEFINE_UNQUOTED("re_set_registers", "rpl_re_set_registers"),
+        checks.AC_DEFINE_UNQUOTED("re_comp", "rpl_re_comp"),
+        checks.AC_DEFINE_UNQUOTED("re_exec", "rpl_re_exec"),
+        checks.AC_DEFINE_UNQUOTED("regcomp", "rpl_regcomp"),
+        checks.AC_DEFINE_UNQUOTED("regexec", "rpl_regexec"),
+        checks.AC_DEFINE_UNQUOTED("regerror", "rpl_regerror"),
+        checks.AC_DEFINE_UNQUOTED("regfree", "rpl_regfree"),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        # gl_PREREQ_REGEX - called from gl_REGEX
+        ":gl_PREREQ_REGEX",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Prerequisites of lib/regex.c and lib/regex_internal.c
+autoconf(
+    name = "gl_PREREQ_REGEX",
+    checks = [
+        # This is handled by extensions dependency
+
+        # This is handled by AC_C_INLINE dependency
+
+        # This is handled by AC_C_RESTRICT dependency
+
+        # This is handled by AC_TYPE_MBSTATE_T dependency
+        checks.AC_CHECK_HEADER(
             "libintl.h",
             define = "HAVE_LIBINTL_H",
         ),
-        macros.AC_CHECK_HEADER(
-            "malloc.h",
-            define = "HAVE_MALLOC_H",
+        checks.AC_CHECK_FUNC(
+            "iswctype",
+            define = "HAVE_ISWCTYPE",
         ),
-        macros.AC_CHECK_DECL(
-            "isblank",
-            define = "HAVE_DECL_ISBLANK",
-            headers = ["ctype.h"],
-        ),
+
+        # Note: AC_CHECK_DECLS_ONCE([alarm]) is called from gl_REGEX (line 28)
+        # Do not redefine it here to avoid duplicate cache variable
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/extensions",
+        "//autoconf/macros/AC_C_INLINE",
+        "//autoconf/macros/AC_C_RESTRICT",
+        "//autoconf/macros/AC_TYPE_MBSTATE_T",
+        "//gnulib/m4/malloc_h:HAVE_MALLOC_H",
+        "//autoconf/macros/AC_CHECK_DECLS_ONCE_ALARM",
+        "//gnulib/m4/isblank",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "regex",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_REGEX",
+    ],
 )

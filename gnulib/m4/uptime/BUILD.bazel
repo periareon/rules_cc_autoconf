@@ -1,11 +1,16 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/uptime.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "uptime",
-    checks = [
-        # TODO: Add checks based on .m4 file
-    ],
+    checks = select({
+        # On Linux, /proc/uptime exists
+        "@platforms//os:linux": [
+            checks.AC_DEFINE("HAVE_PROC_UPTIME", 1),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
 )

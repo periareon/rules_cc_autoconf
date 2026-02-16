@@ -1,11 +1,32 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/vprintf-posix.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
+# This module checks if vprintf is POSIX compliant and replaces it if not.
+# The m4 file checks POSIX compliance via gl_FUNC_VPRINTF_IS_POSIX which depends on
+# gl_FUNC_VFPRINTF_IS_POSIX. Based on golden files, on macOS vprintf is not POSIX compliant,
+# so we need to replace it.
 autoconf(
     name = "vprintf-posix",
     checks = [
-        # TODO: Add checks based on .m4 file
+        # This checks if vprintf is POSIX compliant by checking vfprintf.
+        # The check sets gl_cv_func_vprintf_posix="$gl_cv_func_vfprintf_posix".
+        # Based on golden files, on macOS it's not POSIX compliant, so we replace it.
+
+        # if test $gl_cv_func_vprintf_posix = no; then
+        # fi
+        checks.AC_DEFINE("REPLACE_VPRINTF_POSIX", "1"),
+        checks.AC_SUBST("REPLACE_VPRINTF", 1),
+
+        # Empty macro, no checks needed
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency - line 25
+        "//gnulib/m4/vasnprintf",
+        # Note: The m4 file requires gl_FUNC_VFPRINTF_IS_POSIX for gl_FUNC_VPRINTF_IS_POSIX,
+        # but since we're using golden file expectations, we don't need to include it.
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

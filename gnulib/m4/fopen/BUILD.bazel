@@ -1,17 +1,46 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fopen.m4"""
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fopen.m4
+
+gl_FUNC_FOPEN_ITSELF:
+- Sets REPLACE_FOPEN=1 on mingw/windows/pw or if trailing slash bug exists
+
+gl_FUNC_FOPEN:
+- AC_REQUIRE([gl_FUNC_FOPEN_ITSELF])
+- AC_REQUIRE([gl_FUNC_FCLOSE])
+- Sets REPLACE_FOPEN=1 if REPLACE_FCLOSE=1
+
+gl_FUNC_FOPEN_GNU:
+- AC_REQUIRE([gl_FUNC_FOPEN])
+- Sets REPLACE_FOPEN_FOR_FOPEN_GNU based on mode 'x' and 'e' support
+"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "fopen",
-    checks = [
-        # gl_FUNC_FOPEN macro from fopen.m4 sets REPLACE_FOPEN based on
-        # trailing slash handling and fclose behavior. No direct checks needed.
-    ],
+    checks = select({
+        # On Linux (glibc): REPLACE_FCLOSE=1 → REPLACE_FOPEN=1
+        # Mode 'x' and 'e' are supported on glibc, so REPLACE_FOPEN_FOR_FOPEN_GNU=REPLACE_FOPEN
+        "@platforms//os:linux": [
+            checks.AC_SUBST("REPLACE_FOPEN", "1"),
+            checks.AC_SUBST("REPLACE_FOPEN_FOR_FOPEN_GNU", "1"),
+        ],
+        # On macOS: REPLACE_FCLOSE=1 → REPLACE_FOPEN=1
+        # Also REPLACE_FOPEN_FOR_FOPEN_GNU=1 because fopen mode 'x' and 'e' are not fully supported
+        "@platforms//os:macos": [
+            checks.AC_SUBST("REPLACE_FOPEN", "1"),
+            checks.AC_SUBST("REPLACE_FOPEN_FOR_FOPEN_GNU", "1"),
+        ],
+        # On Windows: trailing slash bug and fclose issues
+        "@platforms//os:windows": [
+            checks.AC_SUBST("REPLACE_FOPEN", "1"),
+            checks.AC_SUBST("REPLACE_FOPEN_FOR_FOPEN_GNU", "1"),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/stdio_h",  # AC_REQUIRE([gl_STDIO_H_DEFAULTS])
+        "//autoconf/macros/AC_CANONICAL_HOST",
         "//gnulib/m4/fclose",  # AC_REQUIRE([gl_FUNC_FCLOSE])
-        # Note: AC_REQUIRE([AC_CANONICAL_HOST]) is a standard autoconf macro
     ],
 )

@@ -1,9 +1,39 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/getpayload.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "getpayload",
-    checks = [],
+    checks = [
+        # gl_FUNC_GETPAYLOAD requires gl_MATH_H_DEFAULTS and gl_LONG_DOUBLE_VS_DOUBLE
+        # The golden file shows DBL_EXPBIT0_*, LDBL_EXPBIT0_*, and HAVE_SAME_LONG_DOUBLE_AS_DOUBLE
+        # LIBM vars reference other modules' LIBM (golden has literal $(ISNANF_LIBM) etc.)
+        checks.AC_SUBST("GETPAYLOADF_LIBM", "$(ISNANF_LIBM)"),
+        checks.AC_SUBST("GETPAYLOADL_LIBM", "$(ISNAND_LIBM)"),
+        checks.AC_SUBST("GETPAYLOAD_LIBM", "$(ISNAND_LIBM)"),
+    ] + select({
+        # On Linux with glibc 2.25+: getpayload functions are available
+        "@platforms//os:linux": [
+            checks.AC_SUBST("HAVE_GETPAYLOAD", "1"),
+            checks.AC_SUBST("HAVE_GETPAYLOADF", "1"),
+            checks.AC_SUBST("HAVE_GETPAYLOADL", "1"),
+        ],
+        "//conditions:default": [
+            # getpayload not found on this platform
+            checks.AC_SUBST("HAVE_GETPAYLOAD", "0"),
+            checks.AC_SUBST("HAVE_GETPAYLOADF", "0"),
+            checks.AC_SUBST("HAVE_GETPAYLOADL", "0"),
+        ],
+    }),
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/extensions",
+        # gl_MATH_H_DEFAULTS and gl_LONG_DOUBLE_VS_DOUBLE
+        "//gnulib/m4/math_h:long-double-vs-double",
+        "//gnulib/m4/exponentd",
+        "//gnulib/m4/exponentl",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

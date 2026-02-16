@@ -1,0 +1,27 @@
+"""https://www.gnu.org/savannah-checkouts/gnu/autoconf/manual/autoconf-2.72/autoconf.html#index-AC_005fC_005fBIGENDIAN"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+# Determine byte order based on target platform.
+#
+# The original autoconf AC_C_BIGENDIAN macro uses AC_TRY_RUN to execute
+# a binary, which is not possible in Bazel's hermetic build model
+# (especially with cross-compilation and remote execution). Instead we
+# use platform-based select() over known big-endian CPU architectures.
+#
+# On big-endian platforms: #define WORDS_BIGENDIAN 1
+# On little-endian platforms (default): WORDS_BIGENDIAN left undefined
+#
+# If you are targeting an exotic big-endian platform not listed here,
+# add a config_setting for its @platforms//cpu constraint and include
+# it in the select().
+autoconf(
+    name = "AC_C_BIGENDIAN",
+    checks = select({
+        "@platforms//cpu:ppc": [checks.AC_DEFINE("WORDS_BIGENDIAN", "1")],
+        "@platforms//cpu:s390x": [checks.AC_DEFINE("WORDS_BIGENDIAN", "1")],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+)

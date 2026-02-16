@@ -1,14 +1,60 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/roundf-ieee.m4"""
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/roundf-ieee.m4
+
+gl_FUNC_ROUNDF_IEEE:
+- m4_divert_text([INIT_PREPARE], [gl_roundf_required=ieee])
+- AC_REQUIRE([gl_FUNC_ROUNDF])
+
+The divert_text sets gl_roundf_required=ieee BEFORE gl_FUNC_ROUNDF runs, causing it to
+also run the IEEE compliance test (roundf(-0.0) sign bit preservation). On Linux glibc,
+roundf(-0.0) returns +0.0 (loses sign bit), so REPLACE_ROUNDF=1.
+When REPLACE_ROUNDF=1, gl_FUNC_ROUNDF also calls gl_FUNC_FLOOR_LIBS and gl_FUNC_CEIL_LIBS
+to find floor/ceil needed for the replacement implementation.
+"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "gl_FUNC_ROUNDF_IEEE",
+    checks = [
+        checks.AC_CHECK_DECL(
+            "roundf",
+            includes = ["#include <math.h>"],
+        ),
+        checks.AC_SUBST("ROUNDF_LIBM", ""),
+    ] + select({
+        # On Linux: glibc's roundf(-0.0) returns +0.0 (loses sign bit),
+        # failing the IEEE compliance test → REPLACE_ROUNDF=1
+        # HAVE_FLOORF_AND_CEILF is set because floorf/ceilf modules provide
+        # the declarations (depended on conditionally below)
+        "@platforms//os:linux": [
+            checks.AC_SUBST("REPLACE_ROUNDF", 1),
+            checks.AC_DEFINE("HAVE_FLOORF_AND_CEILF", "1"),
+        ],
+        # On macOS: roundf passes IEEE compliance test
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_ROUNDF", 0),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",
+    ] + select({
+        # On Linux: replacement needs floor/ceil, so depend on floorf/ceilf
+        # modules which provide HAVE_DECL_FLOORF and HAVE_DECL_CEILF
+        "@platforms//os:linux": [
+            "//gnulib/m4/ceilf",
+            "//gnulib/m4/floorf",
+        ],
+        "//conditions:default": [],
+    }),
+)
 
 autoconf(
     name = "roundf-ieee",
-    checks = [
-        # Note: roundf-ieee.m4 may not exist in gnulib, or this module may not have checks
-    ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/roundf",
+        ":gl_FUNC_ROUNDF_IEEE",
     ],
 )

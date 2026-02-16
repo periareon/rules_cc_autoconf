@@ -2,13 +2,27 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 
-# HAVE_MEMPCPY comes from mempcpy dependency
+autoconf(
+    name = "gl_FILE_NAME_CONCAT",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FILE_NAME_CONCAT_LGPL",
+    ],
+)
+
+autoconf(
+    name = "gl_FILE_NAME_CONCAT_LGPL",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/mempcpy:HAVE_MEMPCPY",
+    ],
+)
 
 autoconf(
     name = "filenamecat",
-    checks = [],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/mempcpy",
+        ":gl_FILE_NAME_CONCAT",
+        ":gl_FILE_NAME_CONCAT_LGPL",
     ],
 )

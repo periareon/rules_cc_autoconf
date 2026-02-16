@@ -5,7 +5,15 @@ load("//autoconf:autoconf.bzl", "autoconf")
 autoconf(
     name = "sm3",
     checks = [
-        # TODO: Add checks based on .m4 file
+        # gl_SM3 requires AC_C_RESTRICT and gl_BIGENDIAN
+        # These are provided by dependencies
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_C_RESTRICT",  # AC_REQUIRE([AC_C_RESTRICT])
+        # Note: bigendian module may not exist or may be named differently
+        # "//gnulib/m4/bigendian",  # AC_REQUIRE([gl_BIGENDIAN])
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

@@ -1,0 +1,21 @@
+/* config.h.in */
+/* #undef HAVE_GLOB */
+#define HAVE_GLOB_H 1
+/* #undef HAVE_GLOB_PATTERN_P */
+#define HAVE_INTTYPES_H 1
+#define HAVE_STDINT_H 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_STRING_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+/* #undef INCLUDE_NEXT */
+/* #undef INCLUDE_NEXT_AS_FIRST_DIRECTIVE */
+/* #undef NEXT_AS_FIRST_DIRECTIVE_GLOB_H */
+/* #undef NEXT_GLOB_H */
+/* #undef PRAGMA_SYSTEM_HEADER */
+/* #undef REPLACE_GLOB */
+/* #undef REPLACE_GLOB_PATTERN_P */
+#define STDC_HEADERS 1

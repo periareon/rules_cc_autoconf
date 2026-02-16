@@ -1,0 +1,2 @@
+/* config.h.in */
+#undef HAVE_INTTYPES_H_WITH_UINTMAX

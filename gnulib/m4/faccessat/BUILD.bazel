@@ -1,33 +1,71 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/faccessat.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
-# gl_FUNC_FACCESSAT from faccessat.m4
-# HAVE_ACCESS comes from access dependency
-
+# HAVE_FACCESSAT - Check for faccessat function existence only
+# For modules that just need to check if faccessat exists (like euidaccess)
+# without pulling in the replacement logic.
 autoconf(
-    name = "faccessat",
+    name = "HAVE_FACCESSAT",
     checks = [
-        macros.AC_TRY_COMPILE(
-            code = """#include <unistd.h>
-
-#ifdef __cplusplus
-extern "C"
-#endif
-char faccessat ();
-
-int main(void) {
-    return faccessat();
-}""",
+        checks.AC_CHECK_FUNC(
+            "faccessat",
             define = "HAVE_FACCESSAT",
-            language = "c",
+            subst = True,
+        ),
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+#
+# REPLACE_FACCESSAT is set based on:
+# 1. If faccessat doesn't exist (HAVE_FACCESSAT=0) - might need replacement
+# 2. If lstat doesn't correctly handle slashed symlinks - needs replacement
+autoconf(
+    name = "gl_FUNC_FACCESSAT",
+    checks = [
+        # REPLACE_FACCESSAT is set based on gl_cv_func_lstat_dereferences_slashed_symlink
+        # from lstat module. If lstat doesn't handle slashed symlinks correctly,
+        # faccessat needs replacement.
+        checks.AC_SUBST(
+            "REPLACE_FACCESSAT",
+            condition = "gl_cv_func_lstat_dereferences_slashed_symlink",
+            if_false = 1,  # lstat has issues, faccessat needs replacement
+            if_true = 0,  # lstat works correctly, no replacement needed
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/access",  # Provides HAVE_ACCESS
-        "//gnulib/m4/lstat",  # AC_REQUIRE([gl_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK])
-        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
+        # HAVE_FACCESSAT check
+        ":HAVE_FACCESSAT",
+        # Provides gl_cv_func_lstat_dereferences_slashed_symlink
+        "//gnulib/m4/lstat:gl_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK",
+        "//gnulib/m4/extensions",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Prerequisites of lib/faccessat.c
+autoconf(
+    name = "gl_PREREQ_FACCESSAT",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/access:HAVE_ACCESS",
+    ],
+)
+
+# Package-level aggregator target
+autoconf(
+    name = "faccessat",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_FACCESSAT",
+        ":gl_PREREQ_FACCESSAT",
     ],
 )

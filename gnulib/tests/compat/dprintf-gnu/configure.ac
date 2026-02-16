@@ -1,0 +1,20 @@
+AC_INIT([test_dprintf-gnu], [1.0])
+AC_CONFIG_HEADERS([config.h])
+
+# Invoke macros from dprintf-gnu.m4
+gl_FUNC_DPRINTF_GNU
+
+# Account for global Bazel defaults
+HAVE_ALLOCA_H=1
+AC_SUBST([HAVE_ALLOCA_H])
+HAVE_DECL__SNPRINTF=0
+AC_SUBST([HAVE_DECL__SNPRINTF])
+HAVE_NL_LANGINFO=1
+AC_SUBST([HAVE_NL_LANGINFO])
+HAVE_WCRTOMB=1
+AC_SUBST([HAVE_WCRTOMB])
+HAVE_WCSLEN=1
+AC_SUBST([HAVE_WCSLEN])
+
+AC_CONFIG_FILES([subst.h:subst.h.in])
+AC_OUTPUT

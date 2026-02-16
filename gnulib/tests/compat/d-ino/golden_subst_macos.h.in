@@ -1,0 +1,2 @@
+/* subst.h.in */
+#define SUBST_D_INO_IN_DIRENT "@D_INO_IN_DIRENT@"

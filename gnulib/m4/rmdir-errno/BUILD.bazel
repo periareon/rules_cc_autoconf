@@ -1,12 +1,25 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/rmdir-errno.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "rmdir-errno",
-    checks = [],
+    checks = select({
+        # gl_FUNC_RMDIR_NOTEMPTY determines the errno value when rmdir fails on non-empty directory
+        # On Linux: ENOTEMPTY = 39
+        "@platforms//os:linux": [
+            checks.AC_DEFINE("RMDIR_ERRNO_NOT_EMPTY", "39"),
+        ],
+        # On macOS: ENOTEMPTY = 66
+        "//conditions:default": [
+            checks.AC_DEFINE("RMDIR_ERRNO_NOT_EMPTY", "66"),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/unistd_h",
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

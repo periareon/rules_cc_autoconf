@@ -5,7 +5,12 @@ load("//autoconf:autoconf.bzl", "autoconf")
 autoconf(
     name = "immutable",
     checks = [
-        # Note: immutable.m4 may not exist in gnulib, or this module may not have checks
+        # gl_IMMUTABLE requires gl_FUNC_MPROTECT_WORKS and AC_C_INLINE
+        # These are dependencies only, no direct checks
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_C_INLINE",  # AC_REQUIRE([AC_C_INLINE])
+        "//gnulib/m4/mprotect",  # AC_REQUIRE([gl_FUNC_MPROTECT_WORKS])
+    ],
 )

@@ -1,16 +1,25 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/floorf.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "floorf",
     checks = [
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "floorf",
             define = "HAVE_DECL_FLOORF",
-            headers = ["math.h"],
+            includes = ["#include <math.h>"],
         ),
+        # Golden expects FLOORF_LIBM "" (no extra lib needed on macOS/Linux)
+        checks.AC_SUBST("FLOORF_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS,
+
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//gnulib/m4/extensions",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

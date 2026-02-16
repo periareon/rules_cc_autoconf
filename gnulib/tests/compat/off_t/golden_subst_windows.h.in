@@ -1,0 +1,2 @@
+/* subst.h.in */
+#define SUBST_WINDOWS_64_BIT_OFF_T "1"

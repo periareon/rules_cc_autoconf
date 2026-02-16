@@ -1,18 +1,30 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/wcslen.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
-# gl_FUNC_WCSLEN macro from wcslen.m4
 autoconf(
     name = "wcslen",
     checks = [
-        # AC_CHECK_FUNCS_ONCE([wcslen])
-        macros.AC_CHECK_FUNC("wcslen"),
+        # Note: gl_WCHAR_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        checks.AC_CHECK_FUNC(
+            "wcslen",
+            name = "ac_cv_func_wcslen",
+        ),
+
+        # if test $ac_cv_func_wcslen = no; then
+        # fi
+        # Define HAVE_WCSLEN in config.h if function exists
+        checks.AC_DEFINE(
+            "HAVE_WCSLEN",
+            requires = ["ac_cv_func_wcslen==1"],
+        ),
+        # Set HAVE_WCSLEN as substitution variable (subst.h)
+        # AC_SUBST with condition creates the variable regardless of condition result
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_WCHAR_H_DEFAULTS])
-        "//gnulib/m4/wchar_h",
+        # Note: gl_WCHAR_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

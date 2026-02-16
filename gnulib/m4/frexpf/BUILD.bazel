@@ -1,26 +1,33 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/frexpf.m4"""
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/frexpf.m4
+
+gl_FUNC_FREXPF:
+- AC_REQUIRE([gl_MATH_H_DEFAULTS])
+- AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+- AC_REQUIRE([gl_FUNC_FREXP])
+- AC_CHECK_FUNCS([frexpf])
+- AC_SUBST([FREXPF_LIBM])
+"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "frexpf",
     checks = [
-        # Check for frexpf function
-        # Equivalent to gl_FUNC_FREXPF macro from frexpf.m4
-        # Note: Full implementation includes runtime checks for infinite numbers
-        # and negative zero that are not easily replicable in Bazel
-        macros.AC_CHECK_FUNC(
+        # gl_FUNC_FREXPF checks for frexpf function
+        checks.AC_CHECK_FUNC(
             "frexpf",
-            define = "HAVE_FREXPF",
+            name = "_gl_cv_func_frexpf",
         ),
+        # FREXPF_LIBM is empty on macOS
+        checks.AC_SUBST("FREXPF_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
         "//gnulib/m4/frexp",  # AC_REQUIRE([gl_FUNC_FREXP])
-        "//gnulib/m4/mathfunc",  # Uses gl_MATHFUNC([frexpf, ...])
-        # Note: AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]), AC_REQUIRE([AC_PROG_CC]),
-        # and AC_REQUIRE([AC_CANONICAL_HOST]) are standard autoconf macros
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+        "//gnulib/m4/mktime",  # Provides HAVE_DECL_ALARM (needed for test compatibility)
     ],
 )

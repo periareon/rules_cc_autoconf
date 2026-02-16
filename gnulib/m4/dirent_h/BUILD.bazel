@@ -1,11 +1,101 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/dirent_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks", "macros")
+load("//gnulib:macros.bzl", gl_macros = "macros")
+
+# Sets DIR_HAS_FD_MEMBER based on platform
+autoconf(
+    name = "gl_DIRENT_DIR",
+    checks = select({
+        "@platforms//os:windows": [
+            checks.AC_SUBST("DIR_HAS_FD_MEMBER", 0),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST("DIR_HAS_FD_MEMBER", 1),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+    ],
+)
+
+autoconf(
+    name = "gl_DIRENT_H",
+    checks = macros.AC_CHECK_HEADERS(
+        ["dirent.h"],
+    ) + gl_macros.GL_CHECK_NEXT_HEADERS(
+        ["dirent.h"],
+    ) + [
+        checks.AC_SUBST(
+            "HAVE_DIRENT_H",
+            condition = "ac_cv_header_dirent_h",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",
+        ":gl_DIRENT_DIR",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        # (golden files include standard header checks even though not AC_REQUIREd)
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "gl_DIRENT_H_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("HAVE_OPENDIR", 1),
+        checks.AC_SUBST("HAVE_READDIR", 1),
+        checks.AC_SUBST("HAVE_REWINDDIR", 1),
+        checks.AC_SUBST("HAVE_CLOSEDIR", 1),
+        checks.AC_SUBST("HAVE_DECL_DIRFD", 1),
+        checks.AC_SUBST("HAVE_DECL_FDOPENDIR", 1),
+        checks.AC_SUBST("HAVE_FDOPENDIR", 1),
+        checks.AC_SUBST("HAVE_SCANDIR", 1),
+        checks.AC_SUBST("HAVE_ALPHASORT", 1),
+        checks.AC_SUBST("REPLACE_OPENDIR", 0),
+        checks.AC_SUBST("REPLACE_READDIR", 0),
+        checks.AC_SUBST("REPLACE_REWINDDIR", 0),
+        checks.AC_SUBST("REPLACE_CLOSEDIR", 0),
+        checks.AC_SUBST("REPLACE_DIRFD", 0),
+        checks.AC_SUBST("REPLACE_FDOPENDIR", 0),
+    ],
+    visibility = ["//visibility:private"],
+)
+
+autoconf(
+    name = "gl_DIRENT_H_REQUIRE_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("GNULIB_ALPHASORT", 0),
+        checks.AC_SUBST("GNULIB_CLOSEDIR", 0),
+        checks.AC_SUBST("GNULIB_DIRFD", 0),
+        checks.AC_SUBST("GNULIB_FDOPENDIR", 0),
+        checks.AC_SUBST("GNULIB_OPENDIR", 0),
+        checks.AC_SUBST("GNULIB_READDIR", 0),
+        checks.AC_SUBST("GNULIB_REWINDDIR", 0),
+        checks.AC_SUBST("GNULIB_SCANDIR", 0),
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gl_DIRENT_H_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_DIRENT_H_REQUIRE_DEFAULTS",
+    ],
+)
 
 autoconf(
     name = "dirent_h",
-    checks = [
-        # Note: dirent_h.m4 may not exist in gnulib, or this module may not have checks
-    ],
     visibility = ["//visibility:public"],
+    deps = [
+        ":gl_DIRENT_DIR",
+        ":gl_DIRENT_H",
+    ],
 )

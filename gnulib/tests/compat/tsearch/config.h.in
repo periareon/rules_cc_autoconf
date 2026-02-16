@@ -1,0 +1,5 @@
+/* config.h.in */
+#undef HAVE_TSEARCH
+#undef HAVE_TWALK
+#undef REPLACE_TSEARCH
+#undef REPLACE_TWALK

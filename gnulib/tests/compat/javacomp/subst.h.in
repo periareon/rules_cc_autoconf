@@ -1,0 +1,4 @@
+/* subst.h.in */
+#define SUBST_CONF_JAVAC "@CONF_JAVAC@"
+#define SUBST_HAVE_JAVAC "@HAVE_JAVAC@"
+#define SUBST_HAVE_JAVAC_ENVVAR "@HAVE_JAVAC_ENVVAR@"

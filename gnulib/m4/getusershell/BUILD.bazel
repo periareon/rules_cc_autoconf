@@ -1,16 +1,51 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/getusershell.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "getusershell",
     checks = [
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_FUNC(
             "getusershell",
-            define = "HAVE_DECL_GETUSERSHELL",
-            headers = ["unistd.h"],
+            name = "ac_cv_func_getusershell",
         ),
+
+        # if test $ac_cv_func_getusershell = yes; then
+        #   if test $ac_cv_have_decl_getusershell = no; then
+        #   fi
+        # else
+        # fi
+        checks.AC_DEFINE(
+            "HAVE_GETUSERSHELL",
+            condition = "ac_cv_func_getusershell",
+            if_true = 1,
+        ),
+        # Set HAVE_GETUSERSHELL as substitution variable
+        checks.AC_CHECK_DECL(
+            "getusershell",
+            name = "ac_cv_have_decl_getusershell",
+            includes = ["#include <unistd.h>"],
+            requires = ["ac_cv_func_getusershell"],
+        ),
+        checks.AC_DEFINE(
+            "HAVE_DECL_GETUSERSHELL",
+            condition = "ac_cv_have_decl_getusershell",
+            if_true = 1,
+        ),
+        # Set HAVE_DECL_GETUSERSHELL=0 as substitution variable if function doesn't exist or declaration doesn't exist
+        # Override with declaration check result if function exists
+        # case "$host_os" in
+        # esac
+        # Based on golden files, REPLACE_GETUSERSHELL=0 on macOS
+        checks.AC_SUBST("REPLACE_GETUSERSHELL", 0),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//gnulib/m4/extensions",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

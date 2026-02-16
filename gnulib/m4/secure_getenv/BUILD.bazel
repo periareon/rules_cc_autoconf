@@ -1,15 +1,90 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/secure_getenv.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "secure_getenv",
     checks = [
-        macros.AC_CHECK_FUNC(
-            "__secure_getenv",
-            define = "HAVE___SECURE_GETENV",
+
+        # Note: gl_STDLIB_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+
+        # Use AC_TRY_LINK to verify the function actually links (not just declared)
+        # Need _GNU_SOURCE for secure_getenv to be visible on Linux
+        checks.AC_TRY_LINK(
+            name = "ac_cv_func_secure_getenv",
+            code = """\
+#define _GNU_SOURCE 1
+#include <stdlib.h>
+int main(void) {
+    (void)secure_getenv;
+    return 0;
+}
+""",
+        ),
+
+        # if test $ac_cv_func_secure_getenv = no; then
+        # fi
+        # Set HAVE_SECURE_GETENV as substitution variable
+        # If not found, set to "0", if found, set to "1"
+        # On macOS, secure_getenv doesn't exist, so this will be "0"
+        # Define in config.h and create substitution variable
+        checks.AC_DEFINE(
+            "HAVE_SECURE_GETENV",
+            requires = ["ac_cv_func_secure_getenv==1"],
+        ),
+        checks.AC_SUBST(
+            "HAVE_SECURE_GETENV",
+            condition = "ac_cv_func_secure_getenv",
+            if_false = 0,
+            if_true = 1,
         ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/extensions",
+        # Note: gl_STDLIB_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        # gl_PREREQ_SECURE_GETENV is called in configure.ac, so include it as a dependency
+        ":gl_PREREQ_SECURE_GETENV",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Prerequisites of lib/secure_getenv.c
+autoconf(
+    name = "gl_PREREQ_SECURE_GETENV",
+    checks = [
+        checks.AC_CHECK_FUNC(
+            "__secure_getenv",
+            name = "ac_cv_func___secure_getenv",
+        ),
+
+        # if test $ac_cv_func___secure_getenv = no; then
+        # fi
+        # Use AC_TRY_LINK to check for issetugid with unistd.h header
+        checks.AC_TRY_LINK(
+            name = "ac_cv_func_issetugid",
+            code = """\
+#include <unistd.h>
+int main(void) {
+    (void)issetugid;
+    return 0;
+}
+""",
+        ),
+
+        # Define HAVE_ISSETUGID in config.h if the function exists
+        # Use requires pattern to only define when check succeeds (otherwise undef)
+        checks.AC_DEFINE(
+            "HAVE_ISSETUGID",
+            requires = ["ac_cv_func_issetugid==1"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/idpriv",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

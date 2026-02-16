@@ -5,9 +5,13 @@ load("//autoconf:autoconf.bzl", "autoconf")
 autoconf(
     name = "sha512",
     checks = [
-        # gl_SHA512 macro from sha512.m4 has prerequisites (gl_BIGENDIAN) and
-        # gl_CRYPTO_CHECK which checks for OpenSSL SHA512 support
-        # Note: Crypto checks are complex and may require library linking
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # Note: bigendian module may not exist or may be named differently
+        # "//gnulib/m4/bigendian",  # AC_REQUIRE([gl_BIGENDIAN])
+        "//gnulib/m4/gl-openssl",
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

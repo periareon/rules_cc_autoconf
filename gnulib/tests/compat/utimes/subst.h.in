@@ -1,0 +1,2 @@
+/* subst.h.in */
+#define SUBST_HAVE_WORKING_UTIMES "@HAVE_WORKING_UTIMES@"

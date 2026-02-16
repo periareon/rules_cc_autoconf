@@ -1,0 +1,80 @@
+"""AC_FUNC_STRERROR_R - Autoconf builtin macro
+
+Checks the signature of strerror_r().
+
+Defines:
+  - HAVE_DECL_STRERROR_R (if declared)
+  - STRERROR_R_CHAR_P (if returns char*)
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "ac_cv_have_decl_strerror_r",
+    checks = [
+        checks.AC_CHECK_DECL(
+            "strerror_r",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "ac_cv_func_strerror_r",
+    checks = [
+        checks.AC_CHECK_FUNC(
+            "strerror_r",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "HAVE_DECL_STRERROR_R",
+    checks = [
+        checks.AC_DEFINE(
+            "HAVE_DECL_STRERROR_R",
+            condition = "ac_cv_have_decl_strerror_r",
+            subst = True,
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":ac_cv_have_decl_strerror_r",
+    ],
+)
+
+autoconf(
+    name = "HAVE_STRERROR_R",
+    checks = [
+        # Note: HAVE_STRERROR_R is a define only, not a subst variable.
+        # AC_FUNC_STRERROR_R defines it but does not AC_SUBST it.
+        # HAVE_DECL_STRERROR_R is the one that gets substituted.
+        checks.AC_DEFINE(
+            "HAVE_STRERROR_R",
+            condition = "ac_cv_func_strerror_r",
+        ),
+    ] + select({
+        # On Linux with glibc, strerror_r returns char* (GNU extension)
+        "@platforms//os:linux": [
+            checks.AC_DEFINE("STRERROR_R_CHAR_P", 1),
+        ],
+        # On macOS/POSIX, strerror_r returns int
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        ":ac_cv_func_strerror_r",
+    ],
+)
+
+autoconf(
+    name = "AC_FUNC_STRERROR_R",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":HAVE_DECL_STRERROR_R",
+        ":HAVE_STRERROR_R",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)

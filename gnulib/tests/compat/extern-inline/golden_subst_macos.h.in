@@ -1,0 +1,2 @@
+/* subst.h.in */
+#define SUBST_HAVE___HEADER_INLINE "@HAVE___HEADER_INLINE@"

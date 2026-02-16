@@ -1,18 +1,20 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/posixver.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 # gl_POSIXVER macro from posixver.m4
 # Defines the default level of POSIX conformance.
 # The value can be overridden at run time via _POSIX2_VERSION environment variable.
+# Note: This is typically only needed for GNU coreutils-style applications.
 
 autoconf(
     name = "posixver",
     checks = [
-        macros.AC_DEFINE(
+        # DEFAULT_POSIX2_VERSION is empty on both platforms
+        checks.AC_SUBST(
             "DEFAULT_POSIX2_VERSION",
-            "gl_default_posix2_version",
+            "",
         ),
     ],
     visibility = ["//visibility:public"],

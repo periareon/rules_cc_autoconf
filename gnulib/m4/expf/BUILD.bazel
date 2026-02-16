@@ -1,23 +1,28 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/expf.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "expf",
     checks = [
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "expf",
             define = "HAVE_EXPF",
         ),
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "expf",
             define = "HAVE_DECL_EXPF",
-            headers = ["math.h"],
+            includes = ["#include <math.h>"],
         ),
+        # gl_MATHFUNC sets EXPF_LIBM based on whether expf needs -lm
+        # On macOS/Linux, expf is in libc, so EXPF_LIBM is empty
+        checks.AC_SUBST("EXPF_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/exp",
+        "//gnulib/m4/extensions",
     ],
 )

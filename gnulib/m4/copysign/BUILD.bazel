@@ -1,21 +1,18 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/copysign.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "copysign",
     checks = [
-        # Check for copysign function
-        # Equivalent to gl_FUNC_COPYSIGN macro from copysign.m4
-        macros.AC_CHECK_FUNC(
-            "copysign",
-            define = "HAVE_COPYSIGN",
-        ),
+        # gl_FUNC_COPYSIGN uses gl_MATHFUNC which does complex checking
+        # gl_MATHFUNC sets COPYSIGN_LIBM based on whether copysign needs -lm
+        # On macOS/Linux, copysign is in libc, so COPYSIGN_LIBM is empty
+        checks.AC_SUBST("COPYSIGN_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
-        "//gnulib/m4/mathfunc",  # Uses gl_MATHFUNC([copysign, ...])
+        "//gnulib/m4/math_h",
     ],
 )

@@ -1,0 +1,9 @@
+/* config.h.in */
+/* #undef ENABLE_NLS */
+/* #undef HAVE_ARGZ_H */
+#define HAVE_CFLOCALECOPYPREFERREDLANGUAGES 1
+#define HAVE_CFPREFERENCESCOPYAPPVALUE 1
+/* #undef HAVE_DCGETTEXT */
+/* #undef HAVE_ERROR_T */
+/* #undef HAVE_GETTEXT */
+/* #undef HAVE_WORKING_ARGZ */

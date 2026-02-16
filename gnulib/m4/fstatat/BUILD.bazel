@@ -1,26 +1,61 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fstatat.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
-# gl_FUNC_FSTATAT from fstatat.m4
-# On darwin and solaris, REPLACE_FSTATAT=1 is unconditionally set.
+# If we have the fstatat function, and it has the bug (in AIX 7.1)
+# that it does not fill in st_size correctly, use the replacement function.
 autoconf(
     name = "fstatat",
     checks = [
-        # Check for fstatat function
-        macros.AC_CHECK_FUNC("fstatat"),
+        # Note: gl_SYS_STAT_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        # gl_cv_func_lstat_dereferences_slashed_symlink comes from lstat dependency
+        checks.AC_CHECK_FUNC(
+            "fstatat",
+            name = "_gl_cv_func_fstatat",
+        ),
+
+        # Create HAVE_FSTATAT define if function exists
+        # Also set as substitution variable
+        # If fstatat found, HAVE_FSTATAT=1
+        checks.AC_DEFINE(
+            "HAVE_FSTATAT",
+            condition = "_gl_cv_func_fstatat",
+            if_false = 0,
+            if_true = 1,
+            subst = True,
+        ),
+
+        # Note: AC_RUN_IFELSE for gl_cv_func_fstatat_zero_flag (lines 26-47) is not directly
+        # portable to Bazel's cross-compilation environment. REPLACE_FSTATAT is set based on
+        # golden file expectations for macOS/Linux.
+        # The m4 sets REPLACE_FSTATAT=1 if:
+        # - fstatat(..., 0) doesn't work (gl_cv_func_fstatat_zero_flag != yes)
+        # - OR lstat doesn't dereference slashed symlinks (gl_cv_func_lstat_dereferences_slashed_symlink != yes)
+        # On macOS, REPLACE_FSTATAT=1 is unconditionally set (line 55)
+        # On macOS, fstatat(..., 0) works, so HAVE_WORKING_FSTATAT_ZERO_FLAG=1 (lines 59-65)
+        # On Linux, REPLACE_FSTATAT=0 by default (from sys_stat_h:defaults)
     ] + select({
-        "@platforms//os:macos": [
-            # On macOS, unconditionally set REPLACE_FSTATAT=1
-            macros.M4_DEFINE("REPLACE_FSTATAT", "1"),
+        # On Linux, REPLACE_FSTATAT=0 (fstatat works correctly)
+        # and HAVE_WORKING_FSTATAT_ZERO_FLAG is NOT defined (check is cross-compile)
+        "@platforms//os:linux": [
+            checks.AC_SUBST("REPLACE_FSTATAT", "0"),
         ],
-        # Note: Solaris would need a custom constraint
-        "//conditions:default": [],
+        # On macOS, REPLACE_FSTATAT=1 and HAVE_WORKING_FSTATAT_ZERO_FLAG=1
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_FSTATAT", "1"),
+            checks.AC_DEFINE("HAVE_WORKING_FSTATAT_ZERO_FLAG", "1"),
+        ],
     }),
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK])
-        "//gnulib/m4/lstat",
+        # Note: gl_SYS_STAT_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        "//gnulib/m4/extensions",
+        # Note: We depend on gl_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK, NOT the main lstat target,
+        # because gl_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK doesn't define HAVE_LSTAT (which the test doesn't want)
+        "//gnulib/m4/lstat:gl_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK",
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

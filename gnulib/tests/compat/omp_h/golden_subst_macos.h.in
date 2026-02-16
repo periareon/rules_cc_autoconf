@@ -1,0 +1,6 @@
+/* subst.h.in */
+#define SUBST_INCLUDE_NEXT "include_next"
+#define SUBST_INCLUDE_NEXT_AS_FIRST_DIRECTIVE "include_next"
+#define SUBST_NEXT_AS_FIRST_DIRECTIVE_OMP_H "<omp.h>"
+#define SUBST_NEXT_OMP_H "<omp.h>"
+#define SUBST_PRAGMA_SYSTEM_HEADER "#pragma GCC system_header"

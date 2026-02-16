@@ -1,0 +1,1 @@
+/* An empty subst file to force all gnulib checks */

@@ -1,11 +1,111 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fenv-exceptions-trapping.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
+# Prerequisites of lib/fenv-except-trapping.c.
 autoconf(
-    name = "fenv-exceptions-trapping",
+    name = "gl_PREREQ_FENV_EXCEPTIONS_TRAPPING",
     checks = [
-        # Note: fenv-exceptions-trapping.m4 may not exist in gnulib, or this module may not have checks
+        # gl_MATHFUNC([fpsetmask], ...) - not available on macOS/Linux
+        checks.AC_SUBST("FPSETMASK_LIBM", ""),
+        # gl_MATHFUNC([fesettrapenable], ...) - not available on macOS/Linux
+        checks.AC_SUBST("FESETTRAPENABLE_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",
+    ],
+)
+
+# FEENABLEEXCEPT_LIBM - shared target for the library linkage value
+# This is shared between fenv-exceptions-state and fenv-exceptions-trapping.
+# Both modules call gl_MATHFUNC([feenableexcept], ...) in M4, but it only
+# runs once due to AC_DEFUN_ONCE behavior.
+autoconf(
+    name = "FEENABLEEXCEPT_LIBM",
+    checks = [
+        # gl_MATHFUNC([feenableexcept], ...) sets this
+        # On macOS, feenableexcept exists without -lm, so empty string
+        checks.AC_SUBST("FEENABLEEXCEPT_LIBM", ""),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",
+    ],
+)
+
+# Main macro: checks for feenableexcept, fedisableexcept, fegetexcept.
+#
+# On macOS: feenableexcept doesn't exist (not in standard fenv.h), so HAVE_*=0
+# On Linux: feenableexcept exists in -lm, so HAVE_*=1
+autoconf(
+    name = "gl_FENV_EXCEPTIONS_TRAPPING",
+    checks = select({
+        # On Linux, feenableexcept and related functions exist in glibc
+        "@platforms//os:linux": [
+            checks.AC_SUBST("HAVE_FEENABLEEXCEPT", "1"),
+            checks.AC_SUBST("HAVE_FEDISABLEEXCEPT", "1"),
+            checks.AC_SUBST("HAVE_FEGETEXCEPT", "1"),
+            checks.AC_SUBST("FENV_EXCEPTIONS_TRAPPING_LIBM", ""),
+        ],
+        # On macOS, feenableexcept doesn't exist
+        "//conditions:default": [
+            # gl_MATHFUNC([feenableexcept], [int], [(int)], [#include <fenv.h>])
+            checks.AC_TRY_LINK(
+                name = "gl_cv_func_feenableexcept",
+                code = """\
+#include <fenv.h>
+
+int main(void) {
+    int (*p)(int) = feenableexcept;
+    return p(0);
+}
+""",
+            ),
+
+            # HAVE_FEENABLEEXCEPT, HAVE_FEDISABLEEXCEPT, HAVE_FEGETEXCEPT
+            # These are all set based on whether feenableexcept exists
+            checks.AC_SUBST(
+                "HAVE_FEENABLEEXCEPT",
+                condition = "gl_cv_func_feenableexcept",
+                if_false = 0,
+                if_true = 1,
+            ),
+            checks.AC_SUBST(
+                "HAVE_FEDISABLEEXCEPT",
+                condition = "gl_cv_func_feenableexcept",
+                if_false = 0,
+                if_true = 1,
+            ),
+            checks.AC_SUBST(
+                "HAVE_FEGETEXCEPT",
+                condition = "gl_cv_func_feenableexcept",
+                if_false = 0,
+                if_true = 1,
+            ),
+
+            # FENV_EXCEPTIONS_TRAPPING_LIBM - empty on macOS
+            checks.AC_SUBST("FENV_EXCEPTIONS_TRAPPING_LIBM", ""),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        ":FEENABLEEXCEPT_LIBM",
+        ":gl_PREREQ_FENV_EXCEPTIONS_TRAPPING",
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",
+    ],
+)
+
+# Package-level aggregator target
+autoconf(
+    name = "fenv-exceptions-trapping",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FENV_EXCEPTIONS_TRAPPING",
+    ],
 )

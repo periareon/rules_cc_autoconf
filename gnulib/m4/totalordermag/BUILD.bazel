@@ -1,9 +1,85 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/totalordermag.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+# Core signbit defines shared by totalorder and totalordermag
+autoconf(
+    name = "gl_SIGNBIT_DEFINES",
+    checks = select({
+        # On Linux: Don't define LDBL_SIGNBIT_* (not needed when totalordermag functions are available)
+        "@platforms//os:linux": [
+            checks.AC_DEFINE("DBL_SIGNBIT_BIT", "31"),
+            checks.AC_DEFINE("DBL_SIGNBIT_WORD", "1"),
+            checks.AC_DEFINE("FLT_SIGNBIT_BIT", "31"),
+            checks.AC_DEFINE("FLT_SIGNBIT_WORD", "0"),
+            # LDBL_SIGNBIT_* are not defined on Linux (functions available)
+        ],
+        # On macOS: Define all signbit values for replacement implementation
+        "//conditions:default": [
+            checks.AC_DEFINE("DBL_SIGNBIT_BIT", "31"),
+            checks.AC_DEFINE("DBL_SIGNBIT_WORD", "1"),
+            checks.AC_DEFINE("FLT_SIGNBIT_BIT", "31"),
+            checks.AC_DEFINE("FLT_SIGNBIT_WORD", "0"),
+            checks.AC_DEFINE("LDBL_SIGNBIT_BIT", "31"),
+            checks.AC_DEFINE("LDBL_SIGNBIT_WORD", "1"),
+        ],
+    }),
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/math_h",
+        "//gnulib/m4/math_h:long-double-vs-double",
+    ],
+)
+
+# Core totalordermag target with signbit defines and _LIBM vars, but NOT HAVE_TOTALORDERMAG*
+# Use this for modules that need totalordermag support but will set their own HAVE_TOTALORDERMAG* values
+autoconf(
+    name = "gl_TOTALORDERMAG_CORE",
+    checks = [
+        # These _LIBM variables indicate library needed - use macro syntax
+        checks.AC_SUBST("TOTALORDERMAG_LIBM", "$(ISNAND_LIBM)"),
+        checks.AC_SUBST("TOTALORDERMAGF_LIBM", "$(ISNANF_LIBM)"),
+        checks.AC_SUBST("TOTALORDERMAGL_LIBM", "$(ISNAND_LIBM)"),
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        ":gl_SIGNBIT_DEFINES",
+        "//gnulib/m4/wchar_h:gl_WCHAR_H_CORE",
+    ],
+)
 
 autoconf(
     name = "totalordermag",
-    checks = [],
+    checks = select({
+        # On Linux with glibc 2.25+: totalordermag functions are available
+        "@platforms//os:linux": [
+            checks.AC_SUBST("HAVE_TOTALORDERMAG", "1"),
+            checks.AC_SUBST("HAVE_TOTALORDERMAGF", "1"),
+            checks.AC_SUBST("HAVE_TOTALORDERMAGL", "1"),
+            checks.AC_SUBST("TOTALORDERMAG_LIBM", ""),
+            checks.AC_SUBST("TOTALORDERMAGF_LIBM", ""),
+            checks.AC_SUBST("TOTALORDERMAGL_LIBM", ""),
+        ],
+        # On macOS: totalordermag functions are not natively available
+        "//conditions:default": [
+            checks.AC_SUBST("HAVE_TOTALORDERMAG", "0"),
+            checks.AC_SUBST("HAVE_TOTALORDERMAGF", "0"),
+            checks.AC_SUBST("HAVE_TOTALORDERMAGL", "0"),
+        ],
+    }),
     visibility = ["//visibility:public"],
+    deps = select({
+        # On Linux: don't need signbit defines (functions available), but need math_h for HAVE_SAME_LONG_DOUBLE_AS_DOUBLE
+        "@platforms//os:linux": [
+            "//gnulib/m4/math_h",
+            "//gnulib/m4/wchar_h:gl_WCHAR_H_CORE",
+        ],
+        # On macOS: need signbit defines for replacement implementation
+        "//conditions:default": [
+            ":gl_TOTALORDERMAG_CORE",
+        ],
+    }),
 )

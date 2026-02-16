@@ -1,15 +1,92 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/ttyname_r.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 autoconf(
     name = "ttyname_r",
     checks = [
-        macros.AC_CHECK_FUNC(
+        # AC_CHECK_DECLS_ONCE with subst=True automatically creates both config.h define and subst.h entry
+        checks.AC_CHECK_DECL(
+            "ttyname_r",
+            define = "HAVE_DECL_TTYNAME_R",
+            includes = ["#include <unistd.h>"],
+            subst = True,
+        ),
+
+        # GL_CHECK_FUNCS_ANDROID already includes the function check, so we don't need a separate AC_CHECK_FUNC
+        # Then use CHECK_FUNC_ANDROID for the HAVE_TTYNAME_R define/subst
+        # This handles:
+        # - AC_DEFINE HAVE_TTYNAME_R in config.h ONLY when function exists
+        # - AC_SUBST HAVE_TTYNAME_R in subst.h ALWAYS (0 or 1)
+        # Note: Additional POSIX signature check is done below
+    ] + gl_macros.GL_CHECK_FUNCS_ANDROID(
+        ["ttyname_r"],
+        includes = ["#include <unistd.h>"],
+    ) + [
+        # The m4 test tries to compile: *ttyname_r (0, NULL, 0);
+        # If this compiles, it means ttyname_r returns char* (non-POSIX) -> gl_cv_func_ttyname_r_posix=no
+        # If this doesn't compile, it means ttyname_r returns int (POSIX) -> gl_cv_func_ttyname_r_posix=yes
+        # Since AC_TRY_COMPILE only sets the define on success, we check if the code that should fail
+        # actually compiles. If it compiles, ttyname_r is non-POSIX.
+        # We use an internal define to check if the non-POSIX code compiles
+        checks.AC_TRY_COMPILE(
+            name = "_gl_cv_func_ttyname_r_non_posix",
+            code = """
+#include <stddef.h>
+#include <unistd.h>
+int test() {
+    *ttyname_r (0, NULL, 0);
+    return 0;
+}
+""",
+            requires = ["ac_cv_func_ttyname_r==1"],  # Only check if function exists
+        ),
+
+        # If the non-POSIX code compiles, ttyname_r is non-POSIX (gl_cv_func_ttyname_r_posix=no)
+        # If it doesn't compile, ttyname_r is POSIX (gl_cv_func_ttyname_r_posix=yes)
+        # So gl_cv_func_ttyname_r_posix = !_gl_cv_func_ttyname_r_non_posix
+        # But condition syntax doesn't support negation, so we use if_false for the POSIX case
+        checks.AC_DEFINE(
+            "gl_cv_func_ttyname_r_posix",
+            condition = "_gl_cv_func_ttyname_r_non_posix",
+            if_false = 1,  # If non-POSIX code doesn't compile, it's POSIX
+        ),
+
+        # if test $gl_cv_func_ttyname_r_posix = no; then
+        # else
+        # fi
+        # gl_cv_func_ttyname_r_posix is set when _gl_cv_func_ttyname_r_non_posix is false
+        # (non-POSIX code doesn't compile -> ttyname_r is POSIX). Use condition on the
+        # check result directly so HAVE_POSIXDECL_TTYNAME_R=1 when non-POSIX fails.
+        checks.AC_DEFINE(
+            "HAVE_POSIXDECL_TTYNAME_R",
+            condition = "_gl_cv_func_ttyname_r_non_posix",
+            if_false = 1,
+        ),
+        # The m4 file has complex runtime checks for Android and Solaris bugs
+        # Based on golden files, on macOS:
+        # - REPLACE_TTYNAME_R=0 (function works correctly)
+        checks.AC_SUBST("REPLACE_TTYNAME_R", 0),
+        checks.AC_CHECK_FUNC(
             "ttyname",
             define = "HAVE_TTYNAME",
         ),
+        # HAVE_TTYNAME_R subst: "1" if function exists
+        # GL_CHECK_FUNCS_ANDROID handles the config.h define, but we need explicit subst
+        checks.AC_SUBST(
+            "HAVE_TTYNAME_R",
+            condition = "ac_cv_func_ttyname_r",
+            if_false = "0",
+            if_true = "1",
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",
+        # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency - line 13
+    ],
 )

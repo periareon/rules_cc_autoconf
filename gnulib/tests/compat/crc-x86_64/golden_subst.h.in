@@ -1,0 +1,4 @@
+/* subst.h.in */
+#define SUBST_GL_CRC_X86_64_PCLMUL "@GL_CRC_X86_64_PCLMUL@"
+#define SUBST_GL_CRC_X86_64_PCLMUL_FALSE ""
+#define SUBST_GL_CRC_X86_64_PCLMUL_TRUE "#"

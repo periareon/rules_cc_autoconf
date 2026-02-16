@@ -1,0 +1,18 @@
+"""AC_TYPE_UNSIGNED_LONG_LONG_INT - Autoconf builtin macro
+
+Checks if unsigned long long int type is supported.
+
+Defines:
+  - HAVE_UNSIGNED_LONG_LONG_INT (if supported)
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "AC_TYPE_UNSIGNED_LONG_LONG_INT",
+    checks = [
+        checks.AC_CHECK_TYPE("unsigned long long int"),
+    ],
+    visibility = ["//visibility:public"],
+)

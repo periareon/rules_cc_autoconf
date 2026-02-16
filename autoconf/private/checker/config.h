@@ -40,9 +40,6 @@ struct Config {
     /** Compiler type (e.g., "msvc", "gcc", "clang") */
     std::string compiler_type{};
 
-    /** Array of checks to perform */
-    std::vector<Check> checks{};
-
     /**
      * @brief Load configuration from a JSON file.
      * @param config_path Path to the JSON configuration file.

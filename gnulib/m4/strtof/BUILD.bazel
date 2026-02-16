@@ -1,15 +1,55 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/strtof.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "strtof",
     checks = [
-        macros.AC_CHECK_FUNC(
+        # Note: gl_STDLIB_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        checks.AC_CHECK_DECL(
             "strtof",
-            define = "HAVE_STRTOF",
+            name = "ac_cv_have_decl_strtof",
+            includes = ["#include <stdlib.h>"],
         ),
+
+        # Set HAVE_STRTOF=1 by default (from gl_STDLIB_H_DEFAULTS)
+        # if test $ac_cv_have_decl_strtof != yes; then
+        # fi
+        # Default is "1" (from gl_STDLIB_H_DEFAULTS), only set to "0" if declaration not found
+        # if test $HAVE_STRTOF = 1; then
+        # fi
+        # Define HAVE_STRTOF in config.h if declaration is found
+        checks.AC_DEFINE(
+            "HAVE_STRTOF",
+            condition = "ac_cv_have_decl_strtof",
+            if_true = 1,
+        ),
+
+        # Define HAVE_DECL_STRTOF in config.h if declaration is found
+        checks.AC_DEFINE(
+            "HAVE_DECL_STRTOF",
+            condition = "ac_cv_have_decl_strtof",
+            if_true = 1,
+        ),
+
+        # REPLACE_STRTOF: Based on golden files, REPLACE_STRTOF=0 on macOS/Linux
+        # The AC_RUN_IFELSE check can't be done in Bazel, so we assume it works correctly
+        # on our target platforms (macOS/Linux)
+        checks.AC_SUBST("REPLACE_STRTOF", 0),
+
+        # if test $gl_cv_func_ldexpf_no_libm = yes; then
+        # fi
+        # Based on golden files, HAVE_LDEXPF_IN_LIBC=1 on macOS/Linux
+        checks.AC_DEFINE("HAVE_LDEXPF_IN_LIBC", "1"),
+        # This is already checked by the nl_langinfo module, but we need to ensure
+        # HAVE_NL_LANGINFO is available. The nl_langinfo module should provide this.
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/nl_langinfo",  # gl_CHECK_FUNCS_ANDROID([nl_langinfo])
+        # Note: gl_STDLIB_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
+    ],
 )

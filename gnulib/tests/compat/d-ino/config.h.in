@@ -1,0 +1,2 @@
+/* config.h.in */
+#undef D_INO_IN_DIRENT

@@ -5,11 +5,14 @@ load("//autoconf:autoconf.bzl", "autoconf")
 autoconf(
     name = "remove",
     checks = [
-        # Note: remove.m4 may not exist in gnulib, or this module may not have checks
+        # gl_FUNC_REMOVE requires runtime checks for directory handling
+        # which are difficult to implement in Bazel, so we rely on defaults
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/rmdir",
-        "//gnulib/m4/unlink",
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//gnulib/m4/rmdir",  # AC_REQUIRE([gl_FUNC_RMDIR])
+        # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
+        "//gnulib/m4/unlink",  # AC_REQUIRE([gl_FUNC_UNLINK])
     ],
 )

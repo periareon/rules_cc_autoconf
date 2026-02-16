@@ -1,0 +1,3 @@
+/* subst.h.in */
+#define SUBST_DC "@DC@"
+#define SUBST_DFLAGS "@DFLAGS@"

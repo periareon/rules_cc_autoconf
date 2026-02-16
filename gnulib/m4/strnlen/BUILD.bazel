@@ -1,20 +1,21 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/strnlen.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
-# AC_FUNC_STRNLEN from strnlen.m4
-# COMPLEX CASE: Uses AC_RUN_IFELSE to test for AIX 4.3 bug (strnlen(S,1)==3)
-# and Android 5.0 crash (strnlen("", SIZE_MAX)). Runtime tests are NOT
-# cross-compile friendly.
+# gl_PREREQ_STRNLEN - lines 77-78 (empty)
+# AC_FUNC_STRNLEN - lines 12-58 (replaces Autoconf 2.72 and earlier)
 autoconf(
     name = "strnlen",
     checks = [
-        # Basic function check
-        macros.AC_CHECK_FUNC(
-            "strnlen",
-            code = "#include <string.h>",
-        ),
+        # Based on golden files, strnlen works on macOS, so REPLACE_STRNLEN=0
+        checks.AC_SUBST("REPLACE_STRNLEN", 0),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//autoconf/macros/AC_FUNC_STRNLEN",
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/string_h",
+    ],
 )

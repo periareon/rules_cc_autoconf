@@ -2,13 +2,27 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 
-# HAVE_VSNPRINTF comes from vsnprintf dependency
-
 autoconf(
     name = "vsnprintf-posix",
-    checks = [],
+    checks = [
+        # gl_FUNC_VSNPRINTF_POSIX checks if vsnprintf is POSIX compliant
+        # If not, it calls gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS, gl_REPLACE_VASNPRINTF, gl_REPLACE_VSNPRINTF
+    ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/vsnprintf",  # Provides HAVE_VSNPRINTF
+        # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
+        "//gnulib/m4/vsnprintf",
+        "//gnulib/m4/vasnprintf",  # gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS, gl_REPLACE_VASNPRINTF
+        # Additional dependencies for golden file:
+        "//gnulib/m4/exponentd",
+        "//gnulib/m4/alloca",
+        "//gnulib/m4/intmax_t",
+        "//gnulib/m4/inttypes_h",
+        # Note: nl_langinfo removed to avoid duplicate HAVE_LANGINFO_CODESET (already provided by codeset via mbrtowc)
+        "//gnulib/m4/math_h:long-double-vs-double",
+        "//gnulib/m4/printf:gl_SNPRINTF_PRESENCE",
+        "//gnulib/m4/printf:gl_SNPRINTF_RETVAL_C99",
+        "//gnulib/m4/printf:gl_SNPRINTF_TRUNCATION_C99",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

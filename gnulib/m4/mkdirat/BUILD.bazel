@@ -1,20 +1,24 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/mkdirat.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "mkdirat",
     checks = [
-        # Check for mkdirat function
         # Equivalent to gl_FUNC_MKDIRAT macro from mkdirat.m4
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "mkdirat",
             define = "HAVE_MKDIRAT",
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS,
+        "//gnulib/m4/extensions",
+
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/sys_stat_h",  # AC_REQUIRE([gl_SYS_STAT_H_DEFAULTS])
         # Note: AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) and
         # AC_REQUIRE([AC_TYPE_MODE_T]) are standard autoconf macros

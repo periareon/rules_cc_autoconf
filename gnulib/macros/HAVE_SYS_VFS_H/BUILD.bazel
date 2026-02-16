@@ -1,0 +1,26 @@
+"""Common module for sys/vfs.h header check"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "ac_cv_header_sys_vfs_h",
+    checks = [
+        checks.AC_CHECK_HEADER("sys/vfs.h"),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "HAVE_SYS_VFS_H",
+    checks = [
+        checks.AC_DEFINE(
+            "HAVE_SYS_VFS_H",
+            requires = ["ac_cv_header_sys_vfs_h==1"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":ac_cv_header_sys_vfs_h",
+    ],
+)

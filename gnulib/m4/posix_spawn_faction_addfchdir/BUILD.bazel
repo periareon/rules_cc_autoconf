@@ -1,11 +1,27 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/posix_spawn_faction_addfchdir.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "posix_spawn_faction_addfchdir",
     checks = [
-        # Note: posix_spawn_faction_addfchdir.m4 may not exist in gnulib, or this module may not have checks
+        # On macOS, this function exists
+        checks.AC_CHECK_FUNC(
+            "posix_spawn_file_actions_addfchdir_np",
+            define = "HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR_NP",
+        ),
+        # This function is not yet standardized, so always replace the system's implementation
+        # REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR=1 is set by defaults if function exists
+        # HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR=0 on macOS (not available)
+        checks.AC_SUBST("HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR", "0"),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # Use gl_POSIX_SPAWN_MINIMAL instead of posix_spawn to avoid HAVE_POSIX_SPAWNATTR_T
+        "//gnulib/m4/posix_spawn:gl_POSIX_SPAWN_MINIMAL",
+        # Note: gl_SPAWN_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

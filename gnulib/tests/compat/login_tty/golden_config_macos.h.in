@@ -1,0 +1,16 @@
+/* config.h.in */
+#define HAVE_INTTYPES_H 1
+#define HAVE_LOGIN_TTY 1
+#define HAVE_STDINT_H 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_STRING_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_TERMIOS_H 1
+#define HAVE_UNISTD_H 1
+#define HAVE_UTIL_H 1
+#define HAVE_UTMP_H 1
+/* #undef PTY_LIB */
+#define STDC_HEADERS 1

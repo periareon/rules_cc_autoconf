@@ -1,0 +1,27 @@
+"""Shared check for flockfile/funlockfile functions.
+
+Multiple gnulib modules use AC_CHECK_FUNCS_ONCE([flockfile funlockfile]).
+In autoconf, AC_CHECK_FUNCS_ONCE caches the result so it only runs once.
+In Bazel, we create a shared target that all modules depend on.
+
+Used by: argp (argp.m4 line 74), getdelim (getdelim.m4 line 122)
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "AC_CHECK_FUNCS_ONCE_flockfile",
+    checks = [
+        # AC_CHECK_FUNCS_ONCE([flockfile funlockfile])
+        checks.AC_CHECK_FUNC(
+            "flockfile",
+            define = "HAVE_FLOCKFILE",
+        ),
+        checks.AC_CHECK_FUNC(
+            "funlockfile",
+            define = "HAVE_FUNLOCKFILE",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

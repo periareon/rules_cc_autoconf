@@ -29,17 +29,26 @@ class CheckRunner {
     explicit CheckRunner(const Config& config);
 
     /**
-     * @brief Run all checks defined in the configuration.
-     * @return Vector of CheckResult objects, one for each check.
-     */
-    std::vector<CheckResult> run_all_checks();
-
-    /**
      * @brief Run a single check.
      * @param check Check object describing the check to perform.
      * @return CheckResult containing the result of the check.
      */
     CheckResult run_check(const Check& check);
+
+    /**
+     * @brief Set defines from required checks (dependencies).
+     * @param required_defines Map of define names to their values from required
+     * checks.
+     */
+    void set_required_defines(
+        const std::map<std::string, std::string>& required_defines);
+
+    /**
+     * @brief Set dependent check results for compile_defines lookup.
+     * @param dep_results Map of define names to their check results from
+     * dependent checks.
+     */
+    void set_dep_results(const std::map<std::string, CheckResult>& dep_results);
 
     // Deleted copy and move assignment operators (const reference member)
     CheckRunner& operator=(const CheckRunner&) = delete;
@@ -48,9 +57,11 @@ class CheckRunner {
    private:
     const Config& config_;                ///< Reference to the configuration
     std::vector<CheckResult> results_{};  ///< Accumulated check results
-
-    /** @brief Check if a header file exists and can be included. */
-    CheckResult check_header(const Check& check);
+    ///< Map of define names from required checks (dependencies) to their values
+    std::map<std::string, std::string> required_defines_{};
+    ///< Map of define names to check results from dependent checks (for
+    ///< compile_defines lookup)
+    std::map<std::string, CheckResult> dep_results_{};
 
     /** @brief Check if a function exists and can be linked. */
     CheckResult check_function(const Check& check);
@@ -66,6 +77,9 @@ class CheckRunner {
 
     /** @brief Check if code compiles successfully. */
     CheckResult check_compile(const Check& check);
+
+    /** @brief Check if code compiles and links. */
+    CheckResult check_link(const Check& check);
 
     /** @brief Produce the define value for the check unconditionally. */
     CheckResult check_define(const Check& check);
@@ -124,6 +138,18 @@ class CheckRunner {
         const std::string& unique_id = "conftest");
 
     /**
+     * @brief Try to compile and link code (without running).
+     * @param code Source code to compile and link.
+     * @param language Language of the code ("c" or "cpp").
+     * @param unique_id Optional unique identifier for this check (used in
+     * filenames).
+     * @return true if compilation and linking succeeded, false otherwise.
+     */
+    bool try_compile_and_link(const std::string& code,
+                              const std::string& language = "c",
+                              const std::string& unique_id = "conftest");
+
+    /**
      * @brief Try to compile and link code with a specific library.
      * @param code Source code to compile and link.
      * @param library Library name (without -l prefix) to link against.
@@ -169,6 +195,36 @@ class CheckRunner {
      * @return File extension (".c" or ".cpp").
      */
     std::string get_file_extension(const std::string& language);
+
+    /**
+     * @brief Get #define statements from all successful AC_DEFINE checks
+     * processed so far.
+     * @return String containing #define statements for all previous defines,
+     *         to be prepended to compilation test code.
+     */
+    std::string get_defines_from_previous_checks() const;
+
+    /**
+     * @brief Find compile-time constant value using static_assert binary
+     * search.
+     * @param base_code_template Code template with {value} placeholder for
+     * static_assert.
+     * @param language Language of the code ("c" or "cpp").
+     * @param unique_id Optional unique identifier for this check.
+     * @return The value that makes static_assert pass, or std::nullopt if none
+     * found.
+     */
+    std::optional<int> find_compile_time_value_with_static_assert(
+        const std::string& base_code_template, const std::string& language,
+        const std::string& unique_id);
+
+    /**
+     * @brief Resolve compile_defines from check and build #define statements.
+     * @param check The check that may have compile_defines.
+     * @return String containing #define statements for compile_defines,
+     *         or empty string if no compile_defines specified.
+     */
+    std::string resolve_compile_defines(const Check& check) const;
 };
 
 }  // namespace rules_cc_autoconf

@@ -4,9 +4,12 @@ load("//autoconf:autoconf.bzl", "autoconf")
 
 autoconf(
     name = "userspec",
-    checks = [],
+    checks = [
+        # gl_USERSPEC checks for sys/param.h header
+    ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/pathmax",  # Provides HAVE_SYS_PARAM_H
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/macros/HAVE_SYS_PARAM_H",
     ],
 )

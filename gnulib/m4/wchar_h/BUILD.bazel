@@ -1,27 +1,226 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/wchar_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
+# gl_WCHAR_H_DEFAULTS - AC_DEFUN([gl_WCHAR_H_DEFAULTS], ...)
+# This macro must not be AC_REQUIREd; it is invoked from gl_WCHAR_H_REQUIRE_DEFAULTS.
 autoconf(
-    name = "wchar_h",
+    name = "gl_WCHAR_H_DEFAULTS",
     checks = [
-        # Check for wchar.h header
-        # Equivalent to gl_WCHAR_H macro from wchar_h.m4
-        macros.AC_CHECK_HEADER(
-            "wchar.h",
-            define = "HAVE_WCHAR_H",
-        ),
-        macros.AC_CHECK_DECL(
-            "wcsdup",
-            define = "HAVE_DECL_WCSDUP",
-            headers = ["wchar.h"],
-        ),
+        checks.AC_SUBST("HAVE_BTOWC", 1),
+        checks.AC_SUBST("HAVE_MBSINIT", 1),
+        checks.AC_SUBST("HAVE_MBRTOWC", 1),
+        checks.AC_SUBST("HAVE_MBRLEN", 1),
+        checks.AC_SUBST("HAVE_MBSRTOWCS", 1),
+        checks.AC_SUBST("HAVE_MBSNRTOWCS", 1),
+        checks.AC_SUBST("HAVE_WCRTOMB", 1),
+        checks.AC_SUBST("HAVE_WCSRTOMBS", 1),
+        checks.AC_SUBST("HAVE_WCSNRTOMBS", 1),
+        checks.AC_SUBST("HAVE_WMEMCHR", 1),
+        checks.AC_SUBST("HAVE_WMEMCMP", 1),
+        checks.AC_SUBST("HAVE_WMEMCPY", 1),
+        checks.AC_SUBST("HAVE_WMEMMOVE", 1),
+        checks.AC_SUBST("HAVE_WMEMPCPY", 1),
+        checks.AC_SUBST("HAVE_WMEMSET", 1),
+        checks.AC_SUBST("HAVE_WCSLEN", 1),
+        checks.AC_SUBST("HAVE_WCSNLEN", 1),
+        checks.AC_SUBST("HAVE_DECL_WCWIDTH", 1),
+        checks.AC_SUBST("HAVE_WCSCPY", 1),
+        checks.AC_SUBST("HAVE_WCPCPY", 1),
+        checks.AC_SUBST("HAVE_WCSNCPY", 1),
+        checks.AC_SUBST("HAVE_WCPNCPY", 1),
+        checks.AC_SUBST("HAVE_WCSCAT", 1),
+        checks.AC_SUBST("HAVE_WCSNCAT", 1),
+        checks.AC_SUBST("HAVE_WCSCMP", 1),
+        checks.AC_SUBST("HAVE_WCSNCMP", 1),
+        checks.AC_SUBST("HAVE_WCSCASECMP", 1),
+        checks.AC_SUBST("HAVE_WCSNCASECMP", 1),
+        checks.AC_SUBST("HAVE_WCSCOLL", 1),
+        checks.AC_SUBST("HAVE_WCSXFRM", 1),
+        checks.AC_SUBST("HAVE_WCSDUP", 1),
+        checks.AC_SUBST("HAVE_WCSCHR", 1),
+        checks.AC_SUBST("HAVE_WCSRCHR", 1),
+        checks.AC_SUBST("HAVE_WCSCSPN", 1),
+        checks.AC_SUBST("HAVE_WCSSPN", 1),
+        checks.AC_SUBST("HAVE_WCSPBRK", 1),
+        checks.AC_SUBST("HAVE_WCSSTR", 1),
+        checks.AC_SUBST("HAVE_WCSTOK", 1),
+        checks.AC_SUBST("HAVE_WCSWIDTH", 1),
+        checks.AC_SUBST("HAVE_WCSFTIME", 1),
+        checks.AC_SUBST("HAVE_WCTOB", 1),
+        checks.AC_SUBST("HAVE_DECL_WCSDUP", 1),
+        checks.AC_SUBST("HAVE_DECL_WCTOB", 1),
+        checks.AC_SUBST("REPLACE_MBSTATE_T", 0),
+        checks.AC_SUBST("REPLACE_BTOWC", 0),
+        checks.AC_SUBST("REPLACE_WCTOB", 0),
+        checks.AC_SUBST("REPLACE_MBSINIT", 0),
+        checks.AC_SUBST("REPLACE_MBRTOWC", 0),
+        checks.AC_SUBST("REPLACE_MBRLEN", 0),
+        checks.AC_SUBST("REPLACE_MBSRTOWCS", 0),
+        checks.AC_SUBST("REPLACE_MBSNRTOWCS", 0),
+        checks.AC_SUBST("REPLACE_WCRTOMB", 0),
+        checks.AC_SUBST("REPLACE_WCSRTOMBS", 0),
+        checks.AC_SUBST("REPLACE_WCSNRTOMBS", 0),
+        checks.AC_SUBST("REPLACE_WCWIDTH", 0),
+        checks.AC_SUBST("REPLACE_WCSWIDTH", 0),
+        checks.AC_SUBST("REPLACE_WCSFTIME", 0),
+        checks.AC_SUBST("REPLACE_WCSCMP", 0),
+        checks.AC_SUBST("REPLACE_WCSNCAT", 0),
+        checks.AC_SUBST("REPLACE_WCSNCMP", 0),
+        checks.AC_SUBST("REPLACE_WCSSTR", 0),
+        checks.AC_SUBST("REPLACE_WCSTOK", 0),
+        checks.AC_SUBST("REPLACE_WMEMCMP", 0),
+        checks.AC_SUBST("REPLACE_WMEMPCPY", 0),
     ],
+    visibility = ["//visibility:private"],
+)
+
+# gl_WCHAR_H_REQUIRE_DEFAULTS - AC_DEFUN([gl_WCHAR_H_REQUIRE_DEFAULTS], ...)
+# Expands module indicator defaults (GNULIB_*) then AC_REQUIRE([gl_WCHAR_H_DEFAULTS]).
+autoconf(
+    name = "gl_WCHAR_H_REQUIRE_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("GNULIB_BTOWC", 0),
+        checks.AC_SUBST("GNULIB_WCTOB", 0),
+        checks.AC_SUBST("GNULIB_MBSINIT", 0),
+        checks.AC_SUBST("GNULIB_MBSZERO", 0),
+        checks.AC_SUBST("GNULIB_MBRTOWC", 0),
+        checks.AC_SUBST("GNULIB_MBRLEN", 0),
+        checks.AC_SUBST("GNULIB_MBSRTOWCS", 0),
+        checks.AC_SUBST("GNULIB_MBSNRTOWCS", 0),
+        checks.AC_SUBST("GNULIB_WCRTOMB", 0),
+        checks.AC_SUBST("GNULIB_WCSRTOMBS", 0),
+        checks.AC_SUBST("GNULIB_WCSNRTOMBS", 0),
+        checks.AC_SUBST("GNULIB_WCWIDTH", 0),
+        checks.AC_SUBST("GNULIB_WMEMCHR", 0),
+        checks.AC_SUBST("GNULIB_WMEMCMP", 0),
+        checks.AC_SUBST("GNULIB_WMEMCPY", 0),
+        checks.AC_SUBST("GNULIB_WMEMMOVE", 0),
+        checks.AC_SUBST("GNULIB_WMEMPCPY", 0),
+        checks.AC_SUBST("GNULIB_WMEMSET", 0),
+        checks.AC_SUBST("GNULIB_WCSLEN", 0),
+        checks.AC_SUBST("GNULIB_WCSNLEN", 0),
+        checks.AC_SUBST("GNULIB_WCSCPY", 0),
+        checks.AC_SUBST("GNULIB_WCPCPY", 0),
+        checks.AC_SUBST("GNULIB_WCSNCPY", 0),
+        checks.AC_SUBST("GNULIB_WCPNCPY", 0),
+        checks.AC_SUBST("GNULIB_WCSCAT", 0),
+        checks.AC_SUBST("GNULIB_WCSNCAT", 0),
+        checks.AC_SUBST("GNULIB_WCSCMP", 0),
+        checks.AC_SUBST("GNULIB_WCSNCMP", 0),
+        checks.AC_SUBST("GNULIB_WCSCASECMP", 0),
+        checks.AC_SUBST("GNULIB_WCSNCASECMP", 0),
+        checks.AC_SUBST("GNULIB_WCSCOLL", 0),
+        checks.AC_SUBST("GNULIB_WCSXFRM", 0),
+        checks.AC_SUBST("GNULIB_WCSDUP", 0),
+        checks.AC_SUBST("GNULIB_WCSCHR", 0),
+        checks.AC_SUBST("GNULIB_WCSRCHR", 0),
+        checks.AC_SUBST("GNULIB_WCSCSPN", 0),
+        checks.AC_SUBST("GNULIB_WCSSPN", 0),
+        checks.AC_SUBST("GNULIB_WCSPBRK", 0),
+        checks.AC_SUBST("GNULIB_WCSSTR", 0),
+        checks.AC_SUBST("GNULIB_WCSTOK", 0),
+        checks.AC_SUBST("GNULIB_WCSWIDTH", 0),
+        checks.AC_SUBST("GNULIB_WCSFTIME", 0),
+        checks.AC_SUBST("GNULIB_WGETCWD", 0),
+        checks.AC_SUBST("GNULIB_MDA_WCSDUP", 1),
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gl_WCHAR_H_DEFAULTS",
+    ],
+)
+
+# gl_WCHAR_MODULE_INDICATOR - AC_DEFUN([gl_WCHAR_MODULE_INDICATOR], [modulename])
+# Ensures default settings expanded; sets shell variable for given module.
+# In Bazel, modules that need the indicator depend on this (or REQUIRE_DEFAULTS).
+autoconf(
+    name = "gl_WCHAR_MODULE_INDICATOR",
+    checks = [],
     visibility = ["//visibility:public"],
     deps = [
-        # Note: AC_C_RESTRICT and AC_CANONICAL_HOST are standard autoconf macros
-        # Self-dependency removed (was: "//gnulib/m4/wchar_h")
-        "//gnulib/m4/wint_t",  # AC_REQUIRE([gt_TYPE_WINT_T])
+        ":gl_WCHAR_H_REQUIRE_DEFAULTS",
+    ],
+)
+
+# gl_WCHAR_H_INLINE_OK - AC_DEFUN([gl_WCHAR_H_INLINE_OK], ...)
+# Tests whether <wchar.h> uses 'inline' correctly (glibc/gcc interoperability).
+# No-op in Bazel for now; gl_WCHAR_H AC_REQUIREs it.
+autoconf(
+    name = "gl_WCHAR_H_INLINE_OK",
+    checks = [],
+    visibility = ["//visibility:private"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+    ],
+)
+
+# gl_WCHAR_H_CORE - Core wchar.h checks without HAVE_WCHAR_H subst
+# Used by modules that need wchar.h checks but don't want HAVE_WCHAR_H substituted
+autoconf(
+    name = "gl_WCHAR_H_CORE",
+    checks = gl_macros.GL_CHECK_NEXT_HEADERS(["wchar.h"]) + [
+        checks.AC_CHECK_DECL(
+            "wcsdup",
+            name = "_gl_cv_have_decl_wcsdup",
+            includes = ["#include <wchar.h>"],
+        ),
+        checks.AC_DEFINE(
+            "HAVE_DECL_WCSDUP",
+            requires = ["_gl_cv_have_decl_wcsdup==1"],
+        ),
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        ":gl_WCHAR_H_INLINE_OK",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/gnulib-common:gl_FEATURES_H",
+        "//gnulib/m4/include_next",
+        "//gnulib/m4/wint_t:AC_SUBST_HAVE_WINT_T",
+        "//gnulib/m4/wint_t:gl_TYPE_WINT_T_PREREQ",
+        "//gnulib/m4/wint_t:gt_TYPE_WINT_T",
+    ],
+)
+
+# HAVE_WCHAR_H_SUBST - Shared substitution for HAVE_WCHAR_H
+# Use this when you need HAVE_WCHAR_H subst without pulling in full wchar_h deps
+autoconf(
+    name = "HAVE_WCHAR_H_SUBST",
+    checks = [
+        checks.AC_SUBST("HAVE_WCHAR_H", "1"),
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+)
+
+# gl_WCHAR_H - AC_DEFUN_ONCE([gl_WCHAR_H], ...)
+# Main header logic with HAVE_WCHAR_H subst for modules that need it
+autoconf(
+    name = "gl_WCHAR_H",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":HAVE_WCHAR_H_SUBST",
+        ":gl_WCHAR_H_CORE",
+    ],
+)
+
+# wchar_h - public name; same as gl_WCHAR_H for backward compatibility
+autoconf(
+    name = "wchar_h",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_WCHAR_H",
+    ],
+)
+
+# defaults - public defaults target (gl_WCHAR_H_REQUIRE_DEFAULTS)
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_WCHAR_H_REQUIRE_DEFAULTS",
     ],
 )

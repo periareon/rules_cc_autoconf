@@ -1,0 +1,4 @@
+/* config.h.in */
+#define HAVE_TERMCAP 1
+#define HAVE_TERMINFO 1
+/* #undef INCTERMCAP */

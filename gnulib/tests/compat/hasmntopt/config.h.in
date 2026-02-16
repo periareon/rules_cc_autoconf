@@ -1,0 +1,4 @@
+/* config.h.in */
+#undef HAVE_HASMNTOPT
+#undef HAVE_SETMNTENT
+#undef REPLACE_HASMNTOPT

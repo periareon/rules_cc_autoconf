@@ -1,19 +1,30 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/logb.m4"""
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/logb.m4
+
+gl_FUNC_LOGB:
+- AC_REQUIRE([gl_MATH_H_DEFAULTS])
+- AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+- AC_CHECK_DECLS([logb])
+- AC_SUBST([LOGB_LIBM])
+"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "logb",
     checks = [
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "logb",
             define = "HAVE_DECL_LOGB",
-            headers = ["math.h"],
+            includes = ["#include <math.h>"],
         ),
+        # LOGB_LIBM is empty on macOS
+        checks.AC_SUBST("LOGB_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
         "//gnulib/m4/frexp",
         "//gnulib/m4/isnand",
     ],

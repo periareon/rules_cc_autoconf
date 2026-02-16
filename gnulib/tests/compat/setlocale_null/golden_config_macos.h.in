@@ -1,0 +1,21 @@
+/* config.h.in */
+/* #undef CFLAG_VISIBILITY */
+#define HAVE_INTTYPES_H 1
+#define HAVE_PTHREAD_API 1
+#define HAVE_STDINT_H 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_STRING_H 1
+/* #undef HAVE_STRUCT_STATFS_F_TYPE */
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+/* #undef HAVE_SYS_VFS_H */
+/* #undef HAVE_THREADS_H */
+#define HAVE_UNISTD_H 1
+#define HAVE_VISIBILITY 1
+/* #undef SCHED_YIELD_LIB */
+#define SETLOCALE_NULL_ALL_MTSAFE 0
+/* #undef SETLOCALE_NULL_LIB */
+#define SETLOCALE_NULL_ONE_MTSAFE 1
+#define STDC_HEADERS 1

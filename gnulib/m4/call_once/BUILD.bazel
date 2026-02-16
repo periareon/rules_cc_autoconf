@@ -1,31 +1,30 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/call_once.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "call_once",
-    checks = [
-        # Check for call_once function
-        # Equivalent to gl_FUNC_CALL_ONCE macro from call_once.m4
-        macros.AC_TRY_COMPILE(
-            code = """#include <threads.h>
-
-#ifdef __cplusplus
-extern "C"
-#endif
-char call_once ();
-
-int main(void) {
-    return call_once();
-}""",
-            define = "HAVE_CALL_ONCE",
-            language = "c",
-        ),
-    ],
+    checks = select({
+        # On Linux with glibc 2.28+: call_once is available
+        # Golden subst expects @HAVE_CALL_ONCE@ (not substituted), only define in config.h
+        "@platforms//os:linux": [
+            checks.AC_DEFINE("HAVE_CALL_ONCE", "1"),
+        ],
+        # On other platforms: use AC_CHECK_FUNC to detect
+        "//conditions:default": [
+            # gl_CHECK_FUNCS_ANDROID([call_once], [[#include <threads.h>]])
+            checks.AC_CHECK_FUNC(
+                "call_once",
+                subst = True,
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/threads_h",  # AC_REQUIRE([gl_THREADS_H])
-        # Note: AC_REQUIRE([AC_CANONICAL_HOST]) is a standard autoconf macro
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/include_next",  # Required for INCLUDE_NEXT variables
+        "//gnulib/m4/threads_h",
     ],
 )

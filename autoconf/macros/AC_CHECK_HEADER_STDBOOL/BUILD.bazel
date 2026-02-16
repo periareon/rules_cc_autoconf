@@ -1,0 +1,18 @@
+"""AC_CHECK_HEADER_STDBOOL - Autoconf builtin macro
+
+Checks for stdbool.h header.
+
+Defines:
+  - HAVE_STDBOOL_H (if stdbool.h exists)
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "AC_CHECK_HEADER_STDBOOL",
+    checks = [
+        checks.AC_CHECK_HEADER("stdbool.h"),
+    ],
+    visibility = ["//visibility:public"],
+)

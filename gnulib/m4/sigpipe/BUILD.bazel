@@ -1,11 +1,45 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sigpipe.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
+# This is the actual implementation that does the check
 autoconf(
-    name = "sigpipe",
+    name = "gl_SIGNAL_SIGPIPE_BODY",
     checks = [
-        # TODO: Add checks based on .m4 file
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_header_signal_h_SIGPIPE",
+            code = """\
+#include <signal.h>
+#if !defined SIGPIPE
+#error SIGPIPE not defined
+#endif
+""",
+            language = "c",
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# This just requires gl_SIGNAL_SIGPIPE_BODY
+autoconf(
+    name = "gl_SIGNAL_SIGPIPE",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_SIGNAL_SIGPIPE_BODY",  # AC_REQUIRE([gl_SIGNAL_SIGPIPE_BODY])
+    ],
+)
+
+# Top-level target that aggregates all AC_DEFUN functions
+autoconf(
+    name = "sigpipe",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_SIGNAL_SIGPIPE",
+    ],
 )

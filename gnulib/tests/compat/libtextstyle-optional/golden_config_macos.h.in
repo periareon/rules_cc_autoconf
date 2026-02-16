@@ -1,0 +1,4 @@
+/* config.h.in */
+/* #undef HAVE_LIBTEXTSTYLE */
+#define HAVE_TCDRAIN 1
+/* #undef TEXTSTYLE_H */

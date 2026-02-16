@@ -1,0 +1,4 @@
+/* config.h.in */
+#define GNULIB_LOCALEDIR "/usr/local/share/locale"
+/* #undef GNULIB_LOCALEDIR_c */
+/* #undef GNULIB_LOCALEDIR_c_make */

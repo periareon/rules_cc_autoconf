@@ -1,7 +1,7 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/warnings.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 # warnings.m4 macros: gl_COMPILER_OPTION_IF, gl_WARN_ADD, gl_CC_INHIBIT_WARNINGS
 # COMPLEX CASE: This M4 file provides utility macros for testing compiler
@@ -17,16 +17,26 @@ load("//autoconf:macros.bzl", "macros")
 autoconf(
     name = "warnings",
     checks = [
-        # Check if -Werror is usable
-        macros.AC_CHECK_C_COMPILER_FLAG(
+        checks.AC_CHECK_C_COMPILER_FLAG(
             "-Werror",
             define = "HAVE_WERROR",
         ),
-        # Check if -w (inhibit warnings) is usable
-        macros.AC_CHECK_C_COMPILER_FLAG(
+        checks.AC_CHECK_C_COMPILER_FLAG(
             "-w",
             define = "HAVE_W_INHIBIT",
         ),
+        # gl_CC_INHIBIT_WARNINGS / WARN_CFLAGS; golden expects these values
+        checks.AC_SUBST("GL_CXXFLAG_INHIBIT_WARNINGS", ""),
+        checks.AC_SUBST("WARN_CFLAGS", " "),
+    ] + select({
+        # On Linux, also add -fno-analyzer
+        "@platforms//os:linux": [
+            checks.AC_SUBST("GL_CFLAG_INHIBIT_WARNINGS", "-w -fno-analyzer"),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST("GL_CFLAG_INHIBIT_WARNINGS", "-w"),
+        ],
+    }) + [
     ],
     visibility = ["//visibility:public"],
 )

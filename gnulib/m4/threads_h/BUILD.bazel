@@ -1,11 +1,102 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/threads_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
+
+autoconf(
+    name = "gl_THREADS_H",
+    checks = gl_macros.GL_CHECK_NEXT_HEADERS(["threads.h"]) + [
+        # HAVE_THREADS_H = 1 if threads.h exists, 0 otherwise
+        # threadlib already checks for threads.h via gl_STDTHREADLIB_BODY
+        checks.AC_SUBST(
+            "HAVE_THREADS_H",
+            condition = "ac_cv_header_threads_h",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # BROKEN_THRD_START_T - only broken on AIX 7.1-7.2, 0 elsewhere
+        # AIX defines thrd_start_t as 'void * (*) (void *)' instead of 'int (*) (void *)'
+        checks.AC_SUBST("BROKEN_THRD_START_T", "0"),
+        # BROKEN_THRD_JOIN - only broken on AIX 7.3.1, 0 elsewhere
+        checks.AC_SUBST("BROKEN_THRD_JOIN", "0"),
+        # HAVE_THREAD_LOCAL - supported on macOS and Linux with modern compilers
+        # (GCC 4.9+, Clang 3.3+)
+        checks.AC_SUBST("HAVE_THREAD_LOCAL", "1"),
+        # LIBTHREADLOCAL - empty on macOS/Linux, only -lpthread on AIX
+        checks.AC_SUBST("LIBTHREADLOCAL", ""),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/include_next",  # Required for INCLUDE_NEXT variables
+        "//gnulib/m4/threadlib",
+    ],
+)
+
+autoconf(
+    name = "gl_THREADS_H_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("HAVE_THREAD_LOCAL", 1),
+        checks.AC_SUBST("BROKEN_THRD_JOIN", 0),
+        checks.AC_SUBST("BROKEN_THRD_START_T", 0),
+        checks.AC_SUBST("REPLACE_CALL_ONCE", 0),
+        checks.AC_SUBST("REPLACE_CND_BROADCAST", 0),
+        checks.AC_SUBST("REPLACE_CND_DESTROY", 0),
+        checks.AC_SUBST("REPLACE_CND_INIT", 0),
+        checks.AC_SUBST("REPLACE_CND_SIGNAL", 0),
+        checks.AC_SUBST("REPLACE_CND_TIMEDWAIT", 0),
+        checks.AC_SUBST("REPLACE_CND_WAIT", 0),
+        checks.AC_SUBST("REPLACE_MTX_DESTROY", 0),
+        checks.AC_SUBST("REPLACE_MTX_INIT", 0),
+        checks.AC_SUBST("REPLACE_MTX_LOCK", 0),
+        checks.AC_SUBST("REPLACE_MTX_TIMEDLOCK", 0),
+        checks.AC_SUBST("REPLACE_MTX_TRYLOCK", 0),
+        checks.AC_SUBST("REPLACE_MTX_UNLOCK", 0),
+        checks.AC_SUBST("REPLACE_THRD_CREATE", 0),
+        checks.AC_SUBST("REPLACE_THRD_CURRENT", 0),
+        checks.AC_SUBST("REPLACE_THRD_DETACH", 0),
+        checks.AC_SUBST("REPLACE_THRD_EQUAL", 0),
+        checks.AC_SUBST("REPLACE_THRD_EXIT", 0),
+        checks.AC_SUBST("REPLACE_THRD_JOIN", 0),
+        checks.AC_SUBST("REPLACE_THRD_SLEEP", 0),
+        checks.AC_SUBST("REPLACE_THRD_YIELD", 0),
+        checks.AC_SUBST("REPLACE_TSS_CREATE", 0),
+        checks.AC_SUBST("REPLACE_TSS_DELETE", 0),
+        checks.AC_SUBST("REPLACE_TSS_GET", 0),
+        checks.AC_SUBST("REPLACE_TSS_SET", 0),
+    ],
+    visibility = ["//visibility:private"],
+)
+
+autoconf(
+    name = "gl_THREADS_H_REQUIRE_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("GNULIB_CALL_ONCE", 0),
+        checks.AC_SUBST("GNULIB_CND", 0),
+        checks.AC_SUBST("GNULIB_MTX", 0),
+        checks.AC_SUBST("GNULIB_THRD", 0),
+        checks.AC_SUBST("GNULIB_TSS", 0),
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gl_THREADS_H_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_THREADS_H_REQUIRE_DEFAULTS",
+    ],
+)
 
 autoconf(
     name = "threads_h",
-    checks = [
-        # TODO: Add checks based on .m4 file
-    ],
     visibility = ["//visibility:public"],
+    deps = [
+        ":gl_THREADS_H",
+    ],
 )

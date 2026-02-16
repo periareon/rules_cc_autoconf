@@ -1,55 +1,151 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/signal_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "signal_h",
     checks = [
-        # Check for signal.h types
-        # Equivalent to gl_SIGNAL_H macro from signal_h.m4
-        macros.AC_CHECK_TYPE(
-            "volatile sig_atomic_t",
+        # gl_SIGNAL_H checks for signal.h header
+        checks.AC_CHECK_HEADER("signal.h"),
+        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_SIGNAL_H", "<signal.h>"),
+        checks.AC_SUBST("NEXT_SIGNAL_H", "<signal.h>"),
+
+        # gl_CHECK_TYPE_SIGSET_T checks for sigset_t type
+        # This check is moved to :signal_h_sigset_t to avoid pulling it in transitively
+        checks.AC_TRY_COMPILE(
+            name = "_gl_have_volatile_sig_atomic_t",
             code = """\
 #include <signal.h>
-int main(void) {
-    volatile sig_atomic_t x = 0;
-    return (int)x;
-}
+volatile sig_atomic_t x;
+int main(void) { return 0; }
 """,
-            define = "HAVE_TYPE_VOLATILE_SIG_ATOMIC_T",
+            language = "c",
         ),
-        macros.AC_CHECK_TYPE(
-            "sighandler_t",
-            code = """\
-#include <signal.h>
-int main(void) {
-    if (sizeof(sighandler_t))
-        return 0;
-    return 1;
-}
-""",
-            define = "HAVE_SIGHANDLER_T",
+        checks.AC_SUBST(
+            "HAVE_TYPE_VOLATILE_SIG_ATOMIC_T",
+            condition = "_gl_have_volatile_sig_atomic_t",
+            if_false = 0,
+            if_true = 1,
         ),
-        macros.AC_CHECK_TYPE(
-            "sigset_t",
+
+        # Note: This check finds it doesn't exist on macOS, but defaults provide "1"
+        # signal_h's own test expects HAVE_SIGHANDLER_T to be set, so we check it
+        # but only set it if it exists, otherwise let defaults provide "1"
+        checks.AC_TRY_COMPILE(
+            name = "_gl_have_sighandler_t",
             code = """\
+#define _GNU_SOURCE 1
 #include <signal.h>
-#include <sys/types.h>
-int main(void) {
-    if (sizeof(sigset_t))
-        return 0;
-    return 1;
-}
+sighandler_t x;
+int main(void) { return 0; }
 """,
-            define = "HAVE_SIGSET_T",
+            language = "c",
+        ),
+        # Set HAVE_SIGHANDLER_T based on check result
+        # On macOS, the type doesn't exist, so set to "0" (matches signal_h golden file)
+        # On Linux, the type exists, so set to "1"
+        # ISSUE: raise module depends on signal_h and expects HAVE_SIGHANDLER_T="1" from defaults,
+        # but signal_h sets it to "0" on macOS, causing raise test to fail.
+        # The golden files are correct - signal_h should be "0" on macOS, raise should be "1".
+        # This suggests raise shouldn't inherit signal_h's value, or signal_h shouldn't
+        # set this when used as a dependency. Need to investigate the m4 file behavior.
+        checks.AC_SUBST(
+            "HAVE_SIGHANDLER_T",
+            condition = "_gl_have_sighandler_t",
+            if_false = 0,  # Set to "0" when type doesn't exist (matches signal_h golden file)
+            if_true = 1,
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # Note: Standard autoconf macros like AC_C_RESTRICT, AC_TYPE_PID_T, etc.
-        # would be handled via the corresponding macros if needed, but those
-        # targets don't exist in this project. These are standard system checks
-        # that are typically available.
+        "//gnulib/m4/include_next",
+        "//gnulib/m4/extensions",
+        ":signal_h_sigset_t",  # gl_CHECK_TYPE_SIGSET_T is called by gl_SIGNAL_H
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# signal_h_sigset_t - gl_CHECK_TYPE_SIGSET_T check
+# Only included via with_defaults, not transitively
+
+autoconf(
+    name = "signal_h_sigset_t",
+    checks = [
+        checks.AC_CHECK_TYPE(
+            "sigset_t",
+            name = "gl_cv_type_sigset_t",
+            code = """\
+#include <signal.h>
+#include <sys/types.h>
+int main(void) { sigset_t x; (void)x; return 0; }
+""",
+        ),
+
+        # if test $gl_cv_type_sigset_t != yes; then
+        # fi
+        # Set HAVE_SIGSET_T as substitution variable
+        # Define HAVE_SIGSET_T in config.h if the type exists
+        checks.AC_DEFINE(
+            "HAVE_SIGSET_T",
+            condition = "gl_cv_type_sigset_t",
+            if_false = 0,
+            if_true = 1,
+            subst = True,
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # gl_CHECK_TYPE_SIGSET_T doesn't need signal_h as a dependency
+        # It can check for sigset_t independently
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# defaults - All default AC_SUBST values. Added to gnulib_toolchain.
+
+autoconf(
+    name = "gl_SIGNAL_H_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("HAVE_POSIX_SIGNALBLOCKING", 1),
+        checks.AC_SUBST("HAVE_PTHREAD_SIGMASK", 1),
+        checks.AC_SUBST("HAVE_RAISE", 1),
+        checks.AC_SUBST("HAVE_SIG2STR", 1),
+        checks.AC_SUBST("HAVE_SIGSET_T", 1),
+        checks.AC_SUBST("HAVE_SIGINFO_T", 1),
+        checks.AC_SUBST("HAVE_SIGACTION", 1),
+        checks.AC_SUBST("HAVE_STR2SIG", 1),
+        checks.AC_SUBST("HAVE_STRUCT_SIGACTION_SA_SIGACTION", 1),
+        checks.AC_SUBST("HAVE_TYPE_VOLATILE_SIG_ATOMIC_T", 1),
+        checks.AC_SUBST("HAVE_SIGHANDLER_T", 1),
+        checks.AC_SUBST("REPLACE_PTHREAD_SIGMASK", 0),
+        checks.AC_SUBST("REPLACE_RAISE", 0),
+    ],
+    visibility = ["//visibility:private"],
+)
+
+autoconf(
+    name = "gl_SIGNAL_H_REQUIRE_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("GNULIB_PTHREAD_SIGMASK", 0),
+        checks.AC_SUBST("GNULIB_RAISE", 0),
+        checks.AC_SUBST("GNULIB_SIG2STR", 0),
+        checks.AC_SUBST("GNULIB_SIGNAL_H_SIGPIPE", 0),
+        checks.AC_SUBST("GNULIB_SIGPROCMASK", 0),
+        checks.AC_SUBST("GNULIB_SIGACTION", 0),
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gl_SIGNAL_H_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_SIGNAL_H_REQUIRE_DEFAULTS",
     ],
 )

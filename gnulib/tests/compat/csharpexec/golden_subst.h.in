@@ -1,0 +1,12 @@
+/* subst.h.in */
+#define SUBST_CLIX_PATH ""
+#define SUBST_CLIX_PATH_VAR ""
+#define SUBST_CSHARP_CHOICE "any"
+#define SUBST_HAVE_CLIX ""
+#define SUBST_HAVE_CLIX_IN_PATH ""
+#define SUBST_HAVE_DOTNET ""
+#define SUBST_HAVE_DOTNET_IN_PATH ""
+#define SUBST_HAVE_MONO ""
+#define SUBST_HAVE_MONO_IN_PATH ""
+#define SUBST_MONO_PATH ""
+#define SUBST_MONO_PATH_SEPARATOR ":"

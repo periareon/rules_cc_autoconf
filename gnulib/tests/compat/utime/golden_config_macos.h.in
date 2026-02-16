@@ -1,0 +1,4 @@
+/* config.h.in */
+#define HAVE_LSTAT 1
+#define HAVE_UTIME 1
+/* #undef REPLACE_UTIME */

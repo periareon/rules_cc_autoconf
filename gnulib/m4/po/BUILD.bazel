@@ -1,11 +1,51 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/po.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+# One autoconf target per M4 AC_DEFUN macro.
 
 autoconf(
-    name = "po",
+    name = "AM_PO_SUBDIRS",
     checks = [
-        # Note: po.m4 may not exist in gnulib, or this module may not have checks
+        checks.AC_SUBST("SET_MAKE", ""),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/nls",
+    ],
+)
+
+autoconf(
+    name = "AM_POSTPROCESS_PO_MAKEFILE",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "AM_XGETTEXT_OPTION_INIT",
+    checks = [
+        checks.AC_SUBST("XGETTEXT_EXTRA_OPTIONS", ""),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "AM_XGETTEXT_OPTION",
+    checks = [
+        checks.AC_SUBST("XGETTEXT_EXTRA_OPTIONS", ""),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# Aggregate target for tests and dependents (e.g. //gnulib/tests/compatibility/po).
+# Depends only on AM_PO_SUBDIRS and AM_POSTPROCESS_PO_MAKEFILE to avoid duplicate
+# XGETTEXT_EXTRA_OPTIONS (AM_PO_SUBDIRS and AM_XGETTEXT_OPTION_INIT/AM_XGETTEXT_OPTION all set it).
+autoconf(
+    name = "po",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":AM_POSTPROCESS_PO_MAKEFILE",
+        ":AM_PO_SUBDIRS",
+    ],
 )

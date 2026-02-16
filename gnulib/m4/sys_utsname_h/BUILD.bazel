@@ -1,15 +1,93 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sys_utsname_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
+# Configure a replacement for <sys/utsname.h>
 autoconf(
     name = "sys_utsname_h",
     checks = [
-        macros.AC_CHECK_TYPE(
+        # Note: gl_SYS_UTSNAME_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        checks.AC_CHECK_HEADER(
+            "sys/utsname.h",
+            name = "ac_cv_header_sys_utsname_h",
+        ),
+        checks.AC_SUBST("HAVE_SYS_UTSNAME_H", "1"),
+        checks.AC_SUBST("HAVE_STRUCT_UTSNAME", "1"),
+        checks.AC_SUBST("NEXT_SYS_UTSNAME_H", "<sys/utsname.h>"),
+        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_SYS_UTSNAME_H", "<sys/utsname.h>"),
+
+        # if test $ac_cv_header_sys_utsname_h != yes; then
+        #   HAVE_STRUCT_UTSNAME=0
+        # else
+        # fi
+        # Define HAVE_SYS_UTSNAME_H in config.h if the header exists
+        checks.AC_DEFINE(
+            "HAVE_SYS_UTSNAME_H",
+            condition = "ac_cv_header_sys_utsname_h",
+            if_true = 1,
+        ),
+        checks.AC_CHECK_TYPE(
             "struct utsname",
-            define = "HAVE_STRUCT_UTSNAME",
+            name = "ac_cv_type_struct_utsname",
+            code = """\
+/* Minix 3.1.8 has a bug: <stddef.h> must be included before
+   <sys/utsname.h>.  */
+#include <stddef.h>
+#include <sys/utsname.h>
+int main(void) {
+    struct utsname u;
+    (void)u;
+    return 0;
+}
+""",
+            requires = ["ac_cv_header_sys_utsname_h==1"],
+        ),
+
+        # Set HAVE_STRUCT_UTSNAME based on type check result
+        # Define HAVE_STRUCT_UTSNAME in config.h if the type exists
+        checks.AC_DEFINE(
+            "HAVE_STRUCT_UTSNAME",
+            condition = "ac_cv_type_struct_utsname",
+            if_true = 1,
         ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/include_next",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )
+
+# defaults - Default AC_SUBST values. Added to gnulib_toolchain.
+
+autoconf(
+    name = "gl_SYS_UTSNAME_H_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("HAVE_UNAME", 1),
+        checks.AC_SUBST("HAVE_STRUCT_UTSNAME", 1),
+    ],
+    visibility = ["//visibility:private"],
+)
+
+autoconf(
+    name = "gl_SYS_UTSNAME_H_REQUIRE_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("GNULIB_UNAME", 0),
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gl_SYS_UTSNAME_H_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_SYS_UTSNAME_H_REQUIRE_DEFAULTS",
+    ],
+)
+
+# with_defaults - For external consumers who don't use the toolchain

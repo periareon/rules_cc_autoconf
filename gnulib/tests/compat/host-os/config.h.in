@@ -1,0 +1,2 @@
+/* config.h.in */
+#undef HOST_OPERATING_SYSTEM

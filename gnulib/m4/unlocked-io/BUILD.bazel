@@ -1,70 +1,115 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/unlocked-io.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
-# gl_FUNC_GLIBC_UNLOCKED_IO from unlocked-io.m4
-# Checks for glibc *_unlocked I/O macros or functions
+COMPILE_DEFINES = [
+    "STDC_HEADERS",
+    "_ALL_SOURCE",
+    "_DARWIN_C_SOURCE",
+    "_GNU_SOURCE",
+    "_HPUX_ALT_XOPEN_SOCKET_API",
+    "_NETBSD_SOURCE",
+    "_OPENBSD_SOURCE",
+    "_POSIX_PTHREAD_SEMANTICS",
+]
+
 autoconf(
     name = "unlocked-io",
     checks = [
         # AC_CHECK_DECLS_ONCE for unlocked IO functions
-        macros.AC_CHECK_DECL(
+        # No headers specified in M4, so we use default includes
+        # Extension defines are needed for these declarations to be visible
+        # AC_CHECK_DECLS_ONCE for unlocked IO functions
+        # On macOS, some are declared, some are not
+        checks.AC_CHECK_DECL(
             "clearerr_unlocked",
-            headers = ["stdio.h"],
+            compile_defines = COMPILE_DEFINES,
+            define = "HAVE_DECL_CLEARERR_UNLOCKED",
+            includes = ["#include <stdio.h>"],
         ),
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "feof_unlocked",
-            headers = ["stdio.h"],
+            compile_defines = COMPILE_DEFINES,
+            define = "HAVE_DECL_FEOF_UNLOCKED",
+            includes = ["#include <stdio.h>"],
         ),
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "ferror_unlocked",
-            headers = ["stdio.h"],
+            compile_defines = COMPILE_DEFINES,
+            define = "HAVE_DECL_FERROR_UNLOCKED",
+            includes = ["#include <stdio.h>"],
         ),
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "fflush_unlocked",
-            headers = ["stdio.h"],
+            compile_defines = COMPILE_DEFINES,
+            define = "HAVE_DECL_FFLUSH_UNLOCKED",
+            includes = ["#include <stdio.h>"],
         ),
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "fgets_unlocked",
-            headers = ["stdio.h"],
+            compile_defines = COMPILE_DEFINES,
+            define = "HAVE_DECL_FGETS_UNLOCKED",
+            includes = ["#include <stdio.h>"],
         ),
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "fileno_unlocked",
-            headers = ["stdio.h"],
+            compile_defines = COMPILE_DEFINES,
+            define = "HAVE_DECL_FILENO_UNLOCKED",
+            includes = ["#include <stdio.h>"],
         ),
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "fputc_unlocked",
-            headers = ["stdio.h"],
+            compile_defines = COMPILE_DEFINES,
+            define = "HAVE_DECL_FPUTC_UNLOCKED",
+            includes = ["#include <stdio.h>"],
         ),
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "fputs_unlocked",
-            headers = ["stdio.h"],
+            compile_defines = COMPILE_DEFINES,
+            define = "HAVE_DECL_FPUTS_UNLOCKED",
+            includes = ["#include <stdio.h>"],
         ),
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "fread_unlocked",
-            headers = ["stdio.h"],
+            compile_defines = COMPILE_DEFINES,
+            define = "HAVE_DECL_FREAD_UNLOCKED",
+            includes = ["#include <stdio.h>"],
         ),
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "fwrite_unlocked",
-            headers = ["stdio.h"],
+            compile_defines = COMPILE_DEFINES,
+            define = "HAVE_DECL_FWRITE_UNLOCKED",
+            includes = ["#include <stdio.h>"],
         ),
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "getc_unlocked",
-            headers = ["stdio.h"],
+            compile_defines = COMPILE_DEFINES,
+            define = "HAVE_DECL_GETC_UNLOCKED",
+            includes = ["#include <stdio.h>"],
         ),
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "getchar_unlocked",
-            headers = ["stdio.h"],
+            compile_defines = COMPILE_DEFINES,
+            define = "HAVE_DECL_GETCHAR_UNLOCKED",
+            includes = ["#include <stdio.h>"],
         ),
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "putc_unlocked",
-            headers = ["stdio.h"],
+            compile_defines = COMPILE_DEFINES,
+            define = "HAVE_DECL_PUTC_UNLOCKED",
+            includes = ["#include <stdio.h>"],
         ),
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "putchar_unlocked",
-            headers = ["stdio.h"],
+            compile_defines = COMPILE_DEFINES,
+            define = "HAVE_DECL_PUTCHAR_UNLOCKED",
+            includes = ["#include <stdio.h>"],
         ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",
+    ],
 )

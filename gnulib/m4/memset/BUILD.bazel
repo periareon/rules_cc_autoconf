@@ -1,14 +1,13 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/memset.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "memset",
     checks = [
-        # Check for memset function
         # Equivalent to gl_FUNC_MEMSET macro from memset.m4
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "memset",
             define = "HAVE_MEMSET",
         ),

@@ -1,14 +1,56 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/openat2.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-
-# HAVE_SYS_VFS_H comes from sys_vfs_h dependency
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "openat2",
-    checks = [],
+    checks = [
+
+        # On macOS, openat2 is not available (golden file shows it undefined/0)
+        # Use AC_TRY_LINK to verify the function actually links (not just declared)
+        checks.AC_TRY_LINK(
+            name = "ac_cv_func_openat2",
+            code = """\
+#include <fcntl.h>
+#include <sys/types.h>
+int main(void) {
+    openat2(0, "", NULL, 0);
+    return 0;
+}
+""",
+        ),
+        # Set HAVE_OPENAT2 - use AC_DEFINE with subst=True to create both config.h and subst.h entries
+        # The m4 file: AS_CASE([$ac_cv_func_openat2], [yes], [HAVE_OPENAT2=1])
+        # This only sets HAVE_OPENAT2=1 if the function exists
+        # If it doesn't exist, HAVE_OPENAT2 should be undefined in config.h but "0" in subst.h
+        # Note: AC_DEFINE with if_false would set it in config.h too, so we need separate handling
+        checks.AC_DEFINE(
+            "HAVE_OPENAT2",
+            requires = ["ac_cv_func_openat2==1"],
+        ),
+        # Set substitution separately - "0" in subst.h when function doesn't exist
+    ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/sys_vfs_h",
+        "//gnulib/m4/fcntl_h",
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/fcntl-o",
+        # gl_PREREQ_OPENAT2 is called by gl_FUNC_OPENAT2 (implicitly via lib/openat2.c)
+        # Include it as a dependency to ensure its checks are run
+        ":gl_PREREQ_OPENAT2",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_OPENAT2",
+    visibility = ["//visibility:public"],
+    deps = [
+        # Shared targets for fstatfs, sys/vfs.h and struct statfs.f_type checks
+        "//gnulib/m4/fts:gl_HAVE_STRUCT_STATFS_F_TYPE",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

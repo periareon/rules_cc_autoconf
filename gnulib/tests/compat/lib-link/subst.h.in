@@ -1,0 +1,5 @@
+/* subst.h.in */
+#define SUBST_HAVE_LIB "@HAVE_LIB@"
+#define SUBST_LIB "@LIB@"
+#define SUBST_LIB_PREFIX "@LIB_PREFIX@"
+#define SUBST_LTLIB "@LTLIB@"

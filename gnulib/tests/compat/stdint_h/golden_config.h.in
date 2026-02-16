@@ -1,0 +1,2 @@
+/* config.h.in */
+#define HAVE_STDINT_H_WITH_UINTMAX 1

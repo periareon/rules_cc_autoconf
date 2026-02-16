@@ -1,0 +1,4 @@
+/* subst.h.in */
+#define SUBST_HAVE_HASMNTOPT "0"
+#define SUBST_HAVE_SETMNTENT "0"
+#define SUBST_REPLACE_HASMNTOPT "0"

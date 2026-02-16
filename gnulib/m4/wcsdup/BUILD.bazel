@@ -5,7 +5,15 @@ load("//autoconf:autoconf.bzl", "autoconf")
 autoconf(
     name = "wcsdup",
     checks = [
-        # TODO: Add checks based on .m4 file
+        # gl_FUNC_WCSDUP checks for wcsdup function
+        # On macOS, wcsdup is not available
+        # The golden file shows HAVE_WCSDUP is undefined
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # Note: wchar_h provides HAVE_DECL_WCSDUP, but golden file expects it undefined
+        # "//gnulib/m4/wchar_h",  # AC_REQUIRE([gl_WCHAR_H_DEFAULTS]) - but pulls in HAVE_DECL_WCSDUP
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

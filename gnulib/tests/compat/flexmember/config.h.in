@@ -1,0 +1,2 @@
+/* config.h.in */
+#undef FLEXIBLE_ARRAY_MEMBER

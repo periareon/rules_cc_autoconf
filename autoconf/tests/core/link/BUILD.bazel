@@ -1,0 +1,93 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:checks.bzl", "checks", "utils")
+load("//autoconf:package_info.bzl", "package_info")
+load("//autoconf/tests:diff_test.bzl", "diff_test")
+load("//autoconf/tests:gnu_autoconf_configure_test.bzl", "gnu_autoconf_configure_test")
+
+package_info(
+    name = "package",
+    package_name = "test_link",
+    package_version = "1.0.0",
+)
+
+autoconf(
+    name = "autoconf",
+    checks = [
+        # AC_TRY_LINK checks if code compiles AND links successfully
+        # This is useful for checking functions that are declared but may not
+        # be available at link time (e.g., nl_langinfo(CODESET))
+        checks.AC_TRY_LINK(
+            code = """char* cs = nl_langinfo(CODESET);
+    (void)cs;""",
+            define = "HAVE_LANGINFO_CODESET",
+            includes = ["#include <langinfo.h>"],
+        ),
+        # Test with full code (not just includes)
+        checks.AC_TRY_LINK(
+            code = """#include <stdio.h>
+int main(void) {
+    printf("test");
+    return 0;
+}""",
+            define = "HAVE_PRINTF_LINK",
+        ),
+        # Test extern declaration pattern (AC_CHECK_FUNC default pattern)
+        # This verifies that try_compile_and_link works with the exact
+        # pattern used by AC_CHECK_FUNC's default code
+        # Using AC_LANG_PROGRAM to mirror autoconf
+        checks.AC_TRY_LINK(
+            code = utils.AC_LANG_PROGRAM(
+                [
+                    """/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.
+   MSVC does not have GCC builtins, so we can safely use int. */
+#ifdef __cplusplus
+extern "C"
+#endif
+#if defined _MSC_VER
+int malloc();
+#else
+char malloc();
+#endif""",
+                ],
+                "return malloc();",
+            ),
+            define = "HAVE_MALLOC_EXTERN_PATTERN",
+        ),
+    ],
+    deps = [":package"],
+)
+
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    template = "config.h.in",
+    deps = [":autoconf"],
+)
+
+diff_test(
+    name = "diff_test",
+    file1 = select({
+        "@platforms//os:windows": "golden_config_windows.h.in",
+        "//conditions:default": "golden_config.h.in",
+    }),
+    file2 = ":config.h",
+)
+
+cc_test(
+    name = "test_link",
+    srcs = [
+        "test_link.c",
+        ":config.h",
+    ],
+)
+
+gnu_autoconf_configure_test(
+    name = "gnu_autoconf_configure_test",
+    config_h_in = "config.h.in",
+    configure_ac = "configure.ac",
+    golden_config_h = "golden_config.h.in",
+)

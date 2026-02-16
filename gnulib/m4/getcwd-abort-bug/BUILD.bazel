@@ -1,4 +1,11 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/getcwd-abort-bug.m4"""
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/getcwd-abort-bug.m4
+
+gl_FUNC_GETCWD_ABORT_BUG:
+- AC_REQUIRE([AC_CANONICAL_HOST])
+- AC_CHECK_DECLS_ONCE([getcwd])
+- AC_CHECK_HEADERS_ONCE([unistd.h])
+- AC_REQUIRE([gl_PATHMAX_SNIPPET_PREREQ])
+"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
 
@@ -7,6 +14,11 @@ autoconf(
     checks = [],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/unistd_h",
+        # AC_CHECK_DECLS_ONCE([getcwd]) - HAVE_DECL_GETCWD comes from here
+        "//gnulib/m4/getcwd:HAVE_DECL_GETCWD",
+        "//gnulib/macros/HAVE_SYS_PARAM_H",
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        # AC_CHECK_HEADERS_ONCE([unistd.h]) - HAVE_UNISTD_H define comes from here
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

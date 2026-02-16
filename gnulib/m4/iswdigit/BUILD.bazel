@@ -3,17 +3,28 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 
 autoconf(
-    name = "iswdigit",
+    name = "gl_FUNC_ISWDIGIT",
     checks = [
-        # Check for iswdigit function
         # Equivalent to gl_FUNC_ISWDIGIT macro from iswdigit.m4
         # Note: Full implementation includes runtime locale-based checks
         # that are not easily replicable in Bazel
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/wctype_h",  # AC_REQUIRE([gl_WCTYPE_H_DEFAULTS]), AC_REQUIRE([gl_WCTYPE_H])
-        # Note: gt_LOCALE_FR, gt_LOCALE_JA, gt_LOCALE_EN_UTF8, gt_LOCALE_ZH_CN
-        # and AC_REQUIRE([AC_CANONICAL_HOST]) are standard autoconf macros
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/codeset:AM_LANGINFO_CODESET",
+        "//gnulib/m4/locale-en",
+        "//gnulib/m4/locale-fr",
+        "//gnulib/m4/locale-ja",
+        "//gnulib/m4/locale-zh",
+        "//gnulib/m4/wctype_h",
+    ],
+)
+
+autoconf(
+    name = "iswdigit",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_ISWDIGIT",
     ],
 )

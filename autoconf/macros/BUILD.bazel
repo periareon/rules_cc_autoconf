@@ -1,0 +1,10 @@
+# Standard autoconf macro implementations
+#
+# This package contains reusable implementations of common autoconf macros
+# that can be depended on by other packages.
+#
+# Example:
+#   autoconf(
+#       name = "my_config",
+#       deps = ["//autoconf/macros/extensions"],
+#   )

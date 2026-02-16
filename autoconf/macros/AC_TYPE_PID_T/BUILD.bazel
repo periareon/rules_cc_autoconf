@@ -1,0 +1,19 @@
+"""AC_TYPE_PID_T - Autoconf builtin macro
+
+Checks if pid_t type is defined.
+
+Defines:
+  - pid_t (if not defined, defined to int)
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "AC_TYPE_PID_T",
+    checks = [
+        # Check if pid_t is already defined
+        checks.AC_CHECK_TYPE("pid_t"),
+    ],
+    visibility = ["//visibility:public"],
+)

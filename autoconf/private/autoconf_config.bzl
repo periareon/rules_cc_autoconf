@@ -8,37 +8,187 @@ load("@rules_cc//cc:find_cc_toolchain.bzl", "find_cpp_toolchain")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
 
-def collect_transitive_results(label, dep_infos):
-    """Collect transitive results while failing on duplicates.
+_TOOLCHAIN_TYPE = "//autoconf:toolchain_type"
+
+def get_autoconf_toolchain_defaults(ctx):
+    """Get default checks from the autoconf toolchain if available.
 
     Args:
-        label (Label): The target running this macro.
+        ctx (ctx): The rule context.
+
+    Returns:
+        struct: A struct with `cache`, `define`, and `subst` fields, each containing
+                a dict[str, File] mapping variable names to result files.
+                Returns struct(cache={}, define={}, subst={}) if no toolchain is configured.
+    """
+
+    # Access toolchain - returns None if not registered or mandatory=False
+    toolchain = ctx.toolchains[_TOOLCHAIN_TYPE]
+    if not toolchain:
+        return struct(cache = {}, define = {}, subst = {})
+
+    autoconf_defaults = getattr(toolchain, "autoconf_defaults", None)
+    if not autoconf_defaults:
+        return struct(cache = {}, define = {}, subst = {})
+
+    return struct(
+        cache = getattr(autoconf_defaults, "cache", {}),
+        define = getattr(autoconf_defaults, "define", {}),
+        subst = getattr(autoconf_defaults, "subst", {}),
+    )
+
+def get_autoconf_toolchain_defaults_by_label(ctx):
+    """Get default checks from the autoconf toolchain, organized by source label.
+
+    Args:
+        ctx (ctx): The rule context.
+
+    Returns:
+        dict: A mapping of source labels to structs with `cache`, `define`, and `subst` fields,
+              each containing a dict[str, File]. Returns empty dict if no toolchain is configured.
+    """
+
+    # Access toolchain - returns None if not registered or mandatory=False
+    toolchain = ctx.toolchains[_TOOLCHAIN_TYPE]
+    if not toolchain:
+        return {}
+
+    autoconf_defaults = getattr(toolchain, "autoconf_defaults", None)
+    if not autoconf_defaults:
+        return {}
+
+    return getattr(autoconf_defaults, "defaults_by_label", {})
+
+def filter_defaults(defaults_by_label, include_labels, exclude_labels):
+    """Filter toolchain defaults based on include/exclude lists.
+
+    Args:
+        defaults_by_label (dict): Mapping of Label -> struct(cache=..., define=..., subst=...) from toolchain.
+        include_labels (list[Label]): If non-empty, only include defaults from these labels.
+            An error is raised if a label is specified but not found in the toolchain.
+        exclude_labels (list[Label]): If non-empty, exclude defaults from these labels.
+            Labels not found in the toolchain are silently ignored.
+
+    Returns:
+        struct: A struct with `cache`, `define`, and `subst` fields, each containing
+                a merged dict[str, File] after filtering.
+    """
+    if include_labels and exclude_labels:
+        fail("defaults_include and defaults_exclude are mutually exclusive")
+
+    result_cache = {}
+    result_define = {}
+    result_subst = {}
+
+    if include_labels:
+        # Only include specified labels
+        for label in include_labels:
+            if label not in defaults_by_label:
+                fail("defaults_include specifies label '{}' but it is not provided by the autoconf toolchain. Available labels: {}".format(
+                    label,
+                    ", ".join([str(label_key) for label_key in defaults_by_label.keys()]),
+                ))
+            label_defaults = defaults_by_label[label]
+            result_cache = result_cache | getattr(label_defaults, "cache", {})
+            result_define = result_define | getattr(label_defaults, "define", {})
+            result_subst = result_subst | getattr(label_defaults, "subst", {})
+    elif exclude_labels:
+        # Include all except specified labels
+        exclude_set = {label: True for label in exclude_labels}
+        for label, label_defaults in defaults_by_label.items():
+            if label not in exclude_set:
+                result_cache = result_cache | getattr(label_defaults, "cache", {})
+                result_define = result_define | getattr(label_defaults, "define", {})
+                result_subst = result_subst | getattr(label_defaults, "subst", {})
+    else:
+        # Include all
+        for label_defaults in defaults_by_label.values():
+            result_cache = result_cache | getattr(label_defaults, "cache", {})
+            result_define = result_define | getattr(label_defaults, "define", {})
+            result_subst = result_subst | getattr(label_defaults, "subst", {})
+
+    return struct(
+        cache = result_cache,
+        define = result_define,
+        subst = result_subst,
+    )
+
+def merge_with_defaults(defaults, results):
+    """Merge check results with toolchain defaults.
+
+    Results from actual targets take precedence over defaults - any variable
+    present in both will use the result value, not the default.
+
+    Args:
+        defaults (dict): Default checks from toolchain (variable name -> File).
+        results (dict): Check results from targets (variable name -> File).
+
+    Returns:
+        dict: Merged results with targets overriding defaults.
+    """
+
+    # Defaults first, then results override
+    return defaults | results
+
+def collect_transitive_results(dep_infos):
+    """Collect transitive cache variable results.
+
+    Args:
         dep_infos (list): A list of `CcAutoconfInfo`.
 
     Returns:
-        dict: A mapping of define name to check result files.
+        dict: A mapping of cache variable name to check result files.
     """
-    transitive_checks = {}
+    cache_results = {}
+    define_results = {}
+    subst_results = {}
     for dep_info in dep_infos:
-        total = len(transitive_checks)
-        new = len(dep_info.results)
-        updated = transitive_checks | dep_info.results
-        if total + new != len(updated):
-            providers = {}
-            duplicates = [define_name for define_name in dep_info.results.keys() if define_name in transitive_checks]
-            for duplicate in duplicates:
-                providers[duplicate] = []
-                for info in dep_infos:
-                    if duplicate in info.results:
-                        providers[duplicate].append(str(info.owner))
+        # Check for conflicts before merging - same cache variable from different targets
+        # should point to the same file (they're the same check result)
+        # Compare file paths, not File objects, since the same file from different
+        # dependencies might be different File objects
+        for cache_name, cache_file in dep_info.cache_results.items():
+            if cache_name in cache_results:
+                existing_file = cache_results[cache_name]
 
-            fail("A duplicate check was detected in dependencies of `{}`: {}".format(
-                label,
-                json.encode_indent(providers, indent = " " * 4),
-            ))
-        transitive_checks = updated
+                # Compare file paths to see if they're the same file
+                if existing_file.path != cache_file.path:
+                    # Different files for the same cache variable - this is a conflict
+                    # This should not happen if Starlark properly prevents duplicates
+                    fail("Cache variable '{}' is defined in multiple dependencies with different result files:\n  First:  {}\n  Second: {}\nThis indicates duplicate checks across different autoconf targets.".format(
+                        cache_name,
+                        existing_file.path,
+                        cache_file.path,
+                    ))
+            cache_results[cache_name] = cache_file
 
-    return transitive_checks
+        for define_name, define_file in dep_info.define_results.items():
+            if define_name in define_results:
+                existing_file = define_results[define_name]
+                if existing_file.path != define_file.path:
+                    fail("Define '{}' is defined in multiple dependencies with different result files:\n  First:  {}\n  Second: {}\nThis indicates duplicate defines across different autoconf targets.".format(
+                        define_name,
+                        existing_file.path,
+                        define_file.path,
+                    ))
+            define_results[define_name] = define_file
+
+        for subst_name, subst_file in dep_info.subst_results.items():
+            if subst_name in subst_results:
+                existing_file = subst_results[subst_name]
+                if existing_file.path != subst_file.path:
+                    fail("Subst '{}' is defined in multiple dependencies with different result files:\n  First:  {}\n  Second: {}\nThis indicates duplicate subst across different autoconf targets.".format(
+                        subst_name,
+                        existing_file.path,
+                        subst_file.path,
+                    ))
+            subst_results[subst_name] = subst_file
+
+    return {
+        "cache": cache_results,
+        "define": define_results,
+        "subst": subst_results,
+    }
 
 def collect_deps(deps):
     """Collect `CcAutoconfInfo` from dependencies.
@@ -150,12 +300,11 @@ def get_cc_toolchain_info(ctx):
         compiler_type = cc_toolchain.compiler,
     )
 
-def create_config_dict(toolchain_info, checks):
+def create_config_dict(toolchain_info):
     """Create a config dictionary for the autoconf runner.
 
     Args:
         toolchain_info (cc_toolchain): Struct from get_cc_toolchain_info().
-        checks (list[str]): List of processed checks.
 
     Returns:
         A dictionary representing the autoconf config.
@@ -164,7 +313,6 @@ def create_config_dict(toolchain_info, checks):
         "c_compiler": toolchain_info.c_compiler_path,
         "c_flags": toolchain_info.c_flags,
         "c_link_flags": toolchain_info.c_link_flags,
-        "checks": checks,
         "compiler_type": toolchain_info.compiler_type,
         "cpp_compiler": toolchain_info.cpp_compiler_path,
         "cpp_flags": toolchain_info.cpp_flags,

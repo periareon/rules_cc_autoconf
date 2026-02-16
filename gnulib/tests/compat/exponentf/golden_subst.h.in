@@ -1,0 +1,3 @@
+/* subst.h.in */
+#define SUBST_FLT_EXPBIT0_BIT "@FLT_EXPBIT0_BIT@"
+#define SUBST_FLT_EXPBIT0_WORD "@FLT_EXPBIT0_WORD@"

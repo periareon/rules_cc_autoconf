@@ -1,0 +1,2 @@
+/* subst.h.in */
+#define SUBST_HAVE_PIPE "@HAVE_PIPE@"

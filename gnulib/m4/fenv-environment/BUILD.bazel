@@ -1,11 +1,23 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fenv-environment.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "fenv-environment",
     checks = [
-        # Note: fenv-environment.m4 may not exist in gnulib, or this module may not have checks
+        # gl_FENV_ENVIRONMENT checks if FE_DFL_ENV is usable
+        # On macOS, FE_DFL_ENV is available
+        checks.AC_DEFINE("HAVE_FE_DFL_ENV", "1"),
+        # AC_SUBST([FENV_ENVIRONMENT_LIBM]) - library needed for fenv functions
+        # On macOS/Linux, fenv functions are in libc, so FENV_ENVIRONMENT_LIBM is empty
+        checks.AC_SUBST("FENV_ENVIRONMENT_LIBM", ""),
+        # AC_SUBST([FESETENV_LIBM]) - library needed for fesetenv
+        checks.AC_SUBST("FESETENV_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/fenv_h",
+    ],
 )

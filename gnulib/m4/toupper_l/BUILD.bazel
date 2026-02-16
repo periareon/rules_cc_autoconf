@@ -1,11 +1,22 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/toupper_l.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "toupper_l",
     checks = [
-        # TODO: Add checks based on .m4 file
+        # gl_FUNC_TOUPPER_L checks for toupper_l function
+        checks.AC_CHECK_FUNC(
+            "toupper_l",
+            define = "HAVE_TOUPPER_L",
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/c-strtod",
+        "//gnulib/m4/wchar_h:gl_WCHAR_H_CORE",
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

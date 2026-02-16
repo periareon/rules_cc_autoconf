@@ -1,11 +1,65 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/malloc_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks", "macros")
+load("//gnulib:macros.bzl", gl_macros = "macros")
+
+autoconf(
+    name = "HAVE_MALLOC_H",
+    checks = macros.AC_CHECK_HEADERS(["malloc.h"]),
+    visibility = ["//gnulib:__subpackages__"],
+)
+
+autoconf(
+    name = "gl_MALLOC_H",
+    checks = [
+        # Set HAVE_MALLOC_H as a subst variable based on the header check result
+        checks.AC_SUBST(
+            "HAVE_MALLOC_H",
+            condition = "ac_cv_header_malloc_h",
+            if_false = 0,
+            if_true = 1,
+        ),
+    ] + gl_macros.GL_CHECK_NEXT_HEADERS(["malloc.h"]),
+    visibility = ["//visibility:public"],
+    deps = [
+        ":HAVE_MALLOC_H",
+        "//gnulib/m4/include_next",  # gl_CHECK_NEXT_HEADERS([malloc.h])
+    ],
+)
+
+autoconf(
+    name = "gl_MALLOC_H_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("HAVE_MEMALIGN", 1),
+        checks.AC_SUBST("REPLACE_MEMALIGN", 0),
+    ],
+    visibility = ["//visibility:private"],
+)
+
+autoconf(
+    name = "gl_MALLOC_H_REQUIRE_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("GNULIB_MEMALIGN", 0),
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gl_MALLOC_H_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_MALLOC_H_REQUIRE_DEFAULTS",
+    ],
+)
 
 autoconf(
     name = "malloc_h",
-    checks = [
-        # Note: malloc_h.m4 may not exist in gnulib, or this module may not have checks
-    ],
     visibility = ["//visibility:public"],
+    deps = [
+        ":gl_MALLOC_H",
+    ],
 )

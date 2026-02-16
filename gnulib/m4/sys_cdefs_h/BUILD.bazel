@@ -1,22 +1,38 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sys_cdefs_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
-# gl_CHECK_HEADER_SYS_CDEFS_H from sys_cdefs_h.m4
-# Checks for glibc-compatible sys/cdefs.h
 autoconf(
-    name = "sys_cdefs_h",
+    name = "gl_CHECK_HEADER_SYS_CDEFS_H",
     checks = [
-        # Check for glibc-compatible sys/cdefs.h with __GNUC_PREREQ
-        macros.AC_TRY_COMPILE(
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_header_sys_cdefs_h",
             code = """\
 #include <sys/cdefs.h>
 enum { foo = __GNUC_PREREQ (14, 1) } bar;
 int main(void) { return bar; }
 """,
-            define = "HAVE_SYS_CDEFS_H",
+        ),
+        # Set HAVE_SYS_CDEFS_H as substitution variable
+        # if test "$gl_cv_header_sys_cdefs_h" = yes; then
+        # else
+        # fi
+        # On macOS, sys/cdefs.h is not glibc-compatible, so HAVE_SYS_CDEFS_H=0
+        checks.AC_SUBST(
+            "HAVE_SYS_CDEFS_H",
+            condition = "gl_cv_header_sys_cdefs_h",
+            if_false = 0,
+            if_true = 1,
         ),
     ],
     visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "sys_cdefs_h",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_CHECK_HEADER_SYS_CDEFS_H",
+    ],
 )

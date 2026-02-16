@@ -1,0 +1,3 @@
+/* config.h.in */
+/* #undef POSIX_SHELL */
+/* #undef PREFERABLY_POSIX_SHELL */

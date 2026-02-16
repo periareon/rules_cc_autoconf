@@ -1,0 +1,5 @@
+/* config.h.in */
+#undef HAVE_MEMPCPY
+#undef HAVE_THREADS_H
+#undef HAVE_WEAK_SYMBOLS
+#undef USE_POSIX_THREADS_FROM_LIBC

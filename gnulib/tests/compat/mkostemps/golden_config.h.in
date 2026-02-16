@@ -1,0 +1,118 @@
+/* config.h.in */
+/* #undef CAN_PRINT_STACK_TRACE */
+/* #undef HAVE_ALIGNED_ALLOC */
+/* #undef HAVE_ATOLL */
+/* #undef HAVE_CANONICALIZE_FILE_NAME */
+/* #undef HAVE_DECL_ECVT */
+/* #undef HAVE_DECL_FCVT */
+/* #undef HAVE_DECL_GCVT */
+/* #undef HAVE_DECL_GETLOADAVG */
+/* #undef HAVE_DECL_INITSTATE */
+/* #undef HAVE_DECL_PROGRAM_INVOCATION_NAME */
+/* #undef HAVE_DECL_SETENV */
+/* #undef HAVE_DECL_SETSTATE */
+/* #undef HAVE_DECL_UNSETENV */
+/* #undef HAVE_GETPROGNAME */
+/* #undef HAVE_GETSUBOPT */
+/* #undef HAVE_GRANTPT */
+/* #undef HAVE_INITSTATE */
+#define HAVE_INTTYPES_H 1
+/* #undef HAVE_MBTOWC */
+/* #undef HAVE_MKDTEMP */
+/* #undef HAVE_MKOSTEMP */
+#define HAVE_MKOSTEMPS 1
+/* #undef HAVE_MKSTEMP */
+/* #undef HAVE_MKSTEMPS */
+/* #undef HAVE_POSIX_MEMALIGN */
+/* #undef HAVE_POSIX_OPENPT */
+/* #undef HAVE_PTSNAME */
+/* #undef HAVE_PTSNAME_R */
+/* #undef HAVE_QSORT_R */
+/* #undef HAVE_RANDOM */
+/* #undef HAVE_RANDOM_R */
+/* #undef HAVE_REALLOCARRAY */
+/* #undef HAVE_REALPATH */
+/* #undef HAVE_RPMATCH */
+/* #undef HAVE_SECURE_GETENV */
+/* #undef HAVE_SETENV */
+/* #undef HAVE_SETSTATE */
+#define HAVE_STDINT_H 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_STRING_H 1
+/* #undef HAVE_STRTOD */
+/* #undef HAVE_STRTOF */
+/* #undef HAVE_STRTOL */
+/* #undef HAVE_STRTOLD */
+/* #undef HAVE_STRTOLL */
+/* #undef HAVE_STRTOUL */
+/* #undef HAVE_STRTOULL */
+/* #undef HAVE_STRUCT_RANDOM_DATA */
+/* #undef HAVE_SYS_LOADAVG_H */
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+/* #undef HAVE_UNLOCKPT */
+#define HAVE_WCHAR_H 1
+/* #undef HAVE__EXIT */
+/* #undef REPLACE_ABORT */
+/* #undef REPLACE_ALIGNED_ALLOC */
+/* #undef REPLACE_CALLOC_FOR_CALLOC_GNU */
+/* #undef REPLACE_CALLOC_FOR_CALLOC_POSIX */
+/* #undef REPLACE_CANONICALIZE_FILE_NAME */
+/* #undef REPLACE_FREE */
+/* #undef REPLACE_GETLOADAVG */
+/* #undef REPLACE_GETPROGNAME */
+/* #undef REPLACE_GETSUBOPT */
+/* #undef REPLACE_INITSTATE */
+/* #undef REPLACE_MALLOC_FOR_MALLOC_GNU */
+/* #undef REPLACE_MALLOC_FOR_MALLOC_POSIX */
+/* #undef REPLACE_MBSTOWCS */
+/* #undef REPLACE_MBTOWC */
+/* #undef REPLACE_MB_CUR_MAX */
+/* #undef REPLACE_MKOSTEMP */
+/* #undef REPLACE_MKOSTEMPS */
+/* #undef REPLACE_MKSTEMP */
+/* #undef REPLACE_POSIX_MEMALIGN */
+/* #undef REPLACE_POSIX_OPENPT */
+/* #undef REPLACE_PTSNAME */
+/* #undef REPLACE_PTSNAME_R */
+/* #undef REPLACE_PUTENV */
+/* #undef REPLACE_QSORT_R */
+/* #undef REPLACE_RAND */
+/* #undef REPLACE_RANDOM */
+/* #undef REPLACE_RANDOM_R */
+/* #undef REPLACE_REALLOCARRAY */
+/* #undef REPLACE_REALLOC_FOR_REALLOC_POSIX */
+/* #undef REPLACE_REALPATH */
+/* #undef REPLACE_SETENV */
+/* #undef REPLACE_SETSTATE */
+/* #undef REPLACE_STRTOD */
+/* #undef REPLACE_STRTOF */
+/* #undef REPLACE_STRTOL */
+/* #undef REPLACE_STRTOLD */
+/* #undef REPLACE_STRTOLL */
+/* #undef REPLACE_STRTOUL */
+/* #undef REPLACE_STRTOULL */
+/* #undef REPLACE_UNSETENV */
+/* #undef REPLACE_WCTOMB */
+/* #undef REPLACE__EXIT */
+#define STDC_HEADERS 1
+#define _ALL_SOURCE 1
+#define _DARWIN_C_SOURCE 1
+#define _GNU_SOURCE 1
+#define _HPUX_ALT_XOPEN_SOCKET_API 1
+#define _NETBSD_SOURCE 1
+#define _OPENBSD_SOURCE 1
+#define _POSIX_PTHREAD_SEMANTICS 1
+#define _TANDEM_SOURCE 1
+#define __EXTENSIONS__ 1
+#define __STDC_WANT_IEC_60559_ATTRIBS_EXT__ 1
+#define __STDC_WANT_IEC_60559_BFP_EXT__ 1
+#define __STDC_WANT_IEC_60559_DFP_EXT__ 1
+#define __STDC_WANT_IEC_60559_EXT__ 1
+#define __STDC_WANT_IEC_60559_FUNCS_EXT__ 1
+#define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
+#define __STDC_WANT_LIB_EXT2__ 1
+#define __STDC_WANT_MATH_SPEC_FUNCS__ 1

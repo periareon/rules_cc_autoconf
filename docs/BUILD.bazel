@@ -30,12 +30,12 @@ stardoc(
 )
 
 stardoc(
-    name = "macros",
-    out = "src/macros.md",
-    input = "//autoconf:macros.bzl",
+    name = "checks",
+    out = "src/checks.md",
+    input = "//autoconf:checks.bzl",
     table_of_contents_template = "@stardoc//stardoc:templates/markdown_tables/table_of_contents.vm",
     tags = ["manual"],
-    deps = ["//autoconf:macros_bzl"],
+    deps = ["//autoconf:checks_bzl"],
 )
 
 stardoc(
@@ -53,7 +53,7 @@ mdbook(
         ":autoconf",
         ":autoconf_hdr",
         ":autoconf_srcs",
-        ":macros",
+        ":checks",
         ":package_info",
     ],
     book = "book.toml",

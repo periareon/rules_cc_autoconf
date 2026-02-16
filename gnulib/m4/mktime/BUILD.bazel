@@ -1,16 +1,20 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/mktime.m4"""
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/mktime.m4
+
+gl_FUNC_MKTIME_WORKS - runtime check for working mktime, sets gl_cv_func_working_mktime
+gl_FUNC_MKTIME - full mktime function check, sets REPLACE_MKTIME based on gl_cv_func_working_mktime
+"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
-# gl_FUNC_MKTIME from mktime.m4
-# On Windows (mingw/windows), REPLACE_MKTIME=1 and NEED_MKTIME_WINDOWS=1 are set.
-# HAVE_UNISTD_H comes from unistd_h dependency
-
+# This is the runtime check that determines gl_cv_func_working_mktime.
+# Used by timegm to decide if REPLACE_TIMEGM should be set, WITHOUT
+# setting REPLACE_MKTIME itself.
 autoconf(
-    name = "mktime",
+    name = "gl_FUNC_MKTIME_WORKS",
     checks = [
-        macros.AC_TRY_COMPILE(
+        # gl_TIME_T_IS_SIGNED
+        checks.AC_TRY_COMPILE(
             code = """\
 #include <time.h>
 char time_t_signed[(time_t) -1 < 0 ? 1 : -1];
@@ -19,34 +23,87 @@ int main(void) { return 0; }
             define = "TIME_T_IS_SIGNED",
             language = "c",
         ),
-        macros.AC_CHECK_DECL(
-            "alarm",
-            headers = ["unistd.h"],
-        ),
-        # If __mktime_internal is found, define mktime_internal as __mktime_internal
-        # If not found, set WANT_MKTIME_INTERNAL=1 and define NEED_MKTIME_INTERNAL=1
-        macros.AC_CHECK_FUNC(
-            "__mktime_internal",
-            define = "HAVE_MKTIME_INTERNAL",
-            if_false = [
-                macros.AC_DEFINE("WANT_MKTIME_INTERNAL", "1"),
-                macros.AC_DEFINE("NEED_MKTIME_INTERNAL", "1"),
-            ],
-            if_true = [
-                macros.AC_DEFINE("mktime_internal", "__mktime_internal"),
-            ],
-        ),
-    ] + select({
-        "@platforms//os:windows": [
-            macros.M4_DEFINE("REPLACE_MKTIME", "1"),
-            macros.M4_DEFINE("NEED_MKTIME_WINDOWS", "1"),
+        # On macOS with Apple Universal Build, gl_cv_func_working_mktime="guessing no"
+        # which means mktime is considered broken for cross-compile purposes.
+        # This is used by timegm to decide REPLACE_TIMEGM.
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_DECLS_ONCE_ALARM",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/multiarch",  # AC_REQUIRE([gl_MULTIARCH])
+        "//gnulib/m4/time_h",  # AC_REQUIRE([gl_TIME_H_DEFAULTS])
+    ],
+)
+
+# On Windows (mingw/windows), REPLACE_MKTIME=1 and NEED_MKTIME_WINDOWS=1 are set.
+# HAVE_UNISTD_H comes from unistd_h dependency
+# TIME_T_IS_SIGNED and HAVE_DECL_ALARM come from gl_FUNC_MKTIME_WORKS dependency
+
+autoconf(
+    name = "mktime",
+    checks = select({
+        # On Linux: __mktime_internal is not exported by glibc
+        # mktime works correctly, but gnulib needs its internal version
+        "@platforms//os:linux": [
+            checks.AC_DEFINE("NEED_MKTIME_INTERNAL", "1"),
         ],
-        "//conditions:default": [],
+        "@platforms//os:macos": [
+            # macOS mktime has timezone bugs that require gnulib replacement
+            checks.AC_SUBST("REPLACE_MKTIME", "1"),
+            checks.AC_DEFINE("NEED_MKTIME_INTERNAL", "1"),
+            checks.AC_DEFINE("NEED_MKTIME_WORKING", "1"),
+        ],
+        "@platforms//os:windows": [
+            checks.AC_CHECK_FUNC(
+                "__mktime_internal",
+                define = "HAVE_MKTIME_INTERNAL",
+            ),
+            checks.M4_VARIABLE("REPLACE_MKTIME", "1"),
+            checks.M4_VARIABLE("NEED_MKTIME_WINDOWS", "1"),
+            checks.AC_DEFINE(
+                "mktime_internal",
+                "__mktime_internal",
+                requires = ["HAVE_MKTIME_INTERNAL==1"],
+            ),
+            checks.AC_DEFINE(
+                "WANT_MKTIME_INTERNAL",
+                "1",
+                requires = ["HAVE_MKTIME_INTERNAL==0"],
+            ),
+            checks.AC_DEFINE(
+                "NEED_MKTIME_INTERNAL",
+                "1",
+                requires = ["HAVE_MKTIME_INTERNAL==0"],
+            ),
+        ],
+        "//conditions:default": [
+            # If __mktime_internal is found, define mktime_internal as __mktime_internal
+            # If not found, set WANT_MKTIME_INTERNAL=1 and define NEED_MKTIME_INTERNAL=1
+            checks.AC_CHECK_FUNC(
+                "__mktime_internal",
+                define = "HAVE_MKTIME_INTERNAL",
+            ),
+            checks.AC_DEFINE(
+                "mktime_internal",
+                "__mktime_internal",
+                requires = ["HAVE_MKTIME_INTERNAL==1"],
+            ),
+            checks.AC_DEFINE(
+                "WANT_MKTIME_INTERNAL",
+                "1",
+                requires = ["HAVE_MKTIME_INTERNAL==0"],
+            ),
+            checks.AC_DEFINE(
+                "NEED_MKTIME_INTERNAL",
+                "1",
+                requires = ["HAVE_MKTIME_INTERNAL==0"],
+            ),
+        ],
     }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/multiarch",  # AC_REQUIRE([gl_MULTIARCH])
-        "//gnulib/m4/time_h",  # AC_REQUIRE([gl_TIME_H_DEFAULTS])
-        "//gnulib/m4/unistd_h",  # Provides HAVE_UNISTD_H
+        # all other common checks (multiarch, time_h, AC_CHECK_INCLUDES_DEFAULT)
+        ":gl_FUNC_MKTIME_WORKS",
     ],
 )

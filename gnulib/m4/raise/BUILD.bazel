@@ -1,21 +1,30 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/raise.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "raise",
     checks = [
-        # Check for raise function
-        # Equivalent to gl_FUNC_RAISE macro from raise.m4
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "raise",
             define = "HAVE_RAISE",
+            subst = True,
         ),
+        # if test $ac_cv_func_raise = no; then
+        # else
+        # fi
+        # Note: The conditional logic for REPLACE_RAISE is handled via dependencies
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/msvc-inval",  # m4_ifdef([gl_MSVC_INVAL], [AC_REQUIRE([gl_MSVC_INVAL])])
-        "//gnulib/m4/signal_h",  # AC_REQUIRE([gl_SIGNAL_H_DEFAULTS])
+        # Note: raise sets HAVE_RAISE itself, so we can't depend on signal_h:defaults
+        # which also sets it. The m4 file requires defaults but raise determines
+        # HAVE_RAISE itself via AC_CHECK_FUNCS.
+        "//gnulib/m4/signalblocking:gl_SIGNALBLOCKING",  # m4_ifdef([gl_SIGNALBLOCKING], [gl_SIGNALBLOCKING])
+        "//gnulib/m4/sigpipe:gl_SIGNAL_SIGPIPE",  # m4_ifdef([gl_SIGNAL_SIGPIPE], [gl_SIGNAL_SIGPIPE])
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

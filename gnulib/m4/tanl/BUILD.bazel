@@ -1,21 +1,28 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/tanl.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "tanl",
     checks = [
-        macros.AC_CHECK_DECL(
+        # The golden file shows HAVE_DECL_TANL should be undefined in config.h
+        # Use internal define to avoid defining it in config.h
+        checks.AC_CHECK_DECL(
             "tanl",
-            define = "HAVE_DECL_TANL",
+            name = "_gl_cv_have_decl_tanl",
+            includes = ["#include <math.h>"],
         ),
+        checks.AC_SUBST("TANL_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/floor",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",
         "//gnulib/m4/floorl",
-        "//gnulib/m4/isnanl",
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+        "//gnulib/m4/mktime",  # Provides HAVE_DECL_ALARM (needed for test compatibility)
+        "//gnulib/m4/sinl",
         "//gnulib/m4/tan",
     ],
 )

@@ -1,54 +1,267 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/stdio_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
-# gl_STDIO_H from stdio_h.m4
-# COMPLEX CASE: This is a complex header replacement module that checks
-# for many printf/scanf features. Full migration would require many
-# runtime tests.
+# Shared AC_CHECK_DECL(_snprintf) used by stdio_h and vasnprintf's gl_PREREQ_VASNPRINTF.
 autoconf(
-    name = "stdio_h",
+    name = "gl_HAVE_DECL__SNPRINTF",
     checks = [
-        # Check for stdio.h header
-        macros.AC_CHECK_HEADER("stdio.h"),
-        # Check for various function declarations
-        macros.AC_CHECK_DECL(
-            "dprintf",
-            headers = ["stdio.h"],
-        ),
-        macros.AC_CHECK_DECL(
-            "fseeko",
-            headers = ["stdio.h"],
-        ),
-        macros.AC_CHECK_DECL(
-            "getdelim",
-            headers = ["stdio.h"],
-        ),
-        macros.AC_CHECK_DECL(
-            "getline",
-            headers = ["stdio.h"],
-        ),
-        macros.AC_CHECK_DECL(
-            "snprintf",
-            headers = ["stdio.h"],
-        ),
-        macros.AC_CHECK_DECL(
-            "vsnprintf",
-            headers = ["stdio.h"],
-        ),
-        macros.AC_CHECK_DECL(
-            "fcloseall",
-            headers = ["stdio.h"],
-        ),
-        macros.AC_CHECK_DECL(
-            "getw",
-            headers = ["stdio.h"],
-        ),
-        macros.AC_CHECK_DECL(
-            "putw",
-            headers = ["stdio.h"],
+        checks.AC_CHECK_DECL(
+            "_snprintf",
+            define = "HAVE_DECL__SNPRINTF",
+            includes = ["#include <stdio.h>"],
+            subst = True,
         ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )
+
+autoconf(
+    name = "stdio_h",
+    checks = [
+        # This makes printf/scanf use GNU-style format specifiers
+        checks.AC_DEFINE("__USE_MINGW_ANSI_STDIO", "1"),
+
+        # From gl_STDIO_H: Check which flavor of printf attribute matches inttypes macros
+        # Lines 39-53: AC_CACHE_CHECK + AC_COMPILE_IFELSE
+        # Sets GNULIB_PRINTF_ATTRIBUTE_FLAVOR_GNU=1 when compilation FAILS (gnu printf flavor)
+        checks.AC_TRY_COMPILE(
+            name = "_gl_cv_printf_attribute_flavor_system",
+            code = """\
+#define __STDC_FORMAT_MACROS 1
+#include <stdio.h>
+#include <inttypes.h>
+/* For non-mingw systems, compilation will trivially succeed.
+   For mingw, compilation will succeed for older mingw (system
+   printf, "I64d") and fail for newer mingw (gnu printf, "lld"). */
+#if (defined _WIN32 && ! defined __CYGWIN__) && \
+  (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 4))
+extern char PRIdMAX_probe[sizeof PRIdMAX == sizeof "I64d" ? 1 : -1];
+#endif
+int main(void) { return 0; }
+""",
+            language = "c",
+        ),
+        # Set GNULIB_PRINTF_ATTRIBUTE_FLAVOR_GNU when system flavor check fails
+        checks.AC_DEFINE(
+            "GNULIB_PRINTF_ATTRIBUTE_FLAVOR_GNU",
+            condition = "_gl_cv_printf_attribute_flavor_system",
+            if_false = 1,
+        ),
+
+        # gl_NEXT_HEADERS([stdio.h]) sets NEXT_STDIO_H and NEXT_AS_FIRST_DIRECTIVE_STDIO_H
+        # On systems with include_next support, these are '<stdio.h>'
+        # On systems without include_next, these are absolute paths
+        # For cross-compilation, we default to '<stdio.h>' (most common case)
+        checks.AC_SUBST("NEXT_STDIO_H", "<stdio.h>"),
+        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_STDIO_H", "<stdio.h>"),
+
+        # Use subst=True to create both subst variables and config.h defines
+        # The original m4 sets HAVE_DECL_*=0 if not found, otherwise uses default (1)
+        checks.AC_CHECK_DECL(
+            "fcloseall",
+            define = "HAVE_DECL_FCLOSEALL",
+            includes = ["#include <stdio.h>"],
+            subst = True,
+            # Note: stdio_h itself needs HAVE_DECL_FCLOSEALL=0 when not found (for its test)
+            # But modules that depend on stdio_h transitively shouldn't have it at all
+            # This is handled by making vasnprintf check for _snprintf directly instead of depending on stdio_h
+        ),
+        checks.AC_CHECK_DECL(
+            "getw",
+            define = "HAVE_DECL_GETW",
+            includes = ["#include <stdio.h>"],
+            subst = True,
+        ),
+        checks.AC_CHECK_DECL(
+            "putw",
+            define = "HAVE_DECL_PUTW",
+            includes = ["#include <stdio.h>"],
+            subst = True,
+        ),
+
+        # ac_cv_have_decl__snprintf from gl_HAVE_DECL__SNPRINTF (shared with vasnprintf)
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_HAVE_DECL__SNPRINTF",
+        # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
+        # The defaults are provided by the toolchain/defaults target
+        "//gnulib/m4/include_next",
+        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "gl_STDIO_H_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("HAVE_DECL_FCLOSEALL", 1),
+        checks.AC_SUBST("HAVE_DECL_FPURGE", 1),
+        checks.AC_SUBST("HAVE_DECL_FSEEKO", 1),
+        checks.AC_SUBST("HAVE_DECL_FTELLO", 1),
+        checks.AC_SUBST("HAVE_DECL_GETDELIM", 1),
+        checks.AC_SUBST("HAVE_DECL_GETLINE", 1),
+        checks.AC_SUBST("HAVE_DECL_GETW", 1),
+        checks.AC_SUBST("HAVE_DECL_OBSTACK_PRINTF", 1),
+        checks.AC_SUBST("HAVE_DECL_PUTW", 1),
+        checks.AC_SUBST("HAVE_DECL_SNPRINTF", 1),
+        checks.AC_SUBST("HAVE_DECL_VSNPRINTF", 1),
+        checks.AC_SUBST("HAVE_DPRINTF", 1),
+        checks.AC_SUBST("HAVE_FSEEKO", 1),
+        checks.AC_SUBST("HAVE_FTELLO", 1),
+        checks.AC_SUBST("HAVE_PCLOSE", 1),
+        checks.AC_SUBST("HAVE_POPEN", 1),
+        checks.AC_SUBST("HAVE_RENAMEAT", 1),
+        checks.AC_SUBST("HAVE_VASPRINTF", 1),
+        checks.AC_SUBST("HAVE_VDPRINTF", 1),
+        checks.AC_SUBST("REPLACE_DPRINTF", 0),
+        checks.AC_SUBST("REPLACE_FCLOSE", 0),
+        checks.AC_SUBST("REPLACE_FDOPEN", 0),
+        checks.AC_SUBST("REPLACE_FFLUSH", 0),
+        checks.AC_SUBST("REPLACE_FOPEN", 0),
+        checks.AC_SUBST("REPLACE_FOPEN_FOR_FOPEN_GNU", 0),
+        checks.AC_SUBST("REPLACE_FPRINTF", 0),
+        checks.AC_SUBST("REPLACE_FPURGE", 0),
+        checks.AC_SUBST("REPLACE_FREOPEN", 0),
+        checks.AC_SUBST("REPLACE_FSEEK", 0),
+        checks.AC_SUBST("REPLACE_FSEEKO", 0),
+        checks.AC_SUBST("REPLACE_FTELL", 0),
+        checks.AC_SUBST("REPLACE_FTELLO", 0),
+        checks.AC_SUBST("REPLACE_GETDELIM", 0),
+        checks.AC_SUBST("REPLACE_GETLINE", 0),
+        checks.AC_SUBST("REPLACE_OBSTACK_PRINTF", 0),
+        checks.AC_SUBST("REPLACE_PERROR", 0),
+        checks.AC_SUBST("REPLACE_POPEN", 0),
+        checks.AC_SUBST("REPLACE_PRINTF", 0),
+        checks.AC_SUBST("REPLACE_REMOVE", 0),
+        checks.AC_SUBST("REPLACE_RENAME", 0),
+        checks.AC_SUBST("REPLACE_RENAMEAT", 0),
+        checks.AC_SUBST("REPLACE_SNPRINTF", 0),
+        checks.AC_SUBST("REPLACE_SPRINTF", 0),
+        checks.AC_SUBST("REPLACE_STDIO_READ_FUNCS", 0),
+        checks.AC_SUBST("REPLACE_STDIO_WRITE_FUNCS", 0),
+        checks.AC_SUBST("REPLACE_TMPFILE", 0),
+        checks.AC_SUBST("REPLACE_VASPRINTF", 0),
+        checks.AC_SUBST("REPLACE_VDPRINTF", 0),
+        checks.AC_SUBST("REPLACE_VFPRINTF", 0),
+        checks.AC_SUBST("REPLACE_VPRINTF", 0),
+        checks.AC_SUBST("REPLACE_VSNPRINTF", 0),
+        checks.AC_SUBST("REPLACE_VSPRINTF", 0),
+    ],
+    visibility = ["//visibility:private"],
+)
+
+autoconf(
+    name = "gl_STDIO_H_REQUIRE_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("GNULIB_DPRINTF", 0),
+        checks.AC_SUBST("GNULIB_DZPRINTF", 0),
+        checks.AC_SUBST("GNULIB_FCLOSE", 0),
+        checks.AC_SUBST("GNULIB_FDOPEN", 0),
+        checks.AC_SUBST("GNULIB_FFLUSH", 0),
+        checks.AC_SUBST("GNULIB_FGETC", 0),
+        checks.AC_SUBST("GNULIB_FGETS", 0),
+        checks.AC_SUBST("GNULIB_FOPEN", 0),
+        checks.AC_SUBST("GNULIB_FOPEN_GNU", 0),
+        checks.AC_SUBST("GNULIB_FPRINTF", 0),
+        checks.AC_SUBST("GNULIB_FPRINTF_POSIX", 0),
+        checks.AC_SUBST("GNULIB_FPURGE", 0),
+        checks.AC_SUBST("GNULIB_FPUTC", 0),
+        checks.AC_SUBST("GNULIB_FPUTS", 0),
+        checks.AC_SUBST("GNULIB_FREAD", 0),
+        checks.AC_SUBST("GNULIB_FREOPEN", 0),
+        checks.AC_SUBST("GNULIB_FSCANF", 0),
+        checks.AC_SUBST("GNULIB_FSEEK", 0),
+        checks.AC_SUBST("GNULIB_FSEEKO", 0),
+        checks.AC_SUBST("GNULIB_FTELL", 0),
+        checks.AC_SUBST("GNULIB_FTELLO", 0),
+        checks.AC_SUBST("GNULIB_FWRITE", 0),
+        checks.AC_SUBST("GNULIB_FZPRINTF", 0),
+        checks.AC_SUBST("GNULIB_GETC", 0),
+        checks.AC_SUBST("GNULIB_GETCHAR", 0),
+        checks.AC_SUBST("GNULIB_GETDELIM", 0),
+        checks.AC_SUBST("GNULIB_GETLINE", 0),
+        checks.AC_SUBST("GNULIB_OBSTACK_PRINTF", 0),
+        checks.AC_SUBST("GNULIB_OBSTACK_PRINTF_POSIX", 0),
+        checks.AC_SUBST("GNULIB_OBSTACK_ZPRINTF", 0),
+        checks.AC_SUBST("GNULIB_PCLOSE", 0),
+        checks.AC_SUBST("GNULIB_PERROR", 0),
+        checks.AC_SUBST("GNULIB_POPEN", 0),
+        checks.AC_SUBST("GNULIB_PRINTF", 0),
+        checks.AC_SUBST("GNULIB_PRINTF_POSIX", 0),
+        checks.AC_SUBST("GNULIB_PUTC", 0),
+        checks.AC_SUBST("GNULIB_PUTCHAR", 0),
+        checks.AC_SUBST("GNULIB_PUTS", 0),
+        checks.AC_SUBST("GNULIB_REMOVE", 0),
+        checks.AC_SUBST("GNULIB_RENAME", 0),
+        checks.AC_SUBST("GNULIB_RENAMEAT", 0),
+        checks.AC_SUBST("GNULIB_SCANF", 0),
+        checks.AC_SUBST("GNULIB_SNPRINTF", 0),
+        checks.AC_SUBST("GNULIB_SNZPRINTF", 0),
+        checks.AC_SUBST("GNULIB_SPRINTF_POSIX", 0),
+        checks.AC_SUBST("GNULIB_STDIO_H_NONBLOCKING", 0),
+        checks.AC_SUBST("GNULIB_STDIO_H_SIGPIPE", 0),
+        checks.AC_SUBST("GNULIB_SZPRINTF", 0),
+        checks.AC_SUBST("GNULIB_TMPFILE", 0),
+        checks.AC_SUBST("GNULIB_VASPRINTF", 0),
+        checks.AC_SUBST("GNULIB_VASZPRINTF", 0),
+        checks.AC_SUBST("GNULIB_VFSCANF", 0),
+        checks.AC_SUBST("GNULIB_VSCANF", 0),
+        checks.AC_SUBST("GNULIB_VDPRINTF", 0),
+        checks.AC_SUBST("GNULIB_VDZPRINTF", 0),
+        checks.AC_SUBST("GNULIB_VFPRINTF", 0),
+        checks.AC_SUBST("GNULIB_VFPRINTF_POSIX", 0),
+        checks.AC_SUBST("GNULIB_VFZPRINTF", 0),
+        checks.AC_SUBST("GNULIB_VPRINTF", 0),
+        checks.AC_SUBST("GNULIB_VPRINTF_POSIX", 0),
+        checks.AC_SUBST("GNULIB_VSNPRINTF", 0),
+        checks.AC_SUBST("GNULIB_VSNZPRINTF", 0),
+        checks.AC_SUBST("GNULIB_VSPRINTF_POSIX", 0),
+        checks.AC_SUBST("GNULIB_VSZPRINTF", 0),
+        checks.AC_SUBST("GNULIB_VZPRINTF", 0),
+        checks.AC_SUBST("GNULIB_ZPRINTF", 0),
+        # Microsoft deprecated alias function names
+        checks.AC_SUBST("GNULIB_MDA_FCLOSEALL", 1),
+        checks.AC_SUBST("GNULIB_MDA_FDOPEN", 1),
+        checks.AC_SUBST("GNULIB_MDA_FILENO", 1),
+        checks.AC_SUBST("GNULIB_MDA_GETW", 1),
+        checks.AC_SUBST("GNULIB_MDA_PUTW", 1),
+        checks.AC_SUBST("GNULIB_MDA_TEMPNAM", 1),
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gl_STDIO_H_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_STDIO_H_REQUIRE_DEFAULTS",
+    ],
+)
+
+# stdio_h_decls - AC_CHECK_DECLS_ONCE checks for fcloseall, getw, putw
+# Only included when stdio_h is the main target (stdio_h test)
+
+autoconf(
+    name = "stdio_h_decls",
+    checks = [
+        # This target is kept for backward compatibility but is no longer needed
+        # since stdio_h now defines these directly with subst = True
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":stdio_h",  # Need the checks from stdio_h
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Combined target that includes defaults for convenience

@@ -9,4 +9,8 @@ autoconf(
         # No actual checks needed
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

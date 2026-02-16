@@ -4,9 +4,13 @@ load("//autoconf:autoconf.bzl", "autoconf")
 
 autoconf(
     name = "supersede",
-    checks = [],
+    checks = [
+        # gl_SUPERSEDE checks for chown function
+    ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/chown",  # Provides HAVE_CHOWN
+        "//gnulib/m4/chown",
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

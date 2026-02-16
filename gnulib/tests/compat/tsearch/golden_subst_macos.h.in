@@ -1,0 +1,5 @@
+/* subst.h.in */
+#define SUBST_HAVE_TSEARCH "1"
+#define SUBST_HAVE_TWALK "1"
+#define SUBST_REPLACE_TSEARCH "0"
+#define SUBST_REPLACE_TWALK "0"

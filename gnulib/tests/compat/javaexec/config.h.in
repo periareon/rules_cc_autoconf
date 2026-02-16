@@ -1,0 +1,9 @@
+/* config.h.in */
+#undef CLASSPATH
+#undef CLASSPATH_SEPARATOR
+#undef CONF_JAVA
+#undef HAVE_JAVA
+#undef HAVE_JAVA_ENVVAR
+#undef HAVE_JAVA_IN_PATH
+#undef HAVE_JRE
+#undef HAVE_JRE_IN_PATH

@@ -1,14 +1,99 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/getlocalename_l.m4"""
+"""Clean port of gnulib m4/getlocalename_l.m4 (serial 5).
+
+gl_FUNC_GETLOCALENAME_L_SIMPLE: Requires gl_LOCALE_H_DEFAULTS, AC_USE_SYSTEM_EXTENSIONS,
+  gl_FUNC_GETLOCALENAME_L_UNSAFE.
+gl_FUNC_GETLOCALENAME_L_UNSAFE (AC_DEFUN_ONCE): AC_CHECK_FUNCS_ONCE([getlocalename_l]).
+  If no → HAVE_GETLOCALENAME_L=0. If yes → optional AC_RUN_IFELSE (Cygwin/Haiku bugs);
+  we cannot run at configure time, so assume works (REPLACE_GETLOCALENAME_L=0).
+  GETLOCALENAME_L_LIB = SETLOCALE_NULL_LIB when missing or replace, else "".
+gl_PREREQ_GETLOCALENAME_L_UNSAFE: locale_h_defaults, gl_LOCALE_T, gt_INTL_THREAD_LOCALE_NAME,
+  langinfo.h, newlocale/duplocale/freelocale (from those modules).
+"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
-# HAVE_LANGINFO_H comes from langinfo_h dependency
+# gl_FUNC_GETLOCALENAME_L_UNSAFE: main logic
+autoconf(
+    name = "gl_FUNC_GETLOCALENAME_L_UNSAFE",
+    checks = [
+        # AC_CHECK_FUNCS_ONCE([getlocalename_l]) → ac_cv_func_getlocalename_l
+        checks.AC_CHECK_FUNC(
+            "getlocalename_l",
+            name = "ac_cv_func_getlocalename_l",
+        ),
+        # if test $ac_cv_func_getlocalename_l = yes; then ... else HAVE_GETLOCALENAME_L=0; fi
+        # We only #define HAVE_GETLOCALENAME_L when 1 (when 0 template stays #undef)
+        checks.AC_DEFINE(
+            "HAVE_GETLOCALENAME_L",
+            condition = "ac_cv_func_getlocalename_l",
+            if_false = None,
+            if_true = "1",
+        ),
+        # Subst: HAVE_GETLOCALENAME_L "1" or "0" for @HAVE_GETLOCALENAME_L@
+        checks.AC_SUBST(
+            "HAVE_GETLOCALENAME_L",
+            condition = "ac_cv_func_getlocalename_l",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # GETLOCALENAME_L_LIB = SETLOCALE_NULL_LIB when HAVE_GETLOCALENAME_L=0 or REPLACE=1, else ""
+        # We cannot run AC_RUN_IFELSE so REPLACE_GETLOCALENAME_L=0. SETLOCALE_NULL_LIB is "" in setlocale_null.
+        checks.AC_SUBST(
+            "GETLOCALENAME_L_LIB",
+            condition = "ac_cv_func_getlocalename_l",
+            if_false = "",  # When missing, M4 uses $SETLOCALE_NULL_LIB; we use "" to match setlocale_null
+            if_true = "",
+        ),
+        # From gl_LOCALE_H_DEFAULTS (we don't depend on it to avoid duplicate HAVE_GETLOCALENAME_L)
+        checks.AC_SUBST("REPLACE_GETLOCALENAME_L", "0"),
+        checks.AC_SUBST("LOCALENAME_ENHANCE_LOCALE_FUNCS", "0"),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/setlocale_null",
+    ],
+)
+
+# gl_FUNC_GETLOCALENAME_L_SIMPLE: requires + gl_FUNC_GETLOCALENAME_L_UNSAFE
+autoconf(
+    name = "gl_FUNC_GETLOCALENAME_L_SIMPLE",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_GETLOCALENAME_L_UNSAFE",
+        "//gnulib/m4/extensions",
+    ],
+)
+
+# gl_PREREQ_GETLOCALENAME_L_SIMPLE: empty (just : in M4)
+autoconf(
+    name = "gl_PREREQ_GETLOCALENAME_L_SIMPLE",
+    visibility = ["//visibility:public"],
+)
+
+# gl_PREREQ_GETLOCALENAME_L_UNSAFE: deps only (newlocale/duplocale/freelocale, locale_t, langinfo)
+autoconf(
+    name = "gl_PREREQ_GETLOCALENAME_L_UNSAFE",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/locale_h:gl_LOCALE_T",
+        "//gnulib/m4/intl-thread-locale",
+        "//gnulib/m4/langinfo_h",
+        # Use HAVE_NEWLOCALE only to avoid REPLACE_NEWLOCALE=1 from full newlocale (macOS)
+        "//gnulib/m4/newlocale:HAVE_NEWLOCALE",
+        "//gnulib/m4/duplocale",
+        "//gnulib/m4/freelocale",
+    ],
+)
 
 autoconf(
     name = "getlocalename_l",
-    checks = [],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/langinfo_h",
+        ":gl_FUNC_GETLOCALENAME_L_SIMPLE",
+        ":gl_FUNC_GETLOCALENAME_L_UNSAFE",
+        ":gl_PREREQ_GETLOCALENAME_L_SIMPLE",
+        ":gl_PREREQ_GETLOCALENAME_L_UNSAFE",
     ],
 )

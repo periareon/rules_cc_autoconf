@@ -1,0 +1,4 @@
+/* subst.h.in */
+#define SUBST_HAVE_TERMCAP "@HAVE_TERMCAP@"
+#define SUBST_HAVE_TERMINFO "@HAVE_TERMINFO@"
+#define SUBST_INCTERMCAP ""

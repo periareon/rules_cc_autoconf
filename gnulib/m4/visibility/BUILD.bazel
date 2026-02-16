@@ -1,15 +1,15 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/visibility.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 # gl_VISIBILITY macro from visibility.m4
 # Tests if compiler supports -fvisibility=hidden and visibility attributes
 autoconf(
     name = "visibility",
     checks = [
-        # Check if compiler supports visibility attribute declarations
-        macros.AC_TRY_COMPILE(
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_cc_visibility",
             code = """\
 extern __attribute__((__visibility__("hidden"))) int hiddenvar;
 extern __attribute__((__visibility__("default"))) int exportedvar;
@@ -23,8 +23,20 @@ int exportedfunc (void) { return 1225736919; }
 void dummyfunc (void) {}
 int main(void) { return 0; }
 """,
-            define = "HAVE_VISIBILITY",
         ),
+        # Set HAVE_VISIBILITY and CFLAG_VISIBILITY as substitution variables
+        # On macOS, compiler supports visibility, so HAVE_VISIBILITY=1
+        checks.AC_DEFINE(
+            "HAVE_VISIBILITY",
+            1,  # Integer, not string - renders as unquoted 1
+            subst = True,  # Also create substitution variable
+        ),
+        # CFLAG_VISIBILITY is set to "-fvisibility=hidden" if supported
+        checks.AC_SUBST("CFLAG_VISIBILITY", "-fvisibility=hidden"),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

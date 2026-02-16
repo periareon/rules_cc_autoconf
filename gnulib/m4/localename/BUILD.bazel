@@ -11,7 +11,9 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # Note: AC_REQUIRE([gt_LC_MESSAGES]) and AC_REQUIRE([gt_INTL_MACOSX])
-        # are from gettext, not gnulib
+        "//gnulib/m4/lcmessage",
+        "//gnulib/m4/intlmacosx",
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

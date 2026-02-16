@@ -1,22 +1,23 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/hostent.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "hostent",
     checks = [
-        # Check for gethostbyname function
         # Equivalent to gl_HOSTENT macro from hostent.m4
-        # Note: Full implementation includes library search (nsl, network, net, ws2_32)
-        # that is complex to replicate in Bazel
-        macros.AC_CHECK_FUNC(
+        checks.AC_CHECK_FUNC(
             "gethostbyname",
             define = "HAVE_GETHOSTBYNAME",
         ),
+        # AC_SUBST([HOSTENT_LIB]) - library needed for gethostbyname
+        # On macOS/Linux, gethostbyname is in libc, so HOSTENT_LIB is empty
+        checks.AC_SUBST("HOSTENT_LIB", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/sys_socket_h",  # AC_REQUIRE([gl_SYS_SOCKET_H])
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/sys_socket_h:gl_SYS_SOCKET_H",
     ],
 )

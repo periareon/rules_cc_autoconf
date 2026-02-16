@@ -1,22 +1,22 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/roundf.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
-
-# gl_FUNC_ROUNDF from roundf.m4
-# HAVE_DECL_CEILF comes from ceilf, HAVE_DECL_FLOORF from floorf
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "roundf",
     checks = [
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "roundf",
-            headers = ["math.h"],
+            includes = ["#include <math.h>"],
         ),
+        # gl_MATHFUNC sets ROUNDF_LIBM; golden expects ""
+        checks.AC_SUBST("ROUNDF_LIBM", ""),
+        # Autoconf detects REPLACE_ROUNDF=0 on Linux (roundf works correctly)
+        checks.AC_SUBST("REPLACE_ROUNDF", 0),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/ceilf",  # Provides HAVE_DECL_CEILF
-        "//gnulib/m4/floorf",  # Provides HAVE_DECL_FLOORF
+        "//gnulib/m4/extensions",
     ],
 )

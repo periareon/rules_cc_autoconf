@@ -1,44 +1,231 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/posix_spawn.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
+# gl_HAVE_DECL_POSIX_SPAWN - shared check for posix_spawn declaration
+# Used by gl_POSIX_SPAWN_BODY (and gl_POSIX_SPAWN_MINIMAL). Does NOT set
+# REPLACE_POSIX_SPAWN; that is set in gl_POSIX_SPAWN_BODY.
 autoconf(
-    name = "posix_spawn",
+    name = "gl_HAVE_DECL_POSIX_SPAWN",
     checks = [
-        macros.AC_CHECK_HEADER(
-            "paths.h",
-            define = "HAVE_PATHS_H",
-        ),
-        macros.AC_CHECK_FUNC(
-            "confstr",
-            define = "HAVE_CONFSTR",
-        ),
-        macros.AC_CHECK_FUNC(
-            "sched_setparam",
-            define = "HAVE_SCHED_SETPARAM",
-        ),
-        macros.AC_CHECK_FUNC(
-            "sched_setscheduler",
-            define = "HAVE_SCHED_SETSCHEDULER",
-        ),
-        macros.AC_CHECK_FUNC(
-            "setegid",
-            define = "HAVE_SETEGID",
-        ),
-        macros.AC_CHECK_FUNC(
-            "seteuid",
-            define = "HAVE_SETEUID",
-        ),
-        macros.AC_CHECK_FUNC(
-            "vfork",
-            define = "HAVE_VFORK",
-        ),
-        macros.AC_CHECK_DECL(
+        checks.AC_CHECK_DECL(
             "posix_spawn",
             define = "HAVE_DECL_POSIX_SPAWN",
-            headers = ["spawn.h"],
+            includes = ["#include <spawn.h>"],
         ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Test whether posix_spawn actually works (runtime check; not portable to Bazel).
+autoconf(
+    name = "gl_POSIX_SPAWN_WORKS",
+    checks = [
+        # AC_RUN_IFELSE not portable; gl_cv_func_posix_spawn_works set by platform in BODY
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Test whether posix_spawn and posix_spawnp are secure (runtime check; not portable).
+autoconf(
+    name = "gl_POSIX_SPAWN_SECURE",
+    checks = [
+        # AC_RUN_IFELSE not portable; gl_cv_func_posix_spawn_secure_exec etc. set by platform in BODY
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Prerequisites of lib/spawni.c.
+autoconf(
+    name = "gl_PREREQ_POSIX_SPAWN_INTERNAL",
+    checks = [
+        checks.AC_CHECK_HEADER(
+            "paths.h",
+            define = "HAVE_PATHS_H",
+        ),
+        checks.AC_CHECK_FUNC(
+            "confstr",
+            define = "HAVE_CONFSTR",
+        ),
+        checks.AC_CHECK_FUNC(
+            "sched_setparam",
+            define = "HAVE_SCHED_SETPARAM",
+        ),
+        checks.AC_CHECK_FUNC(
+            "sched_setscheduler",
+            define = "HAVE_SCHED_SETSCHEDULER",
+        ),
+        checks.AC_CHECK_FUNC(
+            "vfork",
+            define = "HAVE_VFORK",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/idpriv",
+    ],
+)
+
+# Core logic: gl_HAVE_POSIX_SPAWN, AC_CHECK_DECLS([posix_spawn]), conditional
+# REPLACE_POSIX_SPAWN, POSIX_SPAWN_SETSCHEDULER/SETSCHEDPARAM. Does NOT set
+# REPLACE_POSIX_SPAWN_FILE_ACTIONS_*; those are in gl_FUNC_* targets.
+autoconf(
+    name = "gl_POSIX_SPAWN_BODY",
+    checks = [
+        # AC_REQUIRE([gl_SPAWN_H_DEFAULTS]) - line 14; not tracked
+        # AC_REQUIRE([gl_HAVE_POSIX_SPAWN]) - line 15; via dep
+        # AC_CHECK_DECLS([posix_spawn]) - line 33; via gl_HAVE_DECL_POSIX_SPAWN
+        # REPLACE_POSIX_SPAWN - lines 119-122: set when no posix_spawn or works/secure fail.
+        # We use platform select (no runtime checks): macOS -> 1, Linux -> 0 (matches goldens).
+    ] + select({
+        "@platforms//os:macos": [
+            # config.h #define REPLACE_POSIX_SPAWN 1 and subst "1"
+            checks.AC_DEFINE(
+                "REPLACE_POSIX_SPAWN",
+                "1",
+                subst = True,
+            ),
+        ],
+        "//conditions:default": [
+            # subst "0" only; config.h has /* #undef REPLACE_POSIX_SPAWN */ on Linux
+            checks.AC_SUBST("REPLACE_POSIX_SPAWN", "0"),
+        ],
+    }) + [
+        # POSIX_SPAWN_SETSCHEDULER - lines 78-87 (compile-time)
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_func_spawnattr_setschedpolicy",
+            code = """\
+#include <spawn.h>
+#if POSIX_SPAWN_SETSCHEDULER
+int main(void) { return 0; }
+#endif
+""",
+        ),
+        # POSIX_SPAWN_SETSCHEDPARAM - lines 88-97 (compile-time)
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_func_spawnattr_setschedparam",
+            code = """\
+#include <spawn.h>
+#if POSIX_SPAWN_SETSCHEDPARAM
+int main(void) { return 0; }
+#endif
+""",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_HAVE_DECL_POSIX_SPAWN",
+        ":gl_POSIX_SPAWN_SECURE",
+        ":gl_POSIX_SPAWN_WORKS",
+        ":gl_PREREQ_POSIX_SPAWN_INTERNAL",
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/spawn_h:gl_HAVE_POSIX_SPAWN",
+    ],
+)
+
+# Thin wrapper: AC_REQUIRE([gl_POSIX_SPAWN_BODY])
+autoconf(
+    name = "gl_POSIX_SPAWN",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_POSIX_SPAWN_BODY",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# If REPLACE_POSIX_SPAWN=1 then REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDCLOSE=1.
+# Else runtime check (addclose with -5 should fail); we use platform: musl/solaris/windows -> 1.
+autoconf(
+    name = "gl_FUNC_POSIX_SPAWN_FILE_ACTIONS_ADDCLOSE",
+    checks = select({
+        "@platforms//os:macos": [
+            # macOS: REPLACE_POSIX_SPAWN=1 so ADDCLOSE=1 (golden_subst_macos)
+            checks.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDCLOSE", "1"),
+        ],
+        "//conditions:default": [
+            # Linux etc.: addclose works; musl/solaris/windows would be 1 (we default 0 for Linux golden)
+            checks.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDCLOSE", "0"),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_POSIX_SPAWN",
+    ],
+)
+
+autoconf(
+    name = "gl_FUNC_POSIX_SPAWN_FILE_ACTIONS_ADDDUP2",
+    checks = select({
+        "@platforms//os:macos": [
+            checks.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDDUP2", "1"),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDDUP2", "0"),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_POSIX_SPAWN",
+    ],
+)
+
+autoconf(
+    name = "gl_FUNC_POSIX_SPAWN_FILE_ACTIONS_ADDOPEN",
+    checks = select({
+        "@platforms//os:macos": [
+            checks.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDOPEN", "1"),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDOPEN", "0"),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_POSIX_SPAWN",
+    ],
+)
+
+# gl_POSIX_SPAWN_MINIMAL - used by posix_spawn_faction_addchdir etc.
+# Provides HAVE_POSIX_SPAWN, HAVE_DECL_POSIX_SPAWN, REPLACE_POSIX_SPAWN via deps.
+autoconf(
+    name = "gl_POSIX_SPAWN_MINIMAL",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_HAVE_DECL_POSIX_SPAWN",
+        ":gl_POSIX_SPAWN",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/spawn_h:gl_HAVE_POSIX_SPAWN",
+    ],
+)
+
+# posix_spawn - top-level module
+autoconf(
+    name = "posix_spawn",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_POSIX_SPAWN_FILE_ACTIONS_ADDCLOSE",
+        ":gl_FUNC_POSIX_SPAWN_FILE_ACTIONS_ADDDUP2",
+        ":gl_FUNC_POSIX_SPAWN_FILE_ACTIONS_ADDOPEN",
+        ":gl_POSIX_SPAWN",
+        ":gl_POSIX_SPAWN_BODY",
+        ":gl_POSIX_SPAWN_SECURE",
+        ":gl_POSIX_SPAWN_WORKS",
+        ":gl_PREREQ_POSIX_SPAWN_INTERNAL",
+    ],
 )

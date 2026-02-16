@@ -1,0 +1,46 @@
+"""AC_STRUCT_ST_BLOCKS - Autoconf builtin macro
+
+Checks for st_blocks member in struct stat.
+
+Defines:
+  - HAVE_STRUCT_STAT_ST_BLOCKS (if st.st_blocks member exists)
+  - HAVE_ST_BLOCKS (if st_blocks is available as member or macro)
+"""
+
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "AC_STRUCT_ST_BLOCKS",
+    checks = [
+        # Check for st_blocks member in struct stat
+        checks.AC_TRY_COMPILE(
+            name = "ac_cv_member_struct_stat_st_blocks",
+            code = """\
+#include <sys/stat.h>
+int main(void) {
+    struct stat st;
+    return (int)st.st_blocks;
+}""",
+            language = "c",
+        ),
+        # Define HAVE_STRUCT_STAT_ST_BLOCKS if member exists
+        checks.AC_DEFINE(
+            "HAVE_STRUCT_STAT_ST_BLOCKS",
+            condition = "ac_cv_member_struct_stat_st_blocks",
+            if_true = "1",
+        ),
+        # Check if st_blocks is available (as member or macro)
+        # This is a simplified check - full AC_STRUCT_ST_BLOCKS also checks for
+        # st_blocks as a macro or function, but for most systems the member check is sufficient
+        checks.AC_DEFINE(
+            "HAVE_ST_BLOCKS",
+            condition = "ac_cv_member_struct_stat_st_blocks",
+            if_true = "1",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)

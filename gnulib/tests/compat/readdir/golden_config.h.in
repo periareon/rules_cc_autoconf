@@ -1,0 +1,17 @@
+/* config.h.in */
+/* #undef DIR_HAS_FD_MEMBER */
+/* #undef HAVE_ALPHASORT */
+/* #undef HAVE_CLOSEDIR */
+/* #undef HAVE_DECL_DIRFD */
+/* #undef HAVE_DECL_FDOPENDIR */
+/* #undef HAVE_FDOPENDIR */
+/* #undef HAVE_OPENDIR */
+#define HAVE_READDIR 1
+/* #undef HAVE_REWINDDIR */
+/* #undef HAVE_SCANDIR */
+/* #undef REPLACE_CLOSEDIR */
+/* #undef REPLACE_DIRFD */
+/* #undef REPLACE_FDOPENDIR */
+/* #undef REPLACE_OPENDIR */
+/* #undef REPLACE_READDIR */
+/* #undef REPLACE_REWINDDIR */

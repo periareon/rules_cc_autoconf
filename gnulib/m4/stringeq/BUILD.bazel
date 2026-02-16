@@ -1,11 +1,44 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/stringeq.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "stringeq",
     checks = [
-        # TODO: Add checks based on .m4 file
+        # gl_FUNC_STREQ checks for streq declaration
+        checks.AC_CHECK_DECL(
+            "streq",
+            name = "ac_cv_have_decl_streq",
+            includes = ["#include <string.h>"],
+        ),
+        # if test $ac_cv_have_decl_streq != no; then HAVE_DECL_STREQ=1; fi
+        # On macOS, streq is not declared, so HAVE_DECL_STREQ=0
+        checks.AC_DEFINE(
+            "HAVE_DECL_STREQ",
+            condition = "ac_cv_have_decl_streq",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # gl_FUNC_MEMEQ checks for memeq declaration
+        checks.AC_CHECK_DECL(
+            "memeq",
+            name = "ac_cv_have_decl_memeq",
+            includes = ["#include <string.h>"],
+        ),
+        # if test $ac_cv_have_decl_memeq != no; then HAVE_DECL_MEMEQ=1; fi
+        # On macOS, memeq is not declared, so HAVE_DECL_MEMEQ=0
+        checks.AC_DEFINE(
+            "HAVE_DECL_MEMEQ",
+            condition = "ac_cv_have_decl_memeq",
+            if_false = 0,
+            if_true = 1,
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/string_h",  # AC_REQUIRE([gl_STRING_H_DEFAULTS])
+        # For test compatibility - need basic header defines
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )

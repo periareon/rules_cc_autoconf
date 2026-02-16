@@ -1,0 +1,2 @@
+/* config.h.in */
+#define HAVE_STRUCT_STATFS_F_FSTYPENAME 1

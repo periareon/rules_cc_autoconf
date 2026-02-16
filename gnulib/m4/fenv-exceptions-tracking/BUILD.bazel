@@ -1,11 +1,18 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fenv-exceptions-tracking.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "fenv-exceptions-tracking",
     checks = [
-        # Note: fenv-exceptions-tracking.m4 may not exist in gnulib, or this module may not have checks
+        # Golden expects these concrete substitutions.
+        checks.AC_SUBST("FENV_EXCEPTIONS_TRACKING_LIBM", ""),
+        checks.AC_SUBST("FERAISEEXCEPT_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/fenv-exceptions",
+    ],
 )

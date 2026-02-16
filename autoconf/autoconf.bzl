@@ -12,111 +12,34 @@ load(
 )
 load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
 
-def _checks_equivalent(a, b):
-    """Check if two check dictionaries are equivalent.
+def _coerce_name(name, value):
+    if type(value) == "string":
+        return value
 
-    Two checks are equivalent if all their parameters match exactly.
-    This is used for deduplication when the same check appears in multiple
-    if_true/if_false blocks.
+    return name
 
-    Args:
-        a: First check dictionary.
-        b: Second check dictionary.
+def _extract_define_name(expr):
+    """Extract base define name from requirement/condition expression.
 
-    Returns:
-        True if the checks are equivalent, False otherwise.
+    Handles: "FOO", "!FOO", "FOO==value", "FOO!=value", "FOO=value"
     """
+    required_define = expr
 
-    # Compare all fields that affect check behavior
-    fields = [
-        "type",
-        "name",
-        "define",
-        "language",
-        "code",
-        "file",
-        "file_path",
-        "headers",
-        "define_value",
-        "define_value_fail",
-        "library",
-        "requires",
-        "flag",
-    ]
-    for field in fields:
-        if a.get(field) != b.get(field):
-            return False
-    return True
+    if required_define.startswith("!"):
+        # Handle negation prefix
+        required_define = required_define[1:]
 
-def _flatten_checks(raw_checks, label):
-    """Flatten nested conditional checks into a flat list with requirements.
+    if "!=" in required_define:
+        # Handle != operator
+        required_define = required_define.split("!=")[0]
+    elif "==" in required_define:
+        # Handle == operator
+        required_define = required_define.split("==")[0]
+    elif "=" in required_define:
+        # Handle legacy = operator
+        required_define = required_define.split("=")[0]
 
-    This processes checks with if_true/if_false nested checks and converts
-    them into a flat list where nested checks have their parent's define
-    added to their requires list.
-
-    Args:
-        raw_checks: List of JSON-encoded check strings.
-        label: The label of the target (for error messages).
-
-    Returns:
-        A dictionary mapping define names to flattened check dictionaries.
-    """
-    result = {}
-
-    # Queue entries are (check_dict, inherited_requires)
-    queue = []
-
-    # Initialize queue with top-level checks
-    for check_json in raw_checks:
-        check = json.decode(check_json)
-        queue.append((check, []))
-
-    for _ in range(10000):  # Prevent infinite loops
-        if not queue:
-            break
-
-        check, inherited_reqs = queue.pop(0)
-        define = check["define"]
-
-        # Extract nested checks before processing
-        if_true_checks = check.pop("if_true", [])
-        if_false_checks = check.pop("if_false", [])
-
-        # Merge inherited requires with check's own requires
-        own_requires = check.get("requires", [])
-        all_requires = inherited_reqs + own_requires
-
-        if all_requires:
-            check["requires"] = all_requires
-        elif "requires" in check:
-            check.pop("requires")
-
-        # Handle uniqueness/deduplication
-        if define in result:
-            existing = result[define]
-            if _checks_equivalent(existing, check):
-                # Identical check - skip (silently merge)
-                pass
-            else:
-                fail(("Conflicting check definitions for '{}' in '{}'. " +
-                      "The same define name is used with different parameters. " +
-                      "Use a custom 'define' parameter to disambiguate.").format(
-                    define,
-                    label,
-                ))
-        else:
-            result[define] = check
-
-        # Queue if_true checks - they require this check to succeed
-        for nested in if_true_checks:
-            queue.append((nested, all_requires + [define]))
-
-        # Queue if_false checks - they require this check to fail
-        for nested in if_false_checks:
-            queue.append((nested, all_requires + ["!" + define]))
-
-    return result
+    return required_define
 
 def _autoconf_impl(ctx):
     """Implementation of the autoconf rule that only runs checks."""
@@ -124,42 +47,106 @@ def _autoconf_impl(ctx):
     # Get cc_toolchain info
     toolchain_info = get_cc_toolchain_info(ctx)
 
-    if len(ctx.files.data) != len(ctx.attr.data):
-        fail("`data` targets cannot represent multiple files. Please investigate {}".format(
-            ctx.label,
-        ))
+    # Get transitive dependencies to compute compile_defines paths
+    deps = collect_deps(ctx.attr.deps)
+    dep_infos = deps.to_list()
+    dep_results = collect_transitive_results(dep_infos)
 
-    data_files = {}
-    for target, file in zip(ctx.attr.data, ctx.files.data):
-        data_files[str(target.label)] = file
+    cache_checks = {}
+    define_checks = {}
+    subst_checks = {}
 
-    # Flatten nested checks (if_true/if_false) into a flat list with requirements
-    checks = _flatten_checks(ctx.attr.checks, ctx.label)
+    cache_results = {}
+    define_results = {}
+    subst_results = {}
 
-    # Process file dependencies after flattening
-    check_inputs = {}
-    for define_name, check in checks.items():
-        # Collect file labels for dependency resolution
-        if "file" in check:
-            if check["file"] not in data_files:
-                fail("Check `{}` requires file `{}` but it was not provided. Options are: `{}`".format(
-                    check["define"],
-                    check["file"],
-                    data_files.keys(),
+    actions = {}
+
+    # Process all checks
+    for check_json in ctx.attr.checks:
+        check = json.decode(check_json)
+
+        if "name" not in check:
+            fail("Check in '{}' is missing 'name' field (cache variable name). All checks must have a 'name' field.".format(
+                ctx.label,
+            ))
+
+        name = check["name"]
+        define = check.get("define")
+        define_name = _coerce_name(name, define)
+        subst = check.get("subst")
+
+        # Subst will prefer the define name if it's available.
+        subst_name = _coerce_name(name, _coerce_name(define_name, subst))
+
+        output = ctx.actions.declare_file("{}/{}.result.cache.json".format(ctx.label.name, name))
+
+        # Check for truthy value
+        if define:
+            check["define"] = define_name
+
+            if define_name in define_results:
+                fail("Define variable `{}` is duplicated on `{}`\nLEFT:  {}\nRIGHT: {}".format(
+                    define_name,
+                    ctx.label,
+                    define_checks[define_name],
+                    check,
                 ))
 
-            check_inputs[check["define"]] = data_files[check["file"]]
-            check["file_path"] = check_inputs[check["define"]].path
-            check.pop("file")
+            define_checks[define_name] = check
 
-    # Create config dictionary
-    config_dict = create_config_dict(
-        toolchain_info = toolchain_info,
-        checks = checks.values(),
-    )
+            # Use cache file directly - no symlink needed
+            define_results[define_name] = output
+
+        # Check for truthy value
+        if subst:
+            check["subst"] = subst_name
+
+            if subst_name in subst_checks:
+                fail("Subst variable `{}` is duplicated on `{}`\nLEFT:  {}\nRIGHT: {}".format(
+                    subst_name,
+                    ctx.label,
+                    subst_checks[subst_name],
+                    check,
+                ))
+
+            subst_checks[subst_name] = check
+
+            # Use cache file directly - no symlink needed
+            subst_results[subst_name] = output
+
+        # Always add cache variable to cache_results, even if define/subst are set
+        # This allows other checks to reference the cache variable in conditions
+        if name in cache_results:
+            fail("Cache variable `{}` is duplicated on `{}`\nLEFT:  {}\nRIGHT: {}".format(
+                name,
+                ctx.label,
+                cache_checks[name],
+                check,
+            ))
+
+        cache_checks[name] = check
+        cache_results[name] = output
+
+        check_json = ctx.actions.declare_file("{}/{}.check.json".format(ctx.label.name, name))
+        ctx.actions.write(
+            output = check_json,
+            content = json.encode_indent(check, indent = " " * 4) + "\n",
+        )
+
+        if name in actions:
+            fail("Duplicate action identified `{}`. Please update `{}`".format(name, ctx.label))
+
+        actions[name] = struct(
+            output = output,
+            check = check,
+            input = check_json,
+        )
 
     # Write config to JSON
-    config_json = write_config_json(ctx, config_dict)
+    config_json = write_config_json(ctx, create_config_dict(
+        toolchain_info = toolchain_info,
+    ))
 
     # Get environment variables from the toolchain (like LIB, INCLUDE, PATH for MSVC)
     # We need environment variables from both compile and link actions since the autoconf
@@ -167,100 +154,181 @@ def _autoconf_impl(ctx):
     # variable from the compile action is crucial for finding standard headers like stdint.h
     env = get_environment_variables(ctx, toolchain_info)
 
-    deps = collect_deps(ctx.attr.deps)
-    transitive_checks = collect_transitive_results(ctx.label, deps.to_list())
+    inputs = [config_json]
 
-    # Create individual CcAutoconfCheck actions for each check
-    # Each check is identified by its unique define name
-    # First, declare all result files
-    results = {}
-    for check in checks.values():
-        define_name = check["define"]
-        if define_name in transitive_checks:
-            providers = []
-            for dep_info in deps.to_list():
-                if define_name in dep_info.results:
-                    providers.append(str(dep_info.owner))
+    # Check for conflicts when merging local results with dependency results
+    # Same cache variable/define/subst from different sources should point to the same file
+    for cache_name, cache_file in dep_results["cache"].items():
+        if cache_name in cache_results:
+            existing_file = cache_results[cache_name]
+            if existing_file.path != cache_file.path:
+                fail("Cache variable '{}' is defined both locally and in dependencies with different result files:\n  Local:    {}\n  Dep:       {}\nThis indicates duplicate checks. Consider removing the local check or using a different cache variable name.".format(
+                    cache_name,
+                    existing_file.path,
+                    cache_file.path,
+                ))
 
-            fail("Check `{}` is duplicating a dependent check for `{}`: {}".format(
-                define_name,
-                ctx.label,
-                providers,
-            ))
+    for define_name, define_file in dep_results["define"].items():
+        if define_name in define_results:
+            existing_file = define_results[define_name]
+            if existing_file.path != define_file.path:
+                fail("Define '{}' is defined both locally and in dependencies with different result files:\n  Local:    {}\n  Dep:       {}\nThis indicates duplicate defines. Consider removing the local define or using a different name.".format(
+                    define_name,
+                    existing_file.path,
+                    define_file.path,
+                ))
 
-        check_result_file = ctx.actions.declare_file("{}/{}.json".format(ctx.label.name, define_name))
-        results[define_name] = check_result_file
+    for subst_name, subst_file in dep_results["subst"].items():
+        if subst_name in subst_results:
+            existing_file = subst_results[subst_name]
+            if existing_file.path != subst_file.path:
+                fail("Subst '{}' is defined both locally and in dependencies with different result files:\n  Local:    {}\n  Dep:       {}\nThis indicates duplicate subst. Consider removing the local subst or using a different name.".format(
+                    subst_name,
+                    existing_file.path,
+                    subst_file.path,
+                ))
 
-    all_results = results | transitive_checks
+    all_results = {
+        "cache": cache_results | dep_results["cache"],
+        "define": define_results | dep_results["define"],
+        "subst": subst_results | dep_results["subst"],
+    }
 
-    for check in checks.values():
-        define_name = check["define"]
-        check_result_file = results[define_name]
+    # Create individual CcAutoconfCheck actions for each cache variable
+    # All checks sharing the same cache variable are processed together
+    # (checks is already grouped by cache_name from _flatten_checks)
+    for check_name, action in actions.items():
+        check_result_file = action.output
+        check = action.check
+        check_json = action.input
 
-        inputs = [config_json]
-        if define_name in check_inputs:
-            inputs.append(check_inputs[define_name])
+        all_required_defines = []
+
+        for required in check.get("requires", []):
+            required_define = _extract_define_name(required)
+            all_required_defines.append(required_define)
+
+        condition = check.get("condition")
+        if condition:
+            required_define = _extract_define_name(condition)
+            all_required_defines.append(required_define)
+
+        for required in check.get("compile_defines", []):
+            required_define = _extract_define_name(required)
+            all_required_defines.append(required_define)
 
         args = ctx.actions.args()
         args.use_param_file("@%s", use_always = True)
         args.set_param_file_format("multiline")
         args.add("--config", config_json)
+        args.add("--check", check_json)
         args.add("--results", check_result_file)
-        args.add("--check-define", define_name)
 
-        for required in check.get("requires", []):
-            # Extract base define name
-            # Handle various syntaxes:
-            #   - "FOO" - simple success check
-            #   - "!FOO" - negated check (failure)
-            #   - "FOO==value" - value equality
-            #   - "FOO!=value" - value inequality
-            #   - "FOO=value" - legacy value equality
-            required_define = required
+        # Collect dependencies for all required defines
+        # Build a dictionary mapping lookup_name -> file_path
+        # This ensures strict deduplication before passing to C++
+        name_to_file = {}  # lookup_name -> file_path
 
-            if required_define.startswith("!"):
-                # Handle negation prefix
-                required_define = required_define[1:]
+        for required_define in depset(all_required_defines).to_list():
+            dep_results_file = None
+            for group_name in ["cache", "define", "subst"]:
+                if required_define in all_results[group_name]:
+                    candidate_file = all_results[group_name][required_define]
+                    if dep_results_file:
+                        # Check if it's the same file (legitimate duplicate from AC_DEFINE with subst=True)
+                        if dep_results_file != candidate_file:
+                            # Check if this is a legitimate duplicate: same variable in both define and subst groups
+                            # When AC_DEFINE has subst=True and define_name == subst_name, both reference
+                            # the same cache file directly, so they're the same result
+                            is_legitimate_duplicate = (
+                                required_define in all_results["define"] and
+                                required_define in all_results["subst"] and
+                                group_name in ["define", "subst"]
+                            )
+                            if is_legitimate_duplicate:
+                                # Same variable in both define and subst - they reference the same cache file
+                                # Use the define file (arbitrary but consistent choice)
+                                if group_name == "subst":
+                                    continue  # Skip subst, use define
 
-            if "!=" in required_define:
-                # Handle != operator
-                required_define = required_define.split("!=")[0]
+                                # If we already have define, skip this (shouldn't happen, but be safe)
+                                if dep_results_file == all_results["define"][required_define]:
+                                    continue
 
-            elif "==" in required_define:
-                # Handle == operator
-                required_define = required_define.split("==")[0]
+                            # Different files - real conflict
+                            all_duplicates = {
+                                "cache": sorted([k for k in all_results["cache"].keys() if k == required_define]),
+                                "define": sorted([k for k in all_results["define"].keys() if k == required_define]),
+                                "subst": sorted([k for k in all_results["subst"].keys() if k == required_define]),
+                            }
+                            fail("Duplicate results were found for check `{}`. Please update `{}`.\n Available options: {}".format(
+                                required_define,
+                                ctx.label,
+                                json.encode_indent(all_duplicates, indent = " " * 4) + "\n",
+                            ))
 
-            elif "=" in required_define:
-                # Handle legacy = operator
-                required_define = required_define.split("=")[0]
+                        # Same file - no conflict, continue (AC_DEFINE with subst=True case)
+                    else:
+                        dep_results_file = candidate_file
 
-            if required_define not in all_results:
-                fail("Check `{}` requires `{}` but it's not provided. Please update `{}`".format(
-                    define_name,
+            if not dep_results_file:
+                all_available = {
+                    "cache": sorted(all_results["cache"].keys()),
+                    "define": sorted(all_results["define"].keys()),
+                    "subst": sorted(all_results["subst"].keys()),
+                }
+                fail("No results were found for check `{}`. Please update `{}`.\n Available options: {}".format(
                     required_define,
                     ctx.label,
+                    json.encode_indent(all_available, indent = " " * 4) + "\n",
                 ))
 
-            required_check = all_results[required_define]
-            inputs.append(required_check)
-            args.add("--required", required_check)
+            # Deduplicate: check if this name is already mapped
+            if required_define in name_to_file:
+                if name_to_file[required_define] != dep_results_file:
+                    fail("Duplicate lookup name '{}' maps to different files:\n  {} -> {}\n  {} -> {}\nThis indicates a bug in dependency resolution.".format(
+                        required_define,
+                        required_define,
+                        name_to_file[required_define],
+                        required_define,
+                        dep_results_file,
+                    ))
+
+                # Same name, same file - idempotent, skip
+                continue
+
+            # Add mapping
+            name_to_file[required_define] = dep_results_file
+
+        # Add --dep arguments with explicit name=file format
+        check_deps = []
+        for lookup_name, file_path in name_to_file.items():
+            check_deps.append(file_path)
+            args.add("--dep", "{}={}".format(lookup_name, file_path.path))
 
         ctx.actions.run(
             executable = ctx.executable._checker,
             arguments = [args],
-            inputs = inputs,
+            inputs = depset(inputs + [check_json] + check_deps),
             outputs = [check_result_file],
             mnemonic = "CcAutoconfCheck",
+            progress_message = "CcAutoconfCheck %{label} - " + check_name,
             env = env | ctx.configuration.default_shell_env,
             tools = toolchain_info.cc_toolchain.all_files,
         )
 
-    # Return a dict mapping define names to result files
+    # Return provider with three separate buckets
     return [
         CcAutoconfInfo(
             owner = ctx.label,
             deps = deps,
-            results = results,
+            cache_results = cache_results,
+            define_results = define_results,
+            subst_results = subst_results,
+        ),
+        OutputGroupInfo(
+            autoconf_checks = depset([action.input for action in actions.values()]),
+            autoconf_results = depset(cache_results.values() + define_results.values() + subst_results.values()),
         ),
     ]
 
@@ -276,14 +344,14 @@ does not generate any header files - it only performs checks.
 Example:
 
 ```python
-load("@rules_cc_autoconf//autoconf:macros.bzl", "macros")
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "config",
     checks = [
-        macros.AC_CHECK_HEADER("stdio.h"),
-        macros.AC_CHECK_HEADER("stdlib.h"),
-        macros.AC_CHECK_FUNC("printf"),
+        checks.AC_CHECK_HEADER("stdio.h"),
+        checks.AC_CHECK_HEADER("stdlib.h"),
+        checks.AC_CHECK_FUNC("printf"),
     ],
 )
 ```
@@ -293,12 +361,8 @@ or wrapped source files.
 """,
     attrs = {
         "checks": attr.string_list(
-            doc = "List of JSON-encoded checks from macros (e.g., `macros.AC_CHECK_HEADER('stdio.h')`).",
+            doc = "List of JSON-encoded checks from checks (e.g., `checks.AC_CHECK_HEADER('stdio.h')`).",
             default = [],
-        ),
-        "data": attr.label_list(
-            doc = "Files referenced by checks (via the file parameter).",
-            allow_files = True,
         ),
         "deps": attr.label_list(
             doc = "Additional `autoconf` or `package_info` dependencies.",

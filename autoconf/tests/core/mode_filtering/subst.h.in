@@ -1,0 +1,9 @@
+/* subst.h.in - should only contain subst variables, NOT defines */
+
+/* Substitution variables should appear here */
+#define SUBST_SUBST_VAR /* @SUBST_VAR@ */
+#define SUBST_ANOTHER_SUBST /* @ANOTHER_SUBST@ */
+
+/* Defines should NOT appear here */
+#undef HAVE_STDIO_H
+#undef HAVE_FEATURE

@@ -1,16 +1,73 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sys_un_h.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "sys_un_h",
     checks = [
-        macros.AC_CHECK_HEADER(
-            "sys/un.h",
-            define = "HAVE_SYS_UN_H",
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_type_sys_un_sa_family_t",
+            code = """\
+#include <stddef.h>
+#include <string.h>
+#include <sys/un.h>
+
+int main(void) {
+    sa_family_t f;
+    (void)f;
+    return 0;
+}
+""",
+            language = "c",
         ),
-        # TODO: Add checks based on .m4 file
-    ],
+
+        # if test $gl_cv_type_sys_un_sa_family_t = yes; then
+        # else
+        #   HAVE_SA_FAMILY_T_IN_SYS_UN_H=0
+        # fi
+        checks.AC_SUBST(
+            "HAVE_SA_FAMILY_T_IN_SYS_UN_H",
+            condition = "gl_cv_type_sys_un_sa_family_t",
+            if_false = 0,
+            if_true = 1,
+        ),
+
+        # If gl_cv_type_sys_un_sa_family_t = yes, then GL_GENERATE_SYS_UN_H=false (unless on glibc)
+        # If GL_GENERATE_SYS_UN_H=false, then HAVE_SYS_UN_H and HAVE_AFUNIX_H substitution variables are not set (empty)
+        # If GL_GENERATE_SYS_UN_H=true, then we check for sys/un.h and set substitution variables
+        # Note: sys/un.h is already checked by sockpfaf, so we use ac_cv_header_sys_un_h from there
+
+        # Note: HAVE_UNIXSOCKET is already provided by sockpfaf dependency
+
+        # Set HAVE_SYS_UN_H, NEXT_* headers, and HAVE_AFUNIX_H based on platform
+    ] + select({
+        "@platforms//os:linux": [
+            # On Linux (glibc): sys/un.h exists and GL_GENERATE_SYS_UN_H=true
+            checks.AC_SUBST("HAVE_SYS_UN_H", "1"),
+            checks.AC_SUBST("NEXT_SYS_UN_H", "<sys/un.h>"),
+            checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_SYS_UN_H", "<sys/un.h>"),
+            checks.AC_SUBST("HAVE_AFUNIX_H", 0),
+        ],
+        "//conditions:default": [
+            # On macOS: HAVE_SYS_UN_H is empty, GL_GENERATE_SYS_UN_H=false
+            checks.AC_SUBST("HAVE_SYS_UN_H", ""),
+            checks.AC_SUBST("NEXT_SYS_UN_H", ""),
+            checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_SYS_UN_H", ""),
+            checks.AC_SUBST(
+                "HAVE_AFUNIX_H",
+                condition = "gl_cv_type_sys_un_sa_family_t",
+                if_false = 0,  # "0" if sa_family_t is not in sys/un.h
+                if_true = "",  # Empty if sa_family_t is in sys/un.h
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/include_next",  # gl_CHECK_NEXT_HEADERS([sys/un.h])
+        "//gnulib/m4/sockpfaf",  # AC_REQUIRE([gl_SOCKET_FAMILY_UNIX])
+        "//gnulib/m4/sys_socket_h:gl_SYS_SOCKET_H",
+    ],
 )

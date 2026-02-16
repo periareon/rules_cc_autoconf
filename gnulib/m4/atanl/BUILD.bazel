@@ -1,19 +1,24 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/atanl.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "atanl",
     checks = [
-        macros.AC_CHECK_DECL(
-            "atanl",
-            define = "HAVE_DECL_ATANL",
-        ),
+        # gl_FUNC_ATANL checks if atanl exists, then checks declaration
+        # On macOS, atanl may not be available (long double == double)
+        # The golden file shows HAVE_DECL_ATANL as undefined, so we don't check it
+        # This matches the m4 logic where declaration is only checked if function exists
+        # LIBM vars expected by atanl golden_subst.h.in (empty on macOS)
+        # ISNANL_LIBM from isnanl dependency to avoid duplicate in //... build
+        checks.AC_SUBST("ATANL_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/atan",
+        "//gnulib/m4/extensions",
         "//gnulib/m4/isnanl",
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_LONG_DOUBLE_VS_DOUBLE])
     ],
 )

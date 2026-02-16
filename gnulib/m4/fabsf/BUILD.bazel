@@ -1,23 +1,25 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fabsf.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "fabsf",
     checks = [
-        # Check for fabsf function
-        # Equivalent to gl_FUNC_FABSF macro from fabsf.m4
-        macros.AC_CHECK_FUNC(
+        # gl_FUNC_FABSF checks for fabsf function
+        checks.AC_CHECK_FUNC(
             "fabsf",
-            define = "HAVE_FABSF",
+            name = "_gl_cv_func_fabsf",
         ),
+        # gl_MATHFUNC sets FABSF_LIBM based on whether fabsf needs -lm
+        # On macOS/Linux, fabsf is in libc, so FABSF_LIBM is empty
+        checks.AC_SUBST("FABSF_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
-        "//gnulib/m4/fabs",  # AC_REQUIRE([gl_FUNC_FABS])
-        "//gnulib/m4/mathfunc",  # Uses gl_MATHFUNC([fabsf, ...])
-        # Note: AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) is a standard autoconf macro
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",
+        "//gnulib/m4/fabs",
+        "//gnulib/m4/math_h",
     ],
 )

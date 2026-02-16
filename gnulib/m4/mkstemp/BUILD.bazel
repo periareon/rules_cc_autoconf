@@ -1,23 +1,30 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/mkstemp.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
-load("//autoconf:macros.bzl", "macros")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "mkstemp",
     checks = [
-        # Check for mkstemp function
-        # Equivalent to gl_FUNC_MKSTEMP macro from mkstemp.m4
-        # Note: Full implementation includes runtime checks for file creation
-        # limits and permissions that require file system operations
-        macros.AC_CHECK_FUNC(
+
+        # Use subst=True to automatically create both config.h define and subst.h entry
+        checks.AC_CHECK_FUNC(
             "mkstemp",
             define = "HAVE_MKSTEMP",
+            subst = True,
         ),
+
+        # The m4 file performs runtime checks (gl_cv_func_working_mkstemp)
+        # that use AC_RUN_IFELSE, which is not portable to Bazel's cross-compilation environment.
+        # These checks test for file creation limits and permissions.
+        # Based on golden files, REPLACE_MKSTEMP=0 on macOS (mkstemp works correctly)
+        checks.AC_SUBST("REPLACE_MKSTEMP", 0),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/stdlib_h",  # AC_REQUIRE([gl_STDLIB_H_DEFAULTS])
-        # Note: AC_REQUIRE([AC_CANONICAL_HOST]) is a standard autoconf macro
+        # Note: gl_STDLIB_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        # For test compatibility
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
