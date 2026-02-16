@@ -166,7 +166,8 @@
 <pre>
 load("@rules_cc_autoconf//autoconf:package_info.bzl", "package_info")
 
-package_info(<a href="#package_info-name">name</a>, <a href="#package_info-module_bazel">module_bazel</a>, <a href="#package_info-package_bugreport">package_bugreport</a>, <a href="#package_info-package_name">package_name</a>, <a href="#package_info-package_url">package_url</a>, <a href="#package_info-package_version">package_version</a>)
+package_info(<a href="#package_info-name">name</a>, <a href="#package_info-module_bazel">module_bazel</a>, <a href="#package_info-package_bugreport">package_bugreport</a>, <a href="#package_info-package_name">package_name</a>, <a href="#package_info-package_tarname">package_tarname</a>, <a href="#package_info-package_url">package_url</a>,
+             <a href="#package_info-package_version">package_version</a>)
 </pre>
 <p>A rule for parsing module info from <code>MODULE.bazel</code> files.</p>
 <p>This rule is most useful when paired with the <code>autoconf</code> rule.</p>
@@ -196,6 +197,7 @@ autoconf(
 <tr><td style="text-align: left"><a id="package_info-module_bazel"></a>module_bazel</td><td style="text-align: left">A <code>MODULE.bazel</code> file to parse module information from. Mutually exclusive with <code>package_name</code> and <code>package_version</code>.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="package_info-package_bugreport"></a>package_bugreport</td><td style="text-align: left">The package bug report email/URL. Used to populate <code>PACKAGE_BUGREPORT</code> define.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
 <tr><td style="text-align: left"><a id="package_info-package_name"></a>package_name</td><td style="text-align: left">The package name. Must be provided together with <code>package_version</code> if <code>module_bazel</code> is not provided.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
+<tr><td style="text-align: left"><a id="package_info-package_tarname"></a>package_tarname</td><td style="text-align: left">Exactly tarname, possibly generated from package.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
 <tr><td style="text-align: left"><a id="package_info-package_url"></a>package_url</td><td style="text-align: left">The package home page URL. Used to populate <code>PACKAGE_URL</code> define.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
 <tr><td style="text-align: left"><a id="package_info-package_version"></a>package_version</td><td style="text-align: left">The package version. Must be provided together with <code>package_name</code> if <code>module_bazel</code> is not provided.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
 </tbody></table>
@@ -204,7 +206,7 @@ autoconf(
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="macros.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="checks.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
@@ -218,7 +220,7 @@ autoconf(
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="macros.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="checks.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 

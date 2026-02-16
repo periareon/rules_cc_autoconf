@@ -1,0 +1,1403 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>checks - rules_cc_autoconf</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">rules_cc_autoconf</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/periareon/rules_cc_autoconf" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <!-- Generated with Stardoc: http://skydoc.bazel.build -->
+<h1 id="checks"><a class="header" href="#checks">checks</a></h1>
+<p>This module provides Bazel macros that mirror GNU Autoconf's behavior.</p>
+<h2 id="cache-variables-defines-and-subst-values"><a class="header" href="#cache-variables-defines-and-subst-values">Cache Variables, Defines, and Subst Values</a></h2>
+<p>Checks (AC_CHECK_FUNC, AC_CHECK_HEADER, etc.) create cache variables by default, following
+autoconf's naming convention:</p>
+<ul>
+<li>AC_CHECK_HEADER("foo.h") → cache variable "ac_cv_header_foo_h"</li>
+<li>AC_CHECK_FUNC("foo") → cache variable "ac_cv_func_foo"</li>
+<li>AC_CHECK_DECL("foo") → cache variable "ac_cv_have_decl_foo"</li>
+</ul>
+<p>Defines and subst values are created explicitly using AC_DEFINE and AC_SUBST.</p>
+<h2 id="condition-resolution"><a class="header" href="#condition-resolution">Condition Resolution</a></h2>
+<p>When AC_DEFINE or AC_SUBST use a <code>condition</code> parameter that references a cache variable
+(e.g., <code>condition="ac_cv_header_foo_h"</code>), the condition is evaluated as a <strong>truthy check</strong>:</p>
+<ul>
+<li>
+<p>Condition is <code>true</code> if:</p>
+<ul>
+<li>The cache variable exists (check was run)</li>
+<li>The check succeeded (success = true)</li>
+<li>The value is truthy (non-empty string, not "0")</li>
+</ul>
+</li>
+<li>
+<p>Condition is <code>false</code> if:</p>
+<ul>
+<li>The cache variable doesn't exist (check wasn't run)</li>
+<li>The check failed (success = false)</li>
+<li>The value is falsy (empty string or "0")</li>
+</ul>
+</li>
+</ul>
+<p>If the condition includes a comparison operator (e.g., <code>condition="ac_cv_header_foo_h==1"</code>),
+it performs value comparison instead of truthy check.</p>
+<p>Example:</p>
+<pre><code class="language-python"># Check creates cache variable
+macros.AC_CHECK_HEADER("alloca.h")
+# → Creates cache variable: "ac_cv_header_alloca_h" with value "1" (if header exists)
+
+# Define with truthy condition
+macros.AC_DEFINE(
+    "HAVE_ALLOCA_H",
+    condition="ac_cv_header_alloca_h",  # Truthy: true if check succeeded and value is truthy
+    if_true="1",
+    if_false=None,  # Don't define if condition is false
+)
+
+# Subst with truthy condition
+macros.AC_SUBST(
+    "HAVE_ALLOCA_H",
+    condition="ac_cv_header_alloca_h",  # Truthy check
+    if_true="1",
+    if_false="0",  # Always set subst value
+)
+</code></pre>
+<h2 id="default-includes"><a class="header" href="#default-includes">Default Includes</a></h2>
+<p>Default includes used by AC_CHECK_DECL, AC_CHECK_TYPE, etc. when no includes are specified.</p>
+<p>GNU Autoconf's AC_INCLUDES_DEFAULT uses #ifdef HAVE_* guards, but that relies on
+AC_CHECK_HEADERS_ONCE being called earlier to define those macros. In Bazel, each
+compile test runs independently without access to results from other checks, so we
+use unconditional includes instead. This matches what would happen on a modern
+POSIX system where all the standard headers exist.</p>
+<p>See: https://www.gnu.org/savannah-checkouts/gnu/autoconf/manual/autoconf-2.72/autoconf.html#Default-Includes</p>
+<h2 id="header--includes-parameter"><a class="header" href="#header--includes-parameter">Header / includes parameter</a></h2>
+<p>Checks that need to include headers (AC_CHECK_DECL, AC_CHECK_TYPE, AC_CHECK_SIZEOF,
+AC_CHECK_MEMBER, etc.) take an <strong><code>includes</code></strong> parameter. <strong>AC_CHECK_FUNC</strong> does not
+take includes (standard Autoconf link test only); use <strong>GL_CHECK_FUNCS_ANDROID</strong> (or
+other GL_CHECK_FUNCS* in gnulib/macros.bzl) when includes are needed. Both of these forms are
+supported:</p>
+<p>Use <strong>include directives</strong> as strings, e.g. <code>"#include &lt;stdlib.h&gt;"</code> or
+<code>"#include &lt;sys/stat.h&gt;"</code>, matching Autoconf/gnulib (e.g.
+<code>gl_CHECK_FUNCS_ANDROID([faccessat], [[#include &lt;unistd.h&gt;]])</code>). The list is
+joined with newlines to form the prologue of the test program.</p>
+<p>The parameter <code>headers</code> is a deprecated alias for <code>includes</code>; prefer <code>includes</code>.</p>
+<h2 id="functions"><a class="header" href="#functions">Functions</a></h2>
+<ul>
+<li><a href="#checks.AC_CHECK_ALIGNOF">checks.AC_CHECK_ALIGNOF</a></li>
+<li><a href="#checks.AC_CHECK_CXX_COMPILER_FLAG">checks.AC_CHECK_CXX_COMPILER_FLAG</a></li>
+<li><a href="#checks.AC_CHECK_C_COMPILER_FLAG">checks.AC_CHECK_C_COMPILER_FLAG</a></li>
+<li><a href="#checks.AC_CHECK_DECL">checks.AC_CHECK_DECL</a></li>
+<li><a href="#checks.AC_CHECK_FUNC">checks.AC_CHECK_FUNC</a></li>
+<li><a href="#checks.AC_CHECK_HEADER">checks.AC_CHECK_HEADER</a></li>
+<li><a href="#checks.AC_CHECK_LIB">checks.AC_CHECK_LIB</a></li>
+<li><a href="#checks.AC_CHECK_MEMBER">checks.AC_CHECK_MEMBER</a></li>
+<li><a href="#checks.AC_CHECK_SIZEOF">checks.AC_CHECK_SIZEOF</a></li>
+<li><a href="#checks.AC_CHECK_TYPE">checks.AC_CHECK_TYPE</a></li>
+<li><a href="#checks.AC_COMPUTE_INT">checks.AC_COMPUTE_INT</a></li>
+<li><a href="#checks.AC_C_BIGENDIAN">checks.AC_C_BIGENDIAN</a></li>
+<li><a href="#checks.AC_C_INLINE">checks.AC_C_INLINE</a></li>
+<li><a href="#checks.AC_C_RESTRICT">checks.AC_C_RESTRICT</a></li>
+<li><a href="#checks.AC_DEFINE">checks.AC_DEFINE</a></li>
+<li><a href="#checks.AC_DEFINE_UNQUOTED">checks.AC_DEFINE_UNQUOTED</a></li>
+<li><a href="#checks.AC_PROG_CC">checks.AC_PROG_CC</a></li>
+<li><a href="#checks.AC_PROG_CC_C_O">checks.AC_PROG_CC_C_O</a></li>
+<li><a href="#checks.AC_PROG_CXX">checks.AC_PROG_CXX</a></li>
+<li><a href="#checks.AC_SUBST">checks.AC_SUBST</a></li>
+<li><a href="#checks.AC_TRY_COMPILE">checks.AC_TRY_COMPILE</a></li>
+<li><a href="#checks.AC_TRY_LINK">checks.AC_TRY_LINK</a></li>
+<li><a href="#checks.M4_VARIABLE">checks.M4_VARIABLE</a></li>
+<li><a href="#macros.AC_CHECK_DECLS">macros.AC_CHECK_DECLS</a></li>
+<li><a href="#macros.AC_CHECK_FUNCS">macros.AC_CHECK_FUNCS</a></li>
+<li><a href="#macros.AC_CHECK_HEADERS">macros.AC_CHECK_HEADERS</a></li>
+<li><a href="#macros.AC_CHECK_MEMBERS">macros.AC_CHECK_MEMBERS</a></li>
+<li><a href="#macros.AC_CHECK_TYPES">macros.AC_CHECK_TYPES</a></li>
+<li><a href="#utils.AC_LANG_PROGRAM">utils.AC_LANG_PROGRAM</a></li>
+</ul>
+<p><a id="checks.AC_CHECK_ALIGNOF"></a></p>
+<h2 id="checksac_check_alignof"><a class="header" href="#checksac_check_alignof">checks.AC_CHECK_ALIGNOF</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+checks.AC_CHECK_ALIGNOF(<a href="#checks.AC_CHECK_ALIGNOF-type_name">type_name</a>, *, <a href="#checks.AC_CHECK_ALIGNOF-define">define</a>, <a href="#checks.AC_CHECK_ALIGNOF-includes">includes</a>, <a href="#checks.AC_CHECK_ALIGNOF-language">language</a>, <a href="#checks.AC_CHECK_ALIGNOF-requires">requires</a>, <a href="#checks.AC_CHECK_ALIGNOF-subst">subst</a>)
+</pre>
+<p>Check the alignment of a type.</p>
+<p>Original m4 example:</p>
+<pre><code class="language-m4">AC_CHECK_ALIGNOF([int])
+AC_CHECK_ALIGNOF([double], [[#include &lt;stddef.h&gt;]])
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-python">macros.AC_CHECK_ALIGNOF("int")
+macros.AC_CHECK_ALIGNOF("double", includes = ["stddef.h"])
+</code></pre>
+<p>Cross-Compile Warning:
+This macro is NOT cross-compile friendly. It requires compiling and
+running code to determine the alignment, which doesn't work when cross-compiling.</p>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_ALIGNOF-type_name"></a>type_name</td><td style="text-align: left">Name of the type</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_ALIGNOF-define"></a>define</td><td style="text-align: left">Custom define name (defaults to <code>ALIGNOF_&lt;TYPE&gt;</code>)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_ALIGNOF-includes"></a>includes</td><td style="text-align: left">Optional list of header names to include (e.g. <code>["stddef.h"]</code>)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_ALIGNOF-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_ALIGNOF-requires"></a>requires</td><td style="text-align: left">List of requirements that must be met before this check runs. Can be simple define names (e.g., <code>"HAVE_FOO"</code>) or value-based requirements (e.g., <code>"REPLACE_FSTAT=1"</code> to require specific value)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_ALIGNOF-subst"></a>subst</td><td style="text-align: left">If True, mark as a substitution variable (for @VAR@ replacement in subst.h).</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
+<p><a id="checks.AC_CHECK_CXX_COMPILER_FLAG"></a></p>
+<h2 id="checksac_check_cxx_compiler_flag"><a class="header" href="#checksac_check_cxx_compiler_flag">checks.AC_CHECK_CXX_COMPILER_FLAG</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+checks.AC_CHECK_CXX_COMPILER_FLAG(<a href="#checks.AC_CHECK_CXX_COMPILER_FLAG-flag">flag</a>, <a href="#checks.AC_CHECK_CXX_COMPILER_FLAG-define">define</a>, <a href="#checks.AC_CHECK_CXX_COMPILER_FLAG-language">language</a>, <a href="#checks.AC_CHECK_CXX_COMPILER_FLAG-requires">requires</a>, <a href="#checks.AC_CHECK_CXX_COMPILER_FLAG-subst">subst</a>)
+</pre>
+<p>Check if the C++ compiler supports a specific flag.</p>
+<p>Original m4 example:</p>
+<pre><code class="language-m4">AC_CHECK_CXX_COMPILER_FLAG([-std=c++17], [CXXFLAGS="$CXXFLAGS -std=c++17"])
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-python">macros.AC_CHECK_CXX_COMPILER_FLAG("-std=c++17")
+macros.AC_CHECK_CXX_COMPILER_FLAG("-Wall")
+</code></pre>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_CXX_COMPILER_FLAG-flag"></a>flag</td><td style="text-align: left">Compiler flag to test (e.g., <code>"-Wall"</code>, <code>"-std=c++17"</code>)</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_CXX_COMPILER_FLAG-define"></a>define</td><td style="text-align: left">Custom define name (defaults to <code>HAVE_FLAG_&lt;FLAG&gt;</code>)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_CXX_COMPILER_FLAG-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"cpp"</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_CXX_COMPILER_FLAG-requires"></a>requires</td><td style="text-align: left">List of requirements that must be met before this check runs. Can be simple define names (e.g., <code>"HAVE_FOO"</code>) or value-based requirements (e.g., <code>"REPLACE_FSTAT=1"</code> to require specific value)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_CXX_COMPILER_FLAG-subst"></a>subst</td><td style="text-align: left">If True, mark as a substitution variable (for @VAR@ replacement in subst.h).</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
+<p><a id="checks.AC_CHECK_C_COMPILER_FLAG"></a></p>
+<h2 id="checksac_check_c_compiler_flag"><a class="header" href="#checksac_check_c_compiler_flag">checks.AC_CHECK_C_COMPILER_FLAG</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+checks.AC_CHECK_C_COMPILER_FLAG(<a href="#checks.AC_CHECK_C_COMPILER_FLAG-flag">flag</a>, <a href="#checks.AC_CHECK_C_COMPILER_FLAG-define">define</a>, <a href="#checks.AC_CHECK_C_COMPILER_FLAG-language">language</a>, <a href="#checks.AC_CHECK_C_COMPILER_FLAG-requires">requires</a>, <a href="#checks.AC_CHECK_C_COMPILER_FLAG-subst">subst</a>)
+</pre>
+<p>Check if the C compiler supports a specific flag.</p>
+<p>Original m4 example:</p>
+<pre><code class="language-m4">AC_CHECK_C_COMPILER_FLAG([-Wall], [CFLAGS="$CFLAGS -Wall"])
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-python">macros.AC_CHECK_C_COMPILER_FLAG("-Wall")
+macros.AC_CHECK_C_COMPILER_FLAG("-std=c99")
+</code></pre>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_C_COMPILER_FLAG-flag"></a>flag</td><td style="text-align: left">Compiler flag to test (e.g., <code>"-Wall"</code>, <code>"-std=c99"</code>)</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_C_COMPILER_FLAG-define"></a>define</td><td style="text-align: left">Custom define name (defaults to <code>HAVE_FLAG_&lt;FLAG&gt;</code>)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_C_COMPILER_FLAG-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_C_COMPILER_FLAG-requires"></a>requires</td><td style="text-align: left">List of requirements that must be met before this check runs. Can be simple define names (e.g., <code>"HAVE_FOO"</code>) or value-based requirements (e.g., <code>"REPLACE_FSTAT=1"</code> to require specific value)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_C_COMPILER_FLAG-subst"></a>subst</td><td style="text-align: left">If True, mark as a substitution variable (for @VAR@ replacement in subst.h).</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
+<p><a id="checks.AC_CHECK_DECL"></a></p>
+<h2 id="checksac_check_decl"><a class="header" href="#checksac_check_decl">checks.AC_CHECK_DECL</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+checks.AC_CHECK_DECL(<a href="#checks.AC_CHECK_DECL-symbol">symbol</a>, *, <a href="#checks.AC_CHECK_DECL-name">name</a>, <a href="#checks.AC_CHECK_DECL-define">define</a>, <a href="#checks.AC_CHECK_DECL-includes">includes</a>, <a href="#checks.AC_CHECK_DECL-compile_defines">compile_defines</a>, <a href="#checks.AC_CHECK_DECL-language">language</a>, <a href="#checks.AC_CHECK_DECL-requires">requires</a>,
+                     <a href="#checks.AC_CHECK_DECL-if_true">if_true</a>, <a href="#checks.AC_CHECK_DECL-if_false">if_false</a>, <a href="#checks.AC_CHECK_DECL-subst">subst</a>)
+</pre>
+<p>Check if a symbol is declared.</p>
+<p>Original m4 example:</p>
+<pre><code class="language-m4">AC_CHECK_DECL([NULL], [AC_DEFINE([HAVE_DECL_NULL], [1])], [], [[#include &lt;stddef.h&gt;]])
+AC_CHECK_DECL([stdout], [AC_DEFINE([HAVE_DECL_STDOUT], [1])], [], [[#include &lt;stdio.h&gt;]])
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-python"># Cache variable only (no define, no subst)
+macros.AC_CHECK_DECL("NULL", includes = ["stddef.h"])
+# → Creates cache variable: "ac_cv_have_decl_NULL"
+
+# Cache variable + define (explicit name)
+macros.AC_CHECK_DECL("stdout", includes = ["stdio.h"], define = "HAVE_DECL_STDOUT")
+# → Creates cache variable: "ac_cv_have_decl_stdout"
+# → Creates define: "HAVE_DECL_STDOUT" in config.h
+</code></pre>
+<p>Note:
+This is different from <code>AC_CHECK_SYMBOL</code> - it checks if something is
+declared (not just <code>#defined</code>).</p>
+<pre><code>When no includes are specified, the standard default includes
+are used (AC_INCLUDES_DEFAULT from GNU Autoconf).
+
+Use header names like `"stdlib.h"` (not `"#include &lt;stdlib.h&gt;"`).
+</code></pre>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_DECL-symbol"></a>symbol</td><td style="text-align: left">Name of the symbol to check</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_DECL-name"></a>name</td><td style="text-align: left">Cache variable name (defaults to <code>ac_cv_have_decl_&lt;SYMBOL&gt;</code> following autoconf convention)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_DECL-define"></a>define</td><td style="text-align: left">Define behavior: - <code>None</code> (default): No define is created, only cache variable - <code>True</code>: Create define using the cache variable name (<code>name</code>) - <code>"HAVE_FOO"</code>: Create define with explicit name <code>HAVE_FOO</code> (implies <code>define=True</code>)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_DECL-includes"></a>includes</td><td style="text-align: left">Optional list of header names to include (e.g. <code>["stdlib.h"]</code>). If not specified and <code>headers</code> is not specified, uses AC_INCLUDES_DEFAULT.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_DECL-compile_defines"></a>compile_defines</td><td style="text-align: left">Optional list of preprocessor define names from previous checks to add before includes (e.g., <code>["_GNU_SOURCE", "_DARWIN_C_SOURCE"]</code>). Each string must match the define name of a previous check. The values from those checks will be used automatically.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_DECL-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_DECL-requires"></a>requires</td><td style="text-align: left">Requirements that must be met for this check to run. Can be define names (e.g., <code>"HAVE_FOO"</code>), negated (e.g., <code>"!HAVE_FOO"</code>), or value-based (e.g., <code>"REPLACE_FSTAT==1"</code>, <code>"REPLACE_FSTAT!=0"</code>).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_DECL-if_true"></a>if_true</td><td style="text-align: left">Value to use when check succeeds (currently not used for this check type).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_DECL-if_false"></a>if_false</td><td style="text-align: left">Value to use when check fails (currently not used for this check type).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_DECL-subst"></a>subst</td><td style="text-align: left">Subst behavior: - <code>None</code> (default): No subst is created, only cache variable - <code>True</code>: Create subst using the cache variable name (<code>name</code>) - <code>"HAVE_FOO"</code>: Create subst with explicit name <code>HAVE_FOO</code> (implies <code>subst=True</code>)</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
+<p><a id="checks.AC_CHECK_FUNC"></a></p>
+<h2 id="checksac_check_func"><a class="header" href="#checksac_check_func">checks.AC_CHECK_FUNC</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+checks.AC_CHECK_FUNC(<a href="#checks.AC_CHECK_FUNC-function">function</a>, <a href="#checks.AC_CHECK_FUNC-name">name</a>, *, <a href="#checks.AC_CHECK_FUNC-define">define</a>, <a href="#checks.AC_CHECK_FUNC-code">code</a>, <a href="#checks.AC_CHECK_FUNC-language">language</a>, <a href="#checks.AC_CHECK_FUNC-compile_defines">compile_defines</a>, <a href="#checks.AC_CHECK_FUNC-requires">requires</a>, <a href="#checks.AC_CHECK_FUNC-subst">subst</a>)
+</pre>
+<p>Check for a function.</p>
+<p>Original m4 example:</p>
+<pre><code class="language-m4">AC_CHECK_FUNC([malloc])
+AC_CHECK_FUNC([mmap], [AC_DEFINE([HAVE_MMAP_FEATURE], [1])])
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-python"># Cache variable only (no define, no subst)
+macros.AC_CHECK_FUNC("malloc")
+# → Creates cache variable: "ac_cv_func_malloc"
+
+# Cache variable + define (explicit name)
+macros.AC_CHECK_FUNC("mmap", define = "HAVE_MMAP")
+# → Creates cache variable: "ac_cv_func_mmap"
+# → Creates define: "HAVE_MMAP" in config.h
+
+# Cache variable + define (using cache var name)
+macros.AC_CHECK_FUNC("mmap", define = True)
+# → Creates cache variable: "ac_cv_func_mmap"
+# → Creates define: "ac_cv_func_mmap" in config.h
+
+# Cache variable + subst
+macros.AC_CHECK_FUNC("_Exit", subst = True)
+# → Creates cache variable: "ac_cv_func__Exit"
+# → Creates subst: "ac_cv_func__Exit" in subst.h
+</code></pre>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_FUNC-function"></a>function</td><td style="text-align: left">Name of the function (e.g., <code>"printf"</code>)</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_FUNC-name"></a>name</td><td style="text-align: left">Cache variable name (defaults to <code>ac_cv_func_&lt;FUNCTION&gt;</code> following autoconf convention)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_FUNC-define"></a>define</td><td style="text-align: left">Define behavior: - <code>None</code> (default): No define is created, only cache variable - <code>True</code>: Create define using the cache variable name (<code>name</code>) - <code>"HAVE_FOO"</code>: Create define with explicit name <code>HAVE_FOO</code> (implies <code>define=True</code>)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_FUNC-code"></a>code</td><td style="text-align: left">Custom code to compile (optional).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_FUNC-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_FUNC-compile_defines"></a>compile_defines</td><td style="text-align: left">Optional list of preprocessor define names from previous checks to add before includes (e.g., <code>["_GNU_SOURCE", "_DARWIN_C_SOURCE"]</code>). Each string must match the define name of a previous check. The values from those checks will be used automatically.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_FUNC-requires"></a>requires</td><td style="text-align: left">Requirements that must be met for this check to run. Can be define names (e.g., <code>"HAVE_FOO"</code>), negated (e.g., <code>"!HAVE_FOO"</code>), or value-based (e.g., <code>"REPLACE_FSTAT==1"</code>, <code>"REPLACE_FSTAT!=0"</code>).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_FUNC-subst"></a>subst</td><td style="text-align: left">Subst behavior: - <code>None</code> (default): No subst is created, only cache variable - <code>True</code>: Create subst using the cache variable name (<code>name</code>) - <code>"HAVE_FOO"</code>: Create subst with explicit name <code>HAVE_FOO</code> (implies <code>subst=True</code>)</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
+<p><a id="checks.AC_CHECK_HEADER"></a></p>
+<h2 id="checksac_check_header"><a class="header" href="#checksac_check_header">checks.AC_CHECK_HEADER</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+checks.AC_CHECK_HEADER(<a href="#checks.AC_CHECK_HEADER-header">header</a>, <a href="#checks.AC_CHECK_HEADER-name">name</a>, <a href="#checks.AC_CHECK_HEADER-define">define</a>, <a href="#checks.AC_CHECK_HEADER-includes">includes</a>, <a href="#checks.AC_CHECK_HEADER-language">language</a>, <a href="#checks.AC_CHECK_HEADER-compile_defines">compile_defines</a>, <a href="#checks.AC_CHECK_HEADER-requires">requires</a>, <a href="#checks.AC_CHECK_HEADER-subst">subst</a>)
+</pre>
+<p>Check for a header file.</p>
+<p>Original m4 example:</p>
+<pre><code class="language-m4">AC_CHECK_HEADER([stdio.h])
+AC_CHECK_HEADER([pthread.h], [AC_CHECK_FUNC([pthread_create])])
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-python"># Cache variable only (no define, no subst)
+macros.AC_CHECK_HEADER("stdio.h")
+# → Creates cache variable: "ac_cv_header_stdio_h"
+
+# Cache variable + define (explicit name)
+macros.AC_CHECK_HEADER("pthread.h", define = "HAVE_PTHREAD_H")
+# → Creates cache variable: "ac_cv_header_pthread_h"
+# → Creates define: "HAVE_PTHREAD_H" in config.h
+
+# Cache variable + define (using cache var name)
+macros.AC_CHECK_HEADER("pthread.h", define = True)
+# → Creates cache variable: "ac_cv_header_pthread_h"
+# → Creates define: "ac_cv_header_pthread_h" in config.h
+</code></pre>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_HEADER-header"></a>header</td><td style="text-align: left">Name of the header file (e.g., <code>"stdio.h"</code>)</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_HEADER-name"></a>name</td><td style="text-align: left">Cache variable name (defaults to <code>ac_cv_header_&lt;HEADER&gt;</code> following autoconf convention)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_HEADER-define"></a>define</td><td style="text-align: left">Define behavior: - <code>None</code> (default): No define is created, only cache variable - <code>True</code>: Create define using the cache variable name (<code>name</code>) - <code>"HAVE_FOO"</code>: Create define with explicit name <code>HAVE_FOO</code> (implies <code>define=True</code>)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_HEADER-includes"></a>includes</td><td style="text-align: left">Optional list of headers to include.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_HEADER-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_HEADER-compile_defines"></a>compile_defines</td><td style="text-align: left">Optional list of preprocessor define names from previous checks to add before includes (e.g., <code>["_GNU_SOURCE", "_DARWIN_C_SOURCE"]</code>). Each string must match the define name of a previous check. The values from those checks will be used automatically.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_HEADER-requires"></a>requires</td><td style="text-align: left">Requirements that must be met for this check to run. Can be define names (e.g., <code>"HAVE_FOO"</code>), negated (e.g., <code>"!HAVE_FOO"</code>), or value-based (e.g., <code>"REPLACE_FSTAT==1"</code>, <code>"REPLACE_FSTAT!=0"</code>).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_HEADER-subst"></a>subst</td><td style="text-align: left">Subst behavior: - <code>None</code> (default): No subst is created, only cache variable - <code>True</code>: Create subst using the cache variable name (<code>name</code>) - <code>"HAVE_FOO"</code>: Create subst with explicit name <code>HAVE_FOO</code> (implies <code>subst=True</code>)</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
+<p><a id="checks.AC_CHECK_LIB"></a></p>
+<h2 id="checksac_check_lib"><a class="header" href="#checksac_check_lib">checks.AC_CHECK_LIB</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+checks.AC_CHECK_LIB(<a href="#checks.AC_CHECK_LIB-library">library</a>, <a href="#checks.AC_CHECK_LIB-function">function</a>, *, <a href="#checks.AC_CHECK_LIB-name">name</a>, <a href="#checks.AC_CHECK_LIB-define">define</a>, <a href="#checks.AC_CHECK_LIB-code">code</a>, <a href="#checks.AC_CHECK_LIB-language">language</a>, <a href="#checks.AC_CHECK_LIB-requires">requires</a>, <a href="#checks.AC_CHECK_LIB-if_true">if_true</a>, <a href="#checks.AC_CHECK_LIB-if_false">if_false</a>,
+                    <a href="#checks.AC_CHECK_LIB-subst">subst</a>)
+</pre>
+<p>Check for a function in a library.</p>
+<p>Original m4 example:</p>
+<pre><code class="language-m4">AC_CHECK_LIB([m], [cos])
+AC_CHECK_LIB([pthread], [pthread_create])
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-python">macros.AC_CHECK_LIB("m", "cos")
+macros.AC_CHECK_LIB("pthread", "pthread_create")
+</code></pre>
+<p>Note:
+This checks if the specified function is available in the given library.
+It attempts to link against <code>-l&lt;library&gt;</code> to verify the library provides
+the function.</p>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_LIB-library"></a>library</td><td style="text-align: left">Library name without the <code>-l</code> prefix (e.g., <code>"m"</code>, <code>"pthread"</code>)</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_LIB-function"></a>function</td><td style="text-align: left">Function name to check for in the library (e.g., <code>"cos"</code>, <code>"pthread_create"</code>)</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_LIB-name"></a>name</td><td style="text-align: left">The name of the cache variable. Defaults to <code>ac_cv_lib_library_function</code></td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_LIB-define"></a>define</td><td style="text-align: left">Custom define name (defaults to <code>HAVE_LIB&lt;LIBRARY&gt;</code>)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_LIB-code"></a>code</td><td style="text-align: left">Custom code to compile and link (optional)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_LIB-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_LIB-requires"></a>requires</td><td style="text-align: left">Requirements that must be met for this check to run. Can be define names (e.g., <code>"HAVE_FOO"</code>), negated (e.g., <code>"!HAVE_FOO"</code>), or value-based (e.g., <code>"REPLACE_FSTAT==1"</code>, <code>"REPLACE_FSTAT!=0"</code>).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_LIB-if_true"></a>if_true</td><td style="text-align: left">Value to use when check succeeds (currently not used for this check type).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_LIB-if_false"></a>if_false</td><td style="text-align: left">Value to use when check fails (currently not used for this check type).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_LIB-subst"></a>subst</td><td style="text-align: left">If True, mark as a substitution variable (for @VAR@ replacement in subst.h).</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
+<p><a id="checks.AC_CHECK_MEMBER"></a></p>
+<h2 id="checksac_check_member"><a class="header" href="#checksac_check_member">checks.AC_CHECK_MEMBER</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+checks.AC_CHECK_MEMBER(<a href="#checks.AC_CHECK_MEMBER-aggregate_member">aggregate_member</a>, *, <a href="#checks.AC_CHECK_MEMBER-name">name</a>, <a href="#checks.AC_CHECK_MEMBER-define">define</a>, <a href="#checks.AC_CHECK_MEMBER-includes">includes</a>, <a href="#checks.AC_CHECK_MEMBER-language">language</a>, <a href="#checks.AC_CHECK_MEMBER-compile_defines">compile_defines</a>,
+                       <a href="#checks.AC_CHECK_MEMBER-requires">requires</a>, <a href="#checks.AC_CHECK_MEMBER-if_true">if_true</a>, <a href="#checks.AC_CHECK_MEMBER-if_false">if_false</a>, <a href="#checks.AC_CHECK_MEMBER-subst">subst</a>)
+</pre>
+<p>Check if a struct or union has a member.</p>
+<p>Original m4 example:</p>
+<pre><code class="language-m4">AC_CHECK_MEMBER([struct stat.st_rdev], [AC_DEFINE([HAVE_STRUCT_STAT_ST_RDEV], [1])], [], [[#include &lt;sys/stat.h&gt;]])
+AC_CHECK_MEMBER([struct tm.tm_zone], [AC_DEFINE([HAVE_STRUCT_TM_TM_ZONE], [1])], [], [[#include &lt;time.h&gt;]])
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-python">macros.AC_CHECK_MEMBER("struct stat.st_rdev", includes = ["sys/stat.h"])
+macros.AC_CHECK_MEMBER("struct tm.tm_zone", includes = ["time.h"])
+</code></pre>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_MEMBER-aggregate_member"></a>aggregate_member</td><td style="text-align: left">Struct or union name with (e.g., <code>struct stat.st_rdev</code>)</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_MEMBER-name"></a>name</td><td style="text-align: left">Cache variable name (defaults to <code>ac_cv_member_aggregate_member</code> following autoconf convention)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_MEMBER-define"></a>define</td><td style="text-align: left">Custom define name (defaults to <code>HAVE_&lt;AGGREGATE&gt;_&lt;MEMBER&gt;</code>)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_MEMBER-includes"></a>includes</td><td style="text-align: left">Optional list of header names to include (e.g. <code>["sys/stat.h"]</code>)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_MEMBER-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_MEMBER-compile_defines"></a>compile_defines</td><td style="text-align: left">Optional list of preprocessor define names from previous checks to add before includes (e.g., <code>["_GNU_SOURCE", "_DARWIN_C_SOURCE"]</code>). Each string must match the define name of a previous check. The values from those checks will be used automatically.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_MEMBER-requires"></a>requires</td><td style="text-align: left">Requirements that must be met for this check to run. Can be define names (e.g., <code>"HAVE_FOO"</code>), negated (e.g., <code>"!HAVE_FOO"</code>), or value-based (e.g., <code>"REPLACE_FSTAT==1"</code>, <code>"REPLACE_FSTAT!=0"</code>).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_MEMBER-if_true"></a>if_true</td><td style="text-align: left">Value to use when check succeeds (currently not used for this check type).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_MEMBER-if_false"></a>if_false</td><td style="text-align: left">Value to use when check fails (currently not used for this check type).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_MEMBER-subst"></a>subst</td><td style="text-align: left">If True, automatically create a substitution variable with the same name that will be set to "1" if the check succeeds, "0" if it fails.</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
+<p><a id="checks.AC_CHECK_SIZEOF"></a></p>
+<h2 id="checksac_check_sizeof"><a class="header" href="#checksac_check_sizeof">checks.AC_CHECK_SIZEOF</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+checks.AC_CHECK_SIZEOF(<a href="#checks.AC_CHECK_SIZEOF-type_name">type_name</a>, *, <a href="#checks.AC_CHECK_SIZEOF-name">name</a>, <a href="#checks.AC_CHECK_SIZEOF-define">define</a>, <a href="#checks.AC_CHECK_SIZEOF-includes">includes</a>, <a href="#checks.AC_CHECK_SIZEOF-language">language</a>, <a href="#checks.AC_CHECK_SIZEOF-requires">requires</a>, <a href="#checks.AC_CHECK_SIZEOF-if_true">if_true</a>, <a href="#checks.AC_CHECK_SIZEOF-if_false">if_false</a>,
+                       <a href="#checks.AC_CHECK_SIZEOF-subst">subst</a>)
+</pre>
+<p>Check the size of a type.</p>
+<p>Original m4 example:</p>
+<pre><code class="language-m4">AC_CHECK_SIZEOF([int])
+AC_CHECK_SIZEOF([size_t], [], [[#include &lt;stddef.h&gt;]])
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-python"># Cache variable only (no define, no subst)
+macros.AC_CHECK_SIZEOF("int")
+# → Creates cache variable: "ac_cv_sizeof_int"
+
+# Cache variable + define (explicit name)
+macros.AC_CHECK_SIZEOF("size_t", includes = ["stddef.h"], define = "SIZEOF_SIZE_T")
+# → Creates cache variable: "ac_cv_sizeof_size_t"
+# → Creates define: "SIZEOF_SIZE_T" in config.h
+</code></pre>
+<p>Cross-Compile Warning:
+This macro is NOT cross-compile friendly. It requires compiling and
+running code to determine the size, which doesn't work when cross-compiling.</p>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_SIZEOF-type_name"></a>type_name</td><td style="text-align: left">Name of the type (e.g., <code>int</code>, <code>size_t</code>, <code>void*</code>)</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_SIZEOF-name"></a>name</td><td style="text-align: left">Cache variable name (defaults to <code>ac_cv_sizeof_&lt;TYPE&gt;</code> following autoconf convention)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_SIZEOF-define"></a>define</td><td style="text-align: left">Define behavior: - <code>None</code> (default): No define is created, only cache variable - <code>True</code>: Create define using the cache variable name (<code>name</code>) - <code>"SIZEOF_FOO"</code>: Create define with explicit name <code>SIZEOF_FOO</code> (implies <code>define=True</code>)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_SIZEOF-includes"></a>includes</td><td style="text-align: left">Optional list of header names to include (e.g. <code>["stddef.h"]</code>)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_SIZEOF-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_SIZEOF-requires"></a>requires</td><td style="text-align: left">Requirements that must be met for this check to run. Can be define names (e.g., <code>"HAVE_FOO"</code>), negated (e.g., <code>"!HAVE_FOO"</code>), or value-based (e.g., <code>"REPLACE_FSTAT==1"</code>, <code>"REPLACE_FSTAT!=0"</code>).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_SIZEOF-if_true"></a>if_true</td><td style="text-align: left">Value to use when check succeeds (currently not used for this check type).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_SIZEOF-if_false"></a>if_false</td><td style="text-align: left">Value to use when check fails (currently not used for this check type).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_SIZEOF-subst"></a>subst</td><td style="text-align: left">Subst behavior: - <code>None</code> (default): No subst is created, only cache variable - <code>True</code>: Create subst using the cache variable name (<code>name</code>) - <code>"SIZEOF_FOO"</code>: Create subst with explicit name <code>SIZEOF_FOO</code> (implies <code>subst=True</code>)</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
+<p><a id="checks.AC_CHECK_TYPE"></a></p>
+<h2 id="checksac_check_type"><a class="header" href="#checksac_check_type">checks.AC_CHECK_TYPE</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+checks.AC_CHECK_TYPE(<a href="#checks.AC_CHECK_TYPE-type_name">type_name</a>, *, <a href="#checks.AC_CHECK_TYPE-name">name</a>, <a href="#checks.AC_CHECK_TYPE-define">define</a>, <a href="#checks.AC_CHECK_TYPE-code">code</a>, <a href="#checks.AC_CHECK_TYPE-includes">includes</a>, <a href="#checks.AC_CHECK_TYPE-language">language</a>, <a href="#checks.AC_CHECK_TYPE-compile_defines">compile_defines</a>,
+                     <a href="#checks.AC_CHECK_TYPE-requires">requires</a>, <a href="#checks.AC_CHECK_TYPE-if_true">if_true</a>, <a href="#checks.AC_CHECK_TYPE-if_false">if_false</a>, <a href="#checks.AC_CHECK_TYPE-subst">subst</a>)
+</pre>
+<p>Check for a type.</p>
+<p>Original m4 example:</p>
+<pre><code class="language-m4">AC_CHECK_TYPE([size_t])
+AC_CHECK_TYPE([pthread_t], [], [], [[#include &lt;pthread.h&gt;]])
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-python"># Cache variable only (no define, no subst)
+macros.AC_CHECK_TYPE("size_t")
+# → Creates cache variable: "ac_cv_type_size_t"
+
+# Cache variable + define (explicit name)
+macros.AC_CHECK_TYPE("pthread_t", includes = ["pthread.h"], define = "HAVE_PTHREAD_T")
+# → Creates cache variable: "ac_cv_type_pthread_t"
+# → Creates define: "HAVE_PTHREAD_T" in config.h
+</code></pre>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_TYPE-type_name"></a>type_name</td><td style="text-align: left">Name of the type (e.g., <code>size_t</code>)</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_TYPE-name"></a>name</td><td style="text-align: left">Cache variable name (defaults to <code>ac_cv_type_&lt;TYPE&gt;</code> following autoconf convention)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_TYPE-define"></a>define</td><td style="text-align: left">Define behavior: - <code>None</code> (default): No define is created, only cache variable - <code>True</code>: Create define using the cache variable name (<code>name</code>) - <code>"HAVE_FOO"</code>: Create define with explicit name <code>HAVE_FOO</code> (implies <code>define=True</code>)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_TYPE-code"></a>code</td><td style="text-align: left">Custom code that includes necessary headers (optional, defaults to standard headers)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_TYPE-includes"></a>includes</td><td style="text-align: left">Optional list of headers to include. If not specified and <code>code</code> is not specified, uses AC_INCLUDES_DEFAULT.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_TYPE-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_TYPE-compile_defines"></a>compile_defines</td><td style="text-align: left">Optional list of preprocessor define names from previous checks to add before includes (e.g., <code>["_GNU_SOURCE", "_DARWIN_C_SOURCE"]</code>). Each string must match the define name of a previous check. The values from those checks will be used automatically.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_TYPE-requires"></a>requires</td><td style="text-align: left">Requirements that must be met for this check to run. Can be define names (e.g., <code>"HAVE_FOO"</code>), negated (e.g., <code>"!HAVE_FOO"</code>), or value-based (e.g., <code>"REPLACE_FSTAT==1"</code>, <code>"REPLACE_FSTAT!=0"</code>).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_TYPE-if_true"></a>if_true</td><td style="text-align: left">Value to use when check succeeds (currently not used for this check type).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_TYPE-if_false"></a>if_false</td><td style="text-align: left">Value to use when check fails (currently not used for this check type).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_TYPE-subst"></a>subst</td><td style="text-align: left">Subst behavior: - <code>None</code> (default): No subst is created, only cache variable - <code>True</code>: Create subst using the cache variable name (<code>name</code>) - <code>"HAVE_FOO"</code>: Create subst with explicit name <code>HAVE_FOO</code> (implies <code>subst=True</code>)</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
+<p><a id="checks.AC_COMPUTE_INT"></a></p>
+<h2 id="checksac_compute_int"><a class="header" href="#checksac_compute_int">checks.AC_COMPUTE_INT</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+checks.AC_COMPUTE_INT(<a href="#checks.AC_COMPUTE_INT-define">define</a>, <a href="#checks.AC_COMPUTE_INT-expression">expression</a>, *, <a href="#checks.AC_COMPUTE_INT-includes">includes</a>, <a href="#checks.AC_COMPUTE_INT-language">language</a>, <a href="#checks.AC_COMPUTE_INT-requires">requires</a>, <a href="#checks.AC_COMPUTE_INT-subst">subst</a>)
+</pre>
+<p>Compute an integer value at compile time.</p>
+<p>Original m4 example:</p>
+<pre><code class="language-m4">AC_COMPUTE_INT([SIZEOF_INT], [sizeof(int)])
+AC_COMPUTE_INT([MAX_VALUE], [1 &lt;&lt; 16])
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-python">macros.AC_COMPUTE_INT("SIZEOF_INT", "sizeof(int)")
+macros.AC_COMPUTE_INT("MAX_VALUE", "1 &lt;&lt; 16")
+</code></pre>
+<p>Cross-Compile Warning:
+This macro is NOT cross-compile friendly. It requires compiling and
+running code to compute the value, which doesn't work when cross-compiling.</p>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="checks.AC_COMPUTE_INT-define"></a>define</td><td style="text-align: left">Define name for the result (first arg to match autoconf)</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_COMPUTE_INT-expression"></a>expression</td><td style="text-align: left">C expression that evaluates to an integer (second arg)</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_COMPUTE_INT-includes"></a>includes</td><td style="text-align: left">Optional list of header names to include (e.g. <code>["stdlib.h"]</code>)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_COMPUTE_INT-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_COMPUTE_INT-requires"></a>requires</td><td style="text-align: left">List of requirements that must be met before this check runs. Can be simple define names (e.g., <code>"HAVE_FOO"</code>) or value-based requirements (e.g., <code>"REPLACE_FSTAT=1"</code> to require specific value)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_COMPUTE_INT-subst"></a>subst</td><td style="text-align: left">If True, mark as a substitution variable (for @VAR@ replacement in subst.h).</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
+<p><a id="checks.AC_C_BIGENDIAN"></a></p>
+<h2 id="checksac_c_bigendian"><a class="header" href="#checksac_c_bigendian">checks.AC_C_BIGENDIAN</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+checks.AC_C_BIGENDIAN(<a href="#checks.AC_C_BIGENDIAN-define">define</a>, <a href="#checks.AC_C_BIGENDIAN-language">language</a>, <a href="#checks.AC_C_BIGENDIAN-requires">requires</a>, <a href="#checks.AC_C_BIGENDIAN-subst">subst</a>)
+</pre>
+<p>Check byte order (endianness) of the system.</p>
+<p>Original m4 example:</p>
+<pre><code class="language-m4">AC_C_BIGENDIAN([AC_DEFINE([WORDS_BIGENDIAN], [1])])
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-python">macros.AC_C_BIGENDIAN()
+</code></pre>
+<p>Note:
+The define is set to 1 for big-endian, 0 for little-endian.</p>
+<p>Cross-Compile Warning:
+This macro is NOT cross-compile friendly. It requires compiling and
+running code to determine endianness, which doesn't work when cross-compiling.</p>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="checks.AC_C_BIGENDIAN-define"></a>define</td><td style="text-align: left">Define name (defaults to <code>WORDS_BIGENDIAN</code>)</td><td style="text-align: left"><code>"WORDS_BIGENDIAN"</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_C_BIGENDIAN-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_C_BIGENDIAN-requires"></a>requires</td><td style="text-align: left">List of requirements that must be met before this check runs. Can be simple define names (e.g., <code>"HAVE_FOO"</code>) or value-based requirements (e.g., <code>"REPLACE_FSTAT=1"</code> to require specific value)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_C_BIGENDIAN-subst"></a>subst</td><td style="text-align: left">If True, mark as a substitution variable (for @VAR@ replacement in subst.h).</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
+<p><a id="checks.AC_C_INLINE"></a></p>
+<h2 id="checksac_c_inline"><a class="header" href="#checksac_c_inline">checks.AC_C_INLINE</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+checks.AC_C_INLINE(<a href="#checks.AC_C_INLINE-define">define</a>, <a href="#checks.AC_C_INLINE-language">language</a>, <a href="#checks.AC_C_INLINE-requires">requires</a>, <a href="#checks.AC_C_INLINE-subst">subst</a>)
+</pre>
+<p>Check what inline keyword the compiler supports.</p>
+<p>Original m4 example:</p>
+<pre><code class="language-m4">AC_C_INLINE
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-python">macros.AC_C_INLINE()
+</code></pre>
+<p>Tests inline keyword and defines it to the appropriate value.</p>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="checks.AC_C_INLINE-define"></a>define</td><td style="text-align: left">Define name (defaults to <code>inline</code>)</td><td style="text-align: left"><code>"inline"</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_C_INLINE-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_C_INLINE-requires"></a>requires</td><td style="text-align: left">List of requirements that must be met before this check runs. Can be simple define names (e.g., <code>"HAVE_FOO"</code>) or value-based requirements (e.g., <code>"REPLACE_FSTAT=1"</code> to require specific value)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_C_INLINE-subst"></a>subst</td><td style="text-align: left">If True, mark as a substitution variable (for @VAR@ replacement in subst.h).</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
+<p><a id="checks.AC_C_RESTRICT"></a></p>
+<h2 id="checksac_c_restrict"><a class="header" href="#checksac_c_restrict">checks.AC_C_RESTRICT</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+checks.AC_C_RESTRICT(<a href="#checks.AC_C_RESTRICT-define">define</a>, <a href="#checks.AC_C_RESTRICT-language">language</a>, <a href="#checks.AC_C_RESTRICT-requires">requires</a>, <a href="#checks.AC_C_RESTRICT-subst">subst</a>)
+</pre>
+<p>Check if the compiler supports restrict keyword.</p>
+<p>Original m4 example:</p>
+<pre><code class="language-m4">AC_C_RESTRICT
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-python">checks.AC_C_RESTRICT()
+</code></pre>
+<p>Note:
+If restrict is not supported, the define is set to empty string.</p>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="checks.AC_C_RESTRICT-define"></a>define</td><td style="text-align: left">Define name (defaults to <code>restrict</code>)</td><td style="text-align: left"><code>"restrict"</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_C_RESTRICT-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_C_RESTRICT-requires"></a>requires</td><td style="text-align: left">List of requirements that must be met before this check runs. Can be simple define names (e.g., <code>"HAVE_FOO"</code>) or value-based requirements (e.g., <code>"REPLACE_FSTAT=1"</code> to require specific value)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_C_RESTRICT-subst"></a>subst</td><td style="text-align: left">If True, mark as a substitution variable (for @VAR@ replacement in subst.h).</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
+<p><a id="checks.AC_DEFINE"></a></p>
+<h2 id="checksac_define"><a class="header" href="#checksac_define">checks.AC_DEFINE</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+checks.AC_DEFINE(<a href="#checks.AC_DEFINE-define">define</a>, <a href="#checks.AC_DEFINE-value">value</a>, <a href="#checks.AC_DEFINE-requires">requires</a>, <a href="#checks.AC_DEFINE-condition">condition</a>, <a href="#checks.AC_DEFINE-if_true">if_true</a>, <a href="#checks.AC_DEFINE-if_false">if_false</a>, <a href="#checks.AC_DEFINE-subst">subst</a>)
+</pre>
+<p>Define a configuration macro.</p>
+<p>Original m4 example:</p>
+<pre><code class="language-m4">AC_DEFINE([CUSTOM_VALUE], [42])
+AC_DEFINE([ENABLE_FEATURE], [1])
+AC_DEFINE([PROJECT_NAME], ["MyProject"])
+AC_DEFINE([EMPTY_VALUE], [])
+</code></pre>
+<p>Conditional example (m4):</p>
+<pre><code class="language-m4">if test $gl_cv_foo = yes; then
+  AC_DEFINE([FOO_WORKS], [1])
+fi
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-python"># Simple (always define)
+macros.AC_DEFINE("CUSTOM_VALUE", "42")
+
+# Conditional (define based on another check's result)
+macros.AC_DEFINE(
+    "FOO_WORKS",
+    condition = "HAVE_FOO",
+    if_true = "1",      # Value when HAVE_FOO is true
+    if_false = None,    # Don't define when HAVE_FOO is false
+)
+</code></pre>
+<p>Note:
+This is equivalent to GNU Autoconf's AC_DEFINE macro. When used without
+<code>condition</code>, it creates a define that will always be set. When used with
+<code>condition</code>, the define is set based on the condition's result.</p>
+<pre><code>**Condition Resolution**: If `condition` references a cache variable (e.g.,
+`condition="ac_cv_header_foo_h"`), it's evaluated as a truthy check:
+- Condition is `true` if the check succeeded AND the value is truthy (non-empty, non-zero)
+- Condition is `false` if the check failed OR the value is falsy (empty, "0")
+- If condition includes a comparison (e.g., `condition="ac_cv_header_foo_h==1"`),
+  it performs value comparison instead.
+</code></pre>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="checks.AC_DEFINE-define"></a>define</td><td style="text-align: left">Define name (e.g., <code>"CUSTOM_VALUE"</code>)</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_DEFINE-value"></a>value</td><td style="text-align: left">Value to assign when no condition is specified (defaults to <code>"1"</code>)</td><td style="text-align: left"><code>1</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_DEFINE-requires"></a>requires</td><td style="text-align: left">Requirements that must be met for this check to run. Can be define names (e.g., <code>"HAVE_FOO"</code>), negated (e.g., <code>"!HAVE_FOO"</code>), or value-based (e.g., <code>"REPLACE_FSTAT==1"</code>, <code>"REPLACE_FSTAT!=0"</code>).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_DEFINE-condition"></a>condition</td><td style="text-align: left">Selects which value to use: <code>if_true</code> when condition is true, <code>if_false</code> when false. Does not affect whether the check runs.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_DEFINE-if_true"></a>if_true</td><td style="text-align: left">Value when condition is true (requires <code>condition</code>).</td><td style="text-align: left"><code>1</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_DEFINE-if_false"></a>if_false</td><td style="text-align: left">Value when condition is false (requires <code>condition</code>). Use <code>None</code> to not define the macro when condition is false.</td><td style="text-align: left"><code>0</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_DEFINE-subst"></a>subst</td><td style="text-align: left">If True, mark as a substitution variable (for @VAR@ replacement in subst.h).</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
+<p><a id="checks.AC_DEFINE_UNQUOTED"></a></p>
+<h2 id="checksac_define_unquoted"><a class="header" href="#checksac_define_unquoted">checks.AC_DEFINE_UNQUOTED</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+checks.AC_DEFINE_UNQUOTED(<a href="#checks.AC_DEFINE_UNQUOTED-define">define</a>, <a href="#checks.AC_DEFINE_UNQUOTED-value">value</a>, <a href="#checks.AC_DEFINE_UNQUOTED-requires">requires</a>, <a href="#checks.AC_DEFINE_UNQUOTED-condition">condition</a>, <a href="#checks.AC_DEFINE_UNQUOTED-if_true">if_true</a>, <a href="#checks.AC_DEFINE_UNQUOTED-if_false">if_false</a>, <a href="#checks.AC_DEFINE_UNQUOTED-subst">subst</a>)
+</pre>
+<p>Define a configuration macro without quoting (AC_DEFINE_UNQUOTED).</p>
+<p>Original m4 example:</p>
+<pre><code class="language-m4">AC_DEFINE_UNQUOTED([ICONV_CONST], [$iconv_arg1])
+AC_DEFINE_UNQUOTED([VERSION], ["$PACKAGE_VERSION"])
+</code></pre>
+<p>This is similar to AC_DEFINE, but with one key difference:</p>
+<ul>
+<li>AC_DEFINE with empty value generates: <code>#define NAME /**/</code></li>
+<li>AC_DEFINE_UNQUOTED with empty value generates: <code>#define NAME </code> (trailing space)</li>
+</ul>
+<p>Example:</p>
+<pre><code class="language-python"># Simple (always define)
+macros.AC_DEFINE_UNQUOTED("ICONV_CONST", "")
+
+# Conditional (define based on another check's result)
+macros.AC_DEFINE_UNQUOTED(
+    "ICONV_CONST",
+    condition = "_gl_cv_iconv_nonconst",
+    if_true = "",      # Empty value - will generate "#define ICONV_CONST " (trailing space)
+    if_false = "const",  # Non-empty value
+)
+</code></pre>
+<p>Note:
+This is equivalent to GNU Autoconf's AC_DEFINE_UNQUOTED macro. The main
+difference from AC_DEFINE is how empty values are rendered in config.h:
+AC_DEFINE uses <code>/**/</code> while AC_DEFINE_UNQUOTED uses a trailing space.</p>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="checks.AC_DEFINE_UNQUOTED-define"></a>define</td><td style="text-align: left">Define name (e.g., <code>"ICONV_CONST"</code>)</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_DEFINE_UNQUOTED-value"></a>value</td><td style="text-align: left">Value to assign when no condition is specified (defaults to <code>"1"</code>)</td><td style="text-align: left"><code>1</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_DEFINE_UNQUOTED-requires"></a>requires</td><td style="text-align: left">Requirements that must be met for this check to run. Can be define names (e.g., <code>"HAVE_FOO"</code>), negated (e.g., <code>"!HAVE_FOO"</code>), or value-based (e.g., <code>"REPLACE_FSTAT==1"</code>, <code>"REPLACE_FSTAT!=0"</code>).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_DEFINE_UNQUOTED-condition"></a>condition</td><td style="text-align: left">Selects which value to use: <code>if_true</code> when condition is true, <code>if_false</code> when false. Does not affect whether the check runs.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_DEFINE_UNQUOTED-if_true"></a>if_true</td><td style="text-align: left">Value when condition is true (requires <code>condition</code>).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_DEFINE_UNQUOTED-if_false"></a>if_false</td><td style="text-align: left">Value when condition is false (requires <code>condition</code>). Use <code>None</code> to not define the macro when condition is false.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_DEFINE_UNQUOTED-subst"></a>subst</td><td style="text-align: left">If True, mark as a substitution variable (for @VAR@ replacement in subst.h).</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
+<p><a id="checks.AC_PROG_CC"></a></p>
+<h2 id="checksac_prog_cc"><a class="header" href="#checksac_prog_cc">checks.AC_PROG_CC</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+checks.AC_PROG_CC(<a href="#checks.AC_PROG_CC-requires">requires</a>)
+</pre>
+<p>Check that a C compiler is available.</p>
+<p>Original m4 example:</p>
+<pre><code class="language-m4">AC_PROG_CC
+AC_PROG_CC([gcc clang])
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-python">macros.AC_PROG_CC()
+</code></pre>
+<p>Note:
+This is mostly a no-op in Bazel since the toolchain must be configured,
+but returns a check that will verify the compiler works.</p>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="checks.AC_PROG_CC-requires"></a>requires</td><td style="text-align: left">List of requirements that must be met before this check runs. Can be simple define names (e.g., <code>"HAVE_FOO"</code>) or value-based requirements (e.g., <code>"REPLACE_FSTAT=1"</code> to require specific value)</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
+<p><a id="checks.AC_PROG_CC_C_O"></a></p>
+<h2 id="checksac_prog_cc_c_o"><a class="header" href="#checksac_prog_cc_c_o">checks.AC_PROG_CC_C_O</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+checks.AC_PROG_CC_C_O(<a href="#checks.AC_PROG_CC_C_O-define">define</a>, <a href="#checks.AC_PROG_CC_C_O-language">language</a>, <a href="#checks.AC_PROG_CC_C_O-requires">requires</a>, <a href="#checks.AC_PROG_CC_C_O-subst">subst</a>)
+</pre>
+<p>Check if the compiler supports -c and -o flags simultaneously.</p>
+<p>Original m4 example:</p>
+<pre><code class="language-m4">AC_PROG_CC_C_O
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-python">macros.AC_PROG_CC_C_O()
+</code></pre>
+<p>Note:
+If the compiler does NOT support both flags together, the define is set.</p>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="checks.AC_PROG_CC_C_O-define"></a>define</td><td style="text-align: left">Define name (defaults to <code>"NO_MINUS_C_MINUS_O"</code>)</td><td style="text-align: left"><code>"NO_MINUS_C_MINUS_O"</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_PROG_CC_C_O-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_PROG_CC_C_O-requires"></a>requires</td><td style="text-align: left">List of requirements that must be met before this check runs. Can be simple define names (e.g., <code>"HAVE_FOO"</code>) or value-based requirements (e.g., <code>"REPLACE_FSTAT=1"</code> to require specific value)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_PROG_CC_C_O-subst"></a>subst</td><td style="text-align: left">If True, mark as a substitution variable (for @VAR@ replacement in subst.h).</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
+<p><a id="checks.AC_PROG_CXX"></a></p>
+<h2 id="checksac_prog_cxx"><a class="header" href="#checksac_prog_cxx">checks.AC_PROG_CXX</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+checks.AC_PROG_CXX(<a href="#checks.AC_PROG_CXX-requires">requires</a>)
+</pre>
+<p>Check that a C++ compiler is available.</p>
+<p>Original m4 example:</p>
+<pre><code class="language-m4">AC_PROG_CXX
+AC_PROG_CXX([g++ clang++])
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-python">macros.AC_PROG_CXX()
+</code></pre>
+<p>Note:
+This is mostly a no-op in Bazel since the toolchain must be configured,
+but returns a check that will verify the compiler works.</p>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="checks.AC_PROG_CXX-requires"></a>requires</td><td style="text-align: left">List of requirements that must be met before this check runs. Can be simple define names (e.g., <code>"HAVE_FOO"</code>) or value-based requirements (e.g., <code>"REPLACE_FSTAT=1"</code> to require specific value)</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
+<p><a id="checks.AC_SUBST"></a></p>
+<h2 id="checksac_subst"><a class="header" href="#checksac_subst">checks.AC_SUBST</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+checks.AC_SUBST(<a href="#checks.AC_SUBST-variable">variable</a>, <a href="#checks.AC_SUBST-value">value</a>, <a href="#checks.AC_SUBST-requires">requires</a>, <a href="#checks.AC_SUBST-condition">condition</a>, <a href="#checks.AC_SUBST-if_true">if_true</a>, <a href="#checks.AC_SUBST-if_false">if_false</a>)
+</pre>
+<p>Substitute a variable value (equivalent to AC_SUBST in GNU Autoconf).</p>
+<p>Original m4 example:</p>
+<pre><code class="language-m4">HAVE_DECL_WCSDUP=1;   AC_SUBST([HAVE_DECL_WCSDUP])
+HAVE_DECL_WCWIDTH=1;  AC_SUBST([HAVE_DECL_WCWIDTH])
+</code></pre>
+<p>Conditional example (m4):</p>
+<pre><code class="language-m4">if test $gl_cv_sys_struct_lconv_ok = no; then
+  REPLACE_STRUCT_LCONV=1
+else
+  REPLACE_STRUCT_LCONV=0
+fi
+AC_SUBST([REPLACE_STRUCT_LCONV])
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-python"># Simple (always set)
+macros.AC_SUBST("HAVE_DECL_WCSDUP", "1")
+
+# Conditional (set based on another check's result)
+macros.AC_SUBST(
+    "REPLACE_STRUCT_LCONV",
+    condition = "HAVE_STRUCT_LCONV_OK",
+    if_true = "0",    # Value when condition is true
+    if_false = "1",   # Value when condition is false
+)
+</code></pre>
+<p>Note:
+<strong>Condition Resolution</strong>: If <code>condition</code> references a cache variable (e.g.,
+<code>condition="ac_cv_header_foo_h"</code>), it's evaluated as a truthy check:
+- Condition is <code>true</code> if the check succeeded AND the value is truthy (non-empty, non-zero)
+- Condition is <code>false</code> if the check failed OR the value is falsy (empty, "0")
+- If condition includes a comparison (e.g., <code>condition="ac_cv_header_foo_h==1"</code>),
+it performs value comparison instead.</p>
+<pre><code>In GNU Autoconf, `AC_SUBST` is used to substitute shell variables into
+Makefiles and template files (replacing `@VAR@` patterns). When used
+without `condition`, it always sets the variable. When used with
+`condition`, the value depends on the condition's result.
+</code></pre>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="checks.AC_SUBST-variable"></a>variable</td><td style="text-align: left">Variable name (e.g., <code>"LIBRARY_PATH"</code>)</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_SUBST-value"></a>value</td><td style="text-align: left">Value to assign when no condition is specified (defaults to <code>"1"</code>)</td><td style="text-align: left"><code>1</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_SUBST-requires"></a>requires</td><td style="text-align: left">Requirements that must be met for this check to run. Can be define names (e.g., <code>"HAVE_FOO"</code>), negated (e.g., <code>"!HAVE_FOO"</code>), or value-based (e.g., <code>"REPLACE_FSTAT==1"</code>, <code>"REPLACE_FSTAT!=0"</code>).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_SUBST-condition"></a>condition</td><td style="text-align: left">Selects which value to use: <code>if_true</code> when condition is true, <code>if_false</code> when false. Does not affect whether the check runs.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_SUBST-if_true"></a>if_true</td><td style="text-align: left">Value when condition is true (requires <code>condition</code>).</td><td style="text-align: left"><code>1</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_SUBST-if_false"></a>if_false</td><td style="text-align: left">Value when condition is false (requires <code>condition</code>).</td><td style="text-align: left"><code>0</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
+<p><a id="checks.AC_TRY_COMPILE"></a></p>
+<h2 id="checksac_try_compile"><a class="header" href="#checksac_try_compile">checks.AC_TRY_COMPILE</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+checks.AC_TRY_COMPILE(*, <a href="#checks.AC_TRY_COMPILE-code">code</a>, <a href="#checks.AC_TRY_COMPILE-name">name</a>, <a href="#checks.AC_TRY_COMPILE-define">define</a>, <a href="#checks.AC_TRY_COMPILE-includes">includes</a>, <a href="#checks.AC_TRY_COMPILE-language">language</a>, <a href="#checks.AC_TRY_COMPILE-compile_defines">compile_defines</a>, <a href="#checks.AC_TRY_COMPILE-requires">requires</a>, <a href="#checks.AC_TRY_COMPILE-if_true">if_true</a>,
+                      <a href="#checks.AC_TRY_COMPILE-if_false">if_false</a>, <a href="#checks.AC_TRY_COMPILE-subst">subst</a>)
+</pre>
+<p>Try to compile custom code.</p>
+<p>Original m4 example:</p>
+<pre><code class="language-m4">AC_TRY_COMPILE([#include &lt;stdio.h&gt;], [printf("test");], [AC_DEFINE([HAVE_PRINTF], [1])])
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-python">load("//autoconf:checks.bzl", "utils")
+macros.AC_TRY_COMPILE(
+    code = "#include &lt;stdio.h&gt;\nint main() { printf(\"test\"); return 0; }",
+    define = "HAVE_PRINTF",
+)
+macros.AC_TRY_COMPILE(file = ":test.c", define = "CUSTOM_CHECK")
+macros.AC_TRY_COMPILE(
+    includes = ["pthread.h"],
+    code = "int x = PTHREAD_CREATE_DETACHED; (void)x;",
+    define = "HAVE_PTHREAD_CREATE_DETACHED",
+)
+macros.AC_TRY_COMPILE(
+    code = utils.AC_LANG_PROGRAM(["#include &lt;stdio.h&gt;"], "printf("test");"),
+    define = "HAVE_PRINTF",
+)
+</code></pre>
+<p>Note:
+This is a rules_cc_autoconf extension. While GNU Autoconf has an
+obsolete AC_TRY_COMPILE macro (replaced by AC_COMPILE_IFELSE), this
+version adds support for file-based checks which is useful in Bazel.</p>
+<pre><code>When `includes` is provided along with `code`, the code is treated as
+the body of main() and the includes are prepended. For the AC_LANG_PROGRAM
+pattern (prologue + body), use `utils.AC_LANG_PROGRAM(prologue, body)` and
+pass the result as `code`.
+</code></pre>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="checks.AC_TRY_COMPILE-code"></a>code</td><td style="text-align: left">Code to compile. If <code>includes</code> is also provided, this is treated as the body of main(). Otherwise, it should be complete C code. For AC_LANG_PROGRAM-style tests, use code = utils.AC_LANG_PROGRAM(prologue, body).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_TRY_COMPILE-name"></a>name</td><td style="text-align: left">Cache variable name.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_TRY_COMPILE-define"></a>define</td><td style="text-align: left">Define name to set if compilation succeeds</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_TRY_COMPILE-includes"></a>includes</td><td style="text-align: left">Optional list of headers to include. When provided, <code>code</code> is treated as the body of main() function.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_TRY_COMPILE-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_TRY_COMPILE-compile_defines"></a>compile_defines</td><td style="text-align: left">Optional list of preprocessor define names from previous checks to add before includes (e.g., <code>["_GNU_SOURCE", "_DARWIN_C_SOURCE"]</code>). Each string must match the define name of a previous check. The values from those checks will be used automatically.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_TRY_COMPILE-requires"></a>requires</td><td style="text-align: left">Requirements that must be met for this check to run. Can be define names (e.g., <code>"HAVE_FOO"</code>), negated (e.g., <code>"!HAVE_FOO"</code>), or value-based (e.g., <code>"REPLACE_FSTAT==1"</code>, <code>"REPLACE_FSTAT!=0"</code>).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_TRY_COMPILE-if_true"></a>if_true</td><td style="text-align: left">Value to use when check succeeds (currently not used for this check type).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_TRY_COMPILE-if_false"></a>if_false</td><td style="text-align: left">Value to use when check fails (currently not used for this check type).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_TRY_COMPILE-subst"></a>subst</td><td style="text-align: left">If True, automatically create a substitution variable with the same name that will be set to "1" if the check succeeds, "0" if it fails.</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
+<p><a id="checks.AC_TRY_LINK"></a></p>
+<h2 id="checksac_try_link"><a class="header" href="#checksac_try_link">checks.AC_TRY_LINK</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+checks.AC_TRY_LINK(*, <a href="#checks.AC_TRY_LINK-code">code</a>, <a href="#checks.AC_TRY_LINK-name">name</a>, <a href="#checks.AC_TRY_LINK-define">define</a>, <a href="#checks.AC_TRY_LINK-includes">includes</a>, <a href="#checks.AC_TRY_LINK-language">language</a>, <a href="#checks.AC_TRY_LINK-compile_defines">compile_defines</a>, <a href="#checks.AC_TRY_LINK-requires">requires</a>, <a href="#checks.AC_TRY_LINK-if_true">if_true</a>,
+                   <a href="#checks.AC_TRY_LINK-if_false">if_false</a>, <a href="#checks.AC_TRY_LINK-subst">subst</a>)
+</pre>
+<p>Try to compile and link custom code.</p>
+<p>This function mirrors GNU Autoconf's <code>AC_LINK_IFELSE</code> macro, which uses
+<code>AC_LANG_PROGRAM</code> to construct test programs. In Bazel, use <code>code</code> (optionally
+with <code>includes</code>). For the AC_LANG_PROGRAM pattern, pass
+code = utils.AC_LANG_PROGRAM(prologue, body).</p>
+<p>Comparison with GNU Autoconf:</p>
+<p><strong>GNU Autoconf:</strong></p>
+<pre><code class="language-m4">AC_LINK_IFELSE(
+    [AC_LANG_PROGRAM(
+        [[#include &lt;stdio.h&gt;]],     # Prologue (includes/declarations)
+        [[printf("test");]]         # Body (code inside main())
+    )],
+    [AC_DEFINE([HAVE_PRINTF], [1])],
+    []
+)
+</code></pre>
+<p><strong>Bazel (AC_LANG_PROGRAM pattern):</strong></p>
+<pre><code class="language-python">load("//autoconf:checks.bzl", "utils")
+checks.AC_TRY_LINK(
+    code = utils.AC_LANG_PROGRAM(["#include &lt;stdio.h&gt;"], "printf("test");"),
+    define = "HAVE_PRINTF",
+)
+</code></pre>
+<p><strong>Bazel (includes pattern - backward compat):</strong></p>
+<pre><code class="language-python">checks.AC_TRY_LINK(
+    includes = ["stdio.h"],
+    code = "printf("test");",     # Treated as body of main()
+    define = "HAVE_PRINTF",
+)
+</code></pre>
+<p><strong>Bazel (raw code pattern):</strong></p>
+<pre><code class="language-python">checks.AC_TRY_LINK(
+    code = "#include &lt;stdio.h&gt;\nint main() { printf(\"test\"); return 0; }",
+    define = "HAVE_PRINTF",
+)
+</code></pre>
+<p>Note:
+This is similar to AC_TRY_COMPILE but also links the code, which is necessary
+to verify that functions are available at link time (not just declared).</p>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="checks.AC_TRY_LINK-code"></a>code</td><td style="text-align: left">Code to compile and link. If <code>includes</code> is also provided, this is treated as the body of main(). Otherwise, it should be complete C code. For AC_LANG_PROGRAM-style tests use code = utils.AC_LANG_PROGRAM(prologue, body).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_TRY_LINK-name"></a>name</td><td style="text-align: left">Cache variable name.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_TRY_LINK-define"></a>define</td><td style="text-align: left">Define name to set if compilation and linking succeeds</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_TRY_LINK-includes"></a>includes</td><td style="text-align: left">Optional list of headers to include (backward compatibility). When provided, <code>code</code> is treated as the body of main() function.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_TRY_LINK-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_TRY_LINK-compile_defines"></a>compile_defines</td><td style="text-align: left">Optional list of preprocessor define names from previous checks to add before includes (e.g., <code>["_GNU_SOURCE", "_DARWIN_C_SOURCE"]</code>). Each string must match the define name of a previous check. The values from those checks will be used automatically.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_TRY_LINK-requires"></a>requires</td><td style="text-align: left">Requirements that must be met for this check to run. Can be define names (e.g., <code>"HAVE_FOO"</code>), negated (e.g., <code>"!HAVE_FOO"</code>), or value-based (e.g., <code>"REPLACE_FSTAT==1"</code>, <code>"REPLACE_FSTAT!=0"</code>).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_TRY_LINK-if_true"></a>if_true</td><td style="text-align: left">Value to use when check succeeds (currently not used for this check type).</td><td style="text-align: left"><code>1</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_TRY_LINK-if_false"></a>if_false</td><td style="text-align: left">Value to use when check fails (currently not used for this check type).</td><td style="text-align: left"><code>0</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_TRY_LINK-subst"></a>subst</td><td style="text-align: left">If True, mark as a substitution variable (for @VAR@ replacement in subst.h).</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
+<p><a id="checks.M4_VARIABLE"></a></p>
+<h2 id="checksm4_variable"><a class="header" href="#checksm4_variable">checks.M4_VARIABLE</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+checks.M4_VARIABLE(<a href="#checks.M4_VARIABLE-define">define</a>, <a href="#checks.M4_VARIABLE-value">value</a>, <a href="#checks.M4_VARIABLE-requires">requires</a>, <a href="#checks.M4_VARIABLE-condition">condition</a>, <a href="#checks.M4_VARIABLE-if_true">if_true</a>, <a href="#checks.M4_VARIABLE-if_false">if_false</a>)
+</pre>
+<p>Define a configuration M4 variable.</p>
+<p>Original m4 example:</p>
+<pre><code class="language-m4">REPLACE_FOO=1
+</code></pre>
+<p>Conditional example (m4):</p>
+<pre><code class="language-m4">if test $HAVE_FOO = yes; then
+  REPLACE_FOO=0
+else
+  REPLACE_FOO=1
+fi
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-python"># Simple (always set)
+macros.M4_VARIABLE("REPLACE_FOO", "1")
+
+# Conditional (set based on another check's result)
+macros.M4_VARIABLE(
+    "REPLACE_FOO",
+    condition = "HAVE_FOO",
+    if_true = "0",    # Value when HAVE_FOO is true
+    if_false = "1",   # Value when HAVE_FOO is false
+)
+</code></pre>
+<p>Note:
+This is similar to <code>AC_SUBST</code> but is useful for tracking the difference
+between actual <code>AC_DEFINE</code> values and M4 shell variables used in macros.
+Unlike <code>AC_SUBST</code>, this does not set <code>subst=true</code> by default.</p>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="checks.M4_VARIABLE-define"></a>define</td><td style="text-align: left">Define name (e.g., <code>"REPLACE_FOO"</code>)</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="checks.M4_VARIABLE-value"></a>value</td><td style="text-align: left">Value to assign when no condition is specified (defaults to <code>"1"</code>)</td><td style="text-align: left"><code>1</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.M4_VARIABLE-requires"></a>requires</td><td style="text-align: left">List of requirements that must be met before this check runs. Can be simple define names (e.g., <code>"HAVE_FOO"</code>) or value-based requirements (e.g., <code>"REPLACE_FSTAT=1"</code> to require specific value)</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.M4_VARIABLE-condition"></a>condition</td><td style="text-align: left">Selects which value to use: <code>if_true</code> when condition is true, <code>if_false</code> when false. Does not affect whether the check runs.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.M4_VARIABLE-if_true"></a>if_true</td><td style="text-align: left">Value when condition is true (requires <code>condition</code>).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.M4_VARIABLE-if_false"></a>if_false</td><td style="text-align: left">Value when condition is false (requires <code>condition</code>).</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the m4 rule.</p>
+<p><a id="macros.AC_CHECK_DECLS"></a></p>
+<h2 id="macrosac_check_decls"><a class="header" href="#macrosac_check_decls">macros.AC_CHECK_DECLS</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "macros")
+
+macros.AC_CHECK_DECLS(<a href="#macros.AC_CHECK_DECLS-symbols">symbols</a>, *, <a href="#macros.AC_CHECK_DECLS-includes">includes</a>, <a href="#macros.AC_CHECK_DECLS-compile_defines">compile_defines</a>, <a href="#macros.AC_CHECK_DECLS-language">language</a>, <a href="#macros.AC_CHECK_DECLS-requires">requires</a>, <a href="#macros.AC_CHECK_DECLS-if_true">if_true</a>, <a href="#macros.AC_CHECK_DECLS-if_false">if_false</a>,
+                      <a href="#macros.AC_CHECK_DECLS-subst">subst</a>)
+</pre>
+<p>Check multiple declarations, creating HAVE_DECL_<SYMBOL> defines (AC_CHECK_DECLS).</p>
+<p>GNU Autoconf's AC_CHECK_DECLS(symbol, ...) checks whether each symbol is
+declared (e.g. in a header). This macro runs AC_CHECK_DECL for each symbol
+and sets define names HAVE_DECL_<SYMBOL> following autoconf conventions.</p>
+<p>Upstream:
+https://www.gnu.org/savannah-checkouts/gnu/autoconf/manual/autoconf-2.72/autoconf.html#index-AC_005fCHECK_002dDECL</p>
+<p>M4 example (configure.ac):
+AC_CHECK_DECLS([NULL, stdout, stderr], [], [], [[#include &lt;stdio.h&gt;]])
+AC_CHECK_DECL([NULL], [AC_DEFINE([HAVE_DECL_NULL], [1])], [], [[#include &lt;stddef.h&gt;]])</p>
+<p>Bazel example (use <code>#include &lt;foo&gt;</code> in includes):
+load("//autoconf:checks.bzl", "macros")
+macros.AC_CHECK_DECLS(["NULL", "stdout", "stderr"], includes = ["#include &lt;stdio.h&gt;"])</p>
+<h1 id="defines-have_decl_null-have_decl_stdout-have_decl_stderr"><a class="header" href="#defines-have_decl_null-have_decl_stdout-have_decl_stderr">Defines: HAVE_DECL_NULL, HAVE_DECL_STDOUT, HAVE_DECL_STDERR</a></h1>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_DECLS-symbols"></a>symbols</td><td style="text-align: left">List of symbol names to check.</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_DECLS-includes"></a>includes</td><td style="text-align: left">Optional list of include directives (e.g. ["#include &lt;stdio.h&gt;"]).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_DECLS-compile_defines"></a>compile_defines</td><td style="text-align: left">Optional list of preprocessor define names (applies to all checks).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_DECLS-language"></a>language</td><td style="text-align: left">Language to use for checks (<code>"c"</code> or <code>"cpp"</code>).</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_DECLS-requires"></a>requires</td><td style="text-align: left">Requirements that must be met (applies to all checks).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_DECLS-if_true"></a>if_true</td><td style="text-align: left">Value to use when check succeeds (applies to all checks).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_DECLS-if_false"></a>if_false</td><td style="text-align: left">Value to use when check fails (applies to all checks).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_DECLS-subst"></a>subst</td><td style="text-align: left">Subst behavior (applies to all checks).</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>List of JSON-encoded check strings.</p>
+<p><a id="macros.AC_CHECK_FUNCS"></a></p>
+<h2 id="macrosac_check_funcs"><a class="header" href="#macrosac_check_funcs">macros.AC_CHECK_FUNCS</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "macros")
+
+macros.AC_CHECK_FUNCS(<a href="#macros.AC_CHECK_FUNCS-functions">functions</a>, *, <a href="#macros.AC_CHECK_FUNCS-code">code</a>, <a href="#macros.AC_CHECK_FUNCS-language">language</a>, <a href="#macros.AC_CHECK_FUNCS-compile_defines">compile_defines</a>, <a href="#macros.AC_CHECK_FUNCS-requires">requires</a>, <a href="#macros.AC_CHECK_FUNCS-subst">subst</a>)
+</pre>
+<p>Check multiple functions, creating HAVE_<FUNCTION> defines (AC_CHECK_FUNCS).</p>
+<p>GNU Autoconf's AC_CHECK_FUNCS(function, ...) checks whether each function
+is available (linkable). This macro runs AC_CHECK_FUNC for each function
+and sets HAVE_<FUNCTION> following autoconf conventions.</p>
+<p>Upstream:
+https://www.gnu.org/savannah-checkouts/gnu/autoconf/manual/autoconf-2.72/autoconf.html#index-AC_005fCHECK_002dFUNC</p>
+<p>M4 example (configure.ac):
+AC_CHECK_FUNCS([malloc, free, printf])</p>
+<p>Bazel example:
+load("//autoconf:checks.bzl", "macros")
+macros.AC_CHECK_FUNCS(["malloc", "free", "printf"])</p>
+<h1 id="defines-have_malloc-have_free-have_printf"><a class="header" href="#defines-have_malloc-have_free-have_printf">Defines: HAVE_MALLOC, HAVE_FREE, HAVE_PRINTF</a></h1>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNCS-functions"></a>functions</td><td style="text-align: left">List of function names to check.</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNCS-code"></a>code</td><td style="text-align: left">Custom code to compile (applies to all checks).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNCS-language"></a>language</td><td style="text-align: left">Language to use for checks (<code>"c"</code> or <code>"cpp"</code>).</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNCS-compile_defines"></a>compile_defines</td><td style="text-align: left">Optional list of preprocessor define names (applies to all checks).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNCS-requires"></a>requires</td><td style="text-align: left">Requirements that must be met (applies to all checks).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNCS-subst"></a>subst</td><td style="text-align: left">Subst behavior (applies to all checks).</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>List of JSON-encoded check strings.</p>
+<p><a id="macros.AC_CHECK_HEADERS"></a></p>
+<h2 id="macrosac_check_headers"><a class="header" href="#macrosac_check_headers">macros.AC_CHECK_HEADERS</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "macros")
+
+macros.AC_CHECK_HEADERS(<a href="#macros.AC_CHECK_HEADERS-headers">headers</a>, *, <a href="#macros.AC_CHECK_HEADERS-language">language</a>, <a href="#macros.AC_CHECK_HEADERS-includes">includes</a>, <a href="#macros.AC_CHECK_HEADERS-compile_defines">compile_defines</a>, <a href="#macros.AC_CHECK_HEADERS-requires">requires</a>)
+</pre>
+<p>Check multiple headers, creating HAVE_<HEADER> defines (AC_CHECK_HEADERS).</p>
+<p>GNU Autoconf's AC_CHECK_HEADERS(header, ...) checks whether each header can
+be compiled. This macro runs AC_CHECK_HEADER for each header and sets
+HAVE_&lt;HEADER_UPPER&gt; (e.g. HAVE_STDIO_H) following autoconf conventions.
+Header names are turned into include directives as #include <header>.</p>
+<p>Upstream:
+https://www.gnu.org/savannah-checkouts/gnu/autoconf/manual/autoconf-2.72/autoconf.html#index-AC_005fCHECK_002dHEADERS</p>
+<p>Original m4 example:</p>
+<pre><code class="language-m4">AC_CHECK_HEADERS([stdio.h, stdlib.h, string.h])
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-python">load("//autoconf:checks.bzl", "macros")
+macros.AC_CHECK_HEADERS(["stdio.h", "stdlib.h", "string.h"])
+# Defines: HAVE_STDIO_H, HAVE_STDLIB_H, HAVE_STRING_H
+</code></pre>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_HEADERS-headers"></a>headers</td><td style="text-align: left">List of header names to check (e.g. "sys/stat.h").</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_HEADERS-language"></a>language</td><td style="text-align: left">Language to use for checks (<code>"c"</code> or <code>"cpp"</code>).</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_HEADERS-includes"></a>includes</td><td style="text-align: left">Optional list of include directives (e.g. ["#include &lt;stdio.h&gt;"]).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_HEADERS-compile_defines"></a>compile_defines</td><td style="text-align: left">Optional list of preprocessor define names (applies to all checks).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_HEADERS-requires"></a>requires</td><td style="text-align: left">Requirements that must be met (applies to all checks).</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>List of JSON-encoded check strings.</p>
+<p><a id="macros.AC_CHECK_MEMBERS"></a></p>
+<h2 id="macrosac_check_members"><a class="header" href="#macrosac_check_members">macros.AC_CHECK_MEMBERS</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "macros")
+
+macros.AC_CHECK_MEMBERS(<a href="#macros.AC_CHECK_MEMBERS-aggregate_members">aggregate_members</a>, *, <a href="#macros.AC_CHECK_MEMBERS-includes">includes</a>, <a href="#macros.AC_CHECK_MEMBERS-language">language</a>, <a href="#macros.AC_CHECK_MEMBERS-compile_defines">compile_defines</a>, <a href="#macros.AC_CHECK_MEMBERS-requires">requires</a>,
+                        <a href="#macros.AC_CHECK_MEMBERS-if_true">if_true</a>, <a href="#macros.AC_CHECK_MEMBERS-if_false">if_false</a>, <a href="#macros.AC_CHECK_MEMBERS-subst">subst</a>)
+</pre>
+<p>Check multiple structure members, creating HAVE_<AGG>_<MEMBER> defines (AC_CHECK_MEMBERS).</p>
+<p>GNU Autoconf's AC_CHECK_MEMBER(aggregate.member, ...) checks whether a
+structure member exists. This macro runs AC_CHECK_MEMBER for each
+"aggregate.member" and sets HAVE_<AGGREGATE>_<MEMBER> (e.g.
+HAVE_STRUCT_STAT_ST_RDEV). Use includes with <code>#include &lt;foo&gt;</code> for headers
+that declare the aggregate.</p>
+<p>Upstream:
+https://www.gnu.org/savannah-checkouts/gnu/autoconf/manual/autoconf-2.72/autoconf.html#index-AC_005fCHECK_002dMEMBER</p>
+<p>M4 example (configure.ac):
+AC_CHECK_MEMBERS([struct stat.st_rdev, struct tm.tm_zone], [], [], [[#include &lt;sys/stat.h&gt;]])
+AC_CHECK_MEMBER([struct stat.st_rdev], [], [], [[#include &lt;sys/stat.h&gt;]])</p>
+<p>Bazel example (use <code>#include &lt;foo&gt;</code> in includes):
+load("//autoconf:checks.bzl", "macros")
+macros.AC_CHECK_MEMBERS(
+["struct stat.st_rdev", "struct tm.tm_zone"],
+includes = ["#include &lt;sys/stat.h&gt;", "#include &lt;time.h&gt;"],
+)</p>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_MEMBERS-aggregate_members"></a>aggregate_members</td><td style="text-align: left">List of member specs (e.g. ["struct stat.st_rdev"]).</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_MEMBERS-includes"></a>includes</td><td style="text-align: left">Optional list of include directives (e.g. ["#include &lt;sys/stat.h&gt;"]).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_MEMBERS-language"></a>language</td><td style="text-align: left">Language to use for checks (<code>"c"</code> or <code>"cpp"</code>).</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_MEMBERS-compile_defines"></a>compile_defines</td><td style="text-align: left">Optional list of preprocessor define names (applies to all checks).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_MEMBERS-requires"></a>requires</td><td style="text-align: left">Requirements that must be met (applies to all checks).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_MEMBERS-if_true"></a>if_true</td><td style="text-align: left">Value to use when check succeeds (applies to all checks).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_MEMBERS-if_false"></a>if_false</td><td style="text-align: left">Value to use when check fails (applies to all checks).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_MEMBERS-subst"></a>subst</td><td style="text-align: left">Subst behavior (applies to all checks).</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>List of JSON-encoded check strings.</p>
+<p><a id="macros.AC_CHECK_TYPES"></a></p>
+<h2 id="macrosac_check_types"><a class="header" href="#macrosac_check_types">macros.AC_CHECK_TYPES</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "macros")
+
+macros.AC_CHECK_TYPES(<a href="#macros.AC_CHECK_TYPES-types">types</a>, *, <a href="#macros.AC_CHECK_TYPES-code">code</a>, <a href="#macros.AC_CHECK_TYPES-includes">includes</a>, <a href="#macros.AC_CHECK_TYPES-language">language</a>, <a href="#macros.AC_CHECK_TYPES-compile_defines">compile_defines</a>, <a href="#macros.AC_CHECK_TYPES-requires">requires</a>, <a href="#macros.AC_CHECK_TYPES-if_true">if_true</a>,
+                      <a href="#macros.AC_CHECK_TYPES-if_false">if_false</a>, <a href="#macros.AC_CHECK_TYPES-subst">subst</a>)
+</pre>
+<p>Check multiple types, creating HAVE_<TYPE> defines (AC_CHECK_TYPES).</p>
+<p>GNU Autoconf's AC_CHECK_TYPE(type, ...) checks whether each type is defined.
+This macro runs AC_CHECK_TYPE for each type and sets HAVE_<TYPE> (e.g.
+HAVE_SIZE_T) following autoconf conventions. Use includes with
+<code>#include &lt;foo&gt;</code> for the headers that declare the types.</p>
+<p>Upstream:
+https://www.gnu.org/savannah-checkouts/gnu/autoconf/manual/autoconf-2.72/autoconf.html#index-AC_005fCHECK_002dTYPE</p>
+<p>M4 example (configure.ac):
+AC_CHECK_TYPES([size_t, pthread_t, pid_t], [], [], [[#include &lt;stddef.h&gt;]])
+AC_CHECK_TYPE([pthread_t], [], [], [[#include &lt;pthread.h&gt;]])</p>
+<p>Bazel example (use <code>#include &lt;foo&gt;</code> in includes):
+load("//autoconf:checks.bzl", "macros")
+macros.AC_CHECK_TYPES(["size_t", "pthread_t", "pid_t"], includes = ["#include &lt;stddef.h&gt;", "#include &lt;pthread.h&gt;"])</p>
+<h1 id="defines-have_size_t-have_pthread_t-have_pid_t"><a class="header" href="#defines-have_size_t-have_pthread_t-have_pid_t">Defines: HAVE_SIZE_T, HAVE_PTHREAD_T, HAVE_PID_T</a></h1>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_TYPES-types"></a>types</td><td style="text-align: left">List of type names to check.</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_TYPES-code"></a>code</td><td style="text-align: left">Custom code that includes necessary headers (applies to all checks).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_TYPES-includes"></a>includes</td><td style="text-align: left">Optional list of include directives (e.g. ["#include &lt;stddef.h&gt;"]).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_TYPES-language"></a>language</td><td style="text-align: left">Language to use for checks (<code>"c"</code> or <code>"cpp"</code>).</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_TYPES-compile_defines"></a>compile_defines</td><td style="text-align: left">Optional list of preprocessor define names (applies to all checks).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_TYPES-requires"></a>requires</td><td style="text-align: left">Requirements that must be met (applies to all checks).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_TYPES-if_true"></a>if_true</td><td style="text-align: left">Value to use when check succeeds (applies to all checks).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_TYPES-if_false"></a>if_false</td><td style="text-align: left">Value to use when check fails (applies to all checks).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_TYPES-subst"></a>subst</td><td style="text-align: left">Subst behavior (applies to all checks).</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>List of JSON-encoded check strings.</p>
+<p><a id="utils.AC_LANG_PROGRAM"></a></p>
+<h2 id="utilsac_lang_program"><a class="header" href="#utilsac_lang_program">utils.AC_LANG_PROGRAM</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "utils")
+
+utils.AC_LANG_PROGRAM(<a href="#utils.AC_LANG_PROGRAM-prologue">prologue</a>, <a href="#utils.AC_LANG_PROGRAM-body">body</a>)
+</pre>
+<p>Build program code from prologue and main body (AC_LANG_PROGRAM).</p>
+<p>GNU Autoconf's AC_LANG_PROGRAM(prologue, body) expands to a complete test
+program: prologue (includes/declarations) followed by main() containing body.
+Use the result as the <code>code</code> argument to AC_TRY_COMPILE or AC_TRY_LINK.</p>
+<p>Upstream:
+https://www.gnu.org/savannah-checkouts/gnu/autoconf/manual/autoconf-2.72/autoconf.html#index-AC_005fLANG_005fPROGRAM</p>
+<p>M4 example (configure.ac):
+AC_TRY_COMPILE([AC_LANG_PROGRAM([[#include &lt;stdio.h&gt;]], [printf("test");])], ...)
+AC_TRY_LINK([AC_LANG_PROGRAM([[#include &lt;langinfo.h&gt;]], [char* cs = nl_langinfo(CODESET); return !cs;])], ...)</p>
+<p>Bazel example (use <code>#include &lt;foo&gt;</code> in the prologue list):
+load("//autoconf:checks.bzl", "utils", "checks")
+checks.AC_TRY_COMPILE(
+code = utils.AC_LANG_PROGRAM(["#include &lt;stdio.h&gt;"], "printf("test");"),
+define = "HAVE_PRINTF",
+)
+checks.AC_TRY_LINK(
+code = utils.AC_LANG_PROGRAM(
+["#include &lt;langinfo.h&gt;"],
+"char* cs = nl_langinfo(CODESET); return !cs;",
+),
+define = "HAVE_LANGINFO_CODESET",
+)</p>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="utils.AC_LANG_PROGRAM-prologue"></a>prologue</td><td style="text-align: left">List of strings (include directives or declarations), joined with newlines.</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="utils.AC_LANG_PROGRAM-body"></a>body</td><td style="text-align: left">Code inside main() — a string, or a list of strings joined with newlines.</td><td style="text-align: left">none</td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A string suitable for the <code>code</code> parameter of AC_TRY_COMPILE or AC_TRY_LINK.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="autoconf_srcs.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="package_info.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="autoconf_srcs.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="package_info.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>
