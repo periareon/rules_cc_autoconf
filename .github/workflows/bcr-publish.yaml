@@ -33,7 +33,7 @@ jobs:
       # Tags don't include a "v" prefix
       tag_prefix: ""
       # GitHub repository which is a fork of the upstream where the Pull Request will be opened.
-      registry_fork: scentini/bazel-central-registry
+      registry_fork: periareon/bazel-central-registry
       templates_ref: ${{ inputs.templates_ref || inputs.release_version }}
     permissions:
       contents: write
