@@ -1,0 +1,18 @@
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("//tools/cxxopts:cxxopts.bzl", "cxxopts")
+
+cc_binary(
+    name = "result_query",
+    srcs = ["result_query.cc"],
+    cxxopts = cxxopts(),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//tools/json",
+    ],
+)
+
+alias(
+    name = "query",
+    actual = ":result_query",
+    visibility = ["//visibility:public"],
+)

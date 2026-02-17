@@ -1,6 +1,6 @@
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("//autoconf/private:cxxopts.bzl", "cxxopts")
+load("//tools/cxxopts:cxxopts.bzl", "cxxopts", "linkopts")
 
 # Library for source generation
 cc_library(
@@ -27,7 +27,7 @@ cc_library(
     deps = [
         ":source_generator",
         "//autoconf/private/checker",
-        "//autoconf/private/json",
+        "//tools/json",
     ],
 )
 
@@ -37,6 +37,7 @@ cc_binary(
         "main.cc",
     ],
     cxxopts = cxxopts(),
+    linkopts = linkopts(),
     visibility = ["//visibility:public"],
     deps = [
         ":resolver",

@@ -1,7 +1,7 @@
 """https://www.gnu.org/savannah-checkouts/gnu/autoconf/manual/autoconf-2.72/autoconf.html#index-AC_005fC_005fRESTRICT"""
 
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
-load("//autoconf/private:cxxopts.bzl", "cxxopts")
+load("//tools/cxxopts:cxxopts.bzl", "cxxopts")
 load(":restrict.bzl", "ac_c_restrict")
 
 # Resolver tool that combines the three keyword compile-check results
@@ -11,7 +11,7 @@ cc_binary(
     srcs = ["restrict_resolver.cc"],
     cxxopts = cxxopts(),
     deps = [
-        "//autoconf/private/json",
+        "//tools/json",
     ],
 )
 

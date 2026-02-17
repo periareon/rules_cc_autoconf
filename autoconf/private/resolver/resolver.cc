@@ -13,8 +13,8 @@
 #include "autoconf/private/checker/check_result.h"
 #include "autoconf/private/checker/checker.h"
 #include "autoconf/private/checker/debug_logger.h"
-#include "autoconf/private/json/json.h"
 #include "autoconf/private/resolver/source_generator.h"
+#include "tools/json/json.h"
 
 namespace rules_cc_autoconf {
 
