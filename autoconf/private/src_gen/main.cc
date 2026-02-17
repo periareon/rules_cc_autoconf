@@ -19,10 +19,7 @@
 namespace rules_cc_autoconf {
 
 struct ResultEntry {
-    std::string value{};
     bool success = false;
-
-    ResultEntry() : value(), success(false) {}
 };
 
 struct SrcsArgs {
@@ -172,10 +169,6 @@ ResultEntry load_single_result_from_file(const std::string& path) {
     const nlohmann::json& val = it.value();
 
     ResultEntry entry;
-    nlohmann::json::const_iterator value_it = val.find("value");
-    if (value_it != val.end() && !value_it->is_null()) {
-        entry.value = value_it->dump();  // JSON-encoded string
-    }
     nlohmann::json::const_iterator success_it = val.find("success");
     entry.success = (success_it != val.end()) ? success_it->get<bool>() : false;
     return entry;
@@ -187,12 +180,7 @@ bool generate_wrapped_source(
     const std::unordered_map<std::string, ResultEntry>& results) {
     std::unordered_map<std::string, ResultEntry>::const_iterator it =
         results.find(define);
-    bool defined = false;
-    std::string value{};
-    if (it != results.end()) {
-        defined = it->second.success;
-        value = it->second.value;
-    }
+    bool defined = (it != results.end()) && it->second.success;
 
     std::ifstream in_file(orig_path);
     if (!in_file.is_open()) {
@@ -215,21 +203,14 @@ bool generate_wrapped_source(
     }
 
     if (defined) {
-        out_file << "#define " << define;
-        if (!value.empty()) {
-            out_file << " " << value;
+        out_file << original_content;
+        if (!original_content.empty() && original_content.back() != '\n') {
+            out_file << "\n";
         }
-        out_file << "\n";
     } else {
-        out_file << "#undef " << define << "\n";
+        out_file << "/* " << define
+                 << " is not set — source excluded by autoconf_srcs */\n";
     }
-
-    out_file << "#ifdef " << define << "\n";
-    out_file << original_content;
-    if (!original_content.empty() && original_content.back() != '\n') {
-        out_file << "\n";
-    }
-    out_file << "#endif\n";
 
     out_file.close();
     return true;

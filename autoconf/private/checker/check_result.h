@@ -31,7 +31,7 @@ struct CheckResult {
      */
     std::optional<std::string> value{};
 
-    /** Whether the check succeeded */
+    /** Whether the check succeeded in writing a value. */
     bool success = false;
 
     /** Whether this is a define (true for all CheckTypes except kM4Variable) */
@@ -41,7 +41,7 @@ struct CheckResult {
     bool is_subst = false;
 
     /** The type of check that produced this result */
-    CheckType type = CheckType::kDefine;
+    CheckType type = CheckType::kUnknown;
 
     /** Whether this is an unquoted define (AC_DEFINE_UNQUOTED) */
     bool unquote = false;
@@ -51,7 +51,7 @@ struct CheckResult {
      * @param name The cache variable name (e.g., "ac_cv_func_printf").
      * @param value The define value. nullopt = not provided, "" = explicitly
      * empty.
-     * @param success Whether the check succeeded.
+     * @param success Whether the check succeeded in writing a value.
      * @param is_define Whether this is a define (default: true).
      * @param is_subst Whether this is a subst (default: false).
      * @param type The type of check that produced this result (default:

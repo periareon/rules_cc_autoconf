@@ -433,7 +433,9 @@ int Checker::run_check_from_file(const std::filesystem::path& check_path,
                 std::string result_name = check.name();
                 if (value.has_value() &&
                     (!value->empty() || should_create_define)) {
-                    result = CheckResult(result_name, value, cond_true,
+                    // A value was assigned (from either if_true or
+                    // if_false branch), so the check succeeded.
+                    result = CheckResult(result_name, value, true,
                                          check_type_is_define(check.type()),
                                          check.subst().has_value(),
                                          check.type(), check.define(),
