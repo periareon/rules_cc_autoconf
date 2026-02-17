@@ -41,8 +41,8 @@ class ResultLookup {
         if (it != name_to_index_.end()) {
             // Duplicate name detected
             size_t existing_idx = it->second;
-            std::filesystem::path existing_file = file_to_path_[existing_idx];
-            if (existing_file != file_path) {
+            const std::string& existing_file = file_to_path_[existing_idx];
+            if (existing_file != file_path.string()) {
                 throw std::runtime_error(
                     "Duplicate --dep argument for name '" + lookup_name +
                     "':\n"
@@ -50,7 +50,7 @@ class ResultLookup {
                     lookup_name +
                     "' was already mapped to file:\n"
                     "    " +
-                    existing_file.string() +
+                    existing_file +
                     "\n"
                     "  Attempted to map to different file:\n"
                     "    " +
@@ -100,9 +100,9 @@ class ResultLookup {
     std::vector<CheckResult> results_;  // Single source of truth
     std::unordered_map<std::string, size_t>
         name_to_index_;  // Lookup name -> index
-    std::unordered_map<std::filesystem::path, size_t>
+    std::unordered_map<std::string, size_t>
         file_to_index_;  // File path -> index
-    std::unordered_map<size_t, std::filesystem::path>
+    std::unordered_map<size_t, std::string>
         file_to_path_;  // Index -> file path (for error messages)
 
     /**
@@ -111,9 +111,11 @@ class ResultLookup {
      * @return Index of the result in results_ vector.
      */
     size_t load_or_get_index(const std::filesystem::path& file_path) {
+        std::string file_key = file_path.string();
+
         // Check if file already loaded
-        std::unordered_map<std::filesystem::path, size_t>::iterator file_it =
-            file_to_index_.find(file_path);
+        std::unordered_map<std::string, size_t>::iterator file_it =
+            file_to_index_.find(file_key);
         if (file_it != file_to_index_.end()) {
             return file_it->second;  // Already loaded
         }
@@ -121,13 +123,13 @@ class ResultLookup {
         // Load from file
         if (!std::filesystem::exists(file_path)) {
             throw std::runtime_error("Dep results file does not exist: " +
-                                     file_path.string());
+                                     file_key);
         }
 
         std::ifstream results_file(file_path);
         if (!results_file.is_open()) {
             throw std::runtime_error("Failed to open dep results file: " +
-                                     file_path.string());
+                                     file_key);
         }
 
         nlohmann::json results_json;
@@ -137,7 +139,7 @@ class ResultLookup {
         // Parse result from JSON (expect single result per file)
         if (results_json.empty() || !results_json.is_object()) {
             throw std::runtime_error("Dep results file is empty or invalid: " +
-                                     file_path.string());
+                                     file_key);
         }
 
         // Get the first (and should be only) result from the JSON
@@ -149,14 +151,14 @@ class ResultLookup {
             CheckResult::from_json(key, &json_value);
         if (!result.has_value()) {
             throw std::runtime_error("Failed to parse CheckResult from file: " +
-                                     file_path.string());
+                                     file_key);
         }
 
         // Add to results vector
         size_t idx = results_.size();
         results_.push_back(*result);
-        file_to_index_[file_path] = idx;
-        file_to_path_[idx] = file_path;
+        file_to_index_[file_key] = idx;
+        file_to_path_[idx] = file_key;
 
         return idx;
     }
