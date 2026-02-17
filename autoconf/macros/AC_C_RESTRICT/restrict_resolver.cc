@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 
-#include "autoconf/private/json/json.h"
+#include "tools/json/json.h"
 
 namespace {
 

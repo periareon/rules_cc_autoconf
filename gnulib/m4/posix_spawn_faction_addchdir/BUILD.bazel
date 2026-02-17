@@ -6,15 +6,34 @@ load("//autoconf:checks.bzl", "checks")
 autoconf(
     name = "posix_spawn_faction_addchdir",
     checks = [
-        # On macOS, this function exists
+        # Check for the _np (non-portable) variant (macOS)
         checks.AC_CHECK_FUNC(
             "posix_spawn_file_actions_addchdir_np",
             define = "HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR_NP",
         ),
-        # This function is not yet standardized, so always replace the system's implementation
-        # REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR=1 is set by defaults if function exists
-        # HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR=0 on macOS (not available)
-        checks.AC_SUBST("HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR", "0"),
+        # Check for the standard function name (added in newer POSIX / Xcode 26+).
+        # AC_CHECK_FUNCS_ONCE([posix_spawn_file_actions_addchdir])
+        checks.AC_CHECK_FUNC(
+            "posix_spawn_file_actions_addchdir",
+        ),
+        # Per upstream m4:
+        #   if test $ac_cv_func_posix_spawn_file_actions_addchdir = yes; then
+        #     REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR=1
+        #   else
+        #     HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR=0
+        #   fi
+        checks.AC_SUBST(
+            "HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR",
+            condition = "ac_cv_func_posix_spawn_file_actions_addchdir",
+            if_false = "0",
+            if_true = "1",
+        ),
+        checks.AC_SUBST(
+            "REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR",
+            condition = "ac_cv_func_posix_spawn_file_actions_addchdir",
+            if_false = "0",
+            if_true = "1",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [

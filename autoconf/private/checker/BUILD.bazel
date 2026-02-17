@@ -1,6 +1,6 @@
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("//autoconf/private:cxxopts.bzl", "cxxopts")
+load("//tools/cxxopts:cxxopts.bzl", "cxxopts", "linkopts")
 
 cc_library(
     name = "check_types",
@@ -14,7 +14,7 @@ cc_library(
     cxxopts = cxxopts(),
     visibility = ["//autoconf/private:__subpackages__"],
     deps = [
-        "//autoconf/private/json",
+        "//tools/json",
     ],
 )
 
@@ -36,7 +36,7 @@ cc_library(
     deps = [
         ":check_types",
         ":debug_logger",
-        "//autoconf/private/json",
+        "//tools/json",
     ],
 )
 
@@ -55,7 +55,7 @@ cc_library(
         ":check_types",
         ":config",
         ":debug_logger",
-        "//autoconf/private/json",
+        "//tools/json",
     ],
 )
 
@@ -70,7 +70,7 @@ cc_library(
     deps = [
         ":check_types",
         ":debug_logger",
-        "//autoconf/private/json",
+        "//tools/json",
     ],
 )
 
@@ -85,7 +85,7 @@ cc_library(
     deps = [
         ":check_runner",
         ":condition_evaluator",
-        "//autoconf/private/json",
+        "//tools/json",
     ],
 )
 
@@ -95,10 +95,11 @@ cc_binary(
         "main.cc",
     ],
     cxxopts = cxxopts(),
+    linkopts = linkopts(),
     visibility = ["//visibility:public"],
     deps = [
         ":checker",
         "//autoconf/private/common:action_args",
-        "//autoconf/private/json",
+        "//tools/json",
     ],
 )

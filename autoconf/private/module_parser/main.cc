@@ -9,7 +9,7 @@
 #include <sstream>
 #include <string>
 
-#include "autoconf/private/json/json.h"
+#include "tools/json/json.h"
 
 /**
  * @brief Extract a string value from a Starlark function call parameter.

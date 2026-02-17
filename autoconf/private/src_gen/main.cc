@@ -14,7 +14,7 @@
 #include <utility>
 #include <vector>
 
-#include "autoconf/private/json/json.h"
+#include "tools/json/json.h"
 
 namespace rules_cc_autoconf {
 
