@@ -84,24 +84,35 @@ autoconf(
 # REPLACE_POSIX_SPAWN_FILE_ACTIONS_*; those are in gl_FUNC_* targets.
 autoconf(
     name = "gl_POSIX_SPAWN_BODY",
-    checks = [
-        # AC_REQUIRE([gl_SPAWN_H_DEFAULTS]) - line 14; not tracked
-        # AC_REQUIRE([gl_HAVE_POSIX_SPAWN]) - line 15; via dep
-        # AC_CHECK_DECLS([posix_spawn]) - line 33; via gl_HAVE_DECL_POSIX_SPAWN
-        # REPLACE_POSIX_SPAWN - lines 119-122: set when no posix_spawn or works/secure fail.
-        # We use platform select (no runtime checks): macOS -> 1, Linux -> 0 (matches goldens).
-    ] + select({
+    checks = select({
         "@platforms//os:macos": [
-            # config.h #define REPLACE_POSIX_SPAWN 1 and subst "1"
+
+            # macOS posix_spawn is buggy (gl_POSIX_SPAWN_WORKS / gl_POSIX_SPAWN_SECURE
+            # fail at runtime); always use gnulib replacement.
             checks.AC_DEFINE(
                 "REPLACE_POSIX_SPAWN",
-                "1",
+                1,
                 subst = True,
             ),
         ],
         "//conditions:default": [
-            # subst "0" only; config.h has /* #undef REPLACE_POSIX_SPAWN */ on Linux
-            checks.AC_SUBST("REPLACE_POSIX_SPAWN", "0"),
+            # AC_REQUIRE([gl_SPAWN_H_DEFAULTS]) - line 14; not tracked
+            # AC_REQUIRE([gl_HAVE_POSIX_SPAWN]) - line 15; via dep
+            # AC_CHECK_DECLS([posix_spawn]) - line 33; via gl_HAVE_DECL_POSIX_SPAWN
+            # REPLACE_POSIX_SPAWN - lines 36-47, 119-122.
+            # posix_spawn.m4 checks (via m4_ifdef) for posix_spawn_file_actions_addchdir_np;
+            # if missing, REPLACE_POSIX_SPAWN=1 so the gnulib replacement is used.
+            # This is not OS-gated in the M4; the shared cache variable comes from
+            # //gnulib/m4/posix_spawn_faction_addchdir:ac_cv_func_posix_spawn_file_actions_addchdir_np.
+            checks.AC_DEFINE(
+                "REPLACE_POSIX_SPAWN",
+                requires = ["ac_cv_func_posix_spawn_file_actions_addchdir_np==0"],
+            ),
+            # Subst value driven by the _np check result
+            checks.AC_SUBST(
+                "REPLACE_POSIX_SPAWN",
+                condition = "!ac_cv_func_posix_spawn_file_actions_addchdir_np",
+            ),
         ],
     }) + [
         # POSIX_SPAWN_SETSCHEDULER - lines 78-87 (compile-time)
@@ -133,6 +144,7 @@ int main(void) { return 0; }
         ":gl_PREREQ_POSIX_SPAWN_INTERNAL",
         "//autoconf/macros/AC_CANONICAL_HOST",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/posix_spawn_faction_addchdir:ac_cv_func_posix_spawn_file_actions_addchdir_np",
         "//gnulib/m4/spawn_h:gl_HAVE_POSIX_SPAWN",
     ],
 )
