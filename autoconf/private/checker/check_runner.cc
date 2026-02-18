@@ -6,7 +6,6 @@
 #include <nlohmann/json.hpp>
 #include <sstream>
 #include <stdexcept>
-#include <system_error>
 #include <vector>
 
 #include "autoconf/private/checker/check.h"
@@ -38,6 +37,12 @@ void CheckRunner::set_required_defines(
 void CheckRunner::set_dep_results(
     const std::map<std::string, CheckResult>& dep_results) {
     dep_results_ = dep_results;
+}
+
+void CheckRunner::set_source_id(const std::string& source_id,
+                                const std::filesystem::path& source_dir) {
+    source_id_ = source_id;
+    source_dir_ = std::filesystem::path(source_dir).make_preferred();
 }
 
 std::string CheckRunner::get_defines_from_previous_checks() const {
@@ -200,8 +205,7 @@ int main(void) {
     // AC_CHECK_FUNC should use linking (not just compilation) to match GNU
     // Autoconf behavior This ensures functions that exist but aren't declared
     // in headers are detected
-    bool success =
-        try_compile_and_link(code, check.language(), check_id(check));
+    bool success = try_compile_and_link(code, check.language());
     return CheckResult(check.name(), success ? "1" : "0", success,
                        check_type_is_define(check.type()),
                        check.subst().has_value(), check.type(), check.define(),
@@ -245,8 +249,8 @@ int main(void) {
 )";
     }
 
-    bool success = try_compile_and_link_with_lib(
-        code, library, check.language(), check_id(check));
+    bool success =
+        try_compile_and_link_with_lib(code, library, check.language());
     return CheckResult(check.name(), success ? "1" : "0", success,
                        check_type_is_define(check.type()),
                        check.subst().has_value(), check.type(), check.define(),
@@ -276,7 +280,7 @@ int main(void) {
         code = defines_code + code;
     }
 
-    bool success = try_compile(code, check.language(), check_id(check));
+    bool success = try_compile(code, check.language());
     return CheckResult(check.name(), success ? "1" : "0", success,
                        check_type_is_define(check.type()),
                        check.subst().has_value(), check.type(), check.define(),
@@ -387,8 +391,7 @@ CheckResult CheckRunner::check_link(const Check& check) {
 
     // Compile and link without running - we only need to verify linking
     // succeeds
-    bool success =
-        try_compile_and_link(code, check.language(), check_id(check));
+    bool success = try_compile_and_link(code, check.language());
 
     std::string value;
     if (check.define_value().has_value()) {
@@ -437,7 +440,7 @@ CheckResult CheckRunner::check_sizeof(const Check& check) {
 
     // Use static_assert to find the sizeof value at compile time
     std::optional<int> size = find_compile_time_value_with_static_assert(
-        code_template, check.language(), check_id(check));
+        code_template, check.language());
 
     if (size.has_value()) {
         return CheckResult(check.name(), std::to_string(*size), true,
@@ -468,7 +471,7 @@ CheckResult CheckRunner::check_alignof(const Check& check) {
 
     // Use static_assert to find the alignment value at compile time
     std::optional<int> alignment = find_compile_time_value_with_static_assert(
-        code_template, check.language(), check_id(check));
+        code_template, check.language());
 
     if (alignment.has_value()) {
         return CheckResult(check.name(), std::to_string(*alignment), true,
@@ -492,7 +495,7 @@ CheckResult CheckRunner::check_compute_int(const Check& check) {
     }
 
     std::optional<int> value =
-        try_compile_and_run(*check.code(), check.language(), id);
+        try_compile_and_run(*check.code(), check.language());
     if (value.has_value()) {
         return CheckResult(id, std::to_string(*value), true,
                            check_type_is_define(check.type()),
@@ -520,7 +523,7 @@ CheckResult CheckRunner::check_endian(const Check& check) {
 
     // Endianness is a runtime property that cannot be determined at compile
     // time We must run the program to determine the actual endianness
-    std::optional<int> value = try_compile_and_run(code, check.language(), id);
+    std::optional<int> value = try_compile_and_run(code, check.language());
     if (value.has_value()) {
         return CheckResult(id, std::to_string(*value), true,
                            check_type_is_define(check.type()),
@@ -544,7 +547,7 @@ CheckResult CheckRunner::check_decl(const Check& check) {
         code = defines_code + code;
     }
 
-    bool found = try_compile(code, check.language(), check_id(check));
+    bool found = try_compile(code, check.language());
 
     std::optional<std::string> value;
     if (check.define_value().has_value()) {
@@ -589,7 +592,7 @@ CheckResult CheckRunner::check_member(const Check& check) {
         code = defines_code + code;
     }
 
-    bool success = try_compile(code, check.language(), check_id(check));
+    bool success = try_compile(code, check.language());
     return CheckResult(check.name(), success ? "1" : "0", success,
                        check_type_is_define(check.type()),
                        check.subst().has_value(), check.type(), check.define(),
@@ -597,15 +600,11 @@ CheckResult CheckRunner::check_member(const Check& check) {
 }
 
 std::optional<int> CheckRunner::find_compile_time_value_with_static_assert(
-    const std::string& base_code_template, const std::string& language,
-    const std::string& unique_id) {
-    // Common values to try (powers of 2 and some common sizes)
+    const std::string& base_code_template, const std::string& language) {
     std::vector<int> values_to_try = {1,  2,   4,   8,   16,  32,
                                       64, 128, 256, 512, 1024};
 
     for (int value : values_to_try) {
-        // Replace ALL {value} placeholders in template (may appear in comments
-        // and code)
         std::string code = base_code_template;
         std::string value_str = std::to_string(value);
         size_t pos = 0;
@@ -614,9 +613,7 @@ std::optional<int> CheckRunner::find_compile_time_value_with_static_assert(
             pos += value_str.length();
         }
 
-        // Try to compile with this value
-        if (try_compile(code, language,
-                        unique_id + "_" + std::to_string(value))) {
+        if (try_compile(code, language)) {
             return value;
         }
     }

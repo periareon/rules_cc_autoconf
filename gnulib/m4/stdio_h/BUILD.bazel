@@ -49,8 +49,7 @@ int main(void) { return 0; }
         # Set GNULIB_PRINTF_ATTRIBUTE_FLAVOR_GNU when system flavor check fails
         checks.AC_DEFINE(
             "GNULIB_PRINTF_ATTRIBUTE_FLAVOR_GNU",
-            condition = "_gl_cv_printf_attribute_flavor_system",
-            if_false = 1,
+            condition = "!_gl_cv_printf_attribute_flavor_system",
         ),
 
         # gl_NEXT_HEADERS([stdio.h]) sets NEXT_STDIO_H and NEXT_AS_FIRST_DIRECTIVE_STDIO_H

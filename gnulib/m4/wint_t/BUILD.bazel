@@ -28,9 +28,7 @@ int main(void) { return 0; }
         ),
         checks.AC_SUBST(
             "GNULIBHEADERS_OVERRIDE_WINT_T",
-            condition = "_gl_cv_type_wint_t_large_enough",
-            if_false = 1,
-            if_true = 0,
+            condition = "!_gl_cv_type_wint_t_large_enough",
         ),
     ],
     visibility = ["//visibility:public"],

@@ -1,8 +1,6 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
-#include <iostream>
-#include <random>
 #include <sstream>
 #include <system_error>
 
@@ -159,35 +157,38 @@ int run_command(const std::string& label, const std::vector<std::string>& cmd) {
 }
 
 /**
- * @brief RAII helper for creating a temporary build directory with a source
- * file.
+ * @brief RAII helper for managing build artifacts (source, object, executable).
  *
- * Creates a uniquely-named temp directory on construction and removes it
- * on destruction, ensuring cleanup even on early returns or exceptions.
+ * Files are written into the provided directory (next to the check JSON file)
+ * using a globally unique name derived from the check JSON filename. Build
+ * artifacts are cleaned up on destruction.
  */
-struct TempBuildDir {
+struct BuildDir {
     std::filesystem::path dir;
     std::string safe_id;
 
     /**
-     * @brief Create a temp directory with a random name suffix.
-     * @param unique_id An identifier used in the directory/file names.
+     * @brief Create a build dir context.
+     * @param unique_id An identifier used in filenames (derived from check JSON
+     *                  filename, e.g. "ac_cv_header_stdio_h.check.conftest").
+     * @param base_dir Directory to write files into (parent of the check JSON).
      */
-    explicit TempBuildDir(const std::string& unique_id) {
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_int_distribution<> dis(100000, 999999);
+    BuildDir(const std::string& unique_id,
+             const std::filesystem::path& base_dir)
+        : dir(base_dir), safe_id(sanitize_for_filename(unique_id)) {}
 
-        safe_id = sanitize_for_filename(unique_id);
-        dir = std::filesystem::temp_directory_path() /
-              ("rules_cc_autoconf_" + std::to_string(dis(gen)));
-        std::filesystem::create_directory(dir);
+    ~BuildDir() {
+        std::error_code ec;
+        std::filesystem::remove(dir / (safe_id + ".c"), ec);
+        std::filesystem::remove(dir / (safe_id + ".cpp"), ec);
+        std::filesystem::remove(dir / (safe_id + ".o"), ec);
+        std::filesystem::remove(dir / (safe_id + ".obj"), ec);
+        std::filesystem::remove(dir / (safe_id + ".exe"), ec);
+        std::filesystem::remove(dir / safe_id, ec);
     }
 
-    ~TempBuildDir() { std::filesystem::remove_all(dir); }
-
     /**
-     * @brief Write source code to a file inside the temp directory.
+     * @brief Write source code to a file inside the build directory.
      * @param code The source code to write.
      * @param extension The file extension (e.g., ".c" or ".cpp").
      * @return The path to the written source file, or nullopt on failure.
@@ -220,8 +221,8 @@ struct TempBuildDir {
     }
 
     // Non-copyable, non-movable
-    TempBuildDir(const TempBuildDir&) = delete;
-    TempBuildDir& operator=(const TempBuildDir&) = delete;
+    BuildDir(const BuildDir&) = delete;
+    BuildDir& operator=(const BuildDir&) = delete;
 };
 
 }  // namespace
@@ -293,9 +294,8 @@ std::string CheckRunner::get_file_extension(const std::string& language) {
 }
 
 bool CheckRunner::try_compile(const std::string& code,
-                              const std::string& language,
-                              const std::string& unique_id) {
-    TempBuildDir tmp(unique_id);
+                              const std::string& language) {
+    BuildDir tmp(source_id_, source_dir_);
     std::optional<std::filesystem::path> source_file =
         tmp.write_source(code, get_file_extension(language));
     if (!source_file) return false;
@@ -354,9 +354,8 @@ bool CheckRunner::try_link(const std::filesystem::path& object_file,
 }
 
 std::optional<int> CheckRunner::try_compile_and_run(
-    const std::string& code, const std::string& language,
-    const std::string& unique_id) {
-    TempBuildDir tmp(unique_id);
+    const std::string& code, const std::string& language) {
+    BuildDir tmp(source_id_, source_dir_);
     std::optional<std::filesystem::path> source_file =
         tmp.write_source(code, get_file_extension(language));
     if (!source_file) return std::nullopt;
@@ -409,9 +408,8 @@ std::optional<int> CheckRunner::try_compile_and_run(
 }
 
 bool CheckRunner::try_compile_and_link(const std::string& code,
-                                       const std::string& language,
-                                       const std::string& unique_id) {
-    TempBuildDir tmp(unique_id);
+                                       const std::string& language) {
+    BuildDir tmp(source_id_, source_dir_);
     std::optional<std::filesystem::path> source_file =
         tmp.write_source(code, get_file_extension(language));
     if (!source_file) return false;
@@ -451,9 +449,8 @@ bool CheckRunner::try_compile_and_link(const std::string& code,
 
 bool CheckRunner::try_compile_and_link_with_lib(const std::string& code,
                                                 const std::string& library,
-                                                const std::string& language,
-                                                const std::string& unique_id) {
-    TempBuildDir tmp(unique_id);
+                                                const std::string& language) {
+    BuildDir tmp(source_id_, source_dir_);
     std::optional<std::filesystem::path> source_file =
         tmp.write_source(code, get_file_extension(language));
     if (!source_file) return false;

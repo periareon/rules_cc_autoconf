@@ -21,8 +21,6 @@ namespace rules_cc_autoconf {
 struct ResultEntry {
     std::string value{};
     bool success = false;
-
-    ResultEntry() : value(), success(false) {}
 };
 
 struct SrcsArgs {
@@ -174,7 +172,11 @@ ResultEntry load_single_result_from_file(const std::string& path) {
     ResultEntry entry;
     nlohmann::json::const_iterator value_it = val.find("value");
     if (value_it != val.end() && !value_it->is_null()) {
-        entry.value = value_it->dump();  // JSON-encoded string
+        if (value_it->is_string()) {
+            entry.value = value_it->get<std::string>();
+        } else {
+            entry.value = value_it->dump();
+        }
     }
     nlohmann::json::const_iterator success_it = val.find("success");
     entry.success = (success_it != val.end()) ? success_it->get<bool>() : false;
@@ -214,22 +216,21 @@ bool generate_wrapped_source(
         return false;
     }
 
-    if (defined) {
-        out_file << "#define " << define;
-        if (!value.empty()) {
-            out_file << " " << value;
-        }
-        out_file << "\n";
-    } else {
-        out_file << "#undef " << define << "\n";
-    }
+    bool enabled = defined && !value.empty() && value != "0";
 
-    out_file << "#ifdef " << define << "\n";
-    out_file << original_content;
-    if (!original_content.empty() && original_content.back() != '\n') {
-        out_file << "\n";
+    if (enabled) {
+        out_file << original_content;
+        if (!original_content.empty() && original_content.back() != '\n') {
+            out_file << "\n";
+        }
+    } else {
+        out_file << "#if 0 /* " << define << " */\n";
+        out_file << original_content;
+        if (!original_content.empty() && original_content.back() != '\n') {
+            out_file << "\n";
+        }
+        out_file << "#endif\n";
     }
-    out_file << "#endif\n";
 
     out_file.close();
     return true;

@@ -54,9 +54,7 @@ autoconf(
     checks = [
         checks.AC_SUBST(
             "REPLACE_FFLUSH",
-            condition = "gl_cv_func_fflush_stdin",
-            if_false = 1,  # broken -> replace
-            if_true = 0,  # works -> don't replace
+            condition = "!gl_cv_func_fflush_stdin",
         ),
     ],
     visibility = ["//visibility:public"],

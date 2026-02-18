@@ -51,9 +51,7 @@ autoconf(
         # REPLACE_MALLOC_FOR_MALLOC_POSIX=1 if not ptrdiff_t safe
         checks.AC_SUBST(
             "REPLACE_MALLOC_FOR_MALLOC_POSIX",
-            condition = "gl_cv_malloc_ptrdiff",
-            if_false = 1,
-            if_true = 0,
+            condition = "!gl_cv_malloc_ptrdiff",
         ),
     ],
     visibility = ["//visibility:public"],
