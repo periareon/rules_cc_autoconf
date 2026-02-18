@@ -1,7 +1,6 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
-#include <iostream>
 #include <sstream>
 #include <system_error>
 
@@ -295,9 +294,8 @@ std::string CheckRunner::get_file_extension(const std::string& language) {
 }
 
 bool CheckRunner::try_compile(const std::string& code,
-                              const std::string& language,
-                              const std::string& unique_id) {
-    BuildDir tmp(unique_id, source_dir_);
+                              const std::string& language) {
+    BuildDir tmp(source_id_, source_dir_);
     std::optional<std::filesystem::path> source_file =
         tmp.write_source(code, get_file_extension(language));
     if (!source_file) return false;
@@ -356,9 +354,8 @@ bool CheckRunner::try_link(const std::filesystem::path& object_file,
 }
 
 std::optional<int> CheckRunner::try_compile_and_run(
-    const std::string& code, const std::string& language,
-    const std::string& unique_id) {
-    BuildDir tmp(unique_id, source_dir_);
+    const std::string& code, const std::string& language) {
+    BuildDir tmp(source_id_, source_dir_);
     std::optional<std::filesystem::path> source_file =
         tmp.write_source(code, get_file_extension(language));
     if (!source_file) return std::nullopt;
@@ -411,9 +408,8 @@ std::optional<int> CheckRunner::try_compile_and_run(
 }
 
 bool CheckRunner::try_compile_and_link(const std::string& code,
-                                       const std::string& language,
-                                       const std::string& unique_id) {
-    BuildDir tmp(unique_id, source_dir_);
+                                       const std::string& language) {
+    BuildDir tmp(source_id_, source_dir_);
     std::optional<std::filesystem::path> source_file =
         tmp.write_source(code, get_file_extension(language));
     if (!source_file) return false;
@@ -453,9 +449,8 @@ bool CheckRunner::try_compile_and_link(const std::string& code,
 
 bool CheckRunner::try_compile_and_link_with_lib(const std::string& code,
                                                 const std::string& library,
-                                                const std::string& language,
-                                                const std::string& unique_id) {
-    BuildDir tmp(unique_id, source_dir_);
+                                                const std::string& language) {
+    BuildDir tmp(source_id_, source_dir_);
     std::optional<std::filesystem::path> source_file =
         tmp.write_source(code, get_file_extension(language));
     if (!source_file) return false;

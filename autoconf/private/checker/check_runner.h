@@ -3,7 +3,6 @@
 #include <filesystem>
 #include <map>
 #include <optional>
-#include <set>
 #include <string>
 #include <vector>
 
@@ -92,9 +91,6 @@ class CheckRunner {
     /** @brief Check if a library provides a function. */
     CheckResult check_lib(const Check& check);
 
-    /** @brief Check if a preprocessor symbol is defined. */
-    CheckResult check_symbol(const Check& check);
-
     /** @brief Check if a type exists. */
     CheckResult check_type_check(const Check& check);
 
@@ -129,12 +125,10 @@ class CheckRunner {
      * @brief Try to compile code with the configured compiler.
      * @param code Source code to compile.
      * @param language Language of the code ("c" or "cpp").
-     * @param unique_id Optional unique identifier for this check (used in
-     * filenames).
      * @return true if compilation succeeded, false otherwise.
      */
-    bool try_compile(const std::string& code, const std::string& language = "c",
-                     const std::string& unique_id = "conftest");
+    bool try_compile(const std::string& code,
+                     const std::string& language = "c");
 
     /**
      * @brief Try to link an object file into an executable.
@@ -151,40 +145,31 @@ class CheckRunner {
      * @brief Try to compile and run code, returning its exit code.
      * @param code Source code to compile and run.
      * @param language Language of the code ("c" or "cpp").
-     * @param unique_id Optional unique identifier for this check (used in
-     * filenames).
      * @return Exit code of the program, or std::nullopt if
      * compilation/execution failed.
      */
-    std::optional<int> try_compile_and_run(
-        const std::string& code, const std::string& language = "c",
-        const std::string& unique_id = "conftest");
+    std::optional<int> try_compile_and_run(const std::string& code,
+                                           const std::string& language = "c");
 
     /**
      * @brief Try to compile and link code (without running).
      * @param code Source code to compile and link.
      * @param language Language of the code ("c" or "cpp").
-     * @param unique_id Optional unique identifier for this check (used in
-     * filenames).
      * @return true if compilation and linking succeeded, false otherwise.
      */
     bool try_compile_and_link(const std::string& code,
-                              const std::string& language = "c",
-                              const std::string& unique_id = "conftest");
+                              const std::string& language = "c");
 
     /**
      * @brief Try to compile and link code with a specific library.
      * @param code Source code to compile and link.
      * @param library Library name (without -l prefix) to link against.
      * @param language Language of the code ("c" or "cpp").
-     * @param unique_id Optional unique identifier for this check (used in
-     * filenames).
      * @return true if compilation and linking succeeded, false otherwise.
      */
-    bool try_compile_and_link_with_lib(
-        const std::string& code, const std::string& library,
-        const std::string& language = "c",
-        const std::string& unique_id = "conftest");
+    bool try_compile_and_link_with_lib(const std::string& code,
+                                       const std::string& library,
+                                       const std::string& language = "c");
 
     /**
      * @brief Filter out flags that promote warnings to errors.
@@ -233,13 +218,11 @@ class CheckRunner {
      * @param base_code_template Code template with {value} placeholder for
      * static_assert.
      * @param language Language of the code ("c" or "cpp").
-     * @param unique_id Optional unique identifier for this check.
      * @return The value that makes static_assert pass, or std::nullopt if none
      * found.
      */
     std::optional<int> find_compile_time_value_with_static_assert(
-        const std::string& base_code_template, const std::string& language,
-        const std::string& unique_id);
+        const std::string& base_code_template, const std::string& language);
 
     /**
      * @brief Resolve compile_defines from check and build #define statements.

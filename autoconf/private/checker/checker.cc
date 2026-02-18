@@ -85,8 +85,8 @@ class ResultLookup {
     }
 
     /**
-     * @brief Get all results as a map (for backward compatibility).
-     * @return Map of lookup names to CheckResult references.
+     * @brief Get all results as a map keyed by lookup name.
+     * @return Map of lookup names to CheckResult copies.
      */
     std::map<std::string, CheckResult> to_map() const {
         std::map<std::string, CheckResult> result_map;
@@ -192,60 +192,9 @@ int Checker::run_check_from_file(const std::filesystem::path& check_path,
         }
         const Check& check = *check_opt;
 
-        // Load results from dependent check files using explicit name->file
-        // mappings
         ResultLookup result_lookup;
-
-        // Handle legacy format (empty lookup_name) - extract names from JSON
         for (const DepMapping& mapping : dep_mappings) {
-            if (mapping.lookup_name.empty()) {
-                // Legacy format: --dep=file_path (no name specified)
-                // Extract all names (cache, define, subst) from the JSON file
-                if (!std::filesystem::exists(mapping.file_path)) {
-                    throw std::runtime_error(
-                        "Dep results file does not exist: " +
-                        mapping.file_path.string());
-                }
-
-                std::ifstream results_file(mapping.file_path);
-                if (!results_file.is_open()) {
-                    throw std::runtime_error(
-                        "Failed to open dep results file: " +
-                        mapping.file_path.string());
-                }
-
-                nlohmann::json results_json;
-                results_file >> results_json;
-                results_file.close();
-
-                for (nlohmann::json::iterator it = results_json.begin();
-                     it != results_json.end(); ++it) {
-                    const std::string& key = it.key();
-                    const nlohmann::json& json_value = it.value();
-                    std::optional<CheckResult> result =
-                        CheckResult::from_json(key, &json_value);
-                    if (!result.has_value()) {
-                        throw std::runtime_error(
-                            "Failed to parse CheckResult: " +
-                            mapping.file_path.string());
-                    }
-
-                    // Index by all possible names (legacy behavior)
-                    result_lookup.add_mapping(result->name, mapping.file_path);
-                    if (result->define.has_value()) {
-                        result_lookup.add_mapping(*result->define,
-                                                  mapping.file_path);
-                    }
-                    if (result->subst.has_value()) {
-                        result_lookup.add_mapping(*result->subst,
-                                                  mapping.file_path);
-                    }
-                }
-            } else {
-                // New format: --dep=name=file_path (explicit name mapping)
-                result_lookup.add_mapping(mapping.lookup_name,
-                                          mapping.file_path);
-            }
+            result_lookup.add_mapping(mapping.lookup_name, mapping.file_path);
         }
 
         // Convert to map for backward compatibility with existing code

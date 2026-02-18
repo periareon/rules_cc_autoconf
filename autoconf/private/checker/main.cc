@@ -46,10 +46,9 @@ void print_usage(const char* program_name) {
                  "single check to run (required if --config is not provided)\n";
     std::cout << "  --results <file>       Path to JSON results file to write "
                  "(required)\n";
-    std::cout << "  --dep <name>=<file>  Mapping of lookup name to result file "
-                 "(can be specified multiple times)\n";
-    std::cout << "                       Format: --dep=lookup_name=file_path\n";
-    std::cout << "                       Example: "
+    std::cout << "  --dep <name>=<file>    Mapping of lookup name to result "
+                 "file (can be repeated)\n";
+    std::cout << "                         Example: "
                  "--dep=HAVE_FOO=/path/to/result.json\n";
     std::cout << "  --help                 Show this help message\n";
 }
@@ -98,51 +97,31 @@ std::optional<CheckerArgs> parse_args(int argc, char* argv[]) {
                 return std::nullopt;
             }
         } else if (arg == "--dep" || arg.rfind("--dep=", 0) == 0) {
-            DepMapping mapping;
+            std::string value;
             if (arg == "--dep") {
-                // Format: --dep <name>=<path> or --dep <path> (legacy)
                 if (i + 1 < expanded_argc) {
-                    std::string value = std::string(expanded_argv_ptr[++i]);
-                    size_t eq_pos = value.find('=');
-                    if (eq_pos == std::string::npos) {
-                        // Legacy format: --dep <path> (no name)
-                        // This is deprecated but kept for backward
-                        // compatibility
-                        mapping.lookup_name =
-                            "";  // Empty name indicates legacy format
-                        mapping.file_path = value;
-                    } else {
-                        // New format: --dep <name>=<path>
-                        mapping.lookup_name = value.substr(0, eq_pos);
-                        mapping.file_path = value.substr(eq_pos + 1);
-                    }
+                    value = std::string(expanded_argv_ptr[++i]);
                 } else {
-                    std::cerr
-                        << "Error: --dep requires a name=path pair or file path"
-                        << std::endl;
-                    return std::nullopt;
-                }
-            } else {
-                // Format: --dep=<name>=<path> or --dep=<path> (legacy)
-                std::string value = arg.substr(6);  // Skip "--dep="
-                if (value.empty()) {
-                    std::cerr << "Error: --dep= requires a name=path pair or "
-                                 "file path"
+                    std::cerr << "Error: --dep requires a name=path pair"
                               << std::endl;
                     return std::nullopt;
                 }
-                size_t eq_pos = value.find('=');
-                if (eq_pos == std::string::npos) {
-                    // Legacy format: --dep=<path> (no name)
-                    mapping.lookup_name =
-                        "";  // Empty name indicates legacy format
-                    mapping.file_path = value;
-                } else {
-                    // New format: --dep=<name>=<path>
-                    mapping.lookup_name = value.substr(0, eq_pos);
-                    mapping.file_path = value.substr(eq_pos + 1);
-                }
+            } else {
+                value = arg.substr(6);  // Skip "--dep="
             }
+            if (value.empty()) {
+                std::cerr << "Error: --dep value cannot be empty" << std::endl;
+                return std::nullopt;
+            }
+            size_t eq_pos = value.find('=');
+            if (eq_pos == std::string::npos || eq_pos == 0) {
+                std::cerr << "Error: --dep requires name=path format, got: "
+                          << value << std::endl;
+                return std::nullopt;
+            }
+            DepMapping mapping;
+            mapping.lookup_name = value.substr(0, eq_pos);
+            mapping.file_path = value.substr(eq_pos + 1);
             if (mapping.file_path.empty()) {
                 std::cerr << "Error: --dep file path cannot be empty"
                           << std::endl;
