@@ -268,6 +268,15 @@ int Checker::run_check_from_file(const std::filesystem::path& check_path,
 
         CheckRunner runner(*config);
 
+        // Derive source file ID and directory from the check JSON path.
+        // E.g., "config/ac_cv_header_stdio_h.check.json" produces:
+        //   source_id  = "ac_cv_header_stdio_h.check.conftest"
+        //   source_dir = "config/"
+        // So the conftest file "ac_cv_header_stdio_h.check.conftest.c" is
+        // written next to the check JSON, with a globally unique name.
+        runner.set_source_id(check_path.stem().string() + ".conftest",
+                             check_path.parent_path());
+
         // Extract AC_DEFINE defines from dependent checks to include in
         // compilation tests Since dep_results_map now has multiple entries per
         // result (by name, define, subst), we need to process each unique

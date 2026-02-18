@@ -50,6 +50,23 @@ class CheckRunner {
      */
     void set_dep_results(const std::map<std::string, CheckResult>& dep_results);
 
+    /**
+     * @brief Set the source file identifier and directory from the check JSON
+     * path.
+     *
+     * The source_id is used as the base name for generated conftest source
+     * files. The source_dir controls where those files are written (next to
+     * the check JSON file). Typically derived from the check JSON path by
+     * replacing ".json" with ".conftest", producing filenames like
+     * "ac_cv_header_stdio_h.check.conftest.c" in the same directory.
+     *
+     * @param source_id The identifier to use for source file naming.
+     * @param source_dir The directory where source files should be written
+     *                   (parent of the check JSON file).
+     */
+    void set_source_id(const std::string& source_id,
+                       const std::filesystem::path& source_dir);
+
     // Deleted copy and move assignment operators (const reference member)
     CheckRunner& operator=(const CheckRunner&) = delete;
     CheckRunner& operator=(CheckRunner&&) = delete;
@@ -62,6 +79,12 @@ class CheckRunner {
     ///< Map of define names to check results from dependent checks (for
     ///< compile_defines lookup)
     std::map<std::string, CheckResult> dep_results_{};
+    ///< Source file identifier derived from check JSON filename, used as the
+    ///< base name for conftest source files to ensure global uniqueness
+    std::string source_id_;
+    ///< Directory where conftest source files are written (next to the check
+    ///< JSON file), provided by Bazel via the check path
+    std::filesystem::path source_dir_;
 
     /** @brief Check if a function exists and can be linked. */
     CheckResult check_function(const Check& check);
