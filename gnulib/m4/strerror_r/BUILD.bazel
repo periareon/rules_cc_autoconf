@@ -54,9 +54,7 @@ autoconf(
         "//conditions:default": [
             checks.AC_SUBST(
                 "REPLACE_STRERROR_R",
-                condition = "ac_cv_func_strerror_r",
-                if_false = 1,
-                if_true = 0,
+                condition = "!ac_cv_func_strerror_r",
             ),
         ],
     }),

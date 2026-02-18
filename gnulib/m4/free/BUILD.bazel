@@ -33,9 +33,7 @@ int main(void) { return 0; }""",
         # Set REPLACE_FREE=1 if free does not preserve errno
         checks.AC_SUBST(
             "REPLACE_FREE",
-            condition = "gl_cv_func_free_preserves_errno",
-            if_false = 1,
-            if_true = 0,
+            condition = "!gl_cv_func_free_preserves_errno",
         ),
     ],
     visibility = ["//visibility:public"],

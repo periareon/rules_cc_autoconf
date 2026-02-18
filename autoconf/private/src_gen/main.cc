@@ -19,6 +19,7 @@
 namespace rules_cc_autoconf {
 
 struct ResultEntry {
+    std::string value{};
     bool success = false;
 };
 
@@ -169,6 +170,14 @@ ResultEntry load_single_result_from_file(const std::string& path) {
     const nlohmann::json& val = it.value();
 
     ResultEntry entry;
+    nlohmann::json::const_iterator value_it = val.find("value");
+    if (value_it != val.end() && !value_it->is_null()) {
+        if (value_it->is_string()) {
+            entry.value = value_it->get<std::string>();
+        } else {
+            entry.value = value_it->dump();
+        }
+    }
     nlohmann::json::const_iterator success_it = val.find("success");
     entry.success = (success_it != val.end()) ? success_it->get<bool>() : false;
     return entry;
@@ -180,7 +189,12 @@ bool generate_wrapped_source(
     const std::unordered_map<std::string, ResultEntry>& results) {
     std::unordered_map<std::string, ResultEntry>::const_iterator it =
         results.find(define);
-    bool defined = (it != results.end()) && it->second.success;
+    bool defined = false;
+    std::string value{};
+    if (it != results.end()) {
+        defined = it->second.success;
+        value = it->second.value;
+    }
 
     std::ifstream in_file(orig_path);
     if (!in_file.is_open()) {
@@ -202,14 +216,20 @@ bool generate_wrapped_source(
         return false;
     }
 
-    if (defined) {
+    bool enabled = defined && !value.empty() && value != "0";
+
+    if (enabled) {
         out_file << original_content;
         if (!original_content.empty() && original_content.back() != '\n') {
             out_file << "\n";
         }
     } else {
-        out_file << "/* " << define
-                 << " is not set — source excluded by autoconf_srcs */\n";
+        out_file << "#if 0 /* " << define << " */\n";
+        out_file << original_content;
+        if (!original_content.empty() && original_content.back() != '\n') {
+            out_file << "\n";
+        }
+        out_file << "#endif\n";
     }
 
     out_file.close();

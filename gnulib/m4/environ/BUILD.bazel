@@ -51,9 +51,7 @@ int main(void) {
         "//conditions:default": [
             checks.AC_SUBST(
                 "HAVE_DECL_ENVIRON",
-                condition = "gt_cv_var_environ_declaration_compile_succeeds",
-                if_false = 1,  # Compile failed = properly declared
-                if_true = 0,  # Compile succeeded = not properly declared
+                condition = "!gt_cv_var_environ_declaration_compile_succeeds",
             ),
             checks.AC_DEFINE("HAVE__DECL", 1),
         ],

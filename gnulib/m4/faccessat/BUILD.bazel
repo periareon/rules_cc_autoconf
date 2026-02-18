@@ -33,9 +33,7 @@ autoconf(
         # faccessat needs replacement.
         checks.AC_SUBST(
             "REPLACE_FACCESSAT",
-            condition = "gl_cv_func_lstat_dereferences_slashed_symlink",
-            if_false = 1,  # lstat has issues, faccessat needs replacement
-            if_true = 0,  # lstat works correctly, no replacement needed
+            condition = "!gl_cv_func_lstat_dereferences_slashed_symlink",
         ),
     ],
     visibility = ["//visibility:public"],

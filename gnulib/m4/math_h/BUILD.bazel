@@ -60,9 +60,7 @@ int main(void) {
         ),
         checks.AC_SUBST(
             "REPLACE_NAN",
-            condition = "_gl_cv_header_math_nan_works",
-            if_false = 1,
-            if_true = 0,
+            condition = "!_gl_cv_header_math_nan_works",
         ),
         checks.AC_TRY_COMPILE(
             name = "_gl_cv_header_math_huge_val_works",
@@ -77,9 +75,7 @@ int main(void) {
         ),
         checks.AC_SUBST(
             "REPLACE_HUGE_VAL",
-            condition = "_gl_cv_header_math_huge_val_works",
-            if_false = 1,
-            if_true = 0,
+            condition = "!_gl_cv_header_math_huge_val_works",
         ),
     ],
     visibility = ["//visibility:public"],

@@ -20,9 +20,7 @@ autoconf(
             # On non-Windows, replace only if ftruncate doesn't exist
             checks.AC_SUBST(
                 "REPLACE_FTRUNCATE",
-                condition = "HAVE_FTRUNCATE",
-                if_false = 1,  # Replace if function doesn't exist
-                if_true = 0,  # Don't replace if function exists
+                condition = "!HAVE_FTRUNCATE",
             ),
         ],
     }),

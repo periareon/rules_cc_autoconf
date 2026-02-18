@@ -96,25 +96,19 @@ int main(void) { return 0; }
             ),
             checks.AC_SUBST(
                 "REPLACE_LSTAT",
-                condition = "gl_cv_func_lstat_darwin_override",
-                if_false = 1,
-                if_true = 0,
+                condition = "!gl_cv_func_lstat_darwin_override",
             ),
         ],
         "@platforms//os:windows": [
             checks.AC_SUBST(
                 "REPLACE_LSTAT",
-                condition = "gl_cv_func_lstat_dereferences_slashed_symlink",
-                if_false = 1,
-                if_true = 0,
+                condition = "!gl_cv_func_lstat_dereferences_slashed_symlink",
             ),
         ],
         "//conditions:default": [
             checks.AC_SUBST(
                 "REPLACE_LSTAT",
-                condition = "gl_cv_func_lstat_dereferences_slashed_symlink",
-                if_false = 1,
-                if_true = 0,
+                condition = "!gl_cv_func_lstat_dereferences_slashed_symlink",
             ),
         ],
     }),

@@ -50,8 +50,7 @@ int test() {
         # But condition syntax doesn't support negation, so we use if_false for the POSIX case
         checks.AC_DEFINE(
             "gl_cv_func_ttyname_r_posix",
-            condition = "_gl_cv_func_ttyname_r_non_posix",
-            if_false = 1,  # If non-POSIX code doesn't compile, it's POSIX
+            condition = "!_gl_cv_func_ttyname_r_non_posix",
         ),
 
         # if test $gl_cv_func_ttyname_r_posix = no; then
@@ -62,8 +61,7 @@ int test() {
         # check result directly so HAVE_POSIXDECL_TTYNAME_R=1 when non-POSIX fails.
         checks.AC_DEFINE(
             "HAVE_POSIXDECL_TTYNAME_R",
-            condition = "_gl_cv_func_ttyname_r_non_posix",
-            if_false = 1,
+            condition = "!_gl_cv_func_ttyname_r_non_posix",
         ),
         # The m4 file has complex runtime checks for Android and Solaris bugs
         # Based on golden files, on macOS:

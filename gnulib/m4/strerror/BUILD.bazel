@@ -83,9 +83,7 @@ autoconf(
         "//conditions:default": [
             checks.AC_SUBST(
                 "REPLACE_STRERROR",
-                condition = "_gl_cv_func_strerror_0_works",
-                if_false = 1,
-                if_true = 0,
+                condition = "!_gl_cv_func_strerror_0_works",
             ),
         ],
     }),
