@@ -3,19 +3,17 @@ load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
 load("//autoconf:autoconf_srcs.bzl", "autoconf_srcs")
 load("//autoconf:checks.bzl", "checks")
-load("//autoconf:package_info.bzl", "package_info")
 
-package_info(
-    name = "package",
-    package_name = "test_srcs",
-    package_version = "1.0.0",
+autoconf(
+    name = "have_good_src",
+    checks = [
+        checks.AC_DEFINE("HAVE_GOOD_SRC", 1),
+    ],
 )
 
 autoconf(
     name = "autoconf",
     checks = [
-        # Always-on feature.
-        checks.AC_DEFINE("HAVE_GOOD_SRC", 1),
         # Intentionally fails to compile so the check result is unsuccessful.
         checks.AC_TRY_COMPILE(
             code = "#error do not compile",
@@ -23,7 +21,10 @@ autoconf(
             language = "c",
         ),
     ],
-    deps = [":package"],
+    deps = [
+        # Show that checks can be accessed from transitive dependencies.
+        ":have_good_src",
+    ],
 )
 
 autoconf_hdr(

@@ -3,6 +3,8 @@
 load("@rules_cc//cc:find_cc_toolchain.bzl", "use_cc_toolchain")
 load(
     "//autoconf/private:autoconf_config.bzl",
+    "collect_deps",
+    "collect_transitive_results",
     "filter_defaults",
     "get_autoconf_toolchain_defaults",
     "get_autoconf_toolchain_defaults_by_label",
@@ -94,52 +96,14 @@ def _autoconf_srcs_impl(ctx):
             # No filtering - use already-flattened collection directly from toolchain
             defaults = get_autoconf_toolchain_defaults(ctx)
 
-    # Collect transitive results from deps, keeping groups separate
-    cache_results = {}
-    define_results = {}
-    subst_results = {}
+    # Collect transitive results from deps (same approach as autoconf_hdr)
+    deps = collect_deps(ctx.attr.deps)
+    dep_infos = deps.to_list()
+    dep_results = collect_transitive_results(dep_infos)
 
-    for dep in ctx.attr.deps:
-        dep_info = dep[CcAutoconfInfo]
-
-        # Check for duplicates within each group
-        cache_total = len(cache_results)
-        cache_new = len(dep_info.cache_results)
-        cache_updated = cache_results | dep_info.cache_results
-        if cache_total + cache_new != len(cache_updated):
-            fail("A duplicate cache variable was detected in dependencies of `{}`: {}".format(
-                ctx.label,
-                [name for name in dep_info.cache_results.keys() if name in cache_results],
-            ))
-
-        define_total = len(define_results)
-        define_new = len(dep_info.define_results)
-        define_updated = define_results | dep_info.define_results
-        if define_total + define_new != len(define_updated):
-            fail("A duplicate define was detected in dependencies of `{}`: {}".format(
-                ctx.label,
-                [name for name in dep_info.define_results.keys() if name in define_results],
-            ))
-
-        subst_total = len(subst_results)
-        subst_new = len(dep_info.subst_results)
-        subst_updated = subst_results | dep_info.subst_results
-        if subst_total + subst_new != len(subst_updated):
-            fail("A duplicate subst was detected in dependencies of `{}`: {}".format(
-                ctx.label,
-                [name for name in dep_info.subst_results.keys() if name in subst_results],
-            ))
-
-        cache_results = cache_updated
-        define_results = define_updated
-        subst_results = subst_updated
-
-    # Merge defaults with actual results - results override defaults
-    # Use | operator: defaults first, then results override (target prioritizes itself)
-    # defaults.cache | cache_results means cache_results overrides defaults.cache ✅
-    all_cache = defaults.cache | cache_results
-    all_define = defaults.define | define_results
-    all_subst = defaults.subst | subst_results
+    all_cache = defaults.cache | dep_results["cache"]
+    all_define = defaults.define | dep_results["define"]
+    all_subst = defaults.subst | dep_results["subst"]
 
     outputs = []
 
@@ -174,7 +138,7 @@ def _autoconf_srcs_impl(ctx):
                 src,
                 define,
                 ctx.label,
-                all_available,
+                json.encode_indent(all_available, indent = " " * 4),
             ))
 
         # Dedupe candidates by underlying result file. If multiple distinct files
