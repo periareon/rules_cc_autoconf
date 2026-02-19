@@ -170,8 +170,11 @@ autoconf(
             checks.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDCLOSE", "1"),
         ],
         "//conditions:default": [
-            # Linux etc.: addclose works; musl/solaris/windows would be 1 (we default 0 for Linux golden)
-            checks.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDCLOSE", "0"),
+            # Per upstream m4: if REPLACE_POSIX_SPAWN=1 then ADDCLOSE=1
+            checks.AC_SUBST(
+                "REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDCLOSE",
+                condition = "ac_cv_define_REPLACE_POSIX_SPAWN",
+            ),
         ],
     }),
     visibility = ["//visibility:public"],
@@ -187,7 +190,11 @@ autoconf(
             checks.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDDUP2", "1"),
         ],
         "//conditions:default": [
-            checks.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDDUP2", "0"),
+            # Per upstream m4: if REPLACE_POSIX_SPAWN=1 then ADDDUP2=1
+            checks.AC_SUBST(
+                "REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDDUP2",
+                condition = "ac_cv_define_REPLACE_POSIX_SPAWN",
+            ),
         ],
     }),
     visibility = ["//visibility:public"],
@@ -203,7 +210,11 @@ autoconf(
             checks.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDOPEN", "1"),
         ],
         "//conditions:default": [
-            checks.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDOPEN", "0"),
+            # Per upstream m4: if REPLACE_POSIX_SPAWN=1 then ADDOPEN=1
+            checks.AC_SUBST(
+                "REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDOPEN",
+                condition = "ac_cv_define_REPLACE_POSIX_SPAWN",
+            ),
         ],
     }),
     visibility = ["//visibility:public"],
