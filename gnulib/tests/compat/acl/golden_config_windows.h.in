@@ -29,5 +29,5 @@
 /* #undef HAVE_UNISTD_H */
 /* #undef QCOPY_ACL_LIB */
 #define STDC_HEADERS 1
-/* #undef USE_ACL */
+#define USE_ACL 0
 /* #undef USE_SELINUX_SELINUX_H */

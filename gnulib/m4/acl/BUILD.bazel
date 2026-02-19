@@ -113,8 +113,6 @@ autoconf(
         checks.AC_DEFINE(
             "USE_ACL",
             condition = "ac_cv_func_acl_get_file",
-            if_false = 0,
-            if_true = 1,
             subst = True,
         ),
     ],
