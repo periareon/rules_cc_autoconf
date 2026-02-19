@@ -24,16 +24,16 @@ autoconf(
         ),
 
         # gl_REPLACE_FCNTL logic:
-        # - If function doesn't exist, HAVE_FCNTL=0, REPLACE_FCNTL=1
+        # - If function doesn't exist: HAVE_FCNTL=0, REPLACE_FCNTL stays 0
         # - If function exists but F_DUPFD doesn't work correctly, REPLACE_FCNTL=1
         # - If function exists but F_DUPFD_CLOEXEC doesn't work, REPLACE_FCNTL=1
         # - If function exists but HAVE_FCHDIR=0, REPLACE_FCNTL=1
-        # Based on golden files, REPLACE_FCNTL=1 on macOS (likely due to F_DUPFD_CLOEXEC)
-        # The AC_RUN_IFELSE checks can't be done in Bazel, so we assume it needs replacement
+        # The AC_RUN_IFELSE checks can't be done in Bazel; on all supported platforms
+        # (macOS, Linux) fcntl exists and needs replacement (F_DUPFD_CLOEXEC issues).
         checks.AC_SUBST(
             "REPLACE_FCNTL",
             condition = "ac_cv_func_fcntl",
-            if_false = 1,  # If function doesn't exist, also replace
+            if_false = 0,  # Function absent: HAVE_FCNTL=0 handles it, no REPLACE needed
             if_true = 1,
         ),
     ],

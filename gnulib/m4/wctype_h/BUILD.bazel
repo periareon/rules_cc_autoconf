@@ -114,11 +114,12 @@ int main(void) {
             if_true = 1,
         ),
 
-        # Lines 82-105: REPLACE_TOWLOWER logic
-        # If REPLACE_ISWCNTRL=1, then REPLACE_TOWLOWER=1
-        # Otherwise check for towlower function/declaration
-        # For now, default to 0 based on golden file
-        checks.AC_SUBST("REPLACE_TOWLOWER", 0),
+        # M4 lines 82-105: if REPLACE_ISWCNTRL=1 then REPLACE_TOWLOWER=1
+        # else check towlower function (exists on macOS/Linux → 0)
+        checks.AC_SUBST(
+            "REPLACE_TOWLOWER",
+            condition = "REPLACE_ISWCNTRL",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [

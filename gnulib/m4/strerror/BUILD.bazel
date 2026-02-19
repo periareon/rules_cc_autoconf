@@ -59,8 +59,13 @@ autoconf(
             checks.AC_SUBST("REPLACE_STRERROR_0", "1"),
         ],
         "//conditions:default": [
-            # Linux: config.h undef, subst.h "1" (matches test configure.ac defaults)
-            checks.AC_SUBST("REPLACE_STRERROR_0", "1"),
+            # M4: case "$gl_cv_func_strerror_0_works" in *yes) ;; *) REPLACE_STRERROR_0=1
+            # On Linux the compile check passes (_gl_cv_func_strerror_0_works=1) → 0.
+            # On platforms where strerror(0) is broken the check fails → 1.
+            checks.AC_SUBST(
+                "REPLACE_STRERROR_0",
+                condition = "!_gl_cv_func_strerror_0_works",
+            ),
         ],
     }),
     visibility = ["//visibility:public"],

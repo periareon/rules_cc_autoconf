@@ -7,7 +7,6 @@ gl_FUNC_PERROR
 # Account for global Bazel defaults
 HAVE_STRERROR_R=1
 AC_SUBST([HAVE_STRERROR_R])
-REPLACE_STRERROR_0=1
 AC_SUBST([REPLACE_STRERROR_0])
 
 AC_CONFIG_FILES([subst.h:subst.h.in])

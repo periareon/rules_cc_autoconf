@@ -56,12 +56,11 @@ autoconf(
         # have the wcwidth function, then it does not declare it."
         # So we don't set it as a substitution variable
 
-        # The m4 file has runtime checks (AC_RUN_IFELSE) to verify wcwidth works correctly
-        # in UTF-8 locales on various platforms. Based on golden files, on macOS:
-        # - REPLACE_WCWIDTH=0 (function works correctly, or runtime check passes)
+        # M4: gl_cv_func_wcwidth_works AC_RUN_IFELSE tests wcwidth on specific
+        # Unicode code points (combining marks, zero-width spaces, fullwidth chars).
+        # Cross-compile guesses: glibc/musl → "guessing yes", others → "guessing no".
+        # Native test passes on glibc and modern macOS (verified by golden files).
         checks.AC_SUBST("REPLACE_WCWIDTH", 0),
-
-        # Empty macro, no checks needed
     ],
     visibility = ["//visibility:public"],
     deps = [

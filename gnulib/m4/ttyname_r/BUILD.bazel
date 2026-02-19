@@ -63,10 +63,14 @@ int test() {
             "HAVE_POSIXDECL_TTYNAME_R",
             condition = "!_gl_cv_func_ttyname_r_non_posix",
         ),
-        # The m4 file has complex runtime checks for Android and Solaris bugs
-        # Based on golden files, on macOS:
-        # - REPLACE_TTYNAME_R=0 (function works correctly)
-        checks.AC_SUBST("REPLACE_TTYNAME_R", 0),
+        # M4: if gl_cv_func_ttyname_r_posix = no then REPLACE_TTYNAME_R=1
+        # _gl_cv_func_ttyname_r_non_posix=1 means non-POSIX signature (char* return)
+        # which requires replacement. Runtime checks for Android/Solaris bugs are
+        # not portable to Bazel; on macOS/Linux the POSIX signature check suffices.
+        checks.AC_SUBST(
+            "REPLACE_TTYNAME_R",
+            condition = "_gl_cv_func_ttyname_r_non_posix",
+        ),
         checks.AC_CHECK_FUNC(
             "ttyname",
             define = "HAVE_TTYNAME",
