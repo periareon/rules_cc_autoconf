@@ -46,7 +46,7 @@ autoconf(
         checks.AC_CHECK_HEADER(
             "OS.h",
             name = "_gl_cv_header_OS_h",
-            requires = ["gl_cv_func_getpagesize==0"],
+            requires = ["!gl_cv_func_getpagesize"],
         ),
         checks.AC_SUBST(
             "HAVE_OS_H",

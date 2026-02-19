@@ -18,7 +18,7 @@
 /* #undef HAVE_TIMEZONE_T */
 /* #undef HAVE_TZALLOC */
 /* #undef HAVE_UNISTD_H */
-/* #undef NEED_MKTIME_INTERNAL */
+#define NEED_MKTIME_INTERNAL 1
 /* #undef NEED_MKTIME_WORKING */
 /* #undef REPLACE_CTIME */
 /* #undef REPLACE_GMTIME */

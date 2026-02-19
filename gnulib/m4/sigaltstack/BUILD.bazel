@@ -39,7 +39,7 @@ autoconf(
         # Define stack_t as struct sigaltstack if type doesn't exist
         checks.AC_DEFINE(
             "stack_t",
-            condition = "HAVE_STACK_T==0",  # Only define if stack_t doesn't exist
+            condition = "!HAVE_STACK_T",  # Only define if stack_t doesn't exist
             if_true = "struct sigaltstack",
         ),
     ] + select({

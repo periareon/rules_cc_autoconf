@@ -69,12 +69,12 @@ autoconf(
             checks.AC_DEFINE(
                 "WANT_MKTIME_INTERNAL",
                 "1",
-                requires = ["HAVE_MKTIME_INTERNAL==0"],
+                requires = ["!HAVE_MKTIME_INTERNAL"],
             ),
             checks.AC_DEFINE(
                 "NEED_MKTIME_INTERNAL",
                 "1",
-                requires = ["HAVE_MKTIME_INTERNAL==0"],
+                requires = ["!HAVE_MKTIME_INTERNAL"],
             ),
         ],
         "//conditions:default": [
@@ -92,12 +92,12 @@ autoconf(
             checks.AC_DEFINE(
                 "WANT_MKTIME_INTERNAL",
                 "1",
-                requires = ["HAVE_MKTIME_INTERNAL==0"],
+                requires = ["!HAVE_MKTIME_INTERNAL"],
             ),
             checks.AC_DEFINE(
                 "NEED_MKTIME_INTERNAL",
                 "1",
-                requires = ["HAVE_MKTIME_INTERNAL==0"],
+                requires = ["!HAVE_MKTIME_INTERNAL"],
             ),
         ],
     }),

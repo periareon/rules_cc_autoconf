@@ -23,7 +23,7 @@ autoconf(
             checks.AC_DEFINE(
                 "eaccess",
                 "access",
-                requires = ["HAVE_EACCESS==0"],
+                requires = ["!HAVE_EACCESS"],
             ),
         ],
     }),

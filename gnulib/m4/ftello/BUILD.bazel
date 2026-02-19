@@ -26,9 +26,7 @@ autoconf(
     checks = [
         checks.AC_SUBST(
             "REPLACE_FTELLO",
-            condition = "gl_cv_var_stdin_large_offset==0",
-            if_false = 0,
-            if_true = 1,
+            condition = "!gl_cv_var_stdin_large_offset",
         ),
     ],
     visibility = ["//visibility:public"],

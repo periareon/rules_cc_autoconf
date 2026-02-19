@@ -33,7 +33,7 @@ autoconf(
             "mbsinit",
             name = "ac_cv_have_decl_mbsinit",
             includes = ["#include <wchar.h>"],
-            requires = ["_gl_cv_func_mbsinit==0"],  # Only check if function doesn't exist
+            requires = ["!_gl_cv_func_mbsinit"],  # Only check if function doesn't exist
         ),
 
         # Set REPLACE_MBSINIT based on conditions:
