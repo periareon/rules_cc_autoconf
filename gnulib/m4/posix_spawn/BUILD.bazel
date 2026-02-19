@@ -106,7 +106,7 @@ autoconf(
             # //gnulib/m4/posix_spawn_faction_addchdir:ac_cv_func_posix_spawn_file_actions_addchdir_np.
             checks.AC_DEFINE(
                 "REPLACE_POSIX_SPAWN",
-                requires = ["ac_cv_func_posix_spawn_file_actions_addchdir_np==0"],
+                requires = ["!ac_cv_func_posix_spawn_file_actions_addchdir_np"],
             ),
             # Subst value driven by the _np check result
             checks.AC_SUBST(

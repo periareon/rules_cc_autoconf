@@ -27,7 +27,7 @@ autoconf(
             "wcrtomb",
             name = "ac_cv_have_decl_wcrtomb",
             includes = ["#include <wchar.h>"],
-            requires = ["ac_cv_func_wcrtomb==0"],
+            requires = ["!ac_cv_func_wcrtomb"],
         ),
 
         # REPLACE_WCRTOMB logic:

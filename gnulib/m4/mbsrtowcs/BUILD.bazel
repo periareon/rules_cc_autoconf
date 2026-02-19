@@ -35,7 +35,7 @@ autoconf(
             "mbsrtowcs",
             name = "ac_cv_have_decl_mbsrtowcs",
             includes = ["#include <wchar.h>"],
-            requires = ["ac_cv_func_mbsrtowcs==0"],  # Only check if function doesn't exist
+            requires = ["!ac_cv_func_mbsrtowcs"],  # Only check if function doesn't exist
         ),
 
         # Set REPLACE_MBSRTOWCS based on conditions:

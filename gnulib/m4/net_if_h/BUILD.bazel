@@ -28,7 +28,7 @@ autoconf(
 #include <net/if.h>
 int main(void) { return 0; }""",
             language = "c",
-            requires = ["_gl_cv_header_net_if_h_selfcontained==0"],
+            requires = ["!_gl_cv_header_net_if_h_selfcontained"],
         ),
 
         # Set HAVE_NET_IF_H as define if header exists and is not self-contained
@@ -36,7 +36,7 @@ int main(void) { return 0; }""",
             "HAVE_NET_IF_H",
             "1",
             requires = [
-                "_gl_cv_header_net_if_h_selfcontained==0",
+                "!_gl_cv_header_net_if_h_selfcontained",
                 "_gl_cv_header_net_if_h==1",
             ],
         ),

@@ -36,7 +36,7 @@ autoconf(
         # On non-Windows platforms with HAVE_FCHDIR=1, REPLACE_CLOSEDIR=0 (matches golden file)
         checks.AC_SUBST(
             "REPLACE_CLOSEDIR",
-            condition = "ac_cv_func_fchdir==0",  # If fchdir not available, replace closedir (from fchdir module)
+            condition = "!ac_cv_func_fchdir",  # If fchdir not available, replace closedir (from fchdir module)
             if_false = 0,
             if_true = 1,
         ),

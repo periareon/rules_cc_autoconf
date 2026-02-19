@@ -30,7 +30,7 @@ autoconf(
             "wcsrtombs",
             name = "ac_cv_have_decl_wcsrtombs",
             includes = ["#include <wchar.h>"],
-            requires = ["ac_cv_func_wcsrtombs==0"],
+            requires = ["!ac_cv_func_wcsrtombs"],
         ),
 
         # REPLACE_WCSRTOMBS logic:

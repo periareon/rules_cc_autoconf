@@ -27,7 +27,7 @@ autoconf(
         # The condition references the check result
         checks.AC_DEFINE(
             "useconds_t",
-            condition = "HAVE_USECONDS_T==0",
+            condition = "!HAVE_USECONDS_T",
             if_true = "unsigned int",
         ),
 
