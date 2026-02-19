@@ -3,12 +3,25 @@
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
 
+# gl_FUNC_REALLOCARRAY - lines 8-32
+# Checks for reallocarray function and sets HAVE_REALLOCARRAY and REPLACE_REALLOCARRAY
 autoconf(
-    name = "reallocarray",
+    name = "gl_FUNC_REALLOCARRAY",
     checks = [
+        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - line 11
+        # This is provided by extensions dependency
 
+        # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - line 13
         # Note: gl_STDLIB_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
 
+        # AC_REQUIRE([gl_CHECK_MALLOC_PTRDIFF]) - line 14
+        # This is provided by gl_CHECK_MALLOC_PTRDIFF dependency
+
+        # AC_REQUIRE([gl_FUNC_REALLOC_0_NONNULL]) - line 15
+        # This is provided by gl_FUNC_REALLOC_0_NONNULL dependency
+
+        # gl_CHECK_FUNCS_ANDROID([reallocarray], [[#include <stdlib.h>]]) - line 16
+        # Check for reallocarray function
         # Use AC_TRY_LINK to verify the function actually links (not just declared)
         checks.AC_TRY_LINK(
             name = "ac_cv_func_reallocarray",
@@ -22,13 +35,17 @@ int main(void) {
         ),
 
         # if test "$ac_cv_func_reallocarray" = no; then
+        #   HAVE_REALLOCARRAY=0 - line 17
         #   case "$gl_cv_onwards_func_reallocarray" in
+        #     future*) REPLACE_REALLOCARRAY=1 ;; - line 19-20
         #   esac
         # else
         #   if test "$gl_cv_malloc_ptrdiff" = no; then
+        #     REPLACE_REALLOCARRAY=1 - line 24-25
         #   fi
         #   case "$gl_cv_func_realloc_0_nonnull" in
         #     *yes) ;;
+        #     *) REPLACE_REALLOCARRAY=1 ;; - line 26-28
         #   esac
         # fi
         # Set HAVE_REALLOCARRAY as substitution variable
@@ -44,38 +61,39 @@ int main(void) {
             if_false = "0",
             if_true = "1",
         ),
-
-        # REPLACE_REALLOCARRAY logic:
-        # - If reallocarray not found and it's a future function: REPLACE_REALLOCARRAY=1
-        # - If reallocarray found but malloc_ptrdiff=no: REPLACE_REALLOCARRAY=1
-        # - If reallocarray found but realloc_0_nonnull != yes: REPLACE_REALLOCARRAY=1
-        # - Otherwise: REPLACE_REALLOCARRAY=0
     ] + select({
-        # On Linux: reallocarray exists but needs replacement due to realloc(0) behavior
+        # On Linux: reallocarray exists but realloc(0) may return NULL
+        # (HAVE_REALLOC_0_NONNULL is undefined), so REPLACE_REALLOCARRAY=1
         "@platforms//os:linux": [
             checks.AC_SUBST("REPLACE_REALLOCARRAY", 1),
         ],
-        # On macOS: reallocarray doesn't exist, no replacement needed
+        # On macOS/others: reallocarray doesn't exist (HAVE_REALLOCARRAY=0),
+        # so no replacement needed — the missing-function path handles it
         "//conditions:default": [
             checks.AC_SUBST("REPLACE_REALLOCARRAY", 0),
         ],
-    }) + [
-    ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
+        # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - line 11
         "//gnulib/m4/extensions",
+        # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - line 13
         # Note: gl_STDLIB_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        # AC_REQUIRE([gl_CHECK_MALLOC_PTRDIFF]) - line 14
         "//gnulib/m4/malloc:gl_CHECK_MALLOC_PTRDIFF",
         # AC_REQUIRE([gl_FUNC_MALLOC_PTRDIFF]) - needed for HAVE_MALLOC_PTRDIFF
         "//gnulib/m4/malloc:gl_FUNC_MALLOC_PTRDIFF",
         # AC_REQUIRE([gl_FUNC_MALLOC_POSIX]) - needed for HAVE_MALLOC_POSIX
         "//gnulib/m4/malloc:gl_FUNC_MALLOC_POSIX",
+        # AC_REQUIRE([gl_FUNC_REALLOC_0_NONNULL]) - line 15
+        # This provides HAVE_REALLOC_0_NONNULL and HAVE_REALLOC_POSIX
         "//gnulib/m4/realloc:gl_FUNC_REALLOC_0_NONNULL",
         # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
 
+# gl_PREREQ_REALLOCARRAY - lines 34-35
 # Prerequisites of lib/reallocarray.c
 autoconf(
     name = "gl_PREREQ_REALLOCARRAY",
@@ -86,5 +104,14 @@ autoconf(
     deps = [
         # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "reallocarray",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_REALLOCARRAY",
+        ":gl_PREREQ_REALLOCARRAY",
     ],
 )

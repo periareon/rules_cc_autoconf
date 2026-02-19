@@ -129,9 +129,15 @@ autoconf(
     name = "gl_FUNC_MALLOC_GNU",
     checks = [
 
-        # AS_CASE([$ac_cv_func_malloc_0_nonnull],
-        # Based on golden files, REPLACE_MALLOC_FOR_MALLOC_GNU=0 on macOS
-        checks.AC_SUBST("REPLACE_MALLOC_FOR_MALLOC_GNU", 0),
+        # M4: AS_CASE([$ac_cv_func_malloc_0_nonnull],
+        #   [*yes], [REPLACE_MALLOC_FOR_MALLOC_GNU=$REPLACE_MALLOC_FOR_MALLOC_POSIX],
+        #   [REPLACE_MALLOC_FOR_MALLOC_GNU=1])
+        # HAVE_MALLOC_0_NONNULL is hard-coded to 1 (macOS/Linux cross-compile "guessing yes"),
+        # so the *yes path is taken: GNU = POSIX, which is driven by gl_cv_malloc_ptrdiff.
+        checks.AC_SUBST(
+            "REPLACE_MALLOC_FOR_MALLOC_GNU",
+            condition = "!gl_cv_malloc_ptrdiff",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [

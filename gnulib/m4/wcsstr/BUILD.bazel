@@ -10,11 +10,16 @@ autoconf(
             "wcsstr",
             define = "HAVE_WCSSTR",
         ),
-        # NEED_LINEAR_WCSSTR is set if wcsstr needs a linear-time implementation
-        # On macOS, wcsstr may need linear-time implementation
-        checks.AC_DEFINE("NEED_LINEAR_WCSSTR", 1),  # Integer, not string - renders as unquoted 1
-        # REPLACE_WCSSTR=1 when using linear replacement (matches golden from gnulib test)
-        checks.AC_SUBST("REPLACE_WCSSTR", 1),
+        # M4: gl_cv_func_wcsstr_linear runtime test.
+        # Cross-compile heuristic: "$gl_cross_guess_normal" (no platform-specific guess),
+        # always "guessing no" → if function exists, assume non-linear → REPLACE.
+        checks.AC_SUBST(
+            "REPLACE_WCSSTR",
+            condition = "ac_cv_func_wcsstr",
+        ),
+        # NEED_LINEAR_WCSSTR: defined when HAVE_WCSSTR=0 || REPLACE_WCSSTR=1.
+        # Both paths lead here in cross-compile: always defined.
+        checks.AC_DEFINE("NEED_LINEAR_WCSSTR", 1),
     ],
     visibility = ["//visibility:public"],
     deps = [
