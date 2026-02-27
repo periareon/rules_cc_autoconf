@@ -911,7 +911,7 @@ def _ac_check_sizeof(
     # → Creates cache variable: "ac_cv_sizeof_int"
 
     # Cache variable + define (explicit name)
-    macros.AC_CHECK_SIZEOF("size_t", includes = ["stddef.h"], define = "SIZEOF_SIZE_T")
+    macros.AC_CHECK_SIZEOF("size_t", includes = ["#include <stddef.h>"], define = "SIZEOF_SIZE_T")
     # → Creates cache variable: "ac_cv_sizeof_size_t"
     # → Creates define: "SIZEOF_SIZE_T" in config.h
     ```
