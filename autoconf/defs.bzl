@@ -14,7 +14,8 @@ load(
     _autoconf_srcs = "autoconf_srcs",
 )
 load(
-    ":macros.bzl",
+    ":checks.bzl",
+    _checks = "checks",
     _macros = "macros",
 )
 load(
@@ -25,5 +26,6 @@ load(
 autoconf = _autoconf
 autoconf_hdr = _autoconf_hdr
 autoconf_srcs = _autoconf_srcs
+checks = _checks
 macros = _macros
 package_info = _package_info
