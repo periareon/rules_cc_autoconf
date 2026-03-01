@@ -1,5 +1,6 @@
 """# autoconf_srcs"""
 
+load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@rules_cc//cc:find_cc_toolchain.bzl", "use_cc_toolchain")
 load(
     "//autoconf/private:autoconf_config.bzl",
@@ -10,7 +11,6 @@ load(
     "get_autoconf_toolchain_defaults_by_label",
 )
 load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
-load("@bazel_skylib//lib:paths.bzl", "paths")
 
 def _package_relative_name(ctx, file):
     """Returns the package relative path to the file.
