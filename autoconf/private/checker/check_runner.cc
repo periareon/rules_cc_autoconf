@@ -165,36 +165,11 @@ CheckResult CheckRunner::check_function(const Check& check) {
     }
 
     std::string code{};
-
-    if (check.code().has_value()) {
-        code = *check.code();
-    } else {
-        code = R"(
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.
-   MSVC does not have GCC builtins, so we can safely use int. */
-#ifdef __cplusplus
-extern "C"
-#endif
-#if defined _MSC_VER
-/* Since MSVC 2015, many CRT functions (printf, scanf, etc.) are inline
-   in UCRT headers and not exported as linker symbols. Link against
-   legacy_stdio_definitions.lib to make them available for link tests. */
-#pragma comment(lib, "legacy_stdio_definitions.lib")
-int )" + func_name +
-               R"( ();
-#else
-char )" + func_name +
-               R"( ();
-#endif
-
-int main(void) {
-    return )" + func_name +
-               R"(();
+    if (!check.code().has_value()) {
+        throw std::runtime_error("Function check missing code: " +
+                                 check_id(check));
     }
-)";
-    }
+    code = *check.code();
 
     // Resolve compile_defines and prepend to code
     std::string defines_code = resolve_compile_defines(check);
@@ -222,32 +197,11 @@ CheckResult CheckRunner::check_lib(const Check& check) {
     std::string func_name = check.name();
     std::string code{};
 
-    if (check.code().has_value()) {
-        code = *check.code();
-    } else {
-        // Generate default code similar to AC_CHECK_FUNC
-        code = R"(
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.
-   MSVC does not have GCC builtins, so we can safely use int. */
-#ifdef __cplusplus
-extern "C"
-#endif
-#if defined _MSC_VER
-int )" + func_name +
-               R"( ();
-#else
-char )" + func_name +
-               R"( ();
-#endif
-
-int main(void) {
-    return )" + func_name +
-               R"(();
-}
-)";
+    if (!check.code().has_value()) {
+        throw std::runtime_error("Library check missing code: " +
+                                 check_id(check));
     }
+    code = *check.code();
 
     bool success =
         try_compile_and_link_with_lib(code, library, check.language());
@@ -261,18 +215,10 @@ CheckResult CheckRunner::check_type_check(const Check& check) {
     std::string type_name = check.name();
     std::string code{};
 
-    if (check.code().has_value()) {
-        code = *check.code();
-    } else {
-        code = R"(
-int main(void) {
-    if (sizeof()" +
-               type_name + R"())
-        return 0;
-    return 1;
-}
-)";
+    if (!check.code().has_value()) {
+        throw std::runtime_error("Type check missing code: " + check_id(check));
     }
+    code = *check.code();
 
     // Resolve compile_defines and prepend to code
     std::string defines_code = resolve_compile_defines(check);
