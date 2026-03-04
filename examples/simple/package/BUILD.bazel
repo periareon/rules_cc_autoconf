@@ -1,0 +1,17 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc_autoconf//autoconf:autoconf_srcs.bzl", "autoconf_srcs")
+
+autoconf_srcs(
+    name = "gen_src",
+    srcs = {
+        "test.c": "HAVE_MALLOC",
+    },
+    deps = ["//:autoconf"],
+)
+
+cc_library(
+    name = "lib",
+    srcs = [":gen_src"],
+    includes = ["."],
+    visibility = ["//visibility:public"],
+)

@@ -21,6 +21,7 @@ autoconf(
         "stdlib.h",
         "string.h",
     ]),
+    visibility = ["//visibility:public"],
     deps = [":package"],
 )
 
