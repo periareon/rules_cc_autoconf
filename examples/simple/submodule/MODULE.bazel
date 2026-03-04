@@ -1,7 +1,7 @@
 """submodule use parent module"""
 
 module(
-    name = "rules_cc_autoconf_submodule_test",
+    name = "rules_cc_autoconf_example_submodule",
     version = "0.0.0",
 )
 
@@ -10,10 +10,4 @@ bazel_dep(name = "rules_cc_autoconf", version = "0.0.0")
 local_path_override(
     module_name = "rules_cc_autoconf",
     path = "../../../",
-)
-
-bazel_dep(name = "rules_cc_autoconf_example", version = "0.0.0")
-local_path_override(
-    module_name = "rules_cc_autoconf_example",
-    path = "../",
 )

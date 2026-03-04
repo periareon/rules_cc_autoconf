@@ -4,7 +4,7 @@ load("@rules_cc_autoconf//autoconf:autoconf_srcs.bzl", "autoconf_srcs")
 autoconf_srcs(
     name = "gen_src",
     srcs = {
-        "test.c": "HAVE_MALLOC",
+        "src.c": "HAVE_STDINT_H",
     },
     deps = ["//:autoconf"],
 )

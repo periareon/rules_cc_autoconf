@@ -38,4 +38,5 @@ cc_test(
         "simple_test.c",
         ":config.h",
     ],
+    deps = ["@rules_cc_autoconf_example_submodule//package:lib"],
 )
