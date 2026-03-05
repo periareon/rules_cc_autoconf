@@ -591,10 +591,10 @@ static std::string gen_less_compare(const std::string& base_code_template,
 
 static std::pair<std::string, std::string> split_code_expr(
     const std::string& base_code_template) {
-    const std::string::size_type begin = base_code_template.find("{");
+    const std::string::size_type begin = base_code_template.find('{');
     assert(begin != std::string::npos);
 
-    const std::string::size_type end = base_code_template.find("}", begin + 1);
+    const std::string::size_type end = base_code_template.find('}', begin + 1);
     assert(end != std::string::npos);
 
     const std::string expr =
