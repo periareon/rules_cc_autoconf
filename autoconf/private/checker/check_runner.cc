@@ -636,8 +636,11 @@ std::optional<int> CheckRunner::find_compile_time_int_bisect(
                                       std::to_string(search_end)),
                      language)) {
         // at least search_begin < constant or constant < search_end should
-        // compile if none compile, means no such constant
-        return std::nullopt;
+        // compile if none compile, means expr can't evaluate at compile time
+        throw std::runtime_error(
+            "'" + code_expr.second +
+            "' can't be evaluated (non-exist constant, invalid expression, or "
+            "can't evaluate at compile time)");
     }
 
     int l = search_begin;

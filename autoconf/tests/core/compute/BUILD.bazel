@@ -4,6 +4,7 @@ load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
 load("//autoconf:checks.bzl", "checks")
 load("//autoconf:package_info.bzl", "package_info")
 load("//autoconf/tests:diff_test.bzl", "diff_test")
+load("defs.bzl", "RANGE_BEGIN", "RANGE_END", "gen_template_and_src")
 
 package_info(
     name = "package",
@@ -17,6 +18,8 @@ autoconf(
         checks.AC_COMPUTE_INT("TWO", "1 + 1"),
         checks.AC_COMPUTE_INT("ANSWER", "42"),
         checks.AC_COMPUTE_INT("HUNDRED", "100"),
+        checks.AC_COMPUTE_INT("SEARCH_BEGIN", "-1024"),
+        checks.AC_COMPUTE_INT("SEARCH_END", "1024"),
     ],
     deps = [":package"],
 )
@@ -26,6 +29,46 @@ autoconf_hdr(
     out = "config.h",
     template = "config.h.in",
     deps = [":autoconf"],
+)
+
+autoconf(
+    name = "check_value_autoconf",
+    checks = [
+        checks.AC_COMPUTE_INT(
+            "DEFINE_{}".format(i).replace("-", "_"),
+            str(i),
+        )
+        for i in range(RANGE_BEGIN, RANGE_END, 1)
+    ],
+)
+
+gen_template_and_src(name = "template_and_src")
+
+filegroup(
+    name = "template",
+    srcs = [":template_and_src"],
+    output_group = "template",
+)
+
+autoconf_hdr(
+    name = "template_h",
+    out = "template.h",
+    template = ":template",
+    deps = ["check_value_autoconf"],
+)
+
+filegroup(
+    name = "c",
+    srcs = [":template_and_src"],
+    output_group = "c",
+)
+
+cc_test(
+    name = "value_check_test",
+    srcs = [
+        "template.h",
+        ":c",
+    ],
 )
 
 diff_test(
@@ -41,6 +84,3 @@ cc_test(
         ":config.h",
     ],
 )
-
-# Note: AC_COMPUTE_INT is not cross-compile friendly (requires running compiled code)
-# so we don't compare against GNU autoconf output

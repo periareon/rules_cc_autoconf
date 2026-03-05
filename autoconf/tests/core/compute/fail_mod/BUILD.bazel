@@ -1,0 +1,63 @@
+load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
+load("@rules_cc_autoconf//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "underflow",
+    checks = [
+        # This test is expected to fail because the expression is invalid
+        checks.AC_COMPUTE_INT("OUT_OF_RANGE_UNDERFLOW", "-1025"),
+    ],
+)
+
+autoconf_hdr(
+    name = "underflow_hdr",
+    out = "underflow.h",
+    template = "config.h.in",
+    deps = ["underflow"],
+)
+
+autoconf(
+    name = "overflow",
+    checks = [
+        checks.AC_COMPUTE_INT("OUT_OF_RANGE_OVERFLOW", "1025"),
+    ],
+)
+
+autoconf_hdr(
+    name = "overflow_hdr",
+    out = "overflow.h",
+    template = "config.h.in",
+    deps = ["overflow"],
+)
+
+invalid_checks = [
+    ("non_exist_constant", "NOT_DEFINED_CONSTANT"),
+    ("invalid_expr", "int b=3"),
+    ("runtime_eval", "rand()"),
+]
+
+[
+    autoconf(
+        name = check[0],
+        checks = [
+            # This test is expected to fail because the expression is invalid
+            checks.AC_COMPUTE_INT(
+                check[0],
+                check[1],
+                includes = ["#include <stdlib.h>"],
+            ),
+        ],
+    )
+    for check in invalid_checks
+]
+
+[
+    autoconf_hdr(
+        name = "{}_hdr".format(check[0]),
+        out = "{}.h".format(check[0]),
+        template = "config.h.in",
+        deps = [check[0]],
+    )
+    for check in invalid_checks
+]

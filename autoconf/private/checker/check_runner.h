@@ -224,6 +224,16 @@ class CheckRunner {
     std::optional<int> find_compile_time_value_with_static_assert(
         const std::string& base_code_template, const std::string& language);
 
+    /**
+     * @brief Find compile-time constant value using binary search .
+     * @param base_code_template Code template with {$EXPR} and {lhs} < {rhs}
+     * @language language Language of the code ("c" or "cpp").
+     * @param search_begin search begin (inclusive), default -1024
+     * @param search_end search end (inclusive), default 1024
+     * @return The value of $EXPR evaluate, or std::nullopt if build failed
+     *         ($EXPR not defined, or invalid expression). Or throw exception
+     *         if $EXPR is valid expression, but out of search range
+     * */
     std::optional<int> find_compile_time_int_bisect(
         const std::string& base_code_template, const std::string& language,
         const int search_begin = -1024, const int search_end = 1024);
