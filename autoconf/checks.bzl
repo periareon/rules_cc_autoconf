@@ -1304,9 +1304,10 @@ def _ac_check_member(
 
 _AC_COMPUTE_INT_TEMPLATE = """
 {}
-
+{{{}}}
+typedef int _array_with_length[{{lhs}} < {{rhs}} ? 1 : -1];
 int main(void) {{
-    return ({});
+    return 0;
 }}
 """
 

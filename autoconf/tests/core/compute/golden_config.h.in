@@ -6,6 +6,12 @@
 /* Define to the value of 100 */
 #define HUNDRED 100
 
+/* Define to the value of -1024 */
+#define SEARCH_BEGIN -1024
+
+/* Define to the value of 1024 */
+#define SEARCH_END 1024
+
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT ""
 

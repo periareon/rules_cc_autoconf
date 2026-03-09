@@ -55,10 +55,15 @@ jobs:
 
       # Build and Test the code
       - name: Test (Unix)
-        run: bazel ${BAZEL_STARTUP_FLAGS[@]} test //...
+        run: |
+          bazel ${BAZEL_STARTUP_FLAGS[@]} test //...
+          bazel ${BAZEL_STARTUP_FLAGS[@]} run //autoconf/tests/core/compute:test_failure "${{ github.workspace }}/autoconf/tests/core/compute/fail_mod/"
         if: startswith(runner.os, 'Windows') != true
       - name: Test (Windows)
-        run: bazel $env:BAZEL_STARTUP_FLAGS test //...
+        run: |
+          bazel $env:BAZEL_STARTUP_FLAGS test //...
+          bazel $env:BAZEL_STARTUP_FLAGS run //autoconf/tests/core/compute:test_failure "${{ github.workspace }}/autoconf/tests/core/compute/fail_mod/"
+
         if: startswith(runner.os, 'Windows')
 
   ci-examples-simple:

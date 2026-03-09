@@ -225,7 +225,21 @@ class CheckRunner {
         const std::string& base_code_template, const std::string& language);
 
     /**
-     * @brief Resolve compile_defines from check and build #define statements.
+     * @brief Find compile-time constant value using binary search .
+     * @param base_code_template Code template with {$EXPR} and {lhs} < {rhs}
+     * @language language Language of the code ("c" or "cpp").
+     * @param search_begin search begin (inclusive), default -1024
+     * @param search_end search end (inclusive), default 1024
+     * @return The value of $EXPR evaluate, throw exception
+     *         if $EXPR is not valid or out of search range
+     * */
+    std::optional<int> find_compile_time_int_bisect(
+        const std::string& base_code_template, const std::string& language,
+        const int search_begin = -1024, const int search_end = 1024);
+
+    /**
+     * @brief Resolve compile_defines from check and build #define
+     * statements.
      * @param check The check that may have compile_defines.
      * @return String containing #define statements for compile_defines,
      *         or empty string if no compile_defines specified.
