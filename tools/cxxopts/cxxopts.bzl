@@ -8,7 +8,10 @@ def cxxopts():
     """
     return select({
         "@rules_cc//cc/compiler:msvc-cl": ["/std:c++17"],
-        "//conditions:default": ["-std=c++17"],
+        "//conditions:default": [
+            "-std=c++17",
+            "-D_LIBCPP_DISABLE_AVAILABILITY",
+        ],
     })
 
 def linkopts():
