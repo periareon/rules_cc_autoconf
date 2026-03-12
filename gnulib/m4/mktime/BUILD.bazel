@@ -59,8 +59,8 @@ autoconf(
                 "__mktime_internal",
                 define = "HAVE_MKTIME_INTERNAL",
             ),
-            checks.M4_VARIABLE("REPLACE_MKTIME", "1"),
-            checks.M4_VARIABLE("NEED_MKTIME_WINDOWS", "1"),
+            checks.AC_SUBST("REPLACE_MKTIME", "1"),
+            checks.AC_DEFINE("NEED_MKTIME_WINDOWS", "1"),
             checks.AC_DEFINE(
                 "mktime_internal",
                 "__mktime_internal",
