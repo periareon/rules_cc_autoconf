@@ -11,7 +11,7 @@ def cxxopts():
         "//conditions:default": [
             "-std=c++17",
             # Fixes compatibility issues between old and new versions of macOS `std::filesystem`
-            # For more details see: <LINK>
+            # For more details see: https://github.com/periareon/rules_cc_autoconf/pull/42
             "-D_LIBCPP_DISABLE_AVAILABILITY",
         ],
     })
