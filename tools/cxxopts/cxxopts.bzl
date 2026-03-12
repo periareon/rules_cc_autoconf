@@ -10,6 +10,8 @@ def cxxopts():
         "@rules_cc//cc/compiler:msvc-cl": ["/std:c++17"],
         "//conditions:default": [
             "-std=c++17",
+            """Fixes compatibility issues between old and new versions of macOS std::filesystem
+            """
             "-D_LIBCPP_DISABLE_AVAILABILITY",
         ],
     })
