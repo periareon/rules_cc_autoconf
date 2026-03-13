@@ -140,7 +140,6 @@ Valid `mode` values:
 - `"defines"` (default): Only process defines (AC_DEFINE, AC_CHECK_*, etc.), not substitution variables (AC_SUBST). This is for config.h files.
 - `"subst"`: Only process substitution variables (AC_SUBST), not defines. This is for subst.h files.
 - `"all"`: Process both defines and substitution variables.
-```
 
 This allows you to run checks once and generate multiple header files from the same results.
 """,
