@@ -8,12 +8,13 @@ def cxxopts():
     """
     return select({
         "@rules_cc//cc/compiler:msvc-cl": ["/std:c++17"],
-        "//conditions:default": [
+        "@platforms//os:macos": [
             "-std=c++17",
             # Fixes compatibility issues between old and new versions of macOS `std::filesystem`
             # For more details see: https://github.com/periareon/rules_cc_autoconf/pull/42
             "-D_LIBCPP_DISABLE_AVAILABILITY",
         ],
+        "//conditions:default": ["-std=c++17"],
     })
 
 def linkopts():
