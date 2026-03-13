@@ -2,26 +2,58 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
+
+autoconf(
+    name = "gl_CHECK_STRERRORNAME_NP",
+    checks = gl_macros.GL_CHECK_FUNCS_ANDROID(
+        ["strerrorname_np"],
+        includes = ["#include <string.h>"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",
+    ],
+)
+
+autoconf(
+    name = "gl_FUNC_STRERRORNAME_NP",
+    checks = [
+        checks.AC_SUBST(
+            "HAVE_STRERRORNAME_NP",
+            condition = "ac_cv_func_strerrorname_np",
+            if_false = "0",
+            if_true = "1",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_CHECK_STRERRORNAME_NP",
+    ],
+)
+
+autoconf(
+    name = "gl_OPTIONAL_STRERRORNAME_NP",
+    checks = [
+        checks.AC_DEFINE(
+            "HAVE_WORKING_STRERRORNAME_NP",
+            requires = ["ac_cv_func_strerrorname_np==1"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_CHECK_STRERRORNAME_NP",
+    ],
+)
 
 autoconf(
     name = "strerrorname_np",
-    checks = select({
-        # On Linux: strerrorname_np is available in glibc 2.32+
-        "@platforms//os:linux": [
-            checks.AC_DEFINE("HAVE_STRERRORNAME_NP", "1"),
-            checks.AC_DEFINE("HAVE_WORKING_STRERRORNAME_NP", "1"),
-            checks.AC_SUBST("HAVE_STRERRORNAME_NP", "1"),
-        ],
-        # On macOS and other platforms: not available
-        "//conditions:default": [
-            checks.AC_SUBST("HAVE_STRERRORNAME_NP", "0"),
-        ],
-    }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/string_h",  # AC_REQUIRE([gl_STRING_H_DEFAULTS])
-        "//gnulib/m4/wchar_h:gl_WCHAR_H_CORE",
-        # For test compatibility - need basic header defines
-        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        ":gl_CHECK_STRERRORNAME_NP",
+        ":gl_FUNC_STRERRORNAME_NP",
+        ":gl_OPTIONAL_STRERRORNAME_NP",
     ],
 )
