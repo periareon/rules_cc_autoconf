@@ -26,16 +26,12 @@ int main(void) {
             language = "c",
         ),
 
-        # Platform-specific values:
-        # - macOS: NEXT_ASSERT_H = "<assert.h>"
-        # - Linux: NEXT_ASSERT_H = "" (empty)
-    ] + select({
-        "@platforms//os:linux": gl_macros.GL_CHECK_NEXT_HEADERS(
-            ["assert.h"],
-            value = "",
-        ),
-        "//conditions:default": gl_macros.GL_CHECK_NEXT_HEADERS(["assert.h"]),
-    }),
+        # Upstream only calls gl_NEXT_HEADERS when static_assert is unavailable.
+        # When it IS available, the variables are never set (empty in autoconf).
+    ] + gl_macros.GL_NEXT_HEADERS(
+        ["assert.h"],
+        condition = "!HAVE_C_STATIC_ASSERT",
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # gl_NEXT_HEADERS requires gl_INCLUDE_NEXT which is defined in include_next module

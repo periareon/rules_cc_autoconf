@@ -2,6 +2,7 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 autoconf(
     name = "fnmatch_h",
@@ -11,9 +12,7 @@ autoconf(
             "fnmatch.h",
             define = "HAVE_FNMATCH_H",
         ),
-        # gl_CHECK_NEXT_HEADERS([fnmatch.h]) - golden expects "<fnmatch.h>"
-        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_FNMATCH_H", "<fnmatch.h>"),
-        checks.AC_SUBST("NEXT_FNMATCH_H", "<fnmatch.h>"),
+    ] + gl_macros.GL_CHECK_NEXT_HEADERS(["fnmatch.h"]) + [
         checks.AC_SUBST("HAVE_FNMATCH_H", "1"),  # golden expects 1
         # GNU extension checks (from gl_FNMATCH_H)
         checks.AC_TRY_COMPILE(

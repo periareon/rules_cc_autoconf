@@ -2,6 +2,7 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 # Shared AC_CHECK_DECL(_snprintf) used by stdio_h and vasnprintf's gl_PREREQ_VASNPRINTF.
 autoconf(
@@ -51,13 +52,7 @@ int main(void) { return 0; }
             "GNULIB_PRINTF_ATTRIBUTE_FLAVOR_GNU",
             condition = "!_gl_cv_printf_attribute_flavor_system",
         ),
-
-        # gl_NEXT_HEADERS([stdio.h]) sets NEXT_STDIO_H and NEXT_AS_FIRST_DIRECTIVE_STDIO_H
-        # On systems with include_next support, these are '<stdio.h>'
-        # On systems without include_next, these are absolute paths
-        # For cross-compilation, we default to '<stdio.h>' (most common case)
-        checks.AC_SUBST("NEXT_STDIO_H", "<stdio.h>"),
-        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_STDIO_H", "<stdio.h>"),
+    ] + gl_macros.GL_NEXT_HEADERS(["stdio.h"]) + [
 
         # Use subst=True to create both subst variables and config.h defines
         # The original m4 sets HAVE_DECL_*=0 if not found, otherwise uses default (1)

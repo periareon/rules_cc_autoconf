@@ -2,6 +2,7 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 autoconf(
     name = "uchar_h",
@@ -52,9 +53,7 @@ autoconf(
             if_false = 0,
             if_true = 1,
         ),
-        # NEXT_* variables are set by gl_CHECK_NEXT_HEADERS
-        checks.AC_SUBST("NEXT_UCHAR_H", "<uchar.h>"),
-        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_UCHAR_H", "<uchar.h>"),
+    ] + gl_macros.GL_CHECK_NEXT_HEADERS(["uchar.h"]) + [
         # SMALL_WCHAR_T is set based on BITSIZEOF_WCHAR_T
         checks.AC_SUBST("SMALL_WCHAR_T", "0"),  # wchar_t is 32 bits, not small
 

@@ -2,6 +2,7 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 autoconf(
     name = "endian_h",
@@ -42,11 +43,7 @@ autoconf(
             if_false = 0,
             if_true = 1,
         ),
-        # gl_CHECK_NEXT_HEADERS([endian.h]) - line 15 of m4
-        # Set NEXT_* variables directly based on expected values
-        checks.AC_SUBST("NEXT_ENDIAN_H", "<endian.h>"),
-        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_ENDIAN_H", "<endian.h>"),
-    ],
+    ] + gl_macros.GL_CHECK_NEXT_HEADERS(["endian.h"]),
     visibility = ["//visibility:public"],
     deps = [
         # gl_CHECK_NEXT_HEADERS requires gl_INCLUDE_NEXT which is defined in include_next module

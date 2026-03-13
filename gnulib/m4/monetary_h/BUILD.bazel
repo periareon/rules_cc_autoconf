@@ -2,6 +2,7 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 # NEXT_MONETARY_H, NEXT_AS_FIRST_DIRECTIVE_MONETARY_H, and GL_GENERATE_MONETARY_H
 autoconf(
@@ -22,9 +23,7 @@ autoconf(
             "HAVE_MONETARY_H",
             condition = "_gl_cv_header_monetary_h",
         ),
-        # gl_CHECK_NEXT_HEADERS([monetary.h]) - golden expects "<monetary.h>" when present
-        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_MONETARY_H", "<monetary.h>"),
-        checks.AC_SUBST("NEXT_MONETARY_H", "<monetary.h>"),
+    ] + gl_macros.GL_CHECK_NEXT_HEADERS(["monetary.h"]) + [
 
         # Sets default values for HAVE_STRFMON_L and REPLACE_STRFMON_L
         checks.AC_SUBST("HAVE_STRFMON_L", 1),

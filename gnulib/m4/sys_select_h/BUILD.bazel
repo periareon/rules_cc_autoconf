@@ -2,6 +2,7 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 autoconf(
     name = "sys_select_h",
@@ -11,9 +12,7 @@ autoconf(
             define = "HAVE_SYS_SELECT_H",
             subst = True,
         ),
-        # NEXT_SYS_SELECT_H variables
-        checks.AC_SUBST("NEXT_SYS_SELECT_H", "<sys/select.h>"),
-        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_SYS_SELECT_H", "<sys/select.h>"),
+    ] + gl_macros.GL_CHECK_NEXT_HEADERS(["sys/select.h"]) + [
         checks.AC_TRY_COMPILE(
             code = """\
 #include <sys/select.h>

@@ -2,6 +2,7 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 autoconf(
     name = "sys_time_h",
@@ -10,8 +11,7 @@ autoconf(
             "sys/time.h",
             define = "HAVE_SYS_TIME_H",
         ),
-        checks.AC_SUBST("NEXT_SYS_TIME_H", "<sys/time.h>"),
-        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_SYS_TIME_H", "<sys/time.h>"),
+    ] + gl_macros.GL_CHECK_NEXT_HEADERS(["sys/time.h"]) + [
     ],
     visibility = ["//visibility:public"],
     deps = [

@@ -2,6 +2,7 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 autoconf(
     name = "time_h",
@@ -11,8 +12,7 @@ autoconf(
             "time.h",
             define = "HAVE_TIME_H",
         ),
-        checks.AC_SUBST("NEXT_TIME_H", "<time.h>"),
-        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_TIME_H", "<time.h>"),
+    ] + gl_macros.GL_NEXT_HEADERS(["time.h"]) + [
         checks.AC_SUBST("PTHREAD_H_DEFINES_STRUCT_TIMESPEC", "0"),
         checks.AC_SUBST("SYS_TIME_H_DEFINES_STRUCT_TIMESPEC", "0"),
         checks.AC_SUBST("TIME_H_DEFINES_STRUCT_TIMESPEC", "1"),

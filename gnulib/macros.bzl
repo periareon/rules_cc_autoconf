@@ -183,7 +183,7 @@ def _check_funcs_android_macos(
         requires = requires,
     )
 
-def _next_headers_internal(headers, value = None, requires = None):
+def _next_headers_internal(headers, value = None, condition = None):
     """Shared logic for NEXT_* variables (gl_NEXT_HEADERS_INTERNAL with include_next=yes).
 
     For each header, creates two AC_SUBST checks:
@@ -191,14 +191,18 @@ def _next_headers_internal(headers, value = None, requires = None):
     2. NEXT_AS_FIRST_DIRECTIVE_<HEADER_UPPER>
 
     By default (value=None), uses "<header>" which matches macOS autoconf behavior.
-    Pass value="" for Linux behavior (empty string).
+
+    When `condition` is provided, the substitution always runs but the value is
+    conditional: header value when condition is true, empty string when false.
+    This matches autoconf behavior where an unset variable substitutes to empty.
 
     Args:
         headers: List of header names.
         value: Override value for all headers. None means use "<header>".
-        requires: Requirements that must be met for this check to run.
-            Can be define names (e.g., `"HAVE_FOO"`), negated (e.g., `"!HAVE_FOO"`),
-            or value-based (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
+        condition: When provided, makes the value conditional. If condition is
+            true, uses the header value; if false, uses empty string. Supports
+            define names (e.g., `"HAVE_FOO"`), negated (e.g., `"!HAVE_FOO"`),
+            or value-based (e.g., `"REPLACE_FSTAT==1"`).
     """
     if not headers:
         return []
@@ -209,11 +213,15 @@ def _next_headers_internal(headers, value = None, requires = None):
         next_var = "NEXT_{}".format(header_upper)
         next_as_first_var = "NEXT_AS_FIRST_DIRECTIVE_{}".format(header_upper)
         header_value = value if value != None else "<{}>".format(header)
-        result.append(autoconf_checks.AC_SUBST(next_var, header_value, requires = requires))
-        result.append(autoconf_checks.AC_SUBST(next_as_first_var, header_value, requires = requires))
+        if condition:
+            result.append(autoconf_checks.AC_SUBST(next_var, condition = condition, if_true = header_value, if_false = ""))
+            result.append(autoconf_checks.AC_SUBST(next_as_first_var, condition = condition, if_true = header_value, if_false = ""))
+        else:
+            result.append(autoconf_checks.AC_SUBST(next_var, header_value))
+            result.append(autoconf_checks.AC_SUBST(next_as_first_var, header_value))
     return result
 
-def _check_next_headers(headers, value = None, requires = None):
+def _check_next_headers(headers, value = None, condition = None):
     """Set NEXT_* variables for headers (gl_CHECK_NEXT_HEADERS).
 
     Gnulib's gl_CHECK_NEXT_HEADERS runs AC_CHECK_HEADERS_ONCE for the headers, then
@@ -223,10 +231,10 @@ def _check_next_headers(headers, value = None, requires = None):
     - Checks if header exists via AC_CHECK_HEADER (creates cache variable)
     - ALWAYS sets NEXT_<HEADER> = "<header>" (regardless of whether header exists)
 
-    The key insight is that autoconf's gl_CHECK_NEXT_HEADERS ALWAYS sets NEXT_*
-    to "<header>". To get conditional behavior (like mntent_h where NEXT_* should
-    be empty when header doesn't exist), don't call this macro at all - instead
-    use the requires parameter to make the entire check conditional.
+    For conditional behavior (e.g., NEXT_* should be empty when some check fails),
+    use the `condition` parameter. This ensures the substitution always runs (so
+    @NEXT_*@ placeholders are always replaced) but the value is conditional:
+    header value when condition is true, empty string when false.
 
     Upstream:
     <https://github.com/coreutils/gnulib/blob/a8482ceecf8f51571e773475a0efa9af7bb616e2/m4/include_next.m4#L133-L158>
@@ -234,27 +242,21 @@ def _check_next_headers(headers, value = None, requires = None):
     Args:
         headers: Header name (e.g., "assert.h" or "sys/stat.h") or list of headers.
         value: Override value for NEXT_* vars. None means "<header>".
-        requires: Requirements that must be met for this check to run. Use this
-            to make the check conditional (e.g., requires=["ac_cv_header_foo_h"]
-            to only set NEXT_* when the header exists).
+        condition: When provided, makes the value conditional. If condition is
+            true, uses the header value; if false, uses empty string. Supports
+            define names (e.g., `"!HAVE_FOO"`), cache variables, or comparisons.
 
     Returns:
         List of JSON-encoded check strings (header check + two AC_SUBST per header).
     """
-    return _next_headers_internal(headers, value, requires = requires)
+    return _next_headers_internal(headers, value, condition = condition)
 
-def _next_headers(headers, value = None):
+def _next_headers(headers, value = None, condition = None):
     """Set NEXT_* variables for headers without existence check (gl_NEXT_HEADERS).
 
     Gnulib's gl_NEXT_HEADERS sets NEXT_* and NEXT_AS_FIRST_DIRECTIVE_* for each
     header without running AC_CHECK_HEADERS_ONCE. Use for standard headers (e.g.
     C89) that can be assumed to exist.
-
-    The value is platform-specific in autoconf:
-    - macOS: "<header>" (default when value=None)
-    - Linux: "" (pass value="" for Linux-specific rules)
-
-    For platform-specific behavior, use select at the rule level.
 
     Upstream:
     <https://github.com/coreutils/gnulib/blob/a8482ceecf8f51571e773475a0efa9af7bb616e2/m4/include_next.m4#L163-L168>
@@ -262,11 +264,14 @@ def _next_headers(headers, value = None):
     Args:
         headers: Header name (e.g., "stddef.h" or "sys/stat.h") or list of headers.
         value: Override value for NEXT_* vars. None means "<header>", "" means empty.
+        condition: When provided, makes the value conditional. If condition is
+            true, uses the header value; if false, uses empty string. Supports
+            define names (e.g., `"!HAVE_FOO"`), cache variables, or comparisons.
 
     Returns:
         List of JSON-encoded check strings (two AC_SUBST checks per header).
     """
-    return _next_headers_internal(headers, value)
+    return _next_headers_internal(headers, value, condition = condition)
 
 def _ac_lib_have_linkflags(
         *,

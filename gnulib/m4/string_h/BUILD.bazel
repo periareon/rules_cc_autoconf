@@ -2,13 +2,11 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 autoconf(
     name = "string_h",
-    checks = [
-        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_STRING_H", "<string.h>"),
-        checks.AC_SUBST("NEXT_STRING_H", "<string.h>"),
-    ],
+    checks = gl_macros.GL_NEXT_HEADERS(["string.h"]),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/include_next",  # gl_CHECK_NEXT_HEADERS uses include_next

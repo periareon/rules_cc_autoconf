@@ -2,6 +2,7 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 # Configure a replacement for <sys/utsname.h>
 autoconf(
@@ -14,8 +15,7 @@ autoconf(
         ),
         checks.AC_SUBST("HAVE_SYS_UTSNAME_H", "1"),
         checks.AC_SUBST("HAVE_STRUCT_UTSNAME", "1"),
-        checks.AC_SUBST("NEXT_SYS_UTSNAME_H", "<sys/utsname.h>"),
-        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_SYS_UTSNAME_H", "<sys/utsname.h>"),
+    ] + gl_macros.GL_CHECK_NEXT_HEADERS(["sys/utsname.h"]) + [
 
         # if test $ac_cv_header_sys_utsname_h != yes; then
         #   HAVE_STRUCT_UTSNAME=0

@@ -2,6 +2,7 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 # gl_ICONV_H - Header check and GNULIB module indicators
 
@@ -12,10 +13,7 @@ autoconf(
             "iconv.h",
             define = "HAVE_ICONV_H",
         ),
-        # Golden expects NEXT_* "<iconv.h>" when header exists (macOS has iconv.h)
-        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_ICONV_H", "<iconv.h>"),
-        checks.AC_SUBST("NEXT_ICONV_H", "<iconv.h>"),
-    ],
+    ] + gl_macros.GL_CHECK_NEXT_HEADERS(["iconv.h"]),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/include_next",  # For NEXT_ICONV_H,

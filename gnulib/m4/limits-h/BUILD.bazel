@@ -2,6 +2,7 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 autoconf(
     name = "limits-h",
@@ -12,9 +13,7 @@ autoconf(
             "limits.h",
             define = "HAVE_LIMITS_H",
         ),
-        # Golden expects NEXT_* "<limits.h>" (limits.h always present)
-        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_LIMITS_H", "<limits.h>"),
-        checks.AC_SUBST("NEXT_LIMITS_H", "<limits.h>"),
+    ] + gl_macros.GL_CHECK_NEXT_HEADERS(["limits.h"]) + [
 
         # AC_CACHE_CHECK([whether limits.h has WORD_BIT, BOOL_WIDTH etc.],
         checks.AC_TRY_COMPILE(

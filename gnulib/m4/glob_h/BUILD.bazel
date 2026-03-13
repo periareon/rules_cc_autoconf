@@ -2,6 +2,7 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 # gl_GLOB_H - Header check and GNULIB module indicators
 
@@ -13,9 +14,7 @@ autoconf(
             define = "HAVE_GLOB_H",
             subst = True,
         ),
-        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_GLOB_H", "<glob.h>"),
-        checks.AC_SUBST("NEXT_GLOB_H", "<glob.h>"),
-    ],
+    ] + gl_macros.GL_CHECK_NEXT_HEADERS(["glob.h"]),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/include_next",
