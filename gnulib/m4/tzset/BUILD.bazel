@@ -5,13 +5,13 @@ load("//autoconf:checks.bzl", "checks")
 
 # On Windows (mingw/windows), REPLACE_TZSET=1 is unconditionally set
 autoconf(
-    name = "tzset",
+    name = "gl_FUNC_TZSET",
     checks = [
         checks.AC_CHECK_FUNC("tzset"),
     ] + select({
         "@platforms//os:windows": [
             # On Windows, unconditionally set REPLACE_TZSET=1
-            checks.M4_VARIABLE("REPLACE_TZSET", "1"),
+            checks.AC_SUBST("REPLACE_TZSET", "1"),
         ],
         "//conditions:default": [],
     }),
@@ -19,4 +19,10 @@ autoconf(
     deps = [
         "//gnulib/m4/time_h",
     ],
+)
+
+autoconf(
+    name = "tzset",
+    visibility = ["//visibility:public"],
+    deps = [":gl_FUNC_TZSET"],
 )

@@ -5,11 +5,11 @@ load("//autoconf:checks.bzl", "checks")
 
 # On Windows (mingw/windows), REPLACE_CREAT=1 is unconditionally set.
 autoconf(
-    name = "creat",
+    name = "gl_FUNC_CREAT",
     checks = select({
         "@platforms//os:windows": [
             # On Windows, unconditionally set REPLACE_CREAT=1
-            checks.M4_VARIABLE("REPLACE_CREAT", "1"),
+            checks.AC_SUBST("REPLACE_CREAT", "1"),
         ],
         "//conditions:default": [],
     }),
@@ -17,4 +17,10 @@ autoconf(
     deps = [
         "//gnulib/m4/open-slash",  # Uses gl_OPEN_TRAILING_SLASH_BUG
     ],
+)
+
+autoconf(
+    name = "creat",
+    visibility = ["//visibility:public"],
+    deps = [":gl_FUNC_CREAT"],
 )

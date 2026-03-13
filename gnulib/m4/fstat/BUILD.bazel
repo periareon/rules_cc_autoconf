@@ -8,7 +8,7 @@ load("//autoconf:checks.bzl", "checks")
 # - MinGW's original stat() returns st_atime, st_mtime, st_ctime values
 #   that are affected by the time zone
 autoconf(
-    name = "fstat",
+    name = "gl_FUNC_FSTAT",
     checks = select({
         "@platforms//os:macos": [
             # On macOS, set REPLACE_FSTAT=1 (can return negative tv_nsec)
@@ -16,7 +16,7 @@ autoconf(
         ],
         "@platforms//os:windows": [
             # On Windows, unconditionally set REPLACE_FSTAT=1
-            checks.M4_VARIABLE("REPLACE_FSTAT", "1"),
+            checks.AC_SUBST("REPLACE_FSTAT", "1"),
         ],
         "//conditions:default": [],
     }),
@@ -25,5 +25,21 @@ autoconf(
         "//gnulib/m4/fchdir:gl_FUNC_FCHDIR_FOR_CLOSE",  # Conditional dependency on gl_FUNC_FCHDIR - need HAVE_FCHDIR but NOT HAVE_DECL_FCHDIR
         "//gnulib/m4/sys_stat_h",  # AC_REQUIRE([gl_SYS_STAT_H_DEFAULTS]), AC_REQUIRE([gl_SYS_STAT_H])
         "//gnulib/m4/sys_types_h",  # Need _USE_STD_STAT
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_FSTAT",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/sys_stat_h:gl_SYS_STAT_H",
+    ],
+)
+
+autoconf(
+    name = "fstat",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_FSTAT",
     ],
 )
