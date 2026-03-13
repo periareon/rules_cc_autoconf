@@ -1,3 +1,4 @@
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("//autoconf:autoconf.bzl", "autoconf")
@@ -5,7 +6,6 @@ load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
 load("//autoconf:checks.bzl", "checks")
 load("//autoconf:package_info.bzl", "package_info")
 load("//autoconf/tests:diff_test.bzl", "diff_test")
-load("defs.bzl", "RANGE_BEGIN", "RANGE_END", "gen_template_and_src")
 
 package_info(
     name = "package",
@@ -32,6 +32,113 @@ autoconf_hdr(
     deps = [":autoconf"],
 )
 
+# Absolute limits of the binary search range [-1024, 1024]
+_RANGE_BOUNDARIES = [
+    -1024,
+    1024,
+]
+
+# One step inside each boundary to catch off-by-one at the edges
+_NEAR_BOUNDARIES = [
+    -1023,
+    1023,
+]
+
+# Midpoint region where positive/negative sign flips
+_ZERO_REGION = [
+    -1,
+    0,
+    1,
+]
+
+# Binary search pivot points (powers of 2, positive and negative)
+_POWERS_OF_2 = [
+    2,
+    4,
+    8,
+    16,
+    32,
+    64,
+    128,
+    256,
+    512,
+    -2,
+    -4,
+    -8,
+    -16,
+    -32,
+    -64,
+    -128,
+    -256,
+    -512,
+]
+
+# Fencepost values just below each pivot (2^n - 1)
+_POWERS_OF_2_MINUS_1 = [
+    3,
+    7,
+    15,
+    31,
+    63,
+    127,
+    255,
+    511,
+    1023,
+    -3,
+    -7,
+    -15,
+    -31,
+    -63,
+    -127,
+    -255,
+    -511,
+    -1023,
+]
+
+# Fencepost values just above each pivot (2^n + 1)
+_POWERS_OF_2_PLUS_1 = [
+    3,
+    5,
+    9,
+    17,
+    33,
+    65,
+    129,
+    257,
+    513,
+    -3,
+    -5,
+    -9,
+    -17,
+    -33,
+    -65,
+    -129,
+    -257,
+    -513,
+]
+
+# Arbitrary non-power-of-2 values for general correctness
+_ARBITRARY = [
+    42,
+    -42,
+    100,
+    -100,
+    333,
+    -333,
+    777,
+    -777,
+]
+
+MEANINGFUL_VALUES = sorted({v: True for v in (
+    _RANGE_BOUNDARIES +
+    _NEAR_BOUNDARIES +
+    _ZERO_REGION +
+    _POWERS_OF_2 +
+    _POWERS_OF_2_MINUS_1 +
+    _POWERS_OF_2_PLUS_1 +
+    _ARBITRARY
+)}.keys())
+
 autoconf(
     name = "check_value_autoconf",
     checks = [
@@ -39,36 +146,48 @@ autoconf(
             "DEFINE_{}".format(i).replace("-", "_"),
             str(i),
         )
-        for i in range(RANGE_BEGIN, RANGE_END, 1)
+        for i in MEANINGFUL_VALUES
     ],
 )
 
-gen_template_and_src(name = "template_and_src")
+write_file(
+    name = "test_all_values_c",
+    out = "test_all_values.c",
+    content = """\
+#undef NDEBUG
+#include <assert.h>
+#include "template.h"
+int main(){{
+{}
+return 0;
+}}
+""".format("\n".join([
+        """assert(DEFINE_{} == {});""".format(
+            str(i).replace("-", "_"),
+            str(i),
+        )
+        for i in MEANINGFUL_VALUES
+    ])).splitlines(),
+)
 
-filegroup(
-    name = "template",
-    srcs = [":template_and_src"],
-    output_group = "template",
+write_file(
+    name = "template_h_in",
+    out = "template.h.in",
+    content = ["#undef DEFINE_{}".format(i).replace("-", "_") for i in MEANINGFUL_VALUES] + [""],
 )
 
 autoconf_hdr(
     name = "template_h",
     out = "template.h",
-    template = ":template",
+    template = ":template.h.in",
     deps = ["check_value_autoconf"],
-)
-
-filegroup(
-    name = "c",
-    srcs = [":template_and_src"],
-    output_group = "c",
 )
 
 cc_test(
     name = "test_all_values",
     srcs = [
         "template.h",
-        ":c",
+        ":test_all_values.c",
     ],
 )
 
