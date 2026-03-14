@@ -20,4 +20,4 @@
 /* #undef REPLACE_TIMEGM */
 /* #undef REPLACE_TIMESPEC_GET */
 /* #undef REPLACE_TIMESPEC_GETRES */
-#define REPLACE_TZSET 1
+/* #undef REPLACE_TZSET */

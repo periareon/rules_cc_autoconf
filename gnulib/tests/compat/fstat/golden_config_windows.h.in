@@ -93,7 +93,7 @@
 /* #undef REPLACE_FCHMODAT */
 /* #undef REPLACE_FCHOWNAT */
 /* #undef REPLACE_FDATASYNC */
-#define REPLACE_FSTAT 1
+/* #undef REPLACE_FSTAT */
 /* #undef REPLACE_FSTATAT */
 /* #undef REPLACE_FTRUNCATE */
 /* #undef REPLACE_FUTIMENS */

@@ -25,7 +25,7 @@
 /* #undef REPLACE_LOCALTIME */
 /* #undef REPLACE_LOCALTIME_R */
 /* #undef REPLACE_LOCALTIME_RZ */
-#define REPLACE_MKTIME 1
+/* #undef REPLACE_MKTIME */
 /* #undef REPLACE_MKTIME_Z */
 /* #undef REPLACE_NANOSLEEP */
 /* #undef REPLACE_STRFTIME */
