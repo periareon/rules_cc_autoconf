@@ -27,7 +27,7 @@
 /* #undef PRAGMA_SYSTEM_HEADER */
 /* #undef REPLACE_CHMOD */
 /* #undef REPLACE_FCHMODAT */
-#define REPLACE_FSTAT 1
+/* #undef REPLACE_FSTAT */
 /* #undef REPLACE_FSTATAT */
 #define REPLACE_FUNC_STAT_FILE 1
 /* #undef REPLACE_FUTIMENS */

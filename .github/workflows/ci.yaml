@@ -55,27 +55,30 @@ jobs:
 
       # Build and Test the code
       - name: Test (Unix)
-        run: |
-          bazel ${BAZEL_STARTUP_FLAGS[@]} test //...
-          bazel ${BAZEL_STARTUP_FLAGS[@]} run //autoconf/tests/core/compute:test_failure "${{ github.workspace }}/autoconf/tests/core/compute/fail_mod/"
+        run: bazel ${BAZEL_STARTUP_FLAGS[@]} test //...
         if: startswith(runner.os, 'Windows') != true
       - name: Test (Windows)
-        run: |
-          bazel $env:BAZEL_STARTUP_FLAGS test //...
-          bazel $env:BAZEL_STARTUP_FLAGS run //autoconf/tests/core/compute:test_failure "${{ github.workspace }}/autoconf/tests/core/compute/fail_mod/"
-
+        run: bazel $env:BAZEL_STARTUP_FLAGS test //...
         if: startswith(runner.os, 'Windows')
 
-  ci-examples-simple:
+  ci-integration-tests:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: macos-latest
-          - os: ubuntu-24.04
-          - os: ubuntu-24.04-arm
-          - os: windows-2022
+        os:
+          - macos-latest
+          - ubuntu-24.04
+          - ubuntu-24.04-arm
+          - windows-2022
+        test:
+          - name: simple
+            path: examples/simple
+            expect_pass: true
+          - name: negative_compute_int
+            path: autoconf/tests/integration/negative_compute_int
+            expect_pass: false
+    name: "integration-${{ matrix.test.name }} (${{ matrix.os }})"
     steps:
       # Checkout the code
       - uses: actions/checkout@v4
@@ -87,24 +90,37 @@ jobs:
           repository-cache: true
 
       - name: Setup Bazelrc (Windows)
-        working-directory: "${{ github.workspace }}/examples/simple"
+        working-directory: "${{ github.workspace }}/${{ matrix.test.path }}"
         run: |
           echo "TEMP=$env:RUNNER_TEMP" >> "$env:GITHUB_ENV"
           echo "TMP=$env:RUNNER_TEMP" >> "$env:GITHUB_ENV"
           echo "startup --output_user_root=D:/bzl" > ./user.bazelrc
         if: startswith(runner.os, 'Windows')
       - name: Setup Bazelrc
+        working-directory: "${{ github.workspace }}/${{ matrix.test.path }}"
         run: |
           echo "common --keep_going" >> ./user.bazelrc
 
       # Build and Test the code
       - name: Test (Unix)
-        working-directory: "${{ github.workspace }}/examples/simple"
-        run: bazel ${BAZEL_STARTUP_FLAGS[@]} test //...
+        working-directory: "${{ github.workspace }}/${{ matrix.test.path }}"
+        run: |
+          bazel ${BAZEL_STARTUP_FLAGS[@]} test //... && result=0 || result=$?
+          if [ "${{ matrix.test.expect_pass }}" = "true" ]; then
+            exit $result
+          else
+            [ $result -ne 0 ]
+          fi
         if: startswith(runner.os, 'Windows') != true
       - name: Test (Windows)
-        working-directory: "${{ github.workspace }}/examples/simple"
-        run: bazel $env:BAZEL_STARTUP_FLAGS test //...
+        working-directory: "${{ github.workspace }}/${{ matrix.test.path }}"
+        run: |
+          bazel $env:BAZEL_STARTUP_FLAGS test //...
+          if ("${{ matrix.test.expect_pass }}" -eq "true") {
+            exit $LASTEXITCODE
+          } else {
+            if ($LASTEXITCODE -eq 0) { exit 1 } else { exit 0 }
+          }
         if: startswith(runner.os, 'Windows')
 
   ci-format:
