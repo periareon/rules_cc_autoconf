@@ -120,19 +120,18 @@ def _header_code_from_includes(includes_list):
         return ""
     return "\n".join([h.strip() for h in includes_list])
 
-# AC_CHECK_FUNC default code template (GNU Autoconf extern declaration pattern)
+# AC_CHECK_FUNC default code template (GNU Autoconf extern declaration pattern).
+# Overrides any GCC internal prototype to avoid errors. Uses char return type
+# because int might match a GCC builtin's return type and its argument prototype
+# would still apply. MSVC doesn't have GCC builtins so int is safe there.
+# On MSVC 2015+, many CRT functions (printf, scanf, etc.) are inlined in UCRT
+# headers and not exported as linker symbols, so we link against
+# legacy_stdio_definitions.lib to make them available for link tests.
 _AC_CHECK_FUNC_DEFAULT_TEMPLATE = """\
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.
-   MSVC does not have GCC builtins, so we can safely use int. */
 #ifdef __cplusplus
 extern "C"
 #endif
 #if defined _MSC_VER
-/* Since MSVC 2015, many CRT functions (printf, scanf, etc.) are inline
-   in UCRT headers and not exported as linker symbols. Link against
-   legacy_stdio_definitions.lib to make them available for link tests. */
 #pragma comment(lib, "legacy_stdio_definitions.lib")
 int {function} ();
 #else
@@ -871,13 +870,13 @@ def _ac_prog_cxx(requires = None):
         requires = requires,
     )
 
+# Uses negative array size to verify sizeof at compile time. The checker
+# iterates candidate values, substituting {value}; compilation succeeds only
+# when sizeof matches. Portable across all C compilers including MSVC.
 _AC_CHECK_SIZEOF_TEMPLATE = """\
 {}
 #include <stddef.h>
 
-/* Use negative array size to verify sizeof at compile time.
-   The value {{value}} will be tested - if sizeof matches, compilation succeeds.
-   This pattern is portable across all C compilers including MSVC. */
 typedef int _sizeof_check_type[sizeof({}) == {{value}} ? 1 : -1];
 
 int main(void) {{
@@ -986,6 +985,9 @@ def _ac_check_sizeof(
     _add_conditionals(check, if_true, if_false)
     return json.encode(check)
 
+# Uses negative array size to verify alignment at compile time. The checker
+# iterates candidate values, substituting {value}; compilation succeeds only
+# when offsetof matches. Portable across all C compilers including MSVC.
 _AC_CHECK_ALIGNOF_TEMPLATE = """\
 {}
 #include <stddef.h>
@@ -995,9 +997,6 @@ struct align_check {{
     {} x;
 }};
 
-/* Use negative array size to verify alignment at compile time.
-   The value {{value}} will be tested - if alignment matches, compilation succeeds.
-   This pattern is portable across all C compilers including MSVC. */
 typedef int _alignof_check_type[offsetof(struct align_check, x) == {{value}} ? 1 : -1];
 
 int main(void) {{
@@ -1302,13 +1301,29 @@ def _ac_check_member(
     _add_conditionals(check, if_true, if_false)
     return json.encode(check)
 
+# Template for compile-time integer detection via binary search. The checker
+# compiles this repeatedly, substituting {lhs}/{rhs} with comparison operands.
+# On gcc/clang the negative-array-size trick reliably rejects non-constant
+# expressions at file scope. MSVC lacks variable-length array support and
+# mishandles the array trick for non-constant expressions, so we use a
+# switch-case duplication trick instead: case labels must be integer constant
+# expressions in all C standards (C89+), so non-constant expressions like
+# rand() are rejected consistently.
+# See https://learn.microsoft.com/en-us/cpp/build/reference/std-specify-language-standard-version
 _AC_COMPUTE_INT_TEMPLATE = """
 {}
 {{{}}}
+#ifdef _MSC_VER
+int main(void) {{
+    switch(0) {{ case 0: break; case ({{lhs}} < {{rhs}}): break; }}
+    return 0;
+}}
+#else
 typedef int _array_with_length[{{lhs}} < {{rhs}} ? 1 : -1];
 int main(void) {{
     return 0;
 }}
+#endif
 """
 
 def _ac_compute_int(
@@ -1647,18 +1662,13 @@ def _ac_check_cxx_compiler_flag(
 
     return json.encode(check)
 
+# AC_CHECK_LIB code template. Same GCC builtin / MSVC prototype strategy as
+# _AC_CHECK_FUNC_DEFAULT_TEMPLATE (see comment there for rationale).
 _AC_CHECK_LIB_TEMPLATE = """\
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.
-   MSVC does not have GCC builtins, so we can safely use int. */
 #ifdef __cplusplus
 extern "C"
 #endif
 #if defined _MSC_VER
-/* Since MSVC 2015, many CRT functions (printf, scanf, etc.) are inline
-   in UCRT headers and not exported as linker symbols. Link against
-   legacy_stdio_definitions.lib to make them available for link tests. */
 #pragma comment(lib, "legacy_stdio_definitions.lib")
 int {function} ();
 #else
