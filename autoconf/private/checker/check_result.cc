@@ -128,8 +128,6 @@ std::optional<CheckResult> CheckResult::from_json(const std::string& name,
             type = CheckType::kAlignof;
         } else if (type_str == "compute_int") {
             type = CheckType::kComputeInt;
-        } else if (type_str == "endian") {
-            type = CheckType::kEndian;
         } else if (type_str == "decl") {
             type = CheckType::kDecl;
         } else if (type_str == "member") {

@@ -27,8 +27,6 @@ std::string check_type_to_string(CheckType type) {
             return "alignof";
         case CheckType::kComputeInt:
             return "compute_int";
-        case CheckType::kEndian:
-            return "endian";
         case CheckType::kDecl:
             return "decl";
         case CheckType::kMember:
@@ -75,8 +73,6 @@ std::optional<Check> Check::from_json(const void* json_data) {
         type = CheckType::kAlignof;
     } else if (type_str == "compute_int") {
         type = CheckType::kComputeInt;
-    } else if (type_str == "endian") {
-        type = CheckType::kEndian;
     } else if (type_str == "decl") {
         type = CheckType::kDecl;
     } else if (type_str == "member") {
@@ -222,7 +218,6 @@ std::optional<Check> Check::from_json(const void* json_data) {
         case CheckType::kSizeof:
         case CheckType::kAlignof:
         case CheckType::kComputeInt:
-        case CheckType::kEndian:
         case CheckType::kDecl:
         case CheckType::kMember:
             if (!check.code().has_value()) {

@@ -353,60 +353,6 @@ bool CheckRunner::try_link(const std::filesystem::path& object_file,
     return run_command("link", cmd) == 0;
 }
 
-std::optional<int> CheckRunner::try_compile_and_run(
-    const std::string& code, const std::string& language) {
-    BuildDir tmp(source_id_, source_dir_);
-    std::optional<std::filesystem::path> source_file =
-        tmp.write_source(code, get_file_extension(language));
-    if (!source_file) return std::nullopt;
-
-    // Step 1: Compile
-    std::vector<std::string> cmd = get_compiler_and_flags(language);
-    bool msvc = config_.compiler_type.rfind("msvc", 0) == 0;
-    std::filesystem::path obj = tmp.object_path(msvc);
-
-    if (msvc) {
-        cmd.push_back("/c");
-        cmd.push_back("/Fo" + obj.string());
-        cmd.push_back(source_file->string());
-    } else {
-        cmd.push_back("-c");
-        cmd.push_back(source_file->string());
-        cmd.push_back("-o");
-        cmd.push_back(obj.string());
-    }
-
-    if (run_command("compile", cmd) != 0) {
-        DebugLogger::warn("Compilation failed");
-        return std::nullopt;
-    }
-
-    // Step 2: Link
-    std::filesystem::path exe = tmp.executable_path();
-    if (!try_link(obj, exe, language)) {
-        DebugLogger::warn("Linking failed");
-        return std::nullopt;
-    }
-
-    // Step 3: Run
-    std::string run_cmd = quote_if_needed(exe.string());
-    if (!DebugLogger::is_verbose_debug_enabled()) {
-#ifdef _WIN32
-        run_cmd += " >NUL 2>&1";
-#else
-        run_cmd += " >/dev/null 2>&1";
-#endif
-    }
-    DebugLogger::debug("Executing run command: " + run_cmd);
-
-    int run_result = std::system(run_cmd.c_str());
-#ifdef _WIN32
-    return run_result;
-#else
-    return WEXITSTATUS(run_result);
-#endif
-}
-
 bool CheckRunner::try_compile_and_link(const std::string& code,
                                        const std::string& language) {
     BuildDir tmp(source_id_, source_dir_);

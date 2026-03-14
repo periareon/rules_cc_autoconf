@@ -22,7 +22,6 @@ enum class CheckType {
     kSizeof,      ///< Determine size of type
     kAlignof,     ///< Determine alignment of type
     kComputeInt,  ///< Compute integer value
-    kEndian,      ///< Determine endianness
     kDecl,        ///< Check for declaration
     kMember,      ///< Check for struct/union member
 };

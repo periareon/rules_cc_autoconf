@@ -112,9 +112,6 @@ class CheckRunner {
     /** @brief Compute an integer value at compile time. */
     CheckResult check_compute_int(const Check& check);
 
-    /** @brief Determine system endianness. */
-    CheckResult check_endian(const Check& check);
-
     /** @brief Check if a declaration exists. */
     CheckResult check_decl(const Check& check);
 
@@ -140,16 +137,6 @@ class CheckRunner {
     bool try_link(const std::filesystem::path& object_file,
                   const std::filesystem::path& executable,
                   const std::string& language = "c");
-
-    /**
-     * @brief Try to compile and run code, returning its exit code.
-     * @param code Source code to compile and run.
-     * @param language Language of the code ("c" or "cpp").
-     * @return Exit code of the program, or std::nullopt if
-     * compilation/execution failed.
-     */
-    std::optional<int> try_compile_and_run(const std::string& code,
-                                           const std::string& language = "c");
 
     /**
      * @brief Try to compile and link code (without running).

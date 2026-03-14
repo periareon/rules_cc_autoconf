@@ -136,8 +136,6 @@ CheckResult CheckRunner::run_check(const Check& check) {
             return check_alignof(check);
         case CheckType::kComputeInt:
             return check_compute_int(check);
-        case CheckType::kEndian:
-            return check_endian(check);
         case CheckType::kDecl:
             return check_decl(check);
         case CheckType::kMember:
@@ -443,34 +441,6 @@ CheckResult CheckRunner::check_compute_int(const Check& check) {
     std::optional<int> value =
         find_compile_time_int_bisect(*check.code(), check.language());
 
-    if (value.has_value()) {
-        return CheckResult(id, std::to_string(*value), true,
-                           check_type_is_define(check.type()),
-                           check.subst().has_value(), check.type());
-    }
-    return CheckResult(id, "0", false, check_type_is_define(check.type()),
-                       check.subst().has_value(), check.type());
-}
-
-CheckResult CheckRunner::check_endian(const Check& check) {
-    std::string id = check_id(check);
-    if (!check.code().has_value()) {
-        DebugLogger::warn("endian check missing code");
-        return CheckResult(id, "0", false, check_type_is_define(check.type()),
-                           check.subst().has_value(), check.type());
-    }
-
-    std::string code = *check.code();
-
-    // Resolve compile_defines and prepend to code
-    std::string defines_code = resolve_compile_defines(check);
-    if (!defines_code.empty()) {
-        code = defines_code + code;
-    }
-
-    // Endianness is a runtime property that cannot be determined at compile
-    // time We must run the program to determine the actual endianness
-    std::optional<int> value = try_compile_and_run(code, check.language());
     if (value.has_value()) {
         return CheckResult(id, std::to_string(*value), true,
                            check_type_is_define(check.type()),

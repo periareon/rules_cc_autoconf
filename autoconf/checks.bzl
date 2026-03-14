@@ -1373,72 +1373,6 @@ def _ac_compute_int(
 
     return json.encode(check)
 
-_AC_C_BIGENDIAN_TEMPLATE = """\
-#include <stdint.h>
-
-int main(void) {
-    uint32_t x = 0x01020304;
-    uint8_t *p = (uint8_t*)&x;
-
-    // If first byte is 0x01, it's big-endian
-    if (p[0] == 0x01) {
-        return 1;  // big-endian
-    } else {
-        return 0;  // little-endian
-    }
-}
-"""
-
-def _ac_c_bigendian(
-        define = "WORDS_BIGENDIAN",
-        language = "c",
-        requires = None,
-        subst = None):
-    """Check byte order (endianness) of the system.
-
-    Original m4 example:
-    ```m4
-    AC_C_BIGENDIAN([AC_DEFINE([WORDS_BIGENDIAN], [1])])
-    ```
-
-    Example:
-    ```python
-    macros.AC_C_BIGENDIAN()
-    ```
-
-    Note:
-        The define is set to 1 for big-endian, 0 for little-endian.
-
-    Cross-Compile Warning:
-        This macro is NOT cross-compile friendly. It requires compiling and
-        running code to determine endianness, which doesn't work when cross-compiling.
-
-    Args:
-        define: Define name (defaults to `WORDS_BIGENDIAN`)
-        language: Language to use for check (`"c"` or `"cpp"`)
-        requires: List of requirements that must be met before this check runs.
-            Can be simple define names (e.g., `"HAVE_FOO"`) or value-based
-            requirements (e.g., `"REPLACE_FSTAT=1"` to require specific value)
-        subst: If True, mark as a substitution variable (for @VAR@ replacement in subst.h).
-
-    Returns:
-        A JSON-encoded check string for use with the autoconf rule.
-    """
-    check = {
-        "code": _AC_C_BIGENDIAN_TEMPLATE,
-        "define": define,
-        "language": language,
-        "name": "byte_order",
-        "type": "endian",
-    }
-    if requires:
-        check["requires"] = requires
-
-    if subst != None:
-        check["subst"] = subst
-
-    return json.encode(check)
-
 _AC_C_INLINE_TEMPLATE = """\
 static inline int test_func(int x) {
     return x * 2;
@@ -2624,7 +2558,6 @@ def _ac_lang_program(prologue, body):
     return _AC_LANG_PROGRAM_TEMPLATE.format(prologue_str, body_str)
 
 checks = struct(
-    AC_C_BIGENDIAN = _ac_c_bigendian,
     AC_C_INLINE = _ac_c_inline,
     AC_C_RESTRICT = _ac_c_restrict,
     AC_CHECK_ALIGNOF = _ac_check_alignof,
