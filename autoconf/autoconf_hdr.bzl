@@ -74,17 +74,11 @@ def _autoconf_hdr_impl(ctx):
     args.add("--template", ctx.file.template)
     args.add("--mode", ctx.attr.mode)
 
-    # Add inline mappings: --inline <search_string> <file_path>
-    for search_string, file_path in inline_mappings:
-        args.add("--inline")
-        args.add(search_string)
-        args.add(file_path)
+    if inline_mappings:
+        args.add("--inline", json.encode(dict(inline_mappings)))
 
-    # Add substitutions: --subst <name> <value>
-    for name, value in ctx.attr.substitutions.items():
-        args.add("--subst")
-        args.add(name)
-        args.add(value)
+    if ctx.attr.substitutions:
+        args.add("--subst", json.encode(ctx.attr.substitutions))
 
     ctx.actions.run(
         executable = ctx.executable._resolver,

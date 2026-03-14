@@ -42,5 +42,6 @@ cc_binary(
     deps = [
         ":resolver",
         "//autoconf/private/common:action_args",
+        "//tools/json",
     ],
 )

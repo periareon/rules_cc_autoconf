@@ -133,6 +133,28 @@ autoconf_hdr(
     deps = [":autoconf"],
 )
 
+# Regression test: substitution values with embedded newlines and
+# inline search strings that overlap with substitution keys.
+autoconf_hdr(
+    name = "subst_newline",
+    out = "subst_newline.h",
+    inlines = {
+        "/* The definition of static_assert is copied here.  */": "inlined_file.h.in",
+    },
+    mode = "subst",
+    substitutions = {
+        "/* The definition of static_assert is copied here.  */": "#define _GL_STATIC_ASSERT_H\n/* The definition of static_assert is copied here.  */",
+    },
+    template = "subst_newline.h.in",
+    deps = [":autoconf"],
+)
+
+diff_test(
+    name = "subst_newline_diff_test",
+    file1 = "golden_subst_newline.h.in",
+    file2 = ":subst_newline.h",
+)
+
 diff_test(
     name = "subst_diff_test",
     file1 = "golden_subst.h.in",

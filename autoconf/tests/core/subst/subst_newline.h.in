@@ -1,0 +1,3 @@
+/* Regression test for newlines in substitutions and inlines. */
+
+/* The definition of static_assert is copied here.  */
