@@ -118,6 +118,9 @@ class CheckRunner {
     /** @brief Check if a struct/union member exists. */
     CheckResult check_member(const Check& check);
 
+    /** @brief Resolve system header for #include_next replacement. */
+    CheckResult check_gl_next_header(const Check& check);
+
     /**
      * @brief Try to compile code with the configured compiler.
      * @param code Source code to compile.

@@ -24,6 +24,7 @@ def gnu_gnulib_diff_test_suite(
         aux_files = [],
         size = "medium",
         tags = [],
+        skip_subst_diff_on_windows = False,
         **kwargs):
     """Complete test suite for a gnulib module.
 
@@ -63,6 +64,10 @@ def gnu_gnulib_diff_test_suite(
         aux_files (list[Label]): Auxiliary files (e.g., config.rpath) to copy to work directory root
         size (str): Test size (default: "medium")
         tags (list[str]): Test tags
+        skip_subst_diff_on_windows (bool): Skip the subst_diff test on Windows.
+            Set to True for modules whose NEXT_*_H values contain inlined
+            MSVC system header content that is SDK-version-specific and
+            cannot be captured in a stable golden file.
         **kwargs: Additional arguments
     """
 
@@ -122,12 +127,14 @@ def gnu_gnulib_diff_test_suite(
     all_tests.append(":{}_bazel_config_diff".format(name))
 
     # --- 4. Diff test for subst_*.h (single target with select() for file1) ---
+    subst_diff_compat = unix_compatible if skip_subst_diff_on_windows else []
     diff_test(
         name = "{}_bazel_subst_diff".format(name),
         file1 = golden_subst_h,
         file2 = ":{}_bazel_subst_h".format(name),
         size = "small",
         tags = tags,
+        target_compatible_with = subst_diff_compat,
     )
     all_tests.append(":{}_bazel_subst_diff".format(name))
 

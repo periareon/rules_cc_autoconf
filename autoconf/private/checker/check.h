@@ -10,20 +10,21 @@ namespace rules_cc_autoconf {
  * @brief Type of configuration check to perform.
  */
 enum class CheckType {
-    kUnknown,     ///< An unknown check.
-    kFunction,    ///< Check for function
-    kLib,         ///< Check for function in library
-    kType,        ///< Check for type
-    kCompile,     ///< Check if code compiles
-    kLink,        ///< Check if code compiles and links
-    kDefine,      ///< Directly apply the define with the given value
-    kM4Variable,  ///< M4_VARIABLE - compute value for requires but don't
-                  ///< generate output (can be subst)
-    kSizeof,      ///< Determine size of type
-    kAlignof,     ///< Determine alignment of type
-    kComputeInt,  ///< Compute integer value
-    kDecl,        ///< Check for declaration
-    kMember,      ///< Check for struct/union member
+    kUnknown,       ///< An unknown check.
+    kFunction,      ///< Check for function
+    kLib,           ///< Check for function in library
+    kType,          ///< Check for type
+    kCompile,       ///< Check if code compiles
+    kLink,          ///< Check if code compiles and links
+    kDefine,        ///< Directly apply the define with the given value
+    kM4Variable,    ///< M4_VARIABLE - compute value for requires but don't
+                    ///< generate output (can be subst)
+    kSizeof,        ///< Determine size of type
+    kAlignof,       ///< Determine alignment of type
+    kComputeInt,    ///< Compute integer value
+    kDecl,          ///< Check for declaration
+    kMember,        ///< Check for struct/union member
+    kGlNextHeader,  ///< Resolve system header for #include_next replacement
 };
 
 /**
@@ -86,13 +87,6 @@ class Check {
      * not provided.
      */
     const std::optional<std::string>& code() const { return code_; }
-
-    /**
-     * @brief Get the optional file path for this check.
-     * @return Optional string containing path to test file, or std::nullopt if
-     * not provided.
-     */
-    const std::optional<std::string>& file_path() const { return file_path_; }
 
     /**
      * @brief Get the optional define value when check succeeds.
@@ -163,7 +157,6 @@ class Check {
     std::optional<std::string> define_{};  /// Optional preprocessor define name
     std::string language_{};               /// Language ("c" or "cpp")
     std::optional<std::string> code_{};    /// Optional custom code
-    std::optional<std::string> file_path_{};     /// Optional file path
     std::optional<std::string> define_value_{};  /// Value if check succeeds
     std::optional<std::string> define_value_fail_{};  /// Value if check fails
     std::optional<std::string> library_{};  /// Library name for lib checks

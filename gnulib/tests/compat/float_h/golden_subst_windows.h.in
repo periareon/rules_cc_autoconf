@@ -1,0 +1,7 @@
+/* subst.h.in */
+#define SUBST_INCLUDE_NEXT ""
+#define SUBST_INCLUDE_NEXT_AS_FIRST_DIRECTIVE ""
+#define SUBST_NEXT_AS_FIRST_DIRECTIVE_FLOAT_H "<float.h>"
+#define SUBST_NEXT_FLOAT_H "<float.h>"
+#define SUBST_PRAGMA_SYSTEM_HEADER ""
+#define SUBST_REPLACE_ITOLD "0"

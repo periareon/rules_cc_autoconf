@@ -10,6 +10,7 @@
 
 #include "autoconf/private/checker/check.h"
 #include "autoconf/private/checker/debug_logger.h"
+#include "autoconf/private/checker/system_header.h"
 
 namespace rules_cc_autoconf {
 
@@ -140,6 +141,8 @@ CheckResult CheckRunner::run_check(const Check& check) {
             return check_decl(check);
         case CheckType::kMember:
             return check_member(check);
+        case CheckType::kGlNextHeader:
+            return check_gl_next_header(check);
         default:
             throw std::runtime_error("Unknown check type for check: " +
                                      check_id(check));
@@ -234,26 +237,9 @@ CheckResult CheckRunner::check_type_check(const Check& check) {
 CheckResult CheckRunner::check_compile(const Check& check) {
     std::string code{};
 
-    // Check if we have a file_path parameter
-    if (check.file_path().has_value()) {
-        std::string file_path = *check.file_path();
-        std::ifstream file(file_path);
-        if (file.is_open()) {
-            std::stringstream buffer;
-            buffer << file.rdbuf();
-            code = buffer.str();
-            file.close();
-        } else {
-            DebugLogger::warn("Could not open file: " + file_path);
-            return CheckResult(check.name(), "0", false,
-                               check_type_is_define(check.type()),
-                               check.subst().has_value(), check.type(),
-                               check.define(), check.subst());
-        }
-    } else if (check.code().has_value()) {
+    if (check.code().has_value()) {
         code = *check.code();
     } else {
-        // Provide a default code if neither code nor file_path is provided
         code = "int main(void) { return 0; }";
     }
 
@@ -303,26 +289,9 @@ CheckResult CheckRunner::check_compile(const Check& check) {
 CheckResult CheckRunner::check_link(const Check& check) {
     std::string code{};
 
-    // Check if we have a file_path parameter
-    if (check.file_path().has_value()) {
-        std::string file_path = *check.file_path();
-        std::ifstream file(file_path);
-        if (file.is_open()) {
-            std::stringstream buffer;
-            buffer << file.rdbuf();
-            code = buffer.str();
-            file.close();
-        } else {
-            DebugLogger::warn("Could not open file: " + file_path);
-            return CheckResult(check.name(), "0", false,
-                               check_type_is_define(check.type()),
-                               check.subst().has_value(), check.type(),
-                               check.define(), check.subst());
-        }
-    } else if (check.code().has_value()) {
+    if (check.code().has_value()) {
         code = *check.code();
     } else {
-        // Provide a default code if neither code nor file_path is provided
         code = "int main(void) { return 0; }";
     }
 
@@ -514,6 +483,75 @@ CheckResult CheckRunner::check_member(const Check& check) {
                        check_type_is_define(check.type()),
                        check.subst().has_value(), check.type(), check.define(),
                        check.subst());
+}
+
+CheckResult CheckRunner::check_gl_next_header(const Check& check) {
+    if (!check.code().has_value()) {
+        throw std::runtime_error(
+            "GL_NEXT_HEADER check missing 'code' (header name) for check: " +
+            check_id(check));
+    }
+
+    std::string header = *check.code();
+    DebugLogger::debug("GL_NEXT_HEADER: resolving " + header);
+
+    // Look up INCLUDE_NEXT from dependency results to determine strategy
+    auto it = dep_results_.find("INCLUDE_NEXT");
+    bool have_include_next = it != dep_results_.end() &&
+                             it->second.value.has_value() &&
+                             !it->second.value->empty();
+
+    if (have_include_next) {
+        // GCC/Clang: #include_next is supported, use angle-bracket include
+        std::string value = "<" + header + ">";
+        DebugLogger::debug("GL_NEXT_HEADER: include_next supported, value=" +
+                           value);
+        return CheckResult(check.name(), value, true, false, true, check.type(),
+                           check.define(), check.subst());
+    }
+
+    // #include_next not supported -- inline the system header content
+    std::string compiler =
+        (check.language() == "cpp" || check.language() == "c++")
+            ? config_.cpp_compiler
+            : config_.c_compiler;
+    std::vector<std::string> flags =
+        (check.language() == "cpp" || check.language() == "c++")
+            ? config_.cpp_flags
+            : config_.c_flags;
+
+    auto sys_path =
+        find_system_header_path(compiler, flags, config_.compiler_type, header,
+                                source_id_, source_dir_);
+
+    if (!sys_path.has_value()) {
+        // System header not found (e.g., unistd.h on MSVC) -- these usages
+        // are always guarded by #if 0 in gnulib templates, so return a
+        // harmless angle-bracket include
+        DebugLogger::debug("GL_NEXT_HEADER: system header not found for " +
+                           header + ", returning angle-bracket fallback");
+        std::string value = "<" + header + ">";
+        return CheckResult(check.name(), value, true, false, true, check.type(),
+                           check.define(), check.subst());
+    }
+
+    auto content = read_file_content(*sys_path);
+    if (!content.has_value()) {
+        DebugLogger::warn("GL_NEXT_HEADER: could not read system header at " +
+                          sys_path->string());
+        std::string value = "<" + header + ">";
+        return CheckResult(check.name(), value, true, false, true, check.type(),
+                           check.define(), check.subst());
+    }
+
+    // Prepend a newline so the template's `# @INCLUDE_NEXT@ @NEXT_*@` becomes
+    // `# ` (null directive) followed by the inlined content on the next line
+    std::string value = "\n" + *content;
+    DebugLogger::debug("GL_NEXT_HEADER: inlined " +
+                       std::to_string(content->size()) + " bytes from " +
+                       sys_path->string());
+    return CheckResult(check.name(), value, true, false, true, check.type(),
+                       check.define(), check.subst());
 }
 
 std::optional<int> CheckRunner::find_compile_time_value_with_static_assert(

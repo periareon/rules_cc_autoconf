@@ -12,9 +12,11 @@ gnu_gnulib_diff_test_suite(
     }),
     golden_subst_h = select({
         "@platforms//os:macos": "golden_subst_macos.h.in",
+        "@platforms//os:windows": "golden_subst_windows.h.in",
         "//conditions:default": "golden_subst.h.in",
     }),
     m4_files = ["@gnulib//:all_m4"],
+    skip_subst_diff_on_windows = True,
     subst_h_in = "subst.h.in",
     test_c = "test_malloc_h.c",
 )

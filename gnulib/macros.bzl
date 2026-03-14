@@ -183,22 +183,51 @@ def _check_funcs_android_macos(
         requires = requires,
     )
 
+def _gl_next_header(header, name = None):
+    """Resolve NEXT_*_H for a header, inlining system header content when #include_next is unavailable.
+
+    On GCC/Clang: the checker returns `<header>` (normal angle-bracket include).
+    On MSVC: the checker runs the preprocessor to find the system header,
+    reads its content, and returns it prefixed with a newline so that the
+    template line `# @INCLUDE_NEXT@ @NEXT_*@` becomes a null directive
+    followed by the inlined system header content.
+
+    Args:
+        header: Header name (e.g., "stddef.h").
+        name: Override for the substitution variable name. Defaults to
+            NEXT_<HEADER_UPPER> (e.g., "NEXT_STDDEF_H").
+
+    Returns:
+        A JSON-encoded check string for use with the autoconf rule.
+    """
+    subst_name = name or ("NEXT_" + header.upper().replace("/", "_").replace(".", "_"))
+    return json.encode({
+        "code": header,
+        "name": subst_name,
+        "requires": ["INCLUDE_NEXT"],
+        "subst": subst_name,
+        "type": "GL_NEXT_HEADER",
+    })
+
 def _next_headers_internal(headers, value = None, condition = None):
     """Shared logic for NEXT_* variables (gl_NEXT_HEADERS_INTERNAL with include_next=yes).
 
-    For each header, creates two AC_SUBST checks:
+    For each header, creates two checks:
     1. NEXT_<HEADER_UPPER>
     2. NEXT_AS_FIRST_DIRECTIVE_<HEADER_UPPER>
 
-    By default (value=None), uses "<header>" which matches macOS autoconf behavior.
+    When no explicit `value` or `condition` is given, uses the GL_NEXT_HEADER
+    check type which automatically handles #include_next on GCC/Clang and
+    system header inlining on MSVC.
 
-    When `condition` is provided, the substitution always runs but the value is
-    conditional: header value when condition is true, empty string when false.
-    This matches autoconf behavior where an unset variable substitutes to empty.
+    When `value` is provided, uses a static AC_SUBST (the caller knows the
+    exact value to use). When `condition` is provided, uses a conditional
+    AC_SUBST.
 
     Args:
         headers: List of header names.
-        value: Override value for all headers. None means use "<header>".
+        value: Override value for all headers. None means auto-detect via
+            GL_NEXT_HEADER.
         condition: When provided, makes the value conditional. If condition is
             true, uses the header value; if false, uses empty string. Supports
             define names (e.g., `"HAVE_FOO"`), negated (e.g., `"!HAVE_FOO"`),
@@ -212,13 +241,16 @@ def _next_headers_internal(headers, value = None, condition = None):
         header_upper = header.upper().replace("/", "_").replace(".", "_").replace("-", "_")
         next_var = "NEXT_{}".format(header_upper)
         next_as_first_var = "NEXT_AS_FIRST_DIRECTIVE_{}".format(header_upper)
-        header_value = value if value != None else "<{}>".format(header)
         if condition:
+            header_value = value if value != None else "<{}>".format(header)
             result.append(autoconf_checks.AC_SUBST(next_var, condition = condition, if_true = header_value, if_false = ""))
             result.append(autoconf_checks.AC_SUBST(next_as_first_var, condition = condition, if_true = header_value, if_false = ""))
+        elif value != None:
+            result.append(autoconf_checks.AC_SUBST(next_var, value))
+            result.append(autoconf_checks.AC_SUBST(next_as_first_var, value))
         else:
-            result.append(autoconf_checks.AC_SUBST(next_var, header_value))
-            result.append(autoconf_checks.AC_SUBST(next_as_first_var, header_value))
+            result.append(_gl_next_header(header, name = next_var))
+            result.append(_gl_next_header(header, name = next_as_first_var))
     return result
 
 def _check_next_headers(headers, value = None, condition = None):

@@ -31,14 +31,15 @@ std::string check_type_to_string(CheckType type) {
             return "decl";
         case CheckType::kMember:
             return "member";
+        case CheckType::kGlNextHeader:
+            return "GL_NEXT_HEADER";
         default:
             return "unknown";
     }
 }
 
 bool check_type_is_define(CheckType type) {
-    // All CheckTypes are defines except kM4Variable
-    return type != CheckType::kM4Variable;
+    return type != CheckType::kM4Variable && type != CheckType::kGlNextHeader;
 }
 
 std::optional<Check> Check::from_json(const void* json_data) {
@@ -83,10 +84,9 @@ std::optional<Check> Check::from_json(const void* json_data) {
         // Backward compatibility: subst -> kM4Variable with subst=true
         type = CheckType::kM4Variable;
     } else if (type_str == "m4_variable") {
-        // Backward compatibility: m4_define -> kM4Variable
         type = CheckType::kM4Variable;
-    } else if (type_str == "m4_variable") {
-        type = CheckType::kM4Variable;
+    } else if (type_str == "GL_NEXT_HEADER") {
+        type = CheckType::kGlNextHeader;
     } else {
         throw std::runtime_error("Unknown check type: " + type_str);
     }
@@ -111,10 +111,6 @@ std::optional<Check> Check::from_json(const void* json_data) {
     // Parse optional fields
     if (json.contains("code") && json["code"].is_string()) {
         check.code_ = json["code"].get<std::string>();
-    }
-
-    if (json.contains("file_path") && json["file_path"].is_string()) {
-        check.file_path_ = json["file_path"].get<std::string>();
     }
 
     // Parse define_value - always use dump() to preserve type information
@@ -229,11 +225,10 @@ std::optional<Check> Check::from_json(const void* json_data) {
             break;
         case CheckType::kCompile:
         case CheckType::kLink:
-            if (!check.code().has_value() && !check.file_path().has_value()) {
+            if (!check.code().has_value()) {
                 throw std::runtime_error(
                     "Check type '" + check_type_to_string(type) +
-                    "' requires either 'code' or 'file_path' but neither was "
-                    "provided (check name: " +
+                    "' requires 'code' but it was not provided (check name: " +
                     check.name() + ")");
             }
             break;

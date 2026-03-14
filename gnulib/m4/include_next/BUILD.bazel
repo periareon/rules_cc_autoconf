@@ -1,22 +1,22 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/include_next.m4
-
-gl_INCLUDE_NEXT:
-- AC_SUBSTs INCLUDE_NEXT and INCLUDE_NEXT_AS_FIRST_DIRECTIVE (typically "include_next")
-- AC_SUBSTs PRAGMA_SYSTEM_HEADER (typically "#pragma GCC system_header")
-- AC_SUBSTs PRAGMA_COLUMNS (typically empty)
-"""
+"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/include_next.m4"""
 
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "include_next",
-    checks = [
-        # gl_INCLUDE_NEXT sets these for compilers that support #include_next
-        # GCC, Clang, and most modern compilers support it
-        checks.AC_SUBST("INCLUDE_NEXT", "include_next"),
-        checks.AC_SUBST("INCLUDE_NEXT_AS_FIRST_DIRECTIVE", "include_next"),
-        checks.AC_SUBST("PRAGMA_SYSTEM_HEADER", "#pragma GCC system_header"),
+    checks = select({
+        "@rules_cc//cc/compiler:msvc-cl": [
+            checks.AC_SUBST("INCLUDE_NEXT", ""),
+            checks.AC_SUBST("INCLUDE_NEXT_AS_FIRST_DIRECTIVE", ""),
+            checks.AC_SUBST("PRAGMA_SYSTEM_HEADER", ""),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST("INCLUDE_NEXT", "include_next"),
+            checks.AC_SUBST("INCLUDE_NEXT_AS_FIRST_DIRECTIVE", "include_next"),
+            checks.AC_SUBST("PRAGMA_SYSTEM_HEADER", "#pragma GCC system_header"),
+        ],
+    }) + [
         checks.AC_SUBST("PRAGMA_COLUMNS", ""),
     ],
     visibility = ["//visibility:public"],

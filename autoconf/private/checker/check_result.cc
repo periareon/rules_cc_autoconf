@@ -132,6 +132,8 @@ std::optional<CheckResult> CheckResult::from_json(const std::string& name,
             type = CheckType::kDecl;
         } else if (type_str == "member") {
             type = CheckType::kMember;
+        } else if (type_str == "GL_NEXT_HEADER") {
+            type = CheckType::kGlNextHeader;
         }
     }
 
