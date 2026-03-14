@@ -12,6 +12,7 @@
 #include "autoconf/private/common/action_args.h"
 #include "autoconf/private/resolver/resolver.h"
 #include "autoconf/private/resolver/source_generator.h"
+#include "tools/json/json.h"
 
 using namespace rules_cc_autoconf;
 
@@ -70,10 +71,10 @@ void print_usage(const char* program_name) {
                  "additional checks from template)\n";
     std::cout << "  --output <file>        Path to output config.h file "
                  "(required)\n";
-    std::cout << "  --inline <string> <file> Replace exact string in template "
-                 "with file content (can be specified multiple times)\n";
-    std::cout << "  --subst <name> <value> Replace @name@ placeholder with "
-                 "value (can be specified multiple times)\n";
+    std::cout << "  --inline <json>        JSON object mapping search strings "
+                 "to file paths for inline replacement\n";
+    std::cout << "  --subst <json>         JSON object mapping placeholder "
+                 "names to replacement values\n";
     std::cout
         << "  --mode <mode>          Processing mode: \"defines\" (default), "
            "\"subst\", or \"all\"\n";
@@ -164,23 +165,26 @@ std::optional<ResolverArgs> parse_args(int argc, char* argv[]) {
                 return std::nullopt;
             }
         } else if (arg == "--inline") {
-            if (i + 2 < expanded_argc) {
-                std::string search_string = std::string(expanded_argv_ptr[++i]);
-                std::string file_path = std::string(expanded_argv_ptr[++i]);
-                args.inlines[search_string] = file_path;
+            if (i + 1 < expanded_argc) {
+                auto j =
+                    nlohmann::json::parse(std::string(expanded_argv_ptr[++i]));
+                for (auto& [key, value] : j.items()) {
+                    args.inlines[key] = value.get<std::string>();
+                }
             } else {
-                std::cerr
-                    << "Error: --inline requires a search string and file path"
-                    << std::endl;
+                std::cerr << "Error: --inline requires a JSON object"
+                          << std::endl;
                 return std::nullopt;
             }
         } else if (arg == "--subst") {
-            if (i + 2 < expanded_argc) {
-                std::string name = std::string(expanded_argv_ptr[++i]);
-                std::string value = std::string(expanded_argv_ptr[++i]);
-                args.substitutions[name] = value;
+            if (i + 1 < expanded_argc) {
+                auto j =
+                    nlohmann::json::parse(std::string(expanded_argv_ptr[++i]));
+                for (auto& [key, value] : j.items()) {
+                    args.substitutions[key] = value.get<std::string>();
+                }
             } else {
-                std::cerr << "Error: --subst requires a name and value"
+                std::cerr << "Error: --subst requires a JSON object"
                           << std::endl;
                 return std::nullopt;
             }
