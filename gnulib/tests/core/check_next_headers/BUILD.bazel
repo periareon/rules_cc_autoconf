@@ -34,6 +34,10 @@ diff_test(
     name = "subst_diff",
     file1 = "golden_subst.h.in",
     file2 = ":subst",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
 )
 
 cc_test(
@@ -42,6 +46,10 @@ cc_test(
         "test.c",
         ":subst",
     ],
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
 )
 
 gnu_autoconf_configure_test(
