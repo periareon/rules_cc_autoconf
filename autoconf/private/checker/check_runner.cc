@@ -542,20 +542,30 @@ static std::string gen_less_compare(const std::string& base_code_template,
                                     const std::string& lhs,
                                     const std::string& rhs) {
     std::string code = base_code_template;
-    const size_t lhs_pos = code.find("{lhs}");
-    if (lhs_pos == std::string::npos) {
+    bool found_lhs = false;
+    for (size_t pos = code.find("{lhs}"); pos != std::string::npos;
+         pos = code.find("{lhs}", pos)) {
+        code.replace(pos, 5, lhs);
+        pos += lhs.length();
+        found_lhs = true;
+    }
+    if (!found_lhs) {
         throw std::runtime_error(
             "Code template must contain '{lhs}' placeholder for static_assert "
             "checks");
     }
-    code.replace(lhs_pos, 5, lhs);
-    const size_t rhs_pos = code.find("{rhs}");
-    if (rhs_pos == std::string::npos) {
+    bool found_rhs = false;
+    for (size_t pos = code.find("{rhs}"); pos != std::string::npos;
+         pos = code.find("{rhs}", pos)) {
+        code.replace(pos, 5, rhs);
+        pos += rhs.length();
+        found_rhs = true;
+    }
+    if (!found_rhs) {
         throw std::runtime_error(
             "Code template must contain '{rhs}' placeholder for static_assert "
             "checks");
     }
-    code.replace(rhs_pos, 5, rhs);
     return code;
 }
 
