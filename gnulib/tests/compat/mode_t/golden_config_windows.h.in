@@ -8,6 +8,5 @@
 #define HAVE_SYS_STAT_H 1
 #define HAVE_SYS_TYPES_H 1
 /* #undef HAVE_UNISTD_H */
-#define mode_t int
 #define PROMOTED_MODE_T mode_t
 #define STDC_HEADERS 1

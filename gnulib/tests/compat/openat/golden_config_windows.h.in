@@ -18,7 +18,7 @@
 /* #undef HAVE_WORKING_O_NOATIME */
 /* #undef HAVE_WORKING_O_NOFOLLOW */
 /* #undef LSTAT_FOLLOWS_SLASHED_SYMLINK */
-/* #undef PROMOTED_MODE_T */
+#define PROMOTED_MODE_T mode_t
 /* #undef REPLACE_CREAT */
 /* #undef REPLACE_FCNTL */
 /* #undef REPLACE_OPEN */

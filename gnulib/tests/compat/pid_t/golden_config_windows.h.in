@@ -8,5 +8,4 @@
 #define HAVE_SYS_STAT_H 1
 #define HAVE_SYS_TYPES_H 1
 /* #undef HAVE_UNISTD_H */
-#define pid_t int
 #define STDC_HEADERS 1

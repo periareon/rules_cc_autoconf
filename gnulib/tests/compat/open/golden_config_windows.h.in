@@ -62,7 +62,7 @@
 /* #undef HAVE_WORKING_O_NOATIME */
 /* #undef HAVE_WORKING_O_NOFOLLOW */
 /* #undef OPEN_TRAILING_SLASH_BUG */
-/* #undef PROMOTED_MODE_T */
+#define PROMOTED_MODE_T mode_t
 /* #undef REPLACE_ACCESS */
 /* #undef REPLACE_CHOWN */
 /* #undef REPLACE_CLOSE */
