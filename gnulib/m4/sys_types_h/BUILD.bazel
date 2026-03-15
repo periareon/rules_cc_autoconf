@@ -2,6 +2,7 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 autoconf(
     name = "gl_SYS_TYPES_H",
@@ -56,9 +57,7 @@ int main(void) {
 
         # Use sane struct stat types in OpenVMS 8.2 and later
         checks.AC_DEFINE("_USE_STD_STAT", "1"),
-        checks.AC_SUBST("NEXT_SYS_TYPES_H", "<sys/types.h>"),
-        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_SYS_TYPES_H", "<sys/types.h>"),
-    ] + select({
+    ] + gl_macros.GL_NEXT_HEADERS(["sys/types.h"]) + select({
         # AC_SUBST([WINDOWS_STAT_INODES]) is in gl_SYS_TYPES_H in the real m4.
         # gl_WINDOWS_STAT_INODES only sets the shell variable; sys_types_h does the subst.
         "@platforms//os:windows": [

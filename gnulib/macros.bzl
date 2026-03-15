@@ -395,6 +395,10 @@ def _ac_lib_have_linkflags(
 
     return result
 
+checks = struct(
+    GL_NEXT_HEADER = _gl_next_header,
+)
+
 macros = struct(
     GL_CHECK_FUNCS_ANDROID = _check_funcs_android,
     GL_CHECK_FUNCS_MACOS = _check_funcs_macos,

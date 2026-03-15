@@ -2,6 +2,7 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 # Known platforms where long double == double:
 # Linux/HPPA, NetBSD/sparc32, Minix 3.1.8, AIX 5, AIX 6 and 7 with xlc, MSVC 9.
@@ -41,9 +42,7 @@ autoconf(
             define = "HAVE_MATH_H",
             subst = True,
         ),
-        # Golden expects these NEXT_* substitutions from include_next
-        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_MATH_H", "<math.h>"),
-        checks.AC_SUBST("NEXT_MATH_H", "<math.h>"),
+    ] + gl_macros.GL_NEXT_HEADERS(["math.h"]) + [
         checks.AC_TRY_COMPILE(
             name = "_gl_cv_header_math_nan_works",
             code = """\

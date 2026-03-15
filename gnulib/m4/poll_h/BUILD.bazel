@@ -2,6 +2,7 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 autoconf(
     name = "poll_h",
@@ -28,9 +29,7 @@ autoconf(
         # This is a warning/preparation macro, not a check that needs to be ported
         # AC_SUBST for HAVE_POLL_H, NEXT_POLL_H, NEXT_AS_FIRST_DIRECTIVE_POLL_H
         checks.AC_SUBST("HAVE_POLL_H", "1"),
-        checks.AC_SUBST("NEXT_POLL_H", "<poll.h>"),
-        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_POLL_H", "<poll.h>"),
-    ],
+    ] + gl_macros.GL_NEXT_HEADERS(["poll.h"]),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/include_next",

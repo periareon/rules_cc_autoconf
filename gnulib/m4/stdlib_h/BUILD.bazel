@@ -2,86 +2,41 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 # stdlib_h - Header check and feature detection
 
 autoconf(
-    name = "stdlib_h",
-    checks = [
-        # gl_NEXT_HEADERS([stdlib.h]) sets NEXT_STDLIB_H and NEXT_AS_FIRST_DIRECTIVE_STDLIB_H
-        # On systems with include_next support, these are '<stdlib.h>'
-        # On systems without include_next, these are absolute paths
-        # For cross-compilation, we default to '<stdlib.h>' (most common case)
-        checks.AC_SUBST("NEXT_STDLIB_H", "<stdlib.h>"),
-        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_STDLIB_H", "<stdlib.h>"),
-
-        # These checks are in the main function, so they should be here
-        # Use internal cache variables - substitution variables are set from defaults
-        # Defines in config.h are created in stdlib_h_decls (only when primary target)
+    name = "gl_STDLIB_H",
+    checks = gl_macros.GL_NEXT_HEADERS(["stdlib.h"]) + [
+        # AC_CHECK_DECLS_ONCE([ecvt]), [fcvt], [gcvt]) - check and set HAVE_DECL_*
+        # Defaults (1) come from gl_STDLIB_H_DEFAULTS; these override to 0 when missing
         checks.AC_CHECK_DECL(
             "ecvt",
-            name = "ac_cv_have_decl_ecvt",
+            define = "HAVE_DECL_ECVT",
             includes = ["#include <stdlib.h>"],
+            subst = True,
         ),
         checks.AC_CHECK_DECL(
             "fcvt",
-            name = "ac_cv_have_decl_fcvt",
+            define = "HAVE_DECL_FCVT",
             includes = ["#include <stdlib.h>"],
+            subst = True,
         ),
         checks.AC_CHECK_DECL(
             "gcvt",
-            name = "ac_cv_have_decl_gcvt",
+            define = "HAVE_DECL_GCVT",
             includes = ["#include <stdlib.h>"],
+            subst = True,
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/include_next",
         "//gnulib/m4/extensions",
+        "//autoconf/macros/AC_C_RESTRICT",
         # Note: codeset removed to avoid duplicate HAVE_LANGINFO_CODESET (already provided by locale-en -> langinfo_h)
         "//gnulib/m4/locale-en",  # Provides LOCALE_EN_UTF8 (needed for test compatibility) and HAVE_LANGINFO_CODESET via langinfo_h
-        # Note: stdlib_h_decls is NOT included here to avoid circular dependency
-        # stdlib_h_decls depends on stdlib_h, so we can't include it here
-        # For test compatibility
-        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
-    ],
-)
-
-# stdlib_h_decls - AC_CHECK_DECLS_ONCE checks for ecvt, fcvt, gcvt
-# Only included via with_defaults, not transitively
-
-autoconf(
-    name = "stdlib_h_decls",
-    checks = [
-        # Create defines in config.h from cache variables set by stdlib_h
-        # Note: stdlib_h already checks for these declarations
-        # Use AC_DEFINE to create defines from the dependency's cache variables
-        checks.AC_DEFINE(
-            "HAVE_DECL_ECVT",
-            condition = "ac_cv_have_decl_ecvt",  # From stdlib_h dependency
-            if_false = 0,
-            if_true = 1,
-            subst = True,
-        ),
-        checks.AC_DEFINE(
-            "HAVE_DECL_FCVT",
-            condition = "ac_cv_have_decl_fcvt",  # From stdlib_h dependency
-            if_false = 0,
-            if_true = 1,
-            subst = True,
-        ),
-        checks.AC_DEFINE(
-            "HAVE_DECL_GCVT",
-            condition = "ac_cv_have_decl_gcvt",  # From stdlib_h dependency
-            if_false = 0,
-            if_true = 1,
-            subst = True,
-        ),
-    ],
-    visibility = ["//visibility:private"],
-    deps = [
-        # Depend on stdlib_h to get the cache variables from its checks
-        ":stdlib_h",
         # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
@@ -255,16 +210,20 @@ autoconf(
     ],
 )
 
-# stdlib_h_with_decls - For stdlib_h test that needs both stdlib_h and stdlib_h_decls
-
 autoconf(
-    name = "stdlib_h_with_decls",
+    name = "gl_STDLIB_MODULE_INDICATOR",
     checks = [],
     visibility = ["//visibility:public"],
     deps = [
-        ":stdlib_h",
-        ":stdlib_h_decls",  # Adds defines in config.h for tests
+        ":gl_STDLIB_H",
     ],
 )
 
-# with_defaults - For external consumers who don't use the toolchain
+autoconf(
+    name = "stdlib_h",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_STDLIB_H",
+        ":gl_STDLIB_MODULE_INDICATOR",
+    ],
+)

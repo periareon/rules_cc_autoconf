@@ -2,6 +2,7 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 autoconf(
     name = "sys_un_h",
@@ -43,10 +44,8 @@ int main(void) {
         # Set HAVE_SYS_UN_H, NEXT_* headers, and HAVE_AFUNIX_H based on platform
     ] + select({
         "@platforms//os:linux": [
-            # On Linux (glibc): sys/un.h exists and GL_GENERATE_SYS_UN_H=true
             checks.AC_SUBST("HAVE_SYS_UN_H", "1"),
-            checks.AC_SUBST("NEXT_SYS_UN_H", "<sys/un.h>"),
-            checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_SYS_UN_H", "<sys/un.h>"),
+        ] + gl_macros.GL_NEXT_HEADERS(["sys/un.h"]) + [
             checks.AC_SUBST("HAVE_AFUNIX_H", 0),
         ],
         "//conditions:default": [
