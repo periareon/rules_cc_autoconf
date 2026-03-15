@@ -2,6 +2,13 @@
 
 load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
 
+_RUNNER_SOURCES = [
+    "PACKAGE_NAME",
+    "PACKAGE_VERSION",
+    "PACKAGE_STRING",
+    "PACKAGE_TARNAME",
+]
+
 def _package_info_impl(ctx):
     results = {
         "PACKAGE_BUGREPORT": ctx.actions.declare_file("{}/{}.results.json".format(ctx.label.name, "PACKAGE_BUGREPORT")),
@@ -11,6 +18,24 @@ def _package_info_impl(ctx):
         "PACKAGE_URL": ctx.actions.declare_file("{}/{}.results.json".format(ctx.label.name, "PACKAGE_URL")),
         "PACKAGE_VERSION": ctx.actions.declare_file("{}/{}.results.json".format(ctx.label.name, "PACKAGE_VERSION")),
     }
+
+    extra_results = {}
+    for key, value in ctx.attr.aliases.items():
+        if key in results:
+            fail("`{}` already a builtin result. Please update `aliases` for `{}` to drop any of: {}".format(
+                key,
+                ctx.label,
+                sorted(results.keys()),
+            ))
+        if value not in results:
+            fail("`{}` is trying to mirror `{}` but this result doesn't exist. Please update `{}` to use one of: {}".format(
+                key,
+                value,
+                ctx.label,
+                sorted(results.keys()),
+            ))
+
+        extra_results[key] = ctx.actions.declare_file("{}/{}.results.json".format(ctx.label.name, key))
 
     if ctx.attr.module_bazel:
         args = ctx.actions.args()
@@ -29,6 +54,15 @@ def _package_info_impl(ctx):
         if ctx.attr.package_tarname:
             args.add("--force-tarname", ctx.attr.package_tarname)
 
+        if ctx.attr.strip_bcr_version:
+            args.add("--strip-bcr-version")
+
+        runner_alias_outputs = []
+        for key, source in ctx.attr.aliases.items():
+            if source in _RUNNER_SOURCES:
+                args.add("--alias", "{}={}={}".format(key, source, extra_results[key].path))
+                runner_alias_outputs.append(extra_results[key])
+
         ctx.actions.run(
             mnemonic = "ModuleBazelParse",
             outputs = [
@@ -36,11 +70,27 @@ def _package_info_impl(ctx):
                 results["PACKAGE_VERSION"],
                 results["PACKAGE_STRING"],
                 results["PACKAGE_TARNAME"],
-            ],
+            ] + runner_alias_outputs,
             executable = ctx.executable._parser,
             arguments = [args],
             inputs = depset([ctx.file.module_bazel]),
         )
+
+        starlark_alias_values = {
+            "PACKAGE_BUGREPORT": ctx.attr.package_bugreport,
+            "PACKAGE_URL": ctx.attr.package_url,
+        }
+        for key, source in ctx.attr.aliases.items():
+            if source not in _RUNNER_SOURCES:
+                ctx.actions.write(
+                    output = extra_results[key],
+                    content = json.encode_indent({
+                        key: {
+                            "success": True,
+                            "value": json.encode(starlark_alias_values[source]),
+                        },
+                    }, indent = " " * 4) + "\n",
+                )
 
     else:
         # Write JSON files in check result format for PACKAGE_NAME
@@ -90,6 +140,25 @@ def _package_info_impl(ctx):
             }, indent = " " * 4) + "\n",
         )
 
+        all_values = {
+            "PACKAGE_BUGREPORT": ctx.attr.package_bugreport,
+            "PACKAGE_NAME": ctx.attr.package_name,
+            "PACKAGE_STRING": ctx.attr.package_name + " " + ctx.attr.package_version,
+            "PACKAGE_TARNAME": ctx.attr.package_tarname if ctx.attr.package_tarname else ctx.attr.package_name,
+            "PACKAGE_URL": ctx.attr.package_url,
+            "PACKAGE_VERSION": ctx.attr.package_version,
+        }
+        for key, source in ctx.attr.aliases.items():
+            ctx.actions.write(
+                output = extra_results[key],
+                content = json.encode_indent({
+                    key: {
+                        "success": True,
+                        "value": json.encode(all_values[source]),
+                    },
+                }, indent = " " * 4) + "\n",
+            )
+
     ctx.actions.write(
         output = results["PACKAGE_BUGREPORT"],
         content = json.encode_indent({
@@ -117,7 +186,7 @@ def _package_info_impl(ctx):
             owner = ctx.label,
             deps = depset(),
             cache_results = {},
-            define_results = results,
+            define_results = results | extra_results,
             subst_results = {},
         ),
     ]
@@ -153,6 +222,9 @@ autoconf(
 """,
     implementation = _package_info_impl,
     attrs = {
+        "aliases": attr.string_dict(
+            doc = "Additional variables to define that are mirrored by the provided value variable.",
+        ),
         "module_bazel": attr.label(
             doc = "A `MODULE.bazel` file to parse module information from. Mutually exclusive with `package_name` and `package_version`.",
             allow_single_file = True,
@@ -174,6 +246,9 @@ autoconf(
         ),
         "package_version": attr.string(
             doc = "The package version. Must be provided together with `package_name` if `module_bazel` is not provided.",
+        ),
+        "strip_bcr_version": attr.bool(
+            doc = "Whether or not to strip `.bcr.*` suffixes from `module_bazel` parsed versions.",
         ),
         "_parser": attr.label(
             cfg = "exec",

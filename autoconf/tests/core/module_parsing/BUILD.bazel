@@ -455,3 +455,206 @@ diff_test(
     file1 = ":golden_config_with_different_forced_values.h.in",
     file2 = ":config_with_different_forced_values.h",
 )
+
+# Test case 12: Module with BCR version suffix, strip_bcr_version = True
+write_file(
+    name = "module_bcr_version",
+    out = "module_bcr_version.bazel",
+    content = [
+        "module(",
+        '    name = "test_module",',
+        '    version = "3.8.2.bcr.1",',
+        ")",
+    ],
+)
+
+package_info(
+    name = "module_info_bcr_version",
+    module_bazel = ":module_bcr_version.bazel",
+    strip_bcr_version = True,
+)
+
+autoconf_hdr(
+    name = "config_bcr_version",
+    out = "config_bcr_version.h",
+    template = "config.h.in",
+    deps = [":module_info_bcr_version"],
+)
+
+write_file(
+    name = "golden_config_bcr_version",
+    out = "golden_config_bcr_version.h.in",
+    content = [
+        "/* config.h.in.  Generated from MODULE.bazel.  */",
+        "",
+        "/* Define to the full name of this package. */",
+        '#define PACKAGE_NAME "test_module"',
+        "",
+        "/* Define to the version of this package. */",
+        '#define PACKAGE_VERSION "3.8.2"',
+        "",
+    ],
+    newline = "unix",
+)
+
+diff_test(
+    name = "diff_test_header_bcr_version",
+    file1 = ":golden_config_bcr_version.h.in",
+    file2 = ":config_bcr_version.h",
+)
+
+# Test case 13: Module without BCR suffix, strip_bcr_version = True (no-op)
+write_file(
+    name = "module_no_bcr_version",
+    out = "module_no_bcr_version.bazel",
+    content = [
+        "module(",
+        '    name = "test_module",',
+        '    version = "1.0.0",',
+        ")",
+    ],
+)
+
+package_info(
+    name = "module_info_no_bcr_version",
+    module_bazel = ":module_no_bcr_version.bazel",
+    strip_bcr_version = True,
+)
+
+autoconf_hdr(
+    name = "config_no_bcr_version",
+    out = "config_no_bcr_version.h",
+    template = "config.h.in",
+    deps = [":module_info_no_bcr_version"],
+)
+
+diff_test(
+    name = "diff_test_header_no_bcr_version",
+    file1 = "golden_config.h.in",
+    file2 = ":config_no_bcr_version.h",
+)
+
+# Template for alias tests (includes both builtin and alias defines)
+write_file(
+    name = "config_aliases_template",
+    out = "config_aliases.h.in",
+    content = [
+        "/* config.h.in.  Generated from MODULE.bazel.  */",
+        "",
+        "/* Define to the full name of this package. */",
+        "#undef PACKAGE_NAME",
+        "",
+        "/* Define to the version of this package. */",
+        "#undef PACKAGE_VERSION",
+        "",
+        "/* Alias for PACKAGE_TARNAME. */",
+        "#undef PACKAGE",
+        "",
+        "/* Alias for PACKAGE_VERSION. */",
+        "#undef VERSION",
+        "",
+    ],
+    newline = "unix",
+)
+
+# Test case 14: Aliases with module_bazel mode
+write_file(
+    name = "module_aliases",
+    out = "module_aliases.bazel",
+    content = [
+        "module(",
+        '    name = "test_module",',
+        '    version = "1.0.0",',
+        ")",
+    ],
+)
+
+package_info(
+    name = "module_info_aliases",
+    aliases = {
+        "PACKAGE": "PACKAGE_TARNAME",
+        "VERSION": "PACKAGE_VERSION",
+    },
+    module_bazel = ":module_aliases.bazel",
+)
+
+autoconf_hdr(
+    name = "config_aliases",
+    out = "config_aliases.h",
+    template = ":config_aliases.h.in",
+    deps = [":module_info_aliases"],
+)
+
+write_file(
+    name = "golden_config_aliases",
+    out = "golden_config_aliases.h.in",
+    content = [
+        "/* config.h.in.  Generated from MODULE.bazel.  */",
+        "",
+        "/* Define to the full name of this package. */",
+        '#define PACKAGE_NAME "test_module"',
+        "",
+        "/* Define to the version of this package. */",
+        '#define PACKAGE_VERSION "1.0.0"',
+        "",
+        "/* Alias for PACKAGE_TARNAME. */",
+        '#define PACKAGE "test_module"',
+        "",
+        "/* Alias for PACKAGE_VERSION. */",
+        '#define VERSION "1.0.0"',
+        "",
+    ],
+    newline = "unix",
+)
+
+diff_test(
+    name = "diff_test_header_aliases",
+    file1 = ":golden_config_aliases.h.in",
+    file2 = ":config_aliases.h",
+)
+
+# Test case 15: Aliases with direct mode (no module_bazel)
+package_info(
+    name = "direct_info_aliases",
+    package_name = "direct_pkg",
+    aliases = {
+        "PACKAGE": "PACKAGE_TARNAME",
+        "VERSION": "PACKAGE_VERSION",
+    },
+    package_version = "2.5.0",
+)
+
+autoconf_hdr(
+    name = "config_direct_aliases",
+    out = "config_direct_aliases.h",
+    template = ":config_aliases.h.in",
+    deps = [":direct_info_aliases"],
+)
+
+write_file(
+    name = "golden_config_direct_aliases",
+    out = "golden_config_direct_aliases.h.in",
+    content = [
+        "/* config.h.in.  Generated from MODULE.bazel.  */",
+        "",
+        "/* Define to the full name of this package. */",
+        '#define PACKAGE_NAME "direct_pkg"',
+        "",
+        "/* Define to the version of this package. */",
+        '#define PACKAGE_VERSION "2.5.0"',
+        "",
+        "/* Alias for PACKAGE_TARNAME. */",
+        '#define PACKAGE "direct_pkg"',
+        "",
+        "/* Alias for PACKAGE_VERSION. */",
+        '#define VERSION "2.5.0"',
+        "",
+    ],
+    newline = "unix",
+)
+
+diff_test(
+    name = "diff_test_header_direct_aliases",
+    file1 = ":golden_config_direct_aliases.h.in",
+    file2 = ":config_direct_aliases.h",
+)

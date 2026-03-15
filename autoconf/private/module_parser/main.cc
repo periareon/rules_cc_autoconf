@@ -4,10 +4,12 @@
 
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <optional>
 #include <regex>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include "tools/json/json.h"
 
@@ -90,6 +92,16 @@ bool parse_module(const std::string& content, std::string& name,
 }
 
 /**
+ * @brief A define alias: writes the value of a source result under a different
+ * define name to a separate output file.
+ */
+struct Alias {
+    std::string name;
+    std::string source;
+    std::string output_path;
+};
+
+/**
  * @brief Parsed command-line arguments for module_parser binary.
  */
 struct ModuleParserArgs {
@@ -119,6 +131,12 @@ struct ModuleParserArgs {
     /** An optional override tarname to use instead of defaulting to name
      * (optional) */
     std::string forced_tarname{};
+
+    /** Whether to strip `.bcr.N` suffixes from the version */
+    bool strip_bcr_version = false;
+
+    /** Aliases to write (each maps an alias define name to a source result) */
+    std::vector<Alias> aliases{};
 
     /** Whether to show help */
     bool show_help = false;
@@ -158,6 +176,12 @@ void print_usage(const char* program_name) {
               << std::endl;
     std::cout << "  --force-tarname <string>   A tarname to use instead of "
                  "defaulting to name"
+              << std::endl;
+    std::cout << "  --strip-bcr-version        Strip .bcr.N suffixes from the "
+                 "version string"
+              << std::endl;
+    std::cout << "  --alias KEY=SOURCE=PATH    Write an alias result file "
+                 "(repeatable)"
               << std::endl;
     std::cout << "  --help                 Show this help message" << std::endl;
 }
@@ -243,6 +267,32 @@ std::optional<ModuleParserArgs> parse_args(int argc, char* argv[]) {
                           << std::endl;
                 return std::nullopt;
             }
+        } else if (arg == "--strip-bcr-version") {
+            args.strip_bcr_version = true;
+        } else if (arg == "--alias") {
+            if (i + 1 < argc) {
+                std::string val = argv[++i];
+                auto first_eq = val.find('=');
+                auto second_eq = first_eq != std::string::npos
+                                     ? val.find('=', first_eq + 1)
+                                     : std::string::npos;
+                if (first_eq == std::string::npos ||
+                    second_eq == std::string::npos) {
+                    std::cerr
+                        << "Error: --alias requires KEY=SOURCE=PATH format"
+                        << std::endl;
+                    return std::nullopt;
+                }
+                Alias alias;
+                alias.name = val.substr(0, first_eq);
+                alias.source =
+                    val.substr(first_eq + 1, second_eq - first_eq - 1);
+                alias.output_path = val.substr(second_eq + 1);
+                args.aliases.push_back(std::move(alias));
+            } else {
+                std::cerr << "Error: --alias requires a value" << std::endl;
+                return std::nullopt;
+            }
         } else {
             std::cerr << "Error: Unknown argument: " << arg << std::endl;
             return std::nullopt;
@@ -294,6 +344,22 @@ bool write_package_json(const std::string& path, const std::string& define_name,
     return true;
 }
 
+/**
+ * @brief Strip a `.bcr.N` suffix from a version string.
+ *
+ * BCR (Bazel Central Registry) appends suffixes like `.bcr.1` to distinguish
+ * registry releases from upstream versions. This function removes that suffix
+ * so the version matches the upstream release (e.g., `"3.8.2.bcr.1"` becomes
+ * `"3.8.2"`).
+ *
+ * @param version The version string to strip.
+ * @return The version with any `.bcr.N` suffix removed.
+ */
+std::string strip_bcr_suffix(const std::string& version) {
+    std::regex bcr_pattern(R"(\.bcr\.\d+$)");
+    return std::regex_replace(version, bcr_pattern, "");
+}
+
 int main(int argc, char* argv[]) {
     std::optional<ModuleParserArgs> args_opt = parse_args(argc, argv);
     if (!args_opt.has_value()) {
@@ -339,6 +405,10 @@ int main(int argc, char* argv[]) {
         version = args.forced_version;
     }
 
+    if (args.strip_bcr_version) {
+        version = strip_bcr_suffix(version);
+    }
+
     // Compute tarname: use forced_tarname if provided, otherwise default to
     // name
     std::string tarname =
@@ -357,6 +427,26 @@ int main(int argc, char* argv[]) {
     if (!args.out_tarname.empty()) {
         if (!write_package_json(args.out_tarname, "PACKAGE_TARNAME", tarname))
             return 1;
+    }
+
+    if (!args.aliases.empty()) {
+        std::map<std::string, std::string> values = {
+            {"PACKAGE_NAME", name},
+            {"PACKAGE_VERSION", version},
+            {"PACKAGE_STRING", name + " " + version},
+            {"PACKAGE_TARNAME", tarname},
+        };
+        for (const auto& alias : args.aliases) {
+            auto it = values.find(alias.source);
+            if (it == values.end()) {
+                std::cerr << "Error: alias '" << alias.name
+                          << "' references unknown source '" << alias.source
+                          << "'" << std::endl;
+                return 1;
+            }
+            if (!write_package_json(alias.output_path, alias.name, it->second))
+                return 1;
+        }
     }
 
     return 0;
