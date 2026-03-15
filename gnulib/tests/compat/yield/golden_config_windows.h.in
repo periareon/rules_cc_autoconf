@@ -14,8 +14,9 @@
 /* #undef HAVE_WEAK_SYMBOLS */
 /* #undef SCHED_YIELD_LIB */
 #define STDC_HEADERS 1
-#define USE_POSIX_THREADS 1
+/* #undef USE_POSIX_THREADS */
 /* #undef USE_POSIX_THREADS_FROM_LIBC */
+#define USE_WINDOWS_THREADS 1
 /* #undef YIELD_LIB */
 #define _ALL_SOURCE 1
 #define _DARWIN_C_SOURCE 1

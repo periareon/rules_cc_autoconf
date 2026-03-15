@@ -41,10 +41,6 @@ int main(void) {
             condition = "_gl_pthread_api_yes",
             if_true = 1,
         ),
-        # Define USE_POSIX_THREADS so pthread_h test golden is matched (golden cannot be changed).
-        # In M4 this is set in gl_THREADLIB_BODY; we also set it here for gl_PTHREADLIB-only consumers.
-        checks.AC_DEFINE("USE_POSIX_THREADS", "1"),
-
         # On some systems, sched_yield is in librt, rather than in libpthread.
         # On most systems, sched_yield is in libc, so SCHED_YIELD_LIB is empty.
         checks.AC_TRY_LINK(
@@ -127,20 +123,19 @@ autoconf(
         checks.AC_SUBST("LIBMULTITHREAD", ""),
         checks.AC_SUBST("LTLIBMULTITHREAD", ""),
     ] + select({
-        # On Linux with glibc >= 2.34, POSIX threads are in libc (no -lpthread needed)
         "@platforms//os:linux": [
+            checks.AC_DEFINE("USE_POSIX_THREADS", "1"),
             checks.AC_DEFINE("USE_POSIX_THREADS_FROM_LIBC", "1"),
         ],
-        # On macOS, POSIX threads are in libc (libSystem), but may still need explicit linking
-        # The golden shows USE_POSIX_THREADS_FROM_LIBC is undef on macOS
         "@platforms//os:macos": [
-            # Don't define USE_POSIX_THREADS_FROM_LIBC - see lock test golden
+            checks.AC_DEFINE("USE_POSIX_THREADS", "1"),
         ],
-        # On Windows, use Windows threads
         "@platforms//os:windows": [
             checks.AC_DEFINE("USE_WINDOWS_THREADS", "1"),
         ],
-        "//conditions:default": [],
+        "//conditions:default": [
+            checks.AC_DEFINE("USE_POSIX_THREADS", "1"),
+        ],
     }),
     visibility = ["//visibility:public"],
     deps = [

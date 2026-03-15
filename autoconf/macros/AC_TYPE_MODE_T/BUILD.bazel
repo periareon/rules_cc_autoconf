@@ -13,6 +13,11 @@ autoconf(
     name = "AC_TYPE_MODE_T",
     checks = [
         checks.AC_CHECK_TYPE("mode_t"),
+        checks.AC_DEFINE(
+            "mode_t",
+            "int",
+            requires = ["!ac_cv_type_mode_t"],
+        ),
     ],
     visibility = ["//visibility:public"],
 )
