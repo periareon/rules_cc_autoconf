@@ -5,23 +5,26 @@ load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "iconv_open",
-    checks = [
-        # iconv_open.m4: REPLACE_ICONV_OPEN=1 only when iconv IS available
-        checks.AC_SUBST(
-            "REPLACE_ICONV_OPEN",
-            condition = "_am_cv_func_iconv",
-            if_true = 1,
-            if_false = 0,
-        ),
-    ] + select({
+    checks = select({
         "@platforms//os:macos": [
-            # macOS needs iconv replacements
+            # macOS: iconv is available via libiconv but is not GNU.
+            # _am_cv_func_iconv fails because AC_TRY_LINK doesn't add -liconv,
+            # but REPLACE_ICONV_OPEN is unconditionally 1 on macOS (the m4's
+            # gl_REPLACE_ICONV_OPEN is called via the UTF-support failure path).
+            checks.AC_SUBST("REPLACE_ICONV_OPEN", "1"),
             checks.AC_DEFINE("REPLACE_ICONV_UTF", 1),
             checks.AC_SUBST("REPLACE_ICONV", "1"),
             checks.AC_SUBST("REPLACE_ICONV_UTF", "1"),
         ],
         "//conditions:default": [
-            # Linux glibc iconv works correctly
+            # Linux glibc: iconv is in libc, AC_TRY_LINK succeeds without -liconv.
+            # REPLACE_ICONV_OPEN=1 when iconv IS available.
+            checks.AC_SUBST(
+                "REPLACE_ICONV_OPEN",
+                condition = "_am_cv_func_iconv",
+                if_false = 0,
+                if_true = 1,
+            ),
             checks.AC_SUBST("REPLACE_ICONV", "0"),
             checks.AC_SUBST("REPLACE_ICONV_UTF", "0"),
         ],

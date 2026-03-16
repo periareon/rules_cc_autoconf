@@ -15,8 +15,8 @@ autoconf(
         checks.AC_SUBST(
             "HAVE_SIGACTION",
             condition = "ac_cv_func_sigaction",
-            if_true = 1,
             if_false = 0,
+            if_true = 1,
         ),
 
         # if test $ac_cv_func_sigaction = yes; then
@@ -33,8 +33,8 @@ autoconf(
         checks.AC_SUBST(
             "HAVE_STRUCT_SIGACTION_SA_SIGACTION",
             condition = "ac_cv_member_struct_sigaction_sa_sigaction",
-            if_true = 1,
             if_false = 0,
+            if_true = 1,
         ),
     ],
     visibility = ["//visibility:public"],
@@ -54,7 +54,6 @@ autoconf(
             define = "HAVE_SIGINTERRUPT",
             # Note: subst=False because golden expects @HAVE_SIGINTERRUPT@ (unsubstituted)
         ),
-
         checks.AC_CHECK_TYPE(
             "siginfo_t",
             code = """\
@@ -65,8 +64,8 @@ autoconf(
         checks.AC_SUBST(
             "HAVE_SIGINFO_T",
             condition = "ac_cv_type_siginfo_t",
-            if_true = 1,
             if_false = 0,
+            if_true = 1,
         ),
     ],
     visibility = ["//visibility:public"],
