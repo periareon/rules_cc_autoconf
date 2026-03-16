@@ -58,6 +58,20 @@
 #undef DEFINE_ZERO_IF_FALSE
 
 /* =================================================================
+ * Relational comparison operator tests (<, >, <=, >=)
+ * ================================================================= */
+
+#undef COMPUTED_VALUE
+#undef CMP_GE_FALSE
+#undef CMP_GE_TRUE
+#undef CMP_GT_FALSE
+#undef CMP_GT_TRUE
+#undef CMP_LE_FALSE
+#undef CMP_LE_TRUE
+#undef CMP_LT_FALSE
+#undef CMP_LT_TRUE
+
+/* =================================================================
  * Package information
  * ================================================================= */
 

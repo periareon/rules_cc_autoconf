@@ -330,11 +330,10 @@ int Checker::run_check_from_file(const std::filesystem::path& check_path,
                         std::string check_name = check.define().has_value()
                                                      ? *check.define()
                                                      : check.name();
-                        std::string operator_str =
-                            evaluator.is_negated() ? "!=" : "==";
                         DebugLogger::warn(
                             "Check '" + check_name + "' requires '" +
-                            evaluator.define_name() + operator_str +
+                            evaluator.define_name() +
+                            compare_op_str(evaluator.compare_op()) +
                             evaluator.comparison_value() +
                             "' but condition is not satisfied (value is '" +
                             req_result_ptr->value.value_or("") +

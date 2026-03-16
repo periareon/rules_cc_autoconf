@@ -43,6 +43,8 @@ int main(void) { return 0; }
             "nonexistent_condition_test.h",
             define = "HAVE_NONEXISTENT_CONDITION_TEST_H",
         ),
+        # Known integer value for relational operator tests
+        checks.AC_COMPUTE_INT("COMPUTED_VALUE", "42"),
     ],
 )
 
@@ -171,6 +173,68 @@ autoconf(
             if_false = 0,  # Integer - should create #define DEFINE_ZERO_IF_FALSE 0
             if_true = 1,  # Integer - should NOT be used (condition fails)
             subst = True,
+        ),
+
+        # =================================================================
+        # Relational comparison operator tests (<, >, <=, >=)
+        # COMPUTED_VALUE is 42
+        # =================================================================
+
+        # Test 12: 42 < 100 -> true
+        checks.AC_SUBST(
+            "CMP_LT_TRUE",
+            condition = "COMPUTED_VALUE<100",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # Test 13: 42 < 10 -> false
+        checks.AC_SUBST(
+            "CMP_LT_FALSE",
+            condition = "COMPUTED_VALUE<10",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # Test 14: 42 > 10 -> true
+        checks.AC_SUBST(
+            "CMP_GT_TRUE",
+            condition = "COMPUTED_VALUE>10",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # Test 15: 42 > 100 -> false
+        checks.AC_SUBST(
+            "CMP_GT_FALSE",
+            condition = "COMPUTED_VALUE>100",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # Test 16: 42 <= 42 -> true (boundary)
+        checks.AC_SUBST(
+            "CMP_LE_TRUE",
+            condition = "COMPUTED_VALUE<=42",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # Test 17: 42 >= 42 -> true (boundary)
+        checks.AC_SUBST(
+            "CMP_GE_TRUE",
+            condition = "COMPUTED_VALUE>=42",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # Test 18: 42 <= 41 -> false
+        checks.AC_SUBST(
+            "CMP_LE_FALSE",
+            condition = "COMPUTED_VALUE<=41",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # Test 19: 42 >= 43 -> false
+        checks.AC_SUBST(
+            "CMP_GE_FALSE",
+            condition = "COMPUTED_VALUE>=43",
+            if_false = "0",
+            if_true = "1",
         ),
     ],
     deps = [

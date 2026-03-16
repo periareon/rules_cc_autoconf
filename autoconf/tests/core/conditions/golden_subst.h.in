@@ -34,3 +34,31 @@ FAILURE_VALUE
 
 /* Test 9: condition succeeds, no if_false -> defined */
 1
+
+/* =================================================================
+ * Relational comparison operator tests (<, >, <=, >=)
+ * ================================================================= */
+
+/* Test 12: 42 < 100 -> true */
+1
+
+/* Test 13: 42 < 10 -> false */
+0
+
+/* Test 14: 42 > 10 -> true */
+1
+
+/* Test 15: 42 > 100 -> false */
+0
+
+/* Test 16: 42 <= 42 -> true (boundary) */
+1
+
+/* Test 17: 42 >= 42 -> true (boundary) */
+1
+
+/* Test 18: 42 <= 41 -> false */
+0
+
+/* Test 19: 42 >= 43 -> false */
+0

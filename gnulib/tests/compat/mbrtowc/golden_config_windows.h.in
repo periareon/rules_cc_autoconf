@@ -21,7 +21,7 @@
 #define HAVE_SYS_TYPES_H 1
 /* #undef HAVE_THREADS_H */
 /* #undef HAVE_UNISTD_H */
-#define HAVE_VISIBILITY 1
+/* #undef HAVE_VISIBILITY */
 #define HAVE_WCHAR_H 1
 /* #undef HAVE_WCPCPY */
 /* #undef HAVE_WCPNCPY */

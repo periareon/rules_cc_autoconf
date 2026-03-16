@@ -21,23 +21,18 @@ def _coerce_name(name, value):
 def _extract_define_name(expr):
     """Extract base define name from requirement/condition expression.
 
-    Handles: "FOO", "!FOO", "FOO==value", "FOO!=value", "FOO=value"
+    Handles: "FOO", "!FOO", "FOO==value", "FOO!=value", "FOO<value",
+    "FOO>value", "FOO<=value", "FOO>=value", "FOO=value"
     """
     required_define = expr
 
     if required_define.startswith("!"):
-        # Handle negation prefix
         required_define = required_define[1:]
 
-    if "!=" in required_define:
-        # Handle != operator
-        required_define = required_define.split("!=")[0]
-    elif "==" in required_define:
-        # Handle == operator
-        required_define = required_define.split("==")[0]
-    elif "=" in required_define:
-        # Handle legacy = operator
-        required_define = required_define.split("=")[0]
+    for op in ["<=", ">=", "!=", "==", "<", ">", "="]:
+        if op in required_define:
+            required_define = required_define.split(op)[0]
+            break
 
     return required_define
 
