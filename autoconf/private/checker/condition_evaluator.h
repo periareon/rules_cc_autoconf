@@ -9,15 +9,34 @@
 namespace rules_cc_autoconf {
 
 /**
+ * @brief Comparison operator for value-based conditions.
+ */
+enum class CompareOp {
+    kNone,          ///< No comparison (truthy check)
+    kEqual,         ///< ==
+    kNotEqual,      ///< !=
+    kLessThan,      ///< <
+    kGreaterThan,   ///< >
+    kLessEqual,     ///< <=
+    kGreaterEqual,  ///< >=
+};
+
+/**
+ * @brief Return the string representation of a CompareOp.
+ */
+const char* compare_op_str(CompareOp op);
+
+/**
  * @brief Evaluates condition expressions for conditional checks.
  *
- * Parses condition strings like "FOO", "!FOO", "FOO==1", "FOO!=0" and evaluates
- * them against a map of check results.
+ * Parses condition strings like "FOO", "!FOO", "FOO==1", "FOO!=0",
+ * "FOO<32", "FOO>=10" and evaluates them against a map of check results.
  *
  * Negation prefix (!): "!FOO" is true when FOO has success=false or a falsy
  * value (0, empty); false when FOO has a truthy value (1, "yes", etc.).
  *
- * Compares JSON-encoded values for value-based comparisons (==, !=).
+ * Equality operators (==, !=) compare JSON-encoded values.
+ * Relational operators (<, >, <=, >=) perform integer comparison.
  */
 class ConditionEvaluator {
    public:
@@ -46,16 +65,20 @@ class ConditionEvaluator {
 
     /**
      * @brief Check if this condition has a value comparison.
-     * @return true if condition uses == or !=, false if it's just existence
-     * check.
+     * @return true if condition uses an operator (==, !=, <, >, <=, >=).
      */
-    bool has_value_compare() const { return has_value_compare_; }
+    bool has_value_compare() const { return compare_op_ != CompareOp::kNone; }
 
     /**
      * @brief Check if this condition uses != for value comparison.
      * @return true if condition uses !=, false otherwise.
      */
-    bool is_negated() const { return value_negated_; }
+    bool is_negated() const { return compare_op_ == CompareOp::kNotEqual; }
+
+    /**
+     * @brief Get the comparison operator.
+     */
+    CompareOp compare_op() const { return compare_op_; }
 
     /**
      * @brief Check if this condition has a leading ! prefix (!FOO).
@@ -106,8 +129,7 @@ class ConditionEvaluator {
    private:
     std::string define_name_{};
     std::string cond_value_{};
-    bool has_value_compare_ = false;
-    bool value_negated_ = false;
+    CompareOp compare_op_ = CompareOp::kNone;
     /** true when condition had leading ! (e.g. "!FOO") - final result is
      * negated */
     bool condition_negated_ = false;

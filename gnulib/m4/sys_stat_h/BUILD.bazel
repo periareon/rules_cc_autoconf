@@ -8,10 +8,18 @@ autoconf(
     name = "gl_SYS_STAT_H",
     checks = [
         # gl_SYS_STAT_H checks for sys/stat.h header
-    ] + gl_macros.GL_CHECK_NEXT_HEADERS(["sys/stat.h"]) + [
-        # WINDOWS_STAT_TIMESPEC=0 (line 28) - not Windows
-        checks.AC_SUBST("WINDOWS_STAT_TIMESPEC", 0),
-    ],
+    ] + gl_macros.GL_CHECK_NEXT_HEADERS(["sys/stat.h"]) + select({
+        "@platforms//os:windows": [
+            # On Windows (MSVC and MinGW), the UCRT's struct stat has
+            # st_atim, st_mtim, st_ctim as struct timespec members.
+            # gnulib's sys_stat.in.h uses this to add timespec fields to
+            # its replacement struct stat and define _GL_WINDOWS_STAT_TIMESPEC.
+            checks.AC_SUBST("WINDOWS_STAT_TIMESPEC", 1),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST("WINDOWS_STAT_TIMESPEC", 0),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/include_next",  # gl_CHECK_NEXT_HEADERS uses include_next

@@ -1,5 +1,5 @@
 /* config.h.in */
-#define BITSIZEOF_WCHAR_T 32
+#define BITSIZEOF_WCHAR_T 16
 /* #undef CXX_HAS_CHAR8_TYPE */
 /* #undef CXX_HAS_UCHAR_TYPES */
 /* #undef CXX_HAVE_UCHAR_H */

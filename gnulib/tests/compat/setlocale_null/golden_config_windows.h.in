@@ -13,7 +13,7 @@
 /* #undef HAVE_SYS_VFS_H */
 /* #undef HAVE_THREADS_H */
 /* #undef HAVE_UNISTD_H */
-#define HAVE_VISIBILITY 1
+/* #undef HAVE_VISIBILITY */
 /* #undef SCHED_YIELD_LIB */
 #define SETLOCALE_NULL_ALL_MTSAFE 0
 /* #undef SETLOCALE_NULL_LIB */

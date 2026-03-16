@@ -24,15 +24,23 @@ void dummyfunc (void) {}
 int main(void) { return 0; }
 """,
         ),
-        # Set HAVE_VISIBILITY and CFLAG_VISIBILITY as substitution variables
-        # On macOS, compiler supports visibility, so HAVE_VISIBILITY=1
         checks.AC_DEFINE(
             "HAVE_VISIBILITY",
-            1,  # Integer, not string - renders as unquoted 1
-            subst = True,  # Also create substitution variable
+            1,
+            requires = ["gl_cv_cc_visibility==1"],
         ),
-        # CFLAG_VISIBILITY is set to "-fvisibility=hidden" if supported
-        checks.AC_SUBST("CFLAG_VISIBILITY", "-fvisibility=hidden"),
+        checks.AC_SUBST(
+            "HAVE_VISIBILITY",
+            condition = "gl_cv_cc_visibility",
+            if_false = 0,
+            if_true = 1,
+        ),
+        checks.AC_SUBST(
+            "CFLAG_VISIBILITY",
+            condition = "gl_cv_cc_visibility",
+            if_false = "",
+            if_true = "-fvisibility=hidden",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [

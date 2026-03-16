@@ -34,3 +34,31 @@
 
 /* Test 9: condition succeeds, no if_false -> defined */
 @DEFINE_ONLY_IF_TRUE@
+
+/* =================================================================
+ * Relational comparison operator tests (<, >, <=, >=)
+ * ================================================================= */
+
+/* Test 12: 42 < 100 -> true */
+@CMP_LT_TRUE@
+
+/* Test 13: 42 < 10 -> false */
+@CMP_LT_FALSE@
+
+/* Test 14: 42 > 10 -> true */
+@CMP_GT_TRUE@
+
+/* Test 15: 42 > 100 -> false */
+@CMP_GT_FALSE@
+
+/* Test 16: 42 <= 42 -> true (boundary) */
+@CMP_LE_TRUE@
+
+/* Test 17: 42 >= 42 -> true (boundary) */
+@CMP_GE_TRUE@
+
+/* Test 18: 42 <= 41 -> false */
+@CMP_LE_FALSE@
+
+/* Test 19: 42 >= 43 -> false */
+@CMP_GE_FALSE@

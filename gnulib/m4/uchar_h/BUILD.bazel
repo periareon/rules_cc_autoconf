@@ -12,12 +12,17 @@ autoconf(
             "uchar.h",
             name = "ac_cv_header_uchar_h",
         ),
-
-        # BITSIZEOF_WCHAR_T is computed by gl_STDINT_BITSIZEOF([wchar_t])
-        # On most platforms (including macOS), wchar_t is 32 bits
-        # This is the canonical owner of BITSIZEOF_WCHAR_T
-        checks.AC_SUBST("BITSIZEOF_WCHAR_T", "32"),
-        checks.AC_DEFINE("BITSIZEOF_WCHAR_T", "32"),  # config.h #define
+        # gl_STDINT_BITSIZEOF([wchar_t]) -- compute sizeof(wchar_t) * CHAR_BIT
+        checks.AC_COMPUTE_INT(
+            "BITSIZEOF_WCHAR_T",
+            "(int)(sizeof(wchar_t) * CHAR_BIT)",
+            includes = [
+                "#include <limits.h>",
+                "#include <stddef.h>",
+            ],
+            subst = True,
+        ),
+    ] + [
         # CXX_HAS_CHAR8_TYPE, CXX_HAS_UCHAR_TYPES, CXX_HAVE_UCHAR_H are set by gl_UCHAR_H
         # On macOS, uchar.h doesn't exist in C mode, but may exist in C++ mode
         # For now, set to expected values from golden file
@@ -54,12 +59,13 @@ autoconf(
             if_true = 1,
         ),
     ] + gl_macros.GL_CHECK_NEXT_HEADERS(["uchar.h"]) + [
-        # SMALL_WCHAR_T is set based on BITSIZEOF_WCHAR_T
-        checks.AC_SUBST("SMALL_WCHAR_T", "0"),  # wchar_t is 32 bits, not small
-
-        # gl_TYPE_CHAR8_T, gl_TYPE_CHAR16_T, gl_TYPE_CHAR32_T checks for types
-        # Note: These checks are performed but the golden file doesn't show explicit defines
-        # for these types, so we rely on the header check.
+        # if test $BITSIZEOF_WCHAR_T -lt 32; then SMALL_WCHAR_T=1
+        checks.AC_SUBST(
+            "SMALL_WCHAR_T",
+            condition = "BITSIZEOF_WCHAR_T<32",
+            if_false = "0",
+            if_true = "1",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
