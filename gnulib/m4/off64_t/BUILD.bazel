@@ -23,11 +23,12 @@ autoconf(
             checks.AC_SUBST("HAVE_OFF64_T", "1"),
         ],
         "@platforms//os:macos": [
-            # Golden expects HAVE_OFF64_T "0" on macOS (no off64_t)
+            checks.AC_SUBST("HAVE_OFF64_T", "0"),
+        ],
+        "@platforms//os:windows": [
             checks.AC_SUBST("HAVE_OFF64_T", "0"),
         ],
         "//conditions:default": [
-            # This requires _GNU_SOURCE or similar extensions on glibc systems
             checks.AC_TRY_COMPILE(
                 code = """\
 #define _GNU_SOURCE 1

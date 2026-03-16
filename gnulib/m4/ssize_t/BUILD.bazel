@@ -19,6 +19,13 @@ int main(void) {
 """,
             define = "HAVE_SSIZE_T",
         ),
+        # When ssize_t is not found (e.g. MSVC), define it as int in config.h.
+        # Matches upstream: AC_DEFINE_UNQUOTED([ssize_t], [int], ...)
+        checks.AC_DEFINE(
+            "ssize_t",
+            "int",
+            requires = ["!ac_cv_type_ssize_t"],
+        ),
     ],
     visibility = ["//visibility:public"],
 )

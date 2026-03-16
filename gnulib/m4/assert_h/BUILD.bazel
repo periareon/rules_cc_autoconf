@@ -25,20 +25,22 @@ int main(void) {
             define = "HAVE_C_STATIC_ASSERT",
             language = "c",
         ),
-
-        # Upstream only calls gl_NEXT_HEADERS when static_assert is unavailable.
-        # When it IS available, the variables are never set (empty in autoconf).
-    ] + gl_macros.GL_NEXT_HEADERS(
-        ["assert.h"],
-        condition = "!HAVE_C_STATIC_ASSERT",
-    ),
+    ] + select({
+        # Upstream gnulib only calls gl_NEXT_HEADERS when static_assert is
+        # unavailable, but consumers always generate the assert.h wrapper
+        # (unconditional autoconf_hdr), so NEXT_ASSERT_H must always be set.
+        "@rules_cc//cc/compiler:msvc-cl": gl_macros.GL_NEXT_HEADERS(
+            ["assert.h"],
+        ),
+        "//conditions:default": gl_macros.GL_NEXT_HEADERS(
+            ["assert.h"],
+            condition = "!HAVE_C_STATIC_ASSERT",
+        ),
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        # gl_NEXT_HEADERS requires gl_INCLUDE_NEXT which is defined in include_next module
-        "//gnulib/m4/include_next",
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
-        # (golden files include standard header checks even though not AC_REQUIREd)
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/include_next",
     ],
 )
 

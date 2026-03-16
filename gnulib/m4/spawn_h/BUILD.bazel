@@ -15,11 +15,20 @@ autoconf(
             define = "HAVE_SPAWN_H",
             subst = True,  # Also create substitution variable
         ),
-    ] + gl_macros.GL_CHECK_NEXT_HEADERS(["spawn.h"]) + [
-        checks.AC_CHECK_TYPE(
-            "posix_spawnattr_t",
-            name = "_gl_cv_type_posix_spawnattr_t",
-            code = """\
+    ] + gl_macros.GL_CHECK_NEXT_HEADERS(["spawn.h"]) + select({
+        "@rules_cc//cc/compiler:msvc-cl": [
+            # MSVC has no spawn.h or POSIX spawn types.  Emit explicit
+            # subst values so @HAVE_POSIX_SPAWNATTR_T@ etc. are "0" rather
+            # than empty (which would make `#if !` invalid).  MinGW may
+            # provide spawn.h, so let the compile checks run there.
+            checks.AC_SUBST("HAVE_POSIX_SPAWNATTR_T", "0"),
+            checks.AC_SUBST("HAVE_POSIX_SPAWN_FILE_ACTIONS_T", "0"),
+        ],
+        "//conditions:default": [
+            checks.AC_CHECK_TYPE(
+                "posix_spawnattr_t",
+                name = "_gl_cv_type_posix_spawnattr_t",
+                code = """\
 #include <spawn.h>
 int main(void) {
     posix_spawnattr_t attr;
@@ -27,11 +36,11 @@ int main(void) {
     return 0;
 }
 """,
-        ),
-        checks.AC_CHECK_TYPE(
-            "posix_spawn_file_actions_t",
-            name = "_gl_cv_type_posix_spawn_file_actions_t",
-            code = """\
+            ),
+            checks.AC_CHECK_TYPE(
+                "posix_spawn_file_actions_t",
+                name = "_gl_cv_type_posix_spawn_file_actions_t",
+                code = """\
 #include <spawn.h>
 int main(void) {
     posix_spawn_file_actions_t actions;
@@ -39,19 +48,19 @@ int main(void) {
     return 0;
 }
 """,
-        ),
-        # Define these types when they exist
-        checks.AC_DEFINE(
-            "HAVE_POSIX_SPAWNATTR_T",
-            requires = ["_gl_cv_type_posix_spawnattr_t==1"],
-            subst = True,
-        ),
-        checks.AC_DEFINE(
-            "HAVE_POSIX_SPAWN_FILE_ACTIONS_T",
-            requires = ["_gl_cv_type_posix_spawn_file_actions_t==1"],
-            subst = True,
-        ),
-    ],
+            ),
+            checks.AC_DEFINE(
+                "HAVE_POSIX_SPAWNATTR_T",
+                requires = ["_gl_cv_type_posix_spawnattr_t==1"],
+                subst = True,
+            ),
+            checks.AC_DEFINE(
+                "HAVE_POSIX_SPAWN_FILE_ACTIONS_T",
+                requires = ["_gl_cv_type_posix_spawn_file_actions_t==1"],
+                subst = True,
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/include_next",
@@ -102,12 +111,23 @@ autoconf(
 
 autoconf(
     name = "gl_SPAWN_H_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("HAVE_POSIX_SPAWN", 1),
-        checks.AC_SUBST("HAVE_POSIX_SPAWNATTR_T", 1),
-        checks.AC_SUBST("HAVE_POSIX_SPAWN_FILE_ACTIONS_T", 1),
-        checks.AC_SUBST("HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR", 1),
-        checks.AC_SUBST("HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR", 1),
+    checks = select({
+        "@rules_cc//cc/compiler:msvc-cl": [
+            # MSVC has no POSIX spawn API.  MinGW may provide it.
+            checks.AC_SUBST("HAVE_POSIX_SPAWN", 0),
+            checks.AC_SUBST("HAVE_POSIX_SPAWNATTR_T", 0),
+            checks.AC_SUBST("HAVE_POSIX_SPAWN_FILE_ACTIONS_T", 0),
+            checks.AC_SUBST("HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR", 0),
+            checks.AC_SUBST("HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR", 0),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST("HAVE_POSIX_SPAWN", 1),
+            checks.AC_SUBST("HAVE_POSIX_SPAWNATTR_T", 1),
+            checks.AC_SUBST("HAVE_POSIX_SPAWN_FILE_ACTIONS_T", 1),
+            checks.AC_SUBST("HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR", 1),
+            checks.AC_SUBST("HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR", 1),
+        ],
+    }) + [
         checks.AC_SUBST("REPLACE_POSIX_SPAWN", 0),
         checks.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR", 0),
         checks.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDCLOSE", 0),

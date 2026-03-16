@@ -524,13 +524,18 @@ CheckResult CheckRunner::check_gl_next_header(const Check& check) {
         find_system_header_path(compiler, flags, config_.compiler_type, header,
                                 source_id_, source_dir_);
 
+    bool msvc = config_.compiler_type.rfind("msvc", 0) == 0;
+
     if (!sys_path.has_value()) {
-        // System header not found (e.g., unistd.h on MSVC) -- these usages
-        // are always guarded by #if 0 in gnulib templates, so return a
-        // harmless angle-bracket include
+        // MSVC: return empty so the template's `# @INCLUDE_NEXT@ @NEXT_*@`
+        // becomes `# ` (a valid null directive).  Returning `<header>` would
+        // produce `# <header>` which MSVC rejects as an invalid preprocessor
+        // directive.  Headers absent from the platform are guarded by `#if 0`
+        // in gnulib templates.
+        std::string value = msvc ? "" : "<" + header + ">";
         DebugLogger::debug("GL_NEXT_HEADER: system header not found for " +
-                           header + ", returning angle-bracket fallback");
-        std::string value = "<" + header + ">";
+                           header + ", returning " +
+                           (value.empty() ? "empty" : value));
         return CheckResult(check.name(), value, true, false, true, check.type(),
                            check.define(), check.subst());
     }
@@ -539,7 +544,7 @@ CheckResult CheckRunner::check_gl_next_header(const Check& check) {
     if (!content.has_value()) {
         DebugLogger::warn("GL_NEXT_HEADER: could not read system header at " +
                           sys_path->string());
-        std::string value = "<" + header + ">";
+        std::string value = msvc ? "" : "<" + header + ">";
         return CheckResult(check.name(), value, true, false, true, check.type(),
                            check.define(), check.subst());
     }

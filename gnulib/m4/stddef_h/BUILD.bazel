@@ -65,8 +65,18 @@ autoconf(
         checks.AC_SUBST("NULLPTR_T_NEEDS_STDDEF", 1),
         checks.AC_SUBST("STDDEF_NOT_IDEMPOTENT", 0),
         checks.AC_SUBST("REPLACE_NULL", 0),
-        checks.AC_SUBST("HAVE_MAX_ALIGN_T", 1),
-    ],
+    ] + select({
+        "@rules_cc//cc/compiler:msvc-cl": [
+            # MSVC in C mode does not provide max_align_t in <stddef.h>;
+            # gnulib's stddef.in.h supplies rpl_max_align_t when this is 0.
+            # MinGW GCC provides max_align_t via _GCC_MAX_ALIGN_T so it
+            # does not need this override.
+            checks.AC_SUBST("HAVE_MAX_ALIGN_T", 0),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST("HAVE_MAX_ALIGN_T", 1),
+        ],
+    }),
     visibility = ["//visibility:private"],
 )
 

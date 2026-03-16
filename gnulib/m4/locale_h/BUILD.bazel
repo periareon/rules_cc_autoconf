@@ -142,14 +142,23 @@ int main(void) { return 0; }
 """,
             language = "c",
         ),
-        # Set REPLACE_STRUCT_LCONV based on check result
-        # On native Windows with MSVC, don't replace (handled by macros)
-        checks.AC_SUBST(
-            "REPLACE_STRUCT_LCONV",
-            condition = "gl_cv_sys_struct_lconv_ok",
-            if_false = "1",
-            if_true = "0",
-        ),
+    ] + select({
+        "@platforms//os:windows": [
+            # On native Windows (both MSVC and MinGW), replacing struct lconv
+            # doesn't work because localeconv() returns a pointer to the
+            # system's struct.  Upstream gnulib explicitly sets
+            # REPLACE_STRUCT_LCONV=0 on all Windows variants.
+            checks.AC_SUBST("REPLACE_STRUCT_LCONV", "0"),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST(
+                "REPLACE_STRUCT_LCONV",
+                condition = "gl_cv_sys_struct_lconv_ok",
+                if_false = "1",
+                if_true = "0",
+            ),
+        ],
+    }) + [
         # This macro prepares warnings for unused functions. In Bazel, this is typically
         # handled at compile time, so we don't need to replicate it here.
     ],
