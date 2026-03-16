@@ -6,20 +6,26 @@ load("//autoconf:checks.bzl", "checks")
 autoconf(
     name = "openat",
     checks = [
-        # gl_FUNC_OPENAT checks for openat function
         checks.AC_CHECK_FUNC(
             "openat",
             define = "HAVE_OPENAT",
             subst = True,
         ),
     ] + select({
-        # Linux has a working openat implementation
         "@platforms//os:linux": [
+            # Linux glibc openat works correctly
             checks.AC_SUBST("REPLACE_OPENAT", 0),
         ],
-        # macOS and other platforms may have bugs requiring replacement
         "//conditions:default": [
-            checks.AC_SUBST("REPLACE_OPENAT", 1),
+            # openat.m4 three-way case: REPLACE_OPENAT=1 only when openat
+            # exists but has bugs (macOS/Solaris). When openat is absent
+            # (Windows), HAVE_OPENAT=0 and REPLACE_OPENAT stays 0.
+            checks.AC_SUBST(
+                "REPLACE_OPENAT",
+                condition = "ac_cv_func_openat",
+                if_true = 1,
+                if_false = 0,
+            ),
         ],
     }),
     visibility = ["//visibility:public"],
