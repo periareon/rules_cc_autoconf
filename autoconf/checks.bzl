@@ -454,7 +454,6 @@ def _ac_check_type(
         *,
         name = None,
         define = None,
-        code = None,
         includes = None,
         language = "c",
         compile_defines = None,
@@ -477,7 +476,7 @@ def _ac_check_type(
     # → Creates cache variable: "ac_cv_type_size_t"
 
     # Cache variable + define (explicit name)
-    macros.AC_CHECK_TYPE("pthread_t", includes = ["pthread.h"], define = "HAVE_PTHREAD_T")
+    macros.AC_CHECK_TYPE("pthread_t", includes = ["#include <pthread.h>"], define = "HAVE_PTHREAD_T")
     # → Creates cache variable: "ac_cv_type_pthread_t"
     # → Creates define: "HAVE_PTHREAD_T" in config.h
     ```
@@ -489,9 +488,8 @@ def _ac_check_type(
             - `None` (default): No define is created, only cache variable
             - `True`: Create define using the cache variable name (`name`)
             - `"HAVE_FOO"`: Create define with explicit name `HAVE_FOO` (implies `define=True`)
-        code: Custom code that includes necessary headers (optional, defaults to standard headers)
-        includes: Optional list of headers to include. If not specified and
-            `code` is not specified, uses AC_INCLUDES_DEFAULT.
+        includes: Optional list of headers to include (e.g. `["#include <pthread.h>"]`).
+            If not specified, uses AC_INCLUDES_DEFAULT.
         language: Language to use for check (`"c"` or `"cpp"`)
         compile_defines: Optional list of preprocessor define names from previous checks
             to add before includes (e.g., `["_GNU_SOURCE", "_DARWIN_C_SOURCE"]`).
@@ -540,10 +538,7 @@ def _ac_check_type(
         "type": "type",
     }
 
-    # Priority: code > file > includes > default
-    if code:
-        check["code"] = code
-    elif includes:
+    if includes:
         header_code = _header_code_from_includes(includes)
         check["code"] = _AC_CHECK_TYPE_WITH_INCLUDES_TEMPLATE.format(
             header_code = header_code,
@@ -2383,7 +2378,6 @@ def _ac_check_funcs(
 def _ac_check_types(
         types,
         *,
-        code = None,
         includes = None,
         language = "c",
         compile_defines = None,
@@ -2412,7 +2406,6 @@ def _ac_check_types(
 
     Args:
         types: List of type names to check.
-        code: Custom code that includes necessary headers (applies to all checks).
         includes: Optional list of include directives (e.g. ["#include <stddef.h>"]).
         language: Language to use for checks (`"c"` or `"cpp"`).
         compile_defines: Optional list of preprocessor define names (applies to all checks).
@@ -2436,7 +2429,6 @@ def _ac_check_types(
         check = _ac_check_type(
             type_name,
             define = define_name,
-            code = code,
             includes = includes,
             language = language,
             compile_defines = compile_defines,

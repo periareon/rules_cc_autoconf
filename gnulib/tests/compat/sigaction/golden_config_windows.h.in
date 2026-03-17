@@ -7,7 +7,7 @@
 /* #undef HAVE_SIGACTION */
 /* #undef HAVE_SIGALTSTACK */
 /* #undef HAVE_SIGHANDLER_T */
-#define HAVE_SIGINFO_T 1
+/* #undef HAVE_SIGINFO_T */
 /* #undef HAVE_SIGINTERRUPT */
 /* #undef HAVE_SIGSET_T */
 #define HAVE_STDINT_H 1

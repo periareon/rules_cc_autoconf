@@ -28,26 +28,12 @@ autoconf(
             checks.AC_CHECK_TYPE(
                 "posix_spawnattr_t",
                 name = "_gl_cv_type_posix_spawnattr_t",
-                code = """\
-#include <spawn.h>
-int main(void) {
-    posix_spawnattr_t attr;
-    (void)attr;
-    return 0;
-}
-""",
+                includes = ["#include <spawn.h>"],
             ),
             checks.AC_CHECK_TYPE(
                 "posix_spawn_file_actions_t",
                 name = "_gl_cv_type_posix_spawn_file_actions_t",
-                code = """\
-#include <spawn.h>
-int main(void) {
-    posix_spawn_file_actions_t actions;
-    (void)actions;
-    return 0;
-}
-""",
+                includes = ["#include <spawn.h>"],
             ),
             checks.AC_DEFINE(
                 "HAVE_POSIX_SPAWNATTR_T",

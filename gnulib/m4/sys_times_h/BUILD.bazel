@@ -33,14 +33,7 @@ autoconf(
         checks.AC_CHECK_TYPE(
             "struct tms",
             name = "ac_cv_type_struct_tms",
-            code = """\
-#include <sys/times.h>
-int main(void) {
-    struct tms t;
-    (void)t;
-    return 0;
-}
-""",
+            includes = ["#include <sys/times.h>"],
             requires = ["ac_cv_header_sys_times_h==1"],
         ),
 

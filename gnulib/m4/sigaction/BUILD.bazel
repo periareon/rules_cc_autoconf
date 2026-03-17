@@ -56,10 +56,8 @@ autoconf(
         ),
         checks.AC_CHECK_TYPE(
             "siginfo_t",
-            code = """\
-#include <signal.h>
-""",
             define = "HAVE_SIGINFO_T",
+            includes = ["#include <signal.h>"],
         ),
         checks.AC_SUBST(
             "HAVE_SIGINFO_T",

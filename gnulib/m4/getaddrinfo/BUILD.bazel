@@ -66,17 +66,13 @@ int main(void) {
         ),
         checks.AC_CHECK_TYPE(
             "struct addrinfo",
-            code = """\
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-int main(void) {
-    if (sizeof(struct addrinfo))
-        return 0;
-    return 1;
-}
-""",
             define = "HAVE_STRUCT_ADDRINFO",
+            # buildifier: leave-alone
+            includes = [
+                "#include <sys/types.h>",
+                "#include <sys/socket.h>",
+                "#include <netdb.h>",
+            ],
             requires = [
                 "HAVE_SYS_SOCKET_H",
                 "HAVE_NETDB_H",

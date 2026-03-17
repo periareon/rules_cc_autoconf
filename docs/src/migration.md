@@ -194,7 +194,7 @@ checks.AC_DEFINE("HAVE_ARGZ_H", requires = ["ac_cv_header_argz_h==1"])
 # This check depends on the header being found
 checks.AC_CHECK_TYPE(
     "error_t",
-    code = "#include <argz.h>\nint main(void) { if (sizeof(error_t)) return 0; return 1; }",
+    includes = ["#include <argz.h>"],
     name = "ac_cv_type_error_t",
     requires = ["ac_cv_header_argz_h==1"],  # <-- Only run if header check passed
 )

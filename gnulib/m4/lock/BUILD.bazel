@@ -9,14 +9,6 @@ autoconf(
         # Mac OS X 10.1 lacks the pthread_rwlock_t type and the pthread_rwlock_* functions
         checks.AC_CHECK_TYPE(
             "pthread_rwlock_t",
-            code = """\
-#include <pthread.h>
-int main(void) {
-    if (sizeof(pthread_rwlock_t))
-        return 0;
-    return 1;
-}
-""",
             define = "HAVE_PTHREAD_RWLOCK",
             includes = ["#include <pthread.h>"],
         ),

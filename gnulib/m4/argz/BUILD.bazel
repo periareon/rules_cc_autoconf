@@ -23,14 +23,7 @@ autoconf(
         checks.AC_CHECK_TYPE(
             "error_t",
             name = "ac_cv_type_error_t",
-            code = """\
-#include <argz.h>
-int main(void) {
-    if (sizeof(error_t))
-        return 0;
-    return 1;
-}
-""",
+            includes = ["#include <argz.h>"],
             requires = ["ac_cv_header_argz_h"],
         ),
         checks.AC_DEFINE(

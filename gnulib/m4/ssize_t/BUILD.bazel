@@ -9,15 +9,8 @@ autoconf(
         # Equivalent to gt_TYPE_SSIZE_T macro from ssize_t.m4
         checks.AC_CHECK_TYPE(
             "ssize_t",
-            code = """\
-#include <sys/types.h>
-int main(void) {
-    if (sizeof(ssize_t))
-        return 0;
-    return 1;
-}
-""",
             define = "HAVE_SSIZE_T",
+            includes = ["#include <sys/types.h>"],
         ),
         # When ssize_t is not found (e.g. MSVC), define it as int in config.h.
         # Matches upstream: AC_DEFINE_UNQUOTED([ssize_t], [int], ...)

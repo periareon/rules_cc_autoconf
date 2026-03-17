@@ -189,11 +189,8 @@ autoconf(
         # AC_CHECK_TYPES([pthread_t]) - macOS has pthread_t
         checks.AC_CHECK_TYPE(
             "pthread_t",
-            code = """\
-#include <pthread.h>
-pthread_t x;
-""",
             define = "HAVE_PTHREAD_T",
+            includes = ["#include <pthread.h>"],
         ),
         checks.AC_SUBST("HAVE_PTHREAD_T", "1"),
 
@@ -201,10 +198,7 @@ pthread_t x;
         checks.AC_CHECK_TYPE(
             "pthread_spinlock_t",
             name = "ac_cv_type_pthread_spinlock_t",
-            code = """\
-#include <pthread.h>
-pthread_spinlock_t x;
-""",
+            includes = ["#include <pthread.h>"],
         ),
     ] + select({
         # On Linux: pthread_spinlock_t exists in glibc's pthread.h

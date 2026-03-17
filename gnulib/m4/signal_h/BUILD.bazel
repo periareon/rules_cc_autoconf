@@ -76,11 +76,10 @@ autoconf(
         checks.AC_CHECK_TYPE(
             "sigset_t",
             name = "gl_cv_type_sigset_t",
-            code = """\
-#include <signal.h>
-#include <sys/types.h>
-int main(void) { sigset_t x; (void)x; return 0; }
-""",
+            includes = [
+                "#include <signal.h>",
+                "#include <sys/types.h>",
+            ],
         ),
 
         # if test $gl_cv_type_sigset_t != yes; then

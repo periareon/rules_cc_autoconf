@@ -41,9 +41,7 @@ autoconf(
         checks.AC_CHECK_TYPE(
             "__fsword_t",
             name = "ac_cv_type___fsword_t",
-            code = """#include <sys/vfs.h>
-__fsword_t x;
-""",
+            includes = ["#include <sys/vfs.h>"],
             requires = ["ac_cv_member_struct_statfs_f_type"],
         ),
         checks.AC_DEFINE(

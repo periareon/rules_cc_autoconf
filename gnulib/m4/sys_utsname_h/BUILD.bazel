@@ -30,17 +30,11 @@ autoconf(
         checks.AC_CHECK_TYPE(
             "struct utsname",
             name = "ac_cv_type_struct_utsname",
-            code = """\
-/* Minix 3.1.8 has a bug: <stddef.h> must be included before
-   <sys/utsname.h>.  */
-#include <stddef.h>
-#include <sys/utsname.h>
-int main(void) {
-    struct utsname u;
-    (void)u;
-    return 0;
-}
-""",
+            # buildifier: leave-alone
+            includes = [
+                "#include <stddef.h>",
+                "#include <sys/utsname.h>",
+            ],
             requires = ["ac_cv_header_sys_utsname_h==1"],
         ),
 

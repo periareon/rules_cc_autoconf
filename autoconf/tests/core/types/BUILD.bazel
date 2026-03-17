@@ -32,13 +32,13 @@ autoconf(
         # Check with headers - should succeed
         checks.AC_CHECK_TYPE(
             "int8_t",
-            code = "#include <stdint.h>",
             define = "HAVE_INT8_T",
+            includes = ["#include <stdint.h>"],
         ),
         checks.AC_CHECK_TYPE(
             "int64_t",
-            code = "#include <stdint.h>",
             define = "HAVE_INT64_T",
+            includes = ["#include <stdint.h>"],
         ),
         # Non-existent type
         checks.AC_CHECK_TYPE(
