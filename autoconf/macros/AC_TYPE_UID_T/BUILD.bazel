@@ -14,7 +14,17 @@ autoconf(
     name = "AC_TYPE_UID_T",
     checks = [
         checks.AC_CHECK_TYPE("uid_t"),
+        checks.AC_DEFINE(
+            "uid_t",
+            "int",
+            requires = ["!ac_cv_type_uid_t"],
+        ),
         checks.AC_CHECK_TYPE("gid_t"),
+        checks.AC_DEFINE(
+            "gid_t",
+            "int",
+            requires = ["!ac_cv_type_gid_t"],
+        ),
     ],
     visibility = ["//visibility:public"],
 )

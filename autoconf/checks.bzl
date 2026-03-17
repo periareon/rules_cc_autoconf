@@ -6,9 +6,9 @@ This module provides Bazel macros that mirror GNU Autoconf's behavior.
 
 Checks (AC_CHECK_FUNC, AC_CHECK_HEADER, etc.) create cache variables by default, following
 autoconf's naming convention:
-- AC_CHECK_HEADER("foo.h") → cache variable "ac_cv_header_foo_h"
-- AC_CHECK_FUNC("foo") → cache variable "ac_cv_func_foo"
-- AC_CHECK_DECL("foo") → cache variable "ac_cv_have_decl_foo"
+- AC_CHECK_HEADER("foo.h") -> cache variable "ac_cv_header_foo_h"
+- AC_CHECK_FUNC("foo") -> cache variable "ac_cv_func_foo"
+- AC_CHECK_DECL("foo") -> cache variable "ac_cv_have_decl_foo"
 
 Defines and subst values are created explicitly using AC_DEFINE and AC_SUBST.
 
@@ -34,7 +34,7 @@ Example:
 ```python
 # Check creates cache variable
 macros.AC_CHECK_HEADER("alloca.h")
-# → Creates cache variable: "ac_cv_header_alloca_h" with value "1" (if header exists)
+# -> Creates cache variable: "ac_cv_header_alloca_h" with value "1" (if header exists)
 
 # Define with truthy condition
 macros.AC_DEFINE(
@@ -81,7 +81,7 @@ joined with newlines to form the prologue of the test program.
 The parameter `headers` is a deprecated alias for `includes`; prefer `includes`.
 """
 
-# Used by AC_CHECK_HEADER (single header name → #include line)
+# Used by AC_CHECK_HEADER (single header name -> #include line)
 _AC_INCLUDE_FORMAT_WITH_NEWLINE = "#include <{}>\n"
 
 # Default includes for AC_CHECK_DECL, AC_CHECK_TYPE, etc. (AC_INCLUDES_DEFAULT).
@@ -285,17 +285,17 @@ def _ac_check_header(
     ```python
     # Cache variable only (no define, no subst)
     macros.AC_CHECK_HEADER("stdio.h")
-    # → Creates cache variable: "ac_cv_header_stdio_h"
+    # -> Creates cache variable: "ac_cv_header_stdio_h"
 
     # Cache variable + define (explicit name)
     macros.AC_CHECK_HEADER("pthread.h", define = "HAVE_PTHREAD_H")
-    # → Creates cache variable: "ac_cv_header_pthread_h"
-    # → Creates define: "HAVE_PTHREAD_H" in config.h
+    # -> Creates cache variable: "ac_cv_header_pthread_h"
+    # -> Creates define: "HAVE_PTHREAD_H" in config.h
 
     # Cache variable + define (using cache var name)
     macros.AC_CHECK_HEADER("pthread.h", define = True)
-    # → Creates cache variable: "ac_cv_header_pthread_h"
-    # → Creates define: "ac_cv_header_pthread_h" in config.h
+    # -> Creates cache variable: "ac_cv_header_pthread_h"
+    # -> Creates define: "ac_cv_header_pthread_h" in config.h
     ```
 
     Args:
@@ -372,22 +372,22 @@ def _ac_check_func(
     ```python
     # Cache variable only (no define, no subst)
     macros.AC_CHECK_FUNC("malloc")
-    # → Creates cache variable: "ac_cv_func_malloc"
+    # -> Creates cache variable: "ac_cv_func_malloc"
 
     # Cache variable + define (explicit name)
     macros.AC_CHECK_FUNC("mmap", define = "HAVE_MMAP")
-    # → Creates cache variable: "ac_cv_func_mmap"
-    # → Creates define: "HAVE_MMAP" in config.h
+    # -> Creates cache variable: "ac_cv_func_mmap"
+    # -> Creates define: "HAVE_MMAP" in config.h
 
     # Cache variable + define (using cache var name)
     macros.AC_CHECK_FUNC("mmap", define = True)
-    # → Creates cache variable: "ac_cv_func_mmap"
-    # → Creates define: "ac_cv_func_mmap" in config.h
+    # -> Creates cache variable: "ac_cv_func_mmap"
+    # -> Creates define: "ac_cv_func_mmap" in config.h
 
     # Cache variable + subst
     macros.AC_CHECK_FUNC("_Exit", subst = True)
-    # → Creates cache variable: "ac_cv_func__Exit"
-    # → Creates subst: "ac_cv_func__Exit" in subst.h
+    # -> Creates cache variable: "ac_cv_func__Exit"
+    # -> Creates subst: "ac_cv_func__Exit" in subst.h
     ```
 
     Args:
@@ -473,12 +473,12 @@ def _ac_check_type(
     ```python
     # Cache variable only (no define, no subst)
     macros.AC_CHECK_TYPE("size_t")
-    # → Creates cache variable: "ac_cv_type_size_t"
+    # -> Creates cache variable: "ac_cv_type_size_t"
 
     # Cache variable + define (explicit name)
     macros.AC_CHECK_TYPE("pthread_t", includes = ["#include <pthread.h>"], define = "HAVE_PTHREAD_T")
-    # → Creates cache variable: "ac_cv_type_pthread_t"
-    # → Creates define: "HAVE_PTHREAD_T" in config.h
+    # -> Creates cache variable: "ac_cv_type_pthread_t"
+    # -> Creates define: "HAVE_PTHREAD_T" in config.h
     ```
 
     Args:
@@ -902,12 +902,12 @@ def _ac_check_sizeof(
     ```python
     # Cache variable only (no define, no subst)
     macros.AC_CHECK_SIZEOF("int")
-    # → Creates cache variable: "ac_cv_sizeof_int"
+    # -> Creates cache variable: "ac_cv_sizeof_int"
 
     # Cache variable + define (explicit name)
     macros.AC_CHECK_SIZEOF("size_t", includes = ["#include <stddef.h>"], define = "SIZEOF_SIZE_T")
-    # → Creates cache variable: "ac_cv_sizeof_size_t"
-    # → Creates define: "SIZEOF_SIZE_T" in config.h
+    # -> Creates cache variable: "ac_cv_sizeof_size_t"
+    # -> Creates define: "SIZEOF_SIZE_T" in config.h
     ```
 
     Cross-Compile Warning:
@@ -1105,12 +1105,12 @@ def _ac_check_decl(
     ```python
     # Cache variable only (no define, no subst)
     macros.AC_CHECK_DECL("NULL", includes = ["stddef.h"])
-    # → Creates cache variable: "ac_cv_have_decl_NULL"
+    # -> Creates cache variable: "ac_cv_have_decl_NULL"
 
     # Cache variable + define (explicit name)
     macros.AC_CHECK_DECL("stdout", includes = ["stdio.h"], define = "HAVE_DECL_STDOUT")
-    # → Creates cache variable: "ac_cv_have_decl_stdout"
-    # → Creates define: "HAVE_DECL_STDOUT" in config.h
+    # -> Creates cache variable: "ac_cv_have_decl_stdout"
+    # -> Creates define: "HAVE_DECL_STDOUT" in config.h
     ```
 
     Note:
