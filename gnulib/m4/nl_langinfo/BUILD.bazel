@@ -30,10 +30,20 @@ autoconf(
             if_false = "0",
             if_true = "1",
         ),
-        # If nl_langinfo doesn't have required features or is not MTSAFE, REPLACE_NL_LANGINFO=1
-        # Based on golden file, REPLACE_NL_LANGINFO=1 on both Linux and macOS
-        checks.AC_DEFINE("REPLACE_NL_LANGINFO", 1),
-        checks.AC_SUBST("REPLACE_NL_LANGINFO", 1),
+        # If nl_langinfo exists but has issues, replace it. If it doesn't exist
+        # (e.g. Windows), don't set REPLACE — gnulib provides it from scratch.
+        checks.AC_DEFINE(
+            "REPLACE_NL_LANGINFO",
+            condition = "ac_cv_func_nl_langinfo",
+            if_false = 0,
+            if_true = 1,
+        ),
+        checks.AC_SUBST(
+            "REPLACE_NL_LANGINFO",
+            condition = "ac_cv_func_nl_langinfo",
+            if_false = 0,
+            if_true = 1,
+        ),
     ] + select({
         # On Linux with glibc: nl_langinfo is multithread-safe
         "@platforms//os:linux": [
