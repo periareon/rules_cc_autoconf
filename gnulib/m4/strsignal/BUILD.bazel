@@ -6,7 +6,6 @@ load("//autoconf:checks.bzl", "checks")
 autoconf(
     name = "strsignal",
     checks = [
-        # Note: gl_STRING_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
         checks.AC_CHECK_DECL(
             "strsignal",
             name = "ac_cv_have_decl_strsignal",
@@ -15,10 +14,6 @@ autoconf(
                 "#include <string.h>",
             ],
         ),
-
-        # if test $ac_cv_have_decl_strsignal = no; then
-        # fi
-        # Define HAVE_DECL_STRSIGNAL in config.h if found
         checks.AC_DEFINE(
             "HAVE_DECL_STRSIGNAL",
             condition = "ac_cv_have_decl_strsignal",
@@ -28,25 +23,11 @@ autoconf(
             "strsignal",
             name = "ac_cv_func_strsignal",
         ),
-
-        # if test $ac_cv_func_strsignal = yes; then
-        #   if test "$gl_cv_func_working_strsignal" = no; then
-        #   fi
-        # else
-        # fi
-        # Define HAVE_STRSIGNAL in config.h if the function exists
         checks.AC_DEFINE(
             "HAVE_STRSIGNAL",
             condition = "ac_cv_func_strsignal",
             if_true = 1,
         ),
-
-        # REPLACE_STRSIGNAL: Based on golden files, REPLACE_STRSIGNAL=0 on macOS/Linux
-        # The AC_RUN_IFELSE check can't be done in Bazel, so we assume it works correctly
-        # on our target platforms (macOS/Linux)
-        checks.AC_SUBST("REPLACE_STRSIGNAL", 0),
-
-        # Note: unistd.h is already checked by AC_CHECK_INCLUDES_DEFAULT
         checks.AC_CHECK_DECL(
             "sys_siglist",
             name = "ac_cv_have_decl_sys_siglist",
@@ -57,9 +38,6 @@ autoconf(
             name = "ac_cv_have_decl__sys_siglist",
             includes = ["#include <signal.h>"],
         ),
-
-        # Set substitution variables
-        # Define in config.h
         checks.AC_DEFINE(
             "HAVE_DECL_SYS_SIGLIST",
             condition = "ac_cv_have_decl_sys_siglist",
@@ -72,7 +50,14 @@ autoconf(
             if_false = 0,
             if_true = 1,
         ),
-    ],
+    ] + select({
+        "@platforms//os:windows": [
+            checks.AC_SUBST("REPLACE_STRSIGNAL", 1),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_STRSIGNAL", 0),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])

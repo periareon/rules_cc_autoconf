@@ -25,9 +25,16 @@ autoconf(
         #   HAVE_STPCPY=0 - line 18 (substitution variable)
         #   esac
         # fi
-        # Based on golden files, stpcpy exists on macOS, so HAVE_STPCPY=1 and REPLACE_STPCPY=0
-        checks.AC_SUBST("REPLACE_STPCPY", 0),
-    ],
+        # Based on golden files, stpcpy exists on macOS/Linux, so HAVE_STPCPY=1 and REPLACE_STPCPY=0
+        # On Windows, stpcpy doesn't exist and needs gnulib replacement.
+    ] + select({
+        "@platforms//os:windows": [
+            checks.AC_SUBST("REPLACE_STPCPY", 1),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_STPCPY", 0),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",

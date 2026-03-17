@@ -33,8 +33,8 @@ autoconf(
         checks.AC_SUBST(
             "REPLACE_FCNTL",
             condition = "ac_cv_func_fcntl",
-            if_false = 0,  # Function absent: HAVE_FCNTL=0 handles it, no REPLACE needed
-            if_true = 1,
+            if_false = 1,  # Function absent: gnulib replacement needed
+            if_true = 1,  # Function exists but has bugs (F_DUPFD_CLOEXEC issues)
         ),
     ],
     visibility = ["//visibility:public"],

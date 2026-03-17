@@ -19,6 +19,11 @@ autoconf(
             name = "ac_cv_type_mbstate_t",
             includes = ["#include <wchar.h>"],
         ),
+        checks.AC_DEFINE(
+            "mbstate_t",
+            "int",
+            requires = ["!ac_cv_type_mbstate_t"],
+        ),
         # Define HAVE_MBSTATE_T if type exists
         checks.AC_DEFINE(
             "HAVE_MBSTATE_T",

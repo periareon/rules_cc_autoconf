@@ -18,8 +18,15 @@ autoconf(
             "copysignl",
             define = "HAVE_DECL_COPYSIGNL",
         ),
-        # macOS golden expects REPLACE_SIGNBIT_USING_BUILTINS "1" (override math_h default 0)
-        checks.AC_SUBST("REPLACE_SIGNBIT_USING_BUILTINS", "1"),
-    ],
+        # macOS/Linux golden expects REPLACE_SIGNBIT_USING_BUILTINS "1" (override math_h default 0)
+        # On Windows MSVC, __builtin_signbitl etc. don't exist, so use 0.
+    ] + select({
+        "@platforms//os:windows": [
+            checks.AC_SUBST("REPLACE_SIGNBIT_USING_BUILTINS", "0"),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_SIGNBIT_USING_BUILTINS", "1"),
+        ],
+    }),
     visibility = ["//visibility:public"],
 )

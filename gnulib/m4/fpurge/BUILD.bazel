@@ -28,6 +28,14 @@ autoconf(
             ),
             checks.AC_SUBST("REPLACE_FPURGE", "1"),
         ],
+        "@platforms//os:windows": [
+            checks.AC_DEFINE(
+                "HAVE_DECL_FPURGE",
+                0,
+                subst = True,
+            ),
+            checks.AC_SUBST("REPLACE_FPURGE", "1"),
+        ],
         # On Linux, fpurge is not declared (use __fpurge instead)
         "//conditions:default": [
             checks.AC_DEFINE(

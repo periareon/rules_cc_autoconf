@@ -23,12 +23,17 @@ autoconf(
 # Shared REPLACE_FTELLO substitution used by both ftello and gl_FUNC_FTELLO_FOR_FTELL.
 autoconf(
     name = "gl_REPLACE_FTELLO_SUBST",
-    checks = [
-        checks.AC_SUBST(
-            "REPLACE_FTELLO",
-            condition = "!gl_cv_var_stdin_large_offset",
-        ),
-    ],
+    checks = select({
+        "@platforms//os:windows": [
+            checks.AC_SUBST("REPLACE_FTELLO", "1"),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST(
+                "REPLACE_FTELLO",
+                condition = "!gl_cv_var_stdin_large_offset",
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",

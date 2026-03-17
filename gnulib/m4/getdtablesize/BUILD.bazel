@@ -20,6 +20,12 @@ autoconf(
             define = "HAVE_DECL_GETDTABLESIZE",
             includes = ["#include <unistd.h>"],
         ),
+        checks.AC_SUBST(
+            "REPLACE_GETDTABLESIZE",
+            condition = "ac_cv_func_getdtablesize",
+            if_false = 1,
+            if_true = 0,
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [

@@ -14,6 +14,11 @@ autoconf(
     name = "AC_TYPE_OFF_T",
     checks = [
         checks.AC_CHECK_TYPE("off_t"),
+        checks.AC_DEFINE(
+            "off_t",
+            "long int",
+            requires = ["!ac_cv_type_off_t"],
+        ),
         checks.AC_CHECK_SIZEOF("off_t"),
     ],
     visibility = ["//visibility:public"],
