@@ -392,9 +392,9 @@ manually maintain <code>#ifdef</code> guards in every source file.</p>
 <p>Checks (AC_CHECK_FUNC, AC_CHECK_HEADER, etc.) create cache variables by default, following
 autoconf's naming convention:</p>
 <ul>
-<li>AC_CHECK_HEADER("foo.h") → cache variable "ac_cv_header_foo_h"</li>
-<li>AC_CHECK_FUNC("foo") → cache variable "ac_cv_func_foo"</li>
-<li>AC_CHECK_DECL("foo") → cache variable "ac_cv_have_decl_foo"</li>
+<li>AC_CHECK_HEADER("foo.h") -&gt; cache variable "ac_cv_header_foo_h"</li>
+<li>AC_CHECK_FUNC("foo") -&gt; cache variable "ac_cv_func_foo"</li>
+<li>AC_CHECK_DECL("foo") -&gt; cache variable "ac_cv_have_decl_foo"</li>
 </ul>
 <p>Defines and subst values are created explicitly using AC_DEFINE and AC_SUBST.</p>
 <h2 id="condition-resolution"><a class="header" href="#condition-resolution">Condition Resolution</a></h2>
@@ -423,7 +423,7 @@ it performs value comparison instead of truthy check.</p>
 <p>Example:</p>
 <pre><code class="language-python"># Check creates cache variable
 macros.AC_CHECK_HEADER("alloca.h")
-# → Creates cache variable: "ac_cv_header_alloca_h" with value "1" (if header exists)
+# -&gt; Creates cache variable: "ac_cv_header_alloca_h" with value "1" (if header exists)
 
 # Define with truthy condition
 macros.AC_DEFINE(
@@ -590,12 +590,12 @@ AC_CHECK_DECL([stdout], [AC_DEFINE([HAVE_DECL_STDOUT], [1])], [], [[#include &lt
 <p>Example:</p>
 <pre><code class="language-python"># Cache variable only (no define, no subst)
 macros.AC_CHECK_DECL("NULL", includes = ["stddef.h"])
-# → Creates cache variable: "ac_cv_have_decl_NULL"
+# -&gt; Creates cache variable: "ac_cv_have_decl_NULL"
 
 # Cache variable + define (explicit name)
 macros.AC_CHECK_DECL("stdout", includes = ["stdio.h"], define = "HAVE_DECL_STDOUT")
-# → Creates cache variable: "ac_cv_have_decl_stdout"
-# → Creates define: "HAVE_DECL_STDOUT" in config.h
+# -&gt; Creates cache variable: "ac_cv_have_decl_stdout"
+# -&gt; Creates define: "HAVE_DECL_STDOUT" in config.h
 </code></pre>
 <p>Note:
 This is different from <code>AC_CHECK_SYMBOL</code> - it checks if something is
@@ -636,22 +636,22 @@ AC_CHECK_FUNC([mmap], [AC_DEFINE([HAVE_MMAP_FEATURE], [1])])
 <p>Example:</p>
 <pre><code class="language-python"># Cache variable only (no define, no subst)
 macros.AC_CHECK_FUNC("malloc")
-# → Creates cache variable: "ac_cv_func_malloc"
+# -&gt; Creates cache variable: "ac_cv_func_malloc"
 
 # Cache variable + define (explicit name)
 macros.AC_CHECK_FUNC("mmap", define = "HAVE_MMAP")
-# → Creates cache variable: "ac_cv_func_mmap"
-# → Creates define: "HAVE_MMAP" in config.h
+# -&gt; Creates cache variable: "ac_cv_func_mmap"
+# -&gt; Creates define: "HAVE_MMAP" in config.h
 
 # Cache variable + define (using cache var name)
 macros.AC_CHECK_FUNC("mmap", define = True)
-# → Creates cache variable: "ac_cv_func_mmap"
-# → Creates define: "ac_cv_func_mmap" in config.h
+# -&gt; Creates cache variable: "ac_cv_func_mmap"
+# -&gt; Creates define: "ac_cv_func_mmap" in config.h
 
 # Cache variable + subst
 macros.AC_CHECK_FUNC("_Exit", subst = True)
-# → Creates cache variable: "ac_cv_func__Exit"
-# → Creates subst: "ac_cv_func__Exit" in subst.h
+# -&gt; Creates cache variable: "ac_cv_func__Exit"
+# -&gt; Creates subst: "ac_cv_func__Exit" in subst.h
 </code></pre>
 <p><strong>PARAMETERS</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
@@ -682,17 +682,17 @@ AC_CHECK_HEADER([pthread.h], [AC_CHECK_FUNC([pthread_create])])
 <p>Example:</p>
 <pre><code class="language-python"># Cache variable only (no define, no subst)
 macros.AC_CHECK_HEADER("stdio.h")
-# → Creates cache variable: "ac_cv_header_stdio_h"
+# -&gt; Creates cache variable: "ac_cv_header_stdio_h"
 
 # Cache variable + define (explicit name)
 macros.AC_CHECK_HEADER("pthread.h", define = "HAVE_PTHREAD_H")
-# → Creates cache variable: "ac_cv_header_pthread_h"
-# → Creates define: "HAVE_PTHREAD_H" in config.h
+# -&gt; Creates cache variable: "ac_cv_header_pthread_h"
+# -&gt; Creates define: "HAVE_PTHREAD_H" in config.h
 
 # Cache variable + define (using cache var name)
 macros.AC_CHECK_HEADER("pthread.h", define = True)
-# → Creates cache variable: "ac_cv_header_pthread_h"
-# → Creates define: "ac_cv_header_pthread_h" in config.h
+# -&gt; Creates cache variable: "ac_cv_header_pthread_h"
+# -&gt; Creates define: "ac_cv_header_pthread_h" in config.h
 </code></pre>
 <p><strong>PARAMETERS</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
@@ -794,12 +794,12 @@ AC_CHECK_SIZEOF([size_t], [], [[#include &lt;stddef.h&gt;]])
 <p>Example:</p>
 <pre><code class="language-python"># Cache variable only (no define, no subst)
 macros.AC_CHECK_SIZEOF("int")
-# → Creates cache variable: "ac_cv_sizeof_int"
+# -&gt; Creates cache variable: "ac_cv_sizeof_int"
 
 # Cache variable + define (explicit name)
 macros.AC_CHECK_SIZEOF("size_t", includes = ["#include &lt;stddef.h&gt;"], define = "SIZEOF_SIZE_T")
-# → Creates cache variable: "ac_cv_sizeof_size_t"
-# → Creates define: "SIZEOF_SIZE_T" in config.h
+# -&gt; Creates cache variable: "ac_cv_sizeof_size_t"
+# -&gt; Creates define: "SIZEOF_SIZE_T" in config.h
 </code></pre>
 <p>Cross-Compile Warning:
 This macro is NOT cross-compile friendly. It requires compiling and
@@ -835,12 +835,12 @@ AC_CHECK_TYPE([pthread_t], [], [], [[#include &lt;pthread.h&gt;]])
 <p>Example:</p>
 <pre><code class="language-python"># Cache variable only (no define, no subst)
 macros.AC_CHECK_TYPE("size_t")
-# → Creates cache variable: "ac_cv_type_size_t"
+# -&gt; Creates cache variable: "ac_cv_type_size_t"
 
 # Cache variable + define (explicit name)
 macros.AC_CHECK_TYPE("pthread_t", includes = ["#include &lt;pthread.h&gt;"], define = "HAVE_PTHREAD_T")
-# → Creates cache variable: "ac_cv_type_pthread_t"
-# → Creates define: "HAVE_PTHREAD_T" in config.h
+# -&gt; Creates cache variable: "ac_cv_type_pthread_t"
+# -&gt; Creates define: "HAVE_PTHREAD_T" in config.h
 </code></pre>
 <p><strong>PARAMETERS</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
