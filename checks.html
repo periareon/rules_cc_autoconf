@@ -594,8 +594,8 @@ running code to determine the size, which doesn't work when cross-compiling.</p>
 <pre>
 load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
 
-checks.AC_CHECK_TYPE(<a href="#checks.AC_CHECK_TYPE-type_name">type_name</a>, *, <a href="#checks.AC_CHECK_TYPE-name">name</a>, <a href="#checks.AC_CHECK_TYPE-define">define</a>, <a href="#checks.AC_CHECK_TYPE-code">code</a>, <a href="#checks.AC_CHECK_TYPE-includes">includes</a>, <a href="#checks.AC_CHECK_TYPE-language">language</a>, <a href="#checks.AC_CHECK_TYPE-compile_defines">compile_defines</a>,
-                     <a href="#checks.AC_CHECK_TYPE-requires">requires</a>, <a href="#checks.AC_CHECK_TYPE-if_true">if_true</a>, <a href="#checks.AC_CHECK_TYPE-if_false">if_false</a>, <a href="#checks.AC_CHECK_TYPE-subst">subst</a>)
+checks.AC_CHECK_TYPE(<a href="#checks.AC_CHECK_TYPE-type_name">type_name</a>, *, <a href="#checks.AC_CHECK_TYPE-name">name</a>, <a href="#checks.AC_CHECK_TYPE-define">define</a>, <a href="#checks.AC_CHECK_TYPE-includes">includes</a>, <a href="#checks.AC_CHECK_TYPE-language">language</a>, <a href="#checks.AC_CHECK_TYPE-compile_defines">compile_defines</a>, <a href="#checks.AC_CHECK_TYPE-requires">requires</a>,
+                     <a href="#checks.AC_CHECK_TYPE-if_true">if_true</a>, <a href="#checks.AC_CHECK_TYPE-if_false">if_false</a>, <a href="#checks.AC_CHECK_TYPE-subst">subst</a>)
 </pre>
 <p>Check for a type.</p>
 <p>Original m4 example:</p>
@@ -608,7 +608,7 @@ macros.AC_CHECK_TYPE("size_t")
 # → Creates cache variable: "ac_cv_type_size_t"
 
 # Cache variable + define (explicit name)
-macros.AC_CHECK_TYPE("pthread_t", includes = ["pthread.h"], define = "HAVE_PTHREAD_T")
+macros.AC_CHECK_TYPE("pthread_t", includes = ["#include &lt;pthread.h&gt;"], define = "HAVE_PTHREAD_T")
 # → Creates cache variable: "ac_cv_type_pthread_t"
 # → Creates define: "HAVE_PTHREAD_T" in config.h
 </code></pre>
@@ -617,8 +617,7 @@ macros.AC_CHECK_TYPE("pthread_t", includes = ["pthread.h"], define = "HAVE_PTHRE
 <tr><td style="text-align: left"><a id="checks.AC_CHECK_TYPE-type_name"></a>type_name</td><td style="text-align: left">Name of the type (e.g., <code>size_t</code>)</td><td style="text-align: left">none</td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_CHECK_TYPE-name"></a>name</td><td style="text-align: left">Cache variable name (defaults to <code>ac_cv_type_&lt;TYPE&gt;</code> following autoconf convention)</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_CHECK_TYPE-define"></a>define</td><td style="text-align: left">Define behavior: - <code>None</code> (default): No define is created, only cache variable - <code>True</code>: Create define using the cache variable name (<code>name</code>) - <code>"HAVE_FOO"</code>: Create define with explicit name <code>HAVE_FOO</code> (implies <code>define=True</code>)</td><td style="text-align: left"><code>None</code></td></tr>
-<tr><td style="text-align: left"><a id="checks.AC_CHECK_TYPE-code"></a>code</td><td style="text-align: left">Custom code that includes necessary headers (optional, defaults to standard headers)</td><td style="text-align: left"><code>None</code></td></tr>
-<tr><td style="text-align: left"><a id="checks.AC_CHECK_TYPE-includes"></a>includes</td><td style="text-align: left">Optional list of headers to include. If not specified and <code>code</code> is not specified, uses AC_INCLUDES_DEFAULT.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_TYPE-includes"></a>includes</td><td style="text-align: left">Optional list of headers to include (e.g. <code>["#include &lt;pthread.h&gt;"]</code>). If not specified, uses AC_INCLUDES_DEFAULT.</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_CHECK_TYPE-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_CHECK_TYPE-compile_defines"></a>compile_defines</td><td style="text-align: left">Optional list of preprocessor define names from previous checks to add before includes (e.g., <code>["_GNU_SOURCE", "_DARWIN_C_SOURCE"]</code>). Each string must match the define name of a previous check. The values from those checks will be used automatically.</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_CHECK_TYPE-requires"></a>requires</td><td style="text-align: left">Requirements that must be met for this check to run. Can be define names (e.g., <code>"HAVE_FOO"</code>), negated (e.g., <code>"!HAVE_FOO"</code>), or value-based (e.g., <code>"REPLACE_FSTAT==1"</code>, <code>"REPLACE_FSTAT!=0"</code>).</td><td style="text-align: left"><code>None</code></td></tr>
@@ -1250,8 +1249,8 @@ includes = ["#include &lt;sys/stat.h&gt;", "#include &lt;time.h&gt;"],
 <pre>
 load("@rules_cc_autoconf//autoconf:checks.bzl", "macros")
 
-macros.AC_CHECK_TYPES(<a href="#macros.AC_CHECK_TYPES-types">types</a>, *, <a href="#macros.AC_CHECK_TYPES-code">code</a>, <a href="#macros.AC_CHECK_TYPES-includes">includes</a>, <a href="#macros.AC_CHECK_TYPES-language">language</a>, <a href="#macros.AC_CHECK_TYPES-compile_defines">compile_defines</a>, <a href="#macros.AC_CHECK_TYPES-requires">requires</a>, <a href="#macros.AC_CHECK_TYPES-if_true">if_true</a>,
-                      <a href="#macros.AC_CHECK_TYPES-if_false">if_false</a>, <a href="#macros.AC_CHECK_TYPES-subst">subst</a>)
+macros.AC_CHECK_TYPES(<a href="#macros.AC_CHECK_TYPES-types">types</a>, *, <a href="#macros.AC_CHECK_TYPES-includes">includes</a>, <a href="#macros.AC_CHECK_TYPES-language">language</a>, <a href="#macros.AC_CHECK_TYPES-compile_defines">compile_defines</a>, <a href="#macros.AC_CHECK_TYPES-requires">requires</a>, <a href="#macros.AC_CHECK_TYPES-if_true">if_true</a>, <a href="#macros.AC_CHECK_TYPES-if_false">if_false</a>,
+                      <a href="#macros.AC_CHECK_TYPES-subst">subst</a>)
 </pre>
 <p>Check multiple types, creating HAVE_<TYPE> defines (AC_CHECK_TYPES).</p>
 <p>GNU Autoconf's AC_CHECK_TYPE(type, ...) checks whether each type is defined.
@@ -1270,7 +1269,6 @@ macros.AC_CHECK_TYPES(["size_t", "pthread_t", "pid_t"], includes = ["#include &l
 <p><strong>PARAMETERS</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_TYPES-types"></a>types</td><td style="text-align: left">List of type names to check.</td><td style="text-align: left">none</td></tr>
-<tr><td style="text-align: left"><a id="macros.AC_CHECK_TYPES-code"></a>code</td><td style="text-align: left">Custom code that includes necessary headers (applies to all checks).</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_TYPES-includes"></a>includes</td><td style="text-align: left">Optional list of include directives (e.g. ["#include &lt;stddef.h&gt;"]).</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_TYPES-language"></a>language</td><td style="text-align: left">Language to use for checks (<code>"c"</code> or <code>"cpp"</code>).</td><td style="text-align: left"><code>"c"</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_TYPES-compile_defines"></a>compile_defines</td><td style="text-align: left">Optional list of preprocessor define names (applies to all checks).</td><td style="text-align: left"><code>None</code></td></tr>
