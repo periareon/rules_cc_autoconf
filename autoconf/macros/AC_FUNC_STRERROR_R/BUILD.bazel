@@ -54,6 +54,7 @@ autoconf(
         checks.AC_DEFINE(
             "HAVE_STRERROR_R",
             condition = "ac_cv_func_strerror_r",
+            if_false = None,
         ),
     ] + select({
         # On Linux with glibc, strerror_r returns char* (GNU extension)

@@ -14,7 +14,7 @@
 #define SUBST_HAVE_FSEEKO "1"
 #define SUBST_HAVE_FTELLO "1"
 #define SUBST_HAVE_LINK "0"
-#define SUBST_HAVE_LSTAT "1"
+#define SUBST_HAVE_LSTAT "0"
 #define SUBST_HAVE_PCLOSE "1"
 #define SUBST_HAVE_POPEN "1"
 #define SUBST_HAVE_RENAMEAT "1"

@@ -34,7 +34,7 @@
 #define SUBST_HAVE_LCHOWN "1"
 #define SUBST_HAVE_LINK "1"
 #define SUBST_HAVE_LINKAT "1"
-#define SUBST_HAVE_LSTAT "1"
+#define SUBST_HAVE_LSTAT "0"
 #define SUBST_HAVE_OS_H "0"
 #define SUBST_HAVE_PIPE "1"
 #define SUBST_HAVE_PIPE2 "1"

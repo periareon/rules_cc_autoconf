@@ -13,6 +13,13 @@ autoconf(
             "HAVE_LSTAT",
             requires = ["ac_cv_func_lstat==1"],
         ),
+        # Override the sys_stat_h default (HAVE_LSTAT=1) so that the
+        # sys_stat.in.h template sees the correct value. When lstat is absent
+        # (e.g. Windows), the header defines lstat as stat instead of rpl_lstat.
+        checks.AC_SUBST(
+            "HAVE_LSTAT",
+            condition = "ac_cv_func_lstat",
+        ),
     ],
     visibility = ["//gnulib:__subpackages__"],
     deps = [

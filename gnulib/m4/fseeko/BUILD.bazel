@@ -99,6 +99,7 @@ autoconf(
         # Only check if _fseeki64 function exists
         checks.AC_CHECK_DECL(
             "_fseeki64",
+            define = "HAVE_DECL__FSEEKI64",
             includes = ["#include <stdio.h>"],
             requires = ["HAVE__FSEEKI64"],
         ),

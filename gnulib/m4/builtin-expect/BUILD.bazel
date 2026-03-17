@@ -6,7 +6,13 @@ load("//autoconf:checks.bzl", "checks")
 autoconf(
     name = "builtin-expect",
     checks = [
-        checks.AC_TRY_COMPILE(
+        # Use AC_TRY_LINK (not AC_TRY_COMPILE) because MSVC allows calling
+        # undeclared functions (implicit declaration), so a compile-only test
+        # would incorrectly pass. A link test correctly fails on MSVC since
+        # __builtin_expect is not a linkable symbol. On GCC/Clang, the builtin
+        # is expanded inline by the compiler and link still succeeds.
+        checks.AC_TRY_LINK(
+            name = "ac_cv_have___builtin_expect",
             code = """int main(void) {
     return __builtin_expect(1, 1);
 }""",

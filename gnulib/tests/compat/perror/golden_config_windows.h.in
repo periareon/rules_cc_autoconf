@@ -45,7 +45,7 @@
 /* #undef HAVE_STRCHRNUL */
 /* #undef HAVE_STRERRORNAME_NP */
 /* #undef HAVE_STRERROR_L */
-#define HAVE_STRERROR_R 0
+/* #undef HAVE_STRERROR_R */
 /* #undef HAVE_STRINGS_H */
 #define HAVE_STRING_H 1
 /* #undef HAVE_STRPBRK */
