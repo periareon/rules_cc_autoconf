@@ -12,6 +12,7 @@
 
 #include "autoconf/private/checker/check_runner.h"
 #include "autoconf/private/checker/debug_logger.h"
+#include "autoconf/private/common/file_util.h"
 
 namespace rules_cc_autoconf {
 
@@ -179,12 +180,12 @@ struct BuildDir {
 
     ~BuildDir() {
         std::error_code ec;
-        std::filesystem::remove(dir / (safe_id + ".c"), ec);
-        std::filesystem::remove(dir / (safe_id + ".cpp"), ec);
-        std::filesystem::remove(dir / (safe_id + ".o"), ec);
-        std::filesystem::remove(dir / (safe_id + ".obj"), ec);
-        std::filesystem::remove(dir / (safe_id + ".exe"), ec);
-        std::filesystem::remove(dir / safe_id, ec);
+        file_remove(dir / (safe_id + ".c"), ec);
+        file_remove(dir / (safe_id + ".cpp"), ec);
+        file_remove(dir / (safe_id + ".o"), ec);
+        file_remove(dir / (safe_id + ".obj"), ec);
+        file_remove(dir / (safe_id + ".exe"), ec);
+        file_remove(dir / safe_id, ec);
     }
 
     /**
@@ -196,7 +197,7 @@ struct BuildDir {
     std::optional<std::filesystem::path> write_source(
         const std::string& code, const std::string& extension) {
         std::filesystem::path source_file = dir / (safe_id + extension);
-        std::ofstream source(source_file);
+        std::ofstream source = open_ofstream(source_file);
         if (!source.is_open()) {
             DebugLogger::warn("Failed to create source file");
             return std::nullopt;

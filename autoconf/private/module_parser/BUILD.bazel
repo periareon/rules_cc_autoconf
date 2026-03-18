@@ -8,5 +8,8 @@ cc_binary(
     ],
     cxxopts = cxxopts(),
     visibility = ["//visibility:public"],
-    deps = ["//tools/json"],
+    deps = [
+        "//autoconf/private/common:file_util",
+        "//tools/json",
+    ],
 )

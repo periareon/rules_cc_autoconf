@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 
+#include "autoconf/private/common/file_util.h"
 #include "tools/json/json.h"
 
 /**
@@ -329,7 +330,7 @@ std::optional<ModuleParserArgs> parse_args(int argc, char* argv[]) {
  */
 bool write_package_json(const std::string& path, const std::string& define_name,
                         const std::string& value) {
-    std::ofstream out(path);
+    std::ofstream out = rules_cc_autoconf::open_ofstream(path);
     if (!out.is_open()) {
         std::cerr << "Error: Could not open output file: " << path << std::endl;
         return false;
@@ -373,7 +374,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Read the MODULE.bazel file
-    std::ifstream file(args.module_bazel);
+    std::ifstream file = rules_cc_autoconf::open_ifstream(args.module_bazel);
     if (!file.is_open()) {
         std::cerr << "Error: Could not open file: " << args.module_bazel
                   << std::endl;

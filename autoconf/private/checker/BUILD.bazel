@@ -37,6 +37,7 @@ cc_library(
     deps = [
         ":check_types",
         ":debug_logger",
+        "//autoconf/private/common:file_util",
         "//tools/json",
     ],
 )
@@ -58,6 +59,7 @@ cc_library(
         ":check_types",
         ":config",
         ":debug_logger",
+        "//autoconf/private/common:file_util",
         "//tools/json",
     ],
 )
@@ -88,6 +90,7 @@ cc_library(
     deps = [
         ":check_runner",
         ":condition_evaluator",
+        "//autoconf/private/common:file_util",
         "//tools/json",
     ],
 )

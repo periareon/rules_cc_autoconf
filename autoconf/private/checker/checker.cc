@@ -11,6 +11,7 @@
 #include "autoconf/private/checker/condition_evaluator.h"
 #include "autoconf/private/checker/config.h"
 #include "autoconf/private/checker/debug_logger.h"
+#include "autoconf/private/common/file_util.h"
 #include "tools/json/json.h"
 
 namespace rules_cc_autoconf {
@@ -121,12 +122,12 @@ class ResultLookup {
         }
 
         // Load from file
-        if (!std::filesystem::exists(file_path)) {
+        if (!file_exists(file_path)) {
             throw std::runtime_error("Dep results file does not exist: " +
                                      file_key);
         }
 
-        std::ifstream results_file(file_path);
+        std::ifstream results_file = open_ifstream(file_path);
         if (!results_file.is_open()) {
             throw std::runtime_error("Failed to open dep results file: " +
                                      file_key);
@@ -175,7 +176,7 @@ int Checker::run_check_from_file(const std::filesystem::path& check_path,
         std::unique_ptr<Config> config = Config::from_file(config_path);
 
         // Load the check from JSON file
-        std::ifstream check_file(check_path);
+        std::ifstream check_file = open_ifstream(check_path);
         if (!check_file.is_open()) {
             throw std::runtime_error("Failed to open check file: " +
                                      check_path.string());
@@ -446,7 +447,7 @@ int Checker::run_check_from_file(const std::filesystem::path& check_path,
         }
         j[result.name] = result_json;
 
-        std::ofstream results_file(results_path);
+        std::ofstream results_file = open_ofstream(results_path);
         if (!results_file.is_open()) {
             std::cerr << "Error: Failed to open results file: " << results_path
                       << std::endl;

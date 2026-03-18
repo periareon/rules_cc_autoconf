@@ -2,6 +2,7 @@
 
 #include <cstdlib>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <sstream>
@@ -42,8 +43,32 @@ void CheckRunner::set_dep_results(
 
 void CheckRunner::set_source_id(const std::string& source_id,
                                 const std::filesystem::path& source_dir) {
-    source_id_ = source_id;
     source_dir_ = std::filesystem::path(source_dir).make_preferred();
+#ifdef _WIN32
+    // External tools (cl.exe, link.exe) cannot handle paths longer than
+    // MAX_PATH (260 characters). When the cache variable name is very long
+    // the conftest file paths will exceed this limit. Truncate the source_id
+    // and append a hash suffix to keep paths short while staying unique.
+    //
+    // The length check must use the absolute path because Bazel actions run
+    // from an execroot (e.g. D:/_bazel/execroot/_main/) that adds significant
+    // length to what appears to be a short relative path.
+    auto abs_test = std::filesystem::absolute(source_dir_ / (source_id + ".c"));
+    if (abs_test.string().size() > 240) {
+        size_t hash = std::hash<std::string>{}(source_id);
+        std::ostringstream oss;
+        oss << std::hex << hash;
+        std::string hash_str = oss.str();
+        auto abs_dir = std::filesystem::absolute(source_dir_);
+        size_t dir_len = abs_dir.string().size() + 1;
+        size_t max_id_len = 240 - dir_len - hash_str.size() - 4;
+        source_id_ = source_id.substr(0, max_id_len) + "_" + hash_str;
+    } else {
+        source_id_ = source_id;
+    }
+#else
+    source_id_ = source_id;
+#endif
 }
 
 std::string CheckRunner::get_defines_from_previous_checks() const {

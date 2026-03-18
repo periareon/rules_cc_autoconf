@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "autoconf/private/checker/check.h"
+#include "autoconf/private/common/file_util.h"
 #include "tools/json/json.h"
 
 namespace rules_cc_autoconf {
@@ -186,7 +187,7 @@ void SourceGenerator::generate_config_header(
         }
     }
 
-    std::ofstream file(output_path);
+    std::ofstream file = open_ofstream(output_path);
     if (!file.is_open()) {
         throw std::runtime_error("Failed to open output file: " +
                                  output_path.string());
@@ -462,7 +463,7 @@ std::string SourceGenerator::process_inlines_and_direct_subst(
 
     // Process inline replacements
     for (const auto& [search_string, file_path] : inlines) {
-        std::ifstream inline_file(file_path);
+        std::ifstream inline_file = open_ifstream(file_path);
         if (!inline_file.is_open()) {
             throw std::runtime_error("Failed to open inline file: " +
                                      file_path.string());

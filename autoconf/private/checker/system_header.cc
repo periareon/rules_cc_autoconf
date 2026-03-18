@@ -12,6 +12,7 @@
 #endif
 
 #include "autoconf/private/checker/debug_logger.h"
+#include "autoconf/private/common/file_util.h"
 
 namespace rules_cc_autoconf {
 
@@ -92,7 +93,7 @@ std::optional<std::filesystem::path> parse_line_markers(
 
 std::optional<std::string> read_file_content(
     const std::filesystem::path& path) {
-    std::ifstream file(path);
+    std::ifstream file = open_ifstream(path);
     if (!file.is_open()) return std::nullopt;
     std::ostringstream buf;
     buf << file.rdbuf();
@@ -113,7 +114,7 @@ std::optional<std::filesystem::path> find_system_header_path(
     std::filesystem::path pp_out = source_dir / (source_id + ".gl_next.i");
 
     {
-        std::ofstream src(src_path);
+        std::ofstream src = open_ofstream(src_path);
         if (!src.is_open()) {
             DebugLogger::warn("GL_NEXT_HEADER: failed to write source for " +
                               header);
@@ -153,18 +154,18 @@ std::optional<std::filesystem::path> find_system_header_path(
 
     // Clean up source file
     std::error_code ec;
-    std::filesystem::remove(src_path, ec);
+    file_remove(src_path, ec);
 
     if (rc != 0) {
         DebugLogger::debug("GL_NEXT_HEADER: preprocessor failed for " + header +
                            " (rc=" + std::to_string(rc) + ")");
-        std::filesystem::remove(pp_out, ec);
+        file_remove(pp_out, ec);
         return std::nullopt;
     }
 
     // Read and parse preprocessor output
     auto pp_content = read_file_content(pp_out);
-    std::filesystem::remove(pp_out, ec);
+    file_remove(pp_out, ec);
 
     if (!pp_content.has_value()) {
         DebugLogger::warn("GL_NEXT_HEADER: could not read preprocessor output");

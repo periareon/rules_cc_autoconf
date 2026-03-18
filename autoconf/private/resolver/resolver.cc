@@ -13,6 +13,7 @@
 #include "autoconf/private/checker/check_result.h"
 #include "autoconf/private/checker/checker.h"
 #include "autoconf/private/checker/debug_logger.h"
+#include "autoconf/private/common/file_util.h"
 #include "autoconf/private/resolver/source_generator.h"
 #include "tools/json/json.h"
 
@@ -24,7 +25,7 @@ namespace {
 std::vector<CheckResult> load_results_from_file(
     const std::filesystem::path& path) {
     std::vector<CheckResult> loaded_results;
-    std::ifstream results_file(path);
+    std::ifstream results_file = open_ifstream(path);
     if (!results_file.is_open()) {
         throw std::runtime_error("Failed to open results file: " +
                                  path.string());
@@ -77,7 +78,7 @@ int Resolver::resolve_and_generate(
                 std::vector<std::string>
                     order{};  // Preserve order of first occurrence
                 for (const std::filesystem::path& results_path : paths) {
-                    if (!std::filesystem::exists(results_path)) {
+                    if (!file_exists(results_path)) {
                         throw std::runtime_error(
                             "Results file does not exist: " +
                             results_path.string());
@@ -181,7 +182,7 @@ int Resolver::resolve_and_generate(
                                   mode);
 
         std::string template_content{};
-        std::ifstream template_file(template_path);
+        std::ifstream template_file = open_ifstream(template_path);
         if (!template_file.is_open()) {
             std::cerr << "Error: Failed to open template file: "
                       << template_path << std::endl;

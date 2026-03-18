@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "autoconf/private/common/file_util.h"
+
 namespace rules_cc_autoconf {
 
 /**
@@ -15,7 +17,7 @@ namespace rules_cc_autoconf {
 inline std::vector<std::string> read_action_args_file(
     const std::string& file_path) {
     std::vector<std::string> args;
-    std::ifstream file(file_path);
+    std::ifstream file = open_ifstream(file_path);
     if (!file.is_open()) {
         std::cerr << "Error: Cannot open action args file: " << file_path
                   << std::endl;

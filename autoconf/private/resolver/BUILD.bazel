@@ -12,6 +12,7 @@ cc_library(
     deps = [
         "//autoconf/private/checker:check_types",
         "//autoconf/private/checker:config",
+        "//autoconf/private/common:file_util",
     ],
 )
 
@@ -27,6 +28,7 @@ cc_library(
     deps = [
         ":source_generator",
         "//autoconf/private/checker",
+        "//autoconf/private/common:file_util",
         "//tools/json",
     ],
 )

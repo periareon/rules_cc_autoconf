@@ -14,6 +14,7 @@
 #include <utility>
 #include <vector>
 
+#include "autoconf/private/common/file_util.h"
 #include "tools/json/json.h"
 
 namespace rules_cc_autoconf {
@@ -150,7 +151,7 @@ std::unordered_map<std::string, std::string> build_dep_map(
 }
 
 ResultEntry load_single_result_from_file(const std::string& path) {
-    std::ifstream file(path);
+    std::ifstream file = open_ifstream(path);
     if (!file.is_open()) {
         throw std::runtime_error("Failed to open results file: " + path);
     }
@@ -196,7 +197,7 @@ bool generate_wrapped_source(
         value = it->second.value;
     }
 
-    std::ifstream in_file(orig_path);
+    std::ifstream in_file = open_ifstream(orig_path);
     if (!in_file.is_open()) {
         std::cerr << "Error: Failed to open source file: " << orig_path.string()
                   << std::endl;
@@ -209,7 +210,7 @@ bool generate_wrapped_source(
 
     std::filesystem::create_directories(out_path.parent_path());
 
-    std::ofstream out_file(out_path);
+    std::ofstream out_file = open_ofstream(out_path);
     if (!out_file.is_open()) {
         std::cerr << "Error: Failed to open output file: " << out_path.string()
                   << std::endl;

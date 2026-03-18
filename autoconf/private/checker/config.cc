@@ -6,6 +6,7 @@
 #include <sstream>
 
 #include "autoconf/private/checker/check.h"
+#include "autoconf/private/common/file_util.h"
 #include "tools/json/json.h"
 
 namespace rules_cc_autoconf {
@@ -14,7 +15,7 @@ std::unique_ptr<Config> Config::from_file(
     const std::filesystem::path& config_path) {
     std::unique_ptr<Config> config = std::make_unique<Config>();
 
-    std::ifstream file(config_path);
+    std::ifstream file = open_ifstream(config_path);
     if (!file.is_open()) {
         throw std::runtime_error("Failed to open config file: " +
                                  config_path.string());
