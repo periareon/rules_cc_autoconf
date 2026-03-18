@@ -574,16 +574,25 @@ CheckResult CheckRunner::check_gl_next_header(const Check& check) {
                            check.define(), check.subst());
     }
 
-    // Strip `#pragma once` from inlined content. When a system header's text
-    // is pasted into a gnulib wrapper, any `#pragma once` directive applies to
-    // the *wrapper* file, not the original system header. This prevents the
-    // wrapper from being included a second time -- breaking gnulib's
-    // split-double-inclusion-guard pattern (e.g. stat.c includes <sys/stat.h>
-    // twice: once for the raw system types, once for the gnulib additions).
+    // Replace `#pragma once` with a traditional include guard.  When a system
+    // header's text is pasted into a gnulib wrapper, `#pragma once` would mark
+    // the *wrapper* file as "include once", preventing gnulib's
+    // split-double-inclusion-guard pattern from working (e.g. stat.c includes
+    // <sys/stat.h> twice: once for the raw system types, once for gnulib
+    // additions).  A traditional guard lets the first inlining process the
+    // content while the second inlining skips it (guard already defined),
+    // without affecting the wrapper file's own re-includability.
     {
+        std::string guard = "_RCCAC_GL_NEXT_INLINED_";
+        for (char c : header) {
+            guard += (c == '/' || c == '.' || c == '-')
+                         ? '_'
+                         : static_cast<char>(toupper(c));
+        }
+
         std::istringstream stream(*content);
-        std::ostringstream filtered;
-        std::string line;
+        std::ostringstream filtered{};
+        std::string line{};
         while (std::getline(stream, line)) {
             std::string trimmed = line;
             std::size_t start = trimmed.find_first_not_of(" \t");
@@ -596,7 +605,8 @@ CheckResult CheckRunner::check_gl_next_header(const Check& check) {
                 filtered << line << '\n';
             }
         }
-        *content = filtered.str();
+        *content = "#ifndef " + guard + "\n#define " + guard + "\n" +
+                   filtered.str() + "#endif /* " + guard + " */\n";
     }
 
     // Prepend a newline so the template's `# @INCLUDE_NEXT@ @NEXT_*@` becomes
