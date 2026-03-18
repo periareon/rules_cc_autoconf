@@ -574,6 +574,31 @@ CheckResult CheckRunner::check_gl_next_header(const Check& check) {
                            check.define(), check.subst());
     }
 
+    // Strip `#pragma once` from inlined content. When a system header's text
+    // is pasted into a gnulib wrapper, any `#pragma once` directive applies to
+    // the *wrapper* file, not the original system header. This prevents the
+    // wrapper from being included a second time -- breaking gnulib's
+    // split-double-inclusion-guard pattern (e.g. stat.c includes <sys/stat.h>
+    // twice: once for the raw system types, once for the gnulib additions).
+    {
+        std::istringstream stream(*content);
+        std::ostringstream filtered;
+        std::string line;
+        while (std::getline(stream, line)) {
+            std::string trimmed = line;
+            std::size_t start = trimmed.find_first_not_of(" \t");
+            if (start != std::string::npos) {
+                trimmed = trimmed.substr(start);
+            }
+            if (trimmed.rfind("#pragma once", 0) == 0) {
+                filtered << "/* #pragma once removed for inlining */\n";
+            } else {
+                filtered << line << '\n';
+            }
+        }
+        *content = filtered.str();
+    }
+
     // Prepend a newline so the template's `# @INCLUDE_NEXT@ @NEXT_*@` becomes
     // `# ` (null directive) followed by the inlined content on the next line
     std::string value = "\n" + *content;
