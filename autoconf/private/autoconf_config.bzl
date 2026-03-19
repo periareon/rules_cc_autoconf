@@ -250,22 +250,28 @@ def get_cc_toolchain_info(ctx):
         action_name = ACTION_NAMES.cpp_link_executable,
     )
 
-    compile_variables = cc_common.create_compile_variables(
+    c_compile_variables = cc_common.create_compile_variables(
         feature_configuration = feature_configuration,
         cc_toolchain = cc_toolchain,
-        user_compile_flags = ctx.fragments.cpp.copts + ctx.fragments.cpp.cxxopts,
+        user_compile_flags = ctx.fragments.cpp.copts,
     )
 
     c_flags = cc_common.get_memory_inefficient_command_line(
         feature_configuration = feature_configuration,
         action_name = ACTION_NAMES.c_compile,
-        variables = compile_variables,
+        variables = c_compile_variables,
+    )
+
+    cpp_compile_variables = cc_common.create_compile_variables(
+        feature_configuration = feature_configuration,
+        cc_toolchain = cc_toolchain,
+        user_compile_flags = ctx.fragments.cpp.copts + ctx.fragments.cpp.cxxopts,
     )
 
     cpp_flags = cc_common.get_memory_inefficient_command_line(
         feature_configuration = feature_configuration,
         action_name = ACTION_NAMES.cpp_compile,
-        variables = compile_variables,
+        variables = cpp_compile_variables,
     )
 
     link_variables = cc_common.create_link_variables(
@@ -350,7 +356,7 @@ def get_environment_variables(ctx, toolchain_info):
     compile_variables_for_env = cc_common.create_compile_variables(
         feature_configuration = toolchain_info.feature_configuration,
         cc_toolchain = toolchain_info.cc_toolchain,
-        user_compile_flags = ctx.fragments.cpp.copts + ctx.fragments.cpp.cxxopts,
+        user_compile_flags = ctx.fragments.cpp.copts,
     )
     compile_env = cc_common.get_environment_variables(
         feature_configuration = toolchain_info.feature_configuration,
