@@ -152,7 +152,22 @@ def _check_duplicate(all_info, dep_results):
                 ))
     pass
 
-def _unique_name_file_map(label, all_required_defines, all_results):
+def _unique_name_file_map(label, check, all_results):
+    all_required_defines = []
+
+    for required in check.get("requires", []):
+        required_define = _extract_define_name(required)
+        all_required_defines.append(required_define)
+
+    condition = check.get("condition")
+    if condition:
+        required_define = _extract_define_name(condition)
+        all_required_defines.append(required_define)
+
+    for required in check.get("compile_defines", []):
+        required_define = _extract_define_name(required)
+        all_required_defines.append(required_define)
+
     # Collect dependencies for all required defines
     # Build a dictionary mapping lookup_name -> file_path
     # This ensures strict deduplication before passing to C++
@@ -230,24 +245,6 @@ def _unique_name_file_map(label, all_required_defines, all_results):
         name_to_file[required_define] = dep_results_file
     return name_to_file
 
-def _collect_required_defines(check):
-    all_required_defines = []
-
-    for required in check.get("requires", []):
-        required_define = _extract_define_name(required)
-        all_required_defines.append(required_define)
-
-    condition = check.get("condition")
-    if condition:
-        required_define = _extract_define_name(condition)
-        all_required_defines.append(required_define)
-
-    for required in check.get("compile_defines", []):
-        required_define = _extract_define_name(required)
-        all_required_defines.append(required_define)
-
-    return all_required_defines
-
 def _checks_to_build_info(ctx):
     """Implementation of the autoconf rule that only runs checks."""
 
@@ -296,6 +293,28 @@ def _checks_to_build_info(ctx):
 
     return all_info
 
+def _action_arg_dep(ctx, action, all_info):
+    check = action.check
+    check_json = action.input
+    check_result_file = action.output
+
+    args = ctx.actions.args()
+    args.use_param_file("@%s", use_always = True)
+    args.set_param_file_format("multiline")
+    args.add("--config", all_info.config_json)
+    args.add("--check", check_json)
+    args.add("--results", check_result_file)
+
+    name_to_file = _unique_name_file_map(ctx.label, check, all_info)
+
+    # Add --dep arguments with explicit name=file format
+    check_deps = []
+    for lookup_name, file_path in name_to_file.items():
+        check_deps.append(file_path)
+        args.add("--dep", "{}={}".format(lookup_name, file_path.path))
+
+    return (args, depset([all_info.config_json] + [check_json] + check_deps))
+
 def _autoconf_impl(ctx):
     all_info = _checks_to_build_info(ctx)
 
@@ -304,29 +323,12 @@ def _autoconf_impl(ctx):
     # (checks is already grouped by cache_name from _flatten_checks)
     for check_name, action in all_info.actions.items():
         check_result_file = action.output
-        check = action.check
-        check_json = action.input
-
-        args = ctx.actions.args()
-        args.use_param_file("@%s", use_always = True)
-        args.set_param_file_format("multiline")
-        args.add("--config", all_info.config_json)
-        args.add("--check", check_json)
-        args.add("--results", check_result_file)
-
-        all_required_defines = _collect_required_defines(check)
-        name_to_file = _unique_name_file_map(ctx.label, all_required_defines, all_info)
-
-        # Add --dep arguments with explicit name=file format
-        check_deps = []
-        for lookup_name, file_path in name_to_file.items():
-            check_deps.append(file_path)
-            args.add("--dep", "{}={}".format(lookup_name, file_path.path))
+        args, deps = _action_arg_dep(ctx, action, all_info)
 
         ctx.actions.run(
             executable = ctx.executable._checker,
             arguments = [args],
-            inputs = depset([all_info.config_json] + [check_json] + check_deps),
+            inputs = deps,
             outputs = [check_result_file],
             mnemonic = "CcAutoconfCheck",
             progress_message = "CcAutoconfCheck %{label} - " + check_name,
