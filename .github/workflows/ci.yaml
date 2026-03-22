@@ -78,6 +78,9 @@ jobs:
           - name: negative_compute_int
             path: autoconf/tests/integration/negative_compute_int
             expect_pass: false
+          - name: gnulib_integrations
+            path: gnulib/tests/integration
+            expect_pass: true
     name: "integration-${{ matrix.test.name }} (${{ matrix.os }})"
     steps:
       # Checkout the code

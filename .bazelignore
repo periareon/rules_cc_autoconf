@@ -1,2 +1,3 @@
 examples
 autoconf/tests/integration
+gnulib/tests/integration
