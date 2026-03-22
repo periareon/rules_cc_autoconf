@@ -1,0 +1,79 @@
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
+
+alias(
+    name = "bison",
+    actual = "@bison",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
+alias(
+    name = "ffmpeg",
+    actual = "@ffmpeg",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
+alias(
+    name = "flex",
+    actual = "@flex",
+)
+
+alias(
+    name = "libmicrohttpd",
+    actual = "@libmicrohttpd",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
+alias(
+    name = "libpcap",
+    actual = "@libpcap",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
+alias(
+    name = "libssh2",
+    actual = "@libssh2",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
+alias(
+    name = "libwebsockets",
+    actual = "@libwebsockets//:websockets",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
+alias(
+    name = "m4",
+    actual = "@m4",
+)
+
+build_test(
+    name = "build_test",
+    targets = [
+        ":bison",
+        ":ffmpeg",
+        ":flex",
+        ":libmicrohttpd",
+        ":libpcap",
+        ":libssh2",
+        ":libwebsockets",
+        ":m4",
+    ],
+)
