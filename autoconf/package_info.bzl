@@ -1,6 +1,10 @@
 """# package_info"""
 
-load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
+load(
+    ":cc_autoconf_info.bzl",
+    "CcAutoconfInfo",
+    "encode_result",
+)
 
 _RUNNER_SOURCES = [
     "PACKAGE_NAME",
@@ -84,60 +88,31 @@ def _package_info_impl(ctx):
             if source not in _RUNNER_SOURCES:
                 ctx.actions.write(
                     output = extra_results[key],
-                    content = json.encode_indent({
-                        key: {
-                            "success": True,
-                            "value": json.encode(starlark_alias_values[source]),
-                        },
-                    }, indent = " " * 4) + "\n",
+                    content = encode_result(starlark_alias_values[source]),
                 )
 
     else:
-        # Write JSON files in check result format for PACKAGE_NAME
-        # Use regular string (not json.encode) so it goes through .dump() in check.cc
         ctx.actions.write(
             output = results["PACKAGE_NAME"],
-            content = json.encode_indent({
-                "PACKAGE_NAME": {
-                    "success": True,
-                    "value": json.encode(ctx.attr.package_name),
-                },
-            }, indent = " " * 4) + "\n",
+            content = encode_result(ctx.attr.package_name),
         )
 
-        # Write JSON files in check result format for PACKAGE_VERSION
         ctx.actions.write(
             output = results["PACKAGE_VERSION"],
-            content = json.encode_indent({
-                "PACKAGE_VERSION": {
-                    "success": True,
-                    "value": json.encode(ctx.attr.package_version),
-                },
-            }, indent = " " * 4) + "\n",
+            content = encode_result(ctx.attr.package_version),
         )
 
-        # Write PACKAGE_STRING as "package_name package_version"
         package_string = ctx.attr.package_name + " " + ctx.attr.package_version
         ctx.actions.write(
             output = results["PACKAGE_STRING"],
-            content = json.encode_indent({
-                "PACKAGE_STRING": {
-                    "success": True,
-                    "value": json.encode(package_string),
-                },
-            }, indent = " " * 4) + "\n",
+            content = encode_result(package_string),
         )
 
         ctx.actions.write(
             output = results["PACKAGE_TARNAME"],
-            content = json.encode_indent({
-                "PACKAGE_TARNAME": {
-                    "success": True,
-                    "value": json.encode(
-                        ctx.attr.package_tarname if ctx.attr.package_tarname else ctx.attr.package_name,
-                    ),
-                },
-            }, indent = " " * 4) + "\n",
+            content = encode_result(
+                ctx.attr.package_tarname if ctx.attr.package_tarname else ctx.attr.package_name,
+            ),
         )
 
         all_values = {
@@ -151,43 +126,23 @@ def _package_info_impl(ctx):
         for key, source in ctx.attr.aliases.items():
             ctx.actions.write(
                 output = extra_results[key],
-                content = json.encode_indent({
-                    key: {
-                        "success": True,
-                        "value": json.encode(all_values[source]),
-                    },
-                }, indent = " " * 4) + "\n",
+                content = encode_result(all_values[source]),
             )
 
     ctx.actions.write(
         output = results["PACKAGE_BUGREPORT"],
-        content = json.encode_indent({
-            "PACKAGE_BUGREPORT": {
-                "success": True,
-                "value": json.encode(ctx.attr.package_bugreport),
-            },
-        }, indent = " " * 4) + "\n",
+        content = encode_result(ctx.attr.package_bugreport),
     )
 
     ctx.actions.write(
         output = results["PACKAGE_URL"],
-        content = json.encode_indent({
-            "PACKAGE_URL": {
-                "success": True,
-                "value": json.encode(ctx.attr.package_url),
-            },
-        }, indent = " " * 4) + "\n",
+        content = encode_result(ctx.attr.package_url),
     )
 
-    # Package info creates defines (for config.h), so put them in define_results
-    # They're not cache variables or subst values
     return [
         CcAutoconfInfo(
             owner = ctx.label,
-            deps = depset(),
-            cache_results = {},
             define_results = results | extra_results,
-            subst_results = {},
         ),
     ]
 

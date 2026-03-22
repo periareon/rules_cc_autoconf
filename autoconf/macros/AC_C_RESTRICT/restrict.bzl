@@ -15,6 +15,7 @@ and a dedicated resolver tool to combine the results.
 """
 
 load("@rules_cc//cc:find_cc_toolchain.bzl", "use_cc_toolchain")
+load("//autoconf:cc_autoconf_info.bzl", "CcAutoconfInfo")
 load(
     "//autoconf/private:autoconf_config.bzl",
     "create_config_dict",
@@ -22,7 +23,6 @@ load(
     "get_environment_variables",
     "write_config_json",
 )
-load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
 
 # Test code templates for each keyword variant.
 # Each is a minimal C program that uses the keyword in a function signature.
@@ -127,10 +127,9 @@ def _ac_c_restrict_impl(ctx):
     return [
         CcAutoconfInfo(
             owner = ctx.label,
-            deps = depset(),
             cache_results = {"restrict": restrict_result},
             define_results = {"restrict": restrict_result},
-            subst_results = {},
+            unquoted_defines = ["restrict"],
         ),
         DefaultInfo(files = depset([restrict_result])),
         OutputGroupInfo(

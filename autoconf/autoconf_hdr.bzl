@@ -39,7 +39,38 @@ def _autoconf_hdr_impl(ctx):
     all_define_checks = defaults.define | dep_results["define"]
     all_subst_checks = defaults.subst | dep_results["subst"]
 
-    inputs = depset([ctx.file.template] + all_subst_checks.values() + all_define_checks.values())
+    # Merge unquoted_defines from defaults and transitive deps
+    all_unquoted = {}
+    for uq in getattr(defaults, "unquoted_defines", []):
+        all_unquoted[uq] = True
+    for uq in dep_results.get("unquoted_defines", []):
+        all_unquoted[uq] = True
+
+    # Build the manifest: maps define/subst names to result file paths + metadata
+    manifest_data = {
+        "defines": {},
+        "substs": {},
+    }
+    for define_name, result_file in all_define_checks.items():
+        manifest_data["defines"][define_name] = {
+            "path": result_file.path,
+            "unquote": define_name in all_unquoted,
+        }
+    for subst_name, result_file in all_subst_checks.items():
+        manifest_data["substs"][subst_name] = {
+            "path": result_file.path,
+            "unquote": subst_name in all_unquoted,
+        }
+
+    manifest = ctx.actions.declare_file("{}.manifest.json".format(ctx.label.name))
+    ctx.actions.write(
+        output = manifest,
+        content = json.encode_indent(manifest_data, indent = " " * 4) + "\n",
+    )
+
+    inputs = depset(
+        [ctx.file.template, manifest] + all_subst_checks.values() + all_define_checks.values(),
+    )
 
     # Process inlines: collect files and create mappings
     inline_files = []
@@ -55,21 +86,11 @@ def _autoconf_hdr_impl(ctx):
 
     inputs = depset(inline_files, transitive = [inputs])
 
-    # Pass all individual results files directly to resolver (it merges internally)
-    # Include both defaults and transitive checks so resolver can merge them
-    # Use separate flags for each bucket
     args = ctx.actions.args()
     args.use_param_file("@%s", use_always = True)
     args.set_param_file_format("multiline")
 
-    # Add define results
-    for results_file_path in all_define_checks.values():
-        args.add("--define-result", results_file_path)
-
-    # Add subst results
-    for results_file_path in all_subst_checks.values():
-        args.add("--subst-result", results_file_path)
-
+    args.add("--manifest", manifest)
     args.add("--output", ctx.outputs.out)
     args.add("--template", ctx.file.template)
     args.add("--mode", ctx.attr.mode)

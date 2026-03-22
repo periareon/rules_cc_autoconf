@@ -318,27 +318,23 @@ std::optional<ModuleParserArgs> parse_args(int argc, char* argv[]) {
 }
 
 /**
- * @brief Write a check result JSON file for a package define.
+ * @brief Write a flat result JSON file for a package define.
  *
- * Writes JSON in the format: { "DEFINE_NAME": { "value": "\"...\""", "success":
- * true } }
+ * Writes JSON in the format: { "success": true, "value": "\"...\"" }
  *
  * @param path Path to the output file.
- * @param define_name The define name (e.g., "PACKAGE_NAME").
  * @param value The string value (will be quoted in JSON).
  * @return true on success, false on failure (error printed to stderr).
  */
-bool write_package_json(const std::string& path, const std::string& define_name,
-                        const std::string& value) {
+bool write_package_json(const std::string& path, const std::string& value) {
     std::ofstream out = rules_cc_autoconf::open_ofstream(path);
     if (!out.is_open()) {
         std::cerr << "Error: Could not open output file: " << path << std::endl;
         return false;
     }
-    nlohmann::json j = nlohmann::json::object();
-    j[define_name] = {
-        {"value", "\"" + value + "\""},
+    nlohmann::json j = {
         {"success", true},
+        {"value", "\"" + value + "\""},
     };
     out << j.dump(4) << std::endl;
     out.close();
@@ -415,19 +411,16 @@ int main(int argc, char* argv[]) {
     std::string tarname =
         args.forced_tarname.empty() ? name : args.forced_tarname;
 
-    if (!write_package_json(args.out_name, "PACKAGE_NAME", name)) return 1;
-    if (!write_package_json(args.out_version, "PACKAGE_VERSION", version))
-        return 1;
+    if (!write_package_json(args.out_name, name)) return 1;
+    if (!write_package_json(args.out_version, version)) return 1;
 
     if (!args.out_string.empty()) {
-        if (!write_package_json(args.out_string, "PACKAGE_STRING",
-                                name + " " + version))
+        if (!write_package_json(args.out_string, name + " " + version))
             return 1;
     }
 
     if (!args.out_tarname.empty()) {
-        if (!write_package_json(args.out_tarname, "PACKAGE_TARNAME", tarname))
-            return 1;
+        if (!write_package_json(args.out_tarname, tarname)) return 1;
     }
 
     if (!args.aliases.empty()) {
@@ -445,8 +438,7 @@ int main(int argc, char* argv[]) {
                           << "'" << std::endl;
                 return 1;
             }
-            if (!write_package_json(alias.output_path, alias.name, it->second))
-                return 1;
+            if (!write_package_json(alias.output_path, it->second)) return 1;
         }
     }
 

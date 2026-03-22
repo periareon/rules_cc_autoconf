@@ -58,6 +58,7 @@ bzl_library(
     srcs = ["package_info.bzl"],
     visibility = ["//visibility:public"],
     deps = [
+        ":cc_autoconf_info_bzl",
         "//autoconf/private:bzl_lib",
     ],
 )

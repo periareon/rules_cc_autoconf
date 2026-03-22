@@ -34,6 +34,7 @@ def _autoconf_toolchain_impl(ctx):
             cache = direct_results["cache"],
             define = direct_results["define"],
             subst = direct_results["subst"],
+            unquoted_defines = direct_results["unquoted_defines"],
         )
 
     return [
@@ -43,6 +44,7 @@ def _autoconf_toolchain_impl(ctx):
                 cache = dep_results["cache"],
                 define = dep_results["define"],
                 subst = dep_results["subst"],
+                unquoted_defines = dep_results["unquoted_defines"],
                 defaults_by_label = defaults_by_label,
             ),
         ),

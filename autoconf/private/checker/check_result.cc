@@ -74,37 +74,19 @@ std::optional<CheckResult> CheckResult::from_json(const std::string& name,
         value = std::nullopt;
     }
 
-    // Check for is_define, define_flag, or define for backward compatibility
+    // Flat result format: only success, value, type are in the JSON.
+    // Consumer metadata (is_define, is_subst, define, subst, unquote) is
+    // tracked in Starlark providers and supplied via the manifest at render
+    // time. Defaults here are safe for the checker's own dep-loading path.
     bool is_define = false;
-    if (json_value->contains("is_define") &&
-        (*json_value)["is_define"].is_boolean()) {
-        is_define = (*json_value)["is_define"].get<bool>();
-    } else if (json_value->contains("define_flag") &&
-               (*json_value)["define_flag"].is_boolean()) {
-        is_define = (*json_value)["define_flag"].get<bool>();
-    } else if (json_value->contains("define") &&
-               (*json_value)["define"].is_boolean()) {
-        is_define = (*json_value)["define"].get<bool>();
-    }
-
-    // Check for is_subst, subst_flag, or subst for backward compatibility
     bool is_subst = false;
-    if (json_value->contains("is_subst") &&
-        (*json_value)["is_subst"].is_boolean()) {
-        is_subst = (*json_value)["is_subst"].get<bool>();
-    } else if (json_value->contains("subst_flag") &&
-               (*json_value)["subst_flag"].is_boolean()) {
-        is_subst = (*json_value)["subst_flag"].get<bool>();
-    } else if (json_value->contains("subst") &&
-               (*json_value)["subst"].is_boolean()) {
-        is_subst = (*json_value)["subst"].get<bool>();
-    }
+    std::optional<std::string> define_name;
+    std::optional<std::string> subst_name;
+    bool unquote = false;
 
-    // Check for type (defaults to kDefine for backward compatibility)
     CheckType type = CheckType::kDefine;
     if (json_value->contains("type") && (*json_value)["type"].is_string()) {
         std::string type_str = (*json_value)["type"].get<std::string>();
-        // Parse type string to CheckType enum
         if (type_str == "function") {
             type = CheckType::kFunction;
         } else if (type_str == "lib") {
@@ -118,7 +100,6 @@ std::optional<CheckResult> CheckResult::from_json(const std::string& name,
         } else if (type_str == "define") {
             type = CheckType::kDefine;
         } else if (type_str == "subst") {
-            // Backward compatibility: subst -> kM4Variable
             type = CheckType::kM4Variable;
         } else if (type_str == "m4_variable") {
             type = CheckType::kM4Variable;
@@ -135,34 +116,6 @@ std::optional<CheckResult> CheckResult::from_json(const std::string& name,
         } else if (type_str == "GL_NEXT_HEADER") {
             type = CheckType::kGlNextHeader;
         }
-    }
-
-    // Parse optional define and subst string fields
-    std::optional<std::string> define_name;
-    if (json_value->contains("define") && (*json_value)["define"].is_string()) {
-        define_name = (*json_value)["define"].get<std::string>();
-        // If define is a string, infer is_define should be true (unless
-        // explicitly set to false)
-        if (!json_value->contains("is_define")) {
-            is_define = true;
-        }
-    }
-
-    std::optional<std::string> subst_name;
-    if (json_value->contains("subst") && (*json_value)["subst"].is_string()) {
-        subst_name = (*json_value)["subst"].get<std::string>();
-        // If subst is a string, infer is_subst should be true (unless
-        // explicitly set to false)
-        if (!json_value->contains("is_subst")) {
-            is_subst = true;
-        }
-    }
-
-    // Parse unquote field (for AC_DEFINE_UNQUOTED)
-    bool unquote = false;
-    if (json_value->contains("unquote") &&
-        (*json_value)["unquote"].is_boolean()) {
-        unquote = (*json_value)["unquote"].get<bool>();
     }
 
     CheckResult result(name, value, success, is_define, is_subst, type,
