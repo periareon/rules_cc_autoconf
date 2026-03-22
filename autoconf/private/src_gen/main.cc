@@ -161,26 +161,20 @@ ResultEntry load_single_result_from_file(const std::string& path) {
     file.close();
 
     if (j.is_null() || !j.is_object() || j.empty()) {
-        // Treat empty/invalid as unsuccessful.
         return ResultEntry{};
     }
 
-    // Each results file produced by these rules is expected to contain exactly
-    // one entry. We take the first entry regardless of its key.
-    nlohmann::json::iterator it = j.begin();
-    const nlohmann::json& val = it.value();
-
     ResultEntry entry;
-    nlohmann::json::const_iterator value_it = val.find("value");
-    if (value_it != val.end() && !value_it->is_null()) {
+    nlohmann::json::const_iterator value_it = j.find("value");
+    if (value_it != j.end() && !value_it->is_null()) {
         if (value_it->is_string()) {
             entry.value = value_it->get<std::string>();
         } else {
             entry.value = value_it->dump();
         }
     }
-    nlohmann::json::const_iterator success_it = val.find("success");
-    entry.success = (success_it != val.end()) ? success_it->get<bool>() : false;
+    nlohmann::json::const_iterator success_it = j.find("success");
+    entry.success = (success_it != j.end()) ? success_it->get<bool>() : false;
     return entry;
 }
 

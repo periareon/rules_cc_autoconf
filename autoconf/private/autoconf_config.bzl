@@ -10,6 +10,30 @@ load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
 
 _TOOLCHAIN_TYPE = "//autoconf:toolchain_type"
 
+def encode_result(value, success = True):
+    """Encode a value as a flat result JSON string.
+
+    Returns the content for a result file that can be referenced from
+    ``CcAutoconfInfo``.  Using this function insulates callers from the
+    internal result-file schema.
+
+    Args:
+        value: The result value.  Strings are JSON-encoded (quoted in the
+            output); numbers and booleans are stored as their JSON
+            representation.  Use ``None`` for a valueless define
+            (``#define FOO`` with no value).
+        success: Whether the check succeeded.  Defaults to ``True``.
+            A result with ``success=False`` is rendered as
+            ``/* #undef FOO */`` in the generated header.
+
+    Returns:
+        A JSON string suitable for ``ctx.actions.write``.
+    """
+    return json.encode_indent({
+        "success": success,
+        "value": json.encode(value) if value != None else None,
+    }, indent = " " * 4) + "\n"
+
 def get_autoconf_toolchain_defaults(ctx):
     """Get default checks from the autoconf toolchain if available.
 
@@ -35,6 +59,7 @@ def get_autoconf_toolchain_defaults(ctx):
         cache = getattr(autoconf_defaults, "cache", {}),
         define = getattr(autoconf_defaults, "define", {}),
         subst = getattr(autoconf_defaults, "subst", {}),
+        unquoted_defines = getattr(autoconf_defaults, "unquoted_defines", []),
     )
 
 def get_autoconf_toolchain_defaults_by_label(ctx):
@@ -79,6 +104,7 @@ def filter_defaults(defaults_by_label, include_labels, exclude_labels):
     result_cache = {}
     result_define = {}
     result_subst = {}
+    result_unquoted = {}
 
     if include_labels:
         # Only include specified labels
@@ -92,6 +118,8 @@ def filter_defaults(defaults_by_label, include_labels, exclude_labels):
             result_cache = result_cache | getattr(label_defaults, "cache", {})
             result_define = result_define | getattr(label_defaults, "define", {})
             result_subst = result_subst | getattr(label_defaults, "subst", {})
+            for uq in getattr(label_defaults, "unquoted_defines", []):
+                result_unquoted[uq] = True
     elif exclude_labels:
         # Include all except specified labels
         exclude_set = {label: True for label in exclude_labels}
@@ -100,17 +128,22 @@ def filter_defaults(defaults_by_label, include_labels, exclude_labels):
                 result_cache = result_cache | getattr(label_defaults, "cache", {})
                 result_define = result_define | getattr(label_defaults, "define", {})
                 result_subst = result_subst | getattr(label_defaults, "subst", {})
+                for uq in getattr(label_defaults, "unquoted_defines", []):
+                    result_unquoted[uq] = True
     else:
         # Include all
         for label_defaults in defaults_by_label.values():
             result_cache = result_cache | getattr(label_defaults, "cache", {})
             result_define = result_define | getattr(label_defaults, "define", {})
             result_subst = result_subst | getattr(label_defaults, "subst", {})
+            for uq in getattr(label_defaults, "unquoted_defines", []):
+                result_unquoted[uq] = True
 
     return struct(
         cache = result_cache,
         define = result_define,
         subst = result_subst,
+        unquoted_defines = sorted(result_unquoted.keys()),
     )
 
 def merge_with_defaults(defaults, results):
@@ -137,24 +170,18 @@ def collect_transitive_results(dep_infos):
         dep_infos (list): A list of `CcAutoconfInfo`.
 
     Returns:
-        dict: A mapping of cache variable name to check result files.
+        dict: A mapping with keys "cache", "define", "subst" (each dict[str, File])
+              and "unquoted_defines" (list[str]).
     """
     cache_results = {}
     define_results = {}
     subst_results = {}
+    unquoted_defines_set = {}
     for dep_info in dep_infos:
-        # Check for conflicts before merging - same cache variable from different targets
-        # should point to the same file (they're the same check result)
-        # Compare file paths, not File objects, since the same file from different
-        # dependencies might be different File objects
         for cache_name, cache_file in dep_info.cache_results.items():
             if cache_name in cache_results:
                 existing_file = cache_results[cache_name]
-
-                # Compare file paths to see if they're the same file
                 if existing_file.path != cache_file.path:
-                    # Different files for the same cache variable - this is a conflict
-                    # This should not happen if Starlark properly prevents duplicates
                     fail("Cache variable '{}' is defined in multiple dependencies with different result files:\n  First:  {}\n  Second: {}\nThis indicates duplicate checks across different autoconf targets.".format(
                         cache_name,
                         existing_file.path,
@@ -184,10 +211,14 @@ def collect_transitive_results(dep_infos):
                     ))
             subst_results[subst_name] = subst_file
 
+        for uq in dep_info.unquoted_defines:
+            unquoted_defines_set[uq] = True
+
     return {
         "cache": cache_results,
         "define": define_results,
         "subst": subst_results,
+        "unquoted_defines": sorted(unquoted_defines_set.keys()),
     }
 
 def collect_deps(deps):

@@ -215,17 +215,12 @@ std::optional<bool> read_check_success(const std::string& path) {
         return std::nullopt;
     }
 
-    // The result file has one top-level key (the cache variable name)
-    // with an object containing "success": true/false.
-    auto it = j.begin();
-    const nlohmann::json& result = it.value();
-
-    if (!result.contains("success") || !result["success"].is_boolean()) {
+    if (!j.contains("success") || !j["success"].is_boolean()) {
         std::cerr << "Error: missing 'success' field in: " << path << std::endl;
         return std::nullopt;
     }
 
-    return result["success"].get<bool>();
+    return j["success"].get<bool>();
 }
 
 /**
@@ -243,31 +238,20 @@ std::optional<bool> read_check_success(const std::string& path) {
  */
 int write_result(const std::string& path,
                  const std::optional<std::string>& value, bool success) {
-    nlohmann::json result_obj;
+    nlohmann::json j;
 
     if (value.has_value()) {
         if (value->empty()) {
-            // Empty string: renders as #define restrict /**/
-            result_obj["value"] = "";
+            j["value"] = "";
         } else {
-            // Keyword alias: renders as #define restrict <value>
-            result_obj["value"] = *value;
+            j["value"] = *value;
         }
     } else {
-        // No define needed: keyword works natively.
-        // Write null value so the define is not emitted.
-        result_obj["value"] = nullptr;
+        j["value"] = nullptr;
     }
 
-    result_obj["success"] = success;
-    result_obj["is_define"] = true;
-    result_obj["is_subst"] = false;
-    result_obj["type"] = "compile";
-    result_obj["define"] = "restrict";
-    result_obj["unquote"] = true;
-
-    nlohmann::json j;
-    j["restrict"] = result_obj;
+    j["success"] = success;
+    j["type"] = "compile";
 
     std::ofstream out(path);
     if (!out.is_open()) {

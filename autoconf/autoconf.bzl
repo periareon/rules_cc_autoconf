@@ -54,6 +54,7 @@ def _autoconf_impl(ctx):
     cache_results = {}
     define_results = {}
     subst_results = {}
+    unquoted_defines = []
 
     actions = {}
 
@@ -89,9 +90,10 @@ def _autoconf_impl(ctx):
                 ))
 
             define_checks[define_name] = check
-
-            # Use cache file directly - no symlink needed
             define_results[define_name] = output
+
+            if check.get("unquote", False):
+                unquoted_defines.append(define_name)
 
         # Check for truthy value
         if subst:
@@ -320,6 +322,7 @@ def _autoconf_impl(ctx):
             cache_results = cache_results,
             define_results = define_results,
             subst_results = subst_results,
+            unquoted_defines = unquoted_defines,
         ),
         OutputGroupInfo(
             autoconf_checks = depset([action.input for action in actions.values()]),

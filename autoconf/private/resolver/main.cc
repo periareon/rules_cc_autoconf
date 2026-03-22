@@ -1,5 +1,5 @@
 /**
- * @brief Merges check results and generates config.h from a template.
+ * @brief Loads a manifest and generates config.h from a template.
  */
 
 #include <fstream>
@@ -22,17 +22,8 @@ namespace {
  * @brief Parsed command-line arguments for resolver binary.
  */
 struct ResolverArgs {
-    /** Paths to JSON result files for cache variables (can be specified
-     * multiple times) */
-    std::vector<std::filesystem::path> cache_results_paths{};
-
-    /** Paths to JSON result files for defines (can be specified multiple times)
-     */
-    std::vector<std::filesystem::path> define_results_paths{};
-
-    /** Paths to JSON result files for subst values (can be specified multiple
-     * times) */
-    std::vector<std::filesystem::path> subst_results_paths{};
+    /** Path to manifest JSON mapping define/subst names to result file paths */
+    std::filesystem::path manifest_path{};
 
     /** Path to template file (config.h.in) (required) */
     std::filesystem::path template_path{};
@@ -56,19 +47,10 @@ struct ResolverArgs {
 void print_usage(const char* program_name) {
     std::cout << "Usage: " << program_name << " [options]\n";
     std::cout << "Options:\n";
-    std::cout << "  --cache-result <file>  Path to JSON results file for cache "
-                 "variables (can be "
-                 "specified multiple times)\n";
-    std::cout << "  --define-result <file> Path to JSON results file for "
-                 "defines (can be "
-                 "specified multiple times)\n";
-    std::cout << "  --subst-result <file>  Path to JSON results file for subst "
-                 "values (can be "
-                 "specified multiple times)\n";
+    std::cout << "  --manifest <file>      Path to manifest JSON mapping "
+                 "define/subst names to result files (required)\n";
     std::cout
         << "  --template <file>      Template file (config.h.in) (required)\n";
-    std::cout << "  --config <file>        Optional config file (for running "
-                 "additional checks from template)\n";
     std::cout << "  --output <file>        Path to output config.h file "
                  "(required)\n";
     std::cout << "  --inline <json>        JSON object mapping search strings "
@@ -82,7 +64,6 @@ void print_usage(const char* program_name) {
 }
 
 std::optional<ResolverArgs> parse_args(int argc, char* argv[]) {
-    // Expand @file response file if present
     std::vector<std::string> expanded_args;
     std::vector<char*> expanded_argv;
     int expanded_argc;
@@ -101,30 +82,11 @@ std::optional<ResolverArgs> parse_args(int argc, char* argv[]) {
         if (arg == "--help" || arg == "-h") {
             args.show_help = true;
             return args;
-        } else if (arg == "--cache-result") {
+        } else if (arg == "--manifest") {
             if (i + 1 < expanded_argc) {
-                args.cache_results_paths.push_back(
-                    std::string(expanded_argv_ptr[++i]));
+                args.manifest_path = std::string(expanded_argv_ptr[++i]);
             } else {
-                std::cerr << "Error: --cache-result requires a file path"
-                          << std::endl;
-                return std::nullopt;
-            }
-        } else if (arg == "--define-result") {
-            if (i + 1 < expanded_argc) {
-                args.define_results_paths.push_back(
-                    std::string(expanded_argv_ptr[++i]));
-            } else {
-                std::cerr << "Error: --define-result requires a file path"
-                          << std::endl;
-                return std::nullopt;
-            }
-        } else if (arg == "--subst-result") {
-            if (i + 1 < expanded_argc) {
-                args.subst_results_paths.push_back(
-                    std::string(expanded_argv_ptr[++i]));
-            } else {
-                std::cerr << "Error: --subst-result requires a file path"
+                std::cerr << "Error: --manifest requires a file path"
                           << std::endl;
                 return std::nullopt;
             }
@@ -194,10 +156,6 @@ std::optional<ResolverArgs> parse_args(int argc, char* argv[]) {
         }
     }
 
-    // Validate required arguments
-    // Note: result paths can be empty - the resolver will just process the
-    // template without any check results
-
     if (args.output_path.empty()) {
         std::cerr << "Error: --output is required" << std::endl;
         return std::nullopt;
@@ -205,6 +163,11 @@ std::optional<ResolverArgs> parse_args(int argc, char* argv[]) {
 
     if (args.template_path.empty()) {
         std::cerr << "Error: --template is required" << std::endl;
+        return std::nullopt;
+    }
+
+    if (args.manifest_path.empty()) {
+        std::cerr << "Error: --manifest is required" << std::endl;
         return std::nullopt;
     }
 
@@ -227,7 +190,6 @@ int main(int argc, char* argv[]) {
     }
 
     return Resolver::resolve_and_generate(
-        args.cache_results_paths, args.define_results_paths,
-        args.subst_results_paths, args.template_path, args.output_path,
-        args.inlines, args.substitutions, args.mode);
+        args.manifest_path, args.template_path, args.output_path, args.inlines,
+        args.substitutions, args.mode);
 }
