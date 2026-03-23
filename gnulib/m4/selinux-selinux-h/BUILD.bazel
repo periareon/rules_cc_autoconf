@@ -2,44 +2,64 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
+# gl_HEADERS_SELINUX_SELINUX_H - lines 16-40
+# AC_REQUIRE([gl_CHECK_HEADER_SELINUX_SELINUX_H])
+# Conditionally calls gl_CHECK_NEXT_HEADERS([selinux/selinux.h])
+# when with_selinux != no and header is found
 autoconf(
-    name = "selinux-selinux-h",
+    name = "gl_HEADERS_SELINUX_SELINUX_H",
+    checks = gl_macros.GL_NEXT_HEADERS(
+        ["selinux/selinux.h"],
+        condition = "HAVE_SELINUX_SELINUX_H",
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_CHECK_HEADER_SELINUX_SELINUX_H",
+    ],
+)
+
+# gl_CHECK_HEADER_SELINUX_SELINUX_H - lines 42-70
+# AC_REQUIRE([gl_LIBSELINUX])
+# Checks for selinux/selinux.h and sets USE_SELINUX_SELINUX_H
+autoconf(
+    name = "gl_CHECK_HEADER_SELINUX_SELINUX_H",
     checks = [
         checks.AC_CHECK_HEADER(
             "selinux/selinux.h",
             define = "HAVE_SELINUX_SELINUX_H",
         ),
-    ] + select({
-        "@platforms//os:linux": [
-            # SELinux header exists on Linux but is not always available
-            # Set USE_SELINUX_SELINUX_H to 0 (not undef)
-            checks.AC_DEFINE(
-                "USE_SELINUX_SELINUX_H",
-                "0",
-                subst = True,
-            ),
-            checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_SELINUX_SELINUX_H", ""),
-            checks.AC_SUBST("NEXT_SELINUX_SELINUX_H", ""),
-        ],
-        "@platforms//os:macos": [
-            # SELinux is not available on macOS - set to 0 (not undef)
-            checks.AC_DEFINE(
-                "USE_SELINUX_SELINUX_H",
-                "0",
-                subst = True,
-            ),
-            checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_SELINUX_SELINUX_H", ""),
-            checks.AC_SUBST("NEXT_SELINUX_SELINUX_H", ""),
-        ],
-        "//conditions:default": [],
-    }),
-    # Note: USE_SELINUX_SELINUX_H and LIB_SELINUX AC_SUBST are intentionally
-    # not set here because the gnulib m4 only sets them when SELinux is detected.
-    # On non-Linux platforms, the @VAR@ patterns remain unsubstituted in subst.h.
+        checks.AC_DEFINE(
+            "USE_SELINUX_SELINUX_H",
+            condition = "HAVE_SELINUX_SELINUX_H",
+            if_false = "0",
+            if_true = "1",
+            subst = True,
+        ),
+    ],
     visibility = ["//visibility:public"],
     deps = [
+        ":gl_LIBSELINUX",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
-        "//gnulib/m4/include_next",  # Required for INCLUDE_NEXT variables
+        "//gnulib/m4/include_next",
+    ],
+)
+
+# gl_LIBSELINUX - lines 72-99
+# AC_ARG_WITH, AC_SEARCH_LIBS - library detection not applicable in Bazel
+autoconf(
+    name = "gl_LIBSELINUX",
+    visibility = ["//visibility:public"],
+)
+
+# Package-level aggregator
+autoconf(
+    name = "selinux-selinux-h",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_CHECK_HEADER_SELINUX_SELINUX_H",
+        ":gl_HEADERS_SELINUX_SELINUX_H",
+        ":gl_LIBSELINUX",
     ],
 )

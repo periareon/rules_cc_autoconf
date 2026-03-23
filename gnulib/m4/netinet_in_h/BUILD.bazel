@@ -2,22 +2,23 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
-# Core checks without module-specific AC_SUBSTs
-# This can be used by modules that just need the header/type checks
-# Core netinet/in.h checks without HAVE_NETINET_IN_H subst
+# gl_HEADER_NETINET_IN - single AC_DEFUN
 autoconf(
     name = "gl_HEADER_NETINET_IN",
     checks = [
+        # AC_CACHE_CHECK([whether <netinet/in.h> is self-contained])
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_header_netinet_in_h_selfcontained",
+            code = "struct sockaddr_in sa; (void)sa;",
+            includes = ["#include <netinet/in.h>"],
+        ),
         checks.AC_CHECK_HEADER(
             "netinet/in.h",
             define = "HAVE_NETINET_IN_H",
         ),
-        checks.AC_TRY_COMPILE(
-            code = "struct sockaddr_in sa; (void)sa;",
-            define = "HAVE_NETINET_IN_H_SELFCONTAINED",
-            includes = ["#include <netinet/in.h>"],
-        ),
+
         # Type checks
         checks.AC_CHECK_TYPE(
             "struct sockaddr_in",
@@ -39,6 +40,7 @@ autoconf(
             define = "HAVE_IN_PORT_T",
             includes = ["#include <netinet/in.h>"],
         ),
+
         # Constants check
         checks.AC_TRY_COMPILE(
             code = "int x = INET_ADDRSTRLEN; (void)x;",
@@ -50,6 +52,7 @@ autoconf(
             define = "HAVE_INET6_ADDRSTRLEN",
             includes = ["#include <netinet/in.h>"],
         ),
+
         # IPv4/IPv6 support (shared by inet_ntop and inet_pton)
         checks.AC_TRY_COMPILE(
             code = """#include <netinet/in.h>
@@ -69,7 +72,12 @@ int main(void) {
 }""",
             define = "HAVE_IPV6",
         ),
-    ],
+
+        # gl_CHECK_NEXT_HEADERS([netinet/in.h]) - only called when not self-contained
+    ] + gl_macros.GL_NEXT_HEADERS(
+        ["netinet/in.h"],
+        condition = "!gl_cv_header_netinet_in_h_selfcontained",
+    ),
     visibility = ["//gnulib:__subpackages__"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
@@ -77,17 +85,23 @@ int main(void) {
     ],
 )
 
-# Full netinet_in_h module with AC_SUBSTs for test compatibility
+# HAVE_NETINET_IN_H subst is separated from gl_HEADER_NETINET_IN because
+# downstream modules (inet_ntop, sockpfaf, etc.) depend on :gl_HEADER_NETINET_IN
+# for header checks only. In Bazel, substs propagate through deps -- placing it
+# on gl_HEADER_NETINET_IN would substitute @HAVE_NETINET_IN_H@ in their templates.
+# The M4 equivalent AC_SUBST([HAVE_NETINET_IN_H]) is only called when the header
+# is not self-contained, which never happens on modern platforms (value is always "").
+autoconf(
+    name = "gl_HEADER_NETINET_IN_subst",
+    checks = [
+        checks.AC_SUBST("HAVE_NETINET_IN_H", ""),
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [":gl_HEADER_NETINET_IN"],
+)
+
 autoconf(
     name = "netinet_in_h",
-    checks = [
-        # Golden expects empty string for HAVE_* and NEXT_* on both macOS and Linux
-        checks.AC_SUBST("HAVE_NETINET_IN_H", ""),
-        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_NETINET_IN_H", ""),
-        checks.AC_SUBST("NEXT_NETINET_IN_H", ""),
-    ],
     visibility = ["//visibility:public"],
-    deps = [
-        ":gl_HEADER_NETINET_IN",
-    ],
+    deps = [":gl_HEADER_NETINET_IN_subst"],
 )

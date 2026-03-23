@@ -25,10 +25,10 @@ int main(void) {
             define = "HAVE_C_STATIC_ASSERT",
             language = "c",
         ),
-        # Upstream gnulib only calls gl_NEXT_HEADERS when static_assert is
-        # unavailable, but consumers always generate the assert.h wrapper
-        # (unconditional autoconf_hdr), so NEXT_ASSERT_H must always be set.
-    ] + gl_macros.GL_NEXT_HEADERS(["assert.h"]),
+    ] + gl_macros.GL_NEXT_HEADERS(
+        ["assert.h"],
+        condition = "!HAVE_C_STATIC_ASSERT",
+    ),
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",

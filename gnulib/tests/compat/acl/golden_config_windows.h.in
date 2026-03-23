@@ -30,4 +30,4 @@
 /* #undef QCOPY_ACL_LIB */
 #define STDC_HEADERS 1
 #define USE_ACL 0
-/* #undef USE_SELINUX_SELINUX_H */
+#define USE_SELINUX_SELINUX_H 0
