@@ -2,11 +2,13 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks", "utils")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
-# and NEXT_AS_FIRST_DIRECTIVE_NET_IF_H accordingly
+# gl_HEADER_NET_IF - single AC_DEFUN
 autoconf(
     name = "gl_HEADER_NET_IF",
     checks = [
+        # AC_CACHE_CHECK([whether <net/if.h> is self-contained])
         checks.AC_TRY_COMPILE(
             name = "_gl_cv_header_net_if_h_selfcontained",
             code = utils.AC_LANG_PROGRAM(
@@ -16,12 +18,7 @@ autoconf(
             language = "c",
         ),
 
-        # If <net/if.h> is self-contained (line 21), GL_GENERATE_NET_IF_H=false
-        # No defines are set in this case
-        # If not self-contained (line 23), GL_GENERATE_NET_IF_H=true and we check for the header
-
-        # Only set defines if header is not self-contained
-        # Use AC_TRY_COMPILE to check for the header with sys/socket.h included first
+        # AC_CHECK_HEADERS([net/if.h], ...) - only when not self-contained
         checks.AC_TRY_COMPILE(
             name = "_gl_cv_header_net_if_h",
             code = """#include <sys/socket.h>
@@ -30,8 +27,6 @@ int main(void) { return 0; }""",
             language = "c",
             requires = ["!_gl_cv_header_net_if_h_selfcontained"],
         ),
-
-        # Set HAVE_NET_IF_H as define if header exists and is not self-contained
         checks.AC_DEFINE(
             "HAVE_NET_IF_H",
             "1",
@@ -41,18 +36,23 @@ int main(void) { return 0; }""",
             ],
         ),
 
-        # Golden expects empty string on both macOS and Linux when <net/if.h> is self-contained
-        checks.AC_SUBST("HAVE_NET_IF_H", ""),
-        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_NET_IF_H", ""),
-        checks.AC_SUBST("NEXT_NET_IF_H", ""),
-    ],
+        # AC_SUBST([HAVE_NET_IF_H]) - only set when not self-contained
+        checks.AC_SUBST(
+            "HAVE_NET_IF_H",
+            condition = "_gl_cv_header_net_if_h_selfcontained",
+            if_false = "1",
+            if_true = "",
+        ),
+
+        # gl_NEXT_HEADERS([net/if.h]) - only called when not self-contained
+    ] + gl_macros.GL_NEXT_HEADERS(
+        ["net/if.h"],
+        condition = "!_gl_cv_header_net_if_h_selfcontained",
+    ),
     visibility = ["//visibility:public"],
     deps = [
-        # Only needed if header is not self-contained
-        # But we include it anyway, and the checks will only run if not self-contained
-        "//gnulib/m4/include_next",
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/include_next",
     ],
 )
 

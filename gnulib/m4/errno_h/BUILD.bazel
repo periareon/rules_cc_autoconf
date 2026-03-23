@@ -2,113 +2,37 @@
 
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 autoconf(
-    name = "errno_h",
+    name = "gl_HEADER_ERRNO_H",
     checks = [
-        checks.AC_CHECK_HEADER(
-            "errno.h",
-            define = "HAVE_ERRNO_H",
-        ),
-
-        # These are POSIX error codes that may be missing on some platforms
+        # AC_CACHE_CHECK([for complete errno.h], [gl_cv_header_errno_h_complete])
+        # Single combined check for all 18 error codes (matches M4's AC_EGREP_CPP)
         checks.AC_TRY_COMPILE(
-            code = "int x = ETXTBSY; (void)x;",
-            define = "HAVE_ETXTBSY",
+            name = "gl_cv_header_errno_h_complete",
+            code = """\
+int e[] = {ETXTBSY, ENOMSG, EIDRM, ENOLINK, EPROTO, EMULTIHOP,
+           EBADMSG, EOVERFLOW, ENOTSUP, ENETRESET, ECONNABORTED,
+           ESTALE, EDQUOT, ECANCELED, EOWNERDEAD, ENOTRECOVERABLE,
+           EILSEQ, ESOCKTNOSUPPORT}; (void)e;""",
             includes = ["#include <errno.h>"],
         ),
-        checks.AC_TRY_COMPILE(
-            code = "int x = ENOMSG; (void)x;",
-            define = "HAVE_ENOMSG",
-            includes = ["#include <errno.h>"],
-        ),
-        checks.AC_TRY_COMPILE(
-            code = "int x = EIDRM; (void)x;",
-            define = "HAVE_EIDRM",
-            includes = ["#include <errno.h>"],
-        ),
-        checks.AC_TRY_COMPILE(
-            code = "int x = ENOLINK; (void)x;",
-            define = "HAVE_ENOLINK",
-            includes = ["#include <errno.h>"],
-        ),
-        checks.AC_TRY_COMPILE(
-            code = "int x = EPROTO; (void)x;",
-            define = "HAVE_EPROTO",
-            includes = ["#include <errno.h>"],
-        ),
-        checks.AC_TRY_COMPILE(
-            code = "int x = EMULTIHOP; (void)x;",
-            define = "HAVE_EMULTIHOP",
-            includes = ["#include <errno.h>"],
-        ),
-        checks.AC_TRY_COMPILE(
-            code = "int x = EBADMSG; (void)x;",
-            define = "HAVE_EBADMSG",
-            includes = ["#include <errno.h>"],
-        ),
-        checks.AC_TRY_COMPILE(
-            code = "int x = EOVERFLOW; (void)x;",
-            define = "HAVE_EOVERFLOW",
-            includes = ["#include <errno.h>"],
-        ),
-        checks.AC_TRY_COMPILE(
-            code = "int x = ENOTSUP; (void)x;",
-            define = "HAVE_ENOTSUP",
-            includes = ["#include <errno.h>"],
-        ),
-        checks.AC_TRY_COMPILE(
-            code = "int x = ENETRESET; (void)x;",
-            define = "HAVE_ENETRESET",
-            includes = ["#include <errno.h>"],
-        ),
-        checks.AC_TRY_COMPILE(
-            code = "int x = ECONNABORTED; (void)x;",
-            define = "HAVE_ECONNABORTED",
-            includes = ["#include <errno.h>"],
-        ),
-        checks.AC_TRY_COMPILE(
-            code = "int x = ESTALE; (void)x;",
-            define = "HAVE_ESTALE",
-            includes = ["#include <errno.h>"],
-        ),
-        checks.AC_TRY_COMPILE(
-            code = "int x = EDQUOT; (void)x;",
-            define = "HAVE_EDQUOT",
-            includes = ["#include <errno.h>"],
-        ),
-        checks.AC_TRY_COMPILE(
-            code = "int x = ECANCELED; (void)x;",
-            define = "HAVE_ECANCELED",
-            includes = ["#include <errno.h>"],
-        ),
-        checks.AC_TRY_COMPILE(
-            code = "int x = EOWNERDEAD; (void)x;",
-            define = "HAVE_EOWNERDEAD",
-            includes = ["#include <errno.h>"],
-        ),
-        checks.AC_TRY_COMPILE(
-            code = "int x = ENOTRECOVERABLE; (void)x;",
-            define = "HAVE_ENOTRECOVERABLE",
-            includes = ["#include <errno.h>"],
-        ),
-        checks.AC_TRY_COMPILE(
-            code = "int x = EILSEQ; (void)x;",
-            define = "HAVE_EILSEQ",
-            includes = ["#include <errno.h>"],
-        ),
-        checks.AC_TRY_COMPILE(
-            code = "int x = ESOCKTNOSUPPORT; (void)x;",
-            define = "HAVE_ESOCKTNOSUPPORT",
-            includes = ["#include <errno.h>"],
-        ),
-        # NEXT_ERRNO_H and NEXT_AS_FIRST_DIRECTIVE_ERRNO_H are provided by include_next
-        # They should be empty strings (no replacement needed)
-        checks.AC_SUBST("NEXT_ERRNO_H", ""),
-        checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_ERRNO_H", ""),
-    ],
+        # gl_NEXT_HEADERS([errno.h]) -- only called when errno.h is incomplete
+    ] + gl_macros.GL_NEXT_HEADERS(
+        ["errno.h"],
+        condition = "!gl_cv_header_errno_h_complete",
+    ),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/include_next",
+    ],
+)
+
+autoconf(
+    name = "errno_h",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_HEADER_ERRNO_H",
     ],
 )
