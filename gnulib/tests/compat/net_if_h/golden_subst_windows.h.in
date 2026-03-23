@@ -1,7 +1,7 @@
 /* subst.h.in */
-#define SUBST_HAVE_NET_IF_H ""
+#define SUBST_HAVE_NET_IF_H "1"
 #define SUBST_INCLUDE_NEXT ""
 #define SUBST_INCLUDE_NEXT_AS_FIRST_DIRECTIVE ""
-#define SUBST_NEXT_AS_FIRST_DIRECTIVE_NET_IF_H ""
-#define SUBST_NEXT_NET_IF_H ""
+#define SUBST_NEXT_AS_FIRST_DIRECTIVE_NET_IF_H "<net/if.h>"
+#define SUBST_NEXT_NET_IF_H "<net/if.h>"
 #define SUBST_PRAGMA_SYSTEM_HEADER ""
