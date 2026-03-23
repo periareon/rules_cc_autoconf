@@ -6,7 +6,7 @@ Test suite for verifying autoconf_hdr defaults functionality.
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
-load("//autoconf:autoconf_toolchain.bzl", "autoconf_toolchain")
+load("//autoconf:autoconf_toolchain.bzl", "autoconf_cache", "autoconf_toolchain")
 load("//autoconf:checks.bzl", "checks")
 load("//autoconf:package_info.bzl", "package_info")
 load("//autoconf/tests:diff_test.bzl", "diff_test")
@@ -74,7 +74,7 @@ def defaults_test_suite(*, name, **kwargs):
 
     # Defaults set 1: module_a defaults
     # Tagged as manual so they're not built unless explicitly requested
-    autoconf(
+    autoconf_cache(
         name = "module_a_defaults",
         checks = [
             checks.AC_DEFINE("DEFAULT_FROM_A", 1),
@@ -88,7 +88,7 @@ def defaults_test_suite(*, name, **kwargs):
 
     # Defaults set 2: module_b defaults
     # Tagged as manual so they're not built unless explicitly requested
-    autoconf(
+    autoconf_cache(
         name = "module_b_defaults",
         checks = [
             checks.AC_DEFINE("DEFAULT_FROM_B", 1),
@@ -104,8 +104,8 @@ def defaults_test_suite(*, name, **kwargs):
     autoconf(
         name = "test_autoconf",
         checks = [
-            # This will override DEFAULT_FROM_A if defaults are merged
-            checks.AC_DEFINE("DEFAULT_FROM_A", 2),
+            # Same check as module_a — should be a cache hit when toolchain is active
+            checks.AC_DEFINE("DEFAULT_FROM_A", 1),
             # This is unique to the test target
             checks.AC_DEFINE("TARGET_SPECIFIC", 100),
             checks.AC_SUBST("SUBST_TARGET_SPECIFIC", "target_value"),
@@ -118,7 +118,7 @@ def defaults_test_suite(*, name, **kwargs):
     # Tagged as manual so it's not built unless explicitly requested
     autoconf_toolchain(
         name = "test_toolchain_impl",
-        deps = [
+        defaults = [
             ":module_a_defaults",
             ":module_b_defaults",
         ],
@@ -167,7 +167,7 @@ def defaults_test_suite(*, name, **kwargs):
         out = "golden_config_defines_no_defaults.h.in",
         content = [
             "/* config.h.in - defines mode, no defaults */",
-            "#define DEFAULT_FROM_A 2",
+            "#define DEFAULT_FROM_A 1",
             "/* #undef DEFAULT_FROM_B */",
             "#define TARGET_SPECIFIC 100",
             "",
@@ -218,7 +218,7 @@ def defaults_test_suite(*, name, **kwargs):
         out = "golden_config_defines_with_defaults.h.in",
         content = [
             "/* config.h.in - defines mode, with defaults */",
-            "#define DEFAULT_FROM_A 2",
+            "#define DEFAULT_FROM_A 1",
             "#define DEFAULT_FROM_B 1",
             "#define TARGET_SPECIFIC 100",
             "",
@@ -465,8 +465,8 @@ def defaults_test_suite(*, name, **kwargs):
         out = "golden_config_defines_with_include.h.in",
         content = [
             "/* config.h.in - defines mode, with defaults_include (module_a only) */",
-            "#define DEFAULT_FROM_A 2",  # From target (overrides default, but target sets it)
-            "/* #undef DEFAULT_FROM_B */",  # Not included (module_b excluded)
+            "#define DEFAULT_FROM_A 1",
+            "/* #undef DEFAULT_FROM_B */",
             "",
         ],
     )
@@ -515,8 +515,8 @@ def defaults_test_suite(*, name, **kwargs):
         out = "golden_config_defines_with_exclude.h.in",
         content = [
             "/* config.h.in - defines mode, with defaults_exclude (exclude module_b) */",
-            "#define DEFAULT_FROM_A 2",  # From target (overrides default)
-            "/* #undef DEFAULT_FROM_B */",  # Not included (module_b excluded)
+            "#define DEFAULT_FROM_A 1",
+            "/* #undef DEFAULT_FROM_B */",
             "",
         ],
     )
@@ -534,13 +534,13 @@ def defaults_test_suite(*, name, **kwargs):
 
     # Transitive dependency: module_c depends on module_a
     # This tests that defaults_by_label includes transitive results
-    autoconf(
+    autoconf_cache(
         name = "module_c_transitive_dep",
         checks = [
             checks.AC_DEFINE("DEFAULT_FROM_C", 1),
             checks.AC_SUBST("SUBST_FROM_C", "c_value"),
         ],
-        deps = [":module_a_defaults"],  # Transitive dependency
+        deps = [":module_a_defaults"],
         visibility = ["//visibility:public"],
         tags = ["manual"],
     )
@@ -548,8 +548,8 @@ def defaults_test_suite(*, name, **kwargs):
     # Test toolchain with module_c (which transitively includes module_a)
     autoconf_toolchain(
         name = "test_toolchain_transitive_impl",
-        deps = [
-            ":module_c_transitive_dep",  # This should include module_a transitively
+        defaults = [
+            ":module_c_transitive_dep",
         ],
         visibility = ["//visibility:public"],
         tags = ["manual"],
@@ -644,7 +644,7 @@ def defaults_test_suite(*, name, **kwargs):
         out = "golden_config_defines_transitive.h.in",
         content = [
             "/* config.h.in - transitive dependencies test */",
-            "#define DEFAULT_FROM_A 2",  # From target (overrides default from module_a transitive)
+            "#define DEFAULT_FROM_A 1",
             "#define DEFAULT_FROM_C 1",  # From module_c (direct)
             "",
         ],

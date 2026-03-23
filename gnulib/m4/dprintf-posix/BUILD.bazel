@@ -1,6 +1,6 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/dprintf-posix.m4"""
 
-load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 
 # This module checks if dprintf is POSIX compliant and replaces it if not.
 # The m4 file has a complex check (gl_FUNC_DPRINTF_IS_POSIX) that checks many

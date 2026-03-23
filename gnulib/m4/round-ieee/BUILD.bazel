@@ -9,7 +9,7 @@ also run the IEEE compliance test (round(-0.0) sign bit preservation). On Linux 
 round(-0.0) returns +0.0 (loses sign bit), so REPLACE_ROUND=1.
 """
 
-load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(

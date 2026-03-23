@@ -16,7 +16,7 @@ One Bazel target per AC_DEFUN in vasnprintf.m4:
 Aggregate target "vasnprintf" depends on core prereqs and extras.
 """
 
-load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(

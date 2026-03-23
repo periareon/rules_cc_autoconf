@@ -8,7 +8,7 @@ gl_PTHREAD_MUTEX:
   - If not: HAVE_*=0, AC_DEFINE PTHREAD_MUTEXATTR_ROBUST_UNIMPLEMENTED
 """
 
-load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(

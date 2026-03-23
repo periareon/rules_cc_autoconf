@@ -9,7 +9,7 @@ gl_FUNC_SETPAYLOAD:
 Note: setpayload does NOT call gl_FUNC_GETPAYLOAD, so HAVE_GETPAYLOAD* should stay at defaults (1)
 """
 
-load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(

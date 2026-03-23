@@ -2,8 +2,7 @@ load("//autoconf:autoconf_toolchain.bzl", "autoconf_toolchain")
 
 autoconf_toolchain(
     name = "gnulib_toolchain",
-    visibility = ["//visibility:public"],
-    deps = [
+    defaults = [
         "//gnulib/m4/arpa_inet_h:defaults",
         "//gnulib/m4/ctype_h:defaults",
         "//gnulib/m4/dirent_h:defaults",
@@ -59,6 +58,7 @@ autoconf_toolchain(
         "//gnulib/m4/wchar_h:defaults",
         "//gnulib/m4/wctype_h:defaults",
     ],
+    visibility = ["//visibility:public"],
 )
 
 toolchain(

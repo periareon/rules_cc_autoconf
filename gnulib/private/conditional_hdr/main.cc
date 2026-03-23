@@ -113,16 +113,13 @@ ResultEntry load_result(const std::string& path) {
         return {};
     }
 
-    auto it = j.begin();
-    const auto& val = it.value();
-
     ResultEntry entry;
-    auto vi = val.find("value");
-    if (vi != val.end() && !vi->is_null()) {
+    auto vi = j.find("value");
+    if (vi != j.end() && !vi->is_null()) {
         entry.value = vi->is_string() ? vi->get<std::string>() : vi->dump();
     }
-    auto si = val.find("success");
-    entry.success = (si != val.end()) ? si->get<bool>() : false;
+    auto si = j.find("success");
+    entry.success = (si != j.end()) ? si->get<bool>() : false;
     return entry;
 }
 

@@ -7,7 +7,7 @@ gl_FUNC_COSL:
 - AC_SUBST([COSL_LIBM])
 """
 
-load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(

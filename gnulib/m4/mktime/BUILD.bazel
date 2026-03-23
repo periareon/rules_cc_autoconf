@@ -4,7 +4,7 @@ gl_FUNC_MKTIME_WORKS - runtime check for working mktime, sets gl_cv_func_working
 gl_FUNC_MKTIME - full mktime function check, sets REPLACE_MKTIME based on gl_cv_func_working_mktime
 """
 
-load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 # This is the runtime check that determines gl_cv_func_working_mktime.

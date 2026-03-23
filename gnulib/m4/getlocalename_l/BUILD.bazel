@@ -10,7 +10,7 @@ gl_PREREQ_GETLOCALENAME_L_UNSAFE: locale_h_defaults, gl_LOCALE_T, gt_INTL_THREAD
   langinfo.h, newlocale/duplocale/freelocale (from those modules).
 """
 
-load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 # gl_FUNC_GETLOCALENAME_L_UNSAFE: main logic

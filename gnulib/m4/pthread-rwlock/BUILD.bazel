@@ -8,7 +8,7 @@ Single AC_DEFUN gl_PTHREAD_RWLOCK:
 - Linux-only: AC_CACHE_CHECK wait queue (AC_RUN_IFELSE); if no → REPLACE_PTHREAD_RWLOCK_INIT, REPLACE_PTHREAD_RWLOCKATTR_INIT=1
 """
 
-load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(

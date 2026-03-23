@@ -34,8 +34,31 @@ def encode_result(value, success = True):
         "value": json.encode(value) if value != None else None,
     }, indent = " " * 4) + "\n"
 
+def get_autoconf_toolchain_cache(ctx):
+    """Get the content-based cache from the autoconf toolchain.
+
+    Returns the unified content cache from both ``cache_deps`` and ``defaults``
+    on the toolchain.  Used by the ``autoconf`` rule for content-based action
+    deduplication.
+
+    Args:
+        ctx (ctx): The rule context (must declare the autoconf toolchain type).
+
+    Returns:
+        dict[str, File]: Mapping of content keys to result files.
+                         Empty dict if no toolchain is configured.
+    """
+    toolchain = ctx.toolchains[_TOOLCHAIN_TYPE]
+    if not toolchain:
+        return {}
+    cache = getattr(toolchain, "autoconf_cache", None)
+    return cache if cache else {}
+
 def get_autoconf_toolchain_defaults(ctx):
     """Get default checks from the autoconf toolchain if available.
+
+    Returns only the ``defaults`` portion of the toolchain (not ``cache_deps``).
+    Used by ``autoconf_hdr`` for rendering baseline values.
 
     Args:
         ctx (ctx): The rule context.
@@ -170,24 +193,25 @@ def collect_transitive_results(dep_infos):
         dep_infos (list): A list of `CcAutoconfInfo`.
 
     Returns:
-        dict: A mapping with keys "cache", "define", "subst" (each dict[str, File])
-              and "unquoted_defines" (list[str]).
+        dict: A mapping with keys "cache", "content_cache", "define", "subst"
+              (each dict[str, File]) and "unquoted_defines" (list[str]).
     """
     cache_results = {}
+    content_cache = {}
     define_results = {}
     subst_results = {}
     unquoted_defines_set = {}
     for dep_info in dep_infos:
+        # Cache variable names — no conflict detection needed since content-based
+        # dedup handles identity; the same name may appear from different actions
+        # that are semantically identical.
         for cache_name, cache_file in dep_info.cache_results.items():
-            if cache_name in cache_results:
-                existing_file = cache_results[cache_name]
-                if existing_file.path != cache_file.path:
-                    fail("Cache variable '{}' is defined in multiple dependencies with different result files:\n  First:  {}\n  Second: {}\nThis indicates duplicate checks across different autoconf targets.".format(
-                        cache_name,
-                        existing_file.path,
-                        cache_file.path,
-                    ))
             cache_results[cache_name] = cache_file
+
+        # Content cache — same content key always means the same check, so
+        # merging is safe without conflict detection.
+        for ckey, cfile in dep_info.content_cache.items():
+            content_cache[ckey] = cfile
 
         for define_name, define_file in dep_info.define_results.items():
             if define_name in define_results:
@@ -216,6 +240,7 @@ def collect_transitive_results(dep_infos):
 
     return {
         "cache": cache_results,
+        "content_cache": content_cache,
         "define": define_results,
         "subst": subst_results,
         "unquoted_defines": sorted(unquoted_defines_set.keys()),

@@ -8,7 +8,7 @@ Note: This does NOT require gl_WCHAR_H, so we should NOT bring in wchar_h which 
 AC_SUBST HAVE_WINT_T. The test expects HAVE_WINT_T to remain unsubstituted.
 """
 
-load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 
 autoconf(
     name = "vasnwprintf-posix",
