@@ -60,9 +60,21 @@ autoconf(
 autoconf(
     name = "gl_PREREQ_SYS_H_WINSOCK2",
     checks = [
-        checks.AC_SUBST("HAVE_WINSOCK2_H", 0),
+        checks.AC_CHECK_HEADER(
+            "winsock2.h",
+            requires = ["!HAVE_SYS_SOCKET_H"],
+        ),
+        checks.AC_SUBST(
+            "HAVE_WINSOCK2_H",
+            condition = "ac_cv_header_winsock2_h",
+            if_false = 0,
+            if_true = 1,
+        ),
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        ":HAVE_SYS_SOCKET_H",
+    ],
 )
 
 # gl_PREREQ_SYS_H_WS2TCPIP
