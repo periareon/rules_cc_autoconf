@@ -4,7 +4,7 @@ load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "opendir",
+    name = "gl_FUNC_OPENDIR",
     checks = [
         checks.AC_CHECK_FUNC(
             "opendir",
@@ -22,11 +22,7 @@ autoconf(
         # - DIR_HAS_FD_MEMBER = 0 (DIR structure doesn't have fd member, e.g., on Windows) - line 25
         # Otherwise, REPLACE_OPENDIR=0 (default)
         # DIR_HAS_FD_MEMBER is a substitution variable from dirent_h
-        # Based on golden file, REPLACE_OPENDIR=0 on macOS (DIR_HAS_FD_MEMBER=1 and HAVE_FCHDIR=1)
-        checks.AC_SUBST(
-            "REPLACE_OPENDIR",
-            "0",
-        ),
+        checks.AC_SUBST("REPLACE_OPENDIR", "0"),
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -37,5 +33,13 @@ autoconf(
         "//gnulib/m4/fchdir:gl_FUNC_FCHDIR_FOR_CLOSE",
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "opendir",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_OPENDIR",
     ],
 )

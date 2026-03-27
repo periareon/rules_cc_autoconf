@@ -4,7 +4,7 @@ load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "symlinkat",
+    name = "gl_FUNC_SYMLINKAT",
     checks = [
         # On macOS, symlinkat is available
         checks.AC_CHECK_FUNC(
@@ -14,7 +14,6 @@ autoconf(
         ),
     ] + select({
         "@platforms//os:macos": [
-            # macOS symlinkat has issues that require gnulib replacement
             checks.AC_SUBST("REPLACE_SYMLINKAT", "1"),
         ],
         "//conditions:default": [],
@@ -25,5 +24,13 @@ autoconf(
         "//gnulib/m4/openat",
         # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "symlinkat",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_SYMLINKAT",
     ],
 )

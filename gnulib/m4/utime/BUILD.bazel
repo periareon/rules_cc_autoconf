@@ -4,7 +4,7 @@ load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "utime",
+    name = "gl_FUNC_UTIME",
     checks = [
         # Equivalent to gl_FUNC_UTIME macro from utime.m4
         # Note: Full implementation includes runtime tests for trailing slash handling
@@ -12,10 +12,23 @@ autoconf(
             "utime",
             define = "HAVE_UTIME",
         ),
-    ],
+    ] + select({
+        "@platforms//os:windows": [
+            checks.AC_SUBST("REPLACE_UTIME", 1),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/lstat",  # AC_CHECK_FUNCS_ONCE([lstat])
         "//gnulib/m4/utime_h",  # AC_REQUIRE([gl_UTIME_H_DEFAULTS])
+    ],
+)
+
+autoconf(
+    name = "utime",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_UTIME",
     ],
 )

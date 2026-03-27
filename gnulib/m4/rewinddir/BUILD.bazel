@@ -4,7 +4,7 @@ load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "rewinddir",
+    name = "gl_FUNC_REWINDDIR",
     checks = [
         checks.AC_CHECK_FUNC(
             "rewinddir",
@@ -16,7 +16,6 @@ autoconf(
         #   fi
         # fi
         # On macOS, DIR_HAS_FD_MEMBER=1 (not mingw/windows/os2), so REPLACE_REWINDDIR remains 0
-        # Explicitly set REPLACE_REWINDDIR=0 since DIR_HAS_FD_MEMBER=1 on macOS
         checks.AC_SUBST("REPLACE_REWINDDIR", 0),
         # Set HAVE_REWINDDIR as substitution variable
         checks.AC_DEFINE(
@@ -29,5 +28,13 @@ autoconf(
     deps = [
         "//gnulib/m4/dirent_h",  # AC_REQUIRE([gl_DIRENT_H_DEFAULTS])
         "//gnulib/m4/dirent_h:gl_DIRENT_DIR",
+    ],
+)
+
+autoconf(
+    name = "rewinddir",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_REWINDDIR",
     ],
 )

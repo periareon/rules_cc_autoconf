@@ -4,7 +4,7 @@ load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "readdir",
+    name = "gl_FUNC_READDIR",
     checks = [
         checks.AC_CHECK_FUNC(
             "readdir",
@@ -23,12 +23,19 @@ autoconf(
         # Set HAVE_READDIR as substitution variable
         # Only set to "0" if function doesn't exist, otherwise "1"
         # On macOS, DIR_HAS_FD_MEMBER=1 (not mingw/windows/os2), so REPLACE_READDIR remains 0
-        # Explicitly set REPLACE_READDIR=0 since DIR_HAS_FD_MEMBER=1 on macOS
         checks.AC_SUBST("REPLACE_READDIR", 0),
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/dirent_h",  # AC_REQUIRE([gl_DIRENT_H_DEFAULTS])
         "//gnulib/m4/dirent_h:gl_DIRENT_DIR",
+    ],
+)
+
+autoconf(
+    name = "readdir",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_READDIR",
     ],
 )
