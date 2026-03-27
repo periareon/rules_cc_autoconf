@@ -12,7 +12,7 @@
 /* #undef HAVE_DECL_SETENV */
 /* #undef HAVE_DECL_SETSTATE */
 /* #undef HAVE_DECL_UNSETENV */
-/* #undef HAVE_FREE_POSIX */
+#define HAVE_FREE_POSIX 1
 /* #undef HAVE_GETPROGNAME */
 /* #undef HAVE_GETSUBOPT */
 /* #undef HAVE_GRANTPT */

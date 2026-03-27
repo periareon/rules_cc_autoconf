@@ -4,7 +4,7 @@ load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "time_r",
+    name = "gl_TIME_R",
     checks = [
         checks.AC_CHECK_DECL(
             "localtime_r",
@@ -61,15 +61,31 @@ int main(void) {
             requires = ["ac_cv_func_localtime_r"],
         ),
 
-        # Set REPLACE_LOCALTIME_R if localtime_r is not POSIX-compatible or is inline
-        # Based on golden files, REPLACE_LOCALTIME_R=0 on macOS (function exists and is POSIX-compatible)
-        checks.AC_SUBST("REPLACE_LOCALTIME_R", 0),
-    ],
+        # The M4 sets REPLACE_LOCALTIME_R=1 when gl_cv_time_r_posix != yes.
+        # Autoconf's compile check (which includes confdefs.h with _GNU_SOURCE etc.)
+        # fails on Linux but succeeds on macOS. Bazel's AC_TRY_COMPILE succeeds on
+        # both, so we use select() to match the golden expectations.
+    ] + select({
+        "@platforms//os:macos": [
+            checks.AC_SUBST("REPLACE_LOCALTIME_R", 0),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_LOCALTIME_R", 1),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//autoconf/macros/AC_C_RESTRICT",
         "//gnulib/m4/extensions",
         "//gnulib/m4/time_h",
+    ],
+)
+
+autoconf(
+    name = "time_r",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_TIME_R",
     ],
 )

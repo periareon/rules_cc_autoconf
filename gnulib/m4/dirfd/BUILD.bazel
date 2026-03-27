@@ -4,7 +4,7 @@ load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "dirfd",
+    name = "gl_FUNC_DIRFD",
     checks = [
         checks.AC_CHECK_FUNC(
             "dirfd",
@@ -21,5 +21,21 @@ autoconf(
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/dirent_h",  # AC_REQUIRE([gl_DIRENT_H_DEFAULTS])
         "//gnulib/m4/extensions",
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_DIRFD",
+    checks = [
+    ],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "dirfd",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_DIRFD",
+        ":gl_PREREQ_DIRFD",
     ],
 )
