@@ -95,6 +95,14 @@ autoconf(
                 subst = True,
             ),
         ],
+        "@platforms//os:windows": [
+            # UCRT has spawn.h but no POSIX spawn API or POSIX_SPAWN_* constants.
+            # Define=1 so replacement sources compile. Subst=0 so spawn.in.h
+            # takes the "no system spawn" path and defines all POSIX_SPAWN_*
+            # flags (the subst=1 path assumes system-provided flags).
+            checks.AC_DEFINE("REPLACE_POSIX_SPAWN", 1),
+            checks.AC_SUBST("REPLACE_POSIX_SPAWN", 0),
+        ],
         "//conditions:default": [
             # AC_REQUIRE([gl_SPAWN_H_DEFAULTS]) - line 14; not tracked
             # AC_REQUIRE([gl_HAVE_POSIX_SPAWN]) - line 15; via dep
