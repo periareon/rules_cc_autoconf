@@ -16,11 +16,10 @@ autoconf(
             subst = True,  # Also create substitution variable
         ),
     ] + gl_macros.GL_CHECK_NEXT_HEADERS(["spawn.h"]) + select({
-        "@rules_cc//cc/compiler:msvc-cl": [
-            # MSVC has no spawn.h or POSIX spawn types.  Emit explicit
-            # subst values so @HAVE_POSIX_SPAWNATTR_T@ etc. are "0" rather
-            # than empty (which would make `#if !` invalid).  MinGW may
-            # provide spawn.h, so let the compile checks run there.
+        "@platforms//os:windows": [
+            # Windows has no POSIX spawn types.  Emit explicit subst values
+            # so @HAVE_POSIX_SPAWNATTR_T@ etc. are "0" rather than empty
+            # (which would make `#if !` invalid).
             checks.AC_SUBST("HAVE_POSIX_SPAWNATTR_T", "0"),
             checks.AC_SUBST("HAVE_POSIX_SPAWN_FILE_ACTIONS_T", "0"),
         ],
@@ -59,17 +58,26 @@ autoconf(
 
 autoconf(
     name = "gl_HAVE_POSIX_SPAWN",
-    checks = [
-        # gl_CHECK_FUNCS_ANDROID([posix_spawn], [[#include <spawn.h>]])
-        # Use extern declaration trick - don't include header to avoid conflicts
-        # The function check uses linking, so it will detect the function even without header
-        checks.AC_CHECK_FUNC(
-            "posix_spawn",
-            define = "HAVE_POSIX_SPAWN",
-            # Don't include spawn.h - use extern declaration trick instead
-            # This matches gl_CHECK_FUNCS_ANDROID behavior
-            subst = True,
-        ),
+    checks = select({
+        "@platforms//os:windows": [
+            # Windows has no POSIX spawn API.  UCRT ships a spawn.h
+            # (with _spawnl etc.) but not posix_spawn().  Skip the link
+            # check and hard-code the result.
+            checks.AC_SUBST("HAVE_POSIX_SPAWN", 0),
+        ],
+        "//conditions:default": [
+            # gl_CHECK_FUNCS_ANDROID([posix_spawn], [[#include <spawn.h>]])
+            # Use extern declaration trick - don't include header to avoid conflicts
+            # The function check uses linking, so it will detect the function even without header
+            checks.AC_CHECK_FUNC(
+                "posix_spawn",
+                define = "HAVE_POSIX_SPAWN",
+                # Don't include spawn.h - use extern declaration trick instead
+                # This matches gl_CHECK_FUNCS_ANDROID behavior
+                subst = True,
+            ),
+        ],
+    }) + [
         # POSIX_SPAWN_LIB and LIB_POSIX_SPAWN substitution variables
         # AC_SEARCH_LIBS([posix_spawn], [rt], ...) - typically empty on macOS/Linux
         checks.AC_SUBST("POSIX_SPAWN_LIB", ""),
@@ -98,8 +106,8 @@ autoconf(
 autoconf(
     name = "gl_SPAWN_H_DEFAULTS",
     checks = select({
-        "@rules_cc//cc/compiler:msvc-cl": [
-            # MSVC has no POSIX spawn API.  MinGW may provide it.
+        "@platforms//os:windows": [
+            # Windows has no POSIX spawn API.
             checks.AC_SUBST("HAVE_POSIX_SPAWN", 0),
             checks.AC_SUBST("HAVE_POSIX_SPAWNATTR_T", 0),
             checks.AC_SUBST("HAVE_POSIX_SPAWN_FILE_ACTIONS_T", 0),
