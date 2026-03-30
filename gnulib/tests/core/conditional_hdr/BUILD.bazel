@@ -1,0 +1,88 @@
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:checks.bzl", "checks")
+load("//autoconf/tests:diff_test.bzl", "diff_test")
+load("//gnulib:conditional_hdr.bzl", "gnulib_conditional_hdr")
+
+autoconf(
+    name = "checks_truthy",
+    checks = [
+        checks.AC_SUBST("CONDITION_VAR", "true"),
+        checks.AC_SUBST("NEXT_TEST_H", "<test.h>"),
+        checks.AC_SUBST("TEST_VALUE", "42"),
+    ],
+    deps = ["//gnulib/m4/include_next"],
+)
+
+autoconf(
+    name = "checks_falsy",
+    checks = [
+        checks.AC_SUBST("CONDITION_VAR", "false"),
+        checks.AC_SUBST("NEXT_TEST_H", "<test.h>"),
+        checks.AC_SUBST("TEST_VALUE", "42"),
+    ],
+    deps = ["//gnulib/m4/include_next"],
+)
+
+# Step 1: Process the template (shared by both test cases)
+autoconf_hdr(
+    name = "processed_truthy",
+    out = "processed_truthy.h",
+    mode = "subst",
+    template = "template.h.in",
+    deps = [":checks_truthy"],
+)
+
+autoconf_hdr(
+    name = "processed_falsy",
+    out = "processed_falsy.h",
+    mode = "subst",
+    template = "template.h.in",
+    deps = [":checks_falsy"],
+)
+
+# Step 2: Conditional wrap — truthy case (output should be src as-is)
+gnulib_conditional_hdr(
+    name = "conditional_truthy",
+    src = ":processed_truthy",
+    out = "truthy.h",
+    condition = "CONDITION_VAR",
+    next_header = "NEXT_TEST_H",
+    deps = [
+        ":checks_truthy",
+        "//gnulib/m4/include_next",
+    ],
+)
+
+# Step 2: Conditional wrap — falsy case (output should have passthrough)
+gnulib_conditional_hdr(
+    name = "conditional_falsy",
+    src = ":processed_falsy",
+    out = "falsy.h",
+    condition = "CONDITION_VAR",
+    next_header = "NEXT_TEST_H",
+    deps = [
+        ":checks_falsy",
+        "//gnulib/m4/include_next",
+    ],
+)
+
+diff_test(
+    name = "truthy_test",
+    file1 = "golden_truthy.h",
+    file2 = ":conditional_truthy",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
+diff_test(
+    name = "falsy_test",
+    file1 = "golden_falsy.h",
+    file2 = ":conditional_falsy",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)

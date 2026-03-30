@@ -3,10 +3,6 @@ load("@bazel_skylib//rules:build_test.bzl", "build_test")
 alias(
     name = "bison",
     actual = "@bison",
-    target_compatible_with = select({
-        "@platforms//os:windows": ["@platforms//:incompatible"],
-        "//conditions:default": [],
-    }),
 )
 
 alias(
@@ -64,6 +60,11 @@ alias(
     actual = "@m4",
 )
 
+alias(
+    name = "patch",
+    actual = "@patch",
+)
+
 build_test(
     name = "build_test",
     targets = [
@@ -75,5 +76,6 @@ build_test(
         ":libssh2",
         ":libwebsockets",
         ":m4",
+        ":patch",
     ],
 )

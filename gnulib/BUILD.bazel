@@ -8,3 +8,9 @@ bzl_library(
         "//autoconf:checks_bzl",
     ],
 )
+
+bzl_library(
+    name = "conditional_hdr",
+    srcs = ["conditional_hdr.bzl"],
+    visibility = ["//visibility:public"],
+)
