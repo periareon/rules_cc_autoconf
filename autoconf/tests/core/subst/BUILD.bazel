@@ -149,6 +149,47 @@ autoconf_hdr(
     deps = [":autoconf"],
 )
 
+# Verify that `substitutions` are applied before autoconf @VAR@ replacement.
+# A substitution injects raw @SUBST_TEXT@ into the template; the subsequent
+# subst processing resolves it to "Hello".  If the order were reversed the
+# output would be the literal string "@SUBST_TEXT@".
+write_file(
+    name = "subst_order_template",
+    out = "subst_order.h.in",
+    content = [
+        "SUBST_ORDER_PLACEHOLDER",
+        "",
+    ],
+    newline = "unix",
+)
+
+write_file(
+    name = "golden_subst_order",
+    out = "golden_subst_order.h.in",
+    content = [
+        "Hello",
+        "",
+    ],
+    newline = "unix",
+)
+
+autoconf_hdr(
+    name = "subst_order",
+    out = "subst_order.h",
+    mode = "subst",
+    substitutions = {
+        "SUBST_ORDER_PLACEHOLDER": "@SUBST_TEXT@",
+    },
+    template = ":subst_order.h.in",
+    deps = [":autoconf"],
+)
+
+diff_test(
+    name = "subst_order_diff_test",
+    file1 = ":golden_subst_order.h.in",
+    file2 = ":subst_order.h",
+)
+
 diff_test(
     name = "subst_newline_diff_test",
     file1 = "golden_subst_newline.h.in",

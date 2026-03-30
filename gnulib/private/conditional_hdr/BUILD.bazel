@@ -1,0 +1,14 @@
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("//tools/cxxopts:cxxopts.bzl", "cxxopts", "linkopts")
+
+cc_binary(
+    name = "conditional_hdr",
+    srcs = ["main.cc"],
+    cxxopts = cxxopts(),
+    linkopts = linkopts(),
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        "//autoconf/private/common:file_util",
+        "//tools/json",
+    ],
+)

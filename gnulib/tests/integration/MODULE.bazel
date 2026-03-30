@@ -4,13 +4,20 @@ module(
     name = "gnulib_integration_test",
 )
 
-bazel_dep(name = "bison", version = "3.8.2.bcr.2")
+bazel_dep(name = "rules_cc_autoconf", version = "0.7.12")
+local_path_override(
+    module_name = "rules_cc_autoconf",
+    path = "../../..",
+)
+
+bazel_dep(name = "bison", version = "3.8.2.bcr.3")
 bazel_dep(name = "ffmpeg", version = "7.1.1.bcr.beta.4")
 bazel_dep(name = "flex", version = "2.6.4.bcr.1")
 bazel_dep(name = "libmicrohttpd", version = "1.0.2")
 bazel_dep(name = "libpcap", version = "1.10.5")
 bazel_dep(name = "libssh2", version = "1.11.1.bcr.1")
 bazel_dep(name = "libwebsockets", version = "4.5.2")
-bazel_dep(name = "m4", version = "1.4.20")
+bazel_dep(name = "m4", version = "1.4.20.bcr.2")
+bazel_dep(name = "patch", version = "2.8")
 bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "bazel_skylib", version = "1.9.0")
