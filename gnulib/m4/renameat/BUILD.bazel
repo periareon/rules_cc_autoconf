@@ -31,16 +31,22 @@ autoconf(
             "renameat2",
             name = "ac_cv_func_renameat2",
         ),
-    ] + select({
-        "@platforms//os:linux": [
-            checks.AC_DEFINE("HAVE_RENAMEAT2", 1),
-            checks.AC_DEFINE("HAVE_WORKING_RENAMEAT2", 1),
-        ],
-        "//conditions:default": [],
-    }) + [
-        # AC_RUN_IFELSE for renameat2 is skipped - runtime checks can't be done in Bazel
-        # Based on golden files, HAVE_WORKING_RENAMEAT2 is not defined on macOS
-        # so renameat2 either doesn't exist or doesn't work on macOS
+        checks.AC_DEFINE(
+            "HAVE_RENAMEAT2",
+            condition = "ac_cv_func_renameat2",
+            if_false = None,
+            if_true = 1,
+        ),
+        # AC_RUN_IFELSE for renameat2 is skipped - runtime checks can't be done in Bazel.
+        # Conditioning on the link check is the best approximation, matching what autoconf
+        # does when cross-compiling for Linux ("guessing yes"), but only when the function
+        # actually exists in libc (glibc >= 2.28 or musl >= 1.2.4).
+        checks.AC_DEFINE(
+            "HAVE_WORKING_RENAMEAT2",
+            condition = "ac_cv_func_renameat2",
+            if_false = None,
+            if_true = 1,
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
