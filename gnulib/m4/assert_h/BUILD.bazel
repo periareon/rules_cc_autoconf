@@ -25,10 +25,17 @@ int main(void) {
             define = "HAVE_C_STATIC_ASSERT",
             language = "c",
         ),
-    ] + gl_macros.GL_NEXT_HEADERS(
-        ["assert.h"],
-        condition = "!HAVE_C_STATIC_ASSERT",
-    ),
+        # GL_GENERATE_ASSERT_H: true when static_assert is unavailable and the
+        # wrapper header must be generated; false when the system assert.h is
+        # sufficient.  Consumers use this to decide whether to install the
+        # gnulib assert.h wrapper (matching upstream GL_GENERATE_ASSERT_H).
+        checks.AC_SUBST(
+            "GL_GENERATE_ASSERT_H",
+            condition = "!HAVE_C_STATIC_ASSERT",
+            if_false = "false",
+            if_true = "true",
+        ),
+    ] + gl_macros.GL_NEXT_HEADERS(["assert.h"]),
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",

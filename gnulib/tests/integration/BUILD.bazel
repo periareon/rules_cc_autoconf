@@ -3,10 +3,6 @@ load("@bazel_skylib//rules:build_test.bzl", "build_test")
 alias(
     name = "bison",
     actual = "@bison",
-    target_compatible_with = select({
-        "@platforms//os:windows": ["@platforms//:incompatible"],
-        "//conditions:default": [],
-    }),
 )
 
 alias(
