@@ -31,6 +31,8 @@ std::string check_type_to_string(CheckType type) {
             return "decl";
         case CheckType::kMember:
             return "member";
+        case CheckType::kFail:
+            return "fail";
         case CheckType::kGlNextHeader:
             return "GL_NEXT_HEADER";
         default:
@@ -80,6 +82,8 @@ std::optional<Check> Check::from_json(const void* json_data) {
         type = CheckType::kMember;
     } else if (type_str == "define") {
         type = CheckType::kDefine;
+    } else if (type_str == "fail") {
+        type = CheckType::kFail;
     } else if (type_str == "subst") {
         // Backward compatibility: subst -> kM4Variable with subst=true
         type = CheckType::kM4Variable;
