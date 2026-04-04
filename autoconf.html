@@ -169,9 +169,11 @@ load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
 autoconf(<a href="#autoconf-name">name</a>, <a href="#autoconf-deps">deps</a>, <a href="#autoconf-checks">checks</a>)
 </pre>
 <p>Run autoconf-like checks and produce results.</p>
-<p>This rule runs compilation checks against the configured cc_toolchain and produces
-a JSON results file containing the check outcomes. Unlike <code>autoconf_hdr</code>, this rule
-does not generate any header files - it only performs checks.</p>
+<p>This rule resolves the <code>autoconf_toolchain</code> (when registered) to skip redundant
+checker actions.  If a check's cache variable name already has a result in the
+toolchain or in transitive <code>deps</code>, the existing result file is reused.</p>
+<p>Use <code>autoconf_library</code> instead for targets that feed into <code>autoconf_toolchain</code>
+to avoid a dependency cycle.</p>
 <p>Example:</p>
 <pre><code class="language-python">load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
 
@@ -189,7 +191,7 @@ or wrapped source files.</p>
 <p><strong>ATTRIBUTES</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Type</th><th style="text-align: left">Mandatory</th><th style="text-align: left">Default</th></tr></thead><tbody>
 <tr><td style="text-align: left"><a id="autoconf-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
-<tr><td style="text-align: left"><a id="autoconf-deps"></a>deps</td><td style="text-align: left">Additional <code>autoconf</code> or <code>package_info</code> dependencies.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf-deps"></a>deps</td><td style="text-align: left">Additional <code>autoconf</code>, <code>autoconf_library</code>, or <code>package_info</code> dependencies.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
 <tr><td style="text-align: left"><a id="autoconf-checks"></a>checks</td><td style="text-align: left">List of JSON-encoded checks from checks (e.g., <code>checks.AC_CHECK_HEADER('stdio.h')</code>).</td><td style="text-align: left">List of strings</td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
 </tbody></table>
 </div>
