@@ -186,6 +186,20 @@ def merge_with_defaults(defaults, results):
     # Defaults first, then results override
     return defaults | results
 
+def _same_content_key(file_a, file_b, path_to_content_key):
+    """Return True when two files represent the same check implementation.
+
+    Looks up both files in the reverse content-cache map.  If both resolve
+    to the same content key the conflict is a benign sibling duplication
+    (two independent targets ran an identical check) rather than a genuine
+    implementation mismatch.
+    """
+    key_a = path_to_content_key.get(file_a.path)
+    key_b = path_to_content_key.get(file_b.path)
+    if key_a == None or key_b == None:
+        return False
+    return key_a == key_b
+
 def collect_transitive_results(dep_infos):
     """Collect transitive cache variable results.
 
@@ -201,6 +215,7 @@ def collect_transitive_results(dep_infos):
     define_results = {}
     subst_results = {}
     unquoted_defines_set = {}
+    path_to_content_key = {}
     for dep_info in dep_infos:
         # Cache variable names — no conflict detection needed since content-based
         # dedup handles identity; the same name may appear from different actions
@@ -209,30 +224,36 @@ def collect_transitive_results(dep_infos):
             cache_results[cache_name] = cache_file
 
         # Content cache — same content key always means the same check, so
-        # merging is safe without conflict detection.
+        # merging is safe without conflict detection.  Also build a reverse
+        # map (file path -> content key) so that downstream conflict checks
+        # can distinguish "same implementation, different File object" from
+        # genuinely conflicting implementations.
         for ckey, cfile in dep_info.content_cache.items():
             content_cache[ckey] = cfile
+            path_to_content_key[cfile.path] = ckey
 
         for define_name, define_file in dep_info.define_results.items():
             if define_name in define_results:
                 existing_file = define_results[define_name]
                 if existing_file.path != define_file.path:
-                    fail("Define '{}' is defined in multiple dependencies with different result files:\n  First:  {}\n  Second: {}\nThis indicates duplicate defines across different autoconf targets.".format(
-                        define_name,
-                        existing_file.path,
-                        define_file.path,
-                    ))
+                    if not _same_content_key(existing_file, define_file, path_to_content_key):
+                        fail("Define '{}' is defined in multiple dependencies with different result files:\n  First:  {}\n  Second: {}\nThis indicates duplicate defines across different autoconf targets.".format(
+                            define_name,
+                            existing_file.path,
+                            define_file.path,
+                        ))
             define_results[define_name] = define_file
 
         for subst_name, subst_file in dep_info.subst_results.items():
             if subst_name in subst_results:
                 existing_file = subst_results[subst_name]
                 if existing_file.path != subst_file.path:
-                    fail("Subst '{}' is defined in multiple dependencies with different result files:\n  First:  {}\n  Second: {}\nThis indicates duplicate subst across different autoconf targets.".format(
-                        subst_name,
-                        existing_file.path,
-                        subst_file.path,
-                    ))
+                    if not _same_content_key(existing_file, subst_file, path_to_content_key):
+                        fail("Subst '{}' is defined in multiple dependencies with different result files:\n  First:  {}\n  Second: {}\nThis indicates duplicate subst across different autoconf targets.".format(
+                            subst_name,
+                            existing_file.path,
+                            subst_file.path,
+                        ))
             subst_results[subst_name] = subst_file
 
         for uq in dep_info.unquoted_defines:

@@ -126,6 +126,16 @@ def _tc_content_dedup_reuses_file_test_impl(ctx):
 
 tc_content_dedup_reuses_file_test = analysistest.make(_tc_content_dedup_reuses_file_test_impl)
 
+def _sibling_conflict_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    asserts.expect_failure(env, "Define")
+    return analysistest.end(env)
+
+sibling_conflict_test = analysistest.make(
+    _sibling_conflict_test_impl,
+    expect_failure = True,
+)
+
 def caching_test_suite(*, name, **kwargs):
     """Test suite for autoconf dep-level check caching.
 
@@ -800,6 +810,107 @@ def caching_test_suite(*, name, **kwargs):
         file2 = ":tc_content_dedup_hdr_wrapper",
     )
     tests.append(":test_tc_content_dedup")
+
+    # ============================================================================
+    # Test 11: sibling deps — identical check, same define name
+    #
+    # Two sibling autoconf targets (not depending on each other) both declare
+    # AC_DEFINE("SIBLING_DEFINE", 1).  A consumer depends on both.  Because
+    # the implementations are identical (same content key), this should NOT
+    # trigger a conflict error even though the result file paths differ.
+    # ============================================================================
+
+    autoconf(
+        name = "sibling_a",
+        checks = [
+            checks.AC_DEFINE("SIBLING_DEFINE", 1),
+        ],
+        tags = ["manual"],
+    )
+
+    autoconf(
+        name = "sibling_b",
+        checks = [
+            checks.AC_DEFINE("SIBLING_DEFINE", 1),
+        ],
+        tags = ["manual"],
+    )
+
+    autoconf(
+        name = "sibling_consumer",
+        checks = [],
+        deps = [":sibling_a", ":sibling_b"],
+    )
+
+    write_file(
+        name = "sibling_dedup_template",
+        out = "sibling_dedup.h.in",
+        content = [
+            "#undef SIBLING_DEFINE",
+            "",
+        ],
+    )
+
+    autoconf_hdr(
+        name = "sibling_dedup_hdr",
+        out = "sibling_dedup.h",
+        mode = "defines",
+        template = ":sibling_dedup_template",
+        deps = [":sibling_consumer"],
+        defaults = False,
+    )
+
+    write_file(
+        name = "golden_sibling_dedup",
+        out = "golden_sibling_dedup.h.in",
+        content = [
+            "#define SIBLING_DEFINE 1",
+            "",
+        ],
+    )
+
+    diff_test(
+        name = "test_sibling_dedup",
+        file1 = ":golden_sibling_dedup",
+        file2 = ":sibling_dedup_hdr",
+    )
+    tests.append(":test_sibling_dedup")
+
+    # ============================================================================
+    # Test 12: sibling deps — different implementations for same define (MUST FAIL)
+    #
+    # Two sibling targets declare the same define name but with different values.
+    # The content keys differ, so the conflict detection must fire.
+    # ============================================================================
+
+    autoconf(
+        name = "sibling_conflict_a",
+        checks = [
+            checks.AC_DEFINE("CONFLICT_DEFINE", 1),
+        ],
+        tags = ["manual"],
+    )
+
+    autoconf(
+        name = "sibling_conflict_b",
+        checks = [
+            checks.AC_DEFINE("CONFLICT_DEFINE", 999),
+        ],
+        tags = ["manual"],
+    )
+
+    autoconf(
+        name = "sibling_conflict_consumer",
+        checks = [],
+        deps = [":sibling_conflict_a", ":sibling_conflict_b"],
+        tags = ["manual"],
+    )
+
+    sibling_conflict_test(
+        name = "test_sibling_conflict_fails",
+        target_under_test = ":sibling_conflict_consumer",
+    )
+    tests.append(":test_sibling_conflict_fails")
 
     # ============================================================================
     # Starlark unit tests — provider-level cache hit verification

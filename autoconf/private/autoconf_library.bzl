@@ -43,6 +43,20 @@ def _check_content_key(check):
     ])
     return json.encode(pairs)
 
+def _same_content_key(file_a, file_b, path_to_content_key):
+    """Return True when two files represent the same check implementation.
+
+    Looks up both files in the reverse content-cache map.  If both resolve
+    to the same content key the conflict is a benign sibling duplication
+    (two independent targets ran an identical check) rather than a genuine
+    implementation mismatch.
+    """
+    key_a = path_to_content_key.get(file_a.path)
+    key_b = path_to_content_key.get(file_b.path)
+    if key_a == None or key_b == None:
+        return False
+    return key_a == key_b
+
 def _coerce_name(name, value):
     if type(value) == "string":
         return value
@@ -202,26 +216,36 @@ def autoconf_impl_common(ctx, resolve_toolchain):
     # Cache variable conflicts are relaxed: same name from different actions is
     # fine because content-based dedup handles true identity.
     # Define/subst conflicts remain strict: same symbol from different checks
-    # is a real error.
+    # is a real error — unless both files share the same content key, which
+    # indicates a benign sibling duplication (identical implementations that
+    # were run independently because the targets don't depend on each other).
+    path_to_content_key = {}
+    for ckey, cfile in content_cache.items():
+        path_to_content_key[cfile.path] = ckey
+    for ckey, cfile in dep_results["content_cache"].items():
+        path_to_content_key[cfile.path] = ckey
+
     for define_name, define_file in dep_results["define"].items():
         if define_name in define_results:
             existing_file = define_results[define_name]
             if existing_file.path != define_file.path:
-                fail("Define '{}' is defined both locally and in dependencies with different result files:\n  Local:    {}\n  Dep:       {}\nThis indicates duplicate defines. Consider removing the local define or using a different name.".format(
-                    define_name,
-                    existing_file.path,
-                    define_file.path,
-                ))
+                if not _same_content_key(existing_file, define_file, path_to_content_key):
+                    fail("Define '{}' is defined both locally and in dependencies with different result files:\n  Local:    {}\n  Dep:       {}\nThis indicates duplicate defines. Consider removing the local define or using a different name.".format(
+                        define_name,
+                        existing_file.path,
+                        define_file.path,
+                    ))
 
     for subst_name, subst_file in dep_results["subst"].items():
         if subst_name in subst_results:
             existing_file = subst_results[subst_name]
             if existing_file.path != subst_file.path:
-                fail("Subst '{}' is defined both locally and in dependencies with different result files:\n  Local:    {}\n  Dep:       {}\nThis indicates duplicate subst. Consider removing the local subst or using a different name.".format(
-                    subst_name,
-                    existing_file.path,
-                    subst_file.path,
-                ))
+                if not _same_content_key(existing_file, subst_file, path_to_content_key):
+                    fail("Subst '{}' is defined both locally and in dependencies with different result files:\n  Local:    {}\n  Dep:       {}\nThis indicates duplicate subst. Consider removing the local subst or using a different name.".format(
+                        subst_name,
+                        existing_file.path,
+                        subst_file.path,
+                    ))
 
     all_results = {
         "cache": cache_results | dep_results["cache"],
