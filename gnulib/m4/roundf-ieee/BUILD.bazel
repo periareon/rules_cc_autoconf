@@ -11,7 +11,7 @@ When REPLACE_ROUNDF=1, gl_FUNC_ROUNDF also calls gl_FUNC_FLOOR_LIBS and gl_FUNC_
 to find floor/ceil needed for the replacement implementation.
 """
 
-load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(

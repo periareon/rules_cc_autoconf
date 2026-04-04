@@ -7,7 +7,7 @@ gl_FUNC_GETCWD_ABORT_BUG:
 - AC_REQUIRE([gl_PATHMAX_SNIPPET_PREREQ])
 """
 
-load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 
 autoconf(
     name = "getcwd-abort-bug",

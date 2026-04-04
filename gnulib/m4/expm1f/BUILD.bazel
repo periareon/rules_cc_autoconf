@@ -8,7 +8,7 @@ gl_FUNC_EXPM1F:
 - AC_SUBST([EXPM1F_LIBM])
 """
 
-load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(

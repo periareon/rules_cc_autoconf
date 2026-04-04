@@ -15,7 +15,7 @@ gl_PTHREAD_H_PART1 provides:
 - NEXT_PTHREAD_H, NEXT_AS_FIRST_DIRECTIVE_PTHREAD_H
 """
 
-load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 
 autoconf(
     name = "pthread-spin",

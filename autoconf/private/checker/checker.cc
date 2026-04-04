@@ -36,11 +36,9 @@ class ResultLookup {
      */
     void add_mapping(const std::string& lookup_name,
                      const std::filesystem::path& file_path) {
-        // Check for duplicate name (strict - any duplicate is an error)
         std::unordered_map<std::string, size_t>::iterator it =
             name_to_index_.find(lookup_name);
         if (it != name_to_index_.end()) {
-            // Duplicate name detected
             size_t existing_idx = it->second;
             const std::string& existing_file = file_to_path_[existing_idx];
             if (existing_file != file_path.string()) {
@@ -60,14 +58,10 @@ class ResultLookup {
                     "  This indicates a bug in Starlark code - it should "
                     "deduplicate before calling C++.");
             }
-            // Same name, same file - idempotent, skip
             return;
         }
 
-        // Load result from file (or get existing index if file already loaded)
-        size_t idx = load_or_get_index(file_path);
-
-        // Index by lookup name
+        size_t idx = load_or_get_index(lookup_name, file_path);
         name_to_index_[lookup_name] = idx;
     }
 
@@ -108,20 +102,21 @@ class ResultLookup {
 
     /**
      * @brief Load result from file or return existing index if already loaded.
+     * @param lookup_name The name from the --dep argument, used as the result
+     *        identity (flat format files have no embedded name).
      * @param file_path Path to JSON file containing the result.
      * @return Index of the result in results_ vector.
      */
-    size_t load_or_get_index(const std::filesystem::path& file_path) {
+    size_t load_or_get_index(const std::string& lookup_name,
+                             const std::filesystem::path& file_path) {
         std::string file_key = file_path.string();
 
-        // Check if file already loaded
         std::unordered_map<std::string, size_t>::iterator file_it =
             file_to_index_.find(file_key);
         if (file_it != file_to_index_.end()) {
-            return file_it->second;  // Already loaded
+            return file_it->second;
         }
 
-        // Load from file
         if (!file_exists(file_path)) {
             throw std::runtime_error("Dep results file does not exist: " +
                                      file_key);
@@ -137,25 +132,18 @@ class ResultLookup {
         results_file >> results_json;
         results_file.close();
 
-        // Parse result from JSON (expect single result per file)
         if (results_json.empty() || !results_json.is_object()) {
             throw std::runtime_error("Dep results file is empty or invalid: " +
                                      file_key);
         }
 
-        // Get the first (and should be only) result from the JSON
-        nlohmann::json::iterator it = results_json.begin();
-        const std::string& key = it.key();
-        const nlohmann::json& json_value = it.value();
-
         std::optional<CheckResult> result =
-            CheckResult::from_json(key, &json_value);
+            CheckResult::from_json(lookup_name, &results_json);
         if (!result.has_value()) {
             throw std::runtime_error("Failed to parse CheckResult from file: " +
                                      file_key);
         }
 
-        // Add to results vector
         size_t idx = results_.size();
         results_.push_back(*result);
         file_to_index_[file_key] = idx;
@@ -410,42 +398,28 @@ int Checker::run_check_from_file(const std::filesystem::path& check_path,
             }
         }
 
-        nlohmann::json j = nlohmann::json::object();
-        // Parse the value as JSON to preserve type information when writing
-        // result.value is a JSON-encoded string, so we parse it to get the
-        // actual JSON value
+        // Flat result format: {success, value, type} only.
+        // Consumer metadata is tracked in Starlark providers and written
+        // to a manifest at rendering time.
         nlohmann::json value_json;
         if (result.value.has_value()) {
             if (result.value->empty()) {
-                // Explicitly empty value: write as empty string in JSON
                 value_json = "";
             } else {
                 try {
                     value_json = nlohmann::json::parse(*result.value);
                 } catch (const nlohmann::json::parse_error&) {
-                    // If parsing fails, treat as plain string
                     value_json = *result.value;
                 }
             }
         } else {
-            // No value: write as null in JSON
             value_json = nullptr;
         }
-        nlohmann::json result_json = {
-            {"value", value_json},
+        nlohmann::json j = {
             {"success", result.success},
-            {"is_define", result.is_define},
-            {"is_subst", result.is_subst},
             {"type", check_type_to_string(result.type)},
-            {"unquote", result.unquote},
+            {"value", value_json},
         };
-        if (result.define.has_value()) {
-            result_json["define"] = *result.define;
-        }
-        if (result.subst.has_value()) {
-            result_json["subst"] = *result.subst;
-        }
-        j[result.name] = result_json;
 
         std::ofstream results_file = open_ofstream(results_path);
         if (!results_file.is_open()) {

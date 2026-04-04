@@ -9,7 +9,7 @@ gl_FUNC_PERROR:
 - Sets REPLACE_PERROR=1 when GL_GENERATE_ERRNO_H or REPLACE_STRERROR_0
 """
 
-load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(

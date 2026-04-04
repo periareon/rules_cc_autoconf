@@ -8,7 +8,7 @@ gl_FUNC_FREXPL:
 - AC_SUBST([FREXPL_LIBM])
 """
 
-load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(

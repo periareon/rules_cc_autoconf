@@ -13,7 +13,7 @@ gl_FUNC_FOPEN_GNU:
 - Sets REPLACE_FOPEN_FOR_FOPEN_GNU based on mode 'x' and 'e' support
 """
 
-load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(

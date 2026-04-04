@@ -1,6 +1,6 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/lseek.m4"""
 
-load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 
 # gl_FUNC_LSEEK macro from lseek.m4
 # HAVE_UNISTD_H comes from unistd_h dependency

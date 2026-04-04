@@ -1,0 +1,5 @@
+load(":caching_test_suite.bzl", "caching_test_suite")
+
+caching_test_suite(
+    name = "caching_test_suite",
+)

@@ -11,7 +11,7 @@ We set HAVE_FREELOCALE=1 via select() on macOS and Linux to match golden expecta
 - Linux: link check can be skipped or fail in some environments (e.g. Docker/sandbox).
 """
 
-load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 # Explicit HAVE_FREELOCALE=1 for platforms where the link check is unreliable.
