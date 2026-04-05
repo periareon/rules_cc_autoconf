@@ -479,6 +479,7 @@ joined with newlines to form the prologue of the test program.</p>
 <li><a href="checks.html#checks.AC_C_RESTRICT">checks.AC_C_RESTRICT</a></li>
 <li><a href="checks.html#checks.AC_DEFINE">checks.AC_DEFINE</a></li>
 <li><a href="checks.html#checks.AC_DEFINE_UNQUOTED">checks.AC_DEFINE_UNQUOTED</a></li>
+<li><a href="checks.html#checks.AC_FAIL">checks.AC_FAIL</a></li>
 <li><a href="checks.html#checks.AC_PROG_CC">checks.AC_PROG_CC</a></li>
 <li><a href="checks.html#checks.AC_PROG_CC_C_O">checks.AC_PROG_CC_C_O</a></li>
 <li><a href="checks.html#checks.AC_PROG_CXX">checks.AC_PROG_CXX</a></li>
@@ -1039,6 +1040,35 @@ AC_DEFINE uses <code>/**/</code> while AC_DEFINE_UNQUOTED uses a trailing space.
 <tr><td style="text-align: left"><a id="checks.AC_DEFINE_UNQUOTED-if_true"></a>if_true</td><td style="text-align: left">Value when condition is true (requires <code>condition</code>).</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_DEFINE_UNQUOTED-if_false"></a>if_false</td><td style="text-align: left">Value when condition is false (requires <code>condition</code>). Use <code>None</code> to not define the macro when condition is false.</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_DEFINE_UNQUOTED-subst"></a>subst</td><td style="text-align: left">If True, mark as a substitution variable (for @VAR@ replacement in subst.h).</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
+<p><a id="checks.AC_FAIL"></a></p>
+<h2 id="checksac_fail"><a class="header" href="#checksac_fail">checks.AC_FAIL</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+checks.AC_FAIL(<a href="checks.html#checks.AC_FAIL-define">define</a>, *, <a href="checks.html#checks.AC_FAIL-name">name</a>, <a href="checks.html#checks.AC_FAIL-subst">subst</a>)
+</pre>
+<p>A check that always fails, producing /* #undef NAME */ in config.h.</p>
+<p>This is useful for platform-specific checks (like WORDS_BIGENDIAN) where
+the value is only defined on some platforms but should result in an
+explicit #undef on others.</p>
+<p>Original m4 example:</p>
+<pre><code class="language-m4">dnl AC_C_BIGENDIAN sets WORDS_BIGENDIAN=1 on big-endian platforms.
+dnl On little-endian platforms it is left undefined.
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-python"># In a select() for the default (little-endian) case:
+checks.AC_FAIL("WORDS_BIGENDIAN")
+# -&gt; Produces /* #undef WORDS_BIGENDIAN */ in config.h
+</code></pre>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="checks.AC_FAIL-define"></a>define</td><td style="text-align: left">Define name to produce an #undef for (e.g., <code>"WORDS_BIGENDIAN"</code>).</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_FAIL-name"></a>name</td><td style="text-align: left">Cache variable name (defaults to <code>ac_cv_fail_&lt;DEFINE&gt;</code>).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_FAIL-subst"></a>subst</td><td style="text-align: left">If True, mark as a substitution variable (for @VAR@ replacement in subst.h).</td><td style="text-align: left"><code>None</code></td></tr>
 </tbody></table>
 </div>
 <p><strong>RETURNS</strong></p>
