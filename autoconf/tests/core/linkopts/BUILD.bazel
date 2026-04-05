@@ -1,0 +1,43 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_linkopts.bzl", "autoconf_linkopts")
+load("//autoconf:checks.bzl", "checks")
+load("//autoconf:package_info.bzl", "package_info")
+
+package_info(
+    name = "package",
+    package_name = "test_linkopts",
+    package_version = "1.0.0",
+)
+
+autoconf(
+    name = "autoconf",
+    checks = [
+        checks.AC_SEARCH_LIBS(
+            "cos",
+            ["m"],
+            subst = "LIB_MATH",
+        ),
+        checks.AC_SEARCH_LIBS(
+            "printf",
+            ["c"],
+            subst = "LIB_PRINTF",
+        ),
+    ],
+    deps = [":package"],
+)
+
+autoconf_linkopts(
+    name = "linkopts",
+    vars = [
+        "LIB_MATH",
+        "LIB_PRINTF",
+    ],
+    deps = [":autoconf"],
+)
+
+cc_test(
+    name = "test_linkopts",
+    srcs = ["test_linkopts.c"],
+    deps = [":linkopts"],
+)

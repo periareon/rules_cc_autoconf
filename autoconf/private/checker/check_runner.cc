@@ -170,6 +170,8 @@ CheckResult CheckRunner::run_check(const Check& check) {
             return check_fail(check);
         case CheckType::kGlNextHeader:
             return check_gl_next_header(check);
+        case CheckType::kSearchLibs:
+            return check_search_libs(check);
         default:
             throw std::runtime_error("Unknown check type for check: " +
                                      check_id(check));
@@ -774,6 +776,58 @@ std::optional<int> CheckRunner::find_compile_time_int_bisect(
 
     assert(l == r);
     return l;
+}
+
+CheckResult CheckRunner::check_search_libs(const Check& check) {
+    if (!check.libraries().has_value()) {
+        throw std::runtime_error(
+            "search_libs check missing 'libraries' for check: " +
+            check_id(check));
+    }
+
+    if (!check.code().has_value()) {
+        throw std::runtime_error("search_libs check missing code: " +
+                                 check_id(check));
+    }
+
+    std::string code = *check.code();
+    const auto& libs = *check.libraries();
+
+    // AC_SEARCH_LIBS tries linking the function:
+    // 1. Without any extra library (is it in libc?)
+    // 2. With each library in order (-l<lib>)
+    //
+    // The result value is the library flag needed:
+    // - "" (empty) if function is in libc
+    // - "-l<lib>" if function was found in a library
+    // - "" (empty) if function was not found (success=false)
+
+    if (try_compile_and_link(code, check.language())) {
+        DebugLogger::debug("search_libs: " + check.name() +
+                           " found without extra library");
+        return CheckResult(check.name(), std::string(""), true,
+                           check_type_is_define(check.type()),
+                           check.subst().has_value(), check.type(),
+                           check.define(), check.subst());
+    }
+
+    for (const auto& lib : libs) {
+        DebugLogger::debug("search_libs: " + check.name() + " trying -l" + lib);
+        if (try_compile_and_link_with_lib(code, lib, check.language())) {
+            DebugLogger::debug("search_libs: " + check.name() + " found in -l" +
+                               lib);
+            return CheckResult(check.name(), "-l" + lib, true,
+                               check_type_is_define(check.type()),
+                               check.subst().has_value(), check.type(),
+                               check.define(), check.subst());
+        }
+    }
+
+    DebugLogger::debug("search_libs: " + check.name() + " not found");
+    return CheckResult(check.name(), std::string(""), false,
+                       check_type_is_define(check.type()),
+                       check.subst().has_value(), check.type(), check.define(),
+                       check.subst());
 }
 
 }  // namespace rules_cc_autoconf

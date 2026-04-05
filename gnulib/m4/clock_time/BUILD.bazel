@@ -6,7 +6,17 @@ load("//autoconf:checks.bzl", "checks")
 autoconf(
     name = "clock_time",
     checks = [
-        checks.AC_SUBST("CLOCK_TIME_LIB", ""),  # golden expects empty
+        # AC_SEARCH_LIBS([clock_gettime], [rt posix4], ...)
+        # On modern glibc (>= 2.17) and musl, clock_gettime is in libc
+        # and CLOCK_TIME_LIB is empty. On older systems, -lrt is needed.
+        checks.AC_SEARCH_LIBS(
+            "clock_gettime",
+            [
+                "rt",
+                "posix4",
+            ],
+            subst = "CLOCK_TIME_LIB",
+        ),
         checks.AC_CHECK_FUNC(
             "clock_getres",
             define = "HAVE_CLOCK_GETRES",

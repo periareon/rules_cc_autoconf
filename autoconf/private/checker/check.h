@@ -26,6 +26,7 @@ enum class CheckType {
     kMember,        ///< Check for struct/union member
     kFail,          ///< Always-fail check (produces #undef)
     kGlNextHeader,  ///< Resolve system header for #include_next replacement
+    kSearchLibs,    ///< Search for function in libc then in a list of libraries
 };
 
 /**
@@ -115,6 +116,15 @@ class Check {
     const std::optional<std::string>& library() const { return library_; }
 
     /**
+     * @brief Get the optional list of library names for AC_SEARCH_LIBS.
+     * @return Optional vector of library names (without -l prefix) to try,
+     * or std::nullopt if not provided.
+     */
+    const std::optional<std::vector<std::string>>& libraries() const {
+        return libraries_;
+    }
+
+    /**
      * @brief Get the optional list of required define names.
      * @return Optional vector of define names that must be successful before
      * this check runs, or std::nullopt if not provided.
@@ -161,6 +171,8 @@ class Check {
     std::optional<std::string> define_value_{};  /// Value if check succeeds
     std::optional<std::string> define_value_fail_{};  /// Value if check fails
     std::optional<std::string> library_{};  /// Library name for lib checks
+    std::optional<std::vector<std::string>>
+        libraries_{};  /// Library names for search_libs checks
     std::optional<std::vector<std::string>> requires_{};  /// Required defines
     std::optional<std::string>
         condition_{};  /// Condition for conditional checks

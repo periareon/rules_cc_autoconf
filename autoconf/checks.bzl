@@ -1757,6 +1757,88 @@ def _ac_check_lib(
     _add_conditionals(check, if_true, if_false)
     return json.encode(check)
 
+_AC_SEARCH_LIBS_TEMPLATE = """\
+#ifdef __cplusplus
+extern "C"
+#endif
+#if defined _MSC_VER
+#pragma comment(lib, "legacy_stdio_definitions.lib")
+int {function} ();
+#else
+char {function} ();
+#endif
+
+int main(void) {{
+    return {function}();
+}}
+"""
+
+def _ac_search_libs(
+        function,
+        libraries,
+        *,
+        name = None,
+        code = None,
+        language = "c",
+        requires = None,
+        subst = None):
+    """Search for a function in libc, then in a list of libraries.
+
+    Mirrors GNU autoconf's AC_SEARCH_LIBS. The checker tries linking the
+    function without any extra library first, then with each library in order.
+
+    When `subst` is specified, a substitution variable is produced with the
+    library flag value: `""` if the function is in libc or not found,
+    `"-l<lib>"` if found in a library.
+
+    Original m4 example:
+    ```m4
+    AC_SEARCH_LIBS([clock_gettime], [rt posix4])
+    ```
+
+    Example:
+    ```python
+    checks.AC_SEARCH_LIBS("clock_gettime", ["rt", "posix4"],
+                          subst = "CLOCK_TIME_LIB")
+    ```
+
+    Args:
+        function: Function name to search for (e.g., "clock_gettime")
+        libraries: List of library names (without -l prefix) to try in order
+            (e.g., ["rt", "posix4"])
+        name: Cache variable name. Defaults to "ac_cv_search_<function>".
+        code: Custom code to compile and link (optional).
+        language: Language to use for check ("c" or "cpp").
+        requires: Requirements that must be met for this check to run.
+        subst: Substitution variable name for the library flag result.
+
+    Returns:
+        A JSON-encoded check string for use with the autoconf rule.
+    """
+    clean_func = function.replace("-", "_")
+    if not name:
+        name = "ac_cv_search_{}".format(clean_func)
+
+    check = {
+        "language": language,
+        "libraries": libraries,
+        "name": name,
+        "type": "search_libs",
+    }
+
+    if code:
+        check["code"] = code
+    else:
+        check["code"] = _AC_SEARCH_LIBS_TEMPLATE.format(function = function)
+
+    if requires:
+        check["requires"] = requires
+
+    if subst != None:
+        check["subst"] = subst
+
+    return json.encode(check)
+
 def _ac_define_common(
         define,
         value = 1,
@@ -2627,6 +2709,7 @@ checks = struct(
     AC_PROG_CC = _ac_prog_cc,
     AC_PROG_CC_C_O = _ac_prog_cc_c_o,
     AC_PROG_CXX = _ac_prog_cxx,
+    AC_SEARCH_LIBS = _ac_search_libs,
     AC_SUBST = _ac_subst,
     AC_TRY_COMPILE = _ac_try_compile,
     AC_TRY_LINK = _ac_try_link,
