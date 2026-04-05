@@ -2054,6 +2054,54 @@ def _ac_subst(
 
     return json.encode(check)
 
+def _ac_fail(
+        define,
+        *,
+        name = None,
+        subst = None):
+    """A check that always fails, producing /* #undef NAME */ in config.h.
+
+    This is useful for platform-specific checks (like WORDS_BIGENDIAN) where
+    the value is only defined on some platforms but should result in an
+    explicit #undef on others.
+
+    Original m4 example:
+    ```m4
+    dnl AC_C_BIGENDIAN sets WORDS_BIGENDIAN=1 on big-endian platforms.
+    dnl On little-endian platforms it is left undefined.
+    ```
+
+    Example:
+    ```python
+    # In a select() for the default (little-endian) case:
+    checks.AC_FAIL("WORDS_BIGENDIAN")
+    # -> Produces /* #undef WORDS_BIGENDIAN */ in config.h
+    ```
+
+    Args:
+        define: Define name to produce an #undef for (e.g., `"WORDS_BIGENDIAN"`).
+        name: Cache variable name (defaults to `ac_cv_fail_<DEFINE>`).
+        subst: If True, mark as a substitution variable (for @VAR@ replacement in subst.h).
+
+    Returns:
+        A JSON-encoded check string for use with the autoconf rule.
+    """
+    if not name:
+        name = "ac_cv_fail_{}".format(define)
+
+    check = {
+        "code": "",
+        "define": define,
+        "language": "c",
+        "name": name,
+        "type": "fail",
+    }
+
+    if subst != None:
+        check["subst"] = subst
+
+    return json.encode(check)
+
 def _m4_variable(
         define,
         value = 1,
@@ -2575,6 +2623,7 @@ checks = struct(
     AC_COMPUTE_INT = _ac_compute_int,
     AC_DEFINE = _ac_define,
     AC_DEFINE_UNQUOTED = _ac_define_unquoted,
+    AC_FAIL = _ac_fail,
     AC_PROG_CC = _ac_prog_cc,
     AC_PROG_CC_C_O = _ac_prog_cc_c_o,
     AC_PROG_CXX = _ac_prog_cxx,

@@ -118,6 +118,9 @@ class CheckRunner {
     /** @brief Check if a struct/union member exists. */
     CheckResult check_member(const Check& check);
 
+    /** @brief Always-fail check that produces #undef in config.h. */
+    CheckResult check_fail(const Check& check);
+
     /** @brief Resolve system header for #include_next replacement. */
     CheckResult check_gl_next_header(const Check& check);
 

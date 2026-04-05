@@ -21,7 +21,7 @@ autoconf(
     checks = select({
         "@platforms//cpu:ppc": [checks.AC_DEFINE("WORDS_BIGENDIAN", "1")],
         "@platforms//cpu:s390x": [checks.AC_DEFINE("WORDS_BIGENDIAN", "1")],
-        "//conditions:default": [],
+        "//conditions:default": [checks.AC_FAIL("WORDS_BIGENDIAN")],
     }),
     visibility = ["//visibility:public"],
 )

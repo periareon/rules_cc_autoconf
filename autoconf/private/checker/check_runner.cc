@@ -166,6 +166,8 @@ CheckResult CheckRunner::run_check(const Check& check) {
             return check_decl(check);
         case CheckType::kMember:
             return check_member(check);
+        case CheckType::kFail:
+            return check_fail(check);
         case CheckType::kGlNextHeader:
             return check_gl_next_header(check);
         default:
@@ -508,6 +510,12 @@ CheckResult CheckRunner::check_member(const Check& check) {
                        check_type_is_define(check.type()),
                        check.subst().has_value(), check.type(), check.define(),
                        check.subst());
+}
+
+CheckResult CheckRunner::check_fail(const Check& check) {
+    return CheckResult(
+        check.name(), std::nullopt, false, check_type_is_define(check.type()),
+        check.subst().has_value(), check.type(), check.define(), check.subst());
 }
 
 CheckResult CheckRunner::check_gl_next_header(const Check& check) {

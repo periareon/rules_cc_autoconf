@@ -24,6 +24,7 @@ enum class CheckType {
     kComputeInt,    ///< Compute integer value
     kDecl,          ///< Check for declaration
     kMember,        ///< Check for struct/union member
+    kFail,          ///< Always-fail check (produces #undef)
     kGlNextHeader,  ///< Resolve system header for #include_next replacement
 };
 
