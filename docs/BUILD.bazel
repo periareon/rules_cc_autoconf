@@ -21,12 +21,30 @@ stardoc(
 )
 
 stardoc(
+    name = "autoconf_linkopts",
+    out = "src/autoconf_linkopts.md",
+    input = "//autoconf:autoconf_linkopts.bzl",
+    table_of_contents_template = "@stardoc//stardoc:templates/markdown_tables/table_of_contents.vm",
+    tags = ["manual"],
+    deps = ["//autoconf:autoconf_linkopts_bzl"],
+)
+
+stardoc(
     name = "autoconf_srcs",
     out = "src/autoconf_srcs.md",
     input = "//autoconf:autoconf_srcs.bzl",
     table_of_contents_template = "@stardoc//stardoc:templates/markdown_tables/table_of_contents.vm",
     tags = ["manual"],
     deps = ["//autoconf:autoconf_srcs_bzl"],
+)
+
+stardoc(
+    name = "autoconf_toolchain",
+    out = "src/autoconf_toolchain.md",
+    input = "//autoconf:autoconf_toolchain.bzl",
+    table_of_contents_template = "@stardoc//stardoc:templates/markdown_tables/table_of_contents.vm",
+    tags = ["manual"],
+    deps = ["//autoconf:autoconf_toolchain_bzl"],
 )
 
 stardoc(
@@ -52,7 +70,9 @@ mdbook(
     srcs = glob(["src/**/*.md"]) + [
         ":autoconf",
         ":autoconf_hdr",
+        ":autoconf_linkopts",
         ":autoconf_srcs",
+        ":autoconf_toolchain",
         ":checks",
         ":package_info",
     ],

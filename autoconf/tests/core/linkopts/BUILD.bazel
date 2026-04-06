@@ -1,0 +1,78 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_linkopts.bzl", "autoconf_linkopts")
+load("//autoconf:checks.bzl", "checks")
+load("//autoconf:package_info.bzl", "package_info")
+
+package_info(
+    name = "package",
+    package_name = "test_linkopts",
+    package_version = "1.0.0",
+)
+
+autoconf(
+    name = "autoconf",
+    checks = [
+        checks.AC_SEARCH_LIBS(
+            "cos",
+            ["m"],
+            subst = "LIB_MATH",
+        ),
+        checks.AC_SEARCH_LIBS(
+            "printf",
+            ["c"],
+            subst = "LIB_PRINTF",
+        ),
+    ],
+    deps = [":package"],
+)
+
+autoconf_linkopts(
+    name = "linkopts",
+    vars = [
+        "LIB_MATH",
+        "LIB_PRINTF",
+    ],
+    deps = [":autoconf"],
+)
+
+cc_test(
+    name = "test_linkopts",
+    srcs = ["test_linkopts.c"],
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+    deps = [":linkopts"],
+)
+
+# Windows-specific test: exercises the #pragma comment(lib, ...) mechanism.
+# htons() lives in ws2_32.lib which is NOT linked by default on MSVC.
+
+autoconf(
+    name = "autoconf_win",
+    checks = [
+        checks.AC_SEARCH_LIBS(
+            "htons",
+            ["ws2_32"],
+            subst = "WINSOCK_LIB",
+        ),
+    ],
+    deps = [":package"],
+)
+
+autoconf_linkopts(
+    name = "linkopts_win",
+    vars = ["WINSOCK_LIB"],
+    deps = [":autoconf_win"],
+)
+
+cc_test(
+    name = "test_linkopts_win",
+    srcs = ["test_linkopts_win.c"],
+    target_compatible_with = select({
+        "@platforms//os:windows": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+    deps = [":linkopts_win"],
+)

@@ -35,13 +35,16 @@ std::string check_type_to_string(CheckType type) {
             return "fail";
         case CheckType::kGlNextHeader:
             return "GL_NEXT_HEADER";
+        case CheckType::kSearchLibs:
+            return "search_libs";
         default:
             return "unknown";
     }
 }
 
 bool check_type_is_define(CheckType type) {
-    return type != CheckType::kM4Variable && type != CheckType::kGlNextHeader;
+    return type != CheckType::kM4Variable && type != CheckType::kGlNextHeader &&
+           type != CheckType::kSearchLibs;
 }
 
 std::optional<Check> Check::from_json(const void* json_data) {
@@ -91,6 +94,8 @@ std::optional<Check> Check::from_json(const void* json_data) {
         type = CheckType::kM4Variable;
     } else if (type_str == "GL_NEXT_HEADER") {
         type = CheckType::kGlNextHeader;
+    } else if (type_str == "search_libs") {
+        type = CheckType::kSearchLibs;
     } else {
         throw std::runtime_error("Unknown check type: " + type_str);
     }
@@ -176,6 +181,18 @@ std::optional<Check> Check::from_json(const void* json_data) {
 
     if (json.contains("library") && json["library"].is_string()) {
         check.library_ = json["library"].get<std::string>();
+    }
+
+    if (json.contains("libraries") && json["libraries"].is_array()) {
+        std::vector<std::string> libs_list;
+        for (const nlohmann::json& lib : json["libraries"]) {
+            if (lib.is_string()) {
+                libs_list.push_back(lib.get<std::string>());
+            }
+        }
+        if (!libs_list.empty()) {
+            check.libraries_ = libs_list;
+        }
     }
 
     if (json.contains("requires") && json["requires"].is_array()) {

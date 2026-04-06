@@ -124,6 +124,9 @@ class CheckRunner {
     /** @brief Resolve system header for #include_next replacement. */
     CheckResult check_gl_next_header(const Check& check);
 
+    /** @brief Search for function in libc then in a list of libraries. */
+    CheckResult check_search_libs(const Check& check);
+
     /**
      * @brief Try to compile code with the configured compiler.
      * @param code Source code to compile.
