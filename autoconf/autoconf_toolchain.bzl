@@ -96,6 +96,52 @@ toolchain(
     toolchain_type = "@rules_cc_autoconf//autoconf:toolchain_type",
 )
 ```
+
+## Caching behavior
+
+### Content-key deduplication
+
+Every check is fingerprinted by a **content key** derived from its
+implementation fields: `type`, `code`, `language`, `define_value`,
+`includes`, `libraries`, `requires`, `condition`, `compile_defines`,
+and similar. Consumer metadata (`name`, `define`, `subst`, `unquote`)
+is **excluded**, so two checks with different consumer names but
+identical implementations share one content key and produce a single
+checker action and result file.
+
+When a new check is processed, its content key is looked up in order:
+
+1. Transitive deps' `content_cache`
+2. Toolchain unified cache (`cache_deps` + `defaults`)
+3. Current target's local `content_cache`
+
+If a hit is found at any level the existing result file is reused and
+no new checker action is declared. Identical checks within the same
+target are idempotent (silently skipped on second occurrence).
+
+### Conflict detection
+
+Three layers, from strictest to most relaxed:
+
+- **Within one target** -- duplicate `define` or `subst` symbol names
+  in the same `checks` list always fail, even if the content keys
+  match. This prevents accidental duplication in a single target.
+- **Local vs dependencies / deps vs deps** -- the same symbol
+  appearing with a **different result file** is an error, **unless**
+  both files share the same content key (a benign duplicate from
+  identical implementations).
+- **Cache variable names** (`cache_results`) have no cross-dep
+  conflict detection; content-based dedup is the identity signal.
+
+### Resolving conflicts
+
+The typical fix for *"Define 'X' is defined both locally and in
+dependencies with different result files"*:
+
+- Remove the local check and depend on the target that already
+  provides it.
+- Or factor the shared check into its own `autoconf` /
+  `autoconf_cache` target and depend on it from both consumers.
 """,
     implementation = _autoconf_toolchain_impl,
     attrs = {

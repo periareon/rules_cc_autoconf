@@ -93,6 +93,9 @@ Takes check results from `autoconf` targets and generates header files by proces
 ### 3. `package_info` Rule
 Provides package metadata (`PACKAGE_NAME`, `PACKAGE_VERSION`, etc.) equivalent to `AC_INIT`.
 
+### 4. `autoconf_linkopts` Rule (optional)
+Turns **subst** values that hold linker flags (often from `AC_SEARCH_LIBS`) into **`CcInfo`** for `cc_library` / `cc_binary` / `cc_test` dependencies. See [Pattern 7b](#pattern-7b-ac_search_libs-and-autoconf_linkopts).
+
 ### Data Flow
 
 ```
@@ -388,7 +391,7 @@ checks.AC_CHECK_SIZEOF("size_t", define = "SIZEOF_SIZE_T", includes = ["#include
 checks.AC_CHECK_ALIGNOF("double", define = "ALIGNOF_DOUBLE")
 ```
 
-**Warning:** These macros are NOT cross-compile friendly (see [Cross-Compilation](#cross-compilation-considerations)).
+**Note:** In `rules_cc_autoconf`, `AC_CHECK_SIZEOF` / `AC_CHECK_ALIGNOF` are implemented with **compile-time** probing (not by executing a test binary). They still encode facts about the **target** toolchain, so interpret results carefully when cross-compiling (see [Cross-Compilation](#cross-compilation-considerations)).
 
 ---
 
@@ -407,6 +410,51 @@ AC_CHECK_LIB([pthread], [pthread_create])
 checks.AC_CHECK_LIB("m", "cos", define = "HAVE_LIBM")
 checks.AC_CHECK_LIB("pthread", "pthread_create", define = "HAVE_LIBPTHREAD")
 ```
+
+---
+
+### Pattern 7b: `AC_SEARCH_LIBS` and `autoconf_linkopts`
+
+**M4:**
+
+```m4
+AC_SEARCH_LIBS([clock_gettime], [rt posix4], [], [], [AC_MSG_ERROR([...])])
+# LIBS now contains -lrt when needed
+```
+
+**Bazel (check + propagate linker flags):**
+
+```python
+load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
+load("@rules_cc_autoconf//autoconf:autoconf_linkopts.bzl", "autoconf_linkopts")
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "autoconf",
+    checks = [
+        checks.AC_SEARCH_LIBS(
+            "clock_gettime",
+            ["rt", "posix4"],
+            subst = "CLOCK_TIME_LIB",
+        ),
+    ],
+    deps = [":package"],
+)
+
+autoconf_linkopts(
+    name = "linkopts",
+    vars = ["CLOCK_TIME_LIB"],
+    deps = [":autoconf"],
+)
+
+cc_library(
+    name = "mylib",
+    srcs = ["lib.c"],
+    deps = [":linkopts"],
+)
+```
+
+The checker records a **subst** value: empty string if the symbol links without extra libraries, otherwise a flag such as `-lrt`. The `autoconf_linkopts` rule reads those result files and exposes **`CcInfo`** so dependents get the right link flags. On **GCC/Clang**, flags are passed via a linker response file; on **`msvc-cl`** / **`clang-cl`**, the rule uses an MSVC-compatible path (see [autoconf_linkopts](./autoconf_linkopts.md)).
 
 ---
 
@@ -681,6 +729,7 @@ int main(void) {
 | `AC_CHECK_SIZEOF(type_name, ...)` | Check size of a type |
 | `AC_CHECK_ALIGNOF(type_name, ...)` | Check alignment of a type |
 | `AC_CHECK_LIB(library, function, ...)` | Check for a function in a library |
+| `AC_SEARCH_LIBS(function, libraries, ...)` | Find which library provides a symbol; set **subst** to `""` or `-lname` (use with [`autoconf_linkopts`](./autoconf_linkopts.md)) |
 | `AC_TRY_COMPILE(code=..., ...)` | Try to compile custom code |
 | `AC_TRY_LINK(code=..., ...)` | Try to compile and link custom code |
 | `AC_DEFINE(define, value=1, ...)` | Define a preprocessor macro |
@@ -689,10 +738,11 @@ int main(void) {
 | `M4_VARIABLE(define, value=1, ...)` | Track M4 shell variables |
 | `AC_PROG_CC()` | Check for C compiler |
 | `AC_PROG_CXX()` | Check for C++ compiler |
-| `AC_C_BIGENDIAN()` | Check byte order |
+| `AC_PROG_CC_C_O()` | Check `cc -c -o` support |
+| `AC_FAIL(define, ...)` | Check that always fails; emit `#undef` (e.g. little-endian branch for `WORDS_BIGENDIAN`; GNU `AC_C_BIGENDIAN` is usually modeled with `select()` + `AC_DEFINE` / `AC_FAIL`) |
 | `AC_C_INLINE()` | Check for inline keyword |
 | `AC_C_RESTRICT()` | Check for restrict keyword |
-| `AC_COMPUTE_INT(define, expression, ...)` | Compute integer at compile time |
+| `AC_COMPUTE_INT(define, expression, ...)` | Compute integer at compile time (compile-time probe in this implementation) |
 | `AC_CHECK_C_COMPILER_FLAG(flag, ...)` | Check C compiler flag |
 | `AC_CHECK_CXX_COMPILER_FLAG(flag, ...)` | Check C++ compiler flag |
 
@@ -1133,57 +1183,37 @@ Compare test output against golden files and fix any discrepancies.
 
 ### Step 8: Test on Linux (if needed)
 
-When porting modules that have platform-specific behavior, you may need to test on Linux to verify correctness. The repository provides several scripts for running tests in Linux Docker containers:
+When porting modules that have platform-specific behavior, you may need to test on Linux to verify correctness. The repository ships scripts at the workspace root for running Bazel inside Linux Docker containers:
 
-#### Available Linux Test Scripts
+#### Available scripts
 
-**1. `test_linux_docker.sh`** — Comprehensive testing on multiple Linux distributions
-- Tests on Ubuntu 22.04 and Rocky Linux 9
+**1. `test_linux_docker.sh`** — Run a broad test matrix on Linux images (e.g. Ubuntu 22.04, Rocky Linux 9).
+
 - Usage: `./test_linux_docker.sh [--ubuntu-only | --rocky-only]`
-- Runs full test suite: `bazel test //autoconf/... //gnulib/...`
-- Saves results to `docker_test_results/` directory
-- Generates summary files with test statistics
+- Typically runs `bazel test //autoconf/... //gnulib/...` (see script for current defaults)
+- Writes summaries under `docker_test_results/` when configured to do so
 
-**2. `test_modules.sh`** — Test specific modules
-- Usage: `./test_modules.sh [--docker] module1 module2 ...`
-- Without `--docker`: runs tests locally (macOS)
-- With `--docker`: runs tests in Docker (Linux)
-- Example: `./test_modules.sh --docker fsusage renameat`
+**2. `docker_bazel.sh`** — Run an arbitrary Bazel command in the same Docker environment.
 
-**3. `docker_bazel.sh`** — Generic Bazel command runner
 - Usage: `./docker_bazel.sh [--amd64] <bazel_command>`
-- Builds/reuses Docker image and runs any Bazel command
-- Supports `--amd64` flag for x86_64 emulation
 - Example: `./docker_bazel.sh "test //gnulib/tests/compatibility/c32rtomb:all --test_output=errors"`
 
-**4. `update_linux_golden.sh`** — Update Linux golden files
-- Usage: `./update_linux_golden.sh module1 module2 ...`
-- Builds targets in Docker, extracts `config.h` and `subst.h` outputs
-- Updates `golden_config_linux.h.in` and `golden_subst_linux.h.in` files
-- Use when Linux-specific golden files need updating
+For other workflows (targeted module tests, refreshing Linux golden files), use `docker_bazel.sh` with the appropriate `bazel test` / `bazel build` invocations, or add small wrapper scripts in your fork if you need them.
 
-**5. `scripts/run_linux_tests.sh`** — Run tests and update golden files
-- Builds Docker image from `Dockerfile`
-- Runs tests and executes `update.py` to extract results
-- Mounts `gnulib` directory so updates write directly to host
+#### When to use Linux testing
 
-#### When to Use Linux Testing
+- **Platform-specific checks**: Modules with `select()` or Linux-only assumptions
+- **Golden file updates**: When Linux-specific golden inputs need refreshing
+- **Cross-platform verification**: Confirm conditionals on a real Linux toolchain
+- **Test failures**: Debug Linux-only CI issues
 
-- **Platform-specific checks**: Modules with `select()` statements for Linux-specific behavior
-- **Golden file updates**: When Linux golden files (`golden_config_linux.h.in`, `golden_subst_linux.h.in`) need updating
-- **Cross-platform verification**: Verify that platform conditionals work correctly
-- **Test failures**: Debug Linux-specific test failures
-
-#### Example Workflow
+#### Example workflow
 
 ```bash
-# Test a specific module on Linux
-./test_modules.sh --docker c32rtomb
+# Run one compatibility package on Linux
+./docker_bazel.sh "test //gnulib/tests/compatibility/c32rtomb:all --test_output=errors"
 
-# Update Linux golden files after making changes
-./update_linux_golden.sh c32rtomb
-
-# Run full test suite on Linux
+# Run a broader slice (same idea as the docker test driver)
 ./test_linux_docker.sh --ubuntu-only
 ```
 
@@ -1295,26 +1325,29 @@ Bazel intentionally avoids runtime checks to ensure:
 
 When M4 macros use `AC_TRY_EVAL` or `AC_RUN_IFELSE` (running compiled code at configure time), these should be replaced with `select()` statements that provide platform-specific defaults.
 
-### Runtime vs Compile-Time Checks
+### Runtime vs compile-time checks
 
-Some macros require running compiled code, which doesn't work when cross-compiling:
+GNU Autoconf often uses **`AC_RUN_IFELSE`** and similar macros that **execute** test programs on the build machine. That model does not translate to cross-compilation: the binary may not run on the host when the target is different.
 
-**NOT cross-compile safe (use `select()` instead):**
-- `AC_CHECK_SIZEOF` — Computes `sizeof()` by running code
-- `AC_CHECK_ALIGNOF` — Computes alignment by running code
-- `AC_COMPUTE_INT` — Evaluates expressions by running code
-- `AC_C_BIGENDIAN` — Detects endianness at runtime
-- `AC_TRY_EVAL` / `AC_RUN_IFELSE` — Runs compiled test programs
-- Locale detection macros (e.g., `gt_LOCALE_FR`) — Tests locale availability at runtime
+In **`rules_cc_autoconf`**, the checker runs **compile** and **link** actions for the **target** toolchain; it does not execute generated programs. Several macros that Autoconf sometimes implements with runtime probes are implemented here with **compile-time** logic instead:
 
-**Cross-compile safe:**
-- `AC_CHECK_HEADER` — Compile-only
-- `AC_CHECK_FUNC` — Link check
-- `AC_CHECK_DECL` — Compile-only
-- `AC_CHECK_TYPE` — Compile-only
-- `AC_TRY_COMPILE` — Compile-only
-- `AC_TRY_LINK` — Link check
-- `AC_DEFINE` — No check, just defines
+- **`AC_CHECK_SIZEOF`**, **`AC_CHECK_ALIGNOF`**, **`AC_COMPUTE_INT`** — Probed at compile time (e.g. via compile-time techniques in the checker), **not** by running a test executable on the host. They still record properties of the **target** toolchain; when cross-compiling, ensure the configured toolchain matches the intended target and that the probe is meaningful for that environment.
+
+**Still problematic or not modeled like GNU Autoconf:**
+
+- **`AC_TRY_EVAL` / `AC_RUN_IFELSE`** (and M4 that assumes running the binary on the build machine) — Replace with **`select()`**, explicit **`AC_SUBST`**, or other target-appropriate defaults.
+- **Locale and similar environment probes** (e.g. `gt_LOCALE_FR`) — Usually replace with **`select()`** on OS/CPU, or fixed subst values, rather than executing locale code at configure time.
+- **`WORDS_BIGENDIAN` / `AC_C_BIGENDIAN`** — There is no single runtime probe; model endianness with **`select()`** and **`AC_DEFINE`**, and use **`AC_FAIL`** on branches where a define must be explicitly cleared (see **`AC_FAIL`** in the API table).
+
+**Generally “safe” in the sense of not requiring a runnable host binary** (still subject to toolchain correctness when cross-compiling):
+
+- `AC_CHECK_HEADER` — compile-only
+- `AC_CHECK_FUNC` — link check
+- `AC_CHECK_DECL` — compile-only
+- `AC_CHECK_TYPE` — compile-only
+- `AC_TRY_COMPILE` — compile-only
+- `AC_TRY_LINK` — link check
+- `AC_DEFINE` / `AC_SUBST` — no compilation probe
 
 ### Strategies for Cross-Compilation
 
@@ -1554,7 +1587,7 @@ When migrating an M4 file, follow this checklist:
 | Missing main() wrapper | `AC_TRY_COMPILE` code must include `int main(void) { ... }` or use `utils.AC_LANG_PROGRAM` |
 | String literals in defines | Use `'"string"'` (outer single, inner double quotes) |
 | Platform conditionals | Use `select()` for `case "$host_os"` patterns |
-| Cross-compilation failures | Avoid `AC_CHECK_SIZEOF` and similar runtime checks |
+| Cross-compilation failures | Validate sizeof/alignof/compute probes for the real target; replace true **run**-time Autoconf checks with `select()` or explicit substs |
 | Subst test disagrees with autoconf | Evaluate case-by-case: may be due to global defaults vs specific checks (see Step 6) |
 | Changing defaults to fix one module | Don't change existing defaults; they may break other modules |
 | Unnecessary `name` + separate `AC_DEFINE` | Use `define =` directly unless the cache variable is needed in `requires` or you need custom values |

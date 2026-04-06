@@ -10,6 +10,10 @@ load(
     _autoconf_hdr = "autoconf_hdr",
 )
 load(
+    ":autoconf_linkopts.bzl",
+    _autoconf_linkopts = "autoconf_linkopts",
+)
+load(
     ":autoconf_srcs.bzl",
     _autoconf_srcs = "autoconf_srcs",
 )
@@ -25,6 +29,7 @@ load(
 
 autoconf = _autoconf
 autoconf_hdr = _autoconf_hdr
+autoconf_linkopts = _autoconf_linkopts
 autoconf_srcs = _autoconf_srcs
 checks = _checks
 macros = _macros
