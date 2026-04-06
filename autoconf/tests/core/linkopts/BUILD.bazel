@@ -39,5 +39,40 @@ autoconf_linkopts(
 cc_test(
     name = "test_linkopts",
     srcs = ["test_linkopts.c"],
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
     deps = [":linkopts"],
+)
+
+# Windows-specific test: exercises the #pragma comment(lib, ...) mechanism.
+# htons() lives in ws2_32.lib which is NOT linked by default on MSVC.
+
+autoconf(
+    name = "autoconf_win",
+    checks = [
+        checks.AC_SEARCH_LIBS(
+            "htons",
+            ["ws2_32"],
+            subst = "WINSOCK_LIB",
+        ),
+    ],
+    deps = [":package"],
+)
+
+autoconf_linkopts(
+    name = "linkopts_win",
+    vars = ["WINSOCK_LIB"],
+    deps = [":autoconf_win"],
+)
+
+cc_test(
+    name = "test_linkopts_win",
+    srcs = ["test_linkopts_win.c"],
+    target_compatible_with = select({
+        "@platforms//os:windows": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+    deps = [":linkopts_win"],
 )
