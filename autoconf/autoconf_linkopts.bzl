@@ -123,13 +123,20 @@ def _autoconf_linkopts_impl(ctx):
             srcs = [pragma_file],
             name = ctx.label.name + "_pragma",
         )
-        (linking_context, _) = cc_common.create_linking_context_from_compilation_outputs(
-            actions = ctx.actions,
-            feature_configuration = feature_configuration,
-            cc_toolchain = cc_toolchain,
-            compilation_outputs = compilation_outputs,
-            name = ctx.label.name + "_pragma",
-            alwayslink = True,
+
+        # Pass compiled .obj files directly as linker inputs rather than
+        # wrapping in an archive via create_linking_context_from_compilation_outputs.
+        # Archives require alwayslink + /WHOLEARCHIVE to force inclusion of
+        # symbol-free objects, which is fragile. Raw .obj paths in the params
+        # file are processed directly by link.exe.
+        objs = compilation_outputs.objects
+        linker_input = cc_common.create_linker_input(
+            owner = ctx.label,
+            user_link_flags = depset([obj.path for obj in objs]),
+            additional_inputs = depset(objs),
+        )
+        linking_context = cc_common.create_linking_context(
+            linker_inputs = depset([linker_input]),
         )
     else:
         linker_input = cc_common.create_linker_input(
