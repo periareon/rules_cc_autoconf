@@ -163,6 +163,7 @@ a cc_toolchain.</p>
 <h2 id="setup"><a class="header" href="#setup">Setup</a></h2>
 <pre><code class="language-python">bazel_dep(name = "rules_cc_autoconf", version = "{version}")
 </code></pre>
+<p>Use the <code>version</code> that matches the release you depend on in your root <code>MODULE.bazel</code>.</p>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
 <p>At a high level, Autoconf is a system for asking the C/C++ toolchain questions
 like <em>“does this header exist?”</em>, <em>“is this function available?”</em> or <em>“what is
@@ -171,8 +172,12 @@ the size of this type?”</em> and then encoding the answers into a generated
 defines instead of hard‑coding assumptions about the platform.</p>
 <p><code>rules_cc_autoconf</code> brings this style of configuration into <strong>Bazel</strong>. Rather
 than running <code>./configure</code> as an opaque shell script, you describe checks in
-Starlark (via the <code>macros</code> module) and run them with the <code>autoconf</code> rule. The
-rule talks directly to the Bazel C/C++ toolchain, so it respects things like
+Starlark with the <code>checks</code> struct from <code>@rules_cc_autoconf//autoconf:checks.bzl</code>
+(singular macros such as <code>AC_CHECK_HEADER</code>) and, when you need GNU-style plural
+helpers, the <code>macros</code> struct from the same file. You can also
+<code>load("@rules_cc_autoconf//autoconf:defs.bzl", ...)</code> to import the common rules
+and symbols in one place. Run those checks with the <code>autoconf</code> rule. The rule
+talks directly to the Bazel C/C++ toolchain, so it respects things like
 platforms, features, remote execution and sandboxing.</p>
 <p>Running traditional Autoconf inside Bazel (for example with a <code>genrule</code> that
 invokes <code>./configure</code>) tends to be brittle: it often assumes a POSIX shell,
@@ -189,6 +194,13 @@ requested. That gives you:</p>
 </ul>
 <p>The result is the same style of <code>config.h</code> you would expect from GNU Autoconf,
 but integrated cleanly into Bazel builds.</p>
+<h3 id="related-rules"><a class="header" href="#related-rules">Related rules</a></h3>
+<ul>
+<li><strong><code>autoconf_hdr</code></strong> — Renders <code>config.h</code> (or other templates) from check results.</li>
+<li><strong><code>autoconf_srcs</code></strong> — Generates wrapped C/C++ sources and provides <strong><code>CcInfo</code></strong> so libraries and binaries compile against autoconf output.</li>
+<li><strong><code>autoconf_linkopts</code></strong> — Resolves <strong>subst</strong> values (for example from <strong><code>AC_SEARCH_LIBS</code></strong>) into linker inputs: on GCC/Clang, flags are passed via a response file; on <strong><code>msvc-cl</code></strong> / <strong><code>clang-cl</code></strong>, a small generated translation unit is compiled so library dependencies are applied in an MSVC-compatible way. See the Stardoc page <a href="./autoconf_linkopts.html">autoconf_linkopts</a>.</li>
+<li><strong><code>autoconf_toolchain</code></strong> — Supplies default check results for the workspace toolchain; optional override point. See <a href="./autoconf_toolchain.html">autoconf_toolchain</a>.</li>
+</ul>
 <h2 id="why-not-just-run-autoconf"><a class="header" href="#why-not-just-run-autoconf">Why not just run Autoconf?</a></h2>
 <p>GNU <a href="https://www.gnu.org/software/autoconf/">Autoconf</a> is excellent at probing
 platform capabilities and generating Make-based build trees. However, dropping
@@ -213,6 +225,9 @@ by Bazel’s C/C++ toolchain configuration.</p>
 <ul>
 <li><a href="./autoconf.html#autoconf">autoconf</a></li>
 <li><a href="./autoconf_hdr.html#autoconf_hdr">autoconf_hdr</a></li>
+<li><a href="./autoconf_srcs.html#autoconf_srcs">autoconf_srcs</a></li>
+<li><a href="./autoconf_linkopts.html#autoconf_linkopts">autoconf_linkopts</a></li>
+<li><a href="./autoconf_toolchain.html#autoconf_toolchain">autoconf_toolchain</a></li>
 <li><a href="./package_info.html#package_info">package_info</a></li>
 <li><a href="./checks.html#checks">checks</a></li>
 </ul>
@@ -388,6 +403,189 @@ manually maintain <code>#ifdef</code> guards in every source file.</p>
 <tr><td style="text-align: left"><a id="autoconf_srcs-naming"></a>naming</td><td style="text-align: left">How to name generated sources: <code>package_relative</code> keeps the original package-relative path, <code>ac_suffix</code> inserts <code>.ac.</code> before the final suffix (e.g. <code>foo.cc -&gt; foo.ac.cc</code>), and <code>per_target</code> prefixes outputs with <code>{ctx.label.name}</code> to namespace them per rule.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>"package_relative"</code></td></tr>
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
+<h1 id="autoconf_linkopts"><a class="header" href="#autoconf_linkopts">autoconf_linkopts</a></h1>
+<p>Resolve AC_SEARCH_LIBS / AC_SUBST results into linker flags at build time.</p>
+<p>This rule reads the JSON result files from autoconf subst variables and
+produces a linker response file containing only the non-empty flags. The
+response file is returned via CcInfo so that cc_binary/cc_library targets
+can depend on it to get the correct platform-specific linkopts.</p>
+<p>On GCC/Clang the flags are passed via a @response-file in user_link_flags.
+On MSVC/clang-cl (where nested @file is unsupported), a .c file with
+#pragma comment(lib, ...) directives is compiled and the resulting object
+is linked in, achieving the same effect through MSVC's native mechanism.</p>
+<p>Example:</p>
+<pre><code class="language-python">load("@rules_cc_autoconf//autoconf:autoconf_linkopts.bzl", "autoconf_linkopts")
+
+autoconf_linkopts(
+    name = "linkopts",
+    vars = [
+        "LIBPTHREAD",
+        "FDATASYNC_LIB",
+        "CLOCK_TIME_LIB",
+    ],
+    deps = [":autoconf"],
+)
+
+cc_binary(
+    name = "my_binary",
+    srcs = ["main.c"],
+    deps = [":gnulib", ":linkopts"],
+)
+</code></pre>
+<p>On modern Linux (glibc 2.34+) where pthread/rt functions are in libc,
+AC_SEARCH_LIBS produces empty values and no extra -l flags are added.
+On older systems, the appropriate flags (-lpthread, -lrt) are added
+automatically.</p>
+<h2 id="rules-4"><a class="header" href="#rules-4">Rules</a></h2>
+<ul>
+<li><a href="autoconf_linkopts.html#autoconf_linkopts">autoconf_linkopts</a></li>
+</ul>
+<p><a id="autoconf_linkopts"></a></p>
+<h2 id="autoconf_linkopts-1"><a class="header" href="#autoconf_linkopts-1">autoconf_linkopts</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:autoconf_linkopts.bzl", "autoconf_linkopts")
+
+autoconf_linkopts(<a href="autoconf_linkopts.html#autoconf_linkopts-name">name</a>, <a href="autoconf_linkopts.html#autoconf_linkopts-deps">deps</a>, <a href="autoconf_linkopts.html#autoconf_linkopts-defaults">defaults</a>, <a href="autoconf_linkopts.html#autoconf_linkopts-vars">vars</a>)
+</pre>
+<p>Resolve AC_SEARCH_LIBS / AC_SUBST results into linker flags.</p>
+<p>Reads subst result JSON files from autoconf deps and produces a
+linker response file. Returns CcInfo with the flags, so consumers
+can simply add this target to their deps list.</p>
+<p>On GCC/Clang the flags are delivered via a @response-file. On
+MSVC/clang-cl a .c file with #pragma comment(lib, ...) directives
+is compiled instead, since MSVC's link.exe does not support nested
+response files.</p>
+<p>Variables not found in the deps are silently ignored (they may
+be provided by a different module or not needed on this platform).</p>
+<p><strong>ATTRIBUTES</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Type</th><th style="text-align: left">Mandatory</th><th style="text-align: left">Default</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="autoconf_linkopts-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_linkopts-deps"></a>deps</td><td style="text-align: left">List of autoconf targets providing check results.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_linkopts-defaults"></a>defaults</td><td style="text-align: left">Whether to include toolchain defaults.</td><td style="text-align: left">Boolean</td><td style="text-align: left">optional</td><td style="text-align: left"><code>False</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_linkopts-vars"></a>vars</td><td style="text-align: left">List of AC_SUBST variable names to resolve (e.g., ["LIBPTHREAD", "FDATASYNC_LIB"]). Each variable is looked up in the subst results from deps. Non-empty values (like "-lpthread") are added to linkopts; empty values are skipped.</td><td style="text-align: left">List of strings</td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
+<p>autoconf_toolchain</p>
+<p>Provides default autoconf checks that can be overridden by targets.</p>
+<h2 id="rules-5"><a class="header" href="#rules-5">Rules</a></h2>
+<ul>
+<li><a href="autoconf_toolchain.html#autoconf_cache">autoconf_cache</a></li>
+<li><a href="autoconf_toolchain.html#autoconf_toolchain">autoconf_toolchain</a></li>
+</ul>
+<p><a id="autoconf_cache"></a></p>
+<h2 id="autoconf_cache"><a class="header" href="#autoconf_cache">autoconf_cache</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:autoconf_toolchain.bzl", "autoconf_cache")
+
+autoconf_cache(<a href="autoconf_toolchain.html#autoconf_cache-name">name</a>, <a href="autoconf_toolchain.html#autoconf_cache-deps">deps</a>, <a href="autoconf_toolchain.html#autoconf_cache-checks">checks</a>)
+</pre>
+<p>Run autoconf-like checks without resolving the autoconf toolchain.</p>
+<p>Identical to <code>autoconf</code> except that it does <strong>not</strong> resolve the
+<code>autoconf_toolchain</code>.  Use this rule for targets that are listed as
+<code>cache_deps</code> or <code>defaults</code> of an <code>autoconf_toolchain</code> -- using the
+regular <code>autoconf</code> rule in that position would create a dependency cycle.</p>
+<p>Dep-level caching still applies: if a check's cache variable name already
+has a result in transitive <code>deps</code>, the action is skipped.</p>
+<p><strong>ATTRIBUTES</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Type</th><th style="text-align: left">Mandatory</th><th style="text-align: left">Default</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="autoconf_cache-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_cache-deps"></a>deps</td><td style="text-align: left">Additional <code>autoconf</code>, <code>autoconf_library</code>, or <code>package_info</code> dependencies.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_cache-checks"></a>checks</td><td style="text-align: left">List of JSON-encoded checks from checks (e.g., <code>checks.AC_CHECK_HEADER('stdio.h')</code>).</td><td style="text-align: left">List of strings</td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
+</tbody></table>
+</div>
+<p><a id="autoconf_toolchain"></a></p>
+<h2 id="autoconf_toolchain"><a class="header" href="#autoconf_toolchain">autoconf_toolchain</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:autoconf_toolchain.bzl", "autoconf_toolchain")
+
+autoconf_toolchain(<a href="autoconf_toolchain.html#autoconf_toolchain-name">name</a>, <a href="autoconf_toolchain.html#autoconf_toolchain-cache_deps">cache_deps</a>, <a href="autoconf_toolchain.html#autoconf_toolchain-defaults">defaults</a>)
+</pre>
+<p>Define an autoconf toolchain providing cached check results and rendering defaults.</p>
+<p>The toolchain has two separate concepts:</p>
+<ul>
+<li><strong>cache_deps</strong>: Check results available for action deduplication. When an
+<code>autoconf</code> target lists a check whose cache variable name already has a result
+in <code>cache_deps</code>, the checker action is skipped and the existing result file is
+reused.</li>
+<li><strong>defaults</strong>: Baseline values for <code>autoconf_hdr</code> rendering. When
+<code>autoconf_hdr</code> has <code>defaults = True</code>, these values are merged into the
+generated header.</li>
+</ul>
+<p>Both <code>cache_deps</code> and <code>defaults</code> contribute to the unified cache used by the
+<code>autoconf</code> rule for action deduplication. Only <code>defaults</code> contributes to the
+<code>defaults_by_label</code> map used by <code>autoconf_hdr</code> for include/exclude filtering.</p>
+<p>Targets listed in <code>cache_deps</code> and <code>defaults</code> must use <code>autoconf_library</code>
+(not <code>autoconf</code>) to avoid a dependency cycle.</p>
+<p>Example:</p>
+<pre><code class="language-python">load("@rules_cc_autoconf//autoconf:defs.bzl", "autoconf_cache", "autoconf_toolchain")
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+autoconf_cache(
+    name = "gnulib_defaults",
+    checks = [
+        checks.AC_SUBST("GNULIB_VFPRINTF_POSIX", "0"),
+        checks.AC_SUBST("REPLACE_POSIX_SPAWN", "0"),
+    ],
+)
+
+autoconf_toolchain(
+    name = "gnulib_toolchain_impl",
+    defaults = [":gnulib_defaults"],
+)
+
+toolchain(
+    name = "gnulib_toolchain",
+    toolchain = ":gnulib_toolchain_impl",
+    toolchain_type = "@rules_cc_autoconf//autoconf:toolchain_type",
+)
+</code></pre>
+<h2 id="caching-behavior"><a class="header" href="#caching-behavior">Caching behavior</a></h2>
+<h3 id="content-key-deduplication"><a class="header" href="#content-key-deduplication">Content-key deduplication</a></h3>
+<p>Every check is fingerprinted by a <strong>content key</strong> derived from its
+implementation fields: <code>type</code>, <code>code</code>, <code>language</code>, <code>define_value</code>,
+<code>includes</code>, <code>libraries</code>, <code>requires</code>, <code>condition</code>, <code>compile_defines</code>,
+and similar. Consumer metadata (<code>name</code>, <code>define</code>, <code>subst</code>, <code>unquote</code>)
+is <strong>excluded</strong>, so two checks with different consumer names but
+identical implementations share one content key and produce a single
+checker action and result file.</p>
+<p>When a new check is processed, its content key is looked up in order:</p>
+<ol>
+<li>Transitive deps' <code>content_cache</code></li>
+<li>Toolchain unified cache (<code>cache_deps</code> + <code>defaults</code>)</li>
+<li>Current target's local <code>content_cache</code></li>
+</ol>
+<p>If a hit is found at any level the existing result file is reused and
+no new checker action is declared. Identical checks within the same
+target are idempotent (silently skipped on second occurrence).</p>
+<h3 id="conflict-detection"><a class="header" href="#conflict-detection">Conflict detection</a></h3>
+<p>Three layers, from strictest to most relaxed:</p>
+<ul>
+<li><strong>Within one target</strong> -- duplicate <code>define</code> or <code>subst</code> symbol names
+in the same <code>checks</code> list always fail, even if the content keys
+match. This prevents accidental duplication in a single target.</li>
+<li><strong>Local vs dependencies / deps vs deps</strong> -- the same symbol
+appearing with a <strong>different result file</strong> is an error, <strong>unless</strong>
+both files share the same content key (a benign duplicate from
+identical implementations).</li>
+<li><strong>Cache variable names</strong> (<code>cache_results</code>) have no cross-dep
+conflict detection; content-based dedup is the identity signal.</li>
+</ul>
+<h3 id="resolving-conflicts"><a class="header" href="#resolving-conflicts">Resolving conflicts</a></h3>
+<p>The typical fix for <em>"Define 'X' is defined both locally and in
+dependencies with different result files"</em>:</p>
+<ul>
+<li>Remove the local check and depend on the target that already
+provides it.</li>
+<li>Or factor the shared check into its own <code>autoconf</code> /
+<code>autoconf_cache</code> target and depend on it from both consumers.</li>
+</ul>
+<p><strong>ATTRIBUTES</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Type</th><th style="text-align: left">Mandatory</th><th style="text-align: left">Default</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="autoconf_toolchain-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_toolchain-cache_deps"></a>cache_deps</td><td style="text-align: left">Targets whose check results are available for action deduplication in <code>autoconf</code> targets.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_toolchain-defaults"></a>defaults</td><td style="text-align: left">Targets whose results provide baseline values for <code>autoconf_hdr</code> rendering.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
 <h1 id="checks"><a class="header" href="#checks">checks</a></h1>
 <p>This module provides Bazel macros that mirror GNU Autoconf's behavior.</p>
 <h2 id="cache-variables-defines-and-subst-values"><a class="header" href="#cache-variables-defines-and-subst-values">Cache Variables, Defines, and Subst Values</a></h2>
@@ -483,6 +681,7 @@ joined with newlines to form the prologue of the test program.</p>
 <li><a href="checks.html#checks.AC_PROG_CC">checks.AC_PROG_CC</a></li>
 <li><a href="checks.html#checks.AC_PROG_CC_C_O">checks.AC_PROG_CC_C_O</a></li>
 <li><a href="checks.html#checks.AC_PROG_CXX">checks.AC_PROG_CXX</a></li>
+<li><a href="checks.html#checks.AC_SEARCH_LIBS">checks.AC_SEARCH_LIBS</a></li>
 <li><a href="checks.html#checks.AC_SUBST">checks.AC_SUBST</a></li>
 <li><a href="checks.html#checks.AC_TRY_COMPILE">checks.AC_TRY_COMPILE</a></li>
 <li><a href="checks.html#checks.AC_TRY_LINK">checks.AC_TRY_LINK</a></li>
@@ -1149,6 +1348,39 @@ but returns a check that will verify the compiler works.</p>
 </div>
 <p><strong>RETURNS</strong></p>
 <p>A JSON-encoded check string for use with the autoconf rule.</p>
+<p><a id="checks.AC_SEARCH_LIBS"></a></p>
+<h2 id="checksac_search_libs"><a class="header" href="#checksac_search_libs">checks.AC_SEARCH_LIBS</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+checks.AC_SEARCH_LIBS(<a href="checks.html#checks.AC_SEARCH_LIBS-function">function</a>, <a href="checks.html#checks.AC_SEARCH_LIBS-libraries">libraries</a>, *, <a href="checks.html#checks.AC_SEARCH_LIBS-name">name</a>, <a href="checks.html#checks.AC_SEARCH_LIBS-code">code</a>, <a href="checks.html#checks.AC_SEARCH_LIBS-language">language</a>, <a href="checks.html#checks.AC_SEARCH_LIBS-requires">requires</a>, <a href="checks.html#checks.AC_SEARCH_LIBS-subst">subst</a>)
+</pre>
+<p>Search for a function in libc, then in a list of libraries.</p>
+<p>Mirrors GNU autoconf's AC_SEARCH_LIBS. The checker tries linking the
+function without any extra library first, then with each library in order.</p>
+<p>When <code>subst</code> is specified, a substitution variable is produced with the
+library flag value: <code>""</code> if the function is in libc or not found,
+<code>"-l&lt;lib&gt;"</code> if found in a library.</p>
+<p>Original m4 example:</p>
+<pre><code class="language-m4">AC_SEARCH_LIBS([clock_gettime], [rt posix4])
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-python">checks.AC_SEARCH_LIBS("clock_gettime", ["rt", "posix4"],
+                      subst = "CLOCK_TIME_LIB")
+</code></pre>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="checks.AC_SEARCH_LIBS-function"></a>function</td><td style="text-align: left">Function name to search for (e.g., "clock_gettime")</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_SEARCH_LIBS-libraries"></a>libraries</td><td style="text-align: left">List of library names (without -l prefix) to try in order (e.g., ["rt", "posix4"])</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_SEARCH_LIBS-name"></a>name</td><td style="text-align: left">Cache variable name. Defaults to "ac_cv_search_<function>".</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_SEARCH_LIBS-code"></a>code</td><td style="text-align: left">Custom code to compile and link (optional).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_SEARCH_LIBS-language"></a>language</td><td style="text-align: left">Language to use for check ("c" or "cpp").</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_SEARCH_LIBS-requires"></a>requires</td><td style="text-align: left">Requirements that must be met for this check to run.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_SEARCH_LIBS-subst"></a>subst</td><td style="text-align: left">Substitution variable name for the library flag result.</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
 <p><a id="checks.AC_SUBST"></a></p>
 <h2 id="checksac_subst"><a class="header" href="#checksac_subst">checks.AC_SUBST</a></h2>
 <pre>
@@ -1581,7 +1813,7 @@ define = "HAVE_LANGINFO_CODESET",
 <p>A string suitable for the <code>code</code> parameter of AC_TRY_COMPILE or AC_TRY_LINK.</p>
 <div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
 <h1 id="package_info"><a class="header" href="#package_info">package_info</a></h1>
-<h2 id="rules-4"><a class="header" href="#rules-4">Rules</a></h2>
+<h2 id="rules-6"><a class="header" href="#rules-6">Rules</a></h2>
 <ul>
 <li><a href="package_info.html#package_info">package_info</a></li>
 </ul>
@@ -1639,6 +1871,12 @@ many of these M4 macros into Bazel <code>autoconf</code> targets that you can us
 <p>Each target in <code>@rules_cc_autoconf//gnulib/m4/</code> corresponds to a gnulib M4 macro and
 provides the same checks and defines that you would get from using that macro in a
 traditional <code>configure.ac</code> file.</p>
+<p>Some modules expose <strong>linker-related</strong> subst variables via <strong><code>AC_SEARCH_LIBS</code></strong> (for
+example clock/time helpers that may need <code>-lrt</code>). Bazel does not run <code>libtool</code> like
+Autoconf; add an <strong><code>autoconf_linkopts</code></strong> target that lists those subst names and depend
+on it from your <code>cc_library</code> / <code>cc_binary</code> / <code>cc_test</code> targets. See
+<a href="./migration.html#pattern-7b-ac_search_libs-and-autoconf_linkopts">Migrating M4 macros — Pattern 7b</a>
+and the rule reference <a href="./autoconf_linkopts.html">autoconf_linkopts</a>.</p>
 <h2 id="using-gnulib-targets"><a class="header" href="#using-gnulib-targets">Using Gnulib Targets</a></h2>
 <p>Instead of manually writing checks, you can add gnulib reusable targets as dependencies to your
 <code>autoconf</code> rule:</p>
@@ -1753,6 +1991,8 @@ autoconf_hdr(
 </ul>
 <h3 id="3-package_info-rule"><a class="header" href="#3-package_info-rule">3. <code>package_info</code> Rule</a></h3>
 <p>Provides package metadata (<code>PACKAGE_NAME</code>, <code>PACKAGE_VERSION</code>, etc.) equivalent to <code>AC_INIT</code>.</p>
+<h3 id="4-autoconf_linkopts-rule-optional"><a class="header" href="#4-autoconf_linkopts-rule-optional">4. <code>autoconf_linkopts</code> Rule (optional)</a></h3>
+<p>Turns <strong>subst</strong> values that hold linker flags (often from <code>AC_SEARCH_LIBS</code>) into <strong><code>CcInfo</code></strong> for <code>cc_library</code> / <code>cc_binary</code> / <code>cc_test</code> dependencies. See <a href="migration.html#pattern-7b-ac_search_libs-and-autoconf_linkopts">Pattern 7b</a>.</p>
 <h3 id="data-flow"><a class="header" href="#data-flow">Data Flow</a></h3>
 <pre><code>configure.ac         →    BUILD.bazel
      ↓                         ↓
@@ -1961,7 +2201,7 @@ AC_CHECK_ALIGNOF([double])
 checks.AC_CHECK_SIZEOF("size_t", define = "SIZEOF_SIZE_T", includes = ["#include &lt;stddef.h&gt;"])
 checks.AC_CHECK_ALIGNOF("double", define = "ALIGNOF_DOUBLE")
 </code></pre>
-<p><strong>Warning:</strong> These macros are NOT cross-compile friendly (see <a href="migration.html#cross-compilation-considerations">Cross-Compilation</a>).</p>
+<p><strong>Note:</strong> In <code>rules_cc_autoconf</code>, <code>AC_CHECK_SIZEOF</code> / <code>AC_CHECK_ALIGNOF</code> are implemented with <strong>compile-time</strong> probing (not by executing a test binary). They still encode facts about the <strong>target</strong> toolchain, so interpret results carefully when cross-compiling (see <a href="migration.html#cross-compilation-considerations">Cross-Compilation</a>).</p>
 <hr />
 <h3 id="pattern-7-library-checks"><a class="header" href="#pattern-7-library-checks">Pattern 7: Library Checks</a></h3>
 <p><strong>M4:</strong></p>
@@ -1972,6 +2212,42 @@ AC_CHECK_LIB([pthread], [pthread_create])
 <pre><code class="language-python">checks.AC_CHECK_LIB("m", "cos", define = "HAVE_LIBM")
 checks.AC_CHECK_LIB("pthread", "pthread_create", define = "HAVE_LIBPTHREAD")
 </code></pre>
+<hr />
+<h3 id="pattern-7b-ac_search_libs-and-autoconf_linkopts"><a class="header" href="#pattern-7b-ac_search_libs-and-autoconf_linkopts">Pattern 7b: <code>AC_SEARCH_LIBS</code> and <code>autoconf_linkopts</code></a></h3>
+<p><strong>M4:</strong></p>
+<pre><code class="language-m4">AC_SEARCH_LIBS([clock_gettime], [rt posix4], [], [], [AC_MSG_ERROR([...])])
+# LIBS now contains -lrt when needed
+</code></pre>
+<p><strong>Bazel (check + propagate linker flags):</strong></p>
+<pre><code class="language-python">load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
+load("@rules_cc_autoconf//autoconf:autoconf_linkopts.bzl", "autoconf_linkopts")
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "autoconf",
+    checks = [
+        checks.AC_SEARCH_LIBS(
+            "clock_gettime",
+            ["rt", "posix4"],
+            subst = "CLOCK_TIME_LIB",
+        ),
+    ],
+    deps = [":package"],
+)
+
+autoconf_linkopts(
+    name = "linkopts",
+    vars = ["CLOCK_TIME_LIB"],
+    deps = [":autoconf"],
+)
+
+cc_library(
+    name = "mylib",
+    srcs = ["lib.c"],
+    deps = [":linkopts"],
+)
+</code></pre>
+<p>The checker records a <strong>subst</strong> value: empty string if the symbol links without extra libraries, otherwise a flag such as <code>-lrt</code>. The <code>autoconf_linkopts</code> rule reads those result files and exposes <strong><code>CcInfo</code></strong> so dependents get the right link flags. On <strong>GCC/Clang</strong>, flags are passed via a linker response file; on <strong><code>msvc-cl</code></strong> / <strong><code>clang-cl</code></strong>, the rule uses an MSVC-compatible path (see <a href="./autoconf_linkopts.html">autoconf_linkopts</a>).</p>
 <hr />
 <h3 id="pattern-8-compiler-flag-checks"><a class="header" href="#pattern-8-compiler-flag-checks">Pattern 8: Compiler Flag Checks</a></h3>
 <p><strong>M4:</strong></p>
@@ -2153,6 +2429,7 @@ int main(void) {
 <tr><td><code>AC_CHECK_SIZEOF(type_name, ...)</code></td><td>Check size of a type</td></tr>
 <tr><td><code>AC_CHECK_ALIGNOF(type_name, ...)</code></td><td>Check alignment of a type</td></tr>
 <tr><td><code>AC_CHECK_LIB(library, function, ...)</code></td><td>Check for a function in a library</td></tr>
+<tr><td><code>AC_SEARCH_LIBS(function, libraries, ...)</code></td><td>Find which library provides a symbol; set <strong>subst</strong> to <code>""</code> or <code>-lname</code> (use with <a href="./autoconf_linkopts.html"><code>autoconf_linkopts</code></a>)</td></tr>
 <tr><td><code>AC_TRY_COMPILE(code=..., ...)</code></td><td>Try to compile custom code</td></tr>
 <tr><td><code>AC_TRY_LINK(code=..., ...)</code></td><td>Try to compile and link custom code</td></tr>
 <tr><td><code>AC_DEFINE(define, value=1, ...)</code></td><td>Define a preprocessor macro</td></tr>
@@ -2161,10 +2438,11 @@ int main(void) {
 <tr><td><code>M4_VARIABLE(define, value=1, ...)</code></td><td>Track M4 shell variables</td></tr>
 <tr><td><code>AC_PROG_CC()</code></td><td>Check for C compiler</td></tr>
 <tr><td><code>AC_PROG_CXX()</code></td><td>Check for C++ compiler</td></tr>
-<tr><td><code>AC_C_BIGENDIAN()</code></td><td>Check byte order</td></tr>
+<tr><td><code>AC_PROG_CC_C_O()</code></td><td>Check <code>cc -c -o</code> support</td></tr>
+<tr><td><code>AC_FAIL(define, ...)</code></td><td>Check that always fails; emit <code>#undef</code> (e.g. little-endian branch for <code>WORDS_BIGENDIAN</code>; GNU <code>AC_C_BIGENDIAN</code> is usually modeled with <code>select()</code> + <code>AC_DEFINE</code> / <code>AC_FAIL</code>)</td></tr>
 <tr><td><code>AC_C_INLINE()</code></td><td>Check for inline keyword</td></tr>
 <tr><td><code>AC_C_RESTRICT()</code></td><td>Check for restrict keyword</td></tr>
-<tr><td><code>AC_COMPUTE_INT(define, expression, ...)</code></td><td>Compute integer at compile time</td></tr>
+<tr><td><code>AC_COMPUTE_INT(define, expression, ...)</code></td><td>Compute integer at compile time (compile-time probe in this implementation)</td></tr>
 <tr><td><code>AC_CHECK_C_COMPILER_FLAG(flag, ...)</code></td><td>Check C compiler flag</td></tr>
 <tr><td><code>AC_CHECK_CXX_COMPILER_FLAG(flag, ...)</code></td><td>Check C++ compiler flag</td></tr>
 </tbody></table>
@@ -2545,58 +2823,32 @@ bazel test //gnulib/tests/compatibility/c32rtomb:all
 </code></pre>
 <p>Compare test output against golden files and fix any discrepancies.</p>
 <h3 id="step-8-test-on-linux-if-needed"><a class="header" href="#step-8-test-on-linux-if-needed">Step 8: Test on Linux (if needed)</a></h3>
-<p>When porting modules that have platform-specific behavior, you may need to test on Linux to verify correctness. The repository provides several scripts for running tests in Linux Docker containers:</p>
-<h4 id="available-linux-test-scripts"><a class="header" href="#available-linux-test-scripts">Available Linux Test Scripts</a></h4>
-<p><strong>1. <code>test_linux_docker.sh</code></strong> — Comprehensive testing on multiple Linux distributions</p>
+<p>When porting modules that have platform-specific behavior, you may need to test on Linux to verify correctness. The repository ships scripts at the workspace root for running Bazel inside Linux Docker containers:</p>
+<h4 id="available-scripts"><a class="header" href="#available-scripts">Available scripts</a></h4>
+<p><strong>1. <code>test_linux_docker.sh</code></strong> — Run a broad test matrix on Linux images (e.g. Ubuntu 22.04, Rocky Linux 9).</p>
 <ul>
-<li>Tests on Ubuntu 22.04 and Rocky Linux 9</li>
 <li>Usage: <code>./test_linux_docker.sh [--ubuntu-only | --rocky-only]</code></li>
-<li>Runs full test suite: <code>bazel test //autoconf/... //gnulib/...</code></li>
-<li>Saves results to <code>docker_test_results/</code> directory</li>
-<li>Generates summary files with test statistics</li>
+<li>Typically runs <code>bazel test //autoconf/... //gnulib/...</code> (see script for current defaults)</li>
+<li>Writes summaries under <code>docker_test_results/</code> when configured to do so</li>
 </ul>
-<p><strong>2. <code>test_modules.sh</code></strong> — Test specific modules</p>
-<ul>
-<li>Usage: <code>./test_modules.sh [--docker] module1 module2 ...</code></li>
-<li>Without <code>--docker</code>: runs tests locally (macOS)</li>
-<li>With <code>--docker</code>: runs tests in Docker (Linux)</li>
-<li>Example: <code>./test_modules.sh --docker fsusage renameat</code></li>
-</ul>
-<p><strong>3. <code>docker_bazel.sh</code></strong> — Generic Bazel command runner</p>
+<p><strong>2. <code>docker_bazel.sh</code></strong> — Run an arbitrary Bazel command in the same Docker environment.</p>
 <ul>
 <li>Usage: <code>./docker_bazel.sh [--amd64] &lt;bazel_command&gt;</code></li>
-<li>Builds/reuses Docker image and runs any Bazel command</li>
-<li>Supports <code>--amd64</code> flag for x86_64 emulation</li>
 <li>Example: <code>./docker_bazel.sh "test //gnulib/tests/compatibility/c32rtomb:all --test_output=errors"</code></li>
 </ul>
-<p><strong>4. <code>update_linux_golden.sh</code></strong> — Update Linux golden files</p>
+<p>For other workflows (targeted module tests, refreshing Linux golden files), use <code>docker_bazel.sh</code> with the appropriate <code>bazel test</code> / <code>bazel build</code> invocations, or add small wrapper scripts in your fork if you need them.</p>
+<h4 id="when-to-use-linux-testing"><a class="header" href="#when-to-use-linux-testing">When to use Linux testing</a></h4>
 <ul>
-<li>Usage: <code>./update_linux_golden.sh module1 module2 ...</code></li>
-<li>Builds targets in Docker, extracts <code>config.h</code> and <code>subst.h</code> outputs</li>
-<li>Updates <code>golden_config_linux.h.in</code> and <code>golden_subst_linux.h.in</code> files</li>
-<li>Use when Linux-specific golden files need updating</li>
+<li><strong>Platform-specific checks</strong>: Modules with <code>select()</code> or Linux-only assumptions</li>
+<li><strong>Golden file updates</strong>: When Linux-specific golden inputs need refreshing</li>
+<li><strong>Cross-platform verification</strong>: Confirm conditionals on a real Linux toolchain</li>
+<li><strong>Test failures</strong>: Debug Linux-only CI issues</li>
 </ul>
-<p><strong>5. <code>scripts/run_linux_tests.sh</code></strong> — Run tests and update golden files</p>
-<ul>
-<li>Builds Docker image from <code>Dockerfile</code></li>
-<li>Runs tests and executes <code>update.py</code> to extract results</li>
-<li>Mounts <code>gnulib</code> directory so updates write directly to host</li>
-</ul>
-<h4 id="when-to-use-linux-testing"><a class="header" href="#when-to-use-linux-testing">When to Use Linux Testing</a></h4>
-<ul>
-<li><strong>Platform-specific checks</strong>: Modules with <code>select()</code> statements for Linux-specific behavior</li>
-<li><strong>Golden file updates</strong>: When Linux golden files (<code>golden_config_linux.h.in</code>, <code>golden_subst_linux.h.in</code>) need updating</li>
-<li><strong>Cross-platform verification</strong>: Verify that platform conditionals work correctly</li>
-<li><strong>Test failures</strong>: Debug Linux-specific test failures</li>
-</ul>
-<h4 id="example-workflow"><a class="header" href="#example-workflow">Example Workflow</a></h4>
-<pre><code class="language-bash"># Test a specific module on Linux
-./test_modules.sh --docker c32rtomb
+<h4 id="example-workflow"><a class="header" href="#example-workflow">Example workflow</a></h4>
+<pre><code class="language-bash"># Run one compatibility package on Linux
+./docker_bazel.sh "test //gnulib/tests/compatibility/c32rtomb:all --test_output=errors"
 
-# Update Linux golden files after making changes
-./update_linux_golden.sh c32rtomb
-
-# Run full test suite on Linux
+# Run a broader slice (same idea as the docker test driver)
 ./test_linux_docker.sh --ubuntu-only
 </code></pre>
 <hr />
@@ -2689,26 +2941,27 @@ gnu_gnulib_diff_test_suite(
 <li><strong>Hermetic builds</strong> that don't depend on the build machine's locale, environment, etc.</li>
 </ol>
 <p>When M4 macros use <code>AC_TRY_EVAL</code> or <code>AC_RUN_IFELSE</code> (running compiled code at configure time), these should be replaced with <code>select()</code> statements that provide platform-specific defaults.</p>
-<h3 id="runtime-vs-compile-time-checks"><a class="header" href="#runtime-vs-compile-time-checks">Runtime vs Compile-Time Checks</a></h3>
-<p>Some macros require running compiled code, which doesn't work when cross-compiling:</p>
-<p><strong>NOT cross-compile safe (use <code>select()</code> instead):</strong></p>
+<h3 id="runtime-vs-compile-time-checks"><a class="header" href="#runtime-vs-compile-time-checks">Runtime vs compile-time checks</a></h3>
+<p>GNU Autoconf often uses <strong><code>AC_RUN_IFELSE</code></strong> and similar macros that <strong>execute</strong> test programs on the build machine. That model does not translate to cross-compilation: the binary may not run on the host when the target is different.</p>
+<p>In <strong><code>rules_cc_autoconf</code></strong>, the checker runs <strong>compile</strong> and <strong>link</strong> actions for the <strong>target</strong> toolchain; it does not execute generated programs. Several macros that Autoconf sometimes implements with runtime probes are implemented here with <strong>compile-time</strong> logic instead:</p>
 <ul>
-<li><code>AC_CHECK_SIZEOF</code> — Computes <code>sizeof()</code> by running code</li>
-<li><code>AC_CHECK_ALIGNOF</code> — Computes alignment by running code</li>
-<li><code>AC_COMPUTE_INT</code> — Evaluates expressions by running code</li>
-<li><code>AC_C_BIGENDIAN</code> — Detects endianness at runtime</li>
-<li><code>AC_TRY_EVAL</code> / <code>AC_RUN_IFELSE</code> — Runs compiled test programs</li>
-<li>Locale detection macros (e.g., <code>gt_LOCALE_FR</code>) — Tests locale availability at runtime</li>
+<li><strong><code>AC_CHECK_SIZEOF</code></strong>, <strong><code>AC_CHECK_ALIGNOF</code></strong>, <strong><code>AC_COMPUTE_INT</code></strong> — Probed at compile time (e.g. via compile-time techniques in the checker), <strong>not</strong> by running a test executable on the host. They still record properties of the <strong>target</strong> toolchain; when cross-compiling, ensure the configured toolchain matches the intended target and that the probe is meaningful for that environment.</li>
 </ul>
-<p><strong>Cross-compile safe:</strong></p>
+<p><strong>Still problematic or not modeled like GNU Autoconf:</strong></p>
 <ul>
-<li><code>AC_CHECK_HEADER</code> — Compile-only</li>
-<li><code>AC_CHECK_FUNC</code> — Link check</li>
-<li><code>AC_CHECK_DECL</code> — Compile-only</li>
-<li><code>AC_CHECK_TYPE</code> — Compile-only</li>
-<li><code>AC_TRY_COMPILE</code> — Compile-only</li>
-<li><code>AC_TRY_LINK</code> — Link check</li>
-<li><code>AC_DEFINE</code> — No check, just defines</li>
+<li><strong><code>AC_TRY_EVAL</code> / <code>AC_RUN_IFELSE</code></strong> (and M4 that assumes running the binary on the build machine) — Replace with <strong><code>select()</code></strong>, explicit <strong><code>AC_SUBST</code></strong>, or other target-appropriate defaults.</li>
+<li><strong>Locale and similar environment probes</strong> (e.g. <code>gt_LOCALE_FR</code>) — Usually replace with <strong><code>select()</code></strong> on OS/CPU, or fixed subst values, rather than executing locale code at configure time.</li>
+<li><strong><code>WORDS_BIGENDIAN</code> / <code>AC_C_BIGENDIAN</code></strong> — There is no single runtime probe; model endianness with <strong><code>select()</code></strong> and <strong><code>AC_DEFINE</code></strong>, and use <strong><code>AC_FAIL</code></strong> on branches where a define must be explicitly cleared (see <strong><code>AC_FAIL</code></strong> in the API table).</li>
+</ul>
+<p><strong>Generally “safe” in the sense of not requiring a runnable host binary</strong> (still subject to toolchain correctness when cross-compiling):</p>
+<ul>
+<li><code>AC_CHECK_HEADER</code> — compile-only</li>
+<li><code>AC_CHECK_FUNC</code> — link check</li>
+<li><code>AC_CHECK_DECL</code> — compile-only</li>
+<li><code>AC_CHECK_TYPE</code> — compile-only</li>
+<li><code>AC_TRY_COMPILE</code> — compile-only</li>
+<li><code>AC_TRY_LINK</code> — link check</li>
+<li><code>AC_DEFINE</code> / <code>AC_SUBST</code> — no compilation probe</li>
 </ul>
 <h3 id="strategies-for-cross-compilation"><a class="header" href="#strategies-for-cross-compilation">Strategies for Cross-Compilation</a></h3>
 <ol>
@@ -2927,7 +3180,7 @@ Verify no duplicate checks between direct checks and deps</li>
 <tr><td>Missing main() wrapper</td><td><code>AC_TRY_COMPILE</code> code must include <code>int main(void) { ... }</code> or use <code>utils.AC_LANG_PROGRAM</code></td></tr>
 <tr><td>String literals in defines</td><td>Use <code>'"string"'</code> (outer single, inner double quotes)</td></tr>
 <tr><td>Platform conditionals</td><td>Use <code>select()</code> for <code>case "$host_os"</code> patterns</td></tr>
-<tr><td>Cross-compilation failures</td><td>Avoid <code>AC_CHECK_SIZEOF</code> and similar runtime checks</td></tr>
+<tr><td>Cross-compilation failures</td><td>Validate sizeof/alignof/compute probes for the real target; replace true <strong>run</strong>-time Autoconf checks with <code>select()</code> or explicit substs</td></tr>
 <tr><td>Subst test disagrees with autoconf</td><td>Evaluate case-by-case: may be due to global defaults vs specific checks (see Step 6)</td></tr>
 <tr><td>Changing defaults to fix one module</td><td>Don't change existing defaults; they may break other modules</td></tr>
 <tr><td>Unnecessary <code>name</code> + separate <code>AC_DEFINE</code></td><td>Use <code>define =</code> directly unless the cache variable is needed in <code>requires</code> or you need custom values</td></tr>

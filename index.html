@@ -162,6 +162,7 @@ a cc_toolchain.</p>
 <h2 id="setup"><a class="header" href="#setup">Setup</a></h2>
 <pre><code class="language-python">bazel_dep(name = "rules_cc_autoconf", version = "{version}")
 </code></pre>
+<p>Use the <code>version</code> that matches the release you depend on in your root <code>MODULE.bazel</code>.</p>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
 <p>At a high level, Autoconf is a system for asking the C/C++ toolchain questions
 like <em>“does this header exist?”</em>, <em>“is this function available?”</em> or <em>“what is
@@ -170,8 +171,12 @@ the size of this type?”</em> and then encoding the answers into a generated
 defines instead of hard‑coding assumptions about the platform.</p>
 <p><code>rules_cc_autoconf</code> brings this style of configuration into <strong>Bazel</strong>. Rather
 than running <code>./configure</code> as an opaque shell script, you describe checks in
-Starlark (via the <code>macros</code> module) and run them with the <code>autoconf</code> rule. The
-rule talks directly to the Bazel C/C++ toolchain, so it respects things like
+Starlark with the <code>checks</code> struct from <code>@rules_cc_autoconf//autoconf:checks.bzl</code>
+(singular macros such as <code>AC_CHECK_HEADER</code>) and, when you need GNU-style plural
+helpers, the <code>macros</code> struct from the same file. You can also
+<code>load("@rules_cc_autoconf//autoconf:defs.bzl", ...)</code> to import the common rules
+and symbols in one place. Run those checks with the <code>autoconf</code> rule. The rule
+talks directly to the Bazel C/C++ toolchain, so it respects things like
 platforms, features, remote execution and sandboxing.</p>
 <p>Running traditional Autoconf inside Bazel (for example with a <code>genrule</code> that
 invokes <code>./configure</code>) tends to be brittle: it often assumes a POSIX shell,
@@ -188,6 +193,13 @@ requested. That gives you:</p>
 </ul>
 <p>The result is the same style of <code>config.h</code> you would expect from GNU Autoconf,
 but integrated cleanly into Bazel builds.</p>
+<h3 id="related-rules"><a class="header" href="#related-rules">Related rules</a></h3>
+<ul>
+<li><strong><code>autoconf_hdr</code></strong> — Renders <code>config.h</code> (or other templates) from check results.</li>
+<li><strong><code>autoconf_srcs</code></strong> — Generates wrapped C/C++ sources and provides <strong><code>CcInfo</code></strong> so libraries and binaries compile against autoconf output.</li>
+<li><strong><code>autoconf_linkopts</code></strong> — Resolves <strong>subst</strong> values (for example from <strong><code>AC_SEARCH_LIBS</code></strong>) into linker inputs: on GCC/Clang, flags are passed via a response file; on <strong><code>msvc-cl</code></strong> / <strong><code>clang-cl</code></strong>, a small generated translation unit is compiled so library dependencies are applied in an MSVC-compatible way. See the Stardoc page <a href="./autoconf_linkopts.html">autoconf_linkopts</a>.</li>
+<li><strong><code>autoconf_toolchain</code></strong> — Supplies default check results for the workspace toolchain; optional override point. See <a href="./autoconf_toolchain.html">autoconf_toolchain</a>.</li>
+</ul>
 <h2 id="why-not-just-run-autoconf"><a class="header" href="#why-not-just-run-autoconf">Why not just run Autoconf?</a></h2>
 <p>GNU <a href="https://www.gnu.org/software/autoconf/">Autoconf</a> is excellent at probing
 platform capabilities and generating Make-based build trees. However, dropping

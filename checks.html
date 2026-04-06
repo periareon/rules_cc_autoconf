@@ -251,6 +251,7 @@ joined with newlines to form the prologue of the test program.</p>
 <li><a href="#checks.AC_PROG_CC">checks.AC_PROG_CC</a></li>
 <li><a href="#checks.AC_PROG_CC_C_O">checks.AC_PROG_CC_C_O</a></li>
 <li><a href="#checks.AC_PROG_CXX">checks.AC_PROG_CXX</a></li>
+<li><a href="#checks.AC_SEARCH_LIBS">checks.AC_SEARCH_LIBS</a></li>
 <li><a href="#checks.AC_SUBST">checks.AC_SUBST</a></li>
 <li><a href="#checks.AC_TRY_COMPILE">checks.AC_TRY_COMPILE</a></li>
 <li><a href="#checks.AC_TRY_LINK">checks.AC_TRY_LINK</a></li>
@@ -917,6 +918,39 @@ but returns a check that will verify the compiler works.</p>
 </div>
 <p><strong>RETURNS</strong></p>
 <p>A JSON-encoded check string for use with the autoconf rule.</p>
+<p><a id="checks.AC_SEARCH_LIBS"></a></p>
+<h2 id="checksac_search_libs"><a class="header" href="#checksac_search_libs">checks.AC_SEARCH_LIBS</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+checks.AC_SEARCH_LIBS(<a href="#checks.AC_SEARCH_LIBS-function">function</a>, <a href="#checks.AC_SEARCH_LIBS-libraries">libraries</a>, *, <a href="#checks.AC_SEARCH_LIBS-name">name</a>, <a href="#checks.AC_SEARCH_LIBS-code">code</a>, <a href="#checks.AC_SEARCH_LIBS-language">language</a>, <a href="#checks.AC_SEARCH_LIBS-requires">requires</a>, <a href="#checks.AC_SEARCH_LIBS-subst">subst</a>)
+</pre>
+<p>Search for a function in libc, then in a list of libraries.</p>
+<p>Mirrors GNU autoconf's AC_SEARCH_LIBS. The checker tries linking the
+function without any extra library first, then with each library in order.</p>
+<p>When <code>subst</code> is specified, a substitution variable is produced with the
+library flag value: <code>""</code> if the function is in libc or not found,
+<code>"-l&lt;lib&gt;"</code> if found in a library.</p>
+<p>Original m4 example:</p>
+<pre><code class="language-m4">AC_SEARCH_LIBS([clock_gettime], [rt posix4])
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-python">checks.AC_SEARCH_LIBS("clock_gettime", ["rt", "posix4"],
+                      subst = "CLOCK_TIME_LIB")
+</code></pre>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="checks.AC_SEARCH_LIBS-function"></a>function</td><td style="text-align: left">Function name to search for (e.g., "clock_gettime")</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_SEARCH_LIBS-libraries"></a>libraries</td><td style="text-align: left">List of library names (without -l prefix) to try in order (e.g., ["rt", "posix4"])</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_SEARCH_LIBS-name"></a>name</td><td style="text-align: left">Cache variable name. Defaults to "ac_cv_search_<function>".</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_SEARCH_LIBS-code"></a>code</td><td style="text-align: left">Custom code to compile and link (optional).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_SEARCH_LIBS-language"></a>language</td><td style="text-align: left">Language to use for check ("c" or "cpp").</td><td style="text-align: left"><code>"c"</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_SEARCH_LIBS-requires"></a>requires</td><td style="text-align: left">Requirements that must be met for this check to run.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_SEARCH_LIBS-subst"></a>subst</td><td style="text-align: left">Substitution variable name for the library flag result.</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
 <p><a id="checks.AC_SUBST"></a></p>
 <h2 id="checksac_subst"><a class="header" href="#checksac_subst">checks.AC_SUBST</a></h2>
 <pre>
@@ -1352,7 +1386,7 @@ define = "HAVE_LANGINFO_CODESET",
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="autoconf_srcs.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="autoconf_toolchain.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
@@ -1366,7 +1400,7 @@ define = "HAVE_LANGINFO_CODESET",
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="autoconf_srcs.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="autoconf_toolchain.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 

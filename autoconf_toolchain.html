@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>autoconf_srcs - rules_cc_autoconf</title>
+        <title>autoconf_toolchain - rules_cc_autoconf</title>
 
 
         <!-- Custom HTML head -->
@@ -156,79 +156,136 @@
                 <div id="content" class="content">
                     <main>
                         <!-- Generated with Stardoc: http://skydoc.bazel.build -->
-<h1 id="autoconf_srcs"><a class="header" href="#autoconf_srcs">autoconf_srcs</a></h1>
+<p>autoconf_toolchain</p>
+<p>Provides default autoconf checks that can be overridden by targets.</p>
 <h2 id="rules"><a class="header" href="#rules">Rules</a></h2>
 <ul>
-<li><a href="#autoconf_srcs">autoconf_srcs</a></li>
+<li><a href="#autoconf_cache">autoconf_cache</a></li>
+<li><a href="#autoconf_toolchain">autoconf_toolchain</a></li>
 </ul>
-<p><a id="autoconf_srcs"></a></p>
-<h2 id="autoconf_srcs-1"><a class="header" href="#autoconf_srcs-1">autoconf_srcs</a></h2>
+<p><a id="autoconf_cache"></a></p>
+<h2 id="autoconf_cache"><a class="header" href="#autoconf_cache">autoconf_cache</a></h2>
 <pre>
-load("@rules_cc_autoconf//autoconf:autoconf_srcs.bzl", "autoconf_srcs")
+load("@rules_cc_autoconf//autoconf:autoconf_toolchain.bzl", "autoconf_cache")
 
-autoconf_srcs(<a href="#autoconf_srcs-name">name</a>, <a href="#autoconf_srcs-deps">deps</a>, <a href="#autoconf_srcs-srcs">srcs</a>, <a href="#autoconf_srcs-defaults">defaults</a>, <a href="#autoconf_srcs-defaults_exclude">defaults_exclude</a>, <a href="#autoconf_srcs-defaults_include">defaults_include</a>, <a href="#autoconf_srcs-naming">naming</a>)
+autoconf_cache(<a href="#autoconf_cache-name">name</a>, <a href="#autoconf_cache-deps">deps</a>, <a href="#autoconf_cache-checks">checks</a>)
 </pre>
-<p>Generate wrapper sources that are conditionally enabled by autoconf results.</p>
-<p>Typical use case:</p>
-<pre><code class="language-python">load("@rules_cc_autoconf//autoconf:autoconf_srcs.bzl", "autoconf_srcs")
-load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
-load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
-load("@rules_cc//cc:cc_library.bzl", "cc_library")
+<p>Run autoconf-like checks without resolving the autoconf toolchain.</p>
+<p>Identical to <code>autoconf</code> except that it does <strong>not</strong> resolve the
+<code>autoconf_toolchain</code>.  Use this rule for targets that are listed as
+<code>cache_deps</code> or <code>defaults</code> of an <code>autoconf_toolchain</code> -- using the
+regular <code>autoconf</code> rule in that position would create a dependency cycle.</p>
+<p>Dep-level caching still applies: if a check's cache variable name already
+has a result in transitive <code>deps</code>, the action is skipped.</p>
+<p><strong>ATTRIBUTES</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Type</th><th style="text-align: left">Mandatory</th><th style="text-align: left">Default</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="autoconf_cache-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_cache-deps"></a>deps</td><td style="text-align: left">Additional <code>autoconf</code>, <code>autoconf_library</code>, or <code>package_info</code> dependencies.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_cache-checks"></a>checks</td><td style="text-align: left">List of JSON-encoded checks from checks (e.g., <code>checks.AC_CHECK_HEADER('stdio.h')</code>).</td><td style="text-align: left">List of strings</td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
+</tbody></table>
+</div>
+<p><a id="autoconf_toolchain"></a></p>
+<h2 id="autoconf_toolchain"><a class="header" href="#autoconf_toolchain">autoconf_toolchain</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:autoconf_toolchain.bzl", "autoconf_toolchain")
 
-autoconf(
-    name = "config",
-    out = "config.h",
+autoconf_toolchain(<a href="#autoconf_toolchain-name">name</a>, <a href="#autoconf_toolchain-cache_deps">cache_deps</a>, <a href="#autoconf_toolchain-defaults">defaults</a>)
+</pre>
+<p>Define an autoconf toolchain providing cached check results and rendering defaults.</p>
+<p>The toolchain has two separate concepts:</p>
+<ul>
+<li><strong>cache_deps</strong>: Check results available for action deduplication. When an
+<code>autoconf</code> target lists a check whose cache variable name already has a result
+in <code>cache_deps</code>, the checker action is skipped and the existing result file is
+reused.</li>
+<li><strong>defaults</strong>: Baseline values for <code>autoconf_hdr</code> rendering. When
+<code>autoconf_hdr</code> has <code>defaults = True</code>, these values are merged into the
+generated header.</li>
+</ul>
+<p>Both <code>cache_deps</code> and <code>defaults</code> contribute to the unified cache used by the
+<code>autoconf</code> rule for action deduplication. Only <code>defaults</code> contributes to the
+<code>defaults_by_label</code> map used by <code>autoconf_hdr</code> for include/exclude filtering.</p>
+<p>Targets listed in <code>cache_deps</code> and <code>defaults</code> must use <code>autoconf_library</code>
+(not <code>autoconf</code>) to avoid a dependency cycle.</p>
+<p>Example:</p>
+<pre><code class="language-python">load("@rules_cc_autoconf//autoconf:defs.bzl", "autoconf_cache", "autoconf_toolchain")
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+autoconf_cache(
+    name = "gnulib_defaults",
     checks = [
-        # Feature is present on this platform/toolchain.
-        checks.AC_CHECK_HEADER("foo.h", define = "HAVE_FOO"),
+        checks.AC_SUBST("GNULIB_VFPRINTF_POSIX", "0"),
+        checks.AC_SUBST("REPLACE_POSIX_SPAWN", "0"),
     ],
 )
 
-autoconf_srcs(
-    name = "foo_srcs",
-    deps = [":config"],
-    srcs = {
-        "uses_foo.c": "HAVE_FOO",
-    },
+autoconf_toolchain(
+    name = "gnulib_toolchain_impl",
+    defaults = [":gnulib_defaults"],
 )
 
-cc_library(
-    name = "foo",
-    srcs = [":foo_srcs"],
-    hdrs = [":config.h"],
+toolchain(
+    name = "gnulib_toolchain",
+    toolchain = ":gnulib_toolchain_impl",
+    toolchain_type = "@rules_cc_autoconf//autoconf:toolchain_type",
 )
 </code></pre>
-<p>In this setup <code>autoconf_srcs</code> reads the results from <code>:config</code> (or multiple targets via <code>deps</code>) and generates a
-wrapped copy of <code>uses_foo.c</code> whose contents are effectively:</p>
-<pre><code class="language-cc">#define HAVE_FOO 1      // when the check for HAVE_FOO succeeds
-/* or: #undef HAVE_FOO  // when the check fails */
-#ifdef HAVE_FOO
-/* original uses_foo.c contents ... */
-#endif
-</code></pre>
-<p>This is useful when you have platform-specific or optional sources that should
-only be compiled when a particular autoconf check passes, without having to
-manually maintain <code>#ifdef</code> guards in every source file.</p>
+<h2 id="caching-behavior"><a class="header" href="#caching-behavior">Caching behavior</a></h2>
+<h3 id="content-key-deduplication"><a class="header" href="#content-key-deduplication">Content-key deduplication</a></h3>
+<p>Every check is fingerprinted by a <strong>content key</strong> derived from its
+implementation fields: <code>type</code>, <code>code</code>, <code>language</code>, <code>define_value</code>,
+<code>includes</code>, <code>libraries</code>, <code>requires</code>, <code>condition</code>, <code>compile_defines</code>,
+and similar. Consumer metadata (<code>name</code>, <code>define</code>, <code>subst</code>, <code>unquote</code>)
+is <strong>excluded</strong>, so two checks with different consumer names but
+identical implementations share one content key and produce a single
+checker action and result file.</p>
+<p>When a new check is processed, its content key is looked up in order:</p>
+<ol>
+<li>Transitive deps' <code>content_cache</code></li>
+<li>Toolchain unified cache (<code>cache_deps</code> + <code>defaults</code>)</li>
+<li>Current target's local <code>content_cache</code></li>
+</ol>
+<p>If a hit is found at any level the existing result file is reused and
+no new checker action is declared. Identical checks within the same
+target are idempotent (silently skipped on second occurrence).</p>
+<h3 id="conflict-detection"><a class="header" href="#conflict-detection">Conflict detection</a></h3>
+<p>Three layers, from strictest to most relaxed:</p>
+<ul>
+<li><strong>Within one target</strong> -- duplicate <code>define</code> or <code>subst</code> symbol names
+in the same <code>checks</code> list always fail, even if the content keys
+match. This prevents accidental duplication in a single target.</li>
+<li><strong>Local vs dependencies / deps vs deps</strong> -- the same symbol
+appearing with a <strong>different result file</strong> is an error, <strong>unless</strong>
+both files share the same content key (a benign duplicate from
+identical implementations).</li>
+<li><strong>Cache variable names</strong> (<code>cache_results</code>) have no cross-dep
+conflict detection; content-based dedup is the identity signal.</li>
+</ul>
+<h3 id="resolving-conflicts"><a class="header" href="#resolving-conflicts">Resolving conflicts</a></h3>
+<p>The typical fix for <em>"Define 'X' is defined both locally and in
+dependencies with different result files"</em>:</p>
+<ul>
+<li>Remove the local check and depend on the target that already
+provides it.</li>
+<li>Or factor the shared check into its own <code>autoconf</code> /
+<code>autoconf_cache</code> target and depend on it from both consumers.</li>
+</ul>
 <p><strong>ATTRIBUTES</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Type</th><th style="text-align: left">Mandatory</th><th style="text-align: left">Default</th></tr></thead><tbody>
-<tr><td style="text-align: left"><a id="autoconf_srcs-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_srcs-deps"></a>deps</td><td style="text-align: left">List of <code>autoconf</code> targets which provide defines. Results from all deps will be merged together, and duplicate define names will produce an error.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_srcs-srcs"></a>srcs</td><td style="text-align: left">A mapping of source file to define required to compile the file.</td><td style="text-align: left"><a href="https://bazel.build/rules/lib/dict">Dictionary: Label -&gt; String</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_srcs-defaults"></a>defaults</td><td style="text-align: left">Whether to include toolchain defaults.<br><br>When False (the default), no toolchain defaults are included and only the explicit deps provide check results. When True, defaults from the autoconf toolchain are included, subject to filtering by defaults_include or defaults_exclude.</td><td style="text-align: left">Boolean</td><td style="text-align: left">optional</td><td style="text-align: left"><code>False</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_srcs-defaults_exclude"></a>defaults_exclude</td><td style="text-align: left">Labels to exclude from toolchain defaults.<br><br>Only effective when defaults=True. If specified, defaults from these labels are excluded. Labels not found in the toolchain are silently ignored. Mutually exclusive with defaults_include.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_srcs-defaults_include"></a>defaults_include</td><td style="text-align: left">Labels to include from toolchain defaults.<br><br>Only effective when defaults=True. If specified, only defaults from these labels are included. An error is raised if a specified label is not found in the toolchain. Mutually exclusive with defaults_exclude.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_srcs-naming"></a>naming</td><td style="text-align: left">How to name generated sources: <code>package_relative</code> keeps the original package-relative path, <code>ac_suffix</code> inserts <code>.ac.</code> before the final suffix (e.g. <code>foo.cc -&gt; foo.ac.cc</code>), and <code>per_target</code> prefixes outputs with <code>{ctx.label.name}</code> to namespace them per rule.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>"package_relative"</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_toolchain-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_toolchain-cache_deps"></a>cache_deps</td><td style="text-align: left">Targets whose check results are available for action deduplication in <code>autoconf</code> targets.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_toolchain-defaults"></a>defaults</td><td style="text-align: left">Targets whose results provide baseline values for <code>autoconf_hdr</code> rendering.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
 </tbody></table>
 </div>
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="autoconf_hdr.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="autoconf_linkopts.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="autoconf_linkopts.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="checks.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -238,11 +295,11 @@ manually maintain <code>#ifdef</code> guards in every source file.</p>
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="autoconf_hdr.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="autoconf_linkopts.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="autoconf_linkopts.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="checks.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

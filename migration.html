@@ -233,6 +233,8 @@ autoconf_hdr(
 </ul>
 <h3 id="3-package_info-rule"><a class="header" href="#3-package_info-rule">3. <code>package_info</code> Rule</a></h3>
 <p>Provides package metadata (<code>PACKAGE_NAME</code>, <code>PACKAGE_VERSION</code>, etc.) equivalent to <code>AC_INIT</code>.</p>
+<h3 id="4-autoconf_linkopts-rule-optional"><a class="header" href="#4-autoconf_linkopts-rule-optional">4. <code>autoconf_linkopts</code> Rule (optional)</a></h3>
+<p>Turns <strong>subst</strong> values that hold linker flags (often from <code>AC_SEARCH_LIBS</code>) into <strong><code>CcInfo</code></strong> for <code>cc_library</code> / <code>cc_binary</code> / <code>cc_test</code> dependencies. See <a href="#pattern-7b-ac_search_libs-and-autoconf_linkopts">Pattern 7b</a>.</p>
 <h3 id="data-flow"><a class="header" href="#data-flow">Data Flow</a></h3>
 <pre><code>configure.ac         →    BUILD.bazel
      ↓                         ↓
@@ -441,7 +443,7 @@ AC_CHECK_ALIGNOF([double])
 checks.AC_CHECK_SIZEOF("size_t", define = "SIZEOF_SIZE_T", includes = ["#include &lt;stddef.h&gt;"])
 checks.AC_CHECK_ALIGNOF("double", define = "ALIGNOF_DOUBLE")
 </code></pre>
-<p><strong>Warning:</strong> These macros are NOT cross-compile friendly (see <a href="#cross-compilation-considerations">Cross-Compilation</a>).</p>
+<p><strong>Note:</strong> In <code>rules_cc_autoconf</code>, <code>AC_CHECK_SIZEOF</code> / <code>AC_CHECK_ALIGNOF</code> are implemented with <strong>compile-time</strong> probing (not by executing a test binary). They still encode facts about the <strong>target</strong> toolchain, so interpret results carefully when cross-compiling (see <a href="#cross-compilation-considerations">Cross-Compilation</a>).</p>
 <hr />
 <h3 id="pattern-7-library-checks"><a class="header" href="#pattern-7-library-checks">Pattern 7: Library Checks</a></h3>
 <p><strong>M4:</strong></p>
@@ -452,6 +454,42 @@ AC_CHECK_LIB([pthread], [pthread_create])
 <pre><code class="language-python">checks.AC_CHECK_LIB("m", "cos", define = "HAVE_LIBM")
 checks.AC_CHECK_LIB("pthread", "pthread_create", define = "HAVE_LIBPTHREAD")
 </code></pre>
+<hr />
+<h3 id="pattern-7b-ac_search_libs-and-autoconf_linkopts"><a class="header" href="#pattern-7b-ac_search_libs-and-autoconf_linkopts">Pattern 7b: <code>AC_SEARCH_LIBS</code> and <code>autoconf_linkopts</code></a></h3>
+<p><strong>M4:</strong></p>
+<pre><code class="language-m4">AC_SEARCH_LIBS([clock_gettime], [rt posix4], [], [], [AC_MSG_ERROR([...])])
+# LIBS now contains -lrt when needed
+</code></pre>
+<p><strong>Bazel (check + propagate linker flags):</strong></p>
+<pre><code class="language-python">load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
+load("@rules_cc_autoconf//autoconf:autoconf_linkopts.bzl", "autoconf_linkopts")
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "autoconf",
+    checks = [
+        checks.AC_SEARCH_LIBS(
+            "clock_gettime",
+            ["rt", "posix4"],
+            subst = "CLOCK_TIME_LIB",
+        ),
+    ],
+    deps = [":package"],
+)
+
+autoconf_linkopts(
+    name = "linkopts",
+    vars = ["CLOCK_TIME_LIB"],
+    deps = [":autoconf"],
+)
+
+cc_library(
+    name = "mylib",
+    srcs = ["lib.c"],
+    deps = [":linkopts"],
+)
+</code></pre>
+<p>The checker records a <strong>subst</strong> value: empty string if the symbol links without extra libraries, otherwise a flag such as <code>-lrt</code>. The <code>autoconf_linkopts</code> rule reads those result files and exposes <strong><code>CcInfo</code></strong> so dependents get the right link flags. On <strong>GCC/Clang</strong>, flags are passed via a linker response file; on <strong><code>msvc-cl</code></strong> / <strong><code>clang-cl</code></strong>, the rule uses an MSVC-compatible path (see <a href="./autoconf_linkopts.html">autoconf_linkopts</a>).</p>
 <hr />
 <h3 id="pattern-8-compiler-flag-checks"><a class="header" href="#pattern-8-compiler-flag-checks">Pattern 8: Compiler Flag Checks</a></h3>
 <p><strong>M4:</strong></p>
@@ -633,6 +671,7 @@ int main(void) {
 <tr><td><code>AC_CHECK_SIZEOF(type_name, ...)</code></td><td>Check size of a type</td></tr>
 <tr><td><code>AC_CHECK_ALIGNOF(type_name, ...)</code></td><td>Check alignment of a type</td></tr>
 <tr><td><code>AC_CHECK_LIB(library, function, ...)</code></td><td>Check for a function in a library</td></tr>
+<tr><td><code>AC_SEARCH_LIBS(function, libraries, ...)</code></td><td>Find which library provides a symbol; set <strong>subst</strong> to <code>""</code> or <code>-lname</code> (use with <a href="./autoconf_linkopts.html"><code>autoconf_linkopts</code></a>)</td></tr>
 <tr><td><code>AC_TRY_COMPILE(code=..., ...)</code></td><td>Try to compile custom code</td></tr>
 <tr><td><code>AC_TRY_LINK(code=..., ...)</code></td><td>Try to compile and link custom code</td></tr>
 <tr><td><code>AC_DEFINE(define, value=1, ...)</code></td><td>Define a preprocessor macro</td></tr>
@@ -641,10 +680,11 @@ int main(void) {
 <tr><td><code>M4_VARIABLE(define, value=1, ...)</code></td><td>Track M4 shell variables</td></tr>
 <tr><td><code>AC_PROG_CC()</code></td><td>Check for C compiler</td></tr>
 <tr><td><code>AC_PROG_CXX()</code></td><td>Check for C++ compiler</td></tr>
-<tr><td><code>AC_C_BIGENDIAN()</code></td><td>Check byte order</td></tr>
+<tr><td><code>AC_PROG_CC_C_O()</code></td><td>Check <code>cc -c -o</code> support</td></tr>
+<tr><td><code>AC_FAIL(define, ...)</code></td><td>Check that always fails; emit <code>#undef</code> (e.g. little-endian branch for <code>WORDS_BIGENDIAN</code>; GNU <code>AC_C_BIGENDIAN</code> is usually modeled with <code>select()</code> + <code>AC_DEFINE</code> / <code>AC_FAIL</code>)</td></tr>
 <tr><td><code>AC_C_INLINE()</code></td><td>Check for inline keyword</td></tr>
 <tr><td><code>AC_C_RESTRICT()</code></td><td>Check for restrict keyword</td></tr>
-<tr><td><code>AC_COMPUTE_INT(define, expression, ...)</code></td><td>Compute integer at compile time</td></tr>
+<tr><td><code>AC_COMPUTE_INT(define, expression, ...)</code></td><td>Compute integer at compile time (compile-time probe in this implementation)</td></tr>
 <tr><td><code>AC_CHECK_C_COMPILER_FLAG(flag, ...)</code></td><td>Check C compiler flag</td></tr>
 <tr><td><code>AC_CHECK_CXX_COMPILER_FLAG(flag, ...)</code></td><td>Check C++ compiler flag</td></tr>
 </tbody></table>
@@ -1025,58 +1065,32 @@ bazel test //gnulib/tests/compatibility/c32rtomb:all
 </code></pre>
 <p>Compare test output against golden files and fix any discrepancies.</p>
 <h3 id="step-8-test-on-linux-if-needed"><a class="header" href="#step-8-test-on-linux-if-needed">Step 8: Test on Linux (if needed)</a></h3>
-<p>When porting modules that have platform-specific behavior, you may need to test on Linux to verify correctness. The repository provides several scripts for running tests in Linux Docker containers:</p>
-<h4 id="available-linux-test-scripts"><a class="header" href="#available-linux-test-scripts">Available Linux Test Scripts</a></h4>
-<p><strong>1. <code>test_linux_docker.sh</code></strong> — Comprehensive testing on multiple Linux distributions</p>
+<p>When porting modules that have platform-specific behavior, you may need to test on Linux to verify correctness. The repository ships scripts at the workspace root for running Bazel inside Linux Docker containers:</p>
+<h4 id="available-scripts"><a class="header" href="#available-scripts">Available scripts</a></h4>
+<p><strong>1. <code>test_linux_docker.sh</code></strong> — Run a broad test matrix on Linux images (e.g. Ubuntu 22.04, Rocky Linux 9).</p>
 <ul>
-<li>Tests on Ubuntu 22.04 and Rocky Linux 9</li>
 <li>Usage: <code>./test_linux_docker.sh [--ubuntu-only | --rocky-only]</code></li>
-<li>Runs full test suite: <code>bazel test //autoconf/... //gnulib/...</code></li>
-<li>Saves results to <code>docker_test_results/</code> directory</li>
-<li>Generates summary files with test statistics</li>
+<li>Typically runs <code>bazel test //autoconf/... //gnulib/...</code> (see script for current defaults)</li>
+<li>Writes summaries under <code>docker_test_results/</code> when configured to do so</li>
 </ul>
-<p><strong>2. <code>test_modules.sh</code></strong> — Test specific modules</p>
-<ul>
-<li>Usage: <code>./test_modules.sh [--docker] module1 module2 ...</code></li>
-<li>Without <code>--docker</code>: runs tests locally (macOS)</li>
-<li>With <code>--docker</code>: runs tests in Docker (Linux)</li>
-<li>Example: <code>./test_modules.sh --docker fsusage renameat</code></li>
-</ul>
-<p><strong>3. <code>docker_bazel.sh</code></strong> — Generic Bazel command runner</p>
+<p><strong>2. <code>docker_bazel.sh</code></strong> — Run an arbitrary Bazel command in the same Docker environment.</p>
 <ul>
 <li>Usage: <code>./docker_bazel.sh [--amd64] &lt;bazel_command&gt;</code></li>
-<li>Builds/reuses Docker image and runs any Bazel command</li>
-<li>Supports <code>--amd64</code> flag for x86_64 emulation</li>
 <li>Example: <code>./docker_bazel.sh "test //gnulib/tests/compatibility/c32rtomb:all --test_output=errors"</code></li>
 </ul>
-<p><strong>4. <code>update_linux_golden.sh</code></strong> — Update Linux golden files</p>
+<p>For other workflows (targeted module tests, refreshing Linux golden files), use <code>docker_bazel.sh</code> with the appropriate <code>bazel test</code> / <code>bazel build</code> invocations, or add small wrapper scripts in your fork if you need them.</p>
+<h4 id="when-to-use-linux-testing"><a class="header" href="#when-to-use-linux-testing">When to use Linux testing</a></h4>
 <ul>
-<li>Usage: <code>./update_linux_golden.sh module1 module2 ...</code></li>
-<li>Builds targets in Docker, extracts <code>config.h</code> and <code>subst.h</code> outputs</li>
-<li>Updates <code>golden_config_linux.h.in</code> and <code>golden_subst_linux.h.in</code> files</li>
-<li>Use when Linux-specific golden files need updating</li>
+<li><strong>Platform-specific checks</strong>: Modules with <code>select()</code> or Linux-only assumptions</li>
+<li><strong>Golden file updates</strong>: When Linux-specific golden inputs need refreshing</li>
+<li><strong>Cross-platform verification</strong>: Confirm conditionals on a real Linux toolchain</li>
+<li><strong>Test failures</strong>: Debug Linux-only CI issues</li>
 </ul>
-<p><strong>5. <code>scripts/run_linux_tests.sh</code></strong> — Run tests and update golden files</p>
-<ul>
-<li>Builds Docker image from <code>Dockerfile</code></li>
-<li>Runs tests and executes <code>update.py</code> to extract results</li>
-<li>Mounts <code>gnulib</code> directory so updates write directly to host</li>
-</ul>
-<h4 id="when-to-use-linux-testing"><a class="header" href="#when-to-use-linux-testing">When to Use Linux Testing</a></h4>
-<ul>
-<li><strong>Platform-specific checks</strong>: Modules with <code>select()</code> statements for Linux-specific behavior</li>
-<li><strong>Golden file updates</strong>: When Linux golden files (<code>golden_config_linux.h.in</code>, <code>golden_subst_linux.h.in</code>) need updating</li>
-<li><strong>Cross-platform verification</strong>: Verify that platform conditionals work correctly</li>
-<li><strong>Test failures</strong>: Debug Linux-specific test failures</li>
-</ul>
-<h4 id="example-workflow"><a class="header" href="#example-workflow">Example Workflow</a></h4>
-<pre><code class="language-bash"># Test a specific module on Linux
-./test_modules.sh --docker c32rtomb
+<h4 id="example-workflow"><a class="header" href="#example-workflow">Example workflow</a></h4>
+<pre><code class="language-bash"># Run one compatibility package on Linux
+./docker_bazel.sh "test //gnulib/tests/compatibility/c32rtomb:all --test_output=errors"
 
-# Update Linux golden files after making changes
-./update_linux_golden.sh c32rtomb
-
-# Run full test suite on Linux
+# Run a broader slice (same idea as the docker test driver)
 ./test_linux_docker.sh --ubuntu-only
 </code></pre>
 <hr />
@@ -1169,26 +1183,27 @@ gnu_gnulib_diff_test_suite(
 <li><strong>Hermetic builds</strong> that don't depend on the build machine's locale, environment, etc.</li>
 </ol>
 <p>When M4 macros use <code>AC_TRY_EVAL</code> or <code>AC_RUN_IFELSE</code> (running compiled code at configure time), these should be replaced with <code>select()</code> statements that provide platform-specific defaults.</p>
-<h3 id="runtime-vs-compile-time-checks"><a class="header" href="#runtime-vs-compile-time-checks">Runtime vs Compile-Time Checks</a></h3>
-<p>Some macros require running compiled code, which doesn't work when cross-compiling:</p>
-<p><strong>NOT cross-compile safe (use <code>select()</code> instead):</strong></p>
+<h3 id="runtime-vs-compile-time-checks"><a class="header" href="#runtime-vs-compile-time-checks">Runtime vs compile-time checks</a></h3>
+<p>GNU Autoconf often uses <strong><code>AC_RUN_IFELSE</code></strong> and similar macros that <strong>execute</strong> test programs on the build machine. That model does not translate to cross-compilation: the binary may not run on the host when the target is different.</p>
+<p>In <strong><code>rules_cc_autoconf</code></strong>, the checker runs <strong>compile</strong> and <strong>link</strong> actions for the <strong>target</strong> toolchain; it does not execute generated programs. Several macros that Autoconf sometimes implements with runtime probes are implemented here with <strong>compile-time</strong> logic instead:</p>
 <ul>
-<li><code>AC_CHECK_SIZEOF</code> — Computes <code>sizeof()</code> by running code</li>
-<li><code>AC_CHECK_ALIGNOF</code> — Computes alignment by running code</li>
-<li><code>AC_COMPUTE_INT</code> — Evaluates expressions by running code</li>
-<li><code>AC_C_BIGENDIAN</code> — Detects endianness at runtime</li>
-<li><code>AC_TRY_EVAL</code> / <code>AC_RUN_IFELSE</code> — Runs compiled test programs</li>
-<li>Locale detection macros (e.g., <code>gt_LOCALE_FR</code>) — Tests locale availability at runtime</li>
+<li><strong><code>AC_CHECK_SIZEOF</code></strong>, <strong><code>AC_CHECK_ALIGNOF</code></strong>, <strong><code>AC_COMPUTE_INT</code></strong> — Probed at compile time (e.g. via compile-time techniques in the checker), <strong>not</strong> by running a test executable on the host. They still record properties of the <strong>target</strong> toolchain; when cross-compiling, ensure the configured toolchain matches the intended target and that the probe is meaningful for that environment.</li>
 </ul>
-<p><strong>Cross-compile safe:</strong></p>
+<p><strong>Still problematic or not modeled like GNU Autoconf:</strong></p>
 <ul>
-<li><code>AC_CHECK_HEADER</code> — Compile-only</li>
-<li><code>AC_CHECK_FUNC</code> — Link check</li>
-<li><code>AC_CHECK_DECL</code> — Compile-only</li>
-<li><code>AC_CHECK_TYPE</code> — Compile-only</li>
-<li><code>AC_TRY_COMPILE</code> — Compile-only</li>
-<li><code>AC_TRY_LINK</code> — Link check</li>
-<li><code>AC_DEFINE</code> — No check, just defines</li>
+<li><strong><code>AC_TRY_EVAL</code> / <code>AC_RUN_IFELSE</code></strong> (and M4 that assumes running the binary on the build machine) — Replace with <strong><code>select()</code></strong>, explicit <strong><code>AC_SUBST</code></strong>, or other target-appropriate defaults.</li>
+<li><strong>Locale and similar environment probes</strong> (e.g. <code>gt_LOCALE_FR</code>) — Usually replace with <strong><code>select()</code></strong> on OS/CPU, or fixed subst values, rather than executing locale code at configure time.</li>
+<li><strong><code>WORDS_BIGENDIAN</code> / <code>AC_C_BIGENDIAN</code></strong> — There is no single runtime probe; model endianness with <strong><code>select()</code></strong> and <strong><code>AC_DEFINE</code></strong>, and use <strong><code>AC_FAIL</code></strong> on branches where a define must be explicitly cleared (see <strong><code>AC_FAIL</code></strong> in the API table).</li>
+</ul>
+<p><strong>Generally “safe” in the sense of not requiring a runnable host binary</strong> (still subject to toolchain correctness when cross-compiling):</p>
+<ul>
+<li><code>AC_CHECK_HEADER</code> — compile-only</li>
+<li><code>AC_CHECK_FUNC</code> — link check</li>
+<li><code>AC_CHECK_DECL</code> — compile-only</li>
+<li><code>AC_CHECK_TYPE</code> — compile-only</li>
+<li><code>AC_TRY_COMPILE</code> — compile-only</li>
+<li><code>AC_TRY_LINK</code> — link check</li>
+<li><code>AC_DEFINE</code> / <code>AC_SUBST</code> — no compilation probe</li>
 </ul>
 <h3 id="strategies-for-cross-compilation"><a class="header" href="#strategies-for-cross-compilation">Strategies for Cross-Compilation</a></h3>
 <ol>
@@ -1407,7 +1422,7 @@ Verify no duplicate checks between direct checks and deps</li>
 <tr><td>Missing main() wrapper</td><td><code>AC_TRY_COMPILE</code> code must include <code>int main(void) { ... }</code> or use <code>utils.AC_LANG_PROGRAM</code></td></tr>
 <tr><td>String literals in defines</td><td>Use <code>'"string"'</code> (outer single, inner double quotes)</td></tr>
 <tr><td>Platform conditionals</td><td>Use <code>select()</code> for <code>case "$host_os"</code> patterns</td></tr>
-<tr><td>Cross-compilation failures</td><td>Avoid <code>AC_CHECK_SIZEOF</code> and similar runtime checks</td></tr>
+<tr><td>Cross-compilation failures</td><td>Validate sizeof/alignof/compute probes for the real target; replace true <strong>run</strong>-time Autoconf checks with <code>select()</code> or explicit substs</td></tr>
 <tr><td>Subst test disagrees with autoconf</td><td>Evaluate case-by-case: may be due to global defaults vs specific checks (see Step 6)</td></tr>
 <tr><td>Changing defaults to fix one module</td><td>Don't change existing defaults; they may break other modules</td></tr>
 <tr><td>Unnecessary <code>name</code> + separate <code>AC_DEFINE</code></td><td>Use <code>define =</code> directly unless the cache variable is needed in <code>requires</code> or you need custom values</td></tr>

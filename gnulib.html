@@ -167,6 +167,12 @@ many of these M4 macros into Bazel <code>autoconf</code> targets that you can us
 <p>Each target in <code>@rules_cc_autoconf//gnulib/m4/</code> corresponds to a gnulib M4 macro and
 provides the same checks and defines that you would get from using that macro in a
 traditional <code>configure.ac</code> file.</p>
+<p>Some modules expose <strong>linker-related</strong> subst variables via <strong><code>AC_SEARCH_LIBS</code></strong> (for
+example clock/time helpers that may need <code>-lrt</code>). Bazel does not run <code>libtool</code> like
+Autoconf; add an <strong><code>autoconf_linkopts</code></strong> target that lists those subst names and depend
+on it from your <code>cc_library</code> / <code>cc_binary</code> / <code>cc_test</code> targets. See
+<a href="./migration.html#pattern-7b-ac_search_libs-and-autoconf_linkopts">Migrating M4 macros — Pattern 7b</a>
+and the rule reference <a href="./autoconf_linkopts.html">autoconf_linkopts</a>.</p>
 <h2 id="using-gnulib-targets"><a class="header" href="#using-gnulib-targets">Using Gnulib Targets</a></h2>
 <p>Instead of manually writing checks, you can add gnulib reusable targets as dependencies to your
 <code>autoconf</code> rule:</p>
