@@ -88,8 +88,21 @@ std::string extract_flag_value(const std::string& file_path,
     nlohmann::json root;
     ifs >> root;
 
-    // Result files have the form: { "cache_var_name": { "value": "...", ... } }
-    // The outer key is the cache variable name, not the subst variable name.
+    // Checker writes flat results: { "success", "type", "value", ... }.
+    // Each subst points at its own file, so var_name is already implied by the
+    // mapping; no nested "subst" field is present.
+    if (root.is_object() && root.contains("success") && root.contains("type") &&
+        root.contains("value")) {
+        const auto& val = root["value"];
+        if (val.is_null()) return "";
+        if (val.is_string()) return val.get<std::string>();
+        if (val.is_number() && val.get<int>() == 0) return "";
+        return val.dump();
+    }
+
+    // Legacy nested form: { "cache_var_name": { "value": "...", "subst": "..."
+    // } } The outer key is the cache variable name, not the subst variable
+    // name.
     for (auto& [key, result] : root.items()) {
         if (!result.is_object()) continue;
 
