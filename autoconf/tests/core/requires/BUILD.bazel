@@ -74,21 +74,21 @@ autoconf(
             "exit",
             name = "HAVE_EXIT_WITH_FEATURE",
             define = True,
-            requires = ["REPLACE_FEATURE=1"],
+            requires = ["REPLACE_FEATURE==1"],
         ),
         # Value-based requirement - should FAIL because REPLACE_OTHER=0, not 1
         checks.AC_CHECK_FUNC(
             "exit",
             name = "HAVE_EXIT_WITH_OTHER",
             define = True,
-            requires = ["REPLACE_OTHER=1"],
+            requires = ["REPLACE_OTHER==1"],
         ),
         # Value-based requirement with correct value - should succeed
         checks.AC_CHECK_FUNC(
             "exit",
             name = "HAVE_EXIT_WITH_OTHER_ZERO",
             define = True,
-            requires = ["REPLACE_OTHER=0"],
+            requires = ["REPLACE_OTHER==0"],
         ),
         # NEW: Test negated require with ! - should succeed because nonexistent header failed
         checks.AC_DEFINE(

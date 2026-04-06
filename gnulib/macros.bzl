@@ -203,8 +203,8 @@ def _gl_next_header(header, name = None):
     subst_name = name or ("NEXT_" + header.upper().replace("/", "_").replace(".", "_"))
     return json.encode({
         "code": header,
+        "input_deps": ["INCLUDE_NEXT"],
         "name": subst_name,
-        "requires": ["INCLUDE_NEXT"],
         "subst": subst_name,
         "type": "GL_NEXT_HEADER",
     })

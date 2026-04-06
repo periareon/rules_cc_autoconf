@@ -10,6 +10,7 @@ load(
     "get_autoconf_toolchain_defaults",
     "get_autoconf_toolchain_defaults_by_label",
 )
+load("//autoconf/private:condition_utils.bzl", "extract_condition_vars")
 load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
 
 def _package_relative_name(ctx, file):
@@ -73,6 +74,46 @@ def _output_name(ctx, file, naming_mode):
 
     fail("Unknown autoconf_srcs naming mode: {}".format(naming_mode))
 
+def _lookup_var(var, all_cache, all_define, all_subst, src_label, rule_label):
+    """Look up a single variable name across cache/define/subst buckets.
+
+    Returns the result file, or fails with a helpful message.
+    """
+    candidates = []
+    if var in all_cache:
+        candidates.append(("cache", all_cache[var]))
+    if var in all_define:
+        candidates.append(("define", all_define[var]))
+    if var in all_subst:
+        candidates.append(("subst", all_subst[var]))
+
+    if not candidates:
+        all_available = {
+            "cache": sorted(all_cache.keys()),
+            "define": sorted(all_define.keys()),
+            "subst": sorted(all_subst.keys()),
+        }
+        fail("Source `{}` requires `{}` which is not provided by any deps of `{}`. Available options: {}".format(
+            src_label,
+            var,
+            rule_label,
+            json.encode_indent(all_available, indent = " " * 4),
+        ))
+
+    distinct_paths = {}
+    for bucket, f in candidates:
+        distinct_paths[f.path] = (bucket, f)
+
+    if len(distinct_paths) != 1:
+        fail("Source `{}` requires `{}` but it is ambiguous across deps of `{}`.\nMatches: {}".format(
+            src_label,
+            var,
+            rule_label,
+            [(bucket, f.path) for (bucket, f) in candidates],
+        ))
+
+    return distinct_paths.values()[0][1]
+
 def _autoconf_srcs_impl(ctx):
     """Implementation of the autoconf_srcs rule."""
 
@@ -106,7 +147,7 @@ def _autoconf_srcs_impl(ctx):
 
     outputs = []
 
-    for src, define in ctx.attr.srcs.items():
+    for src, condition in ctx.attr.srcs.items():
         files = src.files.to_list()
         if len(files) != 1:
             fail("Label {} in srcs must produce exactly one file, got {}".format(
@@ -118,53 +159,24 @@ def _autoconf_srcs_impl(ctx):
         out_name = _output_name(ctx, in_file, ctx.attr.naming)
         out = ctx.actions.declare_file(out_name)
 
-        # Namespace-agnostic lookup (cache/define/subst) with strict ambiguity detection.
-        candidates = []
-        if define in all_cache:
-            candidates.append(("cache", all_cache[define]))
-        if define in all_define:
-            candidates.append(("define", all_define[define]))
-        if define in all_subst:
-            candidates.append(("subst", all_subst[define]))
+        # Extract all variable names from the (possibly compound) condition.
+        var_names = extract_condition_vars(condition)
 
-        if not candidates:
-            all_available = {
-                "cache": sorted(all_cache.keys()),
-                "define": sorted(all_define.keys()),
-                "subst": sorted(all_subst.keys()),
-            }
-            fail("Source `{}` requires `{}` which is not provided by any deps of `{}`. Available options: {}".format(
-                src,
-                define,
-                ctx.label,
-                json.encode_indent(all_available, indent = " " * 4),
-            ))
-
-        # Dedupe candidates by underlying result file. If multiple distinct files
-        # match the same reference, the reference is ambiguous and must fail.
-        distinct_paths = {}
-        for bucket, f in candidates:
-            distinct_paths[f.path] = (bucket, f)
-
-        if len(distinct_paths) != 1:
-            fail("Source `{}` requires `{}` but it is ambiguous across deps of `{}`.\nMatches: {}".format(
-                src,
-                define,
-                ctx.label,
-                [(bucket, f.path) for (bucket, f) in candidates],
-            ))
-
-        (_, results_file) = distinct_paths.values()[0]
         args = ctx.actions.args()
+        dep_files = []
 
-        # Explicit mapping of lookup name -> result file, similar to checker --dep=name=file.
-        args.add("--dep", "{}={}".format(define, results_file.path))
-        args.add("--src", "{}={}={}".format(in_file.path, define, out.path))
+        for var in var_names:
+            results_file = _lookup_var(var, all_cache, all_define, all_subst, src, ctx.label)
+            args.add("--dep", "{}={}".format(var, results_file.path))
+            dep_files.append(results_file)
+
+        # Use comma separator: {in},{CONDITION},{out}
+        args.add("--src", "{},{},{}".format(in_file.path, condition, out.path))
 
         ctx.actions.run(
             executable = ctx.executable._runner,
             arguments = [args],
-            inputs = [in_file, results_file],
+            inputs = [in_file] + dep_files,
             outputs = [out],
             mnemonic = "CcAutoconfSrc",
         )

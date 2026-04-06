@@ -255,80 +255,22 @@ int Checker::run_check_from_file(const std::filesystem::path& check_path,
         }
 
         if (check.required_defines().has_value()) {
+            std::string check_name =
+                check.define().has_value() ? *check.define() : check.name();
             for (const std::string& req : *check.required_defines()) {
-                // Check for negation prefix (e.g., "!FOO") - handle separately
-                bool negated = ConditionEvaluator::has_negation_prefix(req);
-                std::string req_expr =
-                    negated ? ConditionEvaluator::strip_negation_prefix(req)
-                            : req;
-
-                // Use ConditionEvaluator for parsing and value comparison
-                ConditionEvaluator evaluator(req_expr);
-
-                // Look up the requirement's result from all available results
-                // If lookup fails, this is a configuration error (missing
-                // dependency) - throw exception
-                std::string check_name =
-                    check.define().has_value() ? *check.define() : check.name();
-                const CheckResult* req_result_ptr;
+                ConditionEvaluator evaluator(req);
                 try {
-                    req_result_ptr =
-                        evaluator.find_condition_result(all_results_map);
+                    if (!evaluator.compute(all_results_map)) {
+                        requirements_met = false;
+                        DebugLogger::warn("Check '" + check_name +
+                                          "' requires '" + req +
+                                          "' which is not satisfied, skipping");
+                        break;
+                    }
                 } catch (const std::exception& ex) {
-                    // Wrap with check context for better error message
                     throw std::runtime_error(
-                        "Check '" + check_name + "' requires '" +
-                        evaluator.define_name() +
-                        "' but dependency lookup failed: " + ex.what());
-                }
-
-                // Handle negated success check (e.g., "!FOO")
-                if (negated) {
-                    if (req_result_ptr->success) {
-                        requirements_met = false;
-                        std::string check_name = check.define().has_value()
-                                                     ? *check.define()
-                                                     : check.name();
-                        DebugLogger::warn(
-                            "Check '" + check_name + "' requires '!" +
-                            evaluator.define_name() +
-                            "' (failure) but it succeeded, skipping");
-                        break;
-                    }
-                    continue;
-                }
-
-                // For non-negated checks, require success
-                if (!req_result_ptr->success) {
-                    requirements_met = false;
-                    std::string check_name = check.define().has_value()
-                                                 ? *check.define()
-                                                 : check.name();
-                    DebugLogger::warn("Check '" + check_name + "' requires '" +
-                                      evaluator.define_name() +
-                                      "' which is not successful, skipping");
-                    break;
-                }
-
-                // Handle value requirements using the evaluator
-                if (evaluator.has_value_compare()) {
-                    bool condition_satisfied =
-                        evaluator.evaluate(req_result_ptr);
-                    if (!condition_satisfied) {
-                        requirements_met = false;
-                        std::string check_name = check.define().has_value()
-                                                     ? *check.define()
-                                                     : check.name();
-                        DebugLogger::warn(
-                            "Check '" + check_name + "' requires '" +
-                            evaluator.define_name() +
-                            compare_op_str(evaluator.compare_op()) +
-                            evaluator.comparison_value() +
-                            "' but condition is not satisfied (value is '" +
-                            req_result_ptr->value.value_or("") +
-                            "'), skipping");
-                        break;
-                    }
+                        "Check '" + check_name + "' requires '" + req +
+                        "' but evaluation failed: " + ex.what());
                 }
             }
         }

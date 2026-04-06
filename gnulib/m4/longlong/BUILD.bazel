@@ -62,7 +62,7 @@ int main(void) {
 }""",
             define = "HAVE_LONG_LONG_INT",
             language = "c",
-            requires = ["HAVE_UNSIGNED_LONG_LONG_INT=1"],
+            requires = ["HAVE_UNSIGNED_LONG_LONG_INT==1"],
         ),
     ],
     visibility = ["//visibility:public"],
