@@ -76,6 +76,11 @@ bool parse_undef_at(const std::string& content, size_t pos,
         ++i;
     }
 
+    // Skip trailing whitespace (spaces/tabs) before newline
+    while (i < len && (content[i] == ' ' || content[i] == '\t')) {
+        ++i;
+    }
+
     // Capture trailing newlines (at least one required)
     newlines.clear();
     while (i < len && content[i] == '\n') {
