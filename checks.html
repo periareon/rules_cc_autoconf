@@ -243,7 +243,6 @@ joined with newlines to form the prologue of the test program.</p>
 <li><a href="#checks.AC_CHECK_SIZEOF">checks.AC_CHECK_SIZEOF</a></li>
 <li><a href="#checks.AC_CHECK_TYPE">checks.AC_CHECK_TYPE</a></li>
 <li><a href="#checks.AC_COMPUTE_INT">checks.AC_COMPUTE_INT</a></li>
-<li><a href="#checks.AC_C_INLINE">checks.AC_C_INLINE</a></li>
 <li><a href="#checks.AC_C_RESTRICT">checks.AC_C_RESTRICT</a></li>
 <li><a href="#checks.AC_DEFINE">checks.AC_DEFINE</a></li>
 <li><a href="#checks.AC_DEFINE_UNQUOTED">checks.AC_DEFINE_UNQUOTED</a></li>
@@ -657,31 +656,6 @@ running code to compute the value, which doesn't work when cross-compiling.</p>
 <tr><td style="text-align: left"><a id="checks.AC_COMPUTE_INT-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_COMPUTE_INT-requires"></a>requires</td><td style="text-align: left">List of requirements that must be met before this check runs. Can be simple define names (e.g., <code>"HAVE_FOO"</code>) or value-based requirements (e.g., <code>"REPLACE_FSTAT=1"</code> to require specific value)</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_COMPUTE_INT-subst"></a>subst</td><td style="text-align: left">If True, mark as a substitution variable (for @VAR@ replacement in subst.h).</td><td style="text-align: left"><code>None</code></td></tr>
-</tbody></table>
-</div>
-<p><strong>RETURNS</strong></p>
-<p>A JSON-encoded check string for use with the autoconf rule.</p>
-<p><a id="checks.AC_C_INLINE"></a></p>
-<h2 id="checksac_c_inline"><a class="header" href="#checksac_c_inline">checks.AC_C_INLINE</a></h2>
-<pre>
-load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
-
-checks.AC_C_INLINE(<a href="#checks.AC_C_INLINE-define">define</a>, <a href="#checks.AC_C_INLINE-language">language</a>, <a href="#checks.AC_C_INLINE-requires">requires</a>, <a href="#checks.AC_C_INLINE-subst">subst</a>)
-</pre>
-<p>Check what inline keyword the compiler supports.</p>
-<p>Original m4 example:</p>
-<pre><code class="language-m4">AC_C_INLINE
-</code></pre>
-<p>Example:</p>
-<pre><code class="language-python">macros.AC_C_INLINE()
-</code></pre>
-<p>Tests inline keyword and defines it to the appropriate value.</p>
-<p><strong>PARAMETERS</strong></p>
-<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
-<tr><td style="text-align: left"><a id="checks.AC_C_INLINE-define"></a>define</td><td style="text-align: left">Define name (defaults to <code>inline</code>)</td><td style="text-align: left"><code>"inline"</code></td></tr>
-<tr><td style="text-align: left"><a id="checks.AC_C_INLINE-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
-<tr><td style="text-align: left"><a id="checks.AC_C_INLINE-requires"></a>requires</td><td style="text-align: left">List of requirements that must be met before this check runs. Can be simple define names (e.g., <code>"HAVE_FOO"</code>) or value-based requirements (e.g., <code>"REPLACE_FSTAT=1"</code> to require specific value)</td><td style="text-align: left"><code>None</code></td></tr>
-<tr><td style="text-align: left"><a id="checks.AC_C_INLINE-subst"></a>subst</td><td style="text-align: left">If True, mark as a substitution variable (for @VAR@ replacement in subst.h).</td><td style="text-align: left"><code>None</code></td></tr>
 </tbody></table>
 </div>
 <p><strong>RETURNS</strong></p>
