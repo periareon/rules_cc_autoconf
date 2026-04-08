@@ -4,7 +4,7 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks", "utils")
 
 # gl_CRC_X86_64_PCLMUL from crc-x86_64.m4
-# AC_LINK_IFELSE test for pclmul intrinsics, matching upstream exactly.
+# Upstream AC_LINK_IFELSE test for pclmul intrinsics.
 autoconf(
     name = "gl_CRC_X86_64_PCLMUL",
     checks = [
@@ -12,7 +12,7 @@ autoconf(
             name = "gl_cv_crc_pclmul",
             code = utils.AC_LANG_PROGRAM(
                 [
-                    "#include <immintrin.h>",
+                    "#include <x86intrin.h>",
                     "",
                     "#if defined __GNUC__ || defined __clang__",
                     "__attribute__ ((__target__ (\"pclmul,avx\")))",
@@ -35,7 +35,6 @@ autoconf(
             if_false = None,
             if_true = 1,
         ),
-        # AM_CONDITIONAL mapping: TRUE="" when condition holds, "#" otherwise
         checks.AC_SUBST(
             "GL_CRC_X86_64_PCLMUL_TRUE",
             condition = "gl_cv_crc_pclmul",

@@ -10,22 +10,26 @@ autoconf(
     visibility = ["//visibility:public"],
 )
 
-# Replace snprintf with gnulib implementation if needed.
-# Upstream determines this via runtime tests (gl_SNPRINTF_SIZE1, gl_SNPRINTF_RETVAL_C99,
-# gl_PRINTF_POSITIONS) which cannot run in Bazel. Golden-file approximation:
-# Linux glibc passes all tests → no replacement; other platforms → replace.
+# gl_REPLACE_SNPRINTF from snprintf.m4
+# Upstream sets REPLACE_SNPRINTF=1 when ac_cv_func_snprintf is yes (snprintf
+# exists but we still provide the gnulib replacement). Falls back to checking
+# whether snprintf is declared. Since snprintf exists on all modern platforms
+# this always resolves to 1.
 autoconf(
     name = "gl_REPLACE_SNPRINTF",
-    checks = select({
-        "@platforms//os:linux": [],
-        "//conditions:default": [
-            checks.AC_SUBST("REPLACE_SNPRINTF", 1),
-        ],
-    }),
+    checks = [
+        checks.AC_SUBST(
+            "REPLACE_SNPRINTF",
+            condition = "ac_cv_func_snprintf",
+            if_false = 0,
+            if_true = 1,
+        ),
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_PREREQ_SNPRINTF",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/macros/AC_FUNC_SNPRINTF",
     ],
 )
 
