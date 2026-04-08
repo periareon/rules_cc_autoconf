@@ -6,14 +6,12 @@ load("//autoconf:checks.bzl", "checks")
 autoconf(
     name = "gl_PTHREADLIB_BODY",
     checks = [
-        # Use standard cache variable name so other modules can reference it
         checks.AC_CHECK_HEADER(
             "pthread.h",
             name = "ac_cv_header_pthread_h",
         ),
 
-        # On systems with pthread in libc (e.g., Linux with glibc >= 2.34),
-        # no library is needed. Otherwise, -pthread or -lpthread is needed.
+        # Upstream AC_LINK_IFELSE for pthread API detection (with proper includes).
         checks.AC_TRY_LINK(
             name = "_gl_pthread_api_yes",
             code = """\
@@ -26,45 +24,37 @@ int main(void) {
 """,
             language = "c",
         ),
-
-        # If pthread works without library, LIBPTHREAD and LIBPMULTITHREAD are empty.
-        # Otherwise, they are set to -pthread or -lpthread based on link test.
-        # On macOS/Linux, pthread is typically in libc or available via -lpthread
-        # For macOS, golden file shows LIBPMULTITHREAD=-lpthread, LIBPTHREAD=""
-        # For Linux, golden file shows both are empty
-        checks.AC_SUBST("LIBPTHREAD", ""),
-        # LIBPMULTITHREAD is set based on platform - will need conditional logic
-        # But for now, set a default value and adjust based on golden files
-        checks.AC_SUBST("LIBPMULTITHREAD", ""),
         checks.AC_DEFINE(
             "HAVE_PTHREAD_API",
             condition = "_gl_pthread_api_yes",
             if_true = 1,
         ),
-        # On some systems, sched_yield is in librt, rather than in libpthread.
-        # On most systems, sched_yield is in libc, so SCHED_YIELD_LIB is empty.
-        checks.AC_TRY_LINK(
-            name = "_gl_have_sched_yield_in_libc",
-            code = """\
-#include <sched.h>
-int main(void) {
-    sched_yield();
-    return 0;
-}
-""",
-            language = "c",
+
+        # Upstream uses AC_CHECK_LIB([pthread], [pthread_kill]). AC_SEARCH_LIBS
+        # is equivalent: tries libc first, then -lpthread. Produces "" if in
+        # libc (glibc >= 2.34, macOS), "-lpthread" otherwise.
+        checks.AC_SEARCH_LIBS(
+            "pthread_mutex_lock",
+            ["pthread"],
+            subst = "LIBPMULTITHREAD",
         ),
-        # On most systems, sched_yield is in libc, so SCHED_YIELD_LIB is empty
-        checks.AC_SUBST("SCHED_YIELD_LIB", ""),
-        # For backward compatibility
+        checks.AC_SUBST("LIBPTHREAD", ""),
+
+        # Upstream uses AC_CHECK_LIB([rt], [sched_yield]) and
+        # AC_CHECK_LIB([posix4], [sched_yield]). AC_SEARCH_LIBS equivalent.
+        checks.AC_SEARCH_LIBS(
+            "sched_yield",
+            [
+                "rt",
+                "posix4",
+            ],
+            subst = "SCHED_YIELD_LIB",
+        ),
         checks.AC_SUBST("LIB_SCHED_YIELD", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # gl_ANYTHREADLIB_EARLY adds CPPFLAGS like -D_THREAD_SAFE or -D_REENTRANT
-        # This is handled by toolchain defaults in Bazel, so we don't need to do anything
         "//autoconf/macros/AC_CANONICAL_HOST",
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

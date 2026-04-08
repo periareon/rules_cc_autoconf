@@ -1,8 +1,14 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/obstack.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
-load("//autoconf:checks.bzl", "checks")
+load("//autoconf:checks.bzl", "checks", "utils")
 
+# gl_FUNC_OBSTACK from obstack.m4
+# Checks for obstack.h, then verifies the obstack API quality via link test.
+# Upstream logic:
+#   - No header → REPLACE_OBSTACK=0
+#   - Header + link succeeds → REPLACE_OBSTACK=0
+#   - Header + link fails → REPLACE_OBSTACK=1
 autoconf(
     name = "gl_FUNC_OBSTACK",
     checks = [
@@ -10,19 +16,43 @@ autoconf(
             "obstack.h",
             define = "HAVE_OBSTACK_H",
         ),
+        # Upstream AC_LINK_IFELSE: verify _obstack_memory_used returns size_t
+        # and that obstack_init/obstack_free work. Only meaningful when header exists.
+        checks.AC_TRY_LINK(
+            name = "gl_cv_func_obstack",
+            code = utils.AC_LANG_PROGRAM(
+                [
+                    "#include <obstack.h>",
+                    "void *obstack_chunk_alloc (size_t n) { return 0; }",
+                    "void obstack_chunk_free (void *p) { }",
+                    "size_t _obstack_memory_used (struct obstack *);",
+                ],
+                [
+                    "struct obstack mem;",
+                    "obstack_init (&mem);",
+                    "obstack_free (&mem, 0);",
+                ],
+            ),
+            language = "c",
+            requires = ["ac_cv_header_obstack_h==1"],
+        ),
     ] + select({
-        # On Linux, gnulib replaces the system obstack implementation
+        # On Linux (obstack.h exists): use link test result to set REPLACE_OBSTACK
         "@platforms//os:linux": [
-            checks.AC_SUBST("REPLACE_OBSTACK", 1),
+            checks.AC_SUBST(
+                "REPLACE_OBSTACK",
+                condition = "gl_cv_func_obstack",
+                if_false = 1,
+                if_true = 0,
+            ),
         ],
-        # macOS and others don't have obstack.h, so no replacement needed
+        # macOS and others: no obstack.h → REPLACE_OBSTACK=0 (upstream: no header = no replace)
         "//conditions:default": [
             checks.AC_SUBST("REPLACE_OBSTACK", 0),
         ],
     }),
     visibility = ["//visibility:public"],
     deps = [
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

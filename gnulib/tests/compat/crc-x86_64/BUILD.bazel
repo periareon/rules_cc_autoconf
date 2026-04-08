@@ -1,15 +1,25 @@
 load("//gnulib/tests:gnu_gnulib_diff_test_suite.bzl", "gnu_gnulib_diff_test_suite")
 
+config_setting(
+    name = "linux_x86_64",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
 gnu_gnulib_diff_test_suite(
     name = "crc-x86_64_test",
     bazel_autoconf_target = "//gnulib/m4/crc-x86_64",
     config_h_in = "config.h.in",
     configure_ac = "configure.ac",
     golden_config_h = select({
+        ":linux_x86_64": "golden_config_x86_64.h.in",
         "@platforms//os:macos": "golden_config_macos.h.in",
         "//conditions:default": "golden_config.h.in",
     }),
     golden_subst_h = select({
+        ":linux_x86_64": "golden_subst_x86_64.h.in",
         "@platforms//os:macos": "golden_subst_macos.h.in",
         "//conditions:default": "golden_subst.h.in",
     }),
