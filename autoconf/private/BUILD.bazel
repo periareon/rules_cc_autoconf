@@ -6,7 +6,10 @@ bzl_library(
         ["*.bzl"],
         allow_empty = True,
     ),
-    visibility = ["//autoconf:__pkg__"],
+    visibility = [
+        "//autoconf:__pkg__",
+        "//gnulib:__pkg__",
+    ],
     deps = [
         "@rules_cc//cc:action_names_bzl",
         "@rules_cc//cc:find_cc_toolchain_bzl",

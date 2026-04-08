@@ -6,11 +6,10 @@ These macros encapsulate common patterns from gnulib's m4 files, making it
 easier to port modules while maintaining consistency with gnulib behavior.
 """
 
-# json is a built-in Starlark module in Bazel
-# We can use it directly without importing
-
-# Import the check functions we need
 load("//autoconf:checks.bzl", autoconf_checks = "checks")
+
+# buildifier: disable=bzl-visibility
+load("//autoconf/private:check_info.bzl", "make_check")
 
 def _normalize_for_cache_name(s):
     """Normalize a string for use in cache variable names.
@@ -201,7 +200,7 @@ def _gl_next_header(header, name = None):
         A JSON-encoded check string for use with the autoconf rule.
     """
     subst_name = name or ("NEXT_" + header.upper().replace("/", "_").replace(".", "_"))
-    return json.encode({
+    return make_check({
         "code": header,
         "input_deps": ["INCLUDE_NEXT"],
         "name": subst_name,
