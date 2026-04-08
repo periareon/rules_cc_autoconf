@@ -1,25 +1,57 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/crc-x86_64.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
-load("//autoconf:checks.bzl", "checks")
+load("//autoconf:checks.bzl", "checks", "utils")
 
 # gl_CRC_X86_64_PCLMUL from crc-x86_64.m4
-# Defaults to "not found" case (PCLMUL not available)
+# AC_LINK_IFELSE test for pclmul intrinsics, matching upstream exactly.
 autoconf(
     name = "gl_CRC_X86_64_PCLMUL",
     checks = [
-        # Conditional subst values based on PCLMUL availability
-        # When PCLMUL is available: GL_CRC_X86_64_PCLMUL_TRUE = "#", GL_CRC_X86_64_PCLMUL_FALSE = ""
-        # When PCLMUL is not available: GL_CRC_X86_64_PCLMUL_TRUE = "", GL_CRC_X86_64_PCLMUL_FALSE = "#"
-        # Golden file shows PCLMUL is available (TRUE = "#", FALSE = "")
-        # TODO: This should be a conditional check based on CPU feature detection
-        checks.AC_SUBST("GL_CRC_X86_64_PCLMUL_TRUE", "#"),
-        checks.AC_SUBST("GL_CRC_X86_64_PCLMUL_FALSE", ""),
+        checks.AC_TRY_LINK(
+            name = "gl_cv_crc_pclmul",
+            code = utils.AC_LANG_PROGRAM(
+                [
+                    "#include <immintrin.h>",
+                    "",
+                    "#if defined __GNUC__ || defined __clang__",
+                    "__attribute__ ((__target__ (\"pclmul,avx\")))",
+                    "#endif",
+                ],
+                [
+                    "__m128i a, b;",
+                    "a = _mm_clmulepi64_si128 (a, b, 0x00);",
+                    "a = _mm_shuffle_epi8 (a, b);",
+                    "static __m128i_u u;",
+                    "b = _mm_loadu_si128 (&u);",
+                    "return __builtin_cpu_supports (\"pclmul\");",
+                ],
+            ),
+            language = "c",
+        ),
+        checks.AC_DEFINE(
+            "GL_CRC_X86_64_PCLMUL",
+            condition = "gl_cv_crc_pclmul",
+            if_false = None,
+            if_true = 1,
+        ),
+        # AM_CONDITIONAL mapping: TRUE="" when condition holds, "#" otherwise
+        checks.AC_SUBST(
+            "GL_CRC_X86_64_PCLMUL_TRUE",
+            condition = "gl_cv_crc_pclmul",
+            if_false = "#",
+            if_true = "",
+        ),
+        checks.AC_SUBST(
+            "GL_CRC_X86_64_PCLMUL_FALSE",
+            condition = "gl_cv_crc_pclmul",
+            if_false = "",
+            if_true = "#",
+        ),
     ],
     visibility = ["//visibility:public"],
 )
 
-# Top-level target
 autoconf(
     name = "crc-x86_64",
     checks = [],
