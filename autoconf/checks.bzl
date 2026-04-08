@@ -1385,64 +1385,6 @@ def _ac_compute_int(
 
     return make_check(check)
 
-_AC_C_INLINE_TEMPLATE = """\
-static inline int test_func(int x) {
-    return x * 2;
-}
-
-int main(void) {
-    return test_func(21);
-}
-"""
-
-def _ac_c_inline(
-        define = "inline",
-        language = "c",
-        requires = None,
-        subst = None):
-    """Check what inline keyword the compiler supports.
-
-    Original m4 example:
-    ```m4
-    AC_C_INLINE
-    ```
-
-    Example:
-    ```python
-    macros.AC_C_INLINE()
-    ```
-
-    Tests inline keyword and defines it to the appropriate value.
-
-    Args:
-        define: Define name (defaults to `inline`)
-        language: Language to use for check (`"c"` or `"cpp"`)
-        requires: List of requirements that must be met before this check runs.
-            Can be simple define names (e.g., `"HAVE_FOO"`) or value-based
-            requirements (e.g., `"REPLACE_FSTAT=1"` to require specific value)
-        subst: If True, mark as a substitution variable (for @VAR@ replacement in subst.h).
-
-    Returns:
-        A JSON-encoded check string for use with the autoconf rule.
-    """
-    check = {
-        "code": _AC_C_INLINE_TEMPLATE,
-        "define": define,
-        "define_value": "inline",
-        "define_value_fail": "",
-        "language": language,
-        "name": "inline",
-        "type": "compile",
-        "unquote": True,
-    }
-    if requires:
-        check["requires"] = requires
-
-    if subst != None:
-        check["subst"] = subst
-
-    return make_check(check)
-
 _AC_C_RESTRICT_TEMPLATE = """\
 int main(void) {
     int *restrict ptr = (int*)0x1000;
@@ -2692,7 +2634,6 @@ def _ac_lang_program(prologue, body):
     return _AC_LANG_PROGRAM_TEMPLATE.format(prologue_str, body_str)
 
 checks = struct(
-    AC_C_INLINE = _ac_c_inline,
     AC_C_RESTRICT = _ac_c_restrict,
     AC_CHECK_ALIGNOF = _ac_check_alignof,
     AC_CHECK_C_COMPILER_FLAG = _ac_check_c_compiler_flag,

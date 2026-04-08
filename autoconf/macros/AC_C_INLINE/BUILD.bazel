@@ -1,17 +1,95 @@
 """https://www.gnu.org/savannah-checkouts/gnu/autoconf/manual/autoconf-2.72/autoconf.html#index-AC_005fC_005fINLINE-1"""
 
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:checks.bzl", "checks")
+load("//tools/cxxopts:cxxopts.bzl", "cxxopts")
+load(":inline.bzl", "ac_c_inline")
+
+cc_binary(
+    name = "inline_resolver",
+    srcs = ["inline_resolver.cc"],
+    cxxopts = cxxopts(),
+    deps = [
+        "//tools/json",
+    ],
+)
+
+# Individual keyword compile checks, each wrapped in #ifndef __cplusplus
+# because C++ always supports inline.
 
 autoconf(
-    name = "AC_C_INLINE",
+    name = "_check_inline",
     checks = [
-        # Check if inline keyword is supported
         checks.AC_TRY_COMPILE(
-            code = """inline int test(void) { return 0; }
-int main(void) { return test(); }""",
-            define = "HAVE_INLINE",
+            name = "_ac_cv_c_inline",
+            code = """\
+#ifndef __cplusplus
+typedef int foo_t;
+static inline foo_t test(foo_t x) { return x; }
+#endif
+int main(void) { return 0; }
+""",
+            language = "c",
         ),
     ],
+)
+
+autoconf(
+    name = "_check_inline_dunder",
+    checks = [
+        checks.AC_TRY_COMPILE(
+            name = "_ac_cv_c___inline__",
+            code = """\
+#ifndef __cplusplus
+typedef int foo_t;
+static __inline__ foo_t test(foo_t x) { return x; }
+#endif
+int main(void) { return 0; }
+""",
+            language = "c",
+        ),
+    ],
+)
+
+autoconf(
+    name = "_check_underscore_inline",
+    checks = [
+        checks.AC_TRY_COMPILE(
+            name = "_ac_cv_c___inline",
+            code = """\
+#ifndef __cplusplus
+typedef int foo_t;
+static __inline foo_t test(foo_t x) { return x; }
+#endif
+int main(void) { return 0; }
+""",
+            language = "c",
+        ),
+    ],
+)
+
+# Detect the C inline keyword variant supported by the compiler.
+#
+# The original autoconf AC_C_INLINE macro tries keywords in order:
+#   1. inline      (C99/C11)    — no #define needed
+#   2. __inline__  (GCC/Clang)  — #define inline __inline__
+#   3. __inline    (MSVC)       — #define inline __inline
+#   4. (none)                   — #define inline /**/
+#
+# Wrapped in #ifndef __cplusplus because C++ always supports inline.
+ac_c_inline(
+    name = "AC_C_INLINE",
+    # buildifier: disable=unsorted-dict-items
+    keywords = {
+        "inline": "_ac_cv_c_inline",
+        "__inline__": "_ac_cv_c___inline__",
+        "__inline": "_ac_cv_c___inline",
+    },
     visibility = ["//visibility:public"],
+    deps = [
+        ":_check_inline",
+        ":_check_inline_dunder",
+        ":_check_underscore_inline",
+    ],
 )

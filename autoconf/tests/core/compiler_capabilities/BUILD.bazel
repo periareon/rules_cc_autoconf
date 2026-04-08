@@ -16,7 +16,6 @@ autoconf(
     checks = [
         # Test C language keywords (still useful)
         checks.AC_C_RESTRICT(),
-        checks.AC_C_INLINE(),
     ] + select({
         # Test compiler flag support
         "@rules_cc//cc/compiler:msvc-cl": [
@@ -34,7 +33,10 @@ autoconf(
         # Test compiler capability
         checks.AC_PROG_CC_C_O(),
     ],
-    deps = [":package"],
+    deps = [
+        ":package",
+        "//autoconf/macros/AC_C_INLINE",
+    ],
 )
 
 autoconf_hdr(

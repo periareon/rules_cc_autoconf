@@ -1,16 +1,14 @@
 """https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/sockets.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
-load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "sockets",
     checks = [
-        # AC_REQUIRE([AC_C_INLINE]) - inline checking
-        checks.AC_C_INLINE(),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/macros/AC_C_INLINE",
         "//gnulib/m4/socketlib",
     ],
 )
