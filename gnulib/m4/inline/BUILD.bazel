@@ -3,27 +3,25 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
-# Requires AC_C_INLINE which already checks for HAVE_INLINE.
+# Upstream gl_INLINE defines HAVE_INLINE=1 when the native `inline` keyword
+# is supported.  The upstream m4 also checks __NO_INLINE__, but that flag
+# reflects optimisation level (-O0 sets it), not keyword validity.  Bazel's
+# checker runs with toolchain flags that may include -O0, so we only test
+# whether the `inline` keyword compiles.
 autoconf(
     name = "inline",
     checks = [
-        # AC_C_INLINE already checks for HAVE_INLINE
-        # We check if the compiler actually respects inline (effective inline)
-        # This checks if __NO_INLINE__ is not defined (meaning inline is effective)
-        # If inline is not effective, we don't override HAVE_INLINE (let AC_C_INLINE's value stand)
         checks.AC_TRY_COMPILE(
             name = "_gl_cv_c_inline_effective",
             code = """\
-/* Test if compiler respects inline (not just if keyword exists) */
-#ifdef __NO_INLINE__
-#error "inline is not effective"
+#ifndef __cplusplus
+static inline int test_func(int x) { return x; }
 #endif
-int main(void) { return 0; }
+int main(void) { return test_func(21); }
 """,
+            define = "HAVE_INLINE",
             language = "c",
         ),
-        # Note: HAVE_INLINE is already provided by AC_C_INLINE
-        # The upstream m4 also sets HAVE_INLINE=1 if inline is effective,
     ],
     visibility = ["//visibility:public"],
     deps = [
