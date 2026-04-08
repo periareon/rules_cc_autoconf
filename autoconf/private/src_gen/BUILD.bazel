@@ -10,6 +10,7 @@ cc_binary(
     linkopts = linkopts(),
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/private/checker:condition_evaluator",
         "//autoconf/private/common:file_util",
         "//tools/json",
     ],

@@ -1,228 +1,286 @@
 #include "autoconf/private/checker/condition_evaluator.h"
 
-#include "autoconf/private/checker/debug_logger.h"
-#include "tools/json/json.h"
+#include <cctype>
+#include <cstring>
+#include <stdexcept>
 
 namespace rules_cc_autoconf {
 
-const char* compare_op_str(CompareOp op) {
-    switch (op) {
-        case CompareOp::kNone:
-            return "";
-        case CompareOp::kEqual:
-            return "==";
-        case CompareOp::kNotEqual:
-            return "!=";
-        case CompareOp::kLessThan:
-            return "<";
-        case CompareOp::kGreaterThan:
-            return ">";
-        case CompareOp::kLessEqual:
-            return "<=";
-        case CompareOp::kGreaterEqual:
-            return ">=";
-    }
-    return "";
+// ---------------------------------------------------------------------------
+// ConditionParser
+// ---------------------------------------------------------------------------
+
+ConditionParser::ConditionParser(const std::string& input)
+    : input_(input), src(input_.c_str()), pos(0), len(input_.size()) {}
+
+void ConditionParser::ws() {
+    while (pos < len && std::isspace(static_cast<unsigned char>(src[pos])))
+        ++pos;
 }
+
+bool ConditionParser::at(const char* tok) const {
+    size_t tlen = std::strlen(tok);
+    return pos + tlen <= len && std::strncmp(src + pos, tok, tlen) == 0;
+}
+
+void ConditionParser::eat(const char* tok) {
+    size_t tlen = std::strlen(tok);
+    if (!at(tok)) {
+        throw std::runtime_error(std::string("Expected '") + tok +
+                                 "' at position " + std::to_string(pos));
+    }
+    pos += tlen;
+    ws();
+}
+
+std::string ConditionParser::ident() {
+    ws();
+    size_t start = pos;
+    if (pos < len && std::isdigit(static_cast<unsigned char>(src[pos]))) {
+        throw std::runtime_error("Expected identifier at position " +
+                                 std::to_string(pos) +
+                                 " (identifiers cannot start with a digit)");
+    }
+    while (pos < len && (std::isalnum(static_cast<unsigned char>(src[pos])) ||
+                         src[pos] == '_'))
+        ++pos;
+    if (pos == start) {
+        throw std::runtime_error("Expected identifier at position " +
+                                 std::to_string(pos));
+    }
+    std::string id(src + start, pos - start);
+    ws();
+    return id;
+}
+
+std::string ConditionParser::value() {
+    ws();
+    size_t start = pos;
+    while (pos < len && !std::isspace(static_cast<unsigned char>(src[pos])) &&
+           src[pos] != ')' && src[pos] != '&' && src[pos] != '|')
+        ++pos;
+    if (pos == start) {
+        throw std::runtime_error("Expected value at position " +
+                                 std::to_string(pos));
+    }
+    std::string v(src + start, pos - start);
+    ws();
+    return v;
+}
+
+Cond ConditionParser::atom() {
+    std::string id = ident();
+    Cond c;
+    c.tag = Cond::Var;
+    c.name = id;
+    vars.push_back(id);
+
+    if (at("<=")) {
+        eat("<=");
+        c.cmp_op = CmpOp::kLe;
+        c.cmp_value = value();
+    } else if (at(">=")) {
+        eat(">=");
+        c.cmp_op = CmpOp::kGe;
+        c.cmp_value = value();
+    } else if (at("!=")) {
+        eat("!=");
+        c.cmp_op = CmpOp::kNeq;
+        c.cmp_value = value();
+    } else if (at("==")) {
+        eat("==");
+        c.cmp_op = CmpOp::kEq;
+        c.cmp_value = value();
+    } else if (at("<")) {
+        eat("<");
+        c.cmp_op = CmpOp::kLt;
+        c.cmp_value = value();
+    } else if (at(">")) {
+        eat(">");
+        c.cmp_op = CmpOp::kGt;
+        c.cmp_value = value();
+    } else if (at("=")) {
+        // Bare '=' treated as '==' for backward compatibility
+        eat("=");
+        c.cmp_op = CmpOp::kEq;
+        c.cmp_value = value();
+    }
+    return c;
+}
+
+Cond ConditionParser::unary() {
+    ws();
+    if (at("!")) {
+        eat("!");
+        Cond inner = unary();
+        Cond c;
+        c.tag = Cond::Not;
+        c.children.push_back(std::move(inner));
+        return c;
+    }
+    if (at("(")) {
+        eat("(");
+        Cond c = parse_or();
+        eat(")");
+        return c;
+    }
+    return atom();
+}
+
+Cond ConditionParser::parse_and() {
+    Cond left = unary();
+    while (at("&&")) {
+        eat("&&");
+        Cond right = unary();
+        Cond c;
+        c.tag = Cond::And;
+        c.children.push_back(std::move(left));
+        c.children.push_back(std::move(right));
+        left = std::move(c);
+    }
+    return left;
+}
+
+Cond ConditionParser::parse_or() {
+    Cond left = parse_and();
+    while (at("||")) {
+        eat("||");
+        Cond right = parse_and();
+        Cond c;
+        c.tag = Cond::Or;
+        c.children.push_back(std::move(left));
+        c.children.push_back(std::move(right));
+        left = std::move(c);
+    }
+    return left;
+}
+
+Cond ConditionParser::parse() {
+    ws();
+    if (pos == len) {
+        throw std::runtime_error("Empty condition expression");
+    }
+    Cond c = parse_or();
+    ws();
+    if (pos != len) {
+        throw std::runtime_error("Unexpected trailing content at position " +
+                                 std::to_string(pos) + ": '" +
+                                 std::string(src + pos) + "'");
+    }
+    return c;
+}
+
+std::vector<std::string> ConditionParser::extract_variable_names(
+    const std::string& expr) {
+    ConditionParser p(expr);
+    p.parse();
+    return p.vars;
+}
+
+// ---------------------------------------------------------------------------
+// eval_cond
+// ---------------------------------------------------------------------------
 
 namespace {
 
-struct OperatorMatch {
-    const char* token;
-    size_t token_len;
-    CompareOp op;
-};
+const CheckResult* find_result(
+    const std::string& name,
+    const std::map<std::string, CheckResult>& results) {
+    auto it = results.find(name);
+    if (it != results.end()) return &it->second;
 
-// Order matters: multi-char operators before their single-char prefixes.
-constexpr OperatorMatch kOperators[] = {
-    {"<=", 2, CompareOp::kLessEqual}, {">=", 2, CompareOp::kGreaterEqual},
-    {"!=", 2, CompareOp::kNotEqual},  {"==", 2, CompareOp::kEqual},
-    {"<", 1, CompareOp::kLessThan},   {">", 1, CompareOp::kGreaterThan},
-    {"=", 1, CompareOp::kEqual},
-};
+    for (const auto& [key, result] : results) {
+        if (result.define.has_value() && *result.define == name) return &result;
+        if (result.subst.has_value() && *result.subst == name) return &result;
+        if (result.name == name) return &result;
+    }
+    return nullptr;
+}
+
+std::string result_value(const CheckResult* r) {
+    if (!r) return "";
+    return r->value.value_or("");
+}
+
+bool compare_values(const std::string& actual, CmpOp op,
+                    const std::string& expected) {
+    switch (op) {
+        case CmpOp::kEq:
+            return actual == expected;
+        case CmpOp::kNeq:
+            return actual != expected;
+        case CmpOp::kLt:
+        case CmpOp::kGt:
+        case CmpOp::kLe:
+        case CmpOp::kGe: {
+            int a = 0, b = 0;
+            try {
+                a = std::stoi(actual);
+            } catch (...) {
+            }
+            try {
+                b = std::stoi(expected);
+            } catch (...) {
+            }
+            if (op == CmpOp::kLt) return a < b;
+            if (op == CmpOp::kGt) return a > b;
+            if (op == CmpOp::kLe) return a <= b;
+            return a >= b;
+        }
+    }
+    return false;
+}
+
+bool is_truthy(const CheckResult* r) {
+    if (!r) return false;
+    if (!r->success) return false;
+    const std::string& v = r->value.value_or("");
+    return !v.empty() && v != "0";
+}
 
 }  // namespace
 
-ConditionEvaluator::ConditionEvaluator(const std::string& condition_expr)
-    : define_name_(),
-      cond_value_(),
-      compare_op_(CompareOp::kNone),
-      condition_negated_(false) {
-    std::string cond_expr = condition_expr;
-    if (has_negation_prefix(cond_expr)) {
-        cond_expr = strip_negation_prefix(cond_expr);
-        condition_negated_ = true;
-    }
-
-    define_name_ = cond_expr;
-
-    for (const auto& entry : kOperators) {
-        size_t pos = cond_expr.find(entry.token);
-        if (pos != std::string::npos) {
-            define_name_ = cond_expr.substr(0, pos);
-            cond_value_ = cond_expr.substr(pos + entry.token_len);
-            compare_op_ = entry.op;
-            break;
+bool eval_cond(const Cond& c,
+               const std::map<std::string, CheckResult>& results) {
+    switch (c.tag) {
+        case Cond::Var: {
+            const CheckResult* r = find_result(c.name, results);
+            if (!c.cmp_value.empty()) {
+                return compare_values(result_value(r), c.cmp_op, c.cmp_value);
+            }
+            return is_truthy(r);
         }
+        case Cond::Not:
+            return !eval_cond(c.children[0], results);
+        case Cond::Or:
+            return eval_cond(c.children[0], results) ||
+                   eval_cond(c.children[1], results);
+        case Cond::And:
+            return eval_cond(c.children[0], results) &&
+                   eval_cond(c.children[1], results);
     }
-
-    if (DebugLogger::is_verbose_debug_enabled()) {
-        DebugLogger::debug(
-            "ConditionEvaluator parsed: define_name='" + define_name_ +
-            "', condition_negated=" +
-            std::string(condition_negated_ ? "true" : "false") +
-            ", compare_op=" + compare_op_str(compare_op_) +
-            (has_value_compare() ? ", cond_value='" + cond_value_ + "'" : ""));
-    }
+    return false;
 }
 
-const CheckResult* ConditionEvaluator::find_condition_result(
-    const std::map<std::string, CheckResult>& results) const {
-    // First try to find by the define name directly (in case map is keyed by
-    // define name)
-    auto it = results.find(define_name_);
-    if (it != results.end()) {
-        return &it->second;
-    }
+// ---------------------------------------------------------------------------
+// ConditionEvaluator (wrapper)
+// ---------------------------------------------------------------------------
 
-    // If not found, search by iterating through results to find a match by
-    // define name The results map is keyed by cache variable names, but we need
-    // to find by define name
-    for (const auto& [key, result] : results) {
-        // Check if this result's define name matches
-        if (result.define.has_value() && *result.define == define_name_) {
-            return &result;
-        }
-        // Check if this result's subst name matches
-        if (result.subst.has_value() && *result.subst == define_name_) {
-            return &result;
-        }
-        // Also check if the cache variable name matches (for backward
-        // compatibility)
-        if (result.name == define_name_) {
-            return &result;
-        }
-    }
-
-    std::string error =
-        "Condition references '" + define_name_ +
-        "' which was not found in check results. Available options are: ";
-    for (const auto& [key, _] : results) {
-        error += " `" + key + "`";
-    }
-
-    throw std::runtime_error(error);
+ConditionEvaluator::ConditionEvaluator(const std::string& condition_expr) {
+    ConditionParser parser(condition_expr);
+    tree_ = parser.parse();
+    vars_ = parser.vars;
+    first_var_ = vars_.empty() ? "" : vars_[0];
 }
 
 bool ConditionEvaluator::compute(
     const std::map<std::string, CheckResult>& dep_results) const {
-    if (DebugLogger::is_debug_enabled()) {
-        std::string condition_str = condition_negated_ ? "!" : "";
-        condition_str += define_name_;
-        if (has_value_compare()) {
-            condition_str += compare_op_str(compare_op_) + cond_value_;
-        }
-        DebugLogger::debug("Checking condition: " + condition_str);
-    }
-
-    const CheckResult* cond_result_ptr = find_condition_result(dep_results);
-
-    bool result = evaluate(cond_result_ptr);
-    return condition_negated_ ? !result : result;
+    return eval_cond(tree_, dep_results);
 }
 
-bool ConditionEvaluator::evaluate(const CheckResult* result) const {
-    if (result == nullptr) {
-        return false;
-    }
-
-    if (!has_value_compare()) {
-        return result->success && result->value.has_value() &&
-               !result->value->empty() && *result->value != "0";
-    }
-
-    std::string actual_value_str = result->value.value_or("");
-
-    // Relational operators use integer comparison.
-    if (compare_op_ == CompareOp::kLessThan ||
-        compare_op_ == CompareOp::kGreaterThan ||
-        compare_op_ == CompareOp::kLessEqual ||
-        compare_op_ == CompareOp::kGreaterEqual) {
-        int actual_int = 0;
-        int cond_int = 0;
-        try {
-            actual_int = std::stoi(actual_value_str);
-            cond_int = std::stoi(cond_value_);
-        } catch (const std::exception& e) {
-            throw std::runtime_error("Relational condition '" + define_name_ +
-                                     compare_op_str(compare_op_) + cond_value_ +
-                                     "' requires integer values, got actual='" +
-                                     actual_value_str + "', expected='" +
-                                     cond_value_ + "': " + e.what());
-        }
-
-        bool cond_true = false;
-        switch (compare_op_) {
-            case CompareOp::kLessThan:
-                cond_true = actual_int < cond_int;
-                break;
-            case CompareOp::kGreaterThan:
-                cond_true = actual_int > cond_int;
-                break;
-            case CompareOp::kLessEqual:
-                cond_true = actual_int <= cond_int;
-                break;
-            case CompareOp::kGreaterEqual:
-                cond_true = actual_int >= cond_int;
-                break;
-            default:
-                break;
-        }
-
-        if (DebugLogger::is_debug_enabled()) {
-            DebugLogger::debug(
-                "Condition comparison: " + std::to_string(actual_int) +
-                compare_op_str(compare_op_) + std::to_string(cond_int) +
-                " === " + (cond_true ? "true" : "false"));
-        }
-        return cond_true;
-    }
-
-    // Equality / inequality: compare JSON-encoded values.
-    nlohmann::json cond_value_json;
-    nlohmann::json actual_value_json;
-    try {
-        cond_value_json = nlohmann::json::parse(cond_value_);
-        actual_value_json = nlohmann::json::parse(actual_value_str);
-    } catch (const nlohmann::json::parse_error&) {
-        cond_value_json = cond_value_;
-        actual_value_json = actual_value_str;
-    }
-
-    std::string cond_value_encoded = cond_value_json.dump();
-    std::string actual_value_encoded = actual_value_json.dump();
-    bool value_matches = (actual_value_encoded == cond_value_encoded);
-    bool cond_true =
-        (compare_op_ == CompareOp::kNotEqual) ? !value_matches : value_matches;
-
-    if (DebugLogger::is_debug_enabled()) {
-        DebugLogger::debug("Condition comparison: (" + actual_value_encoded +
-                           ")" + define_name_ + compare_op_str(compare_op_) +
-                           cond_value_encoded +
-                           " === " + (cond_true ? "true" : "false"));
-    }
-    return cond_true;
-}
-
-bool ConditionEvaluator::has_negation_prefix(const std::string& expr) {
-    return !expr.empty() && expr[0] == '!';
-}
-
-std::string ConditionEvaluator::strip_negation_prefix(const std::string& expr) {
-    if (has_negation_prefix(expr)) {
-        return expr.substr(1);
-    }
-    return expr;
+std::vector<std::string> ConditionEvaluator::extract_variable_names(
+    const std::string& expr) {
+    return ConditionParser::extract_variable_names(expr);
 }
 
 }  // namespace rules_cc_autoconf

@@ -14,6 +14,7 @@
 #include <utility>
 #include <vector>
 
+#include "autoconf/private/checker/condition_evaluator.h"
 #include "autoconf/private/common/file_util.h"
 #include "tools/json/json.h"
 
@@ -35,10 +36,10 @@ struct SrcsArgs {
     std::vector<DepMapping> dep_mappings{};
     struct SrcMapping {
         std::string input_path{};
-        std::string define{};
+        std::string condition{};
         std::string output_path{};
 
-        SrcMapping() : input_path(), define(), output_path() {}
+        SrcMapping() : input_path(), condition(), output_path() {}
     };
 
     std::vector<SrcMapping> srcs{};
@@ -54,8 +55,8 @@ void print_usage(const char* program_name) {
         << "  --dep <name>=<file>   Mapping of lookup name to JSON result file "
            "(can be specified multiple times)\n";
     std::cout
-        << "  --src <in>=<DEFINE>=<out>  Input path, associated define, and "
-           "output path (may be repeated)\n";
+        << "  --src <in>,<CONDITION>,<out>  Input path, condition expression, "
+           "and output path (may be repeated)\n";
     std::cout << "  --help                Show this help message\n";
 }
 
@@ -91,28 +92,26 @@ bool parse_args(int argc, char* argv[], SrcsArgs* out_args) {
         } else if (arg == "--src") {
             if (i + 1 < argc) {
                 std::string value = argv[++i];
-                std::size_t first_eq = value.find('=');
-                std::size_t second_eq = (first_eq == std::string::npos)
-                                            ? std::string::npos
-                                            : value.find('=', first_eq + 1);
-                if (first_eq == std::string::npos ||
-                    second_eq == std::string::npos || first_eq == 0 ||
-                    second_eq <= first_eq + 1 ||
-                    second_eq >= value.size() - 1) {
+                // Use comma as separator: {in},{CONDITION},{out}
+                // First comma separates input path from condition.
+                // Last comma separates condition from output path.
+                std::size_t first = value.find(',');
+                std::size_t last = value.rfind(',');
+                if (first == std::string::npos || last == std::string::npos ||
+                    first == last || first == 0 || last >= value.size() - 1) {
                     std::cerr << "Error: --src value must be of the form "
-                              << "{in}={DEFINE}={out}, got: " << value
+                              << "{in},{CONDITION},{out}, got: " << value
                               << std::endl;
                     return false;
                 }
                 SrcsArgs::SrcMapping mapping;
-                mapping.input_path = value.substr(0, first_eq);
-                mapping.define =
-                    value.substr(first_eq + 1, second_eq - first_eq - 1);
-                mapping.output_path = value.substr(second_eq + 1);
+                mapping.input_path = value.substr(0, first);
+                mapping.condition = value.substr(first + 1, last - first - 1);
+                mapping.output_path = value.substr(last + 1);
                 args.srcs.push_back(mapping);
             } else {
                 std::cerr << "Error: --src requires a value of the form "
-                             "{execpath}={DEFINE}"
+                             "{execpath},{CONDITION},{out}"
                           << std::endl;
                 return false;
             }
@@ -178,19 +177,22 @@ ResultEntry load_single_result_from_file(const std::string& path) {
     return entry;
 }
 
-bool generate_wrapped_source(
-    const std::filesystem::path& out_path,
-    const std::filesystem::path& orig_path, const std::string& define,
-    const std::unordered_map<std::string, ResultEntry>& results) {
-    std::unordered_map<std::string, ResultEntry>::const_iterator it =
-        results.find(define);
-    bool defined = false;
-    std::string value{};
-    if (it != results.end()) {
-        defined = it->second.success;
-        value = it->second.value;
+bool eval_condition_for_src(
+    const std::string& condition,
+    const std::unordered_map<std::string, ResultEntry>& result_cache) {
+    // Build a CheckResult map from the ResultEntry cache for eval_cond
+    std::map<std::string, CheckResult> results;
+    for (const auto& [name, entry] : result_cache) {
+        results.emplace(name, CheckResult(name, entry.value, entry.success));
     }
 
+    ConditionEvaluator evaluator(condition);
+    return evaluator.compute(results);
+}
+
+bool generate_wrapped_source(const std::filesystem::path& out_path,
+                             const std::filesystem::path& orig_path,
+                             const std::string& condition, bool enabled) {
     std::ifstream in_file = open_ifstream(orig_path);
     if (!in_file.is_open()) {
         std::cerr << "Error: Failed to open source file: " << orig_path.string()
@@ -211,15 +213,13 @@ bool generate_wrapped_source(
         return false;
     }
 
-    bool enabled = defined && !value.empty() && value != "0";
-
     if (enabled) {
         out_file << original_content;
         if (!original_content.empty() && original_content.back() != '\n') {
             out_file << "\n";
         }
     } else {
-        out_file << "#if 0 /* " << define << " */\n";
+        out_file << "#if 0 /* " << condition << " */\n";
         out_file << original_content;
         if (!original_content.empty() && original_content.back() != '\n') {
             out_file << "\n";
@@ -259,22 +259,32 @@ int main(int argc, char* argv[]) {
     for (const SrcsArgs::SrcMapping& mapping : args.srcs) {
         const std::filesystem::path out_path(mapping.output_path);
         const std::filesystem::path orig_path(mapping.input_path);
-        const std::string& define = mapping.define;
+        const std::string& condition = mapping.condition;
 
-        std::unordered_map<std::string, std::string>::iterator dep_it =
-            dep_map.find(define);
-        if (dep_it == dep_map.end()) {
-            std::cerr << "Error: No --dep mapping provided for '" << define
-                      << "'" << std::endl;
+        // Extract all variable names from the (potentially compound) condition,
+        // then load each one's result file.
+        std::vector<std::string> var_names;
+        try {
+            var_names = ConditionEvaluator::extract_variable_names(condition);
+        } catch (const std::exception& ex) {
+            std::cerr << "Error: Failed to parse condition '" << condition
+                      << "': " << ex.what() << std::endl;
             return 1;
         }
 
-        // Load result once per referenced file.
-        std::unordered_map<std::string, ResultEntry>::iterator cached =
-            result_cache.find(define);
-        if (cached == result_cache.end()) {
+        for (const std::string& var : var_names) {
+            if (result_cache.count(var)) continue;
+
+            auto dep_it = dep_map.find(var);
+            if (dep_it == dep_map.end()) {
+                std::cerr << "Error: No --dep mapping provided for '" << var
+                          << "' (referenced in condition '" << condition << "')"
+                          << std::endl;
+                return 1;
+            }
+
             try {
-                result_cache[define] =
+                result_cache[var] =
                     load_single_result_from_file(dep_it->second);
             } catch (const std::exception& ex) {
                 std::cerr << "Error: " << ex.what() << std::endl;
@@ -282,10 +292,16 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        // Generate the wrapper using the resolved (namespace-agnostic) result.
-        std::unordered_map<std::string, ResultEntry> one;
-        one[define] = result_cache[define];
-        if (!generate_wrapped_source(out_path, orig_path, define, one)) {
+        bool enabled = false;
+        try {
+            enabled = eval_condition_for_src(condition, result_cache);
+        } catch (const std::exception& ex) {
+            std::cerr << "Error: Failed to evaluate condition '" << condition
+                      << "': " << ex.what() << std::endl;
+            return 1;
+        }
+
+        if (!generate_wrapped_source(out_path, orig_path, condition, enabled)) {
             return 1;
         }
     }

@@ -74,9 +74,14 @@ cc_library(
     visibility = ["//autoconf/private:__subpackages__"],
     deps = [
         ":check_types",
-        ":debug_logger",
-        "//tools/json",
     ],
+)
+
+cc_test(
+    name = "condition_evaluator_test",
+    srcs = ["condition_evaluator_test.cc"],
+    cxxopts = cxxopts(),
+    deps = [":condition_evaluator"],
 )
 
 cc_library(

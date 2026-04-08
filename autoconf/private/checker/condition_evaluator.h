@@ -3,136 +3,74 @@
 #include <map>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 #include "autoconf/private/checker/check_result.h"
 
 namespace rules_cc_autoconf {
 
-/**
- * @brief Comparison operator for value-based conditions.
- */
-enum class CompareOp {
-    kNone,          ///< No comparison (truthy check)
-    kEqual,         ///< ==
-    kNotEqual,      ///< !=
-    kLessThan,      ///< <
-    kGreaterThan,   ///< >
-    kLessEqual,     ///< <=
-    kGreaterEqual,  ///< >=
+enum class CmpOp { kEq, kNeq, kLt, kGt, kLe, kGe };
+
+struct Cond {
+    enum Tag { Var, Not, Or, And };
+
+    Tag tag = Var;
+    std::string name;
+    CmpOp cmp_op = CmpOp::kEq;
+    std::string cmp_value;
+    std::vector<Cond> children;
 };
 
-/**
- * @brief Return the string representation of a CompareOp.
- */
-const char* compare_op_str(CompareOp op);
+struct ConditionParser {
+    std::string input_;
+    const char* src = nullptr;
+    size_t pos = 0;
+    size_t len = 0;
+    std::vector<std::string> vars;
+
+    explicit ConditionParser(const std::string& input);
+
+    Cond parse();
+
+    static std::vector<std::string> extract_variable_names(
+        const std::string& expr);
+
+   private:
+    void ws();
+    bool at(const char* tok) const;
+    void eat(const char* tok);
+    std::string ident();
+    std::string value();
+    Cond atom();
+    Cond unary();
+    Cond parse_and();
+    Cond parse_or();
+};
+
+bool eval_cond(const Cond& c,
+               const std::map<std::string, CheckResult>& results);
 
 /**
- * @brief Evaluates condition expressions for conditional checks.
- *
- * Parses condition strings like "FOO", "!FOO", "FOO==1", "FOO!=0",
- * "FOO<32", "FOO>=10" and evaluates them against a map of check results.
- *
- * Negation prefix (!): "!FOO" is true when FOO has success=false or a falsy
- * value (0, empty); false when FOO has a truthy value (1, "yes", etc.).
- *
- * Equality operators (==, !=) compare JSON-encoded values.
- * Relational operators (<, >, <=, >=) perform integer comparison.
+ * Slim wrapper around ConditionParser + eval_cond for backward compatibility
+ * with checker.cc's existing call sites.
  */
 class ConditionEvaluator {
    public:
-    /**
-     * @brief Construct a condition evaluator from a condition expression.
-     * @param condition_expr Condition expression (e.g., "FOO", "!FOO",
-     * "FOO==1", "FOO!=0")
-     */
     explicit ConditionEvaluator(const std::string& condition_expr);
 
-    /**
-     * @brief Compute whether the condition is true given a map of dependent
-     * check results.
-     * @param dep_results Map of results from dependent checks.
-     * @return true if condition is satisfied, false otherwise.
-     * @throws std::runtime_error if the condition's define is not found in the
-     * map.
-     */
     bool compute(const std::map<std::string, CheckResult>& dep_results) const;
 
-    /**
-     * @brief Get the define name this condition references.
-     * @return The define name.
-     */
-    const std::string& define_name() const { return define_name_; }
+    const std::string& define_name() const { return first_var_; }
 
-    /**
-     * @brief Check if this condition has a value comparison.
-     * @return true if condition uses an operator (==, !=, <, >, <=, >=).
-     */
-    bool has_value_compare() const { return compare_op_ != CompareOp::kNone; }
+    const std::vector<std::string>& all_define_names() const { return vars_; }
 
-    /**
-     * @brief Check if this condition uses != for value comparison.
-     * @return true if condition uses !=, false otherwise.
-     */
-    bool is_negated() const { return compare_op_ == CompareOp::kNotEqual; }
-
-    /**
-     * @brief Get the comparison operator.
-     */
-    CompareOp compare_op() const { return compare_op_; }
-
-    /**
-     * @brief Check if this condition has a leading ! prefix (!FOO).
-     * @return true if condition was "!FOO" (result is negated), false
-     * otherwise.
-     */
-    bool has_condition_negation_prefix() const { return condition_negated_; }
-
-    /**
-     * @brief Get the comparison value (for == or != conditions).
-     * @return The value to compare against, or empty string if no value
-     * comparison.
-     */
-    const std::string& comparison_value() const { return cond_value_; }
-
-    /**
-     * @brief Check if an expression has a negation prefix (!FOO).
-     * @param expr The expression to check.
-     * @return true if expression starts with '!' (e.g., "!FOO"), false
-     * otherwise.
-     */
-    static bool has_negation_prefix(const std::string& expr);
-
-    /**
-     * @brief Strip negation prefix from an expression.
-     * @param expr The expression (e.g., "!FOO").
-     * @return The expression without the negation prefix (e.g., "FOO").
-     */
-    static std::string strip_negation_prefix(const std::string& expr);
-
-    /**
-     * @brief Find the condition's result in a map of check results.
-     * @param results Map of define names to their check results.
-     * @return Pointer to the CheckResult for the condition's define.
-     * @throws std::runtime_error if the condition's define is not found in
-     * results.
-     */
-    const CheckResult* find_condition_result(
-        const std::map<std::string, CheckResult>& results) const;
-
-    /**
-     * @brief Evaluate the condition against a check result.
-     * @param result The check result to evaluate against.
-     * @return true if condition is satisfied, false otherwise.
-     */
-    bool evaluate(const CheckResult* result) const;
+    static std::vector<std::string> extract_variable_names(
+        const std::string& expr);
 
    private:
-    std::string define_name_{};
-    std::string cond_value_{};
-    CompareOp compare_op_ = CompareOp::kNone;
-    /** true when condition had leading ! (e.g. "!FOO") - final result is
-     * negated */
-    bool condition_negated_ = false;
+    Cond tree_;
+    std::string first_var_;
+    std::vector<std::string> vars_;
 };
 
 }  // namespace rules_cc_autoconf

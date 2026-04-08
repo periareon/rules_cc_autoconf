@@ -11,6 +11,7 @@ load(
     "get_environment_variables",
     "write_config_json",
 )
+load("//autoconf/private:condition_utils.bzl", "extract_condition_vars")
 load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
 
 _CONTENT_KEY_FIELDS = (
@@ -62,24 +63,6 @@ def _coerce_name(name, value):
         return value
 
     return name
-
-def _extract_define_name(expr):
-    """Extract base define name from requirement/condition expression.
-
-    Handles: "FOO", "!FOO", "FOO==value", "FOO!=value", "FOO<value",
-    "FOO>value", "FOO<=value", "FOO>=value", "FOO=value"
-    """
-    required_define = expr
-
-    if required_define.startswith("!"):
-        required_define = required_define[1:]
-
-    for op in ["<=", ">=", "!=", "==", "<", ">", "="]:
-        if op in required_define:
-            required_define = required_define.split(op)[0]
-            break
-
-    return required_define
 
 def autoconf_impl_common(ctx, resolve_toolchain):
     """Shared implementation for autoconf and autoconf_library rules.
@@ -264,17 +247,17 @@ def autoconf_impl_common(ctx, resolve_toolchain):
         all_required_defines = []
 
         for required in check.get("requires", []):
-            required_define = _extract_define_name(required)
-            all_required_defines.append(required_define)
+            all_required_defines.extend(extract_condition_vars(required))
+
+        for dep_name in check.get("input_deps", []):
+            all_required_defines.extend(extract_condition_vars(dep_name))
 
         condition = check.get("condition")
         if condition:
-            required_define = _extract_define_name(condition)
-            all_required_defines.append(required_define)
+            all_required_defines.extend(extract_condition_vars(condition))
 
         for required in check.get("compile_defines", []):
-            required_define = _extract_define_name(required)
-            all_required_defines.append(required_define)
+            all_required_defines.extend(extract_condition_vars(required))
 
         args = ctx.actions.args()
         args.use_param_file("@%s", use_always = True)
