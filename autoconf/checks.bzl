@@ -81,6 +81,8 @@ joined with newlines to form the prologue of the test program.
 The parameter `headers` is a deprecated alias for `includes`; prefer `includes`.
 """
 
+load("//autoconf/private:check_info.bzl", "make_check")
+
 # Used by AC_CHECK_HEADER (single header name -> #include line)
 _AC_INCLUDE_FORMAT_WITH_NEWLINE = "#include <{}>\n"
 
@@ -348,7 +350,7 @@ def _ac_check_header(
     if requires:
         check["requires"] = requires
 
-    return json.encode(check)
+    return make_check(check)
 
 def _ac_check_func(
         function,
@@ -439,7 +441,7 @@ def _ac_check_func(
     if subst:
         check["subst"] = subst
 
-    return json.encode(check)
+    return make_check(check)
 
 _AC_TEST_TYPE_CODE_TEMPLATE = _AC_INCLUDES_DEFAULT + """
 int main(void) {{
@@ -557,7 +559,7 @@ def _ac_check_type(
         check["subst"] = subst_name
 
     _add_conditionals(check, if_true, if_false)
-    return json.encode(check)
+    return make_check(check)
 
 def _ac_try_compile(
         *,
@@ -668,7 +670,7 @@ def _ac_try_compile(
         check["subst"] = subst
 
     _add_conditionals(check, if_true, if_false)
-    return json.encode(check)
+    return make_check(check)
 
 def _ac_try_link(
         *,
@@ -793,7 +795,7 @@ def _ac_try_link(
         check["subst"] = subst
 
     _add_conditionals(check, if_true, if_false)
-    return json.encode(check)
+    return make_check(check)
 
 _AC_SIMPLE_MAIN_TEMPLATE = """\
 int main(void) { return 0; }
@@ -978,7 +980,7 @@ def _ac_check_sizeof(
         check["subst"] = subst_name
 
     _add_conditionals(check, if_true, if_false)
-    return json.encode(check)
+    return make_check(check)
 
 # Uses negative array size to verify alignment at compile time. The checker
 # iterates candidate values, substituting {value}; compilation succeeds only
@@ -1062,7 +1064,7 @@ def _ac_check_alignof(
     if subst != None:
         check["subst"] = subst
 
-    return json.encode(check)
+    return make_check(check)
 
 _AC_CHECK_DECL_TEMPLATE = """\
 {0}
@@ -1207,7 +1209,7 @@ def _ac_check_decl(
         check["subst"] = subst
 
     _add_conditionals(check, if_true, if_false)
-    return json.encode(check)
+    return make_check(check)
 
 _AC_CHECK_MEMBER_TEMPLATE = """
 {}
@@ -1294,7 +1296,7 @@ def _ac_check_member(
         check["subst"] = subst
 
     _add_conditionals(check, if_true, if_false)
-    return json.encode(check)
+    return make_check(check)
 
 # Template for compile-time integer detection via binary search. The checker
 # compiles this repeatedly, substituting {lhs}/{rhs} with comparison operands.
@@ -1381,7 +1383,7 @@ def _ac_compute_int(
     if subst != None:
         check["subst"] = subst
 
-    return json.encode(check)
+    return make_check(check)
 
 _AC_C_INLINE_TEMPLATE = """\
 static inline int test_func(int x) {
@@ -1439,7 +1441,7 @@ def _ac_c_inline(
     if subst != None:
         check["subst"] = subst
 
-    return json.encode(check)
+    return make_check(check)
 
 _AC_C_RESTRICT_TEMPLATE = """\
 int main(void) {
@@ -1494,7 +1496,7 @@ def _ac_c_restrict(
     if subst != None:
         check["subst"] = subst
 
-    return json.encode(check)
+    return make_check(check)
 
 def _ac_prog_cc_c_o(
         define = "NO_MINUS_C_MINUS_O",
@@ -1547,7 +1549,7 @@ def _ac_prog_cc_c_o(
     if subst != None:
         check["subst"] = subst
 
-    return json.encode(check)
+    return make_check(check)
 
 def _ac_check_c_compiler_flag(
         flag,
@@ -1601,7 +1603,7 @@ def _ac_check_c_compiler_flag(
     if subst != None:
         check["subst"] = subst
 
-    return json.encode(check)
+    return make_check(check)
 
 def _ac_check_cxx_compiler_flag(
         flag,
@@ -1655,7 +1657,7 @@ def _ac_check_cxx_compiler_flag(
     if subst != None:
         check["subst"] = subst
 
-    return json.encode(check)
+    return make_check(check)
 
 # AC_CHECK_LIB code template. Same GCC builtin / MSVC prototype strategy as
 # _AC_CHECK_FUNC_DEFAULT_TEMPLATE (see comment there for rationale).
@@ -1755,7 +1757,7 @@ def _ac_check_lib(
         check["subst"] = subst
 
     _add_conditionals(check, if_true, if_false)
-    return json.encode(check)
+    return make_check(check)
 
 _AC_SEARCH_LIBS_TEMPLATE = """\
 #ifdef __cplusplus
@@ -1837,7 +1839,7 @@ def _ac_search_libs(
     if subst != None:
         check["subst"] = subst
 
-    return json.encode(check)
+    return make_check(check)
 
 def _ac_define_common(
         define,
@@ -1963,7 +1965,7 @@ def _ac_define(
     Returns:
         A JSON-encoded check string for use with the autoconf rule.
     """
-    return json.encode(_ac_define_common(
+    return make_check(_ac_define_common(
         define = define,
         value = value,
         requires = requires,
@@ -2041,7 +2043,7 @@ def _ac_define_unquoted(
 
     check["unquote"] = True
 
-    return json.encode(check)
+    return make_check(check)
 
 def _ac_subst(
         variable,
@@ -2134,7 +2136,7 @@ def _ac_subst(
         check["define_value"] = value
         check["define_value_fail"] = value
 
-    return json.encode(check)
+    return make_check(check)
 
 def _ac_fail(
         define,
@@ -2182,7 +2184,7 @@ def _ac_fail(
     if subst != None:
         check["subst"] = subst
 
-    return json.encode(check)
+    return make_check(check)
 
 def _m4_variable(
         define,
@@ -2270,7 +2272,7 @@ def _m4_variable(
         check["define_value"] = value
         check["define_value_fail"] = value
 
-    return json.encode(check)
+    return make_check(check)
 
 # ============================================================================
 # Plural check macros (AC_CHECK_DECLS, AC_CHECK_HEADERS, etc.)

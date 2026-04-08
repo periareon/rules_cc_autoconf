@@ -60,6 +60,7 @@ bzl_library(
     name = "checks_bzl",
     srcs = ["checks.bzl"],
     visibility = ["//visibility:public"],
+    deps = ["//autoconf/private:bzl_lib"],
 )
 
 bzl_library(
