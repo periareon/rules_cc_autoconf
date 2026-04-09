@@ -1,32 +1,64 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/vprintf-posix.m4"""
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/vprintf-posix.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
-# This module checks if vprintf is POSIX compliant and replaces it if not.
-# The m4 file checks POSIX compliance via gl_FUNC_VPRINTF_IS_POSIX which depends on
-# gl_FUNC_VFPRINTF_IS_POSIX. Based on golden files, on macOS vprintf is not POSIX compliant,
-# so we need to replace it.
+# gl_FUNC_VPRINTF_POSIX - lines 10-18
+# If vprintf is not POSIX compliant, calls vasnprintf extras and replaces vprintf.
+# On Linux, vprintf IS POSIX compliant so gl_REPLACE_VPRINTF is not invoked.
 autoconf(
-    name = "vprintf-posix",
-    checks = [
-        # This checks if vprintf is POSIX compliant by checking vfprintf.
-        # The check sets gl_cv_func_vprintf_posix="$gl_cv_func_vfprintf_posix".
-        # Based on golden files, on macOS it's not POSIX compliant, so we replace it.
-
-        # if test $gl_cv_func_vprintf_posix = no; then
-        # fi
-        checks.AC_DEFINE("REPLACE_VPRINTF_POSIX", "1"),
-        checks.AC_SUBST("REPLACE_VPRINTF", 1),
-
-        # Empty macro, no checks needed
-    ],
+    name = "gl_FUNC_VPRINTF_POSIX",
+    checks = select({
+        "@platforms//os:linux": [],
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_VPRINTF", "1"),
+            checks.AC_DEFINE("REPLACE_VPRINTF_POSIX", "1"),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency - line 25
-        "//gnulib/m4/vasnprintf",
-        # Note: The m4 file requires gl_FUNC_VFPRINTF_IS_POSIX for gl_FUNC_VPRINTF_IS_POSIX,
-        # but since we're using golden file expectations, we don't need to include it.
+        ":gl_FUNC_VPRINTF_IS_POSIX",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/alloca:gl_FUNC_ALLOCA",
+        "//gnulib/m4/multiarch",
+        "//gnulib/m4/vasnprintf:gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS",
+        "//gnulib/m4/vasnprintf:gl_REPLACE_VASNPRINTF",
+    ],
+)
+
+# gl_FUNC_VPRINTF_IS_POSIX - lines 22-27
+# Delegates to gl_FUNC_VFPRINTF_IS_POSIX; vprintf's POSIX compliance
+# is determined by vfprintf's compliance.
+autoconf(
+    name = "gl_FUNC_VPRINTF_IS_POSIX",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/vfprintf-posix:gl_FUNC_VFPRINTF_IS_POSIX",
+    ],
+)
+
+# gl_REPLACE_VPRINTF - lines 29-38
+# Unconditionally sets REPLACE_VPRINTF=1 and defines REPLACE_VPRINTF_POSIX.
+autoconf(
+    name = "gl_REPLACE_VPRINTF",
+    checks = [
+        checks.AC_SUBST("REPLACE_VPRINTF", "1"),
+        checks.AC_DEFINE("REPLACE_VPRINTF_POSIX", "1"),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# gl_PREREQ_VPRINTF - line 40 (no-op)
+autoconf(
+    name = "gl_PREREQ_VPRINTF",
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "vprintf-posix",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_VPRINTF_IS_POSIX",
+        ":gl_FUNC_VPRINTF_POSIX",
     ],
 )

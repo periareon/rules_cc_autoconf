@@ -1,10 +1,4 @@
-"""Clean port of gnulib m4/c-strtod.m4 (serial 21).
-
-gl_C_STRTOD: AC_REQUIRE(extensions, gt_FUNC_USELOCALE), nl_langinfo check,
-AC_CHECK_HEADERS_ONCE(xlocale.h), AC_LINK_IFELSE for strtod_l → HAVE_STRTOD_L 0/1.
-gl_C_STRTOF: Same for strtof_l → HAVE_STRTOF_L.
-gl_C_STRTOLD: Same deps, gl_CHECK_FUNCS_ANDROID(strtold_l) → HAVE_STRTOLD_L.
-"""
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/c-strtod.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks", "utils")

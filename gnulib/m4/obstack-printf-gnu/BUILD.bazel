@@ -1,22 +1,20 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/obstack-printf-gnu.m4"""
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/obstack-printf-gnu.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "obstack-printf-gnu",
-    checks = [
-        # gl_FUNC_OBSTACK_PRINTF_GNU checks if obstack_printf is GNU-compatible
-        # If not, it calls gl_PREREQ_VASNPRINTF_WITH_GNU_EXTRAS, gl_REPLACE_VASNPRINTF, gl_REPLACE_OBSTACK_PRINTF
-        # Note: gl_DECL_OBSTACK_PRINTF is already checked by obstack-printf-posix, so we don't duplicate it here
-
-        # Note: HAVE_DECL__SNPRINTF is already provided by vasnprintf:gl_PREREQ_VASNPRINTF dependency
-    ],
+    checks = select({
+        "@platforms//os:linux": [],
+        "//conditions:default": [
+            checks.AC_DEFINE("SUPPORT_GNU_PRINTF_DIRECTIVES", "1"),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/obstack-printf-posix",  # AC_REQUIRE([gl_FUNC_OBSTACK_PRINTF_IS_POSIX]) and gl_REPLACE_OBSTACK_PRINTF
+        "//gnulib/m4/obstack-printf-posix",  # AC_REQUIRE([gl_FUNC_OBSTACK_PRINTF_IS_POSIX])
         "//gnulib/m4/printf:gl_PRINTF_DIRECTIVE_UPPERCASE_B",  # AC_REQUIRE([gl_PRINTF_DIRECTIVE_UPPERCASE_B])
-        # When obstack_printf is not GNU-compatible (which is the case on macOS):
-        "//gnulib/m4/vasnprintf:gl_PREREQ_VASNPRINTF_WITH_GNU_EXTRAS",
         "//gnulib/m4/vasnprintf:gl_REPLACE_VASNPRINTF",
         # Additional dependencies for the golden file:
         "//gnulib/m4/exponentd",

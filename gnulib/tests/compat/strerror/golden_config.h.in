@@ -36,8 +36,6 @@
 /* #undef HAVE_STRVERSCMP */
 #define HAVE_SYS_STAT_H 1
 #define HAVE_SYS_TYPES_H 1
-/* #undef HAVE_THRD_CREATE */
-/* #undef HAVE_TSS_CREATE */
 #define HAVE_UNISTD_H 1
 #define HAVE_WCHAR_H 1
 #define HAVE___XPG_STRERROR_R 1

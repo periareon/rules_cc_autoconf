@@ -1,4 +1,5 @@
 /* config.h.in */
+#undef HAVE_DLADDR_IN_LIBC
 #undef HAVE_INTTYPES_H
 #undef HAVE_STDINT_H
 #undef HAVE_STDIO_H

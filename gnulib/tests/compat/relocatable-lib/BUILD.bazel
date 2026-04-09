@@ -7,6 +7,7 @@ gnu_gnulib_diff_test_suite(
     configure_ac = "configure.ac",
     golden_config_h = select({
         "@platforms//os:macos": "golden_config_macos.h.in",
+        "@platforms//os:windows": "golden_config_windows.h.in",
         "//conditions:default": "golden_config.h.in",
     }),
     golden_subst_h = select({

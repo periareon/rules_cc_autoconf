@@ -10,7 +10,7 @@
 /* #undef HAVE_DECL_PUTW */
 /* #undef HAVE_DECL_SNPRINTF */
 /* #undef HAVE_DECL_VSNPRINTF */
-/* #undef HAVE_DPRINTF */
+#define HAVE_DPRINTF 0
 /* #undef HAVE_FSEEKO */
 /* #undef HAVE_FTELLO */
 /* #undef HAVE_PCLOSE */

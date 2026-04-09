@@ -1,4 +1,4 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/getline.m4"""
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/getline.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
@@ -46,22 +46,11 @@ autoconf(
         # If getline found, HAVE_GETLINE=1
         # AC_CHECK_DECL already creates HAVE_DECL_GETLINE define if found
 
-        # Note: AC_RUN_IFELSE for am_cv_func_working_getline (lines 31-93) is not directly
-        # portable to Bazel's cross-compilation environment. REPLACE_GETLINE is set based on
-        # golden file expectations for macOS/Linux.
-        # The m4 sets REPLACE_GETLINE=1 if:
-        # On macOS, getline works correctly (matches golden file which shows REPLACE_GETLINE=0)
-        # On Linux, getline also works correctly, so REPLACE_GETLINE=0
-    ] + select({
-        # On Linux, REPLACE_GETLINE=1 (golden_subst_linux.h.in expects 1)
-        "@platforms//os:linux": [
-            checks.AC_SUBST("REPLACE_GETLINE", "1"),
-        ],
-        # On macOS, REPLACE_GETLINE=0
-        "//conditions:default": [
-            checks.AC_SUBST("REPLACE_GETLINE", "0"),
-        ],
-    }),
+        # Upstream uses AC_RUN_IFELSE to test am_cv_func_working_getline.
+        # getline works correctly on both glibc and macOS (cross-compile
+        # guess is also "yes" for glibc2 and musl), so REPLACE_GETLINE=0.
+        checks.AC_SUBST("REPLACE_GETLINE", "0"),
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction

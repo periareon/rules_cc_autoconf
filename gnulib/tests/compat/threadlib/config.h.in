@@ -1,7 +1,5 @@
 /* config.h.in */
-#undef AVOID_ANY_THREADS
 #undef HAVE_INTTYPES_H
-#undef HAVE_MNTENT_H
 #undef HAVE_PTHREAD_API
 #undef HAVE_STDINT_H
 #undef HAVE_STDIO_H
@@ -19,7 +17,6 @@
 #undef STDC_HEADERS
 #undef USE_POSIX_THREADS
 #undef USE_POSIX_THREADS_FROM_LIBC
-#undef USE_WINDOWS_THREADS
 #undef _ALL_SOURCE
 #undef _DARWIN_C_SOURCE
 #undef _GNU_SOURCE

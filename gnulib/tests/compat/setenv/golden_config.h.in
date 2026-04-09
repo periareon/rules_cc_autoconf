@@ -99,6 +99,7 @@
 /* #undef HAVE_SYMLINKAT */
 /* #undef HAVE_SYS_LOADAVG_H */
 /* #undef HAVE_SYS_PARAM_H */
+/* #undef HAVE_SYS_PROCESS_H */
 #define HAVE_SYS_STAT_H 1
 #define HAVE_SYS_TYPES_H 1
 #define HAVE_TSEARCH 1

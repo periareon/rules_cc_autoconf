@@ -4,9 +4,7 @@
 /* #undef ASM_SYMBOL_PREFIX */
 #define DBL_EXPBIT0_BIT 20
 #define DBL_EXPBIT0_WORD 1
-/* #undef EGREP */
 /* #undef GNULIBHEADERS_OVERRIDE_WINT_T */
-/* #undef GREP */
 #define HAVE_ALLOCA 1
 #define HAVE_ALLOCA_H 1
 /* #undef HAVE_DECL_FCLOSEALL */
@@ -77,7 +75,7 @@
 /* #undef REPLACE_PERROR */
 /* #undef REPLACE_POPEN */
 /* #undef REPLACE_PRINTF */
-#define REPLACE_PRINTF_POSIX 1
+/* #undef REPLACE_PRINTF_POSIX */
 /* #undef REPLACE_REMOVE */
 /* #undef REPLACE_RENAME */
 /* #undef REPLACE_RENAMEAT */
@@ -93,5 +91,5 @@
 /* #undef REPLACE_VSNPRINTF */
 /* #undef REPLACE_VSPRINTF */
 #define STDC_HEADERS 1
-#define SUPPORT_GNU_PRINTF_DIRECTIVES 1
+/* #undef SUPPORT_GNU_PRINTF_DIRECTIVES */
 #define USER_LABEL_PREFIX 

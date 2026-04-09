@@ -1,4 +1,4 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/vfprintf-posix.m4"""
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/vfprintf-posix.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
@@ -12,12 +12,15 @@ autoconf(
 
 autoconf(
     name = "gl_REPLACE_VFPRINTF",
-    checks = [
-        # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
-        # This is handled in the source code, not via autoconf defines
-        checks.AC_SUBST("REPLACE_VFPRINTF", 1),
-        checks.AC_DEFINE("REPLACE_VFPRINTF_POSIX", "1"),
-    ],
+    checks = select({
+        "@platforms//os:linux": [
+            checks.AC_SUBST("REPLACE_VFPRINTF", 0),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_VFPRINTF", 1),
+            checks.AC_DEFINE("REPLACE_VFPRINTF_POSIX", "1"),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction

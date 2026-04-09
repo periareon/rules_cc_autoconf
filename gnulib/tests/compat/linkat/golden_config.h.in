@@ -14,7 +14,6 @@
 /* #undef HAVE_DECL_TRUNCATE */
 /* #undef HAVE_DECL_TTYNAME_R */
 /* #undef HAVE_DUP3 */
-/* #undef HAVE_ENDMNTENT */
 /* #undef HAVE_EUIDACCESS */
 /* #undef HAVE_EXECVPE */
 /* #undef HAVE_FACCESSAT */
@@ -29,7 +28,6 @@
 /* #undef HAVE_GETGROUPS */
 /* #undef HAVE_GETHOSTNAME */
 /* #undef HAVE_GETLOGIN */
-/* #undef HAVE_GETMNTENT */
 /* #undef HAVE_GETPAGESIZE */
 /* #undef HAVE_GETPASS */
 /* #undef HAVE_GROUP_MEMBER */
@@ -38,7 +36,6 @@
 /* #undef HAVE_LCHOWN */
 /* #undef HAVE_LINK */
 #define HAVE_LINKAT 1
-/* #undef HAVE_MNTENT_H */
 #define HAVE_OPENAT 1
 /* #undef HAVE_OPENAT2 */
 /* #undef HAVE_OS_H */
@@ -72,8 +69,6 @@
 /* #undef LINKAT_TRAILING_SLASH_BUG */
 #define LINK_FOLLOWS_SYMLINKS 0
 #define LSTAT_FOLLOWS_SLASHED_SYMLINK 1
-/* #undef MAJOR_IN_SYSMACROS */
-/* #undef MOUNTED_GETMNTENT1 */
 /* #undef REPLACE_ACCESS */
 /* #undef REPLACE_CHOWN */
 /* #undef REPLACE_CLOSE */

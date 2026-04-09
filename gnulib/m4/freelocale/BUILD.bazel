@@ -1,15 +1,4 @@
-"""Clean port of gnulib m4/freelocale.m4 (serial 2).
-
-gl_FUNC_FREELOCALE: AC_REQUIRE(gl_LOCALE_H_DEFAULTS), gl_LOCALE_T.
-  If HAVE_LOCALE_T=1: gl_CHECK_FUNCS_ANDROID([freelocale], [[#include <locale.h>]]).
-  Else: gl_func_freelocale=no (z/OS etc.).
-  If gl_func_freelocale != yes: HAVE_FREELOCALE=0, optionally REPLACE_FREELOCALE=1.
-gl_PREREQ_FREELOCALE: empty.
-
-We set HAVE_FREELOCALE=1 via select() on macOS and Linux to match golden expectations:
-- macOS: link check can fail (freelocale in xlocale.h with different linkage).
-- Linux: link check can be skipped or fail in some environments (e.g. Docker/sandbox).
-"""
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/freelocale.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")

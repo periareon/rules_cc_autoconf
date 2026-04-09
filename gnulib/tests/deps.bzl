@@ -21,9 +21,9 @@ filegroup(
 def _gnulib_impl(module_ctx):
     http_archive(
         name = "gnulib",
-        urls = ["https://github.com/coreutils/gnulib/archive/635dbdcf501d52d2e42daf6b44261af9ce2dfe38.zip"],
-        integrity = "sha256-jdRTQZBSkiapmoHhQZTlzlKn7DgN+JY6mPJEb1we2cA=",
-        strip_prefix = "gnulib-635dbdcf501d52d2e42daf6b44261af9ce2dfe38",
+        urls = ["https://github.com/coreutils/gnulib/archive/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0.zip"],
+        integrity = "sha256-m+oVoY9VOHLmFjjV3zmzlCS+Mnp9mqso0YNq3vTHodc=",
+        strip_prefix = "gnulib-1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0",
         build_file_content = _BUILD_FILE,
     )
 

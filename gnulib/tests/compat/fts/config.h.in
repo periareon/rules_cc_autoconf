@@ -1,5 +1,4 @@
 /* config.h.in */
-#undef HAVE_CALL_ONCE
 #undef HAVE_FCNTL
 #undef HAVE_FSTATFS
 #undef HAVE_FTS_OPEN
@@ -18,7 +17,6 @@
 #undef HAVE_SYS_STAT_H
 #undef HAVE_SYS_TYPES_H
 #undef HAVE_SYS_VFS_H
-#undef HAVE_THRD_CREATE
 #undef HAVE_UNISTD_H
 #undef HAVE_WCHAR_H
 #undef HAVE_WORKING_O_DIRECTORY

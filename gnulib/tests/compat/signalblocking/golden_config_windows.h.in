@@ -6,6 +6,7 @@
 /* #undef HAVE_SIGACTION */
 /* #undef HAVE_SIGHANDLER_T */
 /* #undef HAVE_SIGINFO_T */
+/* #undef HAVE_SIGPROCMASK */
 #define HAVE_SIGSET_T 0
 /* #undef HAVE_STR2SIG */
 /* #undef HAVE_STRUCT_SIGACTION_SA_SIGACTION */

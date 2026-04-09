@@ -1,4 +1,4 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/mktime.m4
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/mktime.m4
 
 gl_FUNC_MKTIME_WORKS - runtime check for working mktime, sets gl_cv_func_working_mktime
 gl_FUNC_MKTIME - full mktime function check, sets REPLACE_MKTIME based on gl_cv_func_working_mktime

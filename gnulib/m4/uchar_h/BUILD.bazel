@@ -1,18 +1,48 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/uchar_h.m4"""
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/uchar_h.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 load("//gnulib:macros.bzl", gl_macros = "macros")
 
+# gl_UCHAR_H - lines 13-116
 autoconf(
-    name = "uchar_h",
+    name = "gl_UCHAR_H",
     checks = [
-        # gl_UCHAR_H checks for uchar.h header
+        # gl_CHECK_NEXT_HEADERS([uchar.h]) also checks for the header
         checks.AC_CHECK_HEADER(
             "uchar.h",
             name = "ac_cv_header_uchar_h",
         ),
-        # gl_STDINT_BITSIZEOF([wchar_t]) -- compute sizeof(wchar_t) * CHAR_BIT
+        # if test $ac_cv_header_uchar_h = yes; then HAVE_UCHAR_H=1 else HAVE_UCHAR_H=0 fi
+        checks.AC_DEFINE(
+            "HAVE_UCHAR_H",
+            requires = ["ac_cv_header_uchar_h==1"],
+        ),
+        checks.AC_SUBST(
+            "HAVE_UCHAR_H",
+            condition = "ac_cv_header_uchar_h",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # CXX_HAVE_UCHAR_H: check if C++ compiler has <uchar.h>
+        # On Linux: yes (glibc). On macOS: yes (libc++).
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_cxx_have_uchar_h",
+            code = """\
+#include <uchar.h>
+int main() { return 0; }
+""",
+            language = "cpp",
+        ),
+        checks.AC_SUBST(
+            "CXX_HAVE_UCHAR_H",
+            condition = "gl_cv_cxx_have_uchar_h",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # CXX_HAS_CHAR8_TYPE: 0 on all platforms (char8_t is C++20, not yet available)
+        checks.AC_SUBST("CXX_HAS_CHAR8_TYPE", "0"),
+        # gl_STDINT_BITSIZEOF([wchar_t])
         checks.AC_COMPUTE_INT(
             "BITSIZEOF_WCHAR_T",
             "(int)(sizeof(wchar_t) * CHAR_BIT)",
@@ -22,43 +52,6 @@ autoconf(
             ],
             subst = True,
         ),
-    ] + [
-        # CXX_HAS_CHAR8_TYPE, CXX_HAS_UCHAR_TYPES, CXX_HAVE_UCHAR_H are set by gl_UCHAR_H
-        # On macOS, uchar.h doesn't exist in C mode, but may exist in C++ mode
-        # For now, set to expected values from golden file
-        checks.AC_SUBST("CXX_HAS_CHAR8_TYPE", "0"),
-    ] + select({
-        # On Linux, uchar.h exists and char16/32 types are native
-        "@platforms//os:linux": [
-            checks.AC_SUBST("CXX_HAS_UCHAR_TYPES", "0"),
-            checks.AC_SUBST("CXX_HAVE_UCHAR_H", "1"),
-            # On Linux, native char16_t/char32_t exist, no override needed
-            checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR16_T", "0"),
-            checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR32_T", "0"),
-            checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR8_T", "1"),
-            # Force HAVE_UCHAR_H on Linux (header exists but check may fail in minimal container)
-            checks.AC_DEFINE("HAVE_UCHAR_H", 1),
-        ],
-        # On macOS, CXX_HAS_UCHAR_TYPES is 1, override needed
-        "//conditions:default": [
-            checks.AC_SUBST("CXX_HAS_UCHAR_TYPES", "1"),
-            checks.AC_SUBST("CXX_HAVE_UCHAR_H", "1"),
-            checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR16_T", "1"),
-            checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR32_T", "1"),
-            checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR8_T", "1"),
-        ],
-    }) + [
-        # HAVE_C32RTOMB default from gl_UCHAR_H_DEFAULTS
-        checks.AC_SUBST("HAVE_C32RTOMB", "1"),
-        # Note: HAVE_MBRTOC16 and HAVE_MBRTOC32 are set by mbrtoc16 and mbrtoc32 modules
-        # if test $ac_cv_header_uchar_h = yes; then HAVE_UCHAR_H=1 else HAVE_UCHAR_H=0 fi
-        checks.AC_SUBST(
-            "HAVE_UCHAR_H",
-            condition = "ac_cv_header_uchar_h",
-            if_false = 0,
-            if_true = 1,
-        ),
-    ] + gl_macros.GL_CHECK_NEXT_HEADERS(["uchar.h"]) + [
         # if test $BITSIZEOF_WCHAR_T -lt 32; then SMALL_WCHAR_T=1
         checks.AC_SUBST(
             "SMALL_WCHAR_T",
@@ -66,14 +59,125 @@ autoconf(
             if_false = "0",
             if_true = "1",
         ),
-    ],
+    ] + select({
+        # CXX_HAS_UCHAR_TYPES: only checked when HAVE_UCHAR_H=0 (M4 line 71-91)
+        # On Linux: HAVE_UCHAR_H=1 → check skipped → 0
+        # On macOS: HAVE_UCHAR_H=0 → C++ has char16_t/char32_t → 1
+        "@platforms//os:linux": [
+            checks.AC_SUBST("CXX_HAS_UCHAR_TYPES", "0"),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST("CXX_HAS_UCHAR_TYPES", "1"),
+        ],
+    }) + gl_macros.GL_CHECK_NEXT_HEADERS(["uchar.h"]),
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
-        "//gnulib/m4/include_next",  # Required for INCLUDE_NEXT variables
+        "//gnulib/m4/include_next",
     ],
 )
 
+# gl_TYPE_CHAR8_T - lines 118-140
+# Checks if char8_t is correctly defined in <uchar.h>.
+# On Linux: uchar.h exists but char8_t is not defined → fails → override=1
+# On macOS: uchar.h doesn't exist in C mode → fails → override=1
+autoconf(
+    name = "gl_TYPE_CHAR8_T",
+    checks = [
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_type_char8_t_works",
+            code = """\
+#ifdef __HAIKU__
+#include <stdchar.h>
+#endif
+#include <uchar.h>
+int verify[(char8_t)(-1) >= 0 && sizeof (char8_t) == sizeof (unsigned char) ? 1 : -1];
+int main(void) { return 0; }
+""",
+        ),
+        checks.AC_SUBST(
+            "GNULIBHEADERS_OVERRIDE_CHAR8_T",
+            condition = "gl_cv_type_char8_t_works",
+            if_false = "1",
+            if_true = "0",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# gl_TYPE_CHAR16_T - lines 143-168
+# Checks if char16_t is correctly defined in <uchar.h>.
+# On Linux: uchar.h exists and char16_t works → passes → override=0
+# On macOS: uchar.h doesn't exist → fails → override=1
+autoconf(
+    name = "gl_TYPE_CHAR16_T",
+    checks = [
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_type_char16_t_works",
+            code = """\
+#ifdef __HAIKU__
+#include <stdchar.h>
+#endif
+#include <uchar.h>
+int verify[(char16_t)(-1) >= 0 && sizeof (char16_t) == sizeof (unsigned short) ? 1 : -1];
+int main(void) { return 0; }
+""",
+        ),
+        checks.AC_SUBST(
+            "GNULIBHEADERS_OVERRIDE_CHAR16_T",
+            condition = "gl_cv_type_char16_t_works",
+            if_false = "1",
+            if_true = "0",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# gl_TYPE_CHAR32_T - lines 169-193
+# Checks if char32_t is correctly defined in <uchar.h>.
+# On Linux: uchar.h exists and char32_t works → passes → override=0
+# On macOS: uchar.h doesn't exist → fails → override=1
+autoconf(
+    name = "gl_TYPE_CHAR32_T",
+    checks = [
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_type_char32_t_works",
+            code = """\
+#ifdef __HAIKU__
+#include <stdchar.h>
+#endif
+#include <uchar.h>
+int verify[(char32_t)(-1) >= 0 && sizeof (char32_t) == sizeof (unsigned int) ? 1 : -1];
+int main(void) { return 0; }
+""",
+        ),
+        checks.AC_SUBST(
+            "GNULIBHEADERS_OVERRIDE_CHAR32_T",
+            condition = "gl_cv_type_char32_t_works",
+            if_false = "1",
+            if_true = "0",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# gl_UCHAR_MODULE_INDICATOR - lines 196-204
+# In M4, this calls gl_UCHAR_H_REQUIRE_DEFAULTS. In Bazel, the _DEFAULTS
+# values (HAVE_C32RTOMB, HAVE_MBRTOC16, etc.) are provided by the autoconf
+# toolchain defaults, not through the dependency graph, to avoid duplicate
+# subst errors with downstream modules like c32rtomb that override them.
+autoconf(
+    name = "gl_UCHAR_MODULE_INDICATOR",
+    visibility = ["//visibility:public"],
+)
+
+# gl_UCHAR_H_DEFAULTS - lines 246-254
+# Note: These default values are also provided by the autoconf toolchain
+# defaults (via defaults=True in autoconf_hdr). Individual modules like
+# c32rtomb, mbrtoc16, mbrtoc32 override these with their actual check results.
+# The GNULIBHEADERS_OVERRIDE_CHAR*_T defaults are 0 on Linux (char types
+# exist in <uchar.h>), 1 on macOS (no <uchar.h> in C mode).
+# The uchar_h aggregator overrides these via gl_TYPE_CHAR*_T compile checks.
 autoconf(
     name = "gl_UCHAR_H_DEFAULTS",
     checks = [
@@ -83,10 +187,22 @@ autoconf(
         checks.AC_SUBST("REPLACE_C32RTOMB", 0),
         checks.AC_SUBST("REPLACE_MBRTOC16", 0),
         checks.AC_SUBST("REPLACE_MBRTOC32", 0),
-    ],
+    ] + select({
+        "@platforms//os:linux": [
+            checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR8_T", 0),
+            checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR16_T", 0),
+            checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR32_T", 0),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR8_T", 1),
+            checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR16_T", 1),
+            checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR32_T", 1),
+        ],
+    }),
     visibility = ["//visibility:private"],
 )
 
+# gl_UCHAR_H_REQUIRE_DEFAULTS - lines 209-244
 autoconf(
     name = "gl_UCHAR_H_REQUIRE_DEFAULTS",
     checks = [
@@ -133,5 +249,17 @@ autoconf(
     visibility = ["//visibility:public"],
     deps = [
         ":gl_UCHAR_H_REQUIRE_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "uchar_h",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_TYPE_CHAR16_T",
+        ":gl_TYPE_CHAR32_T",
+        ":gl_TYPE_CHAR8_T",
+        ":gl_UCHAR_H",
+        ":gl_UCHAR_MODULE_INDICATOR",
     ],
 )

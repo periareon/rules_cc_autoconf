@@ -57,7 +57,6 @@
 /* #undef HAVE_VASPRINTF */
 /* #undef HAVE_VDPRINTF */
 #define HAVE_WCHAR_H 1
-/* #undef HAVE_WORKING_STRERRORNAME_NP */
 /* #undef HAVE___XPG_STRERROR_R */
 /* #undef INCLUDE_NEXT */
 /* #undef INCLUDE_NEXT_AS_FIRST_DIRECTIVE */

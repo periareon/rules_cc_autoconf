@@ -2,7 +2,6 @@
 /* #undef HAVE_DECL_ENDUTENT */
 #define HAVE_DECL_SYSINFO 0
 #define HAVE_INTTYPES_H 1
-/* #undef HAVE_PROC_UPTIME */
 #define HAVE_STDINT_H 1
 #define HAVE_STDIO_H 1
 #define HAVE_STDLIB_H 1

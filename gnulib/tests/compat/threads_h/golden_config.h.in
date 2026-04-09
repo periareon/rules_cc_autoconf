@@ -13,7 +13,6 @@
 #define HAVE_THRD_CREATE 1
 #define HAVE_THREADS_H 1
 /* #undef HAVE_THREAD_LOCAL */
-/* #undef HAVE_TIMER_SETTIME */
 #define HAVE_UNISTD_H 1
 /* #undef INCLUDE_NEXT */
 /* #undef INCLUDE_NEXT_AS_FIRST_DIRECTIVE */

@@ -1,14 +1,4 @@
-"""Clean port of gnulib m4/getlocalename_l.m4 (serial 5).
-
-gl_FUNC_GETLOCALENAME_L_SIMPLE: Requires gl_LOCALE_H_DEFAULTS, AC_USE_SYSTEM_EXTENSIONS,
-  gl_FUNC_GETLOCALENAME_L_UNSAFE.
-gl_FUNC_GETLOCALENAME_L_UNSAFE (AC_DEFUN_ONCE): AC_CHECK_FUNCS_ONCE([getlocalename_l]).
-  If no → HAVE_GETLOCALENAME_L=0. If yes → optional AC_RUN_IFELSE (Cygwin/Haiku bugs);
-  we cannot run at configure time, so assume works (REPLACE_GETLOCALENAME_L=0).
-  GETLOCALENAME_L_LIB = SETLOCALE_NULL_LIB when missing or replace, else "".
-gl_PREREQ_GETLOCALENAME_L_UNSAFE: locale_h_defaults, gl_LOCALE_T, gt_INTL_THREAD_LOCALE_NAME,
-  langinfo.h, newlocale/duplocale/freelocale (from those modules).
-"""
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/getlocalename_l.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")

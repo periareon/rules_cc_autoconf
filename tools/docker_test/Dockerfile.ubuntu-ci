@@ -1,0 +1,52 @@
+# Dockerfile that mirrors the GitHub Actions ubuntu-24.04 runner environment.
+# Used by docker_bazel.sh and test_linux_docker.sh for local testing.
+# Source: https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2404-Readme.md
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install the same apt packages as the GitHub Actions ubuntu-24.04 runner.
+RUN apt-get update && apt-get install -y \
+    acl aria2 autoconf automake binutils bison brotli bzip2 \
+    ca-certificates coreutils curl dbus dnsutils dpkg-dev \
+    fakeroot file findutils flex ftp \
+    g++ gcc git gnupg2 \
+    haveged iproute2 iputils-ping \
+    jq \
+    libnss3-tools libsqlite3-dev libssl-dev libtool libyaml-dev \
+    locales lz4 \
+    m4 make mediainfo mercurial \
+    net-tools netcat-openbsd \
+    openssh-client \
+    p7zip-full parallel patchelf pigz pkg-config pollinate \
+    python-is-python3 python3 python3-pip \
+    rpm rsync \
+    shellcheck sqlite3 ssh sshpass sudo swig \
+    tar telnet texinfo time tk tree tzdata \
+    unzip upx \
+    wget \
+    xz-utils \
+    zip zsync \
+    && rm -rf /var/lib/apt/lists/*
+
+# Configure locales to match GitHub runner (en_US.UTF-8)
+RUN locale-gen en_US.UTF-8 && update-locale LANG=en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
+
+# Install Bazelisk
+RUN ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then \
+        BAZEL_ARCH="arm64"; \
+    else \
+        BAZEL_ARCH="amd64"; \
+    fi && \
+    curl -fsSL "https://github.com/bazelbuild/bazelisk/releases/download/v1.19.0/bazelisk-linux-${BAZEL_ARCH}" \
+        -o /usr/local/bin/bazel && \
+    chmod +x /usr/local/bin/bazel
+
+WORKDIR /workspace
+COPY . .
+RUN git config --global --add safe.directory /workspace
+RUN bazel version || true

@@ -72,6 +72,7 @@
 /* #undef HAVE_STRUCT_RANDOM_DATA */
 /* #undef HAVE_STRVERSCMP */
 /* #undef HAVE_SYS_LOADAVG_H */
+/* #undef HAVE_SYS_PROCESS_H */
 /* #undef HAVE_UNLOCKPT */
 /* #undef HAVE__EXIT */
 /* #undef INCLUDE_NEXT */

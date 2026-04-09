@@ -1,7 +1,6 @@
 /* config.h.in */
 #define HAVE_INTTYPES_H 1
 /* #undef HAVE_MNTENT_H */
-/* #undef HAVE_OBSTACK_H */
 /* #undef HAVE_SCHED_GETAFFINITY */
 /* #undef HAVE_SCHED_GETAFFINITY_LIKE_GLIBC */
 /* #undef HAVE_SETMNTENT */

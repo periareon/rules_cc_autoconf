@@ -140,6 +140,7 @@ SKIPPED_VARIABLE_PREFIXES = (
     "XGETTEXT",
     "am_",
     "YACC",
+    "LOCALE_",
 )
 
 SKIPPED_VARIABLE_SUFIXES = ("_LIBM",)

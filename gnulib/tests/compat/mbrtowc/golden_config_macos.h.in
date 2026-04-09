@@ -57,7 +57,6 @@
 /* #undef HAVE_WMEMMOVE */
 /* #undef HAVE_WMEMPCPY */
 /* #undef HAVE_WMEMSET */
-/* #undef HAVE_THREADS_H */
 /* #undef LOCALE_EN_UTF8 */
 /* #undef LOCALE_JA */
 /* #undef LOCALE_ZH_CN */

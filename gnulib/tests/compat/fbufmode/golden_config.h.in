@@ -11,5 +11,4 @@
 #define HAVE_UNISTD_H 1
 #define HAVE___FBUFSIZE 1
 #define HAVE___FLBF 1
-/* #undef HAVE___FSETLOCKING */
 #define STDC_HEADERS 1

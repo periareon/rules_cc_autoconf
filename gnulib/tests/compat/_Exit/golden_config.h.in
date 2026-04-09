@@ -44,6 +44,7 @@
 /* #undef HAVE_STRTOULL */
 /* #undef HAVE_STRUCT_RANDOM_DATA */
 /* #undef HAVE_SYS_LOADAVG_H */
+/* #undef HAVE_SYS_PROCESS_H */
 /* #undef HAVE_UNLOCKPT */
 #define HAVE__EXIT 1
 /* #undef REPLACE_ABORT */

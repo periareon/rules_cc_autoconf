@@ -1,4 +1,4 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/stddef_h.m4"""
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/stddef_h.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
@@ -62,10 +62,19 @@ int main(void) {
 autoconf(
     name = "gl_STDDEF_H_DEFAULTS",
     checks = [
-        checks.AC_SUBST("NULLPTR_T_NEEDS_STDDEF", 1),
-        checks.AC_SUBST("STDDEF_NOT_IDEMPOTENT", 0),
         checks.AC_SUBST("REPLACE_NULL", 0),
     ] + select({
+        # On Ubuntu 24.04 (glibc 2.39 / GCC 14), nullptr_t is provided
+        # natively and stddef.h is NOT idempotent.
+        "@platforms//os:linux": [
+            checks.AC_SUBST("NULLPTR_T_NEEDS_STDDEF", 0),
+            checks.AC_SUBST("STDDEF_NOT_IDEMPOTENT", 1),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST("NULLPTR_T_NEEDS_STDDEF", 1),
+            checks.AC_SUBST("STDDEF_NOT_IDEMPOTENT", 0),
+        ],
+    }) + select({
         "@rules_cc//cc/compiler:msvc-cl": [
             # MSVC in C mode does not provide max_align_t in <stddef.h>;
             # gnulib's stddef.in.h supplies rpl_max_align_t when this is 0.

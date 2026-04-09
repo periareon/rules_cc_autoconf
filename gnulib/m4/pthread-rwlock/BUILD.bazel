@@ -1,51 +1,65 @@
-"""Port of gnulib m4/pthread-rwlock.m4 — gl_PTHREAD_RWLOCK.
-
-https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/pthread-rwlock.m4
-
-Single AC_DEFUN gl_PTHREAD_RWLOCK:
-- AC_REQUIRE([gl_PTHREAD_H]), AC_REQUIRE([AC_CANONICAL_HOST])
-- Else: AC_CHECK_DECL(pthread_rwlock_timedrdlock) → HAVE_*=0 and AC_DEFINE PTHREAD_RWLOCK_LACKS_TIMEOUT when not declared
-- Linux-only: AC_CACHE_CHECK wait queue (AC_RUN_IFELSE); if no → REPLACE_PTHREAD_RWLOCK_INIT, REPLACE_PTHREAD_RWLOCKATTR_INIT=1
-"""
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/pthread-rwlock.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "pthread-rwlock",
-    checks = select({
-        # On Linux: pthread_rwlock_timedrdlock IS declared, but bad waitqueue
+    name = "gl_PTHREAD_RWLOCK",
+    checks = [
+        # AC_CHECK_DECL([pthread_rwlock_timedrdlock], , [...], [[#include <pthread.h>]])
+        # Declared on Linux (glibc); NOT declared on macOS or Windows.
+        checks.AC_CHECK_DECL(
+            "pthread_rwlock_timedrdlock",
+            includes = ["#include <pthread.h>"],
+        ),
+        # When not declared: PTHREAD_RWLOCK_LACKS_TIMEOUT=1 (m4 line ~83)
+        # Uses negated truthy (not ==0) because a failed decl check produces
+        # nullopt, not "0", when no define_name/if_false is set.
+        checks.AC_DEFINE(
+            "PTHREAD_RWLOCK_LACKS_TIMEOUT",
+            requires = ["!ac_cv_have_decl_pthread_rwlock_timedrdlock"],
+        ),
+        # HAVE_PTHREAD_RWLOCK_TIMED{RD,WR}LOCK: "1" when declared, "0" otherwise
+        # Defaults from gl_PTHREAD_H_REQUIRE_DEFAULTS are "1"; override to "0"
+        # when the decl check fails. (m4 lines ~80-81)
+        checks.AC_SUBST(
+            "HAVE_PTHREAD_RWLOCK_TIMEDRDLOCK",
+            condition = "ac_cv_have_decl_pthread_rwlock_timedrdlock",
+            if_false = "0",
+            if_true = "1",
+        ),
+        checks.AC_SUBST(
+            "HAVE_PTHREAD_RWLOCK_TIMEDWRLOCK",
+            condition = "ac_cv_have_decl_pthread_rwlock_timedrdlock",
+            if_false = "0",
+            if_true = "1",
+        ),
+    ] + select({
+        # The upstream m4 runs AC_RUN_IFELSE for pthread_rwlock wait queue
+        # behavior on linux*-gnu* (m4 lines ~89-112). The cross-compile
+        # default is "guessing no" (bad waitqueue). On non-Linux the default
+        # is "guessing yes" (good), so no action needed.
         "@platforms//os:linux": [
-            checks.AC_CHECK_DECL(
-                "pthread_rwlock_timedrdlock",
-                includes = ["#include <pthread.h>"],
-            ),
-            # timedrdlock and timedwrlock are available
-            checks.AC_SUBST("HAVE_PTHREAD_RWLOCK_TIMEDRDLOCK", "1"),
-            checks.AC_SUBST("HAVE_PTHREAD_RWLOCK_TIMEDWRLOCK", "1"),
-            # Bad waitqueue on Linux (glibc): only INIT and ATTR_INIT need replacement
-            checks.AC_DEFINE("PTHREAD_RWLOCK_BAD_WAITQUEUE", "1"),
+            checks.AC_DEFINE("PTHREAD_RWLOCK_BAD_WAITQUEUE"),
             checks.AC_SUBST("REPLACE_PTHREAD_RWLOCK_INIT", "1"),
             checks.AC_SUBST("REPLACE_PTHREAD_RWLOCKATTR_INIT", "1"),
         ],
-        # On macOS: pthread_rwlock_timedrdlock is NOT declared (lacks timeout)
-        "//conditions:default": [
-            checks.AC_CHECK_DECL(
-                "pthread_rwlock_timedrdlock",
-                includes = ["#include <pthread.h>"],
-            ),
-            checks.AC_DEFINE("PTHREAD_RWLOCK_LACKS_TIMEOUT", "1"),
-            checks.AC_SUBST("HAVE_PTHREAD_RWLOCK_TIMEDRDLOCK", "0"),
-            checks.AC_SUBST("HAVE_PTHREAD_RWLOCK_TIMEDWRLOCK", "0"),
-        ],
+        "//conditions:default": [],
     }),
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_PTHREAD_H]) — line 9
+        # AC_REQUIRE([gl_PTHREAD_H]) — m4 line 9
         "//gnulib/m4/pthread_h",
-        # AC_REQUIRE([AC_CANONICAL_HOST]) — line 10
+        # AC_REQUIRE([AC_CANONICAL_HOST]) — m4 line 10
         "//autoconf/macros/AC_CANONICAL_HOST",
-        # For test compatibility (HAVE_* from includes)
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "pthread-rwlock",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_PTHREAD_RWLOCK",
     ],
 )

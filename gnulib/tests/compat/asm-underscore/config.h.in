@@ -1,5 +1,3 @@
 /* config.h.in */
 #undef ASM_SYMBOL_PREFIX
-#undef EGREP
-#undef GREP
 #undef USER_LABEL_PREFIX
