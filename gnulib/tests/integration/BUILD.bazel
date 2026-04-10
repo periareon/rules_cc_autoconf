@@ -65,6 +65,31 @@ alias(
     actual = "@patch",
 )
 
+alias(
+    name = "readline",
+    actual = "@readline",
+)
+
+alias(
+    name = "sdl2",
+    actual = "@sdl2",
+)
+
+alias(
+    name = "tcpdump",
+    actual = "@tcpdump",
+)
+
+alias(
+    name = "x264",
+    actual = "@x264",
+)
+
+alias(
+    name = "mosquitto",
+    actual = "@mosquitto",
+)
+
 build_test(
     name = "build_test",
     targets = [
@@ -77,5 +102,10 @@ build_test(
         ":libwebsockets",
         ":m4",
         ":patch",
+        ":readline",
+        ":sdl2",
+        ":tcpdump",
+        ":x264",
+        ":mosquitto",
     ],
 )
