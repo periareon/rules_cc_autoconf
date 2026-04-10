@@ -68,16 +68,19 @@ alias(
 alias(
     name = "readline",
     actual = "@readline",
-)
-
-alias(
-    name = "sdl2",
-    actual = "@sdl2",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
 )
 
 alias(
     name = "tcpdump",
     actual = "@tcpdump",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
 )
 
 alias(
@@ -88,6 +91,10 @@ alias(
 alias(
     name = "mosquitto",
     actual = "@mosquitto",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
 )
 
 build_test(
@@ -103,7 +110,6 @@ build_test(
         ":m4",
         ":patch",
         ":readline",
-        ":sdl2",
         ":tcpdump",
         ":x264",
         ":mosquitto",
