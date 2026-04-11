@@ -18,7 +18,7 @@
 /* #undef HAVE_DECL_SNPRINTF */
 /* #undef HAVE_DECL_VSNPRINTF */
 #define HAVE_DECL__SNPRINTF 1
-/* #undef HAVE_DPRINTF */
+#define HAVE_DPRINTF 0
 /* #undef HAVE_FEATURES_H */
 /* #undef HAVE_FSEEKO */
 /* #undef HAVE_FTELLO */

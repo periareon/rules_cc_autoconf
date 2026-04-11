@@ -4,9 +4,7 @@
 /* #undef ASM_SYMBOL_PREFIX */
 #define DBL_EXPBIT0_BIT 20
 #define DBL_EXPBIT0_WORD 1
-/* #undef EGREP */
 /* #undef GNULIBHEADERS_OVERRIDE_WINT_T */
-/* #undef GREP */
 #define HAVE_ALLOCA 1
 #define HAVE_ALLOCA_H 1
 /* #undef HAVE_DECL_FCLOSEALL */

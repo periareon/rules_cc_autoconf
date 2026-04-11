@@ -2,7 +2,6 @@
 #define HAVE_IEEE754_H 1
 #define HAVE_INTTYPES_H 1
 #define HAVE_STDINT_H 1
-/* #undef HAVE_STDIO_EXT_H */
 #define HAVE_STDIO_H 1
 #define HAVE_STDLIB_H 1
 #define HAVE_STRINGS_H 1
@@ -10,6 +9,5 @@
 #define HAVE_SYS_STAT_H 1
 #define HAVE_SYS_TYPES_H 1
 #define HAVE_UNISTD_H 1
-/* #undef HAVE___FREADABLE */
 #define STDC_HEADERS 1
 /* #undef _GL_REPLACE_IEEE754_H */

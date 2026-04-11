@@ -1,0 +1,19 @@
+# Bazel output directories (symlinks)
+bazel-*
+
+# Git directory
+.git
+
+# IDE settings
+.idea
+.vscode
+*.swp
+*.swo
+
+# Python cache
+__pycache__
+*.pyc
+.pytest_cache
+
+# macOS
+.DS_Store

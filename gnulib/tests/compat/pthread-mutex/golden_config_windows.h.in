@@ -131,7 +131,6 @@
 #define STDC_HEADERS 1
 /* #undef USE_POSIX_THREADS */
 /* #undef USE_POSIX_THREADS_FROM_LIBC */
-#define USE_WINDOWS_THREADS 1
 #define _ALL_SOURCE 1
 #define _DARWIN_C_SOURCE 1
 #define _GNU_SOURCE 1

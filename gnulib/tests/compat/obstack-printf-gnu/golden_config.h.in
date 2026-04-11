@@ -26,6 +26,7 @@
 #define HAVE_INTTYPES_H 1
 #define HAVE_INTTYPES_H_WITH_UINTMAX 1
 /* #undef HAVE_NL_LANGINFO */
+#define HAVE_OBSTACK_H 1
 #define HAVE_OBSTACK_PRINTF 1
 /* #undef HAVE_PCLOSE */
 /* #undef HAVE_POPEN */
@@ -72,6 +73,7 @@
 /* #undef REPLACE_FTELLO */
 /* #undef REPLACE_GETDELIM */
 /* #undef REPLACE_GETLINE */
+/* #undef REPLACE_OBSTACK */
 /* #undef REPLACE_OBSTACK_PRINTF */
 /* #undef REPLACE_PERROR */
 /* #undef REPLACE_POPEN */
@@ -91,7 +93,7 @@
 /* #undef REPLACE_VSNPRINTF */
 /* #undef REPLACE_VSPRINTF */
 #define STDC_HEADERS 1
-#define SUPPORT_GNU_PRINTF_DIRECTIVES 1
+/* #undef SUPPORT_GNU_PRINTF_DIRECTIVES */
 #define _ALL_SOURCE 1
 #define _DARWIN_C_SOURCE 1
 #define _GNU_SOURCE 1

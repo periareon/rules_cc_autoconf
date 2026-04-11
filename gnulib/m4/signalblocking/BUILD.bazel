@@ -1,4 +1,4 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/signalblocking.m4"""
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/signalblocking.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
@@ -12,6 +12,11 @@ autoconf(
             "sigprocmask",
             define = "HAVE_SIGNALBLOCKING",
             requires = ["gl_cv_type_sigset_t==1"],
+        ),
+        # AC_CHECK_FUNCS_ONCE([sigprocmask]) also defines HAVE_SIGPROCMASK
+        checks.AC_DEFINE(
+            "HAVE_SIGPROCMASK",
+            requires = ["ac_cv_func_sigprocmask==1"],
         ),
         # Set HAVE_POSIX_SIGNALBLOCKING based on sigprocmask check
         # Since defaults already set it to "1", we need to override it conditionally

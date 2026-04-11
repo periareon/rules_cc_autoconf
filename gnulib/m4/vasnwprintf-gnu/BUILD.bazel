@@ -1,22 +1,12 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/vasnwprintf-gnu.m4
-
-gl_FUNC_VASNWPRINTF_GNU:
-- AC_REQUIRE([gl_FUNC_VASNWPRINTF_IS_POSIX])
-- AC_REQUIRE([gl_PRINTF_DIRECTIVE_UPPERCASE_B])
-- If not posix compliant, calls gl_PREREQ_VASNPRINTF_WITH_GNU_EXTRAS and gl_FUNC_VASNWPRINTF
-
-Note: This does NOT require gl_WCHAR_H, so we should NOT bring in wchar_h which would
-AC_SUBST HAVE_WINT_T. The test expects HAVE_WINT_T to remain unsubstituted.
-"""
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/vasnwprintf-gnu.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "vasnwprintf-gnu",
+    name = "gl_FUNC_VASNWPRINTF_GNU",
     checks = [
-        # gl_FUNC_VASNWPRINTF_GNU macro from vasnwprintf-gnu.m4 checks for GNU
-        # compatibility of vasnwprintf. Complex logic that depends on printf
-        # directive checks.
+        checks.AC_DEFINE("SUPPORT_GNU_PRINTF_DIRECTIVES", "1"),
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -39,5 +29,13 @@ autoconf(
         "//gnulib/m4/intmax_t",
         # For test compatibility - need basic header defines
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "vasnwprintf-gnu",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_VASNWPRINTF_GNU",
     ],
 )

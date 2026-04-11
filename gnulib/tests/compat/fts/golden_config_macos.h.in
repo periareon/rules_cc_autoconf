@@ -1,5 +1,4 @@
 /* config.h.in */
-/* #undef HAVE_CALL_ONCE */
 /* #undef HAVE_FCNTL */
 #define HAVE_FSTATFS 1
 #define HAVE_FTS_OPEN 1
@@ -18,7 +17,6 @@
 #define HAVE_SYS_STAT_H 1
 #define HAVE_SYS_TYPES_H 1
 /* #undef HAVE_SYS_VFS_H */
-/* #undef HAVE_THRD_CREATE */
 #define HAVE_UNISTD_H 1
 #define HAVE_WCHAR_H 1
 #define HAVE_WORKING_O_DIRECTORY 1

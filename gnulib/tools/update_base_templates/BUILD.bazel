@@ -1,0 +1,6 @@
+load("@rules_venv//python:py_binary.bzl", "py_binary")
+
+py_binary(
+    name = "update_base_templates",
+    srcs = ["update_base_templates.py"],
+)

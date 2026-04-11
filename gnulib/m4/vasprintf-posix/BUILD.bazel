@@ -1,22 +1,17 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/vasprintf-posix.m4"""
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/vasprintf-posix.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
+load("//autoconf:checks.bzl", "checks")
 
-# This module checks if vasprintf is POSIX compliant and replaces it if not.
-# The m4 file has a complex check (gl_FUNC_VASPRINTF_IS_POSIX) that checks many
-# printf features. Based on golden files, on macOS vasprintf is not POSIX compliant,
-# so we need to replace it.
+# On macOS, vasprintf is not POSIX compliant so gl_REPLACE_VASPRINTF is invoked.
 autoconf(
     name = "vasprintf-posix",
-    checks = [
-        # This checks if vasprintf is POSIX compliant by checking many printf features.
-        # The check sets gl_cv_func_vasprintf_posix=yes if compliant, no otherwise.
-        # Based on golden files, on macOS it's not POSIX compliant, so we replace it.
-
-        # if test $gl_cv_func_vasprintf_posix = no; then
-        # fi
-        # Note: gl_REPLACE_VASPRINTF is a separate target that doesn't define HAVE_VASPRINTF
-    ],
+    checks = select({
+        "@platforms//os:linux": [],
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_VASPRINTF", "1"),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency - line 23 (from vasprintf.m4)

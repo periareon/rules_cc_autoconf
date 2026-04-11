@@ -1,6 +1,5 @@
 /* config.h.in */
 #undef HAVE_FCNTL
-#undef HAVE_FUTIMESAT
 #undef HAVE_INTTYPES_H
 #undef HAVE_OPENAT
 #undef HAVE_OPENAT2

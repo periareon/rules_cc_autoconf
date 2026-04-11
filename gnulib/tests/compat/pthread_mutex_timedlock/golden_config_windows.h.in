@@ -59,7 +59,6 @@
 /* #undef HAVE_PTHREAD_SPIN_UNLOCK */
 /* #undef HAVE_PTHREAD_T */
 #define HAVE_STDINT_H 1
-/* #undef HAVE_STDIO_EXT_H */
 #define HAVE_STDIO_H 1
 #define HAVE_STDLIB_H 1
 /* #undef HAVE_STRINGS_H */
@@ -70,8 +69,6 @@
 /* #undef HAVE_UNISTD_H */
 #define HAVE_WCHAR_H 1
 /* #undef HAVE_WEAK_SYMBOLS */
-/* #undef HAVE___FBUFSIZE */
-/* #undef HAVE___FLBF */
 /* #undef REPLACE_PTHREAD_ATTR_DESTROY */
 /* #undef REPLACE_PTHREAD_ATTR_GETDETACHSTATE */
 /* #undef REPLACE_PTHREAD_ATTR_INIT */
@@ -127,7 +124,6 @@
 #define STDC_HEADERS 1
 /* #undef USE_POSIX_THREADS */
 /* #undef USE_POSIX_THREADS_FROM_LIBC */
-#define USE_WINDOWS_THREADS 1
 #define _ALL_SOURCE 1
 #define _DARWIN_C_SOURCE 1
 #define _GNU_SOURCE 1

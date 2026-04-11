@@ -64,10 +64,8 @@
 #define HAVE_STDLIB_H 1
 /* #undef HAVE_STRINGS_H */
 #define HAVE_STRING_H 1
-/* #undef HAVE_SYS_STATFS_H */
 #define HAVE_SYS_STAT_H 1
 #define HAVE_SYS_TYPES_H 1
-/* #undef HAVE_SYS_VFS_H */
 /* #undef HAVE_THREADS_H */
 /* #undef HAVE_UNISTD_H */
 #define HAVE_WCHAR_H 1
@@ -129,12 +127,9 @@
 /* #undef REPLACE_PTHREAD_SPIN_TRYLOCK */
 /* #undef REPLACE_PTHREAD_SPIN_UNLOCK */
 /* #undef SCHED_YIELD_LIB */
-/* #undef STAT_STATFS2_FRSIZE */
-/* #undef STAT_STATVFS */
 #define STDC_HEADERS 1
 /* #undef USE_POSIX_THREADS */
 /* #undef USE_POSIX_THREADS_FROM_LIBC */
-#define USE_WINDOWS_THREADS 1
 #define _ALL_SOURCE 1
 #define _DARWIN_C_SOURCE 1
 #define _GNU_SOURCE 1

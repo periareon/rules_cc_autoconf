@@ -1,4 +1,4 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/getprogname.m4"""
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/getprogname.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
@@ -35,8 +35,16 @@ autoconf(
 autoconf(
     name = "gl_FUNC_GETPROGNAME",
     checks = [
-        # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - line 15, ignore
-        # AC_CHECK_HEADERS_ONCE([sys/process.h]) - line 17, omit (not in getprogname subst.h.in)
+        checks.AC_CHECK_HEADER(
+            "sys/process.h",
+            name = "ac_cv_header_sys_process_h",
+        ),
+        checks.AC_SUBST(
+            "HAVE_SYS_PROCESS_H",
+            condition = "ac_cv_header_sys_process_h",
+            if_false = 0,
+            if_true = 1,
+        ),
     ] + gl_macros.GL_CHECK_FUNCS_ANDROID(
         ["getprogname"],
         includes = [],

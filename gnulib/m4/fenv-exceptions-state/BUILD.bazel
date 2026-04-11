@@ -1,4 +1,4 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/fenv-exceptions-state.m4"""
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/fenv-exceptions-state.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
@@ -17,16 +17,13 @@ autoconf(
 
         # FESETEXCEPTFLAG_LIBM - for linking with libm if needed
         checks.AC_SUBST("FESETEXCEPTFLAG_LIBM", ""),
-    ] + select({
-        # On Linux, fesetexceptflag is non-trapping (glibc implementation)
-        "@platforms//os:linux": [
-            checks.AC_SUBST("REPLACE_FESETEXCEPTFLAG", "0"),
-        ],
-        # On macOS, fesetexceptflag may raise traps (not guaranteed non-trapping)
-        "//conditions:default": [
-            checks.AC_SUBST("REPLACE_FESETEXCEPTFLAG", "1"),
-        ],
-    }),
+
+        # Upstream uses AC_RUN_IFELSE tests that check whether fesetexceptflag
+        # is guaranteed non-trapping and obeys its arguments. The runtime tests
+        # fail (or cross-compile guesses say "no") on all platforms this project
+        # targets (glibc, musl, darwin, mingw), so REPLACE is always 1.
+        checks.AC_SUBST("REPLACE_FESETEXCEPTFLAG", "1"),
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CANONICAL_HOST",

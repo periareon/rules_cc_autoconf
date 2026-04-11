@@ -7,14 +7,11 @@
 #define HAVE_STRING_H 1
 #define HAVE_SYS_STAT_H 1
 #define HAVE_SYS_TYPES_H 1
-/* #undef HAVE_THREADS_H */
 #define HAVE_TIMER_SETTIME 1
 #define HAVE_UNISTD_H 1
 #define HAVE_WCHAR_H 1
-/* #undef HAVE_WEAK_SYMBOLS */
 #define STDC_HEADERS 1
 /* #undef TIMER_TIME_LIB */
-/* #undef USE_POSIX_THREADS_FROM_LIBC */
 #define _ALL_SOURCE 1
 #define _DARWIN_C_SOURCE 1
 #define _GNU_SOURCE 1

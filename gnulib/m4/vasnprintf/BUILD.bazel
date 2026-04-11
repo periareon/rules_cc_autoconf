@@ -1,4 +1,4 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/vasnprintf.m4
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/vasnprintf.m4
 
 One Bazel target per AC_DEFUN in vasnprintf.m4:
   gl_FUNC_VASNPRINTF, gl_REPLACE_VASNPRINTF, gl_FUNC_VASNWPRINTF,
@@ -412,9 +412,7 @@ autoconf(
 
 autoconf(
     name = "gl_PREREQ_VASNPRINTF_WITH_GNU_EXTRAS",
-    checks = [
-        checks.AC_DEFINE("SUPPORT_GNU_PRINTF_DIRECTIVES", "1"),
-    ],
+    checks = [],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_PREREQ_VASNPRINTF_DIRECTIVE_UPPERCASE_B",
@@ -434,8 +432,10 @@ autoconf(
         ":gl_PREREQ_ASNPRINTF",
         # Required so subst output matches golden (full autoconf runs it via gl_REPLACE_VASNPRINTF).
         ":gl_PREREQ_PRINTF_PARSE",
-        # All extras (for test compatibility)
-        ":gl_PREREQ_VASNPRINTF_WITH_GNU_EXTRAS",
+        # Posix extras and uppercase B (but NOT gl_PREREQ_VASNPRINTF_WITH_GNU_EXTRAS which
+        # adds SUPPORT_GNU_PRINTF_DIRECTIVES — that's conditionally applied at the -gnu module level).
+        ":gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS",
+        ":gl_PREREQ_VASNPRINTF_DIRECTIVE_UPPERCASE_B",
         # HAVE_SAME_LONG_DOUBLE_AS_DOUBLE from math_h module
         "//gnulib/m4/math_h:long-double-vs-double",
         "//gnulib/m4/alloca:gl_FUNC_ALLOCA",

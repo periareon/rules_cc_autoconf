@@ -10,7 +10,6 @@
 /* #undef HAVE_DECL_PUTW */
 /* #undef HAVE_DECL_SNPRINTF */
 /* #undef HAVE_DECL_VSNPRINTF */
-/* #undef HAVE_DECL___FPENDING */
 /* #undef HAVE_DPRINTF */
 /* #undef HAVE_FCNTL */
 /* #undef HAVE_FSEEKO */
@@ -26,7 +25,6 @@
 /* #undef HAVE_RENAMEAT */
 /* #undef HAVE_RENAMEAT2 */
 #define HAVE_STDINT_H 1
-/* #undef HAVE_STDIO_EXT_H */
 #define HAVE_STDIO_H 1
 #define HAVE_STDLIB_H 1
 /* #undef HAVE_STRINGS_H */

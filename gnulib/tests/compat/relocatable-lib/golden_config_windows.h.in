@@ -1,0 +1,2 @@
+/* config.h.in */
+/* #undef HAVE_DLADDR_IN_LIBC */

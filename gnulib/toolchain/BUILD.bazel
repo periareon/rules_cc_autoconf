@@ -26,6 +26,7 @@ autoconf_toolchain(
         "//gnulib/m4/search_h:defaults",
         "//gnulib/m4/signal_h:defaults",
         "//gnulib/m4/spawn_h:defaults",
+        "//gnulib/m4/stdbit_h:defaults",
         "//gnulib/m4/stddef_h:defaults",
         "//gnulib/m4/stdio_h:defaults",
         "//gnulib/m4/stdlib_h:defaults",

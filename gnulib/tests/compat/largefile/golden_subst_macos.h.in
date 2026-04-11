@@ -1,3 +1,2 @@
 /* subst.h.in */
 #define SUBST_HAVE_FSEEKO "1"
-#define SUBST_HAVE_THRD_CREATE "@HAVE_THRD_CREATE@"

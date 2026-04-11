@@ -84,7 +84,7 @@
 /* #undef REPLACE_VASPRINTF */
 /* #undef REPLACE_VDPRINTF */
 /* #undef REPLACE_VFPRINTF */
-#define REPLACE_VFPRINTF_POSIX 1
+/* #undef REPLACE_VFPRINTF_POSIX */
 /* #undef REPLACE_VPRINTF */
 /* #undef REPLACE_VSNPRINTF */
 /* #undef REPLACE_VSPRINTF */

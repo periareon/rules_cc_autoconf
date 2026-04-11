@@ -26,6 +26,7 @@
 #define HAVE_INTTYPES_H 1
 #define HAVE_INTTYPES_H_WITH_UINTMAX 1
 /* #undef HAVE_NL_LANGINFO */
+#define HAVE_OBSTACK_H 1
 #define HAVE_OBSTACK_PRINTF 1
 /* #undef HAVE_PCLOSE */
 /* #undef HAVE_POPEN */
@@ -71,6 +72,7 @@
 /* #undef REPLACE_FTELLO */
 /* #undef REPLACE_GETDELIM */
 /* #undef REPLACE_GETLINE */
+/* #undef REPLACE_OBSTACK */
 /* #undef REPLACE_OBSTACK_PRINTF */
 /* #undef REPLACE_PERROR */
 /* #undef REPLACE_POPEN */

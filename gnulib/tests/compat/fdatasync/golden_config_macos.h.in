@@ -57,7 +57,6 @@
 #define HAVE_UNISTD_H 1
 /* #undef HAVE_UNLINKAT */
 /* #undef HAVE_USLEEP */
-/* #undef LIB_FDATASYNC */
 /* #undef REPLACE_ACCESS */
 /* #undef REPLACE_CHOWN */
 /* #undef REPLACE_CLOSE */

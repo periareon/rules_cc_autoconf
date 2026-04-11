@@ -1,13 +1,17 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/snprintf-posix.m4"""
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/snprintf-posix.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
+load("//autoconf:checks.bzl", "checks")
 
+# On macOS, snprintf is not POSIX compliant so gl_REPLACE_SNPRINTF is invoked.
 autoconf(
     name = "snprintf-posix",
-    checks = [
-        # gl_FUNC_SNPRINTF_POSIX checks if snprintf is POSIX compliant
-        # If not, it calls gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS, gl_REPLACE_VASNPRINTF, gl_REPLACE_SNPRINTF
-    ],
+    checks = select({
+        "@platforms//os:linux": [],
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_SNPRINTF", "1"),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency

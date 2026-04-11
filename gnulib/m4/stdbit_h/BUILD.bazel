@@ -1,34 +1,141 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/stdbit_h.m4"""
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/stdbit_h.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
+# AC_DEFUN_ONCE([gl_STDBIT_H])
+#
+# AC_REQUIRE([gl_BIGENDIAN])
+# gl_CHECK_NEXT_HEADERS([stdbit.h])
+# if test "$ac_cv_header_stdbit_h" = yes; then HAVE_STDBIT_H=1
+# else HAVE_STDBIT_H=0 fi
+# AC_SUBST([HAVE_STDBIT_H])
+# AM_CONDITIONAL([GL_HAVE_STDBIT_H], [test "$ac_cv_header_stdbit_h" = yes])
 autoconf(
-    name = "stdbit_h",
+    name = "gl_STDBIT_H",
     checks = [
+        # AC_CHECK_HEADERS_ONCE([stdbit.h]) (inside gl_CHECK_NEXT_HEADERS)
         checks.AC_CHECK_HEADER(
             "stdbit.h",
             define = "HAVE_STDBIT_H",
         ),
-        # Golden expects all GL_STDC_* "0" (stdbit.h not available on target)
-        checks.AC_SUBST("GL_STDC_BIT_CEIL", "0"),
-        checks.AC_SUBST("GL_STDC_BIT_FLOOR", "0"),
-        checks.AC_SUBST("GL_STDC_BIT_WIDTH", "0"),
-        checks.AC_SUBST("GL_STDC_COUNT_ONES", "0"),
-        checks.AC_SUBST("GL_STDC_COUNT_ZEROS", "0"),
-        checks.AC_SUBST("GL_STDC_FIRST_LEADING_ONE", "0"),
-        checks.AC_SUBST("GL_STDC_FIRST_LEADING_ZERO", "0"),
-        checks.AC_SUBST("GL_STDC_FIRST_TRAILING_ONE", "0"),
-        checks.AC_SUBST("GL_STDC_FIRST_TRAILING_ZERO", "0"),
-        checks.AC_SUBST("GL_STDC_HAS_SINGLE_BIT", "0"),
-        checks.AC_SUBST("GL_STDC_LEADING_ONES", "0"),
-        checks.AC_SUBST("GL_STDC_LEADING_ZEROS", "0"),
-        checks.AC_SUBST("GL_STDC_TRAILING_ONES", "0"),
-        checks.AC_SUBST("GL_STDC_TRAILING_ZEROS", "0"),
+        # AC_SUBST([HAVE_STDBIT_H]): "1" when header present, "0" otherwise
+        checks.AC_SUBST(
+            "HAVE_STDBIT_H",
+            condition = "ac_cv_header_stdbit_h",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # AM_CONDITIONAL([GL_HAVE_STDBIT_H], ...)
+        checks.AC_SUBST(
+            "GL_HAVE_STDBIT_H_TRUE",
+            condition = "ac_cv_header_stdbit_h",
+            if_false = "#",
+            if_true = "",
+        ),
+        checks.AC_SUBST(
+            "GL_HAVE_STDBIT_H_FALSE",
+            condition = "ac_cv_header_stdbit_h",
+            if_false = "",
+            if_true = "#",
+        ),
+        # AC_CHECK_DECLS([stdc_rotate_left_uc], , , [[#include <stdbit.h>]])
+        # Only runs when stdbit.h exists; determines GL_GENERATE_STDBIT_H.
+        checks.AC_CHECK_DECL(
+            "stdc_rotate_left_uc",
+            includes = ["#include <stdbit.h>"],
+            requires = ["ac_cv_header_stdbit_h"],
+        ),
+        # AC_CHECK_DECLS always sets HAVE_DECL_X to 1 (found) or 0 (not found),
+        # but only when the check actually runs (header exists). When the header
+        # is absent the variable stays undefined.
+        checks.AC_DEFINE(
+            "HAVE_DECL_STDC_ROTATE_LEFT_UC",
+            condition = "ac_cv_have_decl_stdc_rotate_left_uc",
+            if_false = "0",
+            if_true = "1",
+            requires = ["ac_cv_header_stdbit_h"],
+        ),
+    ] + gl_macros.GL_CHECK_NEXT_HEADERS(["stdbit.h"]),
+    visibility = ["//visibility:public"],
+    deps = [
+        # AC_REQUIRE([gl_BIGENDIAN])
+        "//gnulib/m4/gnulib-common:gl_BIGENDIAN",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/include_next",
+    ],
+)
+
+# AC_DEFUN([gl_STDBIT_MODULE_INDICATOR])
+#
+# gl_STDBIT_H_REQUIRE_DEFAULTS
+# gl_MODULE_INDICATOR_SET_VARIABLE([$1])
+# gl_MODULE_INDICATOR_FOR_TESTS([$1])
+autoconf(
+    name = "gl_STDBIT_MODULE_INDICATOR",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_STDBIT_H_REQUIRE_DEFAULTS",
+    ],
+)
+
+# AC_DEFUN([gl_STDBIT_H_REQUIRE_DEFAULTS])
+#
+# gl_MODULE_INDICATOR_INIT_VARIABLE for each GNULIB_STDC_* (defaults to 0)
+# AC_REQUIRE([gl_STDBIT_H_DEFAULTS])
+autoconf(
+    name = "gl_STDBIT_H_REQUIRE_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("GNULIB_STDC_LEADING_ZEROS", 0),
+        checks.AC_SUBST("GNULIB_STDC_LEADING_ONES", 0),
+        checks.AC_SUBST("GNULIB_STDC_TRAILING_ZEROS", 0),
+        checks.AC_SUBST("GNULIB_STDC_TRAILING_ONES", 0),
+        checks.AC_SUBST("GNULIB_STDC_FIRST_LEADING_ZERO", 0),
+        checks.AC_SUBST("GNULIB_STDC_FIRST_LEADING_ONE", 0),
+        checks.AC_SUBST("GNULIB_STDC_FIRST_TRAILING_ZERO", 0),
+        checks.AC_SUBST("GNULIB_STDC_FIRST_TRAILING_ONE", 0),
+        checks.AC_SUBST("GNULIB_STDC_COUNT_ZEROS", 0),
+        checks.AC_SUBST("GNULIB_STDC_COUNT_ONES", 0),
+        checks.AC_SUBST("GNULIB_STDC_HAS_SINGLE_BIT", 0),
+        checks.AC_SUBST("GNULIB_STDC_BIT_WIDTH", 0),
+        checks.AC_SUBST("GNULIB_STDC_BIT_FLOOR", 0),
+        checks.AC_SUBST("GNULIB_STDC_BIT_CEIL", 0),
+        checks.AC_SUBST("GNULIB_STDC_ROTATE_LEFT", 0),
+        checks.AC_SUBST("GNULIB_STDC_ROTATE_RIGHT", 0),
+        checks.AC_SUBST("GNULIB_STDC_MEMREVERSE8", 0),
+        checks.AC_SUBST("GNULIB_STDC_MEMREVERSE8U", 0),
+        checks.AC_SUBST("GNULIB_STDC_LOAD8_ALIGNED", 0),
+        checks.AC_SUBST("GNULIB_STDC_LOAD8", 0),
+        checks.AC_SUBST("GNULIB_STDC_STORE8_ALIGNED", 0),
+        checks.AC_SUBST("GNULIB_STDC_STORE8", 0),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
-        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        ":gl_STDBIT_H_DEFAULTS",
+    ],
+)
+
+# AC_DEFUN([gl_STDBIT_H_DEFAULTS])
+# Empty in upstream.
+autoconf(
+    name = "gl_STDBIT_H_DEFAULTS",
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_STDBIT_H_DEFAULTS",
+        ":gl_STDBIT_H_REQUIRE_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "stdbit_h",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_STDBIT_H",
     ],
 )

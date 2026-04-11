@@ -4,5 +4,3 @@
 #define SUBST_LC_MONETARY_IMPLEMENTED "true"
 #define SUBST_LC_NUMERIC_IMPLEMENTED "true"
 #define SUBST_LC_TIME_IMPLEMENTED "true"
-#define SUBST_LOCALE_FR "French_France.1252"
-#define SUBST_LOCALE_FR_UTF8 "French_France.65001"

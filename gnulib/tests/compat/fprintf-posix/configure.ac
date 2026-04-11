@@ -4,7 +4,6 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from fprintf-posix.m4
 gl_FUNC_FPRINTF_POSIX
 gl_FUNC_FPRINTF_IS_POSIX
-gl_REPLACE_FPRINTF
 gl_PREREQ_FPRINTF
 
 # Account for global Bazel defaults

@@ -1,13 +1,17 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/vsnprintf-posix.m4"""
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/vsnprintf-posix.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
+load("//autoconf:checks.bzl", "checks")
 
+# On macOS, vsnprintf is not POSIX compliant so gl_REPLACE_VSNPRINTF is invoked.
 autoconf(
     name = "vsnprintf-posix",
-    checks = [
-        # gl_FUNC_VSNPRINTF_POSIX checks if vsnprintf is POSIX compliant
-        # If not, it calls gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS, gl_REPLACE_VASNPRINTF, gl_REPLACE_VSNPRINTF
-    ],
+    checks = select({
+        "@platforms//os:linux": [],
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_VSNPRINTF", "1"),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency

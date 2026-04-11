@@ -1,4 +1,4 @@
-"""https://github.com/coreutils/gnulib/blob/635dbdcf501d52d2e42daf6b44261af9ce2dfe38/m4/getdelim.m4"""
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/getdelim.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
@@ -47,20 +47,18 @@ autoconf(
         # If getdelim found, HAVE_GETDELIM=1
         # AC_CHECK_DECL already creates HAVE_DECL_GETDELIM define if found
 
-        # Note: AC_RUN_IFELSE for gl_cv_func_working_getdelim (lines 27-101) is not directly
-        # portable to Bazel's cross-compilation environment. REPLACE_GETDELIM is set based on
-        # golden file expectations for macOS/Linux.
-        # The m4 sets REPLACE_GETDELIM=1 if:
-        # On macOS, getdelim has bugs (lines 29-37), so REPLACE_GETDELIM=1
-        # On Linux, getdelim works correctly, so REPLACE_GETDELIM=0
-        # For now, we set REPLACE_GETDELIM based on golden file expectations:
-        # macOS: REPLACE_GETDELIM=1 (getdelim has bugs)
-        # Linux: REPLACE_GETDELIM=0 (getdelim works correctly)
-        # Since we can't use select in checks, we'll need to handle this at the toolchain level or
-        # set it conditionally based on platform defines
-        # Golden file shows REPLACE_GETDELIM=1 on macOS (matches golden_subst.h.in line 48)
-        checks.AC_SUBST("REPLACE_GETDELIM", 1),
-    ],
+        # Upstream has `case "$host_os" in darwin*) gl_cv_func_working_getdelim=no`
+        # which unconditionally forces replacement on macOS (valgrind-detected
+        # out-of-bounds read in macOS getdelim). On other platforms the
+        # AC_RUN_IFELSE runtime test passes (glibc/musl getdelim works).
+    ] + select({
+        "@platforms//os:macos": [
+            checks.AC_SUBST("REPLACE_GETDELIM", "1"),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_GETDELIM", "0"),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction

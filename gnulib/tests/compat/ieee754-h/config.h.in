@@ -2,7 +2,6 @@
 #undef HAVE_IEEE754_H
 #undef HAVE_INTTYPES_H
 #undef HAVE_STDINT_H
-#undef HAVE_STDIO_EXT_H
 #undef HAVE_STDIO_H
 #undef HAVE_STDLIB_H
 #undef HAVE_STRINGS_H
@@ -10,6 +9,5 @@
 #undef HAVE_SYS_STAT_H
 #undef HAVE_SYS_TYPES_H
 #undef HAVE_UNISTD_H
-#undef HAVE___FREADABLE
 #undef STDC_HEADERS
 #undef _GL_REPLACE_IEEE754_H
