@@ -1,16 +1,44 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/chdir-long.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "chdir-long",
+    name = "gl_FUNC_CHDIR_LONG",
     checks = [
-        # gl_FUNC_CHDIR_LONG macro from chdir-long.m4 checks for unlimited
-        # file name length support. This is a compile-time check using
-        # AC_EGREP_CPP to check if PATH_MAX is defined.
+        # gl_FUNC_CHDIR_LONG: AC_EGREP_CPP checks if PATH_MAX is defined.
+        # If PATH_MAX is defined → gl_cv_have_unlimited_file_name_length=no
+        # If PATH_MAX is NOT defined → gl_cv_have_unlimited_file_name_length=yes
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_path_max_defined",
+            code = """\
+#include <limits.h>
+#ifdef PATH_MAX
+int x = PATH_MAX;
+int main(void) { return x; }
+#else
+#error PATH_MAX not defined
+#endif
+""",
+            language = "c",
+        ),
+        checks.M4_VARIABLE(
+            "gl_cv_have_unlimited_file_name_length",
+            condition = "gl_cv_path_max_defined",
+            if_false = "yes",
+            if_true = "no",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/pathmax",  # AC_REQUIRE([gl_PATHMAX_SNIPPET_PREREQ])
+        "//gnulib/m4/pathmax:gl_PATHMAX_SNIPPET_PREREQ",
+    ],
+)
+
+autoconf(
+    name = "chdir-long",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_CHDIR_LONG",
     ],
 )
