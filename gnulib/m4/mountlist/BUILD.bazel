@@ -74,12 +74,14 @@ autoconf(
             ),
             # MOUNTED_GETMNTENT1 indicates one-argument getmntent variant
             checks.AC_DEFINE("MOUNTED_GETMNTENT1", "1"),
-            # MAJOR_IN_SYSMACROS comes from sys_types_h via AC_HEADER_MAJOR check
+            # gl_cv_list_mounted_fs: "yes" when a mount-listing mechanism exists.
+            checks.M4_VARIABLE("gl_cv_list_mounted_fs", "yes"),
         ],
         # macOS/BSD: uses getmntinfo instead of getmntent
         "//conditions:default": [
             # MOUNTED_GETMNTINFO indicates getmntinfo is used
             checks.AC_DEFINE("MOUNTED_GETMNTINFO", "1"),
+            checks.M4_VARIABLE("gl_cv_list_mounted_fs", "yes"),
         ],
     }),
     visibility = ["//visibility:public"],

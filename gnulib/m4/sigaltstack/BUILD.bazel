@@ -37,11 +37,12 @@ autoconf(
             requires = ["ac_cv_func_sigaltstack==1"],
         ),
         # AC_DEFINE(stack_t, [struct sigaltstack], ...) - lines 24-26
+        # Only define stack_t when the type does NOT exist; otherwise leave
+        # it alone so the system typedef is used.
         checks.AC_DEFINE(
             "stack_t",
-            condition = "ac_cv_type_stack_t",
-            if_false = "struct sigaltstack",
-            if_true = None,
+            if_true = "struct sigaltstack",
+            requires = ["!ac_cv_type_stack_t"],
         ),
     ] + select({
         "@platforms//os:windows": [

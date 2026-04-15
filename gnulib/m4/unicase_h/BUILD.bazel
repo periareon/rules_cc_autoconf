@@ -1,17 +1,25 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/unicase_h.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
+load("//autoconf:checks.bzl", "checks")
 
 # This is a defaults-only macro - no actual checks
 autoconf(
-    name = "unicase_h",
+    name = "gl_UNICASE_H",
     checks = [
         # No actual checks - just initializes defaults
     ],
     visibility = ["//visibility:public"],
 )
 
-# Note: unicase_h has _DEFAULTS but no variables in it
+autoconf(
+    name = "gl_UNICASE_MODULE_INDICATOR",
+    checks = [
+        # No actual checks - just initializes defaults
+    ],
+    visibility = ["//visibility:public"],
+)
+
 autoconf(
     name = "gl_UNICASE_H_DEFAULTS",
     checks = [
@@ -19,10 +27,12 @@ autoconf(
     visibility = ["//visibility:private"],
 )
 
-# Note: unicase_h has _REQUIRE_DEFAULTS but no GNULIB_* variables
 autoconf(
     name = "gl_UNICASE_H_REQUIRE_DEFAULTS",
     checks = [
+        # gl_MODULE_INDICATOR_INIT_VARIABLE defaults from unicase_h.m4
+        checks.AC_SUBST("GNULIB_UNICASE_EMPTY_PREFIX_CONTEXT_DLL_VARIABLE", "LIBUNISTRING_DLL_VARIABLE"),
+        checks.AC_SUBST("GNULIB_UNICASE_EMPTY_SUFFIX_CONTEXT_DLL_VARIABLE", "LIBUNISTRING_DLL_VARIABLE"),
     ],
     visibility = ["//visibility:private"],
     deps = [
@@ -35,5 +45,14 @@ autoconf(
     visibility = ["//visibility:public"],
     deps = [
         ":gl_UNICASE_H_REQUIRE_DEFAULTS",
+    ],
+)
+
+autoconf(
+    name = "unicase_h",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_UNICASE_H",
+        ":gl_UNICASE_MODULE_INDICATOR",
     ],
 )

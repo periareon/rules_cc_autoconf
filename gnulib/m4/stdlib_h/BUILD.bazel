@@ -71,6 +71,14 @@ autoconf(
         checks.AC_SUBST("HAVE_PTSNAME_R", 1),
         checks.AC_SUBST("HAVE_QSORT_R", 1),
         checks.AC_SUBST("HAVE_RANDOM", 1),
+        # random.h is a separate header on some BSDs; on Linux (glibc),
+        # random functions are declared in stdlib.h and random.h does not exist.
+        # Used by gl_WARN_ON_USE_PREPARE in upstream gl_STDLIB_H.
+        checks.AC_CHECK_HEADER(
+            "random.h",
+            define = "HAVE_RANDOM_H",
+            subst = "HAVE_RANDOM_H",
+        ),
         checks.AC_SUBST("HAVE_RANDOM_R", 1),
         checks.AC_SUBST("HAVE_REALLOCARRAY", 1),
         checks.AC_SUBST("HAVE_REALPATH", 1),

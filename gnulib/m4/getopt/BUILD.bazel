@@ -61,7 +61,10 @@ autoconf(
             "getopt_long_only",
             define = "HAVE_GETOPT_LONG_ONLY",
         ),
-        checks.AC_SUBST("REPLACE_GETOPT", "0"),
+        # Bazel cannot run target binaries (cross-compilation model).
+        # Upstream cross-compile fallback: gl_cv_func_getopt_gnu="guessing no"
+        # → gl_replace_getopt=yes → REPLACE_GETOPT=1.
+        checks.AC_SUBST("REPLACE_GETOPT", "1"),
     ],
     visibility = ["//visibility:public"],
     deps = [
