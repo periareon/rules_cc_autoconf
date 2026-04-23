@@ -13,6 +13,13 @@ int main(void) {
     // This tests that HAVE_FOO doesn't break HAVE_FOO_BAR
     assert(HAVE_FOO == 1);
 
+    // Verify C integer literal strings render as unquoted numeric values
+    assert(HEX_VALUE == 0x0ff);
+    assert(HEX_VALUE_UPPER == 0xFF);
+    assert(OCTAL_VALUE == 0755);
+    assert(BINARY_VALUE == 0b1010);
+    assert(NEG_INT_STR == -1);
+
 // Verify AC_DEFINE_UNQUOTED values
 // Note: We can't easily test empty values in C, but we can verify non-empty
 // values The empty value test is verified by the diff_test comparing with

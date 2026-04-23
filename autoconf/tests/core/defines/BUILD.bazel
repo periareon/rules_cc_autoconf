@@ -31,6 +31,13 @@ autoconf(
         checks.AC_DEFINE("HAVE_BAZ_STR", "False"),
         # Test AC_DEFINE with empty value - should create "#define EMPTY_VALUE /**/" (matching GNU autoconf)
         checks.AC_DEFINE("EMPTY_VALUE", None),
+        # Test hex/octal/binary C integer literal strings render unquoted
+        checks.AC_DEFINE("HEX_VALUE", "0x0ff"),
+        checks.AC_DEFINE("HEX_VALUE_UPPER", "0xFF"),
+        checks.AC_DEFINE("HEX_VALUE_SUFFIX", "0xffULL"),
+        checks.AC_DEFINE("OCTAL_VALUE", "0755"),
+        checks.AC_DEFINE("BINARY_VALUE", "0b1010"),
+        checks.AC_DEFINE("NEG_INT_STR", "-1"),
         # Test AC_DEFINE_UNQUOTED with regular value
         checks.AC_DEFINE_UNQUOTED("UNQUOTED_VALUE", "test"),
         # Test AC_DEFINE_UNQUOTED with empty value - should create "#define UNQUOTED_EMPTY " (trailing space, not /**/)

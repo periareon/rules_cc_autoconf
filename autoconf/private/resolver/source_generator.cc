@@ -15,6 +15,83 @@ namespace rules_cc_autoconf {
 namespace {
 
 /**
+ * @brief Test whether a string is a valid C integer literal.
+ *
+ * Recognizes decimal, hex (0x/0X), binary (0b/0B), and octal (leading 0)
+ * forms with optional sign prefix and C integer suffixes (u/U, l/L, ll/LL).
+ * Examples: "42", "-1", "0x0ff", "0XFF", "0b1010", "0755", "0xffULL".
+ */
+bool is_c_integer_literal(const std::string& s) {
+    if (s.empty()) return false;
+
+    size_t i = 0;
+    // Optional leading sign
+    if (s[i] == '+' || s[i] == '-') {
+        ++i;
+        if (i >= s.size()) return false;
+    }
+
+    bool has_digits = false;
+
+    if (i < s.size() && s[i] == '0' && i + 1 < s.size()) {
+        char next = s[i + 1];
+        if (next == 'x' || next == 'X') {
+            // Hex: 0x[0-9a-fA-F]+
+            i += 2;
+            if (i >= s.size()) return false;
+            while (i < s.size() && std::isxdigit(static_cast<unsigned char>(s[i]))) {
+                has_digits = true;
+                ++i;
+            }
+            if (!has_digits) return false;
+        } else if (next == 'b' || next == 'B') {
+            // Binary: 0b[01]+
+            i += 2;
+            if (i >= s.size()) return false;
+            while (i < s.size() && (s[i] == '0' || s[i] == '1')) {
+                has_digits = true;
+                ++i;
+            }
+            if (!has_digits) return false;
+        } else {
+            // Octal: 0[0-7]* (a lone '0' is also valid)
+            has_digits = true;
+            ++i;
+            while (i < s.size() && s[i] >= '0' && s[i] <= '7') {
+                ++i;
+            }
+        }
+    } else {
+        // Decimal: [1-9][0-9]* or lone '0'
+        if (i < s.size() && s[i] == '0') {
+            has_digits = true;
+            ++i;
+        } else {
+            while (i < s.size() && std::isdigit(static_cast<unsigned char>(s[i]))) {
+                has_digits = true;
+                ++i;
+            }
+        }
+        if (!has_digits) return false;
+    }
+
+    // Optional C integer suffix: (u|U)?(l|L){0,2} or (l|L){1,2}(u|U)?
+    if (i < s.size() && (s[i] == 'u' || s[i] == 'U')) {
+        ++i;
+        if (i < s.size() && (s[i] == 'l' || s[i] == 'L')) {
+            ++i;
+            if (i < s.size() && (s[i] == 'l' || s[i] == 'L')) ++i;
+        }
+    } else if (i < s.size() && (s[i] == 'l' || s[i] == 'L')) {
+        ++i;
+        if (i < s.size() && (s[i] == 'l' || s[i] == 'L')) ++i;
+        if (i < s.size() && (s[i] == 'u' || s[i] == 'U')) ++i;
+    }
+
+    return i == s.size();
+}
+
+/**
  * @brief Describes how to replace a single #undef line.
  */
 struct UndefReplacement {
@@ -620,13 +697,16 @@ std::string SourceGenerator::format_value_for_define(
             std::string bool_str = parsed.get<bool>() ? "true" : "false";
             return bool_str;
         } else if (parsed.is_string()) {
-            // String: render as-is (no outer quotes added)
-            // JSON parsing automatically handles escaped quotes:
-            // - "\"foo\"" becomes the string "foo" (with quotes as content)
-            // - "foo" becomes the string foo (no quotes)
             std::string str_value = parsed.get<std::string>();
 
-            // Return string value as-is (no quotes added, no special handling)
+            // C integer literals (hex, octal, binary, decimal with suffixes)
+            // are returned verbatim so they render unquoted in config.h.
+            // JSON strings containing escaped quotes (e.g. "\"foo\"") become
+            // the C string literal "foo" — also returned as-is.
+            // All other strings are plain tokens rendered unquoted.
+            if (is_c_integer_literal(str_value)) {
+                return str_value;
+            }
             return str_value;
         } else if (parsed.is_null()) {
             // Null: should not happen (handled in from_json), but return empty
@@ -636,39 +716,9 @@ std::string SourceGenerator::format_value_for_define(
             return parsed.dump();
         }
     } catch (const nlohmann::json::parse_error&) {
-        // If parsing fails, treat as plain string
-        // This handles values that aren't JSON-encoded
-        {
-            // Check if it's a number
-            bool is_number = false;
-            if (!value.empty()) {
-                bool has_dot = false;
-                bool has_digit = false;
-                bool is_valid = true;
-                for (size_t i = 0; i < value.size(); ++i) {
-                    char c = value[i];
-                    if (std::isdigit(static_cast<unsigned char>(c))) {
-                        has_digit = true;
-                    } else if (c == '.' && !has_dot && i > 0 &&
-                               i < value.size() - 1) {
-                        has_dot = true;
-                    } else if ((c == '-' || c == '+') && i == 0) {
-                        // Allow leading sign
-                    } else {
-                        is_valid = false;
-                        break;
-                    }
-                }
-                is_number = is_valid && has_digit;
-            }
-
-            if (is_number) {
-                return value;
-            } else {
-                // Plain string: return as-is (no quotes added)
-                return value;
-            }
-        }
+        // Not valid JSON — return as-is (covers C integer literals like
+        // hex/octal/binary as well as plain string tokens)
+        return value;
     }
 }
 

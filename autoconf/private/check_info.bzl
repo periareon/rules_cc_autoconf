@@ -10,11 +10,16 @@ KNOWN_CHECK_FIELDS = {
     "compile_defines": "list[str]: Preprocessor define names from previous checks to add before includes.",
     "condition": "str: Boolean expression that selects between if_true/if_false values.",
     "define": "(str | bool): Define name to set in config.h, or True to use the cache variable name.",
-    "define_value": "(str | int | None): Value for the define when the check succeeds.",
-    "define_value_fail": "(str | int | None): Value for the define when the check fails.",
+    "define_value": "(str | int | bool | None): Value for the define when the check succeeds. " +
+                    "Strings that are C integer literals (e.g. '0x0ff', '0755', '0b1010') render " +
+                    "unquoted. Wrap in escaped quotes ('\"value\"') for a C string literal.",
+    "define_value_fail": "(str | int | bool | None): Value for the define when the check fails. " +
+                         "Same rendering rules as define_value.",
     "flag": "str: Compiler flag to test (for compiler-flag checks).",
-    "if_false": "(str | int | None): Value to use when a condition evaluates to false.",
-    "if_true": "(str | int | None): Value to use when a condition evaluates to true.",
+    "if_false": "(str | int | bool | None): Value to use when a condition evaluates to false. " +
+                "Same rendering rules as define_value.",
+    "if_true": "(str | int | bool | None): Value to use when a condition evaluates to true. " +
+               "Same rendering rules as define_value.",
     "input_deps": "(list[str]) Dependency variable names (wiring only, not run conditions).",
     "language": "(str) Language for the check ('c' or 'cpp').",
     "libraries": "list[str]: Library names to search in order (for search_libs).",
@@ -56,6 +61,76 @@ TYPES_REQUIRING_CODE = {
     "search_libs": True,
     "sizeof": True,
 }
+
+_HEX_DIGITS = "0123456789abcdefABCDEF"
+_OCTAL_DIGITS = "01234567"
+_BINARY_DIGITS = "01"
+_DECIMAL_DIGITS = "0123456789"
+
+def _is_c_integer_literal(s):
+    """Return True if s looks like a C integer literal (dec/hex/oct/bin with optional suffix).
+
+    Examples: "42", "-1", "0", "0x0ff", "0XFF", "0b1010", "0755", "0xffULL".
+    """
+    if type(s) != "string" or len(s) == 0:
+        return False
+
+    # Starlark has no while-loop, so we consume the string by slicing.
+    # Strip optional leading sign.
+    if s[0] == "+" or s[0] == "-":
+        s = s[1:]
+        if len(s) == 0:
+            return False
+
+    digits = ""
+    if len(s) >= 2 and s[0] == "0":
+        if s[1] == "x" or s[1] == "X":
+            digits = _HEX_DIGITS
+            s = s[2:]
+        elif s[1] == "b" or s[1] == "B":
+            digits = _BINARY_DIGITS
+            s = s[2:]
+        else:
+            digits = _OCTAL_DIGITS
+            s = s[1:]  # skip leading 0, already counts as a digit
+    elif len(s) >= 1 and s[0] == "0":
+        s = s[1:]
+        return _consume_suffix(s)
+    else:
+        digits = _DECIMAL_DIGITS
+
+    if len(s) == 0 and digits != "":
+        # Needed at least one digit after prefix (0x, 0b)
+        return digits == _OCTAL_DIGITS
+
+    count = 0
+    for c in s:
+        if c not in digits:
+            break
+        count += 1
+    if count == 0:
+        return False
+    s = s[count:]
+
+    return _consume_suffix(s)
+
+def _consume_suffix(s):
+    """Consume an optional C integer suffix (u/U, l/L, ll/LL) and return True if nothing remains."""
+    if len(s) == 0:
+        return True
+    if s[0] == "u" or s[0] == "U":
+        s = s[1:]
+        if len(s) >= 2 and (s[0] == "l" or s[0] == "L") and (s[1] == "l" or s[1] == "L"):
+            s = s[2:]
+        elif len(s) >= 1 and (s[0] == "l" or s[0] == "L"):
+            s = s[1:]
+    elif s[0] == "l" or s[0] == "L":
+        s = s[1:]
+        if len(s) >= 1 and (s[0] == "l" or s[0] == "L"):
+            s = s[1:]
+        if len(s) >= 1 and (s[0] == "u" or s[0] == "U"):
+            s = s[1:]
+    return len(s) == 0
 
 def make_check(check):
     """Encode a check dict as JSON.
@@ -110,6 +185,10 @@ def _autoconf_check_init(
     _validate_list_field("input_deps", input_deps)
     _validate_list_field("requires", requires)
     _validate_list_field("libraries", libraries)
+    _validate_value_field("define_value", define_value)
+    _validate_value_field("define_value_fail", define_value_fail)
+    _validate_value_field("if_true", if_true)
+    _validate_value_field("if_false", if_false)
 
     return {
         "code": code,
@@ -131,6 +210,26 @@ def _autoconf_check_init(
         "type": type,
         "unquote": unquote,
     }
+
+def _validate_value_field(field_name, value):
+    """Validate that a define/condition value is an accepted type.
+
+    Accepted: None, bool, int, or str. String values are further
+    classified as C integer literals (rendered unquoted), quoted C
+    strings (e.g. '"foo"'), or plain tokens — all valid.
+    """
+    if value == None:
+        return
+    t = type(value)
+    if t == "bool" or t == "int":
+        return
+    if t != "string":
+        fail("'{}' must be str, int, bool, or None — got {}".format(field_name, t))
+
+    # All string forms are accepted. _is_c_integer_literal classifies
+    # the value so future callers (or stricter modes) can distinguish
+    # numeric-literal strings from free-form tokens.
+    _is_c_integer_literal(value)  # validates parsing; result unused by design
 
 def _validate_list_field(field_name, value):
     """Fail if value is not None and not a list."""

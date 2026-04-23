@@ -57,6 +57,24 @@
 /* Have empty value */
 #undef EMPTY_VALUE
 
+/* Hex value */
+#undef HEX_VALUE
+
+/* Hex value upper */
+#undef HEX_VALUE_UPPER
+
+/* Hex value with suffix */
+#undef HEX_VALUE_SUFFIX
+
+/* Octal value */
+#undef OCTAL_VALUE
+
+/* Binary value */
+#undef BINARY_VALUE
+
+/* Negative integer string */
+#undef NEG_INT_STR
+
 /* Unquoted value */
 #undef UNQUOTED_VALUE
 

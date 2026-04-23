@@ -57,6 +57,24 @@
 /* Have empty value */
 #define EMPTY_VALUE /**/
 
+/* Hex value */
+#define HEX_VALUE 0x0ff
+
+/* Hex value upper */
+#define HEX_VALUE_UPPER 0xFF
+
+/* Hex value with suffix */
+#define HEX_VALUE_SUFFIX 0xffULL
+
+/* Octal value */
+#define OCTAL_VALUE 0755
+
+/* Binary value */
+#define BINARY_VALUE 0b1010
+
+/* Negative integer string */
+#define NEG_INT_STR -1
+
 /* Unquoted value */
 #define UNQUOTED_VALUE test
 
