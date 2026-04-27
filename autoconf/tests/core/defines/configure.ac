@@ -20,5 +20,7 @@ AC_DEFINE([INDENTED_VALUE_2], [1])
 AC_DEFINE_UNQUOTED([UNQUOTED_VALUE], [test], [Unquoted value])
 variable=""
 AC_DEFINE_UNQUOTED([UNQUOTED_EMPTY], [$variable], [Unquoted empty value])
+AC_DEFINE_UNQUOTED([UNQUOTED_HEX], [0x1000], [Unquoted hex value])
+AC_DEFINE_UNQUOTED([UNQUOTED_NUM], [42], [Unquoted numeric string])
 
 AC_OUTPUT

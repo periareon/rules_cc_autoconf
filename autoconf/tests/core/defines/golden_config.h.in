@@ -63,6 +63,12 @@
 /* Unquoted empty value */
 #define UNQUOTED_EMPTY 
 
+/* Unquoted hex value */
+#define UNQUOTED_HEX 0x1000
+
+/* Unquoted numeric string */
+#define UNQUOTED_NUM 42
+
 /* Indented value */
 #   define INDENTED_VALUE_1 1
 

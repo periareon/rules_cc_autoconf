@@ -153,7 +153,8 @@ class SourceGenerator {
 
     // Value formatting helpers
     std::string format_value_for_subst(const std::string& value) const;
-    std::string format_value_for_define(const std::string& value) const;
+    std::string format_value_for_define(const std::string& value,
+                                        bool unqoute = false) const;
 };
 
 }  // namespace rules_cc_autoconf
