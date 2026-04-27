@@ -8,13 +8,13 @@ autoconf(
     checks = select({
         # gl_HOST_OS sets HOST_OPERATING_SYSTEM based on host_os
         "@platforms//os:linux": [
-            checks.AC_DEFINE_UNQUOTED(
+            checks.AC_DEFINE(
                 "HOST_OPERATING_SYSTEM",
                 '"GNU/Linux"',
             ),
         ],
         "//conditions:default": [
-            checks.AC_DEFINE_UNQUOTED(
+            checks.AC_DEFINE(
                 "HOST_OPERATING_SYSTEM",
                 '"Darwin"',
             ),

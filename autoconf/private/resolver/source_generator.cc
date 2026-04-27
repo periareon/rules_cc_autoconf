@@ -322,7 +322,8 @@ std::string SourceGenerator::process_defines_replacement(
             std::string replacement_text = "#define " + define_name;
 
             if (result.value.has_value() && !result.value->empty()) {
-                std::string value = format_value_for_define(*result.value);
+                std::string value =
+                    format_value_for_define(*result.value, result.unquote);
                 replacement_text += " " + value;
             } else {
                 if (result.unquote) {
@@ -601,8 +602,8 @@ std::string SourceGenerator::format_value_for_subst(
     }
 }
 
-std::string SourceGenerator::format_value_for_define(
-    const std::string& value) const {
+std::string SourceGenerator::format_value_for_define(const std::string& value,
+                                                     bool unquote) const {
     // Empty value should remain empty
     if (value.empty()) {
         return "";
@@ -625,6 +626,14 @@ std::string SourceGenerator::format_value_for_define(
             // - "\"foo\"" becomes the string "foo" (with quotes as content)
             // - "foo" becomes the string foo (no quotes)
             std::string str_value = parsed.get<std::string>();
+
+            if (unquote) {
+                // AC_DEFINE_UNQUOTED: strip surrounding quotes
+                if (str_value.size() >= 2 && str_value.front() == '"' &&
+                    str_value.back() == '"') {
+                    return str_value.substr(1, str_value.size() - 2);
+                }
+            }
 
             // Return string value as-is (no quotes added, no special handling)
             return str_value;

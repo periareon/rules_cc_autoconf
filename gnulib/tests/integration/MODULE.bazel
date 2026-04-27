@@ -27,3 +27,10 @@ bazel_dep(name = "readline", version = "8.3.bcr.1")
 bazel_dep(name = "tcpdump", version = "4.99.6")
 bazel_dep(name = "tftp-hpa", version = "5.2")
 bazel_dep(name = "x264", version = "2023.10.1.bcr.2")
+
+single_version_override(
+    module_name = "flex",
+    patch_strip = 1,
+    patches = ["//:flex.patch"],
+    version = "2.6.4.bcr.2",
+)
