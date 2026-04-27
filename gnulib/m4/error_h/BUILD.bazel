@@ -12,17 +12,12 @@ autoconf(
         # - macOS: "<error.h>"
         # - Linux: "" (empty)
         # gl_CHECK_NEXT_HEADERS([error.h]) - both macOS and Linux use <error.h>
-    ] + gl_macros.GL_CHECK_NEXT_HEADERS(["error.h"]) + select({
-        # On Linux with glibc, error.h exists
-        "@platforms//os:linux": [
-            checks.AC_DEFINE("HAVE_ERROR_H", 1),
-            checks.AC_SUBST("HAVE_ERROR_H", 1),
-        ],
-        # On macOS, error.h doesn't exist
-        "//conditions:default": [
-            checks.AC_SUBST("HAVE_ERROR_H", 0),
-        ],
-    }) + [
+    ] + gl_macros.GL_CHECK_NEXT_HEADERS(["error.h"]) + [
+        checks.AC_CHECK_HEADER(
+            "error.h",
+            define = "HAVE_ERROR_H",
+            subst = True,
+        ),
         # Note: On macOS, error.h doesn't exist, so HAVE_ERROR=0
     ] + gl_macros.GL_CHECK_FUNCS_ANDROID(
         ["error"],
