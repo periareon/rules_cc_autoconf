@@ -6,10 +6,7 @@ load("//autoconf:checks.bzl", "checks")
 autoconf(
     name = "gnulib-i18n",
     checks = [
-        # GNULIB_I18N sets GNULIB_LOCALEDIR
-        # AC_DEFINE_UNQUOTED([GNULIB_LOCALEDIR], ["$GNULIB_LOCALEDIR"], ...)
-        # Use AC_DEFINE_UNQUOTED with quoted string so quotes are preserved in output
-        checks.AC_DEFINE_UNQUOTED(
+        checks.AC_DEFINE(
             "GNULIB_LOCALEDIR",
             '"/usr/local/share/locale"',  # Quotes preserved in output
         ),

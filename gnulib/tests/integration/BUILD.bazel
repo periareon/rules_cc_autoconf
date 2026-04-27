@@ -20,6 +20,11 @@ alias(
 )
 
 alias(
+    name = "libgd",
+    actual = "@libgd",
+)
+
+alias(
     name = "libmicrohttpd",
     actual = "@libmicrohttpd",
     target_compatible_with = select({
@@ -61,6 +66,15 @@ alias(
 )
 
 alias(
+    name = "mosquitto",
+    actual = "@mosquitto",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
+alias(
     name = "patch",
     actual = "@patch",
 )
@@ -84,17 +98,17 @@ alias(
 )
 
 alias(
-    name = "x264",
-    actual = "@x264",
-)
-
-alias(
-    name = "mosquitto",
-    actual = "@mosquitto",
+    name = "tftp-hpa",
+    actual = "@tftp-hpa//:tftp",
     target_compatible_with = select({
         "@platforms//os:windows": ["@platforms//:incompatible"],
         "//conditions:default": [],
     }),
+)
+
+alias(
+    name = "x264",
+    actual = "@x264",
 )
 
 build_test(
@@ -103,15 +117,17 @@ build_test(
         ":bison",
         ":ffmpeg",
         ":flex",
+        ":libgd",
         ":libmicrohttpd",
         ":libpcap",
         ":libssh2",
         ":libwebsockets",
         ":m4",
+        ":mosquitto",
         ":patch",
         ":readline",
         ":tcpdump",
+        ":tftp-hpa",
         ":x264",
-        ":mosquitto",
     ],
 )

@@ -63,6 +63,12 @@
 /* Unquoted empty value */
 #undef UNQUOTED_EMPTY
 
+/* Unquoted hex value */
+#undef UNQUOTED_HEX
+
+/* Unquoted numeric string */
+#undef UNQUOTED_NUM
+
 /* Indented value */
 #   undef INDENTED_VALUE_1
 

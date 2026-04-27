@@ -35,6 +35,10 @@ autoconf(
         checks.AC_DEFINE_UNQUOTED("UNQUOTED_VALUE", "test"),
         # Test AC_DEFINE_UNQUOTED with empty value - should create "#define UNQUOTED_EMPTY " (trailing space, not /**/)
         checks.AC_DEFINE_UNQUOTED("UNQUOTED_EMPTY", ""),
+        # Test AC_DEFINE_UNQUOTED with hex value - should render as 0x1000 (not "0x1000")
+        checks.AC_DEFINE_UNQUOTED("UNQUOTED_HEX", "0x1000"),
+        # Test AC_DEFINE_UNQUOTED with numeric string - should render as 42 (not "42")
+        checks.AC_DEFINE_UNQUOTED("UNQUOTED_NUM", "42"),
     ],
     deps = [":package"],
 )
