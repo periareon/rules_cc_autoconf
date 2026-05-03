@@ -15,19 +15,43 @@ autoconf(
             define = "HAVE_STDCKDINT_H",
             subst = "HAVE_STDCKDINT_H",
         ),
-        # C++ version is rarely available
         checks.AC_SUBST("HAVE_CXX_STDCKDINT_H", "0"),
         checks.AC_SUBST("HAVE_WORKING_CXX_STDCKDINT_H", "0"),
-        # C version: depends on whether header exists
+        # gl_cv_header_c_stdckdint_h: can stdckdint.h be included in C?
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_header_c_stdckdint_h",
+            code = """\
+#include <stdckdint.h>
+int main(void) {
+    return 0;
+}
+""",
+            requires = ["ac_cv_header_stdckdint_h"],
+        ),
         checks.AC_SUBST(
             "HAVE_C_STDCKDINT_H",
-            condition = "ac_cv_header_stdckdint_h",
+            condition = "gl_cv_header_c_stdckdint_h",
             if_false = "0",
             if_true = "1",
         ),
+        # gl_cv_header_c_stdckdint_h_works: ISO C23 compliant?
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_header_c_stdckdint_h_works",
+            code = """\
+#include <stdckdint.h>
+int main(void) {
+    int r;
+    int a = 1;
+    int b = 1;
+    return !!(ckd_add(&r, a, b) || ckd_sub(&r, a, b)
+              || ckd_mul(&r, a, b));
+}
+""",
+            requires = ["gl_cv_header_c_stdckdint_h"],
+        ),
         checks.AC_SUBST(
             "HAVE_WORKING_C_STDCKDINT_H",
-            condition = "ac_cv_header_stdckdint_h",
+            condition = "gl_cv_header_c_stdckdint_h_works",
             if_false = "0",
             if_true = "1",
         ),
