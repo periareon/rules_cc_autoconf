@@ -285,6 +285,23 @@ def collect_deps(deps):
 
     return depset(direct, transitive = transitive)
 
+# Some features are incompatible with the probing and result in errors
+# across various toolchain implementations and rules_cc versions.
+_UNSUPPORTED_RULES_CC_FEATURES = [
+    # Enforces declared-only header use; needs `%{module_name}` + cc_library module map.
+    "layering_check",
+    # Adds `-fmodule-map-file` / `-fmodule-name` to compiles; needs module map variables.
+    "use_module_maps",
+    # Toolchain capability to emit `.cppmap` files for cc_library hdrs; no hdrs here.
+    "module_maps",
+    # Synthesizes per-header `-fsyntax-only` actions for cc_library hdrs; nothing to parse.
+    "parse_headers",
+    # Compiles cc_library hdrs into clang PCMs; needs `%{module_name}` + `.pcm` graph.
+    "header_modules",
+    # C++20 named modules orchestration; needs module interface unit context.
+    "cpp_modules",
+]
+
 def get_cc_toolchain_info(ctx):
     """Get cc_toolchain information for autoconf configuration.
 
@@ -309,7 +326,7 @@ def get_cc_toolchain_info(ctx):
         ctx = ctx,
         cc_toolchain = cc_toolchain,
         requested_features = ctx.features,
-        unsupported_features = ctx.disabled_features,
+        unsupported_features = ctx.disabled_features + _UNSUPPORTED_RULES_CC_FEATURES,
     )
 
     c_compiler_path = cc_common.get_tool_for_action(
