@@ -20,6 +20,11 @@ alias(
 )
 
 alias(
+    name = "gmp",
+    actual = "@gmp",
+)
+
+alias(
     name = "libgd",
     actual = "@libgd",
 )
@@ -117,6 +122,7 @@ build_test(
         ":bison",
         ":ffmpeg",
         ":flex",
+        ":gmp",
         ":libgd",
         ":libmicrohttpd",
         ":libpcap",

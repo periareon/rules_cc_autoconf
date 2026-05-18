@@ -1,0 +1,81 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:checks.bzl", "checks")
+load("//autoconf:package_info.bzl", "package_info")
+load("//autoconf/tests:diff_test.bzl", "diff_test")
+load(":copt_transition.bzl", "autoconf_with_copts")
+
+package_info(
+    name = "package",
+    package_name = "test_has_feature_override",
+    package_version = "1.0.0",
+)
+
+autoconf(
+    name = "autoconf_impl",
+    checks = [
+        checks.AC_CHECK_HEADER(
+            "stdio.h",
+            define = "HAVE_STDIO_H",
+        ),
+        checks.AC_CHECK_HEADER(
+            "stdlib.h",
+            define = "HAVE_STDLIB_H",
+        ),
+        checks.AC_CHECK_HEADER(
+            "string.h",
+            define = "HAVE_STRING_H",
+        ),
+    ],
+    deps = [":package"],
+)
+
+# Wrap the autoconf target with a transition that injects flags containing
+# shell metacharacters into the compile flags. This exercises the shell
+# quoting in the checker binary — parentheses, commas inside parens, and
+# nested expressions are all characters that the shell would misinterpret
+# if not properly quoted.
+autoconf_with_copts(
+    name = "autoconf",
+    actual = ":autoconf_impl",
+    extra_copts = [
+        # Clang builtins redefined as function-like macros (the original bug report)
+        "-D__has_feature(x)=0",
+        "-D__has_builtin(x)=0",
+        "-D__has_attribute(x)=0",
+        "-D__has_extension(x)=0",
+        "-D__has_include(x)=0",
+        # Multi-arg function-like macro — commas inside parens
+        "-DTEST_MULTI_ARG(a,b)=((a)+(b))",
+    ],
+)
+
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    template = "config.h.in",
+    deps = [":autoconf"],
+)
+
+diff_test(
+    name = "diff_test",
+    file1 = "golden_config.h.in",
+    file2 = ":config.h",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
+cc_test(
+    name = "test_has_feature_override",
+    srcs = [
+        "test_has_feature_override.c",
+        ":config.h",
+    ],
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
