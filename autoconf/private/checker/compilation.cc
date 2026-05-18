@@ -61,15 +61,24 @@ std::string get_short_path(const std::string& long_path) {
  * argument.
  */
 std::string quote_if_needed(const std::string& arg) {
-    if (arg.find(' ') != std::string::npos) {
 #ifdef _WIN32
-        // Windows: use double quotes
+    if (arg.find_first_of(" \t()&|<>^") != std::string::npos) {
         return "\"" + arg + "\"";
-#else
-        // Unix: use single quotes for simplicity
-        return "'" + arg + "'";
-#endif
     }
+#else
+    if (arg.find_first_of(" \t()|&;<>$`*?[]{}!#~'\"\\") != std::string::npos) {
+        std::string quoted = "'";
+        for (char c : arg) {
+            if (c == '\'') {
+                quoted += "'\\''";
+            } else {
+                quoted += c;
+            }
+        }
+        quoted += "'";
+        return quoted;
+    }
+#endif
     return arg;
 }
 
