@@ -27,6 +27,8 @@ _CONTENT_KEY_FIELDS = (
     "requires",
     "condition",
     "compile_defines",
+    "copts",
+    "linkopts",
     "includes",
     "members",
 )

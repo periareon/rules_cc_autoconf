@@ -151,6 +151,24 @@ class Check {
     }
 
     /**
+     * @brief Get extra compiler flags for this check.
+     * @return Optional vector of compiler flags (e.g. {"-msse2"}),
+     *         or std::nullopt if not provided.
+     */
+    const std::optional<std::vector<std::string>>& copts() const {
+        return copts_;
+    }
+
+    /**
+     * @brief Get extra linker flags for this check.
+     * @return Optional vector of linker flags (e.g. {"-lpthread"}),
+     *         or std::nullopt if not provided.
+     */
+    const std::optional<std::vector<std::string>>& linkopts() const {
+        return linkopts_;
+    }
+
+    /**
      * @brief Get the substitution variable name for this check.
      * @return Optional subst name (e.g., "HAVE_PRINTF"), or std::nullopt if not
      * a subst.
@@ -178,7 +196,11 @@ class Check {
         condition_{};  /// Condition for conditional checks
     std::optional<std::vector<std::string>>
         compile_defines_{};  /// Defines to include in compilation code
-    CheckType type_{};       /// Type of check
+    std::optional<std::vector<std::string>>
+        copts_{};  /// Extra compiler flags for this check
+    std::optional<std::vector<std::string>>
+        linkopts_{};    /// Extra linker flags for this check
+    CheckType type_{};  /// Type of check
     std::optional<std::string>
         subst_{};          /// Optional substitution variable name
     bool unquote_{false};  /// Whether this is AC_DEFINE_UNQUOTED (affects empty

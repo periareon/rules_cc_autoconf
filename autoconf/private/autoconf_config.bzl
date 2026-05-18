@@ -10,6 +10,9 @@ load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
 
 _TOOLCHAIN_TYPE = "//autoconf:toolchain_type"
 
+_COPTS_MARKER = "{rules_cc_autoconf:copts}"
+_LINKOPTS_MARKER = "{rules_cc_autoconf:linkopts}"
+
 def encode_result(value, success = True):
     """Encode a value as a flat result JSON string.
 
@@ -347,7 +350,7 @@ def get_cc_toolchain_info(ctx):
     c_compile_variables = cc_common.create_compile_variables(
         feature_configuration = feature_configuration,
         cc_toolchain = cc_toolchain,
-        user_compile_flags = ctx.fragments.cpp.copts,
+        user_compile_flags = ctx.fragments.cpp.copts + [_COPTS_MARKER],
     )
 
     c_flags = cc_common.get_memory_inefficient_command_line(
@@ -359,7 +362,7 @@ def get_cc_toolchain_info(ctx):
     cpp_compile_variables = cc_common.create_compile_variables(
         feature_configuration = feature_configuration,
         cc_toolchain = cc_toolchain,
-        user_compile_flags = ctx.fragments.cpp.copts + ctx.fragments.cpp.cxxopts,
+        user_compile_flags = ctx.fragments.cpp.copts + ctx.fragments.cpp.cxxopts + [_COPTS_MARKER],
     )
 
     cpp_flags = cc_common.get_memory_inefficient_command_line(
@@ -373,6 +376,7 @@ def get_cc_toolchain_info(ctx):
         cc_toolchain = cc_toolchain,
         is_linking_dynamic_library = False,
         is_static_linking_mode = True,
+        user_link_flags = [_LINKOPTS_MARKER],
     )
 
     c_link_flags = cc_common.get_memory_inefficient_command_line(

@@ -9,6 +9,7 @@ KNOWN_CHECK_FIELDS = {
     "code": "str: C/C++ source code to compile or link for this check.",
     "compile_defines": "list[str]: Preprocessor define names from previous checks to add before includes.",
     "condition": "str: Boolean expression that selects between if_true/if_false values.",
+    "copts": "list[str]: Extra compiler flags for this check (e.g. ['-msse2', '-std=c11']).",
     "define": "(str | bool): Define name to set in config.h, or True to use the cache variable name.",
     "define_value": "(str | int | None): Value for the define when the check succeeds.",
     "define_value_fail": "(str | int | None): Value for the define when the check fails.",
@@ -19,6 +20,7 @@ KNOWN_CHECK_FIELDS = {
     "language": "(str) Language for the check ('c' or 'cpp').",
     "libraries": "list[str]: Library names to search in order (for search_libs).",
     "library": "str: Single library name to link against (for AC_CHECK_LIB).",
+    "linkopts": "list[str]: Extra linker flags for this check (e.g. ['-Wl,--as-needed']).",
     "name": "str: Cache variable name (e.g. 'ac_cv_header_stdio_h').",
     "requires": "(list[str]): Requirements that must be truthy for the check to run.",
     "subst": "(str | bool | None): Substitution variable name for `@VAR@` replacement, or True to use the cache variable name.",
@@ -78,6 +80,7 @@ def _autoconf_check_init(
         code = None,
         compile_defines = None,
         condition = None,
+        copts = None,
         define = None,
         define_value = None,
         define_value_fail = None,
@@ -88,6 +91,7 @@ def _autoconf_check_init(
         language = None,
         libraries = None,
         library = None,
+        linkopts = None,
         requires = None,
         subst = None,
         unquote = None):
@@ -107,7 +111,9 @@ def _autoconf_check_init(
         fail("Check '{}' (type '{}') requires a 'code' field.".format(name, type))
 
     _validate_list_field("compile_defines", compile_defines)
+    _validate_list_field("copts", copts)
     _validate_list_field("input_deps", input_deps)
+    _validate_list_field("linkopts", linkopts)
     _validate_list_field("requires", requires)
     _validate_list_field("libraries", libraries)
 
@@ -115,6 +121,7 @@ def _autoconf_check_init(
         "code": code,
         "compile_defines": compile_defines,
         "condition": condition,
+        "copts": copts,
         "define": define,
         "define_value": define_value,
         "define_value_fail": define_value_fail,
@@ -125,6 +132,7 @@ def _autoconf_check_init(
         "language": language,
         "libraries": libraries,
         "library": library,
+        "linkopts": linkopts,
         "name": name,
         "requires": requires,
         "subst": subst,

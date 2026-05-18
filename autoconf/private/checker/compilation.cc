@@ -16,6 +16,9 @@
 
 namespace rules_cc_autoconf {
 
+constexpr const char* kCoptsMarker = "{rules_cc_autoconf:copts}";
+constexpr const char* kLinkoptsMarker = "{rules_cc_autoconf:linkopts}";
+
 namespace {
 
 #ifdef _WIN32
@@ -255,46 +258,65 @@ std::vector<std::string> CheckRunner::filter_error_flags(
     return filtered;
 }
 
+std::vector<std::string> CheckRunner::replace_marker(
+    const std::vector<std::string>& flags, const char* marker,
+    const std::vector<std::string>& replacement) {
+    std::vector<std::string> result;
+    for (const auto& flag : flags) {
+        if (flag == marker) {
+            result.insert(result.end(), replacement.begin(), replacement.end());
+        } else {
+            result.push_back(flag);
+        }
+    }
+    return result;
+}
+
 std::vector<std::string> CheckRunner::get_compiler_and_flags(
-    const std::string& language) {
+    const std::string& language, const std::vector<std::string>& extra_copts) {
     std::vector<std::string> cmd;
     if (is_cpp(language)) {
         DebugLogger::debug("C++ compiler path: [" + config_.cpp_compiler + "]");
         cmd.push_back(config_.cpp_compiler);
-        std::vector<std::string> filtered =
-            filter_error_flags(config_.cpp_flags);
-        cmd.insert(cmd.end(), filtered.begin(), filtered.end());
+        auto filtered = filter_error_flags(config_.cpp_flags);
+        auto processed = replace_marker(filtered, kCoptsMarker, extra_copts);
+        cmd.insert(cmd.end(), processed.begin(), processed.end());
     } else {
         DebugLogger::debug("C compiler path: [" + config_.c_compiler + "]");
         cmd.push_back(config_.c_compiler);
-        std::vector<std::string> filtered = filter_error_flags(config_.c_flags);
-        cmd.insert(cmd.end(), filtered.begin(), filtered.end());
+        auto filtered = filter_error_flags(config_.c_flags);
+        auto processed = replace_marker(filtered, kCoptsMarker, extra_copts);
+        cmd.insert(cmd.end(), processed.begin(), processed.end());
     }
     return cmd;
 }
 
 std::vector<std::string> CheckRunner::get_compiler_and_link_flags(
-    const std::string& language) {
+    const std::string& language, const std::vector<std::string>& extra_copts,
+    const std::vector<std::string>& extra_linkopts) {
     std::vector<std::string> cmd;
     if (is_cpp(language)) {
         DebugLogger::debug("C++ compiler path (for linking): [" +
                            config_.cpp_compiler + "]");
         cmd.push_back(config_.cpp_compiler);
-        std::vector<std::string> filtered =
-            filter_error_flags(config_.cpp_flags);
-        cmd.insert(cmd.end(), filtered.begin(), filtered.end());
-        std::vector<std::string> link_filtered =
-            filter_error_flags(config_.cpp_link_flags);
-        cmd.insert(cmd.end(), link_filtered.begin(), link_filtered.end());
+        auto filtered = filter_error_flags(config_.cpp_flags);
+        auto processed = replace_marker(filtered, kCoptsMarker, extra_copts);
+        cmd.insert(cmd.end(), processed.begin(), processed.end());
+        auto link_filtered = filter_error_flags(config_.cpp_link_flags);
+        auto link_processed =
+            replace_marker(link_filtered, kLinkoptsMarker, extra_linkopts);
+        cmd.insert(cmd.end(), link_processed.begin(), link_processed.end());
     } else {
         DebugLogger::debug("C compiler path (for linking): [" +
                            config_.c_compiler + "]");
         cmd.push_back(config_.c_compiler);
-        std::vector<std::string> filtered = filter_error_flags(config_.c_flags);
-        cmd.insert(cmd.end(), filtered.begin(), filtered.end());
-        std::vector<std::string> link_filtered =
-            filter_error_flags(config_.c_link_flags);
-        cmd.insert(cmd.end(), link_filtered.begin(), link_filtered.end());
+        auto filtered = filter_error_flags(config_.c_flags);
+        auto processed = replace_marker(filtered, kCoptsMarker, extra_copts);
+        cmd.insert(cmd.end(), processed.begin(), processed.end());
+        auto link_filtered = filter_error_flags(config_.c_link_flags);
+        auto link_processed =
+            replace_marker(link_filtered, kLinkoptsMarker, extra_linkopts);
+        cmd.insert(cmd.end(), link_processed.begin(), link_processed.end());
     }
     return cmd;
 }
@@ -304,13 +326,15 @@ std::string CheckRunner::get_file_extension(const std::string& language) {
 }
 
 bool CheckRunner::try_compile(const std::string& code,
-                              const std::string& language) {
+                              const std::string& language,
+                              const std::vector<std::string>& extra_copts) {
     BuildDir tmp(source_id_, source_dir_);
     std::optional<std::filesystem::path> source_file =
         tmp.write_source(code, get_file_extension(language));
     if (!source_file) return false;
 
-    std::vector<std::string> cmd = get_compiler_and_flags(language);
+    std::vector<std::string> cmd =
+        get_compiler_and_flags(language, extra_copts);
     bool msvc = config_.compiler_type.rfind("msvc", 0) == 0;
 
     if (msvc) {
@@ -329,16 +353,19 @@ bool CheckRunner::try_compile(const std::string& code,
 
 bool CheckRunner::try_link(const std::filesystem::path& object_file,
                            const std::filesystem::path& executable,
-                           const std::string& language) {
+                           const std::string& language,
+                           const std::vector<std::string>& extra_linkopts) {
     std::vector<std::string> cmd;
     bool msvc = config_.compiler_type.rfind("msvc", 0) == 0;
 
     if (msvc) {
         cmd.push_back(config_.linker);
         DebugLogger::debug("Linker tool path: [" + config_.linker + "]");
-        std::vector<std::string> link_flags = filter_error_flags(
+        auto link_flags = filter_error_flags(
             is_cpp(language) ? config_.cpp_link_flags : config_.c_link_flags);
-        cmd.insert(cmd.end(), link_flags.begin(), link_flags.end());
+        auto processed =
+            replace_marker(link_flags, kLinkoptsMarker, extra_linkopts);
+        cmd.insert(cmd.end(), processed.begin(), processed.end());
         cmd.push_back("/OUT:" + executable.string());
         cmd.push_back(object_file.string());
     } else {
@@ -352,9 +379,11 @@ bool CheckRunner::try_link(const std::filesystem::path& object_file,
             DebugLogger::debug("Using compiler as linker: [" + link_tool + "]");
         }
         cmd.push_back(link_tool);
-        std::vector<std::string> link_flags = filter_error_flags(
+        auto link_flags = filter_error_flags(
             is_cpp(language) ? config_.cpp_link_flags : config_.c_link_flags);
-        cmd.insert(cmd.end(), link_flags.begin(), link_flags.end());
+        auto processed =
+            replace_marker(link_flags, kLinkoptsMarker, extra_linkopts);
+        cmd.insert(cmd.end(), processed.begin(), processed.end());
         cmd.push_back(object_file.string());
         cmd.push_back("-o");
         cmd.push_back(executable.string());
@@ -363,8 +392,10 @@ bool CheckRunner::try_link(const std::filesystem::path& object_file,
     return run_command("link", cmd) == 0;
 }
 
-bool CheckRunner::try_compile_and_link(const std::string& code,
-                                       const std::string& language) {
+bool CheckRunner::try_compile_and_link(
+    const std::string& code, const std::string& language,
+    const std::vector<std::string>& extra_copts,
+    const std::vector<std::string>& extra_linkopts) {
     BuildDir tmp(source_id_, source_dir_);
     std::optional<std::filesystem::path> source_file =
         tmp.write_source(code, get_file_extension(language));
@@ -377,7 +408,8 @@ bool CheckRunner::try_compile_and_link(const std::string& code,
         // directly (instead of separate cl.exe /c + link.exe) ensures that
         // default libraries are linked, including legacy_stdio_definitions.lib
         // which provides linker symbols for UCRT inline functions like printf.
-        std::vector<std::string> cmd = get_compiler_and_link_flags(language);
+        std::vector<std::string> cmd =
+            get_compiler_and_link_flags(language, extra_copts, extra_linkopts);
         std::filesystem::path exe = tmp.executable_path();
         cmd.push_back("/Fe" + exe.string());
         cmd.push_back(source_file->string());
@@ -385,7 +417,8 @@ bool CheckRunner::try_compile_and_link(const std::string& code,
     }
 
     // GCC/Clang: compile then link separately
-    std::vector<std::string> cmd = get_compiler_and_flags(language);
+    std::vector<std::string> cmd =
+        get_compiler_and_flags(language, extra_copts);
     std::filesystem::path obj = tmp.object_path(false);
 
     cmd.push_back("-c");
@@ -400,7 +433,7 @@ bool CheckRunner::try_compile_and_link(const std::string& code,
 
     // Step 2: Link
     std::filesystem::path exe = tmp.executable_path();
-    return try_link(obj, exe, language);
+    return try_link(obj, exe, language, extra_linkopts);
 }
 
 bool CheckRunner::try_compile_and_link_with_lib(const std::string& code,

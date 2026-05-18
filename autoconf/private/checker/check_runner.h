@@ -131,30 +131,41 @@ class CheckRunner {
      * @brief Try to compile code with the configured compiler.
      * @param code Source code to compile.
      * @param language Language of the code ("c" or "cpp").
+     * @param extra_copts Additional compiler flags appended after toolchain
+     * flags.
      * @return true if compilation succeeded, false otherwise.
      */
-    bool try_compile(const std::string& code,
-                     const std::string& language = "c");
+    bool try_compile(const std::string& code, const std::string& language = "c",
+                     const std::vector<std::string>& extra_copts = {});
 
     /**
      * @brief Try to link an object file into an executable.
      * @param object_file Path to the object file to link.
      * @param executable Path where the executable should be created.
      * @param language Language of the code ("c" or "cpp").
+     * @param extra_linkopts Additional linker flags appended after toolchain
+     * flags.
      * @return true if linking succeeded, false otherwise.
      */
     bool try_link(const std::filesystem::path& object_file,
                   const std::filesystem::path& executable,
-                  const std::string& language = "c");
+                  const std::string& language = "c",
+                  const std::vector<std::string>& extra_linkopts = {});
 
     /**
      * @brief Try to compile and link code (without running).
      * @param code Source code to compile and link.
      * @param language Language of the code ("c" or "cpp").
+     * @param extra_copts Additional compiler flags appended after toolchain
+     * flags.
+     * @param extra_linkopts Additional linker flags appended after toolchain
+     * flags.
      * @return true if compilation and linking succeeded, false otherwise.
      */
-    bool try_compile_and_link(const std::string& code,
-                              const std::string& language = "c");
+    bool try_compile_and_link(
+        const std::string& code, const std::string& language = "c",
+        const std::vector<std::string>& extra_copts = {},
+        const std::vector<std::string>& extra_linkopts = {});
 
     /**
      * @brief Try to compile and link code with a specific library.
@@ -176,22 +187,52 @@ class CheckRunner {
         const std::vector<std::string>& flags);
 
     /**
+     * @brief Replace a sentinel marker in a flags vector with replacement
+     * flags.
+     * @param flags The flags vector potentially containing the marker.
+     * @param marker The sentinel string to find and replace.
+     * @param replacement Flags to insert at the marker position.
+     * @return New flags vector with marker replaced (or removed if replacement
+     *         is empty).
+     */
+    static std::vector<std::string> replace_marker(
+        const std::vector<std::string>& flags, const char* marker,
+        const std::vector<std::string>& replacement);
+
+    /**
      * @brief Get compiler command and flags for a language.
+     *
+     * Per-check copts replace the copts marker at the toolchain-determined
+     * position for user compile flags, matching cc_library behavior.
+     *
      * @param language Language ("c" or "cpp").
+     * @param extra_copts Per-check compiler flags that replace the copts
+     * marker.
      * @return Vector of compiler command parts (compiler path followed by
      * flags).
      */
     std::vector<std::string> get_compiler_and_flags(
-        const std::string& language);
+        const std::string& language,
+        const std::vector<std::string>& extra_copts = {});
 
     /**
      * @brief Get compiler command with both compile and link flags.
+     *
+     * Per-check copts and linkopts replace their respective markers at the
+     * toolchain-determined positions, matching cc_library behavior.
+     *
      * @param language Language ("c" or "cpp").
+     * @param extra_copts Per-check compiler flags that replace the copts
+     * marker.
+     * @param extra_linkopts Per-check linker flags that replace the linkopts
+     *                       marker.
      * @return Vector of compiler command parts (compiler path followed by
      * compile and link flags).
      */
     std::vector<std::string> get_compiler_and_link_flags(
-        const std::string& language);
+        const std::string& language,
+        const std::vector<std::string>& extra_copts = {},
+        const std::vector<std::string>& extra_linkopts = {});
 
     /**
      * @brief Get file extension for a language.

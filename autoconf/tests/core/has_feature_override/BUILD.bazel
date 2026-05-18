@@ -27,6 +27,31 @@ autoconf(
             "string.h",
             define = "HAVE_STRING_H",
         ),
+        # AC_TRY_COMPILE with per-check copts
+        checks.AC_TRY_COMPILE(
+            code = "int main(void) { return 0; }",
+            copts = ["-DCOMPILE_COPTS_TEST=1"],
+            define = "HAVE_COMPILE_COPTS",
+        ),
+        # AC_TRY_LINK with per-check copts and linkopts
+        checks.AC_TRY_LINK(
+            code = "int main(void) { return 0; }",
+            copts = ["-DLINK_COPTS_TEST=1"],
+            define = "HAVE_LINK_COPTS",
+            linkopts = ["-lm"],
+        ),
+        # AC_TRY_COMPILE that should fail — the code references a macro
+        # that is only defined via copts, proving copts are actually passed
+        checks.AC_TRY_COMPILE(
+            code = """
+#if !COPTS_ACTUALLY_PASSED
+#error "copts were not passed"
+#endif
+int main(void) { return 0; }
+""",
+            copts = ["-DCOPTS_ACTUALLY_PASSED=1"],
+            define = "HAVE_COPTS_VERIFIED",
+        ),
     ],
     deps = [":package"],
 )
