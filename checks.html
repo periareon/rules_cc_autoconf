@@ -986,8 +986,8 @@ without `condition`, it always sets the variable. When used with
 <pre>
 load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
 
-checks.AC_TRY_COMPILE(*, <a href="#checks.AC_TRY_COMPILE-code">code</a>, <a href="#checks.AC_TRY_COMPILE-name">name</a>, <a href="#checks.AC_TRY_COMPILE-define">define</a>, <a href="#checks.AC_TRY_COMPILE-includes">includes</a>, <a href="#checks.AC_TRY_COMPILE-language">language</a>, <a href="#checks.AC_TRY_COMPILE-compile_defines">compile_defines</a>, <a href="#checks.AC_TRY_COMPILE-requires">requires</a>, <a href="#checks.AC_TRY_COMPILE-if_true">if_true</a>,
-                      <a href="#checks.AC_TRY_COMPILE-if_false">if_false</a>, <a href="#checks.AC_TRY_COMPILE-subst">subst</a>)
+checks.AC_TRY_COMPILE(*, <a href="#checks.AC_TRY_COMPILE-code">code</a>, <a href="#checks.AC_TRY_COMPILE-name">name</a>, <a href="#checks.AC_TRY_COMPILE-define">define</a>, <a href="#checks.AC_TRY_COMPILE-includes">includes</a>, <a href="#checks.AC_TRY_COMPILE-language">language</a>, <a href="#checks.AC_TRY_COMPILE-compile_defines">compile_defines</a>, <a href="#checks.AC_TRY_COMPILE-copts">copts</a>, <a href="#checks.AC_TRY_COMPILE-requires">requires</a>,
+                      <a href="#checks.AC_TRY_COMPILE-if_true">if_true</a>, <a href="#checks.AC_TRY_COMPILE-if_false">if_false</a>, <a href="#checks.AC_TRY_COMPILE-subst">subst</a>)
 </pre>
 <p>Try to compile custom code.</p>
 <p>Original m4 example:</p>
@@ -1027,6 +1027,7 @@ pass the result as `code`.
 <tr><td style="text-align: left"><a id="checks.AC_TRY_COMPILE-includes"></a>includes</td><td style="text-align: left">Optional list of headers to include. When provided, <code>code</code> is treated as the body of main() function.</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_TRY_COMPILE-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_TRY_COMPILE-compile_defines"></a>compile_defines</td><td style="text-align: left">Optional list of preprocessor define names from previous checks to add before includes (e.g., <code>["_GNU_SOURCE", "_DARWIN_C_SOURCE"]</code>). Each string must match the define name of a previous check. The values from those checks will be used automatically.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_TRY_COMPILE-copts"></a>copts</td><td style="text-align: left">Optional list of extra compiler flags for this check (e.g., <code>["-msse2", "-std=c11"]</code>).</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_TRY_COMPILE-requires"></a>requires</td><td style="text-align: left">Requirements that must be met for this check to run. Can be define names (e.g., <code>"HAVE_FOO"</code>), negated (e.g., <code>"!HAVE_FOO"</code>), or value-based (e.g., <code>"REPLACE_FSTAT==1"</code>, <code>"REPLACE_FSTAT!=0"</code>).</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_TRY_COMPILE-if_true"></a>if_true</td><td style="text-align: left">Value to use when check succeeds (currently not used for this check type).</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_TRY_COMPILE-if_false"></a>if_false</td><td style="text-align: left">Value to use when check fails (currently not used for this check type).</td><td style="text-align: left"><code>None</code></td></tr>
@@ -1040,8 +1041,8 @@ pass the result as `code`.
 <pre>
 load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
 
-checks.AC_TRY_LINK(*, <a href="#checks.AC_TRY_LINK-code">code</a>, <a href="#checks.AC_TRY_LINK-name">name</a>, <a href="#checks.AC_TRY_LINK-define">define</a>, <a href="#checks.AC_TRY_LINK-includes">includes</a>, <a href="#checks.AC_TRY_LINK-language">language</a>, <a href="#checks.AC_TRY_LINK-compile_defines">compile_defines</a>, <a href="#checks.AC_TRY_LINK-requires">requires</a>, <a href="#checks.AC_TRY_LINK-if_true">if_true</a>,
-                   <a href="#checks.AC_TRY_LINK-if_false">if_false</a>, <a href="#checks.AC_TRY_LINK-subst">subst</a>)
+checks.AC_TRY_LINK(*, <a href="#checks.AC_TRY_LINK-code">code</a>, <a href="#checks.AC_TRY_LINK-name">name</a>, <a href="#checks.AC_TRY_LINK-define">define</a>, <a href="#checks.AC_TRY_LINK-includes">includes</a>, <a href="#checks.AC_TRY_LINK-language">language</a>, <a href="#checks.AC_TRY_LINK-compile_defines">compile_defines</a>, <a href="#checks.AC_TRY_LINK-copts">copts</a>, <a href="#checks.AC_TRY_LINK-linkopts">linkopts</a>,
+                   <a href="#checks.AC_TRY_LINK-requires">requires</a>, <a href="#checks.AC_TRY_LINK-if_true">if_true</a>, <a href="#checks.AC_TRY_LINK-if_false">if_false</a>, <a href="#checks.AC_TRY_LINK-subst">subst</a>)
 </pre>
 <p>Try to compile and link custom code.</p>
 <p>This function mirrors GNU Autoconf's <code>AC_LINK_IFELSE</code> macro, which uses
@@ -1090,6 +1091,8 @@ to verify that functions are available at link time (not just declared).</p>
 <tr><td style="text-align: left"><a id="checks.AC_TRY_LINK-includes"></a>includes</td><td style="text-align: left">Optional list of headers to include (backward compatibility). When provided, <code>code</code> is treated as the body of main() function.</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_TRY_LINK-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_TRY_LINK-compile_defines"></a>compile_defines</td><td style="text-align: left">Optional list of preprocessor define names from previous checks to add before includes (e.g., <code>["_GNU_SOURCE", "_DARWIN_C_SOURCE"]</code>). Each string must match the define name of a previous check. The values from those checks will be used automatically.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_TRY_LINK-copts"></a>copts</td><td style="text-align: left">Optional list of extra compiler flags for this check (e.g., <code>["-msse2", "-std=c11"]</code>).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_TRY_LINK-linkopts"></a>linkopts</td><td style="text-align: left">Optional list of extra linker flags for this check (e.g., <code>["-lpthread", "-Wl,--as-needed"]</code>).</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_TRY_LINK-requires"></a>requires</td><td style="text-align: left">Requirements that must be met for this check to run. Can be define names (e.g., <code>"HAVE_FOO"</code>), negated (e.g., <code>"!HAVE_FOO"</code>), or value-based (e.g., <code>"REPLACE_FSTAT==1"</code>, <code>"REPLACE_FSTAT!=0"</code>).</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_TRY_LINK-if_true"></a>if_true</td><td style="text-align: left">Value to use when check succeeds (currently not used for this check type).</td><td style="text-align: left"><code>1</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_TRY_LINK-if_false"></a>if_false</td><td style="text-align: left">Value to use when check fails (currently not used for this check type).</td><td style="text-align: left"><code>0</code></td></tr>
