@@ -279,7 +279,12 @@ CheckResult CheckRunner::check_compile(const Check& check) {
         code = defines_code + code;
     }
 
-    bool success = try_compile(code, check.language());
+    std::vector<std::string> extra_copts;
+    if (check.copts().has_value()) {
+        extra_copts = *check.copts();
+    }
+
+    bool success = try_compile(code, check.language(), extra_copts);
 
     std::optional<std::string> value;
     bool should_output = true;
@@ -333,7 +338,17 @@ CheckResult CheckRunner::check_link(const Check& check) {
 
     // Compile and link without running - we only need to verify linking
     // succeeds
-    bool success = try_compile_and_link(code, check.language());
+    std::vector<std::string> extra_copts;
+    if (check.copts().has_value()) {
+        extra_copts = *check.copts();
+    }
+    std::vector<std::string> extra_linkopts;
+    if (check.linkopts().has_value()) {
+        extra_linkopts = *check.linkopts();
+    }
+
+    bool success = try_compile_and_link(code, check.language(), extra_copts,
+                                        extra_linkopts);
 
     std::string value;
     if (check.define_value().has_value()) {

@@ -569,6 +569,7 @@ def _ac_try_compile(
         includes = None,
         language = "c",
         compile_defines = None,
+        copts = None,
         requires = None,
         if_true = None,
         if_false = None,
@@ -622,6 +623,8 @@ def _ac_try_compile(
             to add before includes (e.g., `["_GNU_SOURCE", "_DARWIN_C_SOURCE"]`).
             Each string must match the define name of a previous check. The values
             from those checks will be used automatically.
+        copts: Optional list of extra compiler flags for this check
+            (e.g., `["-msse2", "-std=c11"]`).
         requires: Requirements that must be met for this check to run.
             Can be define names (e.g., `"HAVE_FOO"`), negated (e.g., `"!HAVE_FOO"`),
             or value-based (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
@@ -663,6 +666,8 @@ def _ac_try_compile(
 
     if compile_defines:
         check["compile_defines"] = compile_defines
+    if copts:
+        check["copts"] = copts
     if requires:
         check["requires"] = requires
 
@@ -680,6 +685,8 @@ def _ac_try_link(
         includes = None,
         language = "c",
         compile_defines = None,
+        copts = None,
+        linkopts = None,
         requires = None,
         if_true = 1,
         if_false = 0,
@@ -748,6 +755,10 @@ def _ac_try_link(
             to add before includes (e.g., `["_GNU_SOURCE", "_DARWIN_C_SOURCE"]`).
             Each string must match the define name of a previous check. The values
             from those checks will be used automatically.
+        copts: Optional list of extra compiler flags for this check
+            (e.g., `["-msse2", "-std=c11"]`).
+        linkopts: Optional list of extra linker flags for this check
+            (e.g., `["-lpthread", "-Wl,--as-needed"]`).
         requires: Requirements that must be met for this check to run.
             Can be define names (e.g., `"HAVE_FOO"`), negated (e.g., `"!HAVE_FOO"`),
             or value-based (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
@@ -788,6 +799,10 @@ def _ac_try_link(
 
     if compile_defines:
         check["compile_defines"] = compile_defines
+    if copts:
+        check["copts"] = copts
+    if linkopts:
+        check["linkopts"] = linkopts
     if requires:
         check["requires"] = requires
 

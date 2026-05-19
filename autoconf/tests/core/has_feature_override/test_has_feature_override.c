@@ -11,5 +11,9 @@ int main(void) {
     assert(HAVE_STDLIB_H == 1);
     assert(HAVE_STRING_H == 1);
 
+    assert(HAVE_COMPILE_COPTS == 1);
+    assert(HAVE_LINK_COPTS == 1);
+    assert(HAVE_COPTS_VERIFIED == 1);
+
     return 0;
 }

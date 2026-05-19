@@ -9,6 +9,15 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
+/* Define to 1 if AC_TRY_COMPILE with copts succeeds. */
+#undef HAVE_COMPILE_COPTS
+
+/* Define to 1 if AC_TRY_LINK with copts and linkopts succeeds. */
+#undef HAVE_LINK_COPTS
+
+/* Define to 1 if copts are actually passed to the compiler. */
+#undef HAVE_COPTS_VERIFIED
+
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
 

@@ -224,6 +224,30 @@ std::optional<Check> Check::from_json(const void* json_data) {
         }
     }
 
+    if (json.contains("copts") && json["copts"].is_array()) {
+        std::vector<std::string> copts_list;
+        for (const nlohmann::json& flag : json["copts"]) {
+            if (flag.is_string()) {
+                copts_list.push_back(flag.get<std::string>());
+            }
+        }
+        if (!copts_list.empty()) {
+            check.copts_ = copts_list;
+        }
+    }
+
+    if (json.contains("linkopts") && json["linkopts"].is_array()) {
+        std::vector<std::string> linkopts_list;
+        for (const nlohmann::json& flag : json["linkopts"]) {
+            if (flag.is_string()) {
+                linkopts_list.push_back(flag.get<std::string>());
+            }
+        }
+        if (!linkopts_list.empty()) {
+            check.linkopts_ = linkopts_list;
+        }
+    }
+
     // Parse unquote field (for AC_DEFINE_UNQUOTED)
     if (json.contains("unquote") && json["unquote"].is_boolean()) {
         check.unquote_ = json["unquote"].get<bool>();
