@@ -561,14 +561,9 @@ CheckResult CheckRunner::check_gl_next_header(const Check& check) {
     }
 
     // #include_next not supported -- inline the system header content
-    std::string compiler =
-        (check.language() == "cpp" || check.language() == "c++")
-            ? config_.cpp_compiler
-            : config_.c_compiler;
-    std::vector<std::string> flags =
-        (check.language() == "cpp" || check.language() == "c++")
-            ? config_.cpp_flags
-            : config_.c_flags;
+    std::vector<std::string> cmd = get_compiler_and_flags(check.language());
+    std::string compiler = cmd.front();
+    std::vector<std::string> flags(cmd.begin() + 1, cmd.end());
 
     auto sys_path =
         find_system_header_path(compiler, flags, config_.compiler_type, header,
