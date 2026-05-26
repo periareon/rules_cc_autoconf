@@ -188,27 +188,25 @@
 AC_CONFIG_HEADERS([config.h])
 AC_CHECK_HEADERS([stdio.h stdlib.h])
 AC_CHECK_FUNCS([malloc printf])
+REPLACE_FOO=1
+AC_SUBST([REPLACE_FOO])
 AC_OUTPUT
 </code></pre>
 <p><strong>Bazel (BUILD.bazel):</strong></p>
 <pre><code class="language-python">load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
 load("@rules_cc_autoconf//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
-load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks", "macros")
 load("@rules_cc_autoconf//autoconf:package_info.bzl", "package_info")
 
 package_info(
     name = "package",
-    package_name = "myproject",
-    package_version = "1.0.0",
+    module_bazel = "MODULE.bazel"
 )
 
 autoconf(
     name = "autoconf",
-    checks = [
-        checks.AC_CHECK_HEADER("stdio.h", define = "HAVE_STDIO_H"),
-        checks.AC_CHECK_HEADER("stdlib.h", define = "HAVE_STDLIB_H"),
-        checks.AC_CHECK_FUNC("malloc", define = "HAVE_MALLOC"),
-        checks.AC_CHECK_FUNC("printf", define = "HAVE_PRINTF"),
+    checks = macros.AC_CHECK_HEADERS(["stdio.h", "stdlib.h"]) + [
+        checks.AC_SUBST("REPLACE_FOO", 1)
     ],
     deps = [":package"],
 )
@@ -360,16 +358,19 @@ checks.AC_CHECK_HEADER("stdio.h", define = "HAVE_STDIO_H")
 AC_CHECK_HEADERS([stdlib.h string.h unistd.h])
 </code></pre>
 <p><strong>Bazel:</strong></p>
-<pre><code class="language-python">checks.AC_CHECK_HEADER("stdio.h", define = "HAVE_STDIO_H")
-checks.AC_CHECK_HEADER("stdlib.h", define = "HAVE_STDLIB_H")
-checks.AC_CHECK_HEADER("string.h", define = "HAVE_STRING_H")
-checks.AC_CHECK_HEADER("unistd.h", define = "HAVE_UNISTD_H")
+<pre><code class="language-python"># Singular AC_CHECK_HEADER → checks.AC_CHECK_HEADER
+checks.AC_CHECK_HEADER("stdio.h", define = "HAVE_STDIO_H")
+
+# Plural AC_CHECK_HEADERS → macros.AC_CHECK_HEADERS (preferred)
+# Returns a list of checks with auto-generated HAVE_&lt;HEADER&gt; defines.
+macros.AC_CHECK_HEADERS(["stdlib.h", "string.h", "unistd.h"])
 </code></pre>
 <p><strong>Rules:</strong></p>
 <ul>
 <li>Remove square brackets, add quotes</li>
-<li>Split <code>AC_CHECK_HEADERS</code> (plural) into individual <code>AC_CHECK_HEADER</code> calls</li>
-<li>Add <code>define = "HAVE_&lt;HEADER&gt;"</code> to create defines in <code>config.h</code></li>
+<li>For plural <code>AC_CHECK_HEADERS</code>, prefer <code>macros.AC_CHECK_HEADERS([...])</code> over splitting into individual <code>checks.AC_CHECK_HEADER</code> calls — the macro returns a list of checks with auto-generated <code>HAVE_&lt;HEADER&gt;</code> defines, matching upstream behavior with less boilerplate</li>
+<li>Splitting into individual <code>checks.AC_CHECK_HEADER</code> calls is only needed when you must customize per-header parameters (e.g., different <code>requires</code>, <code>includes</code>, or a non-standard <code>define</code> name)</li>
+<li>Add <code>define = "HAVE_&lt;HEADER&gt;"</code> to singular calls to create defines in <code>config.h</code></li>
 </ul>
 <hr />
 <h3 id="pattern-2-function-checks"><a class="header" href="#pattern-2-function-checks">Pattern 2: Function Checks</a></h3>
@@ -378,15 +379,17 @@ checks.AC_CHECK_HEADER("unistd.h", define = "HAVE_UNISTD_H")
 AC_CHECK_FUNCS([printf scanf fopen])
 </code></pre>
 <p><strong>Bazel:</strong></p>
-<pre><code class="language-python">checks.AC_CHECK_FUNC("malloc", define = "HAVE_MALLOC")
-checks.AC_CHECK_FUNC("printf", define = "HAVE_PRINTF")
-checks.AC_CHECK_FUNC("scanf", define = "HAVE_SCANF")
-checks.AC_CHECK_FUNC("fopen", define = "HAVE_FOPEN")
+<pre><code class="language-python"># Singular AC_CHECK_FUNC → checks.AC_CHECK_FUNC
+checks.AC_CHECK_FUNC("malloc", define = "HAVE_MALLOC")
+
+# Plural AC_CHECK_FUNCS → macros.AC_CHECK_FUNCS (preferred)
+macros.AC_CHECK_FUNCS(["printf", "scanf", "fopen"])
 </code></pre>
 <p><strong>Rules:</strong></p>
 <ul>
-<li>Use the GNU Autoconf extern declaration pattern automatically</li>
-<li>Add <code>define = "HAVE_&lt;FUNCTION&gt;"</code> for config.h defines</li>
+<li>For plural <code>AC_CHECK_FUNCS</code>, prefer <code>macros.AC_CHECK_FUNCS([...])</code>; it generates <code>HAVE_&lt;FUNCTION&gt;</code> defines for each entry</li>
+<li>Use individual <code>checks.AC_CHECK_FUNC</code> calls only when per-function customization is required</li>
+<li>Add <code>define = "HAVE_&lt;FUNCTION&gt;"</code> for singular calls</li>
 </ul>
 <hr />
 <h3 id="pattern-3-type-checks"><a class="header" href="#pattern-3-type-checks">Pattern 3: Type Checks</a></h3>
@@ -395,39 +398,46 @@ checks.AC_CHECK_FUNC("fopen", define = "HAVE_FOPEN")
 AC_CHECK_TYPES([int8_t, int64_t], [], [], [[#include &lt;stdint.h&gt;]])
 </code></pre>
 <p><strong>Bazel:</strong></p>
-<pre><code class="language-python"># Without explicit includes (uses AC_INCLUDES_DEFAULT)
+<pre><code class="language-python"># Singular: without explicit includes (uses AC_INCLUDES_DEFAULT)
 checks.AC_CHECK_TYPE("size_t", define = "HAVE_SIZE_T")
 
-# With explicit includes
-checks.AC_CHECK_TYPE("int8_t", define = "HAVE_INT8_T", includes = ["#include &lt;stdint.h&gt;"])
-checks.AC_CHECK_TYPE("int64_t", define = "HAVE_INT64_T", includes = ["#include &lt;stdint.h&gt;"])
+# Plural AC_CHECK_TYPES → macros.AC_CHECK_TYPES (preferred)
+# Shared includes apply to every type in the list.
+macros.AC_CHECK_TYPES(["int8_t", "int64_t"], includes = ["#include &lt;stdint.h&gt;"])
 </code></pre>
 <hr />
 <h3 id="pattern-4-declaration-checks"><a class="header" href="#pattern-4-declaration-checks">Pattern 4: Declaration Checks</a></h3>
 <p><strong>M4:</strong></p>
 <pre><code class="language-m4">AC_CHECK_DECL([NULL], [], [], [[#include &lt;stddef.h&gt;]])
-AC_CHECK_DECLS([execvpe], [], [], [[#include &lt;unistd.h&gt;]])
+AC_CHECK_DECLS([execvpe, secure_getenv], [], [], [[#include &lt;unistd.h&gt;]])
 </code></pre>
 <p><strong>Bazel:</strong></p>
-<pre><code class="language-python">checks.AC_CHECK_DECL("NULL", define = "HAVE_DECL_NULL", includes = ["#include &lt;stddef.h&gt;"])
-checks.AC_CHECK_DECL("execvpe", define = "HAVE_DECL_EXECVPE", includes = ["#include &lt;unistd.h&gt;"])
+<pre><code class="language-python"># Singular AC_CHECK_DECL → checks.AC_CHECK_DECL
+checks.AC_CHECK_DECL("NULL", define = "HAVE_DECL_NULL", includes = ["#include &lt;stddef.h&gt;"])
+
+# Plural AC_CHECK_DECLS → macros.AC_CHECK_DECLS (preferred)
+# Auto-generates HAVE_DECL_&lt;SYMBOL&gt; defines for each entry.
+macros.AC_CHECK_DECLS(["execvpe", "secure_getenv"], includes = ["#include &lt;unistd.h&gt;"])
 </code></pre>
 <p><strong>Note:</strong> <code>AC_CHECK_DECL</code> differs from <code>AC_CHECK_FUNC</code> — it checks if something is <em>declared</em> (not just defined as a macro).</p>
 <hr />
 <h3 id="pattern-5-member-checks"><a class="header" href="#pattern-5-member-checks">Pattern 5: Member Checks</a></h3>
 <p><strong>M4:</strong></p>
 <pre><code class="language-m4">AC_CHECK_MEMBER([struct stat.st_rdev], [], [], [[#include &lt;sys/stat.h&gt;]])
-AC_CHECK_MEMBERS([struct tm.tm_zone, struct stat.st_blocks])
+AC_CHECK_MEMBERS([struct tm.tm_zone, struct tm.tm_gmtoff], [], [], [[#include &lt;time.h&gt;]])
 </code></pre>
 <p><strong>Bazel:</strong></p>
-<pre><code class="language-python">checks.AC_CHECK_MEMBER(
+<pre><code class="language-python"># Singular AC_CHECK_MEMBER → checks.AC_CHECK_MEMBER
+checks.AC_CHECK_MEMBER(
     "struct stat.st_rdev",
     define = "HAVE_STRUCT_STAT_ST_RDEV",
     includes = ["#include &lt;sys/stat.h&gt;"],
 )
-checks.AC_CHECK_MEMBER(
-    "struct tm.tm_zone",
-    define = "HAVE_STRUCT_TM_TM_ZONE",
+
+# Plural AC_CHECK_MEMBERS → macros.AC_CHECK_MEMBERS (preferred)
+# Auto-generates HAVE_STRUCT_&lt;AGGREGATE&gt;_&lt;MEMBER&gt; defines for each entry.
+macros.AC_CHECK_MEMBERS(
+    ["struct tm.tm_zone", "struct tm.tm_gmtoff"],
     includes = ["#include &lt;time.h&gt;"],
 )
 </code></pre>
@@ -612,6 +622,22 @@ HAVE_WORKING_MKTIME=0
 <pre><code class="language-python">checks.M4_VARIABLE("REPLACE_FSTAT", "1")
 checks.M4_VARIABLE("HAVE_WORKING_MKTIME", "0")
 </code></pre>
+<h4 id="when-m4_variable-is-required-not-just-nice-to-have"><a class="header" href="#when-m4_variable-is-required-not-just-nice-to-have">When <code>M4_VARIABLE</code> is required (not just nice-to-have)</a></h4>
+<p>A value belongs in <code>M4_VARIABLE</code> whenever <strong>other M4 modules read it to make decisions</strong>, even if the producing module never calls <code>AC_DEFINE</code> or <code>AC_SUBST</code> on it.</p>
+<p>Common signals that an M4 shell variable must be tracked with <code>M4_VARIABLE</code>:</p>
+<ul>
+<li>The producing <code>.m4</code> file sets it as a plain shell assignment (<code>HAVE_FOO=1</code>, <code>GL_GENERATE_FOO_H=true</code>) and <strong>other</strong> <code>.m4</code> files branch on it (<code>if test $HAVE_FOO = 1; then ...</code>).</li>
+<li>The variable controls whether a sibling module installs a replacement header (<code>GL_GENERATE_&lt;NAME&gt;_H</code>).</li>
+<li>The variable feeds a consumer's <code>requires = ["HAVE_FOO==1"]</code> — without <code>M4_VARIABLE</code> the requirement can never be satisfied because no check produces the value.</li>
+</ul>
+<p>Examples that are easy to miss:</p>
+<pre><code class="language-python"># M4 sets `HAVE_OBSTACK=1` (or 0) and `GL_GENERATE_OBSTACK_H=true|false`
+# as bare shell variables. They are NOT AC_SUBSTed, but other gnulib
+# modules branch on them — so they must be tracked.
+checks.M4_VARIABLE("HAVE_OBSTACK", 1),
+checks.M4_VARIABLE("GL_GENERATE_OBSTACK_H", "false"),
+</code></pre>
+<p><strong>Rule of thumb:</strong> if removing the variable from the original M4 would change the behavior of a <em>different</em> <code>AC_DEFUN</code>, it is a consumer-visible decision input and needs <code>M4_VARIABLE</code>. Use <code>AC_SUBST</code> instead only when the value is also meant to land in a generated template file (<code>@VAR@</code>).</p>
 <hr />
 <h3 id="pattern-15-language-selection"><a class="header" href="#pattern-15-language-selection">Pattern 15: Language Selection</a></h3>
 <p><strong>M4:</strong></p>
@@ -1396,11 +1422,13 @@ Map each M4 macro to its Bazel equivalent</li>
 <li><input disabled="" type="checkbox"/>
 Convert argument syntax (brackets → quotes)</li>
 <li><input disabled="" type="checkbox"/>
-Split plural macros into individual calls</li>
+Use plural <code>macros.AC_CHECK_*</code> for grouped checks (split into individual <code>checks.AC_CHECK_*</code> calls only when per-entry customization is needed)</li>
 <li><input disabled="" type="checkbox"/>
 Add <code>define =</code> parameters for config.h defines</li>
 <li><input disabled="" type="checkbox"/>
 Add <code>subst =</code> parameters for @VAR@ substitutions</li>
+<li><input disabled="" type="checkbox"/>
+Add <code>M4_VARIABLE</code> entries for any shell-only variables that downstream M4 modules branch on (e.g. <code>HAVE_&lt;NAME&gt;</code>, <code>GL_GENERATE_&lt;NAME&gt;_H</code>)</li>
 <li><input disabled="" type="checkbox"/>
 Handle platform conditionals with <code>select()</code></li>
 <li><input disabled="" type="checkbox"/>
@@ -1415,7 +1443,8 @@ Verify no duplicate checks between direct checks and deps</li>
 <hr />
 <h2 id="common-pitfalls"><a class="header" href="#common-pitfalls">Common Pitfalls</a></h2>
 <div class="table-wrapper"><table><thead><tr><th>Problem</th><th>Solution</th></tr></thead><tbody>
-<tr><td>Forgetting to split plural macros</td><td><code>AC_CHECK_HEADERS([a b c])</code> needs 3 separate <code>AC_CHECK_HEADER</code> calls</td></tr>
+<tr><td>Translating plural macros one-by-one</td><td>Use <code>macros.AC_CHECK_HEADERS([...])</code> / <code>AC_CHECK_FUNCS</code> / <code>AC_CHECK_TYPES</code> / <code>AC_CHECK_DECLS</code> / <code>AC_CHECK_MEMBERS</code> instead of expanding into individual <code>checks.AC_CHECK_*</code> calls (split only when per-entry params differ)</td></tr>
+<tr><td>Missing <code>M4_VARIABLE</code> for consumer-visible decisions</td><td>M4 shell variables that other modules branch on (e.g. <code>HAVE_OBSTACK</code>, <code>GL_GENERATE_OBSTACK_H</code>) must be tracked with <code>checks.M4_VARIABLE</code>, or downstream <code>requires = [...]</code> clauses will never match</td></tr>
 <tr><td>Missing <code>define =</code> parameter</td><td>Add <code>define = "HAVE_FOO"</code> to create defines in config.h</td></tr>
 <tr><td>Wrong define names</td><td>Follow autoconf conventions: <code>HAVE_&lt;NAME&gt;</code>, <code>SIZEOF_&lt;TYPE&gt;</code>, etc.</td></tr>
 <tr><td>Duplicate check errors</td><td>Use <code>//gnulib/m4</code> targets instead of manual checks</td></tr>
