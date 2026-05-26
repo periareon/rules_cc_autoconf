@@ -9,6 +9,13 @@ autoconf(
         # gl_SIGSEGV macro from sigsegv.m4 handles --with-libsigsegv option
         # and conditionally calls gl_LIBSIGSEGV. No direct checks needed.
         checks.M4_VARIABLE("gl_sigsegv_uses_libsigsegv", "no"),
+        # HAVE_SIGSEGV_H / GL_GENERATE_SIGSEGV_H: upstream sets HAVE_SIGSEGV_H=0
+        # when not linking against libsigsegv (the default) and sets
+        # GL_GENERATE_SIGSEGV_H=true so gnulib's own sigsegv.h is installed.
+        # The Bazel toolchain doesn't expose --with-libsigsegv, so we mirror
+        # that default unconditionally.
+        checks.AC_SUBST("HAVE_SIGSEGV_H", "0"),
+        checks.M4_VARIABLE("GL_GENERATE_SIGSEGV_H", "true"),
     ],
     visibility = ["//visibility:public"],
     deps = [

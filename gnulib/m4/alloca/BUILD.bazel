@@ -6,35 +6,54 @@ load("//autoconf:checks.bzl", "checks")
 autoconf(
     name = "gl_FUNC_ALLOCA",
     checks = [
-        #   - ac_cv_working_alloca_h (cache variable for alloca.h header)
-        #   - ac_cv_func_alloca_works (cache variable for alloca function)
-        #   - HAVE_ALLOCA_H (define and subst if header exists)
-
-        # AC_EGREP_CPP checks if __GNUC__, _AIX, or _MSC_VER is defined
-        # If any of these are defined, alloca is a compiler builtin
+        # gl_cv_rpl_alloca: is alloca available as a compiler built-in?
+        # Upstream uses AC_EGREP_CPP to look for `__GNUC__ || _AIX || _MSC_VER`.
+        # AC_TRY_COMPILE gives the same yes/no answer: compilation succeeds
+        # when one of the macros is defined and fails (via #error) otherwise.
+        # Only meaningful when alloca.h actually works, so gated on
+        # ac_cv_func_alloca (this port's analogue of upstream's
+        # ac_cv_working_alloca_h).
         checks.AC_TRY_COMPILE(
             name = "gl_cv_rpl_alloca",
             code = """\
-#if defined __GNUC__ || defined _AIX || defined _MSC_VER
-/* Need own alloca */
-#else
-/* Not a compiler builtin */
+#if !(defined __GNUC__ || defined _AIX || defined _MSC_VER)
+#error "alloca is not a compiler built-in on this compiler"
 #endif
 int main(void) { return 0; }
 """,
             language = "c",
+            requires = ["ac_cv_func_alloca"],
         ),
 
-        # Note: AC_FUNC_ALLOCA already creates HAVE_ALLOCA via AC_DEFINE with condition ac_cv_func_alloca
-        # gl_FUNC_ALLOCA should not recreate it - it relies on AC_FUNC_ALLOCA's result
-
-        # Standard header defines are provided by AC_CHECK_INCLUDES_DEFAULT dependency
-
-        # Set ALLOCA to empty string (subst-only) - alloca is a compiler builtin
+        # ALLOCA: empty when alloca is a compiler builtin (no replacement
+        # library needed). Upstream populates this via _AC_LIBOBJ_ALLOCA
+        # when falling back to alloca.c; the empty default matches the
+        # common Linux/macOS case where the compiler provides alloca.
         checks.AC_SUBST("ALLOCA", ""),
+
+        # HAVE_ALLOCA_H: 1 when the header is present on the system. Upstream
+        # keys this off ac_cv_working_alloca_h; this port uses the header
+        # existence check from AC_FUNC_ALLOCA, which lines up on systems
+        # where the header existing implies it works.
         checks.AC_SUBST(
             "HAVE_ALLOCA_H",
             condition = "ac_cv_header_alloca_h",
+        ),
+
+        # GL_GENERATE_ALLOCA_H: plain shell variable in upstream serial 21
+        # (no AC_SUBST / AM_CONDITIONAL), set to "true" when gnulib should
+        # ship its own alloca.h wrapper:
+        #   - working_alloca_h=no                          → true
+        #   - working_alloca_h=yes && rpl_alloca=yes       → true  (builtin: wrap it)
+        #   - working_alloca_h=yes && rpl_alloca=no        → false (system header is fine)
+        # Collapsing those branches: !working_alloca_h || rpl_alloca.
+        # Tracked as M4_VARIABLE so downstream `requires=[...]` can branch on
+        # it without it leaking into config.h / subst.h.
+        checks.M4_VARIABLE(
+            "GL_GENERATE_ALLOCA_H",
+            condition = "ac_cv_func_alloca && !gl_cv_rpl_alloca",
+            if_false = "true",
+            if_true = "false",
         ),
     ],
     visibility = ["//visibility:public"],

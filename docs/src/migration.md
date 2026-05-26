@@ -40,6 +40,8 @@ AC_INIT([myproject], [1.0.0])
 AC_CONFIG_HEADERS([config.h])
 AC_CHECK_HEADERS([stdio.h stdlib.h])
 AC_CHECK_FUNCS([malloc printf])
+REPLACE_FOO=1
+AC_SUBST([REPLACE_FOO])
 AC_OUTPUT
 ```
 
@@ -48,22 +50,18 @@ AC_OUTPUT
 ```python
 load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
 load("@rules_cc_autoconf//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
-load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks", "macros")
 load("@rules_cc_autoconf//autoconf:package_info.bzl", "package_info")
 
 package_info(
     name = "package",
-    package_name = "myproject",
-    package_version = "1.0.0",
+    module_bazel = "MODULE.bazel"
 )
 
 autoconf(
     name = "autoconf",
-    checks = [
-        checks.AC_CHECK_HEADER("stdio.h", define = "HAVE_STDIO_H"),
-        checks.AC_CHECK_HEADER("stdlib.h", define = "HAVE_STDLIB_H"),
-        checks.AC_CHECK_FUNC("malloc", define = "HAVE_MALLOC"),
-        checks.AC_CHECK_FUNC("printf", define = "HAVE_PRINTF"),
+    checks = macros.AC_CHECK_HEADERS(["stdio.h", "stdlib.h"]) + [
+        checks.AC_SUBST("REPLACE_FOO", 1)
     ],
     deps = [":package"],
 )
@@ -268,16 +266,19 @@ AC_CHECK_HEADERS([stdlib.h string.h unistd.h])
 **Bazel:**
 
 ```python
+# Singular AC_CHECK_HEADER → checks.AC_CHECK_HEADER
 checks.AC_CHECK_HEADER("stdio.h", define = "HAVE_STDIO_H")
-checks.AC_CHECK_HEADER("stdlib.h", define = "HAVE_STDLIB_H")
-checks.AC_CHECK_HEADER("string.h", define = "HAVE_STRING_H")
-checks.AC_CHECK_HEADER("unistd.h", define = "HAVE_UNISTD_H")
+
+# Plural AC_CHECK_HEADERS → macros.AC_CHECK_HEADERS (preferred)
+# Returns a list of checks with auto-generated HAVE_<HEADER> defines.
+macros.AC_CHECK_HEADERS(["stdlib.h", "string.h", "unistd.h"])
 ```
 
 **Rules:**
 - Remove square brackets, add quotes
-- Split `AC_CHECK_HEADERS` (plural) into individual `AC_CHECK_HEADER` calls
-- Add `define = "HAVE_<HEADER>"` to create defines in `config.h`
+- For plural `AC_CHECK_HEADERS`, prefer `macros.AC_CHECK_HEADERS([...])` over splitting into individual `checks.AC_CHECK_HEADER` calls — the macro returns a list of checks with auto-generated `HAVE_<HEADER>` defines, matching upstream behavior with less boilerplate
+- Splitting into individual `checks.AC_CHECK_HEADER` calls is only needed when you must customize per-header parameters (e.g., different `requires`, `includes`, or a non-standard `define` name)
+- Add `define = "HAVE_<HEADER>"` to singular calls to create defines in `config.h`
 
 ---
 
@@ -293,15 +294,17 @@ AC_CHECK_FUNCS([printf scanf fopen])
 **Bazel:**
 
 ```python
+# Singular AC_CHECK_FUNC → checks.AC_CHECK_FUNC
 checks.AC_CHECK_FUNC("malloc", define = "HAVE_MALLOC")
-checks.AC_CHECK_FUNC("printf", define = "HAVE_PRINTF")
-checks.AC_CHECK_FUNC("scanf", define = "HAVE_SCANF")
-checks.AC_CHECK_FUNC("fopen", define = "HAVE_FOPEN")
+
+# Plural AC_CHECK_FUNCS → macros.AC_CHECK_FUNCS (preferred)
+macros.AC_CHECK_FUNCS(["printf", "scanf", "fopen"])
 ```
 
 **Rules:**
-- Use the GNU Autoconf extern declaration pattern automatically
-- Add `define = "HAVE_<FUNCTION>"` for config.h defines
+- For plural `AC_CHECK_FUNCS`, prefer `macros.AC_CHECK_FUNCS([...])`; it generates `HAVE_<FUNCTION>` defines for each entry
+- Use individual `checks.AC_CHECK_FUNC` calls only when per-function customization is required
+- Add `define = "HAVE_<FUNCTION>"` for singular calls
 
 ---
 
@@ -317,12 +320,12 @@ AC_CHECK_TYPES([int8_t, int64_t], [], [], [[#include <stdint.h>]])
 **Bazel:**
 
 ```python
-# Without explicit includes (uses AC_INCLUDES_DEFAULT)
+# Singular: without explicit includes (uses AC_INCLUDES_DEFAULT)
 checks.AC_CHECK_TYPE("size_t", define = "HAVE_SIZE_T")
 
-# With explicit includes
-checks.AC_CHECK_TYPE("int8_t", define = "HAVE_INT8_T", includes = ["#include <stdint.h>"])
-checks.AC_CHECK_TYPE("int64_t", define = "HAVE_INT64_T", includes = ["#include <stdint.h>"])
+# Plural AC_CHECK_TYPES → macros.AC_CHECK_TYPES (preferred)
+# Shared includes apply to every type in the list.
+macros.AC_CHECK_TYPES(["int8_t", "int64_t"], includes = ["#include <stdint.h>"])
 ```
 
 ---
@@ -333,14 +336,18 @@ checks.AC_CHECK_TYPE("int64_t", define = "HAVE_INT64_T", includes = ["#include <
 
 ```m4
 AC_CHECK_DECL([NULL], [], [], [[#include <stddef.h>]])
-AC_CHECK_DECLS([execvpe], [], [], [[#include <unistd.h>]])
+AC_CHECK_DECLS([execvpe, secure_getenv], [], [], [[#include <unistd.h>]])
 ```
 
 **Bazel:**
 
 ```python
+# Singular AC_CHECK_DECL → checks.AC_CHECK_DECL
 checks.AC_CHECK_DECL("NULL", define = "HAVE_DECL_NULL", includes = ["#include <stddef.h>"])
-checks.AC_CHECK_DECL("execvpe", define = "HAVE_DECL_EXECVPE", includes = ["#include <unistd.h>"])
+
+# Plural AC_CHECK_DECLS → macros.AC_CHECK_DECLS (preferred)
+# Auto-generates HAVE_DECL_<SYMBOL> defines for each entry.
+macros.AC_CHECK_DECLS(["execvpe", "secure_getenv"], includes = ["#include <unistd.h>"])
 ```
 
 **Note:** `AC_CHECK_DECL` differs from `AC_CHECK_FUNC` — it checks if something is *declared* (not just defined as a macro).
@@ -353,20 +360,23 @@ checks.AC_CHECK_DECL("execvpe", define = "HAVE_DECL_EXECVPE", includes = ["#incl
 
 ```m4
 AC_CHECK_MEMBER([struct stat.st_rdev], [], [], [[#include <sys/stat.h>]])
-AC_CHECK_MEMBERS([struct tm.tm_zone, struct stat.st_blocks])
+AC_CHECK_MEMBERS([struct tm.tm_zone, struct tm.tm_gmtoff], [], [], [[#include <time.h>]])
 ```
 
 **Bazel:**
 
 ```python
+# Singular AC_CHECK_MEMBER → checks.AC_CHECK_MEMBER
 checks.AC_CHECK_MEMBER(
     "struct stat.st_rdev",
     define = "HAVE_STRUCT_STAT_ST_RDEV",
     includes = ["#include <sys/stat.h>"],
 )
-checks.AC_CHECK_MEMBER(
-    "struct tm.tm_zone",
-    define = "HAVE_STRUCT_TM_TM_ZONE",
+
+# Plural AC_CHECK_MEMBERS → macros.AC_CHECK_MEMBERS (preferred)
+# Auto-generates HAVE_STRUCT_<AGGREGATE>_<MEMBER> defines for each entry.
+macros.AC_CHECK_MEMBERS(
+    ["struct tm.tm_zone", "struct tm.tm_gmtoff"],
     includes = ["#include <time.h>"],
 )
 ```
@@ -640,6 +650,28 @@ HAVE_WORKING_MKTIME=0
 checks.M4_VARIABLE("REPLACE_FSTAT", "1")
 checks.M4_VARIABLE("HAVE_WORKING_MKTIME", "0")
 ```
+
+#### When `M4_VARIABLE` is required (not just nice-to-have)
+
+A value belongs in `M4_VARIABLE` whenever **other M4 modules read it to make decisions**, even if the producing module never calls `AC_DEFINE` or `AC_SUBST` on it.
+
+Common signals that an M4 shell variable must be tracked with `M4_VARIABLE`:
+
+- The producing `.m4` file sets it as a plain shell assignment (`HAVE_FOO=1`, `GL_GENERATE_FOO_H=true`) and **other** `.m4` files branch on it (`if test $HAVE_FOO = 1; then ...`).
+- The variable controls whether a sibling module installs a replacement header (`GL_GENERATE_<NAME>_H`).
+- The variable feeds a consumer's `requires = ["HAVE_FOO==1"]` — without `M4_VARIABLE` the requirement can never be satisfied because no check produces the value.
+
+Examples that are easy to miss:
+
+```python
+# M4 sets `HAVE_OBSTACK=1` (or 0) and `GL_GENERATE_OBSTACK_H=true|false`
+# as bare shell variables. They are NOT AC_SUBSTed, but other gnulib
+# modules branch on them — so they must be tracked.
+checks.M4_VARIABLE("HAVE_OBSTACK", 1),
+checks.M4_VARIABLE("GL_GENERATE_OBSTACK_H", "false"),
+```
+
+**Rule of thumb:** if removing the variable from the original M4 would change the behavior of a *different* `AC_DEFUN`, it is a consumer-visible decision input and needs `M4_VARIABLE`. Use `AC_SUBST` instead only when the value is also meant to land in a generated template file (`@VAR@`).
 
 ---
 
@@ -1565,9 +1597,10 @@ When migrating an M4 file, follow this checklist:
 - [ ] Identify all `AC_REQUIRE` dependencies
 - [ ] Map each M4 macro to its Bazel equivalent
 - [ ] Convert argument syntax (brackets → quotes)
-- [ ] Split plural macros into individual calls
+- [ ] Use plural `macros.AC_CHECK_*` for grouped checks (split into individual `checks.AC_CHECK_*` calls only when per-entry customization is needed)
 - [ ] Add `define =` parameters for config.h defines
 - [ ] Add `subst =` parameters for @VAR@ substitutions
+- [ ] Add `M4_VARIABLE` entries for any shell-only variables that downstream M4 modules branch on (e.g. `HAVE_<NAME>`, `GL_GENERATE_<NAME>_H`)
 - [ ] Handle platform conditionals with `select()`
 - [ ] Add comments referencing original M4 file and line numbers
 - [ ] Add dependencies to `deps` list
@@ -1580,7 +1613,8 @@ When migrating an M4 file, follow this checklist:
 
 | Problem | Solution |
 |---------|----------|
-| Forgetting to split plural macros | `AC_CHECK_HEADERS([a b c])` needs 3 separate `AC_CHECK_HEADER` calls |
+| Translating plural macros one-by-one | Use `macros.AC_CHECK_HEADERS([...])` / `AC_CHECK_FUNCS` / `AC_CHECK_TYPES` / `AC_CHECK_DECLS` / `AC_CHECK_MEMBERS` instead of expanding into individual `checks.AC_CHECK_*` calls (split only when per-entry params differ) |
+| Missing `M4_VARIABLE` for consumer-visible decisions | M4 shell variables that other modules branch on (e.g. `HAVE_OBSTACK`, `GL_GENERATE_OBSTACK_H`) must be tracked with `checks.M4_VARIABLE`, or downstream `requires = [...]` clauses will never match |
 | Missing `define =` parameter | Add `define = "HAVE_FOO"` to create defines in config.h |
 | Wrong define names | Follow autoconf conventions: `HAVE_<NAME>`, `SIZEOF_<TYPE>`, etc. |
 | Duplicate check errors | Use `//gnulib/m4` targets instead of manual checks |

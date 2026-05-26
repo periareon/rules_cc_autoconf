@@ -11,6 +11,15 @@ autoconf(
             "byteswap.h",
             define = "HAVE_BYTESWAP_H",
         ),
+        # GL_GENERATE_BYTESWAP_H: true when byteswap.h is missing — gnulib then
+        # ships its own replacement.  Plain shell variable in upstream m4 (not
+        # AC_SUBSTed); tracked here so consumers can branch on it via requires.
+        checks.M4_VARIABLE(
+            "GL_GENERATE_BYTESWAP_H",
+            condition = "ac_cv_header_byteswap_h",
+            if_false = "true",
+            if_true = "false",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [

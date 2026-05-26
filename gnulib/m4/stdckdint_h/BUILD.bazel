@@ -55,6 +55,18 @@ int main(void) {
             if_false = "0",
             if_true = "1",
         ),
+        # GL_GENERATE_STDCKDINT_H: upstream sets this true whenever the system
+        # header doesn't exist, can't be included in C, or fails the C23
+        # ckd_add/sub/mul probe.  gl_cv_header_c_stdckdint_h_works gates on
+        # gl_cv_header_c_stdckdint_h via requires, which in turn gates on the
+        # AC_CHECK_HEADER, so the final "works" cache var captures all three
+        # failure modes — checking its negation is sufficient.
+        checks.M4_VARIABLE(
+            "GL_GENERATE_STDCKDINT_H",
+            condition = "gl_cv_header_c_stdckdint_h_works",
+            if_false = "true",
+            if_true = "false",
+        ),
     ] + gl_macros.GL_CHECK_NEXT_HEADERS(["stdckdint.h"]),
     visibility = ["//visibility:public"],
     deps = [

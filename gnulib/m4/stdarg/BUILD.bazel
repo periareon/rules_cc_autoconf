@@ -22,6 +22,15 @@ int main(void) { return 0; }
             name = "NEXT_STDARG_H",
         ),
         checks.AC_SUBST("NEXT_AS_FIRST_DIRECTIVE_STDARG_H", ""),
+        # GL_GENERATE_STDARG_H: upstream sets this true only when va_copy is
+        # missing (AIX without GCC).  On Linux/macOS with GCC/clang va_copy
+        # is always available, so the wrapper is not generated.
+        checks.M4_VARIABLE(
+            "GL_GENERATE_STDARG_H",
+            condition = "gl_cv_func_va_copy",
+            if_false = "true",
+            if_true = "false",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [

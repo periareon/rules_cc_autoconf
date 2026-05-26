@@ -84,6 +84,11 @@ autoconf(
         checks.AC_SUBST("HAVE_SYS_TYPES_H", "1"),
         checks.AC_SUBST("HAVE_STDINT_H", "1"),
     ] + gl_macros.GL_CHECK_NEXT_HEADERS(["stdint.h"]) + [
+        # GL_GENERATE_STDINT_H: upstream starts at "true" and only flips to
+        # "false" when gl_cv_header_stdint_width=yes (C23 UINTMAX_WIDTH is
+        # available).  C23 widths aren't yet provided by mainstream libcs we
+        # target, so the wrapper is always generated.
+        checks.M4_VARIABLE("GL_GENERATE_STDINT_H", "true"),
 
         # HAVE_C99_STDINT_H=1 on macOS/Linux (golden file expectations)
         checks.AC_SUBST("HAVE_C99_STDINT_H", 1),

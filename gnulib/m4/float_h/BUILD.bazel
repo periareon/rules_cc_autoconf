@@ -10,6 +10,12 @@ autoconf(
     ] + gl_macros.GL_CHECK_NEXT_HEADERS(["float.h"]) + [
         # REPLACE_ITOLD is set to 0 on macOS (float.h is complete)
         checks.AC_SUBST("REPLACE_ITOLD", 0),
+        # GL_GENERATE_FLOAT_H: upstream sets this true for AIX, FreeBSD, PowerPC
+        # Linux, and SPARC (itold bug).  On the targets we currently care about
+        # (mainline Linux/macOS x86_64) the system float.h is complete, but
+        # gnulib still ships a wrapper from gl_CHECK_NEXT_HEADERS — so the
+        # variable is left "true" here to mirror that behavior.
+        checks.M4_VARIABLE("GL_GENERATE_FLOAT_H", "true"),
     ],
     visibility = ["//visibility:public"],
     deps = [

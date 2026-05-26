@@ -10,6 +10,11 @@ autoconf(
     checks = [
         # gl_CHECK_NEXT_HEADERS([stddef.h]) - sets NEXT_STDDEF_H and NEXT_AS_FIRST_DIRECTIVE_STDDEF_H
     ] + gl_macros.GL_CHECK_NEXT_HEADERS(["stddef.h"]) + [
+        # GL_GENERATE_STDDEF_H: upstream starts at "false" and flips to "true"
+        # if max_align_t is missing, wchar_t is missing, NULL is broken, or
+        # unreachable() is unavailable.  Because we call GL_CHECK_NEXT_HEADERS
+        # unconditionally above, gnulib's stddef.h wrapper is always generated.
+        checks.M4_VARIABLE("GL_GENERATE_STDDEF_H", "true"),
         # Check that stddef.h can be included
         checks.AC_CHECK_HEADER("stddef.h"),
         # The m4 uses AC_LINK_IFELSE to check if unreachable() is available
@@ -63,6 +68,10 @@ autoconf(
     name = "gl_STDDEF_H_DEFAULTS",
     checks = [
         checks.AC_SUBST("REPLACE_NULL", 0),
+        # HAVE_WCHAR_T default — present on every libc we target.  Upstream's
+        # gl_STDDEF_H probes it explicitly; we mirror the result as a static
+        # default since no platform we support is missing wchar_t.
+        checks.AC_SUBST("HAVE_WCHAR_T", 1),
     ] + select({
         # On Ubuntu 24.04 (glibc 2.39 / GCC 14), nullptr_t is provided
         # natively and stddef.h is NOT idempotent.
