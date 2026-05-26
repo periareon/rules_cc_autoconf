@@ -14,6 +14,13 @@ autoconf(
         # Based on golden files, both macOS and Linux use the included regex
         # (both show _REGEX_INCLUDE_LIMITS_H and _REGEX_LARGE_OFFSETS defined)
 
+        # ac_use_included_regex: shell variable upstream uses as the condition
+        # for AM_CONDITIONAL([GL_COND_OBJ_REGEX], ...) — i.e. "build lib/regex.c?"
+        # Always "yes" here because we can't run the system-regex correctness
+        # test from Bazel (cross-compile mode) and upstream's guess defaults
+        # to including the gnulib copy.
+        checks.M4_VARIABLE("ac_use_included_regex", "yes"),
+
         # Based on golden files, these are always defined on both platforms
         checks.AC_DEFINE("_REGEX_INCLUDE_LIMITS_H", "1"),
         checks.AC_DEFINE("_REGEX_LARGE_OFFSETS", "1"),

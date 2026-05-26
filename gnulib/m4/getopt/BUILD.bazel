@@ -80,6 +80,13 @@ autoconf(
     name = "gl_GETOPT_SUBSTITUTE_HEADER",
     checks = [
         checks.AC_DEFINE("__GETOPT_PREFIX", "rpl_"),
+        # GL_GENERATE_GETOPT_H / GL_GENERATE_GETOPT_CDEFS_H: plain shell
+        # variables set true by gl_GETOPT_SUBSTITUTE_HEADER upstream, which is
+        # only called when REPLACE_GETOPT=1.  REPLACE_GETOPT is unconditionally
+        # 1 in our port (Bazel can't run target binaries for the gnu-ness probe),
+        # so both wrappers are always generated.
+        checks.M4_VARIABLE("GL_GENERATE_GETOPT_H", "true"),
+        checks.M4_VARIABLE("GL_GENERATE_GETOPT_CDEFS_H", "true"),
     ],
     visibility = ["//visibility:public"],
     deps = [

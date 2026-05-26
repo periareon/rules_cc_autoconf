@@ -13,6 +13,11 @@ autoconf(
             define = "HAVE_FNMATCH_H",
         ),
     ] + gl_macros.GL_CHECK_NEXT_HEADERS(["fnmatch.h"]) + [
+        # GL_GENERATE_FNMATCH_H: upstream sets this true when gl_POSIXCHECK is
+        # defined, a C++ GNULIB_NAMESPACE is in use, or fnmatch.h is missing.
+        # Since GL_CHECK_NEXT_HEADERS is invoked unconditionally here, the
+        # wrapper is always generated.
+        checks.M4_VARIABLE("GL_GENERATE_FNMATCH_H", "true"),
         checks.AC_SUBST("HAVE_FNMATCH_H", "1"),  # golden expects 1
         # GNU extension checks (from gl_FNMATCH_H)
         checks.AC_TRY_COMPILE(

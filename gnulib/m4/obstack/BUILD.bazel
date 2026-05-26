@@ -1,23 +1,34 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/obstack.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
-load("//autoconf:checks.bzl", "checks", "utils")
+load("//autoconf:checks.bzl", "checks", "macros", "utils")
 
-# gl_FUNC_OBSTACK from obstack.m4
-# Checks for obstack.h, then verifies the obstack API quality via link test.
-# Upstream logic:
-#   - No header → REPLACE_OBSTACK=0
-#   - Header + link succeeds → REPLACE_OBSTACK=0
-#   - Header + link fails → REPLACE_OBSTACK=1
 autoconf(
     name = "gl_FUNC_OBSTACK",
-    checks = [
-        checks.AC_CHECK_HEADER(
-            "obstack.h",
-            define = "HAVE_OBSTACK_H",
-        ),
+    checks = macros.AC_CHECK_HEADERS(["obstack.h"]) + [
         # Upstream AC_LINK_IFELSE: verify _obstack_memory_used returns size_t
-        # and that obstack_init/obstack_free work. Only meaningful when header exists.
+        # and that obstack_init/obstack_free work. Only meaningful when header
+        # exists; when the header is missing this check is skipped and the
+        # downstream `condition = "gl_cv_func_obstack"` evaluates as false.
+        # SMALL_PTRDIFF_T=1 only on old/exotic platforms (Win 3.1, AS/400)
+        # where ptrdiff_t is narrower than a pointer; obstack uses this to
+        # decide whether sizes need to be stored in size_t. AC_SUBSTed
+        # upstream so consumers can drop it into templates.
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_ptrdiff_t_wide_enough",
+            code = """\
+#include <stddef.h>
+typedef int check[2 * (sizeof (ptrdiff_t) >= sizeof (void *)) - 1];
+int main(void) { return 0; }
+""",
+            language = "c",
+        ),
+        checks.AC_SUBST(
+            "SMALL_PTRDIFF_T",
+            condition = "gl_cv_ptrdiff_t_wide_enough",
+            if_false = 1,
+            if_true = 0,
+        ),
         checks.AC_TRY_LINK(
             name = "gl_cv_func_obstack",
             code = utils.AC_LANG_PROGRAM(
@@ -36,21 +47,34 @@ autoconf(
             language = "c",
             requires = ["ac_cv_header_obstack_h==1"],
         ),
-    ] + select({
-        # On Linux (obstack.h exists): use link test result to set REPLACE_OBSTACK
-        "@platforms//os:linux": [
-            checks.AC_SUBST(
-                "REPLACE_OBSTACK",
-                condition = "gl_cv_func_obstack",
-                if_false = 1,
-                if_true = 0,
-            ),
-        ],
-        # macOS and others: no obstack.h → REPLACE_OBSTACK=0 (upstream: no header = no replace)
-        "//conditions:default": [
-            checks.AC_SUBST("REPLACE_OBSTACK", 0),
-        ],
-    }),
+        # REPLACE_OBSTACK=1 iff the header exists but the link test failed.
+        # AC_SUBSTed upstream so consumers can drop it into templates.
+        checks.AC_SUBST(
+            "REPLACE_OBSTACK",
+            condition = "ac_cv_header_obstack_h==1 && !gl_cv_func_obstack",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # HAVE_OBSTACK / GL_GENERATE_OBSTACK_H are M4 shell variables (not
+        # AC_SUBSTed upstream) consumed by other gnulib modules to decide
+        # whether to ship a replacement obstack.h. Track with M4_VARIABLE
+        # so downstream `requires = [...]` clauses can branch on them.
+        checks.M4_VARIABLE(
+            "HAVE_OBSTACK",
+            condition = "ac_cv_header_obstack_h",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # gl_cv_func_obstack is only truthy when the header is present AND the
+        # link test succeeds, so its negation captures both "no header" and
+        # "broken obstack" cases — exactly when upstream generates the wrapper.
+        checks.M4_VARIABLE(
+            "GL_GENERATE_OBSTACK_H",
+            condition = "gl_cv_func_obstack",
+            if_false = "true",
+            if_true = "false",
+        ),
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",

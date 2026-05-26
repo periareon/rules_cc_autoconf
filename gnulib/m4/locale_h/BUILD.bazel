@@ -202,6 +202,7 @@ autoconf(
         checks.AC_SUBST("GNULIB_FREELOCALE", 0),
         checks.AC_SUBST("GNULIB_GETLOCALENAME_L", 0),
         checks.AC_SUBST("GNULIB_GETLOCALENAME_L_UNSAFE", 0),
+        checks.AC_SUBST("GNULIB_LOCALENAME", 0),
         checks.AC_SUBST("GNULIB_LOCALENAME_UNSAFE", 0),
     ],
     visibility = ["//visibility:private"],

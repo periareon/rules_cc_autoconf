@@ -5,13 +5,14 @@ gnu_gnulib_diff_test_suite(
     bazel_autoconf_target = "//gnulib/m4/host-cpu-c-abi",
     config_h_in = "config.h.in",
     configure_ac = "configure.ac",
-    golden_config_h = select({
-        "@platforms//os:macos": "golden_config_macos.h.in",
-        "//conditions:default": "golden_config.h.in",
-    }),
+    golden_config_h = "golden_config.h.in",
+    # Per-(os,cpu) goldens: the upstream m4 derives HOST_CPU from $host_cpu,
+    # so the expected subst value differs by target CPU. Only mappings with
+    # corresponding entries in //gnulib/m4/host-cpu-c-abi:host-cpu-c-abi
+    # (currently x86_64 and aarch64) are listed here.
     golden_subst_h = select({
-        "@platforms//os:macos": "golden_subst_macos.h.in",
-        "//conditions:default": "golden_subst.h.in",
+        "@platforms//cpu:aarch64": "golden_subst_arm64.h.in",
+        "//conditions:default": "golden_subst_x86_64.h.in",
     }),
     m4_files = ["@gnulib//:all_m4"],
     subst_h_in = "subst.h.in",

@@ -18,6 +18,15 @@ int e[] = {ETXTBSY, ENOMSG, EIDRM, ENOLINK, EPROTO, EMULTIHOP,
            EILSEQ, ESOCKTNOSUPPORT}; (void)e;""",
             includes = ["#include <errno.h>"],
         ),
+        # GL_GENERATE_ERRNO_H: true when errno.h is incomplete and gnulib must
+        # ship a replacement.  Plain shell variable in upstream m4; consumed
+        # by gnulib/m4/perror (REPLACE_PERROR=1 when GL_GENERATE_ERRNO_H).
+        checks.M4_VARIABLE(
+            "GL_GENERATE_ERRNO_H",
+            condition = "gl_cv_header_errno_h_complete",
+            if_false = "true",
+            if_true = "false",
+        ),
         # gl_NEXT_HEADERS([errno.h]) -- only called when errno.h is incomplete
     ] + gl_macros.GL_NEXT_HEADERS(
         ["errno.h"],

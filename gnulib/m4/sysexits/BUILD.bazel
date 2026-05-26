@@ -17,6 +17,16 @@ autoconf(
             if_false = "0",
             if_true = "1",
         ),
+        # GL_GENERATE_SYSEXITS_H: upstream sets this true when sysexits.h is
+        # missing or lacks the standard EX_* constants.  On Linux and macOS
+        # the header is present and complete, so the wrapper is only
+        # generated when the header itself is absent.
+        checks.M4_VARIABLE(
+            "GL_GENERATE_SYSEXITS_H",
+            condition = "ac_cv_header_sysexits_h",
+            if_false = "true",
+            if_true = "false",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [

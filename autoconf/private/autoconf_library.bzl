@@ -215,7 +215,7 @@ def autoconf_impl_common(ctx, resolve_toolchain):
             existing_file = define_results[define_name]
             if existing_file.path != define_file.path:
                 if not _same_content_key(existing_file, define_file, path_to_content_key):
-                    fail("Define '{}' is defined both locally and in dependencies with different result files:\n  Local:    {}\n  Dep:       {}\nThis indicates duplicate defines. Consider removing the local define or using a different name.".format(
+                    fail("Define '{}' is defined both locally and in dependencies with different result files:\n  Local:    {}\n  Dep:      {}\nThis indicates duplicate defines. Consider removing the local define or using a different name.".format(
                         define_name,
                         existing_file.path,
                         define_file.path,
@@ -226,7 +226,7 @@ def autoconf_impl_common(ctx, resolve_toolchain):
             existing_file = subst_results[subst_name]
             if existing_file.path != subst_file.path:
                 if not _same_content_key(existing_file, subst_file, path_to_content_key):
-                    fail("Subst '{}' is defined both locally and in dependencies with different result files:\n  Local:    {}\n  Dep:       {}\nThis indicates duplicate subst. Consider removing the local subst or using a different name.".format(
+                    fail("Subst '{}' is defined both locally and in dependencies with different result files:\n  Local:    {}\n  Dep:      {}\nThis indicates duplicate subst. Consider removing the local subst or using a different name.".format(
                         subst_name,
                         existing_file.path,
                         subst_file.path,

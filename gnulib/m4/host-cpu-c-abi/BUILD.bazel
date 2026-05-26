@@ -3,13 +3,86 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
+_CPU_ABIS = {
+
+    # ARM 32-bit. Cortex-M / Cortex-R / armv*-m are bare-metal-style and
+    # almost always use the soft-float ABI even with an FPU; aarch32 and
+    # full armv7/armv7k are commonly armhf on Linux distros.
+    "@platforms//cpu:aarch32": ("arm", "armhf", "yes"),
+
+    # ARM 64-bit. arm64e is Apple's pointer-authenticated arm64 (same C ABI);
+    # arm64_32 is watchOS arm64 with 32-bit pointers (ILP32).
+    "@platforms//cpu:aarch64": ("arm64", "arm64", "no"),
+    "@platforms//cpu:arm64_32": ("arm64", "arm64-ilp32", "yes"),
+    "@platforms//cpu:arm64e": ("arm64", "arm64", "no"),
+    "@platforms//cpu:armv6-m": ("arm", "arm", "yes"),
+    "@platforms//cpu:armv7": ("arm", "armhf", "yes"),
+    "@platforms//cpu:armv7-m": ("arm", "arm", "yes"),
+    "@platforms//cpu:armv7e-m": ("arm", "arm", "yes"),
+    "@platforms//cpu:armv7e-mf": ("arm", "arm", "yes"),
+    "@platforms//cpu:armv7k": ("arm", "armhf", "yes"),
+    "@platforms//cpu:armv8-m": ("arm", "arm", "yes"),
+    "@platforms//cpu:cortex-r52": ("arm", "arm", "yes"),
+    "@platforms//cpu:cortex-r82": ("arm", "arm", "yes"),
+    "@platforms//cpu:i386": ("i386", "i386", "yes"),
+
+    # MIPS — only 64-bit is exposed as a constraint here.
+    "@platforms//cpu:mips64": ("mips64", "mips64", "no"),
+
+    # PowerPC. 32-bit ppc collapses to "powerpc"; ppc64le uses the ELFv2
+    # ABI (the only ABI defined for little-endian POWER).
+    "@platforms//cpu:ppc": ("powerpc", "powerpc", "yes"),
+    "@platforms//cpu:ppc32": ("powerpc", "powerpc", "yes"),
+    "@platforms//cpu:ppc64le": ("powerpc64", "powerpc64-elfv2", "no"),
+
+    # RISC-V. Linux distros standardise on lp64d / ilp32d (double-precision
+    # hardware float); embedded toolchains may need their own select branch
+    # if they use a different float ABI.
+    "@platforms//cpu:riscv32": ("riscv32", "riscv32-ilp32d", "yes"),
+    "@platforms//cpu:riscv64": ("riscv64", "riscv64-lp64d", "no"),
+
+    # IBM Z — only the 64-bit variant has a constraint.
+    "@platforms//cpu:s390x": ("s390x", "s390x", "no"),
+
+    # WebAssembly. Upstream m4 has no entry; fall through with $host_cpu
+    # unchanged, which is also what autoconf would do for an unknown CPU.
+    # 32-bit-ness is "unknown" because the upstream lookup table doesn't
+    # cover wasm — wasm32 has 32-bit pointers and wasm64 has 64-bit, but
+    # we don't claim them as "yes"/"no" without an upstream precedent.
+    "@platforms//cpu:wasm32": ("wasm32", "wasm32", "unknown"),
+    "@platforms//cpu:wasm64": ("wasm64", "wasm64", "unknown"),
+    "@platforms//cpu:x86_32": ("i386", "i386", "yes"),
+    # x86 family
+    "@platforms//cpu:x86_64": ("x86_64", "x86_64", "no"),
+}
+
+autoconf(
+    name = "gl_HOST_CPU_C_ABI",
+    checks = select({
+        constraint: [
+            checks.AC_SUBST("HOST_CPU", host_cpu),
+            checks.AC_SUBST("HOST_CPU_C_ABI", host_cpu_c_abi),
+        ]
+        for constraint, (host_cpu, host_cpu_c_abi, _) in _CPU_ABIS.items()
+    }),
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_HOST_CPU_C_ABI_32BIT",
+    checks = select({
+        constraint: [
+            checks.AC_SUBST("HOST_CPU_C_ABI_32BIT", host_cpu_c_abi_32bit),
+        ]
+        for constraint, (_, _, host_cpu_c_abi_32bit) in _CPU_ABIS.items()
+    }),
+    visibility = ["//visibility:public"],
+)
+
 autoconf(
     name = "host-cpu-c-abi",
-    checks = [
-        # AC_SUBST variables with values matching golden file expectations
-        # On macOS ARM64, these are "arm64"
-        checks.AC_SUBST("HOST_CPU", "arm64"),
-        checks.AC_SUBST("HOST_CPU_C_ABI", "arm64"),
-    ],
     visibility = ["//visibility:public"],
+    deps = [
+        ":gl_HOST_CPU_C_ABI",
+    ],
 )
