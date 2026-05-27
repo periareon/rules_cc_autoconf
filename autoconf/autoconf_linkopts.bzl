@@ -82,7 +82,7 @@ def _autoconf_linkopts_impl(ctx):
     for var_name in ctx.attr.vars:
         if var_name in all_subst:
             result_file = all_subst[var_name]
-            args.add("--var", "{}={}".format(var_name, result_file.path))
+            args.add_all([result_file], before_each = "--var", format_each = "{}=%s".format(var_name))
             inputs.append(result_file)
             found_vars.append(var_name)
 
@@ -94,7 +94,7 @@ def _autoconf_linkopts_impl(ctx):
             cache_name = "ac_cv_subst_" + var_name
             if cache_name in all_cache:
                 result_file = all_cache[cache_name]
-                args.add("--var", "{}={}".format(var_name, result_file.path))
+                args.add_all([result_file], before_each = "--var", format_each = "{}=%s".format(var_name))
                 inputs.append(result_file)
                 found_vars.append(var_name)
 
@@ -107,6 +107,7 @@ def _autoconf_linkopts_impl(ctx):
         inputs = inputs,
         outputs = [flags_file, pragma_file],
         mnemonic = "CcAutoconfLinkopts",
+        execution_requirements = {"supports-path-mapping": ""},
     )
 
     if is_msvc_like:

@@ -101,6 +101,7 @@ def _ac_c_restrict_impl(ctx):
             progress_message = "CcAutoconfCheck %{label} - " + cache_name,
             env = env | ctx.configuration.default_shell_env,
             tools = toolchain_info.cc_toolchain.all_files,
+            execution_requirements = {"supports-path-mapping": ""},
         )
 
         # Accumulate resolver arguments.
@@ -119,6 +120,7 @@ def _ac_c_restrict_impl(ctx):
         outputs = [restrict_result],
         mnemonic = "CcAutoconfRestrictResolve",
         progress_message = "CcAutoconfRestrictResolve %{label}",
+        execution_requirements = {"supports-path-mapping": ""},
     )
 
     all_results = check_result_files + [restrict_result]

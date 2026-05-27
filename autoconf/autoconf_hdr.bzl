@@ -10,6 +10,41 @@ load(
 )
 load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
 
+def _arg_map_manifest(value):
+    """Build the manifest: maps define/subst names to result file paths + metadata"""
+    manifest_data = {
+        "defines": {},
+        "substs": {},
+    }
+
+    all_define_checks, all_subst_checks, all_unquoted = value
+    for define_name, result_file in all_define_checks.items():
+        manifest_data["defines"][define_name] = {
+            "path": result_file.path,
+            "unquote": define_name in all_unquoted,
+        }
+    for subst_name, result_file in all_subst_checks.items():
+        manifest_data["substs"][subst_name] = {
+            "path": result_file.path,
+            "unquote": subst_name in all_unquoted,
+        }
+
+    return json.encode_indent(manifest_data, indent = " " * 4) + "\n"
+
+def _arg_map_inline(value):
+    if not value:
+        return None
+
+    inline_mappings = []
+    for search_string, inline_file in value.items():
+        files_list = inline_file.files.to_list()
+        if len(files_list) != 1:
+            fail("Inline file label %s must have exactly one file" % str(inline_file.label))
+        inline_file_obj = files_list[0]
+        inline_mappings.append((search_string, inline_file_obj.path))
+
+    return json.encode(dict(inline_mappings))
+
 def _autoconf_hdr_impl(ctx):
     """Implementation of the autoconf_hdr rule."""
 
@@ -46,26 +81,14 @@ def _autoconf_hdr_impl(ctx):
     for uq in dep_results.get("unquoted_defines", []):
         all_unquoted[uq] = True
 
-    # Build the manifest: maps define/subst names to result file paths + metadata
-    manifest_data = {
-        "defines": {},
-        "substs": {},
-    }
-    for define_name, result_file in all_define_checks.items():
-        manifest_data["defines"][define_name] = {
-            "path": result_file.path,
-            "unquote": define_name in all_unquoted,
-        }
-    for subst_name, result_file in all_subst_checks.items():
-        manifest_data["substs"][subst_name] = {
-            "path": result_file.path,
-            "unquote": subst_name in all_unquoted,
-        }
-
     manifest = ctx.actions.declare_file("{}.manifest.json".format(ctx.label.name))
+    manifest_args = ctx.actions.args()
+    manifest_args.set_param_file_format("multiline")
+    manifest_args.add_all([(all_define_checks, all_subst_checks, all_unquoted)], map_each = _arg_map_manifest)
     ctx.actions.write(
         output = manifest,
-        content = json.encode_indent(manifest_data, indent = " " * 4) + "\n",
+        content = manifest_args,
+        execution_requirements = {"supports-path-mapping": ""},
     )
 
     inputs = depset(
@@ -74,15 +97,13 @@ def _autoconf_hdr_impl(ctx):
 
     # Process inlines: collect files and create mappings
     inline_files = []
-    inline_mappings = []
     if ctx.attr.inlines:
-        for search_string, inline_file in ctx.attr.inlines.items():
+        for inline_file in ctx.attr.inlines.values():
             files_list = inline_file.files.to_list()
             if len(files_list) != 1:
                 fail("Inline file label %s must have exactly one file" % str(inline_file.label))
             inline_file_obj = files_list[0]
             inline_files.append(inline_file_obj)
-            inline_mappings.append((search_string, inline_file_obj.path))
 
     inputs = depset(inline_files, transitive = [inputs])
 
@@ -94,9 +115,7 @@ def _autoconf_hdr_impl(ctx):
     args.add("--output", ctx.outputs.out)
     args.add("--template", ctx.file.template)
     args.add("--mode", ctx.attr.mode)
-
-    if inline_mappings:
-        args.add("--inline", json.encode(dict(inline_mappings)))
+    args.add_all([ctx.attr.inlines], before_each = "--inline", map_each = _arg_map_inline)
 
     if ctx.attr.substitutions:
         args.add("--subst", json.encode(ctx.attr.substitutions))
@@ -108,6 +127,7 @@ def _autoconf_hdr_impl(ctx):
         outputs = [ctx.outputs.out],
         mnemonic = "CcAutoconfHdr",
         env = ctx.configuration.default_shell_env,
+        execution_requirements = {"supports-path-mapping": ""},
     )
 
     # Return a dict mapping define names to result files (from autoconf deps)

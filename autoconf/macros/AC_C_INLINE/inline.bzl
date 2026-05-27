@@ -42,7 +42,7 @@ def _ac_c_inline_impl(ctx):
                 sorted(all_cache.keys()),
             ))
         result_file = all_cache[cache_var]
-        resolver_args.add("--check", "{}={}".format(keyword, result_file.path))
+        resolver_args.add_all([result_file], before_each = "--check", format_each = "{}=%s".format(keyword))
         input_files.append(result_file)
 
     # Run the resolver.
@@ -58,6 +58,7 @@ def _ac_c_inline_impl(ctx):
         outputs = [resolved_result],
         mnemonic = "CcAutoconfInlineResolve",
         progress_message = "CcAutoconfInlineResolve %{label}",
+        execution_requirements = {"supports-path-mapping": ""},
     )
 
     return [
