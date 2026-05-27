@@ -9,45 +9,7 @@ load(
 
 # buildifier: disable=bzl-visibility
 load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
-
-def _find_result_file(name, all_cache, all_define, all_subst, label):
-    """Look up a check result name across cache/define/subst namespaces.
-
-    Returns the result File, or fails with a clear error if not found or
-    ambiguous.
-    """
-    candidates = []
-    if name in all_cache:
-        candidates.append(("cache", all_cache[name]))
-    if name in all_define:
-        candidates.append(("define", all_define[name]))
-    if name in all_subst:
-        candidates.append(("subst", all_subst[name]))
-
-    if not candidates:
-        all_available = {
-            "cache": sorted(all_cache.keys()),
-            "define": sorted(all_define.keys()),
-            "subst": sorted(all_subst.keys()),
-        }
-        fail("gnulib_conditional_hdr `{}` requires `{}` which is not provided by any deps. Available: {}".format(
-            label,
-            name,
-            json.encode_indent(all_available, indent = " " * 4),
-        ))
-
-    distinct_paths = {}
-    for bucket, f in candidates:
-        distinct_paths[f.path] = (bucket, f)
-
-    if len(distinct_paths) != 1:
-        fail("gnulib_conditional_hdr `{}` requires `{}` but it is ambiguous across deps.\nMatches: {}".format(
-            label,
-            name,
-            [(bucket, f.path) for (bucket, f) in candidates],
-        ))
-
-    return distinct_paths.values()[0][1]
+load("//gnulib/private:result_lookup.bzl", "find_result_file")
 
 def _gnulib_conditional_hdr_impl(ctx):
     deps = collect_deps(ctx.attr.deps)
@@ -58,18 +20,18 @@ def _gnulib_conditional_hdr_impl(ctx):
     all_define = dep_results["define"]
     all_subst = dep_results["subst"]
 
-    condition_file = _find_result_file(ctx.attr.condition, all_cache, all_define, all_subst, ctx.label)
-    include_next_file = _find_result_file(ctx.attr.include_next, all_cache, all_define, all_subst, ctx.label)
-    next_header_file = _find_result_file(ctx.attr.next_header, all_cache, all_define, all_subst, ctx.label)
+    condition_file = find_result_file(ctx.attr.condition, all_cache, all_define, all_subst, ctx.label)
+    include_next_file = find_result_file(ctx.attr.include_next, all_cache, all_define, all_subst, ctx.label)
+    next_header_file = find_result_file(ctx.attr.next_header, all_cache, all_define, all_subst, ctx.label)
 
     src_file = ctx.file.src
 
     args = ctx.actions.args()
     args.add("--src", src_file)
     args.add("--output", ctx.outputs.out)
-    args.add("--dep", "{}={}".format(ctx.attr.condition, condition_file.path))
-    args.add("--dep", "{}={}".format(ctx.attr.include_next, include_next_file.path))
-    args.add("--dep", "{}={}".format(ctx.attr.next_header, next_header_file.path))
+    args.add_all([condition_file], before_each = "--dep", format_each = "{}=%s".format(ctx.attr.condition))
+    args.add_all([include_next_file], before_each = "--dep", format_each = "{}=%s".format(ctx.attr.include_next))
+    args.add_all([next_header_file], before_each = "--dep", format_each = "{}=%s".format(ctx.attr.next_header))
     args.add("--condition", ctx.attr.condition)
     args.add("--include-next", ctx.attr.include_next)
     args.add("--next-header", ctx.attr.next_header)
@@ -87,11 +49,18 @@ def _gnulib_conditional_hdr_impl(ctx):
 gnulib_conditional_hdr = rule(
     implementation = _gnulib_conditional_hdr_impl,
     doc = """\
+> **Deprecated.** Use [`cc_gnulib_conditional_hdrs`](conditional_hdrs.bzl)
+> for new code. The replacement rule writes no file on the falsy branch
+> (matching upstream gnulib's `rm -f $@`) rather than synthesizing a
+> `#include_next` wrapper, drops the `INCLUDE_NEXT` / `NEXT_*_H`
+> requirement, has no MSVC `#include_next` gap, and groups multiple
+> gated headers into one `CcInfo` provider.
+
 Conditionally wrap a processed gnulib header with a passthrough fallback.
 
-This rule mirrors upstream gnulib's `gl_CONDITIONAL_HEADER` + Makefile.am
-pattern.  It sits downstream of `autoconf_hdr` and decides, based on a
-check result, whether the processed wrapper header is needed:
+This rule mirrors upstream gnulib's [`gl_CONDITIONAL_HEADER`](https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/gnulib-common.m4#L1505-L1533)
++ Makefile.am pattern.  It sits downstream of `autoconf_hdr` and decides,
+based on a check result, whether the processed wrapper header is needed:
 
 - **Condition truthy** (wrapper needed): the `src` content is output as-is.
 - **Condition falsy** (wrapper not needed): the output wraps the processed

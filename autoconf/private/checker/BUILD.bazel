@@ -71,7 +71,10 @@ cc_library(
     ],
     hdrs = ["condition_evaluator.h"],
     cxxopts = cxxopts(),
-    visibility = ["//autoconf/private:__subpackages__"],
+    visibility = [
+        "//autoconf/private:__subpackages__",
+        "//gnulib/private:__subpackages__",
+    ],
     deps = [
         ":check_types",
     ],
