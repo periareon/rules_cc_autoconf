@@ -1,0 +1,36 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:checks.bzl", "checks")
+load("//gnulib:conditional_hdrs.bzl", "cc_gnulib_conditional_hdrs")
+
+# Two AC_SUBST variables drive the per-header conditions: COND_TRUE
+# resolves truthy and COND_FALSE resolves falsy, so the rule writes the
+# truthy header into the TreeArtifact and writes nothing for the falsy
+# one (matching gnulib's `rm -f $@` branch).
+autoconf(
+    name = "conditions",
+    checks = [
+        checks.AC_SUBST("COND_TRUE", "true"),
+        checks.AC_SUBST("COND_FALSE", "false"),
+    ],
+)
+
+cc_gnulib_conditional_hdrs(
+    name = "gen",
+    hdrs = {
+        "src/gl_conditional_falsy.h": "COND_FALSE",
+        "src/gl_conditional_truthy.h": "COND_TRUE",
+    },
+    deps = [":conditions"],
+)
+
+# Verifies that:
+#   - the truthy header is present in the TreeArtifact and exposes its
+#     sentinel via `#include "gl_conditional_truthy.h"`,
+#   - the falsy header is absent (rule wrote no file), so
+#     `__has_include("gl_conditional_falsy.h")` reports 0.
+cc_test(
+    name = "include_test",
+    srcs = ["include_test.cc"],
+    deps = [":gen"],
+)

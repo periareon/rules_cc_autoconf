@@ -15,3 +15,9 @@ bzl_library(
     srcs = ["conditional_hdr.bzl"],
     visibility = ["//visibility:public"],
 )
+
+bzl_library(
+    name = "conditional_hdrs",
+    srcs = ["conditional_hdrs.bzl"],
+    visibility = ["//visibility:public"],
+)

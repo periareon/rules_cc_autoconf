@@ -77,7 +77,18 @@ def _output_name(ctx, file, naming_mode):
 def _lookup_var(var, all_cache, all_define, all_subst, src_label, rule_label):
     """Look up a single variable name across cache/define/subst buckets.
 
-    Returns the result file, or fails with a helpful message.
+    A name may legitimately appear in more than one bucket (e.g. an
+    `AC_DEFINE` followed by an `AC_SUBST` of the same identifier). When the
+    matches all refer to the *same underlying result file* the lookup
+    succeeds; only genuinely distinct matches trigger the ambiguity error.
+
+    Buckets are not auto-resolved by priority: when an ambiguity occurs the
+    user is asked to disambiguate by using the canonical `ac_cv_*` cache
+    name (which is unique per check) instead of the shorter define / subst
+    name.
+
+    Returns:
+        The matched result `File`.
     """
     candidates = []
     if var in all_cache:
@@ -105,7 +116,11 @@ def _lookup_var(var, all_cache, all_define, all_subst, src_label, rule_label):
         distinct_paths[f.path] = (bucket, f)
 
     if len(distinct_paths) != 1:
-        fail("Source `{}` requires `{}` but it is ambiguous across deps of `{}`.\nMatches: {}".format(
+        fail(("Source `{}` requires `{}` but it resolves to distinct results " +
+              "across deps of `{}`.\nMatches: {}\n" +
+              "Disambiguate by referencing the canonical `ac_cv_*` cache " +
+              "name of the specific check you want, rather than the shorter " +
+              "define / subst name.").format(
             src_label,
             var,
             rule_label,
