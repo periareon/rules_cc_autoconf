@@ -1,6 +1,9 @@
 """Aspect for collecting the autoconf result DAG."""
 
 # buildifier: disable=bzl-visibility
+load("//autoconf/private:ctx_actions_write.bzl", "write")
+
+# buildifier: disable=bzl-visibility
 load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
 
 ResultQueryInfo = provider(
@@ -51,12 +54,17 @@ def _result_query_aspect_impl(target, ctx):
     )
     nodes = all_jsons.to_list()
     if nodes:
-        ctx.actions.write(
+        write(
+            actions = ctx.actions,
             output = output,
             content = "[\n" + ",\n".join(nodes) + "\n]\n",
         )
     else:
-        ctx.actions.write(output = output, content = "[]\n")
+        write(
+            actions = ctx.actions,
+            output = output,
+            content = "[]\n",
+        )
 
     return [
         ResultQueryInfo(

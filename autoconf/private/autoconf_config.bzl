@@ -6,6 +6,7 @@ Common utilities for autoconf rules.
 load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
 load("@rules_cc//cc:find_cc_toolchain.bzl", "find_cpp_toolchain")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
+load("//autoconf/private:ctx_actions_write.bzl", "write")
 load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
 
 _TOOLCHAIN_TYPE = "//autoconf:toolchain_type"
@@ -435,7 +436,8 @@ def write_config_json(ctx, config_dict):
         A File representing the config JSON file.
     """
     config_json = ctx.actions.declare_file("{}.ac.json".format(ctx.label.name))
-    ctx.actions.write(
+    write(
+        actions = ctx.actions,
         output = config_json,
         content = json.encode_indent(config_dict, indent = " " * 4) + "\n",
     )

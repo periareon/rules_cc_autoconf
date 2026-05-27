@@ -14,6 +14,7 @@ The rule uses the standard checker binary for the individual compile checks
 and a dedicated resolver tool to combine the results.
 """
 
+load("@bazel_features//:features.bzl", "bazel_features")
 load("@rules_cc//cc:find_cc_toolchain.bzl", "use_cc_toolchain")
 load("//autoconf:cc_autoconf_info.bzl", "CcAutoconfInfo")
 load(
@@ -23,6 +24,7 @@ load(
     "get_environment_variables",
     "write_config_json",
 )
+load("//autoconf/private:ctx_actions_write.bzl", "write")
 
 # Test code templates for each keyword variant.
 # Each is a minimal C program that uses the keyword in a function signature.
@@ -73,7 +75,8 @@ def _ac_c_restrict_impl(ctx):
         check_json = ctx.actions.declare_file(
             "{}/{}.check.json".format(ctx.label.name, cache_name),
         )
-        ctx.actions.write(
+        write(
+            actions = ctx.actions,
             output = check_json,
             content = json.encode_indent(check_spec, indent = "    ") + "\n",
         )
@@ -101,7 +104,8 @@ def _ac_c_restrict_impl(ctx):
             progress_message = "CcAutoconfCheck %{label} - " + cache_name,
             env = env | ctx.configuration.default_shell_env,
             tools = toolchain_info.cc_toolchain.all_files,
-            execution_requirements = {"supports-path-mapping": ""},
+            # TODO: https://github.com/periareon/rules_cc_autoconf/issues/148
+            execution_requirements = {"supports-path-mapping": ""} if bazel_features.rules.write_action_has_execution_requirements else {},
         )
 
         # Accumulate resolver arguments.
@@ -120,7 +124,8 @@ def _ac_c_restrict_impl(ctx):
         outputs = [restrict_result],
         mnemonic = "CcAutoconfRestrictResolve",
         progress_message = "CcAutoconfRestrictResolve %{label}",
-        execution_requirements = {"supports-path-mapping": ""},
+        # TODO: https://github.com/periareon/rules_cc_autoconf/issues/148
+        execution_requirements = {"supports-path-mapping": ""} if bazel_features.rules.write_action_has_execution_requirements else {},
     )
 
     all_results = check_result_files + [restrict_result]

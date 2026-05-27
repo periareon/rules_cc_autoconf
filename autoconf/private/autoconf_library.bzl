@@ -1,5 +1,6 @@
 """autoconf implementation"""
 
+load("@bazel_features//:features.bzl", "bazel_features")
 load("@rules_cc//cc:find_cc_toolchain.bzl", "use_cc_toolchain")
 load(
     "//autoconf/private:autoconf_config.bzl",
@@ -12,6 +13,7 @@ load(
     "write_config_json",
 )
 load("//autoconf/private:condition_utils.bzl", "extract_condition_vars")
+load("//autoconf/private:ctx_actions_write.bzl", "write")
 load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
 
 _CONTENT_KEY_FIELDS = (
@@ -137,7 +139,8 @@ def autoconf_impl_common(ctx, resolve_toolchain):
             output = ctx.actions.declare_file("{}/{}.result.cache.json".format(ctx.label.name, name))
 
             check_spec = ctx.actions.declare_file("{}/{}.check.json".format(ctx.label.name, name))
-            ctx.actions.write(
+            write(
+                actions = ctx.actions,
                 output = check_spec,
                 content = json.encode_indent(check, indent = " " * 4) + "\n",
             )
@@ -359,7 +362,8 @@ def autoconf_impl_common(ctx, resolve_toolchain):
             progress_message = "CcAutoconfCheck %{label} - " + check_name,
             env = env | ctx.configuration.default_shell_env,
             tools = toolchain_info.cc_toolchain.all_files,
-            execution_requirements = {"supports-path-mapping": ""},
+            # TODO: https://github.com/periareon/rules_cc_autoconf/issues/148
+            execution_requirements = {"supports-path-mapping": ""} if bazel_features.rules.write_action_has_execution_requirements else {},
         )
 
     # Return provider with result buckets and content cache for dedup
