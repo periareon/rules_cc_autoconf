@@ -129,6 +129,10 @@ def _lookup_var(var, all_cache, all_define, all_subst, src_label, rule_label):
 
     return distinct_paths.values()[0][1]
 
+def _arg_map_src(value):
+    in_file, condition, out_file = value
+    return "{},{},{}".format(in_file.path, condition, out_file.path)
+
 def _autoconf_srcs_impl(ctx):
     """Implementation of the autoconf_srcs rule."""
 
@@ -182,11 +186,11 @@ def _autoconf_srcs_impl(ctx):
 
         for var in var_names:
             results_file = _lookup_var(var, all_cache, all_define, all_subst, src, ctx.label)
-            args.add("--dep", "{}={}".format(var, results_file.path))
+            args.add_all([results_file], before_each = "--dep", format_each = "{}=%s".format(var))
             dep_files.append(results_file)
 
         # Use comma separator: {in},{CONDITION},{out}
-        args.add("--src", "{},{},{}".format(in_file.path, condition, out.path))
+        args.add_all([(in_file, condition, out)], before_each = "--src", map_each = _arg_map_src)
 
         ctx.actions.run(
             executable = ctx.executable._runner,
@@ -194,6 +198,7 @@ def _autoconf_srcs_impl(ctx):
             inputs = [in_file] + dep_files,
             outputs = [out],
             mnemonic = "CcAutoconfSrc",
+            execution_requirements = {"supports-path-mapping": ""},
         )
 
         outputs.append(out)

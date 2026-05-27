@@ -348,7 +348,7 @@ def autoconf_impl_common(ctx, resolve_toolchain):
         check_deps = []
         for lookup_name, file_path in name_to_file.items():
             check_deps.append(file_path)
-            args.add("--dep", "{}={}".format(lookup_name, file_path.path))
+            args.add_all([file_path], before_each = "--dep", format_each = "{}=%s".format(lookup_name))
 
         ctx.actions.run(
             executable = ctx.executable._checker,
@@ -359,6 +359,7 @@ def autoconf_impl_common(ctx, resolve_toolchain):
             progress_message = "CcAutoconfCheck %{label} - " + check_name,
             env = env | ctx.configuration.default_shell_env,
             tools = toolchain_info.cc_toolchain.all_files,
+            execution_requirements = {"supports-path-mapping": ""},
         )
 
     # Return provider with result buckets and content cache for dedup

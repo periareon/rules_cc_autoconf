@@ -13,6 +13,10 @@ _RUNNER_SOURCES = [
     "PACKAGE_TARNAME",
 ]
 
+def _arg_map_alias(value):
+    key, source, results = value
+    return "{}={}={}".format(key, source, results.path)
+
 def _package_info_impl(ctx):
     results = {
         "PACKAGE_BUGREPORT": ctx.actions.declare_file("{}/{}.results.json".format(ctx.label.name, "PACKAGE_BUGREPORT")),
@@ -64,7 +68,7 @@ def _package_info_impl(ctx):
         runner_alias_outputs = []
         for key, source in ctx.attr.aliases.items():
             if source in _RUNNER_SOURCES:
-                args.add("--alias", "{}={}={}".format(key, source, extra_results[key].path))
+                args.add_all([(key, source, extra_results[key])], before_each = "--alias", map_each = _arg_map_alias)
                 runner_alias_outputs.append(extra_results[key])
 
         ctx.actions.run(
@@ -78,6 +82,7 @@ def _package_info_impl(ctx):
             executable = ctx.executable._parser,
             arguments = [args],
             inputs = depset([ctx.file.module_bazel]),
+            execution_requirements = {"supports-path-mapping": ""},
         )
 
         starlark_alias_values = {

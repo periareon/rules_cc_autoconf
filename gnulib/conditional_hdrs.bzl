@@ -41,7 +41,7 @@ def _cc_gnulib_conditional_hdrs_impl(ctx):
     tree = ctx.actions.declare_directory(tree_name)
 
     args = ctx.actions.args()
-    args.add("--out-dir", tree.path)
+    args.add_all([tree], before_each = "--out-dir", expand_directories = False)
 
     inputs = []
     seen_dep_names = {}
@@ -79,7 +79,7 @@ def _cc_gnulib_conditional_hdrs_impl(ctx):
                 ctx.label,
             )
             if var not in seen_dep_names:
-                args.add("--dep", "{}={}".format(var, result_file.path))
+                args.add_all([result_file], before_each = "--dep", format_each = "{}=%s".format(var))
                 inputs.append(result_file)
                 seen_dep_names[var] = result_file.path
             elif seen_dep_names[var] != result_file.path:
@@ -88,7 +88,7 @@ def _cc_gnulib_conditional_hdrs_impl(ctx):
                     ctx.label,
                 ))
 
-        args.add("--hdr", "{},{},{}".format(hdr_file.path, condition, slot))
+        args.add_all([hdr_file], before_each = "--hdr", format_each = "%s,{},{}".format(condition, slot))
         inputs.append(hdr_file)
 
     ctx.actions.run(
@@ -97,6 +97,7 @@ def _cc_gnulib_conditional_hdrs_impl(ctx):
         inputs = inputs,
         outputs = [tree],
         mnemonic = "CcGnulibConditionalHdrs",
+        execution_requirements = {"supports-path-mapping": ""},
     )
 
     compilation_context = cc_common.create_compilation_context(

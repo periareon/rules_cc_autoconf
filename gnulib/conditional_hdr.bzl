@@ -42,6 +42,7 @@ def _gnulib_conditional_hdr_impl(ctx):
         inputs = [src_file, condition_file, include_next_file, next_header_file],
         outputs = [ctx.outputs.out],
         mnemonic = "GnulibConditionalHdr",
+        execution_requirements = {"supports-path-mapping": ""},
     )
 
     return [DefaultInfo(files = depset([ctx.outputs.out]))]
