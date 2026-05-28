@@ -40,6 +40,7 @@ On older systems, the appropriate flags (-lpthread, -lrt) are added
 automatically.
 """
 
+load("@bazel_features//:features.bzl", "bazel_features")
 load("@rules_cc//cc:find_cc_toolchain.bzl", "find_cpp_toolchain", "use_cc_toolchain")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
@@ -107,7 +108,8 @@ def _autoconf_linkopts_impl(ctx):
         inputs = inputs,
         outputs = [flags_file, pragma_file],
         mnemonic = "CcAutoconfLinkopts",
-        execution_requirements = {"supports-path-mapping": ""},
+        # TODO: https://github.com/periareon/rules_cc_autoconf/issues/148
+        execution_requirements = {"supports-path-mapping": ""} if bazel_features.rules.write_action_has_execution_requirements else {},
     )
 
     if is_msvc_like:

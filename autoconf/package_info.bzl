@@ -1,5 +1,7 @@
 """# package_info"""
 
+load("@bazel_features//:features.bzl", "bazel_features")
+load("//autoconf/private:ctx_actions_write.bzl", "write")
 load(
     ":cc_autoconf_info.bzl",
     "CcAutoconfInfo",
@@ -82,7 +84,8 @@ def _package_info_impl(ctx):
             executable = ctx.executable._parser,
             arguments = [args],
             inputs = depset([ctx.file.module_bazel]),
-            execution_requirements = {"supports-path-mapping": ""},
+            # TODO: https://github.com/periareon/rules_cc_autoconf/issues/148
+            execution_requirements = {"supports-path-mapping": ""} if bazel_features.rules.write_action_has_execution_requirements else {},
         )
 
         starlark_alias_values = {
@@ -91,29 +94,34 @@ def _package_info_impl(ctx):
         }
         for key, source in ctx.attr.aliases.items():
             if source not in _RUNNER_SOURCES:
-                ctx.actions.write(
+                write(
+                    actions = ctx.actions,
                     output = extra_results[key],
                     content = encode_result(starlark_alias_values[source]),
                 )
 
     else:
-        ctx.actions.write(
+        write(
+            actions = ctx.actions,
             output = results["PACKAGE_NAME"],
             content = encode_result(ctx.attr.package_name),
         )
 
-        ctx.actions.write(
+        write(
+            actions = ctx.actions,
             output = results["PACKAGE_VERSION"],
             content = encode_result(ctx.attr.package_version),
         )
 
         package_string = ctx.attr.package_name + " " + ctx.attr.package_version
-        ctx.actions.write(
+        write(
+            actions = ctx.actions,
             output = results["PACKAGE_STRING"],
             content = encode_result(package_string),
         )
 
-        ctx.actions.write(
+        write(
+            actions = ctx.actions,
             output = results["PACKAGE_TARNAME"],
             content = encode_result(
                 ctx.attr.package_tarname if ctx.attr.package_tarname else ctx.attr.package_name,
@@ -129,17 +137,20 @@ def _package_info_impl(ctx):
             "PACKAGE_VERSION": ctx.attr.package_version,
         }
         for key, source in ctx.attr.aliases.items():
-            ctx.actions.write(
+            write(
+                actions = ctx.actions,
                 output = extra_results[key],
                 content = encode_result(all_values[source]),
             )
 
-    ctx.actions.write(
+    write(
+        actions = ctx.actions,
         output = results["PACKAGE_BUGREPORT"],
         content = encode_result(ctx.attr.package_bugreport),
     )
 
-    ctx.actions.write(
+    write(
+        actions = ctx.actions,
         output = results["PACKAGE_URL"],
         content = encode_result(ctx.attr.package_url),
     )

@@ -18,6 +18,7 @@ used as the key lookup into the deps' results. The resolver picks the first
 successful keyword.
 """
 
+load("@bazel_features//:features.bzl", "bazel_features")
 load("//autoconf:cc_autoconf_info.bzl", "CcAutoconfInfo")
 load("//autoconf/private:autoconf_config.bzl", "collect_deps", "collect_transitive_results")
 
@@ -58,7 +59,8 @@ def _ac_c_inline_impl(ctx):
         outputs = [resolved_result],
         mnemonic = "CcAutoconfInlineResolve",
         progress_message = "CcAutoconfInlineResolve %{label}",
-        execution_requirements = {"supports-path-mapping": ""},
+        # TODO: https://github.com/periareon/rules_cc_autoconf/issues/148
+        execution_requirements = {"supports-path-mapping": ""} if bazel_features.rules.write_action_has_execution_requirements else {},
     )
 
     return [

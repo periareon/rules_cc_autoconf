@@ -1,5 +1,6 @@
 """# autoconf_hdr"""
 
+load("@bazel_features//:features.bzl", "bazel_features")
 load(
     "//autoconf/private:autoconf_config.bzl",
     "collect_deps",
@@ -8,6 +9,7 @@ load(
     "get_autoconf_toolchain_defaults",
     "get_autoconf_toolchain_defaults_by_label",
 )
+load("//autoconf/private:ctx_actions_write.bzl", "write")
 load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
 
 def _arg_map_manifest(value):
@@ -85,10 +87,10 @@ def _autoconf_hdr_impl(ctx):
     manifest_args = ctx.actions.args()
     manifest_args.set_param_file_format("multiline")
     manifest_args.add_all([(all_define_checks, all_subst_checks, all_unquoted)], map_each = _arg_map_manifest)
-    ctx.actions.write(
+    write(
+        actions = ctx.actions,
         output = manifest,
         content = manifest_args,
-        execution_requirements = {"supports-path-mapping": ""},
     )
 
     inputs = depset(
@@ -127,7 +129,8 @@ def _autoconf_hdr_impl(ctx):
         outputs = [ctx.outputs.out],
         mnemonic = "CcAutoconfHdr",
         env = ctx.configuration.default_shell_env,
-        execution_requirements = {"supports-path-mapping": ""},
+        # TODO: https://github.com/periareon/rules_cc_autoconf/issues/148
+        execution_requirements = {"supports-path-mapping": ""} if bazel_features.rules.write_action_has_execution_requirements else {},
     )
 
     # Return a dict mapping define names to result files (from autoconf deps)

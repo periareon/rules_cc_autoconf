@@ -1,5 +1,7 @@
 """Conditional header generation matching gnulib's gl_CONDITIONAL_HEADER pattern."""
 
+load("@bazel_features//:features.bzl", "bazel_features")
+
 # buildifier: disable=bzl-visibility
 load(
     "//autoconf/private:autoconf_config.bzl",
@@ -42,7 +44,8 @@ def _gnulib_conditional_hdr_impl(ctx):
         inputs = [src_file, condition_file, include_next_file, next_header_file],
         outputs = [ctx.outputs.out],
         mnemonic = "GnulibConditionalHdr",
-        execution_requirements = {"supports-path-mapping": ""},
+        # TODO: https://github.com/periareon/rules_cc_autoconf/issues/148
+        execution_requirements = {"supports-path-mapping": ""} if bazel_features.rules.write_action_has_execution_requirements else {},
     )
 
     return [DefaultInfo(files = depset([ctx.outputs.out]))]

@@ -1,5 +1,6 @@
 """# autoconf_srcs"""
 
+load("@bazel_features//:features.bzl", "bazel_features")
 load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@rules_cc//cc:find_cc_toolchain.bzl", "use_cc_toolchain")
 load(
@@ -198,7 +199,8 @@ def _autoconf_srcs_impl(ctx):
             inputs = [in_file] + dep_files,
             outputs = [out],
             mnemonic = "CcAutoconfSrc",
-            execution_requirements = {"supports-path-mapping": ""},
+            # TODO: https://github.com/periareon/rules_cc_autoconf/issues/148
+            execution_requirements = {"supports-path-mapping": ""} if bazel_features.rules.write_action_has_execution_requirements else {},
         )
 
         outputs.append(out)
