@@ -233,7 +233,7 @@ by Bazel’s C/C++ toolchain configuration.</p>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
 <h1 id="autoconf"><a class="header" href="#autoconf">autoconf</a></h1>
-<h2 id="rules-1"><a class="header" href="#rules-1">Rules</a></h2>
+<h2 id="functions"><a class="header" href="#functions">Functions</a></h2>
 <ul>
 <li><a href="autoconf.html#autoconf">autoconf</a></li>
 </ul>
@@ -242,16 +242,17 @@ by Bazel’s C/C++ toolchain configuration.</p>
 <pre>
 load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
 
-autoconf(<a href="autoconf.html#autoconf-name">name</a>, <a href="autoconf.html#autoconf-deps">deps</a>, <a href="autoconf.html#autoconf-checks">checks</a>)
+autoconf(*, <a href="autoconf.html#autoconf-name">name</a>, <a href="autoconf.html#autoconf-build_settings">build_settings</a>, <a href="autoconf.html#autoconf-checks">checks</a>, <a href="autoconf.html#autoconf-deps">deps</a>, <a href="autoconf.html#autoconf-kwargs">**kwargs</a>)
 </pre>
 <p>Run autoconf-like checks and produce results.</p>
 <p>This rule resolves the <code>autoconf_toolchain</code> (when registered) to skip redundant
-checker actions.  If a check's cache variable name already has a result in the
+checker actions. If a check's cache variable name already has a result in the
 toolchain or in transitive <code>deps</code>, the existing result file is reused.</p>
-<p>Use <code>autoconf_library</code> instead for targets that feed into <code>autoconf_toolchain</code>
+<p>Use <code>autoconf_cache</code> instead for targets that feed into <code>autoconf_toolchain</code>
 to avoid a dependency cycle.</p>
 <p>Example:</p>
-<pre><code class="language-python">load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+<pre><code class="language-python">load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "config",
@@ -262,17 +263,19 @@ autoconf(
     ],
 )
 </code></pre>
-<p>The results can then be used by <code>autoconf_hdr</code> or <code>autoconf_srcs</code> to generate headers
-or wrapped source files.</p>
-<p><strong>ATTRIBUTES</strong></p>
-<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Type</th><th style="text-align: left">Mandatory</th><th style="text-align: left">Default</th></tr></thead><tbody>
-<tr><td style="text-align: left"><a id="autoconf-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
-<tr><td style="text-align: left"><a id="autoconf-deps"></a>deps</td><td style="text-align: left">Additional <code>autoconf</code>, <code>autoconf_library</code>, or <code>package_info</code> dependencies.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf-checks"></a>checks</td><td style="text-align: left">List of JSON-encoded checks from checks (e.g., <code>checks.AC_CHECK_HEADER('stdio.h')</code>).</td><td style="text-align: left">List of strings</td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
+<p>The results can then be used by <code>autoconf_hdr</code> or <code>autoconf_srcs</code> to generate
+headers or wrapped source files.</p>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="autoconf-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="autoconf-build_settings"></a>build_settings</td><td style="text-align: left">List of <code>checks.AC_BUILD_SETTING(...)</code> entries associating Bazel build setting targets (any rule providing <code>BuildSettingInfo</code>) with autoconf-style defines and substitutions.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf-checks"></a>checks</td><td style="text-align: left">List of JSON-encoded checks from <code>checks</code> (e.g., <code>checks.AC_CHECK_HEADER('stdio.h')</code>).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf-deps"></a>deps</td><td style="text-align: left">Additional <code>autoconf</code>, <code>autoconf_cache</code>, or <code>package_info</code> dependencies.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf-kwargs"></a>kwargs</td><td style="text-align: left">Standard Bazel attributes (e.g. <code>visibility</code>, <code>tags</code>).</td><td style="text-align: left">none</td></tr>
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
 <h1 id="autoconf_hdr"><a class="header" href="#autoconf_hdr">autoconf_hdr</a></h1>
-<h2 id="rules-2"><a class="header" href="#rules-2">Rules</a></h2>
+<h2 id="rules-1"><a class="header" href="#rules-1">Rules</a></h2>
 <ul>
 <li><a href="autoconf_hdr.html#autoconf_hdr">autoconf_hdr</a></li>
 </ul>
@@ -340,7 +343,7 @@ autoconf_hdr(
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
 <h1 id="autoconf_srcs"><a class="header" href="#autoconf_srcs">autoconf_srcs</a></h1>
-<h2 id="rules-3"><a class="header" href="#rules-3">Rules</a></h2>
+<h2 id="rules-2"><a class="header" href="#rules-2">Rules</a></h2>
 <ul>
 <li><a href="autoconf_srcs.html#autoconf_srcs">autoconf_srcs</a></li>
 </ul>
@@ -436,7 +439,7 @@ cc_binary(
 AC_SEARCH_LIBS produces empty values and no extra -l flags are added.
 On older systems, the appropriate flags (-lpthread, -lrt) are added
 automatically.</p>
-<h2 id="rules-4"><a class="header" href="#rules-4">Rules</a></h2>
+<h2 id="rules-3"><a class="header" href="#rules-3">Rules</a></h2>
 <ul>
 <li><a href="autoconf_linkopts.html#autoconf_linkopts">autoconf_linkopts</a></li>
 </ul>
@@ -467,32 +470,14 @@ be provided by a different module or not needed on this platform).</p>
 </div><div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
 <p>autoconf_toolchain</p>
 <p>Provides default autoconf checks that can be overridden by targets.</p>
-<h2 id="rules-5"><a class="header" href="#rules-5">Rules</a></h2>
+<h2 id="rules-4"><a class="header" href="#rules-4">Rules</a></h2>
 <ul>
-<li><a href="autoconf_toolchain.html#autoconf_cache">autoconf_cache</a></li>
 <li><a href="autoconf_toolchain.html#autoconf_toolchain">autoconf_toolchain</a></li>
 </ul>
-<p><a id="autoconf_cache"></a></p>
-<h2 id="autoconf_cache"><a class="header" href="#autoconf_cache">autoconf_cache</a></h2>
-<pre>
-load("@rules_cc_autoconf//autoconf:autoconf_toolchain.bzl", "autoconf_cache")
-
-autoconf_cache(<a href="autoconf_toolchain.html#autoconf_cache-name">name</a>, <a href="autoconf_toolchain.html#autoconf_cache-deps">deps</a>, <a href="autoconf_toolchain.html#autoconf_cache-checks">checks</a>)
-</pre>
-<p>Run autoconf-like checks without resolving the autoconf toolchain.</p>
-<p>Identical to <code>autoconf</code> except that it does <strong>not</strong> resolve the
-<code>autoconf_toolchain</code>.  Use this rule for targets that are listed as
-<code>cache_deps</code> or <code>defaults</code> of an <code>autoconf_toolchain</code> -- using the
-regular <code>autoconf</code> rule in that position would create a dependency cycle.</p>
-<p>Dep-level caching still applies: if a check's cache variable name already
-has a result in transitive <code>deps</code>, the action is skipped.</p>
-<p><strong>ATTRIBUTES</strong></p>
-<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Type</th><th style="text-align: left">Mandatory</th><th style="text-align: left">Default</th></tr></thead><tbody>
-<tr><td style="text-align: left"><a id="autoconf_cache-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_cache-deps"></a>deps</td><td style="text-align: left">Additional <code>autoconf</code>, <code>autoconf_library</code>, or <code>package_info</code> dependencies.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_cache-checks"></a>checks</td><td style="text-align: left">List of JSON-encoded checks from checks (e.g., <code>checks.AC_CHECK_HEADER('stdio.h')</code>).</td><td style="text-align: left">List of strings</td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
-</tbody></table>
-</div>
+<h2 id="functions-1"><a class="header" href="#functions-1">Functions</a></h2>
+<ul>
+<li><a href="autoconf_toolchain.html#autoconf_cache">autoconf_cache</a></li>
+</ul>
 <p><a id="autoconf_toolchain"></a></p>
 <h2 id="autoconf_toolchain"><a class="header" href="#autoconf_toolchain">autoconf_toolchain</a></h2>
 <pre>
@@ -585,6 +570,29 @@ provides it.</li>
 <tr><td style="text-align: left"><a id="autoconf_toolchain-cache_deps"></a>cache_deps</td><td style="text-align: left">Targets whose check results are available for action deduplication in <code>autoconf</code> targets.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
 <tr><td style="text-align: left"><a id="autoconf_toolchain-defaults"></a>defaults</td><td style="text-align: left">Targets whose results provide baseline values for <code>autoconf_hdr</code> rendering.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
 </tbody></table>
+</div>
+<p><a id="autoconf_cache"></a></p>
+<h2 id="autoconf_cache"><a class="header" href="#autoconf_cache">autoconf_cache</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:autoconf_toolchain.bzl", "autoconf_cache")
+
+autoconf_cache(*, <a href="autoconf_toolchain.html#autoconf_cache-name">name</a>, <a href="autoconf_toolchain.html#autoconf_cache-build_settings">build_settings</a>, <a href="autoconf_toolchain.html#autoconf_cache-checks">checks</a>, <a href="autoconf_toolchain.html#autoconf_cache-deps">deps</a>, <a href="autoconf_toolchain.html#autoconf_cache-kwargs">**kwargs</a>)
+</pre>
+<p>Run autoconf-like checks without resolving the autoconf toolchain.</p>
+<p>Identical to <code>autoconf</code> except that it does <strong>not</strong> resolve the
+<code>autoconf_toolchain</code>. Use this rule for targets that are listed as
+<code>cache_deps</code> or <code>defaults</code> of an <code>autoconf_toolchain</code> -- using the
+regular <code>autoconf</code> rule in that position would create a dependency cycle.</p>
+<p>Dep-level caching still applies: if a check's cache variable name already
+has a result in transitive <code>deps</code>, the action is skipped.</p>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="autoconf_cache-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="autoconf_cache-build_settings"></a>build_settings</td><td style="text-align: left">List of <code>checks.AC_BUILD_SETTING(...)</code> entries associating Bazel build setting targets (any rule providing <code>BuildSettingInfo</code>) with autoconf-style defines and substitutions.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_cache-checks"></a>checks</td><td style="text-align: left">List of JSON-encoded checks from <code>checks</code> (e.g., <code>checks.AC_CHECK_HEADER('stdio.h')</code>).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_cache-deps"></a>deps</td><td style="text-align: left">Additional <code>autoconf</code>, <code>autoconf_cache</code>, or <code>package_info</code> dependencies.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_cache-kwargs"></a>kwargs</td><td style="text-align: left">Standard Bazel attributes (e.g. <code>visibility</code>, <code>tags</code>).</td><td style="text-align: left">none</td></tr>
+</tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
 <h1 id="checks"><a class="header" href="#checks">checks</a></h1>
 <p>This module provides Bazel macros that mirror GNU Autoconf's behavior.</p>
@@ -660,8 +668,9 @@ supported:</p>
 <code>gl_CHECK_FUNCS_ANDROID([faccessat], [[#include &lt;unistd.h&gt;]])</code>). The list is
 joined with newlines to form the prologue of the test program.</p>
 <p>The parameter <code>headers</code> is a deprecated alias for <code>includes</code>; prefer <code>includes</code>.</p>
-<h2 id="functions"><a class="header" href="#functions">Functions</a></h2>
+<h2 id="functions-2"><a class="header" href="#functions-2">Functions</a></h2>
 <ul>
+<li><a href="checks.html#checks.AC_BUILD_SETTING">checks.AC_BUILD_SETTING</a></li>
 <li><a href="checks.html#checks.AC_CHECK_ALIGNOF">checks.AC_CHECK_ALIGNOF</a></li>
 <li><a href="checks.html#checks.AC_CHECK_CXX_COMPILER_FLAG">checks.AC_CHECK_CXX_COMPILER_FLAG</a></li>
 <li><a href="checks.html#checks.AC_CHECK_C_COMPILER_FLAG">checks.AC_CHECK_C_COMPILER_FLAG</a></li>
@@ -692,6 +701,53 @@ joined with newlines to form the prologue of the test program.</p>
 <li><a href="checks.html#macros.AC_CHECK_TYPES">macros.AC_CHECK_TYPES</a></li>
 <li><a href="checks.html#utils.AC_LANG_PROGRAM">utils.AC_LANG_PROGRAM</a></li>
 </ul>
+<p><a id="checks.AC_BUILD_SETTING"></a></p>
+<h2 id="checksac_build_setting"><a class="header" href="#checksac_build_setting">checks.AC_BUILD_SETTING</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+checks.AC_BUILD_SETTING(*, <a href="checks.html#checks.AC_BUILD_SETTING-target">target</a>, <a href="checks.html#checks.AC_BUILD_SETTING-name">name</a>, <a href="checks.html#checks.AC_BUILD_SETTING-define">define</a>, <a href="checks.html#checks.AC_BUILD_SETTING-subst">subst</a>, <a href="checks.html#checks.AC_BUILD_SETTING-unquote">unquote</a>)
+</pre>
+<p>Associate a Bazel build setting target with an autoconf define/subst.</p>
+<p>Reads the value of <code>target</code> (any rule providing <code>BuildSettingInfo</code>) at
+analysis time and renders it as a pre-computed check result -- the same
+shape <code>AC_DEFINE</code> / <code>AC_SUBST</code> produce -- so it flows through
+<code>autoconf_hdr</code> / <code>autoconf_srcs</code> like any other check. No compilation is
+performed.</p>
+<p>The returned value is consumed by the <code>autoconf</code> (and <code>autoconf_cache</code>)
+macro's <code>build_settings</code> parameter, which collects a list of these and
+forwards them to the underlying rule.</p>
+<p>Example:</p>
+<pre><code class="language-python">load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
+load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+string_flag(name = "package_name", build_setting_default = "myproj")
+
+autoconf(
+    name = "config",
+    build_settings = [
+        checks.AC_BUILD_SETTING(
+            target = ":package_name",
+            name = "ac_cv_package_name",
+            define = "PACKAGE_NAME",
+            subst = True,
+        ),
+    ],
+)
+</code></pre>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="checks.AC_BUILD_SETTING-target"></a>target</td><td style="text-align: left">Label of a target providing <code>BuildSettingInfo</code> (e.g. a <code>string_flag</code>, <code>bool_flag</code>, or <code>int_flag</code>).</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_BUILD_SETTING-name"></a>name</td><td style="text-align: left">Cache variable name (e.g. <code>"ac_cv_package_name"</code>).</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_BUILD_SETTING-define"></a>define</td><td style="text-align: left">Define name to set in the generated header, or <code>True</code> to reuse <code>name</code>. At least one of <code>define</code> or <code>subst</code> is required.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_BUILD_SETTING-subst"></a>subst</td><td style="text-align: left">Substitution variable name for <code>@VAR@</code> replacement, or <code>True</code> to reuse <code>define</code>/<code>name</code>. At least one of <code>define</code> or <code>subst</code> is required.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_BUILD_SETTING-unquote"></a>unquote</td><td style="text-align: left">If True, emit the define with AC_DEFINE_UNQUOTED-style (trailing space) instead of <code>/**/</code>.</td><td style="text-align: left"><code>False</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A struct consumed by the <code>autoconf</code> / <code>autoconf_cache</code> macro's
+<code>build_settings</code> parameter.</p>
 <p><a id="checks.AC_CHECK_ALIGNOF"></a></p>
 <h2 id="checksac_check_alignof"><a class="header" href="#checksac_check_alignof">checks.AC_CHECK_ALIGNOF</a></h2>
 <pre>
@@ -1790,7 +1846,7 @@ define = "HAVE_LANGINFO_CODESET",
 <p>A string suitable for the <code>code</code> parameter of AC_TRY_COMPILE or AC_TRY_LINK.</p>
 <div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
 <h1 id="package_info"><a class="header" href="#package_info">package_info</a></h1>
-<h2 id="rules-6"><a class="header" href="#rules-6">Rules</a></h2>
+<h2 id="rules-5"><a class="header" href="#rules-5">Rules</a></h2>
 <ul>
 <li><a href="package_info.html#package_info">package_info</a></li>
 </ul>

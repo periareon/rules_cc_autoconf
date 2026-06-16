@@ -232,6 +232,7 @@ joined with newlines to form the prologue of the test program.</p>
 <p>The parameter <code>headers</code> is a deprecated alias for <code>includes</code>; prefer <code>includes</code>.</p>
 <h2 id="functions"><a class="header" href="#functions">Functions</a></h2>
 <ul>
+<li><a href="#checks.AC_BUILD_SETTING">checks.AC_BUILD_SETTING</a></li>
 <li><a href="#checks.AC_CHECK_ALIGNOF">checks.AC_CHECK_ALIGNOF</a></li>
 <li><a href="#checks.AC_CHECK_CXX_COMPILER_FLAG">checks.AC_CHECK_CXX_COMPILER_FLAG</a></li>
 <li><a href="#checks.AC_CHECK_C_COMPILER_FLAG">checks.AC_CHECK_C_COMPILER_FLAG</a></li>
@@ -262,6 +263,53 @@ joined with newlines to form the prologue of the test program.</p>
 <li><a href="#macros.AC_CHECK_TYPES">macros.AC_CHECK_TYPES</a></li>
 <li><a href="#utils.AC_LANG_PROGRAM">utils.AC_LANG_PROGRAM</a></li>
 </ul>
+<p><a id="checks.AC_BUILD_SETTING"></a></p>
+<h2 id="checksac_build_setting"><a class="header" href="#checksac_build_setting">checks.AC_BUILD_SETTING</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+checks.AC_BUILD_SETTING(*, <a href="#checks.AC_BUILD_SETTING-target">target</a>, <a href="#checks.AC_BUILD_SETTING-name">name</a>, <a href="#checks.AC_BUILD_SETTING-define">define</a>, <a href="#checks.AC_BUILD_SETTING-subst">subst</a>, <a href="#checks.AC_BUILD_SETTING-unquote">unquote</a>)
+</pre>
+<p>Associate a Bazel build setting target with an autoconf define/subst.</p>
+<p>Reads the value of <code>target</code> (any rule providing <code>BuildSettingInfo</code>) at
+analysis time and renders it as a pre-computed check result -- the same
+shape <code>AC_DEFINE</code> / <code>AC_SUBST</code> produce -- so it flows through
+<code>autoconf_hdr</code> / <code>autoconf_srcs</code> like any other check. No compilation is
+performed.</p>
+<p>The returned value is consumed by the <code>autoconf</code> (and <code>autoconf_cache</code>)
+macro's <code>build_settings</code> parameter, which collects a list of these and
+forwards them to the underlying rule.</p>
+<p>Example:</p>
+<pre><code class="language-python">load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
+load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+string_flag(name = "package_name", build_setting_default = "myproj")
+
+autoconf(
+    name = "config",
+    build_settings = [
+        checks.AC_BUILD_SETTING(
+            target = ":package_name",
+            name = "ac_cv_package_name",
+            define = "PACKAGE_NAME",
+            subst = True,
+        ),
+    ],
+)
+</code></pre>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="checks.AC_BUILD_SETTING-target"></a>target</td><td style="text-align: left">Label of a target providing <code>BuildSettingInfo</code> (e.g. a <code>string_flag</code>, <code>bool_flag</code>, or <code>int_flag</code>).</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_BUILD_SETTING-name"></a>name</td><td style="text-align: left">Cache variable name (e.g. <code>"ac_cv_package_name"</code>).</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_BUILD_SETTING-define"></a>define</td><td style="text-align: left">Define name to set in the generated header, or <code>True</code> to reuse <code>name</code>. At least one of <code>define</code> or <code>subst</code> is required.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_BUILD_SETTING-subst"></a>subst</td><td style="text-align: left">Substitution variable name for <code>@VAR@</code> replacement, or <code>True</code> to reuse <code>define</code>/<code>name</code>. At least one of <code>define</code> or <code>subst</code> is required.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_BUILD_SETTING-unquote"></a>unquote</td><td style="text-align: left">If True, emit the define with AC_DEFINE_UNQUOTED-style (trailing space) instead of <code>/**/</code>.</td><td style="text-align: left"><code>False</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A struct consumed by the <code>autoconf</code> / <code>autoconf_cache</code> macro's
+<code>build_settings</code> parameter.</p>
 <p><a id="checks.AC_CHECK_ALIGNOF"></a></p>
 <h2 id="checksac_check_alignof"><a class="header" href="#checksac_check_alignof">checks.AC_CHECK_ALIGNOF</a></h2>
 <pre>
