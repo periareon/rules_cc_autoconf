@@ -1,0 +1,10 @@
+/* config.h.in - build_settings test template */
+
+/* Package name from a string_flag */
+#define PACKAGE_NAME "myproj"
+
+/* Threads toggle from a bool_flag */
+#define ENABLE_THREADS true
+
+/* Log level from an int_flag */
+#define LOG_LEVEL 2

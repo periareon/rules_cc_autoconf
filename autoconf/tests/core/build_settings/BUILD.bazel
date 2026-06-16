@@ -1,0 +1,80 @@
+load("@bazel_skylib//rules:common_settings.bzl", "bool_flag", "int_flag", "string_flag")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:checks.bzl", "checks")
+load("//autoconf/tests:diff_test.bzl", "diff_test")
+load(":transition.bzl", "transitioned_file")
+
+string_flag(
+    name = "package_name",
+    build_setting_default = "myproj",
+)
+
+bool_flag(
+    name = "enable_threads",
+    build_setting_default = True,
+)
+
+int_flag(
+    name = "log_level",
+    build_setting_default = 2,
+)
+
+autoconf(
+    name = "autoconf",
+    build_settings = [
+        checks.AC_BUILD_SETTING(
+            name = "ac_cv_package_name",
+            define = "PACKAGE_NAME",
+            target = ":package_name",
+        ),
+        checks.AC_BUILD_SETTING(
+            name = "ac_cv_enable_threads",
+            define = "ENABLE_THREADS",
+            target = ":enable_threads",
+            unquote = True,
+        ),
+        checks.AC_BUILD_SETTING(
+            name = "ac_cv_log_level",
+            define = "LOG_LEVEL",
+            target = ":log_level",
+            unquote = True,
+        ),
+    ],
+)
+
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    template = "config.h.in",
+    deps = [":autoconf"],
+)
+
+diff_test(
+    name = "diff_test",
+    file1 = "golden_config.h.in",
+    file2 = ":config.h",
+)
+
+# Transitioned variant: overrides the three flags and re-checks the rendered
+# header so that any failure to propagate flag changes through the build
+# would diff against the golden.
+transitioned_file(
+    name = "config_transitioned",
+    actual = ":config",
+)
+
+diff_test(
+    name = "diff_test_transitioned",
+    file1 = "golden_config_transitioned.h.in",
+    file2 = ":config_transitioned",
+)
+
+cc_test(
+    name = "test_build_settings",
+    srcs = [
+        "test_build_settings.c",
+        ":config.h",
+    ],
+)
