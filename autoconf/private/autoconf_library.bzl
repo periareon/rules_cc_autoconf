@@ -1,12 +1,14 @@
 """autoconf implementation"""
 
 load("@bazel_features//:features.bzl", "bazel_features")
+load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@rules_cc//cc:find_cc_toolchain.bzl", "use_cc_toolchain")
 load(
     "//autoconf/private:autoconf_config.bzl",
     "collect_deps",
     "collect_transitive_results",
     "create_config_dict",
+    "encode_result",
     "get_autoconf_toolchain_cache",
     "get_cc_toolchain_info",
     "get_environment_variables",
@@ -67,6 +69,100 @@ def _coerce_name(name, value):
         return value
 
     return name
+
+def _assert_no_duplicate(kind, name, registry, ctx, new_source):
+    """Fail when `name` is already registered for `kind` (Define or Subst).
+
+    Shared by the JSON-check loop and the build-settings loop so both produce
+    the same error shape on a duplicate symbol within a single target.
+    """
+    if name in registry:
+        fail("{} variable `{}` is duplicated on `{}`\nLEFT:  {}\nRIGHT: {}".format(
+            kind,
+            name,
+            ctx.label,
+            registry[name],
+            new_source,
+        ))
+
+def _process_build_settings(
+        ctx,
+        cache_results,
+        define_results,
+        subst_results,
+        content_cache,
+        unquoted_defines,
+        cache_checks,
+        define_checks,
+        subst_checks,
+        available_content_cache):
+    """Render each `build_settings` entry as a pre-computed check result.
+
+    For each (target, metadata_json) pair, read the BuildSettingInfo value,
+    write a result file containing ``encode_result(value)``, and register it
+    in the same cache/define/subst/content_cache dicts the JSON-check loop
+    populates. Content-key dedup applies the same way: two targets that
+    reference the same flag with the same resolved value share one file.
+    """
+    for target, metadata_json in ctx.attr.build_settings.items():
+        metadata = json.decode(metadata_json)
+        name = metadata.get("name")
+        if not name:
+            fail("Build setting entry for `{}` on `{}` is missing 'name'.".format(
+                target.label,
+                ctx.label,
+            ))
+        define = metadata.get("define")
+        subst = metadata.get("subst")
+        unquote = metadata.get("unquote", False)
+
+        define_name = _coerce_name(name, define)
+        subst_name = _coerce_name(name, _coerce_name(define_name, subst))
+
+        value = target[BuildSettingInfo].value
+        content_key = json.encode([
+            "build_setting",
+            str(target.label),
+            value,
+        ])
+
+        if content_key in content_cache and name in cache_results:
+            continue
+
+        if content_key in available_content_cache:
+            output = available_content_cache[content_key]
+        elif content_key in content_cache:
+            output = content_cache[content_key]
+        else:
+            output = ctx.actions.declare_file("{}/{}.result.cache.json".format(ctx.label.name, name))
+            write(
+                actions = ctx.actions,
+                output = output,
+                content = encode_result(value),
+            )
+
+        source_desc = {
+            "build_setting": str(target.label),
+            "define": define,
+            "name": name,
+            "subst": subst,
+        }
+
+        if define:
+            _assert_no_duplicate("Define", define_name, define_checks, ctx, source_desc)
+            define_checks[define_name] = source_desc
+            define_results[define_name] = output
+            if unquote:
+                unquoted_defines.append(define_name)
+
+        if subst:
+            _assert_no_duplicate("Subst", subst_name, subst_checks, ctx, source_desc)
+            subst_checks[subst_name] = source_desc
+            subst_results[subst_name] = output
+
+        cache_checks[name] = source_desc
+        cache_results[name] = output
+        content_cache[content_key] = output
 
 def autoconf_impl_common(ctx, resolve_toolchain):
     """Shared implementation for autoconf and autoconf_library rules.
@@ -154,15 +250,7 @@ def autoconf_impl_common(ctx, resolve_toolchain):
         # Define/subst conflict detection: different cache variable claiming same symbol = error
         if define:
             check["define"] = define_name
-
-            if define_name in define_results:
-                fail("Define variable `{}` is duplicated on `{}`\nLEFT:  {}\nRIGHT: {}".format(
-                    define_name,
-                    ctx.label,
-                    define_checks[define_name],
-                    check,
-                ))
-
+            _assert_no_duplicate("Define", define_name, define_checks, ctx, check)
             define_checks[define_name] = check
             define_results[define_name] = output
 
@@ -171,21 +259,26 @@ def autoconf_impl_common(ctx, resolve_toolchain):
 
         if subst:
             check["subst"] = subst_name
-
-            if subst_name in subst_checks:
-                fail("Subst variable `{}` is duplicated on `{}`\nLEFT:  {}\nRIGHT: {}".format(
-                    subst_name,
-                    ctx.label,
-                    subst_checks[subst_name],
-                    check,
-                ))
-
+            _assert_no_duplicate("Subst", subst_name, subst_checks, ctx, check)
             subst_checks[subst_name] = check
             subst_results[subst_name] = output
 
         cache_checks[name] = check
         cache_results[name] = output
         content_cache[content_key] = output
+
+    _process_build_settings(
+        ctx,
+        cache_results = cache_results,
+        define_results = define_results,
+        subst_results = subst_results,
+        content_cache = content_cache,
+        unquoted_defines = unquoted_defines,
+        cache_checks = cache_checks,
+        define_checks = define_checks,
+        subst_checks = subst_checks,
+        available_content_cache = available_content_cache,
+    )
 
     # Write config to JSON
     config_json = write_config_json(ctx, create_config_dict(
@@ -386,7 +479,47 @@ def autoconf_impl_common(ctx, resolve_toolchain):
 def _autoconf_impl(ctx):
     return autoconf_impl_common(ctx, resolve_toolchain = True)
 
+def to_build_settings_dict(entries):
+    """Convert a list of `checks.AC_BUILD_SETTING(...)` structs to the dict the rule attribute requires.
+
+    The `build_settings` attribute on `autoconf` / `autoconf_cache` is typed
+    `attr.label_keyed_string_dict` -- the only pre-Bazel-9 attribute type that
+    carries `(Label, str)` pairs natively. Users author build settings as a
+    list of `checks.AC_BUILD_SETTING(target=..., name=..., define=...)` calls
+    (so each entry's keyword-argument signature is self-documenting); the
+    public `autoconf` / `autoconf_cache` macros call this helper to fold that
+    list into the `{label_str: metadata_json}` shape the rule attribute
+    accepts.
+
+    Once Bazel 9 is the minimum supported version, switch the attribute to
+    `string_keyed_label_dict` (key = metadata JSON, value = build-setting
+    target), have `AC_BUILD_SETTING` return a one-key dict the user composes
+    with `|`, and delete this helper together with the wrapping macros.
+
+    Args:
+        entries: List of structs produced by `checks.AC_BUILD_SETTING(...)`,
+            or `None` / empty for no entries.
+
+    Returns:
+        A `dict[str, str]` mapping build-setting label strings to JSON
+        metadata blobs, suitable for the rule's `build_settings` attribute.
+    """
+    if not entries:
+        return {}
+    result = {}
+    for entry in entries:
+        if entry.target in result:
+            fail("Duplicate build_settings target: {}".format(entry.target))
+        result[entry.target] = entry.metadata
+    return result
+
 COMMON_ATTRS = {
+    "build_settings": attr.label_keyed_string_dict(
+        doc = "Mapping of Bazel build setting targets (any rule providing `BuildSettingInfo`) " +
+              "to JSON metadata produced by `checks.AC_BUILD_SETTING`.",
+        providers = [BuildSettingInfo],
+        default = {},
+    ),
     "checks": attr.string_list(
         doc = "List of JSON-encoded checks from checks (e.g., `checks.AC_CHECK_HEADER('stdio.h')`).",
         default = [],
@@ -411,7 +544,7 @@ This rule resolves the ``autoconf_toolchain`` (when registered) to skip redundan
 checker actions.  If a check's cache variable name already has a result in the
 toolchain or in transitive ``deps``, the existing result file is reused.
 
-Use ``autoconf_library`` instead for targets that feed into ``autoconf_toolchain``
+Use ``autoconf_cache`` instead for targets that feed into ``autoconf_toolchain``
 to avoid a dependency cycle.
 
 Example:
@@ -437,5 +570,27 @@ or wrapped source files.
     toolchains = use_cc_toolchain() + [
         config_common.toolchain_type("@rules_cc_autoconf//autoconf:toolchain_type", mandatory = False),
     ],
+    provides = [CcAutoconfInfo],
+)
+
+def _autoconf_cache_impl(ctx):
+    return autoconf_impl_common(ctx, resolve_toolchain = False)
+
+autoconf_cache = rule(
+    implementation = _autoconf_cache_impl,
+    doc = """\
+Run autoconf-like checks without resolving the autoconf toolchain.
+
+Identical to ``autoconf`` except that it does **not** resolve the
+``autoconf_toolchain``.  Use this rule for targets that are listed as
+``cache_deps`` or ``defaults`` of an ``autoconf_toolchain`` -- using the
+regular ``autoconf`` rule in that position would create a dependency cycle.
+
+Dep-level caching still applies: if a check's cache variable name already
+has a result in transitive ``deps``, the action is skipped.
+""",
+    attrs = COMMON_ATTRS,
+    fragments = ["cpp"],
+    toolchains = use_cc_toolchain(),
     provides = [CcAutoconfInfo],
 )

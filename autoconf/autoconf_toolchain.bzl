@@ -3,9 +3,8 @@
 Provides default autoconf checks that can be overridden by targets.
 """
 
-load("@rules_cc//cc:find_cc_toolchain.bzl", "use_cc_toolchain")
 load("//autoconf/private:autoconf_config.bzl", "collect_deps", "collect_transitive_results")
-load("//autoconf/private:autoconf_library.bzl", "COMMON_ATTRS", "autoconf_impl_common")
+load("//autoconf/private:autoconf_library.bzl", "to_build_settings_dict", _autoconf_cache_rule = "autoconf_cache")
 load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
 
 def _autoconf_toolchain_impl(ctx):
@@ -156,24 +155,48 @@ dependencies with different result files"*:
     },
 )
 
-def _autoconf_cache_impl(ctx):
-    return autoconf_impl_common(ctx, resolve_toolchain = False)
+def autoconf_cache(
+        *,
+        name,
+        build_settings = None,
+        checks = None,
+        deps = None,
+        **kwargs):
+    """Run autoconf-like checks without resolving the autoconf toolchain.
 
-autoconf_cache = rule(
-    implementation = _autoconf_cache_impl,
-    doc = """\
-Run autoconf-like checks without resolving the autoconf toolchain.
+    Identical to `autoconf` except that it does **not** resolve the
+    `autoconf_toolchain`. Use this rule for targets that are listed as
+    `cache_deps` or `defaults` of an `autoconf_toolchain` -- using the
+    regular `autoconf` rule in that position would create a dependency cycle.
 
-Identical to ``autoconf`` except that it does **not** resolve the
-``autoconf_toolchain``.  Use this rule for targets that are listed as
-``cache_deps`` or ``defaults`` of an ``autoconf_toolchain`` -- using the
-regular ``autoconf`` rule in that position would create a dependency cycle.
+    Dep-level caching still applies: if a check's cache variable name already
+    has a result in transitive `deps`, the action is skipped.
 
-Dep-level caching still applies: if a check's cache variable name already
-has a result in transitive ``deps``, the action is skipped.
-""",
-    attrs = COMMON_ATTRS,
-    fragments = ["cpp"],
-    toolchains = use_cc_toolchain(),
-    provides = [CcAutoconfInfo],
-)
+    Args:
+        name: A unique name for this target.
+        build_settings: List of `checks.AC_BUILD_SETTING(...)` entries
+            associating Bazel build setting targets (any rule providing
+            `BuildSettingInfo`) with autoconf-style defines and substitutions.
+        checks: List of JSON-encoded checks from `checks`
+            (e.g., `checks.AC_CHECK_HEADER('stdio.h')`).
+        deps: Additional `autoconf`, `autoconf_cache`, or `package_info`
+            dependencies.
+        **kwargs: Standard Bazel attributes (e.g. `visibility`, `tags`).
+    """
+
+    # This is a macro rather than a direct rule re-export because the
+    # underlying `build_settings` attribute has to be a
+    # `label_keyed_string_dict` -- the only pre-Bazel-9 attr type that
+    # carries (Label, str) pairs natively. Once Bazel 9 is the minimum
+    # supported version, switch the rule attribute to
+    # `string_keyed_label_dict`, have `AC_BUILD_SETTING` return a one-key
+    # dict, and delete this macro -- the rule can then be re-exported
+    # directly. See `//autoconf:autoconf.bzl` for the matching transition
+    # on the `autoconf` rule.
+    _autoconf_cache_rule(
+        name = name,
+        build_settings = to_build_settings_dict(build_settings),
+        checks = checks or [],
+        deps = deps or [],
+        **kwargs
+    )

@@ -2603,6 +2603,75 @@ def _ac_check_members(
 
     return checks
 
+def _ac_build_setting(
+        *,
+        target,
+        name,
+        define = None,
+        subst = None,
+        unquote = False):
+    """Associate a Bazel build setting target with an autoconf define/subst.
+
+    Reads the value of `target` (any rule providing `BuildSettingInfo`) at
+    analysis time and renders it as a pre-computed check result -- the same
+    shape `AC_DEFINE` / `AC_SUBST` produce -- so it flows through
+    `autoconf_hdr` / `autoconf_srcs` like any other check. No compilation is
+    performed.
+
+    The returned value is consumed by the `autoconf` (and `autoconf_cache`)
+    macro's `build_settings` parameter, which collects a list of these and
+    forwards them to the underlying rule.
+
+    Example:
+    ```python
+    load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
+    load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
+    load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+    string_flag(name = "package_name", build_setting_default = "myproj")
+
+    autoconf(
+        name = "config",
+        build_settings = [
+            checks.AC_BUILD_SETTING(
+                target = ":package_name",
+                name = "ac_cv_package_name",
+                define = "PACKAGE_NAME",
+                subst = True,
+            ),
+        ],
+    )
+    ```
+
+    Args:
+        target: Label of a target providing `BuildSettingInfo` (e.g. a
+            `string_flag`, `bool_flag`, or `int_flag`).
+        name: Cache variable name (e.g. `"ac_cv_package_name"`).
+        define: Define name to set in the generated header, or `True` to
+            reuse `name`. At least one of `define` or `subst` is required.
+        subst: Substitution variable name for `@VAR@` replacement, or `True`
+            to reuse `define`/`name`. At least one of `define` or `subst`
+            is required.
+        unquote: If True, emit the define with AC_DEFINE_UNQUOTED-style
+            (trailing space) instead of `/**/`.
+
+    Returns:
+        A struct consumed by the `autoconf` / `autoconf_cache` macro's
+        `build_settings` parameter.
+    """
+    if not define and not subst:
+        fail("AC_BUILD_SETTING for `{}` must set at least one of `define` or `subst`.".format(target))
+
+    return struct(
+        target = target,
+        metadata = json.encode({
+            "define": define,
+            "name": name,
+            "subst": subst,
+            "unquote": unquote,
+        }),
+    )
+
 def _ac_lang_program(prologue, body):
     """Build program code from prologue and main body (AC_LANG_PROGRAM).
 
@@ -2649,6 +2718,7 @@ def _ac_lang_program(prologue, body):
     return _AC_LANG_PROGRAM_TEMPLATE.format(prologue_str, body_str)
 
 checks = struct(
+    AC_BUILD_SETTING = _ac_build_setting,
     AC_C_RESTRICT = _ac_c_restrict,
     AC_CHECK_ALIGNOF = _ac_check_alignof,
     AC_CHECK_C_COMPILER_FLAG = _ac_check_c_compiler_flag,
