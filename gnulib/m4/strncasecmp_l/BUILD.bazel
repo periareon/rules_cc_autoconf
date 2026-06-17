@@ -14,7 +14,8 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/strings_h:gl_STRINGS_H_CORE",  # AC_REQUIRE([gl_STRINGS_H_DEFAULTS])
+        # AC_REQUIRE([gl_STRINGS_H_DEFAULTS]) is satisfied by the toolchain;
+        # _DEFAULTS targets are never direct dependencies.
         "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
         # Note: strcasecmp dependency pulls in HAVE_STRCASECMP which golden expects undefined
         # gl_STRCASECMP_WORKS is a runtime check that we can approximate

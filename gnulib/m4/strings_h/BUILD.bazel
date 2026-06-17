@@ -4,35 +4,37 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 load("//gnulib:macros.bzl", gl_macros = "macros")
 
-# Core strings_h checks without HAVE_STRINGS_H subst
+# gl_STRINGS_H - lines 11-32 (AC_DEFUN_ONCE)
+# Configure a replacement for <strings.h>.
 autoconf(
-    name = "gl_STRINGS_H_CORE",
-    checks = gl_macros.GL_NEXT_HEADERS(["strings.h"]),
-    visibility = ["//gnulib:__subpackages__"],
+    name = "gl_STRINGS_H",
+    checks = gl_macros.GL_CHECK_NEXT_HEADERS(["strings.h"]) + [
+        # M4: if test $ac_cv_header_strings_h = yes; then HAVE_STRINGS_H=1
+        #     else HAVE_STRINGS_H=0; fi; AC_SUBST([HAVE_STRINGS_H])
+        # ac_cv_header_strings_h is populated by AC_CHECK_INCLUDES_DEFAULT,
+        # which already runs AC_CHECK_HEADER("strings.h").
+        checks.AC_SUBST(
+            "HAVE_STRINGS_H",
+            condition = "ac_cv_header_strings_h",
+            if_false = "0",
+            if_true = "1",
+        ),
+    ],
+    visibility = ["//visibility:public"],
     deps = [
+        # Provides ac_cv_header_strings_h (and AC_REQUIRE([gl_STRINGS_H_DEFAULTS])
+        # is fulfilled by the toolchain-provided :defaults below).
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/include_next",
     ],
 )
 
-# Configure a replacement for <strings.h>
-autoconf(
-    name = "strings_h",
-    checks = [
-        checks.AC_SUBST("HAVE_STRINGS_H", "1"),
-    ],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":gl_STRINGS_H_CORE",
-    ],
-)
-
-# defaults - Default AC_SUBST values. Added to gnulib_toolchain.
-
+# gl_STRINGS_H_DEFAULTS - lines 62-75
+# Default AC_SUBST values; supplied to the toolchain so all consumers see them.
 autoconf(
     name = "gl_STRINGS_H_DEFAULTS",
     checks = [
-        # Assume proper GNU behavior unless another module says otherwise
+        # Assume proper GNU behavior unless another module says otherwise.
         checks.AC_SUBST("HAVE_FFS", 1),
         checks.AC_SUBST("HAVE_STRCASECMP", 1),
         checks.AC_SUBST("HAVE_STRCASECMP_L", 1),
@@ -47,6 +49,9 @@ autoconf(
     visibility = ["//visibility:private"],
 )
 
+# gl_STRINGS_H_REQUIRE_DEFAULTS - lines 47-60
+# Initializes the GNULIB_* module-indicator default values, then AC_REQUIREs
+# gl_STRINGS_H_DEFAULTS.
 autoconf(
     name = "gl_STRINGS_H_REQUIRE_DEFAULTS",
     checks = [
@@ -62,6 +67,7 @@ autoconf(
     ],
 )
 
+# Public defaults target consumed by //gnulib/toolchain.
 autoconf(
     name = "defaults",
     visibility = ["//visibility:public"],
@@ -70,4 +76,12 @@ autoconf(
     ],
 )
 
-# with_defaults - For external consumers who don't use the toolchain
+# Package-level aggregator (matches the package name). No checks - just deps
+# on the AC_DEFUN targets, excluding *_DEFAULTS (provided by the toolchain).
+autoconf(
+    name = "strings_h",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_STRINGS_H",
+    ],
+)
