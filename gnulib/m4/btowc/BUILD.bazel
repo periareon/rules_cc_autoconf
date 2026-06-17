@@ -3,45 +3,85 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
+# gl_FUNC_BTOWC - lines 9-126
 autoconf(
-    name = "btowc",
+    name = "gl_FUNC_BTOWC",
     checks = [
-        # Note: gl_WCHAR_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        # AC_CHECK_FUNCS_ONCE([btowc]) - line 18
         checks.AC_CHECK_FUNC(
             "btowc",
             define = "HAVE_BTOWC",
-            subst = True,
         ),
-
-        # HAVE_MBRTOWC (define and subst) from AC_FUNC_MBRTOWC dependency
-
-        # Note: The m4 file performs several AC_RUN_IFELSE checks:
-        # These runtime checks cannot be easily replicated in Bazel.
+        # M4: if test $ac_cv_func_btowc = no; then HAVE_BTOWC=0
+        # Override the gl_WCHAR_H_DEFAULTS toolchain default (1) when btowc is absent.
+        checks.AC_SUBST(
+            "HAVE_BTOWC",
+            condition = "ac_cv_func_btowc",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # REPLACE_BTOWC - lines 110-124. The M4 sets REPLACE_BTOWC=1 if ANY of:
+        #   (1) GNULIBHEADERS_OVERRIDE_WINT_T == 1 (mingw/ucrt; line 110-115)
+        #   (2) gl_cv_func_btowc_nul != yes (Cygwin; runtime)
+        #   (3) gl_cv_func_btowc_consistent != yes (mingw; runtime)
+        #   (4) gl_cv_func_mbrtowc_C_locale_sans_EILSEQ != yes (glibc; runtime)
+        # The runtime checks (2)-(4) aren't portable to cross-compile. We
+        # approximate per-platform:
+        #   - Linux: glibc mbrtowc C-locale check fails -> REPLACE=1
+        #   - Other platforms: use condition (1) on GNULIBHEADERS_OVERRIDE_WINT_T
+        #     (the only condition we can read from a real subst variable).
     ] + select({
-        # On Linux: gl_MBRTOWC_C_LOCALE check fails, so REPLACE_BTOWC=1
         "@platforms//os:linux": [
-            checks.AC_SUBST("REPLACE_BTOWC", 1),
+            # glibc has gl_cv_func_mbrtowc_C_locale_sans_EILSEQ=no.
+            checks.AC_SUBST("REPLACE_BTOWC", "1"),
         ],
-        # On macOS and other platforms: REPLACE_BTOWC=0
         "//conditions:default": [
-            checks.AC_SUBST("REPLACE_BTOWC", 0),
+            checks.AC_SUBST(
+                "REPLACE_BTOWC",
+                condition = "GNULIBHEADERS_OVERRIDE_WINT_T==1",
+                if_false = "0",
+                if_true = "1",
+            ),
         ],
-    }) + [
-        # LOCALE_FR from locale-fr dependency (gt_LOCALE_FR)
-    ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
+        # AC_REQUIRE([gl_WCHAR_H_DEFAULTS]) is satisfied by the toolchain.
+        # AC_REQUIRE([gt_TYPE_WINT_T]) - line 11 (provides gt_cv_c_wint_t,
+        # GNULIBHEADERS_OVERRIDE_WINT_T).
         "//gnulib/m4/wint_t",
-        # This is part of wchar_h, but we don't need to depend on it since we're not using wchar_h checks
-        # AC_REQUIRE([AC_PROG_CC]) - line 25 (ignored, provided by toolchain)
+        # AC_REQUIRE([gl_WCHAR_H_INLINE_OK]) - line 16
+        "//gnulib/m4/wchar_h:gl_WCHAR_H_INLINE_OK",
+        # AC_REQUIRE([gt_LOCALE_FR]) - line 26 (used by the un-modeled runtime
+        # btowc_nul / btowc_consistent checks; kept for graph completeness)
         "//gnulib/m4/locale-fr",
+        # AC_REQUIRE([AC_CANONICAL_HOST]) - line 27
         "//autoconf/macros/AC_CANONICAL_HOST",
-        # Use AC_FUNC_MBRTOWC directly instead of mbrtowc module to avoid HAVE_MBSINIT
+        # For test compatibility - basic header defines (HAVE_MBRTOWC etc.)
         "//gnulib/macros/AC_FUNC_MBRTOWC",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
 
-# Prerequisites of lib/btowc.c
-# AC_CHECK_FUNCS_ONCE([mbrtowc]) - already included in main target above
-# No separate target needed
+# gl_PREREQ_BTOWC - lines 128-131
+# M4 body: AC_CHECK_FUNCS_ONCE([mbrtowc]) which defines HAVE_MBRTOWC.
+autoconf(
+    name = "gl_PREREQ_BTOWC",
+    visibility = ["//visibility:public"],
+    deps = [
+        # AC_CHECK_FUNCS_ONCE([mbrtowc]) is provided by AC_FUNC_MBRTOWC, which
+        # gl_FUNC_BTOWC already pulls in. Listed here for AC_DEFUN parity.
+        "//gnulib/macros/AC_FUNC_MBRTOWC",
+    ],
+)
+
+# Package-level aggregator (matches package name). No checks - deps on the
+# AC_DEFUN targets.
+autoconf(
+    name = "btowc",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_BTOWC",
+        ":gl_PREREQ_BTOWC",
+    ],
+)

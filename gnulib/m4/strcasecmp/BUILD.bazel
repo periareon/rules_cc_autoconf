@@ -1,22 +1,97 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/strcasecmp.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
-load("//autoconf:checks.bzl", "checks")
+load("//autoconf:checks.bzl", "checks", "utils")
 
+# gl_FUNC_STRCASECMP - lines 9-22
 autoconf(
-    name = "strcasecmp",
+    name = "gl_FUNC_STRCASECMP",
     checks = [
-        # gl_FUNC_STRCASECMP checks for strcasecmp function
+        # AC_CHECK_FUNCS([strcasecmp]) - line 11
         checks.AC_CHECK_FUNC(
             "strcasecmp",
             define = "HAVE_STRCASECMP",
         ),
+        # M4: else HAVE_STRCASECMP=0
+        # Override the gl_STRINGS_H_DEFAULTS toolchain default when function absent.
+        checks.AC_SUBST(
+            "HAVE_STRCASECMP",
+            condition = "ac_cv_func_strcasecmp",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # M4 lines 13-17:
+        #   if test $ac_cv_func_strcasecmp = yes; then
+        #     gl_STRCASECMP_WORKS
+        #     case "$gl_cv_func_strcasecmp_works" in
+        #       *yes) ;;
+        #       *) REPLACE_STRCASECMP=1 ;;
+        #     esac
+        #   fi
+        # Compound condition models "function exists AND broken". `requires`
+        # cannot express this because a failed requires resolves the subst to
+        # "" instead of leaving the toolchain default in place.
+        checks.AC_SUBST(
+            "REPLACE_STRCASECMP",
+            condition = "ac_cv_func_strcasecmp==1 && !gl_cv_func_strcasecmp_works",
+            if_false = "0",
+            if_true = "1",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/strings_h",  # AC_REQUIRE([gl_STRINGS_H_DEFAULTS])
-        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST]) for gl_STRCASECMP_WORKS
-        # For test compatibility - need basic header defines
+        # M4: gl_STRCASECMP_WORKS (line 14)
+        ":gl_STRCASECMP_WORKS",
+        # AC_REQUIRE([gl_STRINGS_H_DEFAULTS]) is satisfied by the toolchain.
+        # For test compatibility - basic header defines.
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_STRCASECMP_WORKS - lines 24-63
+# The M4 uses AC_RUN_IFELSE to test whether strcasecmp handles locale-specific
+# casing. Runtime checks are not portable to cross-compilation; the M4 itself
+# falls back to a host_os guess (solaris/cygwin -> "no", others -> "yes"). We
+# model that guess at compile time with a preprocessor check on __sun /
+# __CYGWIN__, which sets gl_cv_func_strcasecmp_works to "1" or "0".
+autoconf(
+    name = "gl_STRCASECMP_WORKS",
+    checks = [
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_func_strcasecmp_works",
+            code = utils.AC_LANG_PROGRAM(
+                [
+                    "#if defined(__sun) || defined(__CYGWIN__)",
+                    "# error \"strcasecmp may not handle locale-specific casing\"",
+                    "#endif",
+                ],
+                "",
+            ),
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # AC_REQUIRE([AC_CANONICAL_HOST]) - line 26
+        "//autoconf/macros/AC_CANONICAL_HOST",
+    ],
+)
+
+# gl_PREREQ_STRCASECMP - lines 65-67
+# M4 body is just ":" (no-op). Modeled as an empty autoconf target so the
+# AC_DEFUN graph stays explicit.
+autoconf(
+    name = "gl_PREREQ_STRCASECMP",
+    visibility = ["//visibility:public"],
+)
+
+# Package-level aggregator (matches package name). No checks - deps on the
+# AC_DEFUN targets.
+autoconf(
+    name = "strcasecmp",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_STRCASECMP",
+        ":gl_PREREQ_STRCASECMP",
+        ":gl_STRCASECMP_WORKS",
     ],
 )

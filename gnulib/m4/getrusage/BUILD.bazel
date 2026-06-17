@@ -6,10 +6,16 @@ load("//autoconf:checks.bzl", "checks")
 autoconf(
     name = "getrusage",
     checks = [
-        # On macOS, getrusage is available
+        # Probe whether the function is available; bind HAVE_GETRUSAGE both
+        # as a config.h define and as the subst consumed by the gnulib
+        # sys/resource.h wrapper template.  Without `subst`, sys/resource.h
+        # falls back to the HAVE_GETRUSAGE=1 default and the wrapper skips
+        # emitting its own declaration on toolchains that lack getrusage
+        # (e.g. MSVC / clang-cl on Windows).
         checks.AC_CHECK_FUNC(
             "getrusage",
             define = "HAVE_GETRUSAGE",
+            subst = "HAVE_GETRUSAGE",
         ),
     ],
     visibility = ["//visibility:public"],

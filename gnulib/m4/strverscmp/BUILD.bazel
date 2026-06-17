@@ -31,17 +31,24 @@ int main(void) {
             requires = ["ac_cv_func_strverscmp==1"],
         ),
 
+        # Bind the subst counterpart to the same probe — the gnulib
+        # string.h wrapper template gates its declaration on
+        # !@HAVE_STRVERSCMP@, so without writing the subst here the
+        # wrapper falls back to the HAVE_STRVERSCMP=1 default from
+        # gl_STRING_H_DEFAULTS and skips the declaration on toolchains
+        # lacking strverscmp (macOS, MSVC / clang-cl on Windows).
+        checks.AC_SUBST(
+            "HAVE_STRVERSCMP",
+            condition = "ac_cv_func_strverscmp",
+            if_false = "0",
+            if_true = "1",
+        ),
+
         # REPLACE_STRVERSCMP: Based on golden files, REPLACE_STRVERSCMP=0 on macOS/Linux
         # The AC_RUN_IFELSE check can't be done in Bazel, so we assume it works correctly
         # on our target platforms (macOS/Linux)
         checks.AC_SUBST("REPLACE_STRVERSCMP", 0),
-    ] + select({
-        "@platforms//os:macos": [
-            # macOS golden expects HAVE_STRVERSCMP "0" (override from check)
-            checks.AC_SUBST("HAVE_STRVERSCMP", "0"),
-        ],
-        "//conditions:default": [],
-    }),
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])

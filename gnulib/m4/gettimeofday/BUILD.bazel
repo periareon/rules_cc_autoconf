@@ -6,10 +6,17 @@ load("//autoconf:checks.bzl", "checks")
 autoconf(
     name = "gettimeofday",
     checks = [
-        # Equivalent to gl_FUNC_GETTIMEOFDAY macro from gettimeofday.m4
+        # Equivalent to gl_FUNC_GETTIMEOFDAY macro from gettimeofday.m4.
+        # Bind both define and subst — the gnulib sys/time.h wrapper
+        # template gates its own declaration on @HAVE_GETTIMEOFDAY@, so
+        # without writing the subst here the wrapper would fall back to
+        # the HAVE_GETTIMEOFDAY=1 default from gl_SYS_TIME_H_DEFAULTS and
+        # skip the declaration on toolchains lacking gettimeofday (e.g.
+        # MSVC / clang-cl on Windows).
         checks.AC_CHECK_FUNC(
             "gettimeofday",
             define = "HAVE_GETTIMEOFDAY",
+            subst = "HAVE_GETTIMEOFDAY",
         ),
         checks.AC_TRY_COMPILE(
             code = """#include <sys/time.h>
