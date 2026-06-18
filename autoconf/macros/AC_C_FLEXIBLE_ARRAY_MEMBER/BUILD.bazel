@@ -6,7 +6,7 @@ Defines:
   - FLEXIBLE_ARRAY_MEMBER (empty if supported, 1 if not)
 """
 
-load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(

@@ -3,15 +3,24 @@
 Provides default autoconf checks that can be overridden by targets.
 """
 
-load("//autoconf/private:autoconf_config.bzl", "collect_deps", "collect_transitive_results")
+load(
+    "//autoconf/private:autoconf_config.bzl",
+    "collect_deps",
+    "collect_transitive_content_cache",
+    "collect_transitive_results",
+)
 load("//autoconf/private:autoconf_library.bzl", "to_build_settings_dict", _autoconf_cache_rule = "autoconf_cache")
 load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
 
 def _autoconf_toolchain_impl(ctx):
-    # Collect cache_deps results (for action deduplication)
+    # Collect cache_deps content cache (for action deduplication only).
+    # Conflict detection is intentionally skipped here: cache_deps may
+    # cover a broad set of targets with overlapping define/subst symbols
+    # (e.g., all of gnulib's m4 modules). Only the content cache is
+    # exposed to downstream `autoconf` targets, so the cache/define/subst
+    # buckets from cache_deps would be unused even if we computed them.
     cache_deps = collect_deps(ctx.attr.cache_deps)
-    cache_dep_infos = cache_deps.to_list()
-    cache_results = collect_transitive_results(cache_dep_infos)
+    cache_content_cache = collect_transitive_content_cache(cache_deps.to_list())
 
     # Collect defaults results (for autoconf_hdr rendering)
     defaults_deps = collect_deps(ctx.attr.defaults)
@@ -33,7 +42,7 @@ def _autoconf_toolchain_impl(ctx):
         )
 
     # Unified content cache: cache_deps + defaults (for content-based action dedup)
-    unified_content_cache = cache_results["content_cache"] | defaults_results["content_cache"]
+    unified_content_cache = cache_content_cache | defaults_results["content_cache"]
 
     return [
         platform_common.ToolchainInfo(
@@ -132,6 +141,13 @@ Three layers, from strictest to most relaxed:
 - **Cache variable names** (`cache_results`) have no cross-dep
   conflict detection; content-based dedup is the identity signal.
 
+`cache_deps` on the toolchain itself is intentionally exempt from
+define/subst conflict detection: it contributes only to the content
+cache and is meant to absorb broad sweeps of cache providers (e.g.,
+every gnulib m4 module) that legitimately publish overlapping symbols
+from different files. `defaults` and per-target `deps` still enforce
+conflicts.
+
 ### Resolving conflicts
 
 The typical fix for *"Define 'X' is defined both locally and in
@@ -145,7 +161,10 @@ dependencies with different result files"*:
     implementation = _autoconf_toolchain_impl,
     attrs = {
         "cache_deps": attr.label_list(
-            doc = "Targets whose check results are available for action deduplication in `autoconf` targets.",
+            doc = "Targets whose check results are available for action deduplication in `autoconf` targets. " +
+                  "Only the content cache is exposed downstream; define/subst conflicts among these targets " +
+                  "are NOT detected, so a broad sweep of cache providers with overlapping symbols (e.g., " +
+                  "every gnulib m4 module) can be passed safely.",
             providers = [CcAutoconfInfo],
         ),
         "defaults": attr.label_list(

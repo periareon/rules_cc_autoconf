@@ -6,7 +6,7 @@ Defines:
   - HAVE_UNSIGNED_LONG_LONG_INT (if supported)
 """
 
-load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(

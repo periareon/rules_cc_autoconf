@@ -7,7 +7,7 @@ Defines:
   - HAVE_DECL_STRNLEN (if strnlen is declared)
 """
 
-load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(

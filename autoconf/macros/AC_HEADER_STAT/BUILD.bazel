@@ -7,7 +7,7 @@ Defines:
   - HAVE_STRUCT_STAT_ST_BLKSIZE (if struct stat has st_blksize)
 """
 
-load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(

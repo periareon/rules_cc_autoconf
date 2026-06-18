@@ -4,7 +4,7 @@ This macro ensures the _putenv declaration check is only done once,
 even when multiple modules need it.
 """
 
-load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(

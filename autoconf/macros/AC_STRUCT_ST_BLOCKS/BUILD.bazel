@@ -7,7 +7,7 @@ Defines:
   - HAVE_ST_BLOCKS (if st_blocks is available as member or macro)
 """
 
-load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(

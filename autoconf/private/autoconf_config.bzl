@@ -271,6 +271,30 @@ def collect_transitive_results(dep_infos):
         "unquoted_defines": sorted(unquoted_defines_set.keys()),
     }
 
+def collect_transitive_content_cache(dep_infos):
+    """Collect transitive `content_cache` without conflict detection.
+
+    For action deduplication only. Unlike `collect_transitive_results`,
+    this does NOT validate define/subst uniqueness — the sole caller is
+    `autoconf_toolchain`'s `cache_deps` path, which intentionally tolerates
+    overlap so a broad sweep of cache providers (e.g., every gnulib m4
+    module) can be passed without analysis-time conflicts. Last-write-wins
+    is safe because the content key already encodes the full check
+    implementation, so any two files mapped to the same key are
+    interchangeable.
+
+    Args:
+        dep_infos (list): A list of `CcAutoconfInfo`.
+
+    Returns:
+        dict[str, File]: Mapping of content keys to result files.
+    """
+    content_cache = {}
+    for dep_info in dep_infos:
+        for ckey, cfile in dep_info.content_cache.items():
+            content_cache[ckey] = cfile
+    return content_cache
+
 def collect_deps(deps):
     """Collect `CcAutoconfInfo` from dependencies.
 
