@@ -3,27 +3,80 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
+# gl_FUNC_STRNCASECMP - lines 9-28
 autoconf(
-    name = "strncasecmp",
+    name = "gl_FUNC_STRNCASECMP",
     checks = [
-        # gl_FUNC_STRNCASECMP checks for strncasecmp function
+        # AC_CHECK_FUNCS([strncasecmp]) - line 12
         checks.AC_CHECK_FUNC(
             "strncasecmp",
             define = "HAVE_STRNCASECMP",
         ),
-        # AC_CHECK_DECLS([strncasecmp])
+        # M4: else HAVE_STRNCASECMP=0
+        # Override the gl_STRINGS_H_DEFAULTS toolchain default when function absent.
+        checks.AC_SUBST(
+            "HAVE_STRNCASECMP",
+            condition = "ac_cv_func_strncasecmp",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # M4 lines 14-19:
+        #   if test $ac_cv_func_strncasecmp = yes; then
+        #     gl_STRCASECMP_WORKS
+        #     case "$gl_cv_func_strcasecmp_works" in
+        #       *yes) ;;
+        #       *) REPLACE_STRNCASECMP=1 ;;
+        #     esac
+        #   fi
+        # Compound condition models "function exists AND broken". `requires`
+        # cannot express this because a failed requires resolves the subst to
+        # "" instead of leaving the toolchain default in place.
+        checks.AC_SUBST(
+            "REPLACE_STRNCASECMP",
+            condition = "ac_cv_func_strncasecmp==1 && !gl_cv_func_strcasecmp_works",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # AC_CHECK_DECLS([strncasecmp]) - line 23
         checks.AC_CHECK_DECL(
             "strncasecmp",
             define = "HAVE_DECL_STRNCASECMP",
             includes = ["#include <strings.h>"],
         ),
+        # M4: if test $ac_cv_have_decl_strncasecmp = no; then HAVE_DECL_STRNCASECMP=0
+        # Override the toolchain default when the declaration is missing.
+        checks.AC_SUBST(
+            "HAVE_DECL_STRNCASECMP",
+            condition = "ac_cv_have_decl_strncasecmp",
+            if_false = "0",
+            if_true = "1",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_STRINGS_H_DEFAULTS]) is satisfied by the toolchain;
-        # _DEFAULTS targets are never direct dependencies.
-        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST]) for gl_STRCASECMP_WORKS
-        # For test compatibility - need basic header defines
+        # M4: gl_STRCASECMP_WORKS (line 15) - shared with strcasecmp.
+        "//gnulib/m4/strcasecmp:gl_STRCASECMP_WORKS",
+        # AC_REQUIRE([gl_STRINGS_H_DEFAULTS]) is satisfied by the toolchain.
+        # Provides the HAVE_*_H defines and ac_cv_header_strings_h that the
+        # AC_CHECK_DECL include path depends on.
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_PREREQ_STRNCASECMP - lines 31-33
+# M4 body is just ":" (no-op).
+autoconf(
+    name = "gl_PREREQ_STRNCASECMP",
+    visibility = ["//visibility:public"],
+)
+
+# Package-level aggregator (matches package name). No checks - deps on the
+# AC_DEFUN targets.
+autoconf(
+    name = "strncasecmp",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_STRNCASECMP",
+        ":gl_PREREQ_STRNCASECMP",
     ],
 )

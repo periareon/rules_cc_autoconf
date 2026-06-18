@@ -1,11 +1,14 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/fseeko.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
-load("//autoconf:checks.bzl", "checks", "macros", "utils")
+load("//autoconf:checks.bzl", "checks", "utils")
 
+# Shared gl_cv_func_fseeko link probe. Lifted into its own target so
+# gl_FUNC_FSEEKO and gl_PREREQ_FSEEKO read the same cache variable.
 autoconf(
     name = "gl_cv_func_fseeko",
     checks = [
+        # AC_LINK_IFELSE for fseeko - lines 13-17
         checks.AC_TRY_LINK(
             name = "gl_cv_func_fseeko",
             code = utils.AC_LANG_PROGRAM(
@@ -14,47 +17,72 @@ autoconf(
             ),
         ),
     ],
-)
-
-autoconf(
-    name = "gl_FUNC_FSEEKO",
-    checks = macros.AC_CHECK_DECLS(
-        ["fseeko"],
-        subst = True,
-    ) + select({
-        "@platforms//os:linux": [
-            checks.AC_SUBST("REPLACE_FSEEKO", "1"),  # golden_subst_linux expects 1
-        ],
-        "@platforms//os:macos": [
-            checks.AC_SUBST("REPLACE_FSEEKO", "1"),  # golden_subst_macos expects 1
-        ],
-        "@platforms//os:windows": [
-            # WINDOWS_64_BIT_OFF_T is always 1 on Windows, so REPLACE_FSEEKO is always 1.
-            checks.AC_SUBST("REPLACE_FSEEKO", "1"),
-        ],
-        "//conditions:default": [
-            checks.AC_SUBST(
-                "REPLACE_FSEEKO",
-                condition = "!gl_cv_var_stdin_large_offset",
-            ),
-        ],
-    }),
     visibility = ["//visibility:public"],
     deps = [
-        ":gl_cv_func_fseeko",
-        ":gl_STDIN_LARGE_OFFSET",
-        # fseeko only uses gl_FUNC_FFLUSH_STDIN (for REPLACE_FSEEKO); it never runs gl_FUNC_FFLUSH,
-        # so REPLACE_FFLUSH stays at default 0 (we set it below to match autoconf).
-        "//gnulib/m4/fflush:gl_FUNC_FFLUSH_STDIN",
-        "//gnulib/m4/sys_types_h:gl_SYS_TYPES_H",
-        # For test compatibility (standard header + extension defines)
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
-        "//gnulib/m4/extensions",
     ],
 )
 
-# Determine if large files are supported, but stdin does not start as a large file by default.
-# This check is shared by fseeko and ftello modules.
+# gl_FUNC_FSEEKO - lines 9-46
+autoconf(
+    name = "gl_FUNC_FSEEKO",
+    checks = [
+        # AC_CHECK_DECLS_ONCE([fseeko]) - line 20
+        checks.AC_CHECK_DECL(
+            "fseeko",
+            define = "HAVE_DECL_FSEEKO",
+            includes = ["#include <stdio.h>"],
+        ),
+        # M4: if test $ac_cv_have_decl_fseeko = no; then HAVE_DECL_FSEEKO=0
+        # Override the gl_STDIO_H_DEFAULTS toolchain default when not declared.
+        checks.AC_SUBST(
+            "HAVE_DECL_FSEEKO",
+            condition = "ac_cv_have_decl_fseeko",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # M4: if test $gl_cv_func_fseeko = no; then HAVE_FSEEKO=0; fi
+        # Override the gl_STDIO_H_DEFAULTS toolchain default when fseeko is absent.
+        checks.AC_SUBST(
+            "HAVE_FSEEKO",
+            condition = "gl_cv_func_fseeko",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # REPLACE_FSEEKO - lines 30-44. M4 sets REPLACE_FSEEKO=1 only inside the
+        # "fseeko exists" arm if ANY of:
+        #   (a) WINDOWS_64_BIT_OFF_T == 1 (Windows; line 32-34)
+        #   (b) gl_cv_var_stdin_large_offset == no (line 35-37)
+        #   (c) gl_cv_func_fflush_stdin != yes (runtime; line 38-43)
+        # (a) and (b) are real subst variables. (c) is a runtime probe that
+        # //gnulib/m4/fflush:gl_FUNC_FFLUSH_STDIN approximates by setting
+        # gl_cv_func_fflush_stdin to "0" on platforms where it's known broken.
+        checks.AC_SUBST(
+            "REPLACE_FSEEKO",
+            condition = "gl_cv_func_fseeko==1 && (WINDOWS_64_BIT_OFF_T==1 || !gl_cv_var_stdin_large_offset || !gl_cv_func_fflush_stdin)",
+            if_false = "0",
+            if_true = "1",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # AC_REQUIRE([gl_STDIO_H_DEFAULTS]) is satisfied by the toolchain.
+        # AC_REQUIRE([gl_STDIN_LARGE_OFFSET]) - line 11
+        ":gl_STDIN_LARGE_OFFSET",
+        # AC_REQUIRE([gl_SYS_TYPES_H]) - line 12
+        "//gnulib/m4/sys_types_h:gl_SYS_TYPES_H",
+        # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 15
+        "//gnulib/m4/extensions",
+        # gl_cv_func_fseeko link probe.
+        ":gl_cv_func_fseeko",
+        # gl_FUNC_FFLUSH_STDIN - line 38 (m4_ifdef gated; provides
+        # gl_cv_func_fflush_stdin used by the not-modeled REPLACE branch).
+        "//gnulib/m4/fflush:gl_FUNC_FFLUSH_STDIN",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_STDIN_LARGE_OFFSET - lines 48-65 (shared by fseeko and ftello)
 autoconf(
     name = "gl_STDIN_LARGE_OFFSET",
     checks = [
@@ -77,26 +105,26 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # For test compatibility (standard header + extension defines)
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
 
-# Prerequisites of lib/fseeko.c
+# gl_PREREQ_FSEEKO - lines 67-80
 autoconf(
     name = "gl_PREREQ_FSEEKO",
     checks = [
+        # M4: if test $gl_cv_func_fseeko != no; then AC_DEFINE([HAVE_FSEEKO], [1])
+        # Creates the config.h define when the link probe succeeded.
         checks.AC_DEFINE(
             "HAVE_FSEEKO",
-            1,
-            requires = ["gl_cv_func_fseeko"],
+            requires = ["gl_cv_func_fseeko==1"],
         ),
-        # Note: This is handled in gl_FUNC_FSEEKO based on gl_cv_func_fseeko
+        # AC_CHECK_FUNCS([_fseeki64]) - line 74
         checks.AC_CHECK_FUNC(
             "_fseeki64",
             define = "HAVE__FSEEKI64",
         ),
-        # Only check if _fseeki64 function exists
+        # M4: if test $ac_cv_func__fseeki64 = yes; then AC_CHECK_DECLS([_fseeki64])
         checks.AC_CHECK_DECL(
             "_fseeki64",
             define = "HAVE_DECL__FSEEKI64",
@@ -107,11 +135,12 @@ autoconf(
     visibility = ["//visibility:public"],
     deps = [
         ":gl_cv_func_fseeko",
-        # For test compatibility (standard header + extension defines)
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
 
+# Package-level aggregator (matches package name). No checks - deps on the
+# AC_DEFUN targets.
 autoconf(
     name = "fseeko",
     visibility = ["//visibility:public"],
@@ -122,10 +151,11 @@ autoconf(
     ],
 )
 
-# When fseeko's configure runs, it never runs gl_FUNC_FFLUSH, so REPLACE_FFLUSH stays at default 0.
-# This target provides that default. Used only by the fseeko compatibility test so we don't
-# set REPLACE_FFLUSH in gl_FUNC_FSEEKO (which would duplicate when fseeko and fflush are both
-# in the same graph, e.g. gnulib/tests/duplicates).
+# When fseeko's configure runs, it never runs gl_FUNC_FFLUSH, so REPLACE_FFLUSH
+# stays at default 0. This target provides that default. Used only by the
+# fseeko compatibility test so we don't set REPLACE_FFLUSH in gl_FUNC_FSEEKO
+# (which would duplicate when fseeko and fflush are both in the same graph,
+# e.g. gnulib/tests/duplicates).
 autoconf(
     name = "fseeko_fflush_default",
     checks = [
@@ -134,7 +164,8 @@ autoconf(
     visibility = ["//gnulib/tests/compatibility/fseeko:__pkg__"],
 )
 
-# Test target: fseeko + REPLACE_FFLUSH=0 default so the compatibility test matches autoconf.
+# Test target: fseeko + REPLACE_FFLUSH=0 default so the compatibility test
+# matches autoconf.
 autoconf(
     name = "fseeko_for_test",
     visibility = ["//gnulib/tests/compatibility/fseeko:__pkg__"],

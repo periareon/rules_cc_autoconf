@@ -14,7 +14,7 @@
 /* #undef HAVE_DECL_VSNPRINTF */
 /* #undef HAVE_DPRINTF */
 /* #undef HAVE_FSEEKO */
-#define HAVE_FTELLO 1
+/* #undef HAVE_FTELLO */
 #define HAVE_INTTYPES_H 1
 /* #undef HAVE_OFF64_T */
 /* #undef HAVE_PCLOSE */

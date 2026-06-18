@@ -151,25 +151,38 @@ autoconf(
 autoconf(
     name = "gl_WCHAR_H_INLINE_OK",
     checks = [],
-    visibility = ["//visibility:private"],
+    visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CANONICAL_HOST",
     ],
 )
 
-# gl_WCHAR_H_CORE - Core wchar.h checks without HAVE_WCHAR_H subst
-# Used by modules that need wchar.h checks but don't want HAVE_WCHAR_H substituted
+# gl_WCHAR_H_CORE - Core wchar.h checks without HAVE_WCHAR_H subst.
+# Modeled from the body of gl_WCHAR_H minus the HAVE_WCHAR_H AC_SUBST so that
+# downstream modules can pull in the NEXT_*/HAVE_WINT_T/HAVE_DECL_WCSDUP
+# substitutions without also overriding HAVE_WCHAR_H (which can conflict in
+# aggregated graphs).
 autoconf(
     name = "gl_WCHAR_H_CORE",
     checks = gl_macros.GL_CHECK_NEXT_HEADERS(["wchar.h"]) + [
+        # AC_CHECK_DECLS([wcsdup], [], [], [#include <wchar.h>]) - lines 56-59
         checks.AC_CHECK_DECL(
             "wcsdup",
             name = "_gl_cv_have_decl_wcsdup",
             includes = ["#include <wchar.h>"],
         ),
+        # AC_CHECK_DECLS auto-defines HAVE_DECL_WCSDUP (1 if declared, else 0).
         checks.AC_DEFINE(
             "HAVE_DECL_WCSDUP",
             requires = ["_gl_cv_have_decl_wcsdup==1"],
+        ),
+        # M4: if test $ac_cv_have_decl_wcsdup = no; then HAVE_DECL_WCSDUP=0
+        # Override the gl_WCHAR_H_DEFAULTS toolchain default when not declared.
+        checks.AC_SUBST(
+            "HAVE_DECL_WCSDUP",
+            condition = "_gl_cv_have_decl_wcsdup",
+            if_false = "0",
+            if_true = "1",
         ),
     ],
     visibility = ["//gnulib:__subpackages__"],
@@ -185,14 +198,25 @@ autoconf(
     ],
 )
 
-# HAVE_WCHAR_H_SUBST - Shared substitution for HAVE_WCHAR_H
-# Use this when you need HAVE_WCHAR_H subst without pulling in full wchar_h deps
+# HAVE_WCHAR_H_SUBST - Shared substitution for HAVE_WCHAR_H, conditional on
+# whether <wchar.h> exists. M4: if test $ac_cv_header_wchar_h = yes;
+# then HAVE_WCHAR_H=1 else HAVE_WCHAR_H=0; fi; AC_SUBST([HAVE_WCHAR_H]).
+# The cache variable is populated by AC_CHECK_INCLUDES_DEFAULT.
 autoconf(
     name = "HAVE_WCHAR_H_SUBST",
     checks = [
-        checks.AC_SUBST("HAVE_WCHAR_H", "1"),
+        checks.AC_SUBST(
+            "HAVE_WCHAR_H",
+            condition = "ac_cv_header_wchar_h",
+            if_false = "0",
+            if_true = "1",
+        ),
     ],
     visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        # Provides ac_cv_header_wchar_h.
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )
 
 # gl_WCHAR_H - AC_DEFUN_ONCE([gl_WCHAR_H], ...)

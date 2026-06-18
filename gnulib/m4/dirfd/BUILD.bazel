@@ -3,34 +3,96 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
+# gl_FUNC_DIRFD - lines 14-44
 autoconf(
     name = "gl_FUNC_DIRFD",
     checks = [
+        # AC_CHECK_FUNCS([dirfd]) - line 20
         checks.AC_CHECK_FUNC(
             "dirfd",
             define = "HAVE_DIRFD",
         ),
+        # AC_CHECK_DECLS([dirfd], , , [includes]) - lines 21-23
+        # M4 includes both <sys/types.h> and <dirent.h>.
         checks.AC_CHECK_DECL(
             "dirfd",
             define = "HAVE_DECL_DIRFD",
-            includes = ["#include <dirent.h>"],
+            includes = [
+                "#include <dirent.h>",
+                "#include <sys/types.h>",
+            ],
+        ),
+        # M4: if test $ac_cv_have_decl_dirfd = no; then HAVE_DECL_DIRFD=0
+        # Override the gl_DIRENT_H_DEFAULTS toolchain default when not declared.
+        checks.AC_SUBST(
+            "HAVE_DECL_DIRFD",
+            condition = "ac_cv_have_decl_dirfd",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # AC_CACHE_CHECK for gl_cv_func_dirfd_macro - lines 28-36.
+        # The M4 uses AC_EGREP_CPP to check whether <dirent.h> defines `dirfd`
+        # as a macro. We model the same by compiling a probe that errors out
+        # when `dirfd` is not a macro.
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_func_dirfd_macro",
+            code = """\
+#include <sys/types.h>
+#include <dirent.h>
+#ifndef dirfd
+# error "dirfd is not a macro"
+#endif
+int main(void) { return 0; }
+""",
+        ),
+        # M4 lines 38-44:
+        #   if test $ac_cv_func_dirfd = no && test $gl_cv_func_dirfd_macro = no; then
+        #     HAVE_DIRFD=0
+        #   else
+        #     HAVE_DIRFD=1
+        #     AC_REQUIRE([gl_DIRENT_DIR])
+        #     if test $DIR_HAS_FD_MEMBER = 0; then
+        #       REPLACE_DIRFD=1
+        #     fi
+        #   fi
+        # HAVE_DIRFD is a plain shell variable in the M4 (no AC_SUBST), used
+        # only to gate REPLACE_DIRFD. AC_CHECK_FUNCS already creates the
+        # config.h HAVE_DIRFD define when the function exists.
+        # REPLACE_DIRFD=1 only when dirfd is present (function or macro) AND
+        # the DIR struct doesn't expose an fd member.
+        checks.AC_SUBST(
+            "REPLACE_DIRFD",
+            condition = "(ac_cv_func_dirfd==1 || gl_cv_func_dirfd_macro==1) && DIR_HAS_FD_MEMBER==0",
+            if_false = "0",
+            if_true = "1",
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
-        "//gnulib/m4/dirent_h",  # AC_REQUIRE([gl_DIRENT_H_DEFAULTS])
+        # AC_REQUIRE([gl_DIRENT_H_DEFAULTS]) is satisfied by the toolchain.
+        # AC_REQUIRE([AC_CANONICAL_HOST]) - line 16
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 19
         "//gnulib/m4/extensions",
+        # AC_REQUIRE([gl_DIRENT_DIR]) - line 42 (provides DIR_HAS_FD_MEMBER subst).
+        "//gnulib/m4/dirent_h:gl_DIRENT_DIR",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
 
+# gl_PREREQ_DIRFD - lines 47-79
+# The M4 body discovers DIR_FD_MEMBER_NAME by compiling probes against
+# d_fd / dd_fd and AC_DEFINE_UNQUOTEDs the matching name (+ an AH_VERBATIM
+# DIR_TO_FD macro). Neither DIR_FD_MEMBER_NAME nor DIR_TO_FD appears in the
+# test's config.h.in, so we leave the body as a no-op rather than emit
+# orphaned defines.
 autoconf(
     name = "gl_PREREQ_DIRFD",
-    checks = [
-    ],
     visibility = ["//visibility:public"],
 )
 
+# Package-level aggregator (matches package name). No checks - deps on the
+# AC_DEFUN targets.
 autoconf(
     name = "dirfd",
     visibility = ["//visibility:public"],

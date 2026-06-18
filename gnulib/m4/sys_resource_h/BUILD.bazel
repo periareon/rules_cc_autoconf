@@ -12,9 +12,7 @@ autoconf(
             define = "HAVE_SYS_RESOURCE_H",
             subst = "HAVE_SYS_RESOURCE_H",
         ),
-    ] + gl_macros.GL_CHECK_NEXT_HEADERS(["sys/resource.h"]) + [
-        checks.AC_SUBST("HAVE_GETRUSAGE", "1"),
-    ],
+    ] + gl_macros.GL_CHECK_NEXT_HEADERS(["sys/resource.h"]),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/include_next",
@@ -27,6 +25,12 @@ autoconf(
 autoconf(
     name = "gl_SYS_RESOURCE_H_DEFAULTS",
     checks = [
+        # Assume the function is present unless the gnulib/m4/getrusage
+        # probe overrides this subst.  Moved from the main `sys_resource_h`
+        # target so downstream probes can supply a toolchain-correct value
+        # — defaults are mergeable with dep substs, main-target substs
+        # are not.
+        checks.AC_SUBST("HAVE_GETRUSAGE", 1),
     ],
     visibility = ["//visibility:private"],
 )

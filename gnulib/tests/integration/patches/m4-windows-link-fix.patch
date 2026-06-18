@@ -1,0 +1,37 @@
+Fix Windows MSVC link errors for fseeko / ftello
+
+The autoconf_srcs gates for lib/fseeko.c and lib/ftello.c only check
+REPLACE_FSEEKO / REPLACE_FTELLO. Upstream gnulib's modules/fseeko and
+modules/ftello use a compound condition (HAVE_X==0 OR REPLACE_X==1).
+On Windows MSVC, UCRT lacks fseeko/ftello so HAVE_*=0 and REPLACE_*=0;
+the gate fails and lib/fseeko.c / lib/ftello.c are skipped, leaving
+the link with no implementation. See windows.log:
+
+    debug.obj : error LNK2019: unresolved external symbol fseeko
+    m4.lib(fflush.obj) : error LNK2019: unresolved external symbol ftello
+
+We use the canonical gl_cv_func_X cache variable (the AC_LINK_IFELSE
+probe in upstream gnulib/m4/{fseeko,ftello}.m4) rather than HAVE_X
+because rules_cc_autoconf's gnulib/m4/{fseeko,ftello} ports register
+HAVE_X as both a config.h #define (gl_PREREQ_*) and a subst override
+(gl_FUNC_*), which collides in autoconf_srcs's name lookup.
+`gl_cv_func_X==0` (== "link probe failed") is the same condition the
+M4 evaluates inside `if test $gl_cv_func_X = no; then HAVE_X=0`.
+
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -861,12 +861,12 @@
+         "lib/fpurge.c": "REPLACE_FPURGE",
+         "lib/free.c": "REPLACE_FREE",
+         "lib/fseek.c": "REPLACE_FSEEK",
+-        "lib/fseeko.c": "REPLACE_FSEEKO",
++        "lib/fseeko.c": "gl_cv_func_fseeko==0 || REPLACE_FSEEKO==1",
+         "lib/fseterr.c": "COMPILE_FSETERR",
+         "lib/fstat.c": "REPLACE_FSTAT",
+         "lib/fstatat.c": "REPLACE_FSTATAT",
+         "lib/ftell.c": "REPLACE_FTELL",
+-        "lib/ftello.c": "REPLACE_FTELLO",
++        "lib/ftello.c": "gl_cv_func_ftello==0 || REPLACE_FTELLO==1",
+         "lib/getcwd.c": "REPLACE_GETCWD",
+         "lib/getdtablesize.c": "REPLACE_GETDTABLESIZE",
+         "lib/getopt.c": "COMPILE_GETOPT",

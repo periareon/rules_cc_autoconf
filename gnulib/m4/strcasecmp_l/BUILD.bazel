@@ -3,28 +3,70 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
+# gl_FUNC_STRCASECMP_L - lines 9-28
 autoconf(
-    name = "strcasecmp_l",
+    name = "gl_FUNC_STRCASECMP_L",
     checks = [
-        # gl_FUNC_STRCASECMP_L checks for strcasecmp_l function
+        # AC_CHECK_FUNCS_ONCE([strcasecmp_l]) - line 15
         checks.AC_CHECK_FUNC(
             "strcasecmp_l",
             define = "HAVE_STRCASECMP_L",
         ),
+        # M4: else HAVE_STRCASECMP_L=0
+        # Override the gl_STRINGS_H_DEFAULTS toolchain default when function absent.
+        checks.AC_SUBST(
+            "HAVE_STRCASECMP_L",
+            condition = "ac_cv_func_strcasecmp_l",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # M4 lines 17-22:
+        #   if test $ac_cv_func_strcasecmp_l = yes; then
+        #     gl_STRCASECMP_WORKS
+        #     case "$gl_cv_func_strcasecmp_works" in
+        #       *yes) ;;
+        #       *) REPLACE_STRCASECMP_L=1 ;;
+        #     esac
+        #   fi
+        # Compound condition models "function exists AND broken". See the
+        # comment in strncasecmp/BUILD.bazel for why we cannot use `requires`.
+        checks.AC_SUBST(
+            "REPLACE_STRCASECMP_L",
+            condition = "ac_cv_func_strcasecmp_l==1 && !gl_cv_func_strcasecmp_works",
+            if_false = "0",
+            if_true = "1",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_STRINGS_H_DEFAULTS]) is satisfied by the toolchain;
-        # _DEFAULTS targets are never direct dependencies.
-        "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
-        # Note: strcasecmp dependency pulls in HAVE_STRCASECMP which golden expects undefined
-        # gl_STRCASECMP_WORKS is a runtime check that we can approximate
-        # "//gnulib/m4/strcasecmp",  # gl_STRCASECMP_WORKS - but pulls in HAVE_STRCASECMP
-        # Note: uselocale module was deleted per user's instruction
-        # gl_PREREQ_STRCASECMP_L checks for uselocale, xlocale.h
-        "//gnulib/m4/c-strtod",
-        "//gnulib/m4/wchar_h:gl_WCHAR_H_CORE",
-        # For test compatibility - need basic header defines
+        # AC_REQUIRE([gl_STRINGS_H_DEFAULTS]) is satisfied by the toolchain.
+        # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - line 13
+        "//gnulib/m4/extensions",
+        # M4: gl_STRCASECMP_WORKS (line 18)
+        "//gnulib/m4/strcasecmp:gl_STRCASECMP_WORKS",
+        # For test compatibility - basic header defines.
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_PREREQ_STRCASECMP_L - lines 31-34
+# M4 body: AC_REQUIRE([gt_FUNC_USELOCALE]).
+autoconf(
+    name = "gl_PREREQ_STRCASECMP_L",
+    visibility = ["//visibility:public"],
+    deps = [
+        # AC_REQUIRE([gt_FUNC_USELOCALE]) - line 33
+        "//gnulib/m4/intl-thread-locale:gt_FUNC_USELOCALE",
+    ],
+)
+
+# Package-level aggregator (matches package name). No checks - deps on the
+# AC_DEFUN targets.
+autoconf(
+    name = "strcasecmp_l",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_STRCASECMP_L",
+        ":gl_PREREQ_STRCASECMP_L",
     ],
 )
