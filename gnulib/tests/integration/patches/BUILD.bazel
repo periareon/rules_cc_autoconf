@@ -1,4 +1,0 @@
-exports_files([
-    "m4-windows-link-fix.patch",
-    "patch-windows-link-fix.patch",
-])
