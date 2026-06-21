@@ -1,6 +1,4 @@
 /* config.h.in */
-#define DBL_EXPBIT0_BIT 20
-#define DBL_EXPBIT0_WORD 1
 /* #undef HAVE_ACOSF */
 /* #undef HAVE_ACOSL */
 /* #undef HAVE_ASINF */
@@ -20,11 +18,11 @@
 /* #undef HAVE_DECL_ACOSL */
 /* #undef HAVE_DECL_ASINL */
 /* #undef HAVE_DECL_ATANL */
-/* #undef HAVE_DECL_CEILF */
+#define HAVE_DECL_CEILF 1
 /* #undef HAVE_DECL_CEILL */
 /* #undef HAVE_DECL_COSL */
 /* #undef HAVE_DECL_EXPL */
-/* #undef HAVE_DECL_FLOORF */
+#define HAVE_DECL_FLOORF 1
 /* #undef HAVE_DECL_FLOORL */
 /* #undef HAVE_DECL_FREXPL */
 /* #undef HAVE_DECL_LDEXPL */
@@ -47,6 +45,7 @@
 /* #undef HAVE_EXPM1L */
 /* #undef HAVE_FABSF */
 /* #undef HAVE_FABSL */
+#define HAVE_FLOORF_AND_CEILF 1
 /* #undef HAVE_FMA */
 /* #undef HAVE_FMAF */
 /* #undef HAVE_FMAL */
@@ -65,7 +64,6 @@
 /* #undef HAVE_ISNAND */
 /* #undef HAVE_ISNANF */
 /* #undef HAVE_ISNANL */
-#define HAVE_ISNANL_IN_LIBC 1
 /* #undef HAVE_LDEXPF */
 /* #undef HAVE_LOG10F */
 /* #undef HAVE_LOG10L */
@@ -94,7 +92,6 @@
 /* #undef HAVE_ROUND */
 /* #undef HAVE_ROUNDF */
 /* #undef HAVE_ROUNDL */
-/* #undef HAVE_SAME_LONG_DOUBLE_AS_DOUBLE */
 /* #undef HAVE_SETPAYLOAD */
 /* #undef HAVE_SETPAYLOADF */
 /* #undef HAVE_SETPAYLOADL */
@@ -123,8 +120,7 @@
 /* #undef HAVE_TOTALORDERMAGF */
 /* #undef HAVE_TOTALORDERMAGL */
 #define HAVE_UNISTD_H 1
-#define LDBL_EXPBIT0_BIT 0
-#define LDBL_EXPBIT0_WORD 2
+#define HAVE_WCHAR_H 1
 /* #undef REPLACE_ACOSF */
 /* #undef REPLACE_ASINF */
 /* #undef REPLACE_ATAN2F */
@@ -216,3 +212,20 @@
 /* #undef REPLACE_TRUNCF */
 /* #undef REPLACE_TRUNCL */
 #define STDC_HEADERS 1
+#define _ALL_SOURCE 1
+#define _DARWIN_C_SOURCE 1
+#define _GNU_SOURCE 1
+#define _HPUX_ALT_XOPEN_SOCKET_API 1
+#define _NETBSD_SOURCE 1
+#define _OPENBSD_SOURCE 1
+#define _POSIX_PTHREAD_SEMANTICS 1
+#define _TANDEM_SOURCE 1
+#define __EXTENSIONS__ 1
+#define __STDC_WANT_IEC_60559_ATTRIBS_EXT__ 1
+#define __STDC_WANT_IEC_60559_BFP_EXT__ 1
+#define __STDC_WANT_IEC_60559_DFP_EXT__ 1
+#define __STDC_WANT_IEC_60559_EXT__ 1
+#define __STDC_WANT_IEC_60559_FUNCS_EXT__ 1
+#define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
+#define __STDC_WANT_LIB_EXT2__ 1
+#define __STDC_WANT_MATH_SPEC_FUNCS__ 1

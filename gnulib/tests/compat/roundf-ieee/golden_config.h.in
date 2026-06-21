@@ -18,11 +18,11 @@
 /* #undef HAVE_DECL_ACOSL */
 /* #undef HAVE_DECL_ASINL */
 /* #undef HAVE_DECL_ATANL */
-#define HAVE_DECL_CEILF 1
+/* #undef HAVE_DECL_CEILF */
 /* #undef HAVE_DECL_CEILL */
 /* #undef HAVE_DECL_COSL */
 /* #undef HAVE_DECL_EXPL */
-#define HAVE_DECL_FLOORF 1
+/* #undef HAVE_DECL_FLOORF */
 /* #undef HAVE_DECL_FLOORL */
 /* #undef HAVE_DECL_FREXPL */
 /* #undef HAVE_DECL_LDEXPL */
@@ -45,7 +45,7 @@
 /* #undef HAVE_EXPM1L */
 /* #undef HAVE_FABSF */
 /* #undef HAVE_FABSL */
-#define HAVE_FLOORF_AND_CEILF 1
+/* #undef HAVE_FLOORF_AND_CEILF */
 /* #undef HAVE_FMA */
 /* #undef HAVE_FMAF */
 /* #undef HAVE_FMAL */

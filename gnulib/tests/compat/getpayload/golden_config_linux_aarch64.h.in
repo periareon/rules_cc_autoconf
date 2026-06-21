@@ -65,7 +65,6 @@
 /* #undef HAVE_ISNAND */
 /* #undef HAVE_ISNANF */
 /* #undef HAVE_ISNANL */
-#define HAVE_ISNANL_IN_LIBC 1
 /* #undef HAVE_LDEXPF */
 /* #undef HAVE_LOG10F */
 /* #undef HAVE_LOG10L */
@@ -123,8 +122,9 @@
 /* #undef HAVE_TOTALORDERMAGF */
 /* #undef HAVE_TOTALORDERMAGL */
 #define HAVE_UNISTD_H 1
-#define LDBL_EXPBIT0_BIT 0
-#define LDBL_EXPBIT0_WORD 2
+#define HAVE_WCHAR_H 1
+#define LDBL_EXPBIT0_BIT 16
+#define LDBL_EXPBIT0_WORD 3
 /* #undef REPLACE_ACOSF */
 /* #undef REPLACE_ASINF */
 /* #undef REPLACE_ATAN2F */
@@ -216,3 +216,20 @@
 /* #undef REPLACE_TRUNCF */
 /* #undef REPLACE_TRUNCL */
 #define STDC_HEADERS 1
+#define _ALL_SOURCE 1
+#define _DARWIN_C_SOURCE 1
+#define _GNU_SOURCE 1
+#define _HPUX_ALT_XOPEN_SOCKET_API 1
+#define _NETBSD_SOURCE 1
+#define _OPENBSD_SOURCE 1
+#define _POSIX_PTHREAD_SEMANTICS 1
+#define _TANDEM_SOURCE 1
+#define __EXTENSIONS__ 1
+#define __STDC_WANT_IEC_60559_ATTRIBS_EXT__ 1
+#define __STDC_WANT_IEC_60559_BFP_EXT__ 1
+#define __STDC_WANT_IEC_60559_DFP_EXT__ 1
+#define __STDC_WANT_IEC_60559_EXT__ 1
+#define __STDC_WANT_IEC_60559_FUNCS_EXT__ 1
+#define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
+#define __STDC_WANT_LIB_EXT2__ 1
+#define __STDC_WANT_MATH_SPEC_FUNCS__ 1

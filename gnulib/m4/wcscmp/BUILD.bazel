@@ -1,4 +1,16 @@
-"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/wcscmp.m4"""
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/wcscmp.m4
+
+gl_FUNC_WCSCMP checks whether wcscmp handles wide-character ordering correctly.
+The check is runtime (AC_RUN_IFELSE); we follow the M4's cross-compile guess
+with a CPU override for aarch64 glibc.
+
+Upstream m4/wcscmp.m4 explicitly notes:
+  "This test fails on glibc 2.37 on arm and arm64 CPUs."
+
+So even though the M4 cross-compile guess for glibc >= 2.15 is "yes works",
+on aarch64 glibc >= 2.37 (typical for modern aarch64 Linux distros, e.g.
+Ubuntu 24.04) the runtime check actually fails -> REPLACE_WCSCMP=1.
+"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
@@ -10,9 +22,20 @@ autoconf(
             "wcscmp",
             define = "HAVE_WCSCMP",
         ),
-        # Gnulib replaces wcscmp when missing or broken; golden expects REPLACE_WCSCMP "1"
-        checks.AC_SUBST("REPLACE_WCSCMP", "1"),
-    ],
+    ] + select({
+        # aarch64 glibc 2.37+: known broken per upstream M4 comment.
+        "//gnulib/tests:linux_aarch64": [
+            checks.AC_SUBST("REPLACE_WCSCMP", "1"),
+        ],
+        # x86_64 Linux glibc (modern): passes the wide-char ordering check.
+        "@platforms//os:linux": [
+            checks.AC_SUBST("REPLACE_WCSCMP", "0"),
+        ],
+        # macOS / BSDs / Windows: conservative (M4 default).
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_WCSCMP", "1"),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         # Note: wchar_h provides HAVE_DECL_WCSDUP, but golden file expects it undefined

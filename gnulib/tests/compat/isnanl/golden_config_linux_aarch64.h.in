@@ -123,8 +123,8 @@
 /* #undef HAVE_TOTALORDERMAGF */
 /* #undef HAVE_TOTALORDERMAGL */
 #define HAVE_UNISTD_H 1
-#define LDBL_EXPBIT0_BIT 0
-#define LDBL_EXPBIT0_WORD 2
+#define LDBL_EXPBIT0_BIT 16
+#define LDBL_EXPBIT0_WORD 3
 /* #undef REPLACE_ACOSF */
 /* #undef REPLACE_ASINF */
 /* #undef REPLACE_ATAN2F */
