@@ -63,6 +63,12 @@ int main(void) {
             ),
         ],
     }) + [
+        # AC_DEFINE for config.h alongside the AC_SUBST for subst.h —
+        # AC_CHECK_FUNCS_ONCE emits both when the function is present.
+        checks.AC_DEFINE(
+            "HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR",
+            requires = ["ac_cv_func_posix_spawn_file_actions_addchdir==1"],
+        ),
         checks.AC_SUBST(
             "HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR",
             condition = "ac_cv_func_posix_spawn_file_actions_addchdir",

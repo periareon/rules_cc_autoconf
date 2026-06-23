@@ -52,7 +52,14 @@ int main(void) { return 0; }
             if_false = 0,
             if_true = 1,
         ),
-        # HAVE_SYS_ENDIAN_H derives from the sys/endian.h check
+        # HAVE_SYS_ENDIAN_H derives from the sys/endian.h check.
+        # Both AC_DEFINE (config.h) and AC_SUBST (subst.h) — mirrors how
+        # gnulib's gl_HEADER_SYS_ENDIAN_H+AC_CHECK_HEADERS_ONCE emit it
+        # in both places when the header is present.
+        checks.AC_DEFINE(
+            "HAVE_SYS_ENDIAN_H",
+            requires = ["ac_cv_header_sys_endian_h==1"],
+        ),
         checks.AC_SUBST(
             "HAVE_SYS_ENDIAN_H",
             condition = "ac_cv_header_sys_endian_h",
