@@ -54,35 +54,51 @@ autoconf(
 autoconf(
     name = "gl_CHECK_FUNC_C32RTOMB",
     checks = [
-        # AC_CHECK_DECL([c32rtomb], ..., [includes]) - lines 70-74
-        # M4 includes (semantic order matters - do NOT split into individual
-        # list elements; alphabetical sorters will reorder and break the
-        # #ifdef/#endif pairing):
-        #   #ifdef __HAIKU__
-        #    #include <stdint.h>
-        #   #endif
-        #   #include <uchar.h>
-        # Keep the AC_CHECK_DECL gate for the Haiku case (where c32rtomb
-        # is a static inline, so AC_CHECK_FUNC would miss it). macOS
-        # gates the decl in <uchar.h> behind _DARWIN_C_SOURCE; pass it
-        # via `compile_defines` (as a real -D flag) so the macro is set
-        # BEFORE the auto-prepended AC_INCLUDES_DEFAULT pulls in any
-        # system header — an inline `#define` is too late at that point.
+        # M4: AC_CHECK_DECL([c32rtomb], ..., [#include <uchar.h>]).
+        # On Linux/Haiku the header-based probe works directly; on macOS
+        # the decl in <uchar.h> is gated by _DARWIN_C_SOURCE / __DARWIN_C_LEVEL
+        # macros that aren't reliably surfaceable from a Bazel probe
+        # (see the link probe note below for the rationale).
         checks.AC_CHECK_DECL(
             "c32rtomb",
             name = "ac_cv_have_decl_c32rtomb",
-            compile_defines = [
-                "_DARWIN_C_SOURCE",
-                "_GNU_SOURCE",
-            ],
             includes = ["#ifdef __HAIKU__\n#include <stdint.h>\n#endif\n#include <uchar.h>"],
         ),
-        # M4: if test $ac_cv_have_decl_c32rtomb = yes; then AC_LINK_IFELSE(...)
-        # else gl_cv_func_c32rtomb=no. Same feature-define story as the
-        # decl probe — must be -D flags, not in-source.
-        checks.AC_TRY_LINK(
-            name = "gl_cv_func_c32rtomb",
-            code = """\
+    ] + select({
+        # macOS: header-based probes for the c32rtomb decl consistently
+        # fail under Bazel's macOS toolchain even on macOS 13+ where the
+        # symbol is in libSystem. Cause: <uchar.h> hides the decl behind
+        # _DARWIN_C_SOURCE / __DARWIN_C_LEVEL, and the framework's
+        # `compile_defines` only prepends `#define` text — which behaves
+        # the same as inline `#define`s and isn't sufficient because
+        # `<sys/cdefs.h>` may already have computed __DARWIN_C_LEVEL by
+        # the time we get to <uchar.h>.
+        #
+        # Substitute the SDK-version compile probe (already used elsewhere
+        # for runtime-bug detection) — it sets `gl_cv_func_c32rtomb` based
+        # on whether the deployment target is recent enough to guarantee
+        # libSystem has c32rtomb. Downstream consumers (gl_FUNC_C32RTOMB's
+        # REPLACE/HAVE substs, gl_C32RTOMB_SANITYCHECK's HAVE_WORKING
+        # gate) keep reading `gl_cv_func_c32rtomb` unchanged.
+        "@platforms//os:macos": [
+            checks.AC_TRY_COMPILE(
+                name = "gl_cv_func_c32rtomb",
+                code = """\
+#include <Availability.h>
+#if !defined(__MAC_OS_X_VERSION_MIN_REQUIRED) \\
+    || __MAC_OS_X_VERSION_MIN_REQUIRED < 110000
+#error "macOS deployment target is older than 11.0 (Big Sur)"
+#endif
+int main(void) { return 0; }
+""",
+            ),
+        ],
+        "//conditions:default": [
+            # M4: if test $ac_cv_have_decl_c32rtomb = yes; then
+            #       AC_LINK_IFELSE(...) else gl_cv_func_c32rtomb=no.
+            checks.AC_TRY_LINK(
+                name = "gl_cv_func_c32rtomb",
+                code = """\
 #include <stdlib.h>
 #ifdef __HAIKU__
 #include <stdint.h>
@@ -94,20 +110,13 @@ int main(void) {
     return c32rtomb(buf, 0, NULL) == 0;
 }
 """,
-            compile_defines = [
-                "_DARWIN_C_SOURCE",
-                "_GNU_SOURCE",
-            ],
-            requires = ["ac_cv_have_decl_c32rtomb==1"],
-        ),
-    ],
+                requires = ["ac_cv_have_decl_c32rtomb==1"],
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
-        # Provides _DARWIN_C_SOURCE / _GNU_SOURCE defines (via
-        # AC_USE_SYSTEM_EXTENSIONS) that both probes reference through
-        # `compile_defines` so they reach the compiler as -D flags.
-        "//gnulib/m4/extensions",
     ],
 )
 

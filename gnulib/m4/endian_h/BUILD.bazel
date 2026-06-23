@@ -12,18 +12,35 @@ autoconf(
             "endian.h",
             name = "ac_cv_header_endian_h",
         ),
-        # macOS provides <sys/endian.h> as a compatibility shim in modern
-        # SDKs, but only when _DARWIN_C_SOURCE is set in the deployment
-        # target's feature defines. Real autoconf sets this via
-        # AC_USE_SYSTEM_EXTENSIONS; we pass it as a real -D flag via
-        # `compile_defines` so it lands BEFORE the auto-prepended
-        # AC_INCLUDES_DEFAULT — an inline `#define` after those headers
-        # is too late.
-        checks.AC_CHECK_HEADER(
-            "sys/endian.h",
-            name = "ac_cv_header_sys_endian_h",
-            compile_defines = ["_DARWIN_C_SOURCE"],
-        ),
+    ] + select({
+        # macOS: <sys/endian.h> is present in modern SDKs but only after
+        # _DARWIN_C_SOURCE / __DARWIN_C_LEVEL have been set BEFORE any
+        # other system header is included. Both `compile_defines` and an
+        # inline `#define` fail because the framework just prepends text
+        # — by the time the probe's `#include <sys/endian.h>` runs,
+        # <sys/cdefs.h> has often already finalized __DARWIN_C_LEVEL.
+        # Sub in the SDK-version compile probe — a Big-Sur+ deployment
+        # target guarantees the header is available.
+        "@platforms//os:macos": [
+            checks.AC_TRY_COMPILE(
+                name = "ac_cv_header_sys_endian_h",
+                code = """\
+#include <Availability.h>
+#if !defined(__MAC_OS_X_VERSION_MIN_REQUIRED) \\
+    || __MAC_OS_X_VERSION_MIN_REQUIRED < 110000
+#error "macOS deployment target is older than 11.0 (Big Sur)"
+#endif
+int main(void) { return 0; }
+""",
+            ),
+        ],
+        "//conditions:default": [
+            checks.AC_CHECK_HEADER(
+                "sys/endian.h",
+                name = "ac_cv_header_sys_endian_h",
+            ),
+        ],
+    }) + [
         # HAVE_ENDIAN_H derives from the header check result
         checks.AC_DEFINE(
             "HAVE_ENDIAN_H",

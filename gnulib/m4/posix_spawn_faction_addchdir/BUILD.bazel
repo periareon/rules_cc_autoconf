@@ -22,27 +22,47 @@ autoconf(
             "HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR_NP",
             requires = ["ac_cv_func_posix_spawn_file_actions_addchdir_np==1"],
         ),
+    ] + select({
+        # macOS: header-based probes for posix_spawn_file_actions_addchdir
+        # consistently fail under Bazel's macOS toolchain even on macOS 13+
+        # (where the symbol is in libSystem). <spawn.h> hides the decl
+        # behind _DARWIN_C_SOURCE / __DARWIN_C_LEVEL, and the framework's
+        # `compile_defines` only prepends `#define` text — equivalent to
+        # an inline `#define` and not sufficient because <sys/cdefs.h>
+        # may already have computed __DARWIN_C_LEVEL by the time we get
+        # to <spawn.h>. Substitute the SDK-version compile probe.
+        "@platforms//os:macos": [
+            checks.AC_TRY_COMPILE(
+                name = "ac_cv_func_posix_spawn_file_actions_addchdir",
+                code = """\
+#include <Availability.h>
+#if !defined(__MAC_OS_X_VERSION_MIN_REQUIRED) \\
+    || __MAC_OS_X_VERSION_MIN_REQUIRED < 110000
+#error "macOS deployment target is older than 11.0 (Big Sur)"
+#endif
+int main(void) { return 0; }
+""",
+            ),
+        ],
         # AC_CHECK_FUNCS_ONCE([posix_spawn_file_actions_addchdir]). The POSIX
-        # name was added in macOS 13 / glibc 2.29. macOS gates the decl
-        # behind _DARWIN_C_SOURCE in <spawn.h>; we need the macro to be
-        # set BEFORE the prepended AC_INCLUDES_DEFAULT pulls in <unistd.h>
-        # / <sys/types.h>, so we use `compile_defines` (which appends -D
-        # flags to the compile command) rather than an inline `#define`
-        # in the source (which would run after the headers).
-        checks.AC_TRY_LINK(
-            name = "ac_cv_func_posix_spawn_file_actions_addchdir",
-            code = """\
+        # name was added in macOS 13 / glibc 2.29.
+        "//conditions:default": [
+            checks.AC_TRY_LINK(
+                name = "ac_cv_func_posix_spawn_file_actions_addchdir",
+                code = """\
 #include <spawn.h>
 int main(void) {
     posix_spawn_file_actions_t a;
     return posix_spawn_file_actions_addchdir(&a, ".");
 }
 """,
-            compile_defines = [
-                "_DARWIN_C_SOURCE",
-                "_GNU_SOURCE",
-            ],
-        ),
+                compile_defines = [
+                    "_DARWIN_C_SOURCE",
+                    "_GNU_SOURCE",
+                ],
+            ),
+        ],
+    }) + [
         checks.AC_SUBST(
             "HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR",
             condition = "ac_cv_func_posix_spawn_file_actions_addchdir",

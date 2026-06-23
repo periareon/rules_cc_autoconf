@@ -12,26 +12,43 @@ autoconf(
             "posix_spawn_file_actions_addfchdir_np",
             define = "HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR_NP",
         ),
-        # POSIX-standardized name (POSIX.1-2024). Same feature-test issue
-        # as addchdir: macOS hides the decl behind _DARWIN_C_SOURCE. Pass
-        # the defines via `compile_defines` so they reach the compiler as
-        # -D flags BEFORE the auto-prepended AC_INCLUDES_DEFAULT pulls in
-        # system headers — an inline `#define` after those headers is too
-        # late.
-        checks.AC_TRY_LINK(
-            name = "ac_cv_func_posix_spawn_file_actions_addfchdir",
-            code = """\
+    ] + select({
+        # macOS: same SDK-substitute as the addchdir module — header-based
+        # probes for the POSIX-2024 name consistently fail under Bazel's
+        # macOS toolchain even on macOS 13+ where the symbol is in
+        # libSystem. See gl_FUNC_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR for the
+        # full rationale.
+        "@platforms//os:macos": [
+            checks.AC_TRY_COMPILE(
+                name = "ac_cv_func_posix_spawn_file_actions_addfchdir",
+                code = """\
+#include <Availability.h>
+#if !defined(__MAC_OS_X_VERSION_MIN_REQUIRED) \\
+    || __MAC_OS_X_VERSION_MIN_REQUIRED < 110000
+#error "macOS deployment target is older than 11.0 (Big Sur)"
+#endif
+int main(void) { return 0; }
+""",
+            ),
+        ],
+        # POSIX-standardized name (POSIX.1-2024).
+        "//conditions:default": [
+            checks.AC_TRY_LINK(
+                name = "ac_cv_func_posix_spawn_file_actions_addfchdir",
+                code = """\
 #include <spawn.h>
 int main(void) {
     posix_spawn_file_actions_t a;
     return posix_spawn_file_actions_addfchdir(&a, 0);
 }
 """,
-            compile_defines = [
-                "_DARWIN_C_SOURCE",
-                "_GNU_SOURCE",
-            ],
-        ),
+                compile_defines = [
+                    "_DARWIN_C_SOURCE",
+                    "_GNU_SOURCE",
+                ],
+            ),
+        ],
+    }) + [
         checks.AC_SUBST(
             "HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR",
             condition = "ac_cv_func_posix_spawn_file_actions_addfchdir",
