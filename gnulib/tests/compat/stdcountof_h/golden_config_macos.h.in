@@ -1,7 +1,7 @@
 /* config.h.in */
 /* #undef CXX_HAVE_STDCOUNTOF_H */
 #define HAVE_INTTYPES_H 1
-/* #undef HAVE_STDCOUNTOF_H */
+#define HAVE_STDCOUNTOF_H 1
 #define HAVE_STDINT_H 1
 #define HAVE_STDIO_H 1
 #define HAVE_STDLIB_H 1
