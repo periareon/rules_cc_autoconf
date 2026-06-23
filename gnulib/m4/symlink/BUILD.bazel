@@ -23,18 +23,28 @@ autoconf(
 
 autoconf(
     name = "symlink",
+    # M4 m4/symlink.m4 runs AC_RUN_IFELSE for the trailing-slash bug;
+    # cross-compile guess for darwin falls to gl_cross_guess_normal.
+    # On macOS the SDK probe decides.
     checks = select({
-        # On Linux, symlink works correctly
-        "@platforms//os:linux": [
-            checks.AC_SUBST("REPLACE_SYMLINK", 0),
+        "@platforms//os:windows": [
+            checks.AC_SUBST("REPLACE_SYMLINK", "1"),
         ],
-        # On macOS, symlink has some issues with trailing slashes, so REPLACE_SYMLINK=1
+        "@platforms//os:macos": [
+            checks.AC_SUBST(
+                "REPLACE_SYMLINK",
+                condition = "gl_cv_macos_sdk_modern",
+                if_true = "0",
+                if_false = "1",
+            ),
+        ],
         "//conditions:default": [
-            checks.AC_SUBST("REPLACE_SYMLINK", 1),
+            checks.AC_SUBST("REPLACE_SYMLINK", "0"),
         ],
     }),
     visibility = ["//visibility:public"],
     deps = [
         ":gl_FUNC_SYMLINK_CORE",
+        "//gnulib/m4/gnulib-common:gl_HOST_MACOS_SDK_MODERN",
     ],
 )

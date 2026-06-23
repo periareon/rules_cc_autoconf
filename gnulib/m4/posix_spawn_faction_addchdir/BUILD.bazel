@@ -17,21 +17,29 @@ autoconf(
 autoconf(
     name = "gl_FUNC_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR",
     checks = [
-        # Define HAVE_*_NP from the shared check result
+        # Define HAVE_*_NP from the shared check result.
         checks.AC_DEFINE(
             "HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR_NP",
             requires = ["ac_cv_func_posix_spawn_file_actions_addchdir_np==1"],
         ),
-        # AC_CHECK_FUNCS_ONCE([posix_spawn_file_actions_addchdir])
-        checks.AC_CHECK_FUNC(
-            "posix_spawn_file_actions_addchdir",
+        # AC_CHECK_FUNCS_ONCE([posix_spawn_file_actions_addchdir]). The POSIX
+        # name was added in macOS 13 / glibc 2.29 and only becomes visible
+        # with the right feature test macros. macOS gates it behind
+        # _POSIX_C_SOURCE>=202405L which the plain probe doesn't set; force
+        # the include to enable it so the link probe matches what real
+        # ./configure sees on macOS 13+ and modern Linux.
+        checks.AC_TRY_LINK(
+            name = "ac_cv_func_posix_spawn_file_actions_addchdir",
+            code = """\
+#define _DARWIN_C_SOURCE 1
+#define _GNU_SOURCE 1
+#include <spawn.h>
+int main(void) {
+    posix_spawn_file_actions_t a;
+    return posix_spawn_file_actions_addchdir(&a, ".");
+}
+""",
         ),
-        # Per upstream m4:
-        #   if test $ac_cv_func_posix_spawn_file_actions_addchdir = yes; then
-        #     REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR=1
-        #   else
-        #     HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR=0
-        #   fi
         checks.AC_SUBST(
             "HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR",
             condition = "ac_cv_func_posix_spawn_file_actions_addchdir",

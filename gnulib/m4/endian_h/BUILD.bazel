@@ -12,9 +12,16 @@ autoconf(
             "endian.h",
             name = "ac_cv_header_endian_h",
         ),
+        # macOS provides <sys/endian.h> as a compatibility shim in modern
+        # SDKs, but only when _DARWIN_C_SOURCE is in scope (without it the
+        # header is effectively empty). Real autoconf sets this via
+        # AC_USE_SYSTEM_EXTENSIONS; we hand-prepend the define so the probe
+        # matches reality on macOS without breaking the normal "compile"
+        # check semantics or the ac_cv_header_* naming convention.
         checks.AC_CHECK_HEADER(
             "sys/endian.h",
             name = "ac_cv_header_sys_endian_h",
+            includes = ["#define _DARWIN_C_SOURCE 1"],
         ),
         # HAVE_ENDIAN_H derives from the header check result
         checks.AC_DEFINE(

@@ -6,15 +6,41 @@ load("//autoconf:checks.bzl", "checks")
 autoconf(
     name = "posix_spawn_faction_addfchdir",
     checks = [
-        # On macOS, this function exists
+        # _np variant: standard AC_CHECK_FUNC works on systems where it's
+        # exposed without extra feature defines (Linux, macOS).
         checks.AC_CHECK_FUNC(
             "posix_spawn_file_actions_addfchdir_np",
             define = "HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR_NP",
         ),
-        # This function is not yet standardized, so always replace the system's implementation
-        # REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR=1 is set by defaults if function exists
-        # HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR=0 on macOS (not available)
-        checks.AC_SUBST("HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR", "0"),
+        # POSIX-standardized name (POSIX.1-2024). Same feature-test issue as
+        # the addchdir module: macOS gates it behind _POSIX_C_SOURCE / the
+        # _DARWIN_C_SOURCE macros and plain probes don't see it. Force the
+        # defines on so the link probe matches what real ./configure sees on
+        # macOS 13+ and modern Linux.
+        checks.AC_TRY_LINK(
+            name = "ac_cv_func_posix_spawn_file_actions_addfchdir",
+            code = """\
+#define _DARWIN_C_SOURCE 1
+#define _GNU_SOURCE 1
+#include <spawn.h>
+int main(void) {
+    posix_spawn_file_actions_t a;
+    return posix_spawn_file_actions_addfchdir(&a, 0);
+}
+""",
+        ),
+        checks.AC_SUBST(
+            "HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR",
+            condition = "ac_cv_func_posix_spawn_file_actions_addfchdir",
+            if_false = "0",
+            if_true = "1",
+        ),
+        checks.AC_SUBST(
+            "REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR",
+            condition = "ac_cv_func_posix_spawn_file_actions_addfchdir",
+            if_false = "0",
+            if_true = "1",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [

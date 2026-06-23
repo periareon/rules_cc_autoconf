@@ -154,8 +154,13 @@ int main(void) { return 0; }
         checks.AC_SUBST(
             "GNULIBHEADERS_OVERRIDE_CHAR32_T",
             condition = "gl_cv_type_char32_t_works",
-            if_false = "1",
-            if_true = "0",
+            # Use integers (not strings) so the cache value is stored as
+            # raw `0`/`1` rather than JSON-quoted `"\"0\""`/`"\"1\""`.
+            # Downstream conditions (e.g. c32rtomb's HAVE_WORKING gate)
+            # compare against `0` / `1`; the string form would always
+            # mismatch and silently take the wrong arm.
+            if_false = 1,
+            if_true = 0,
         ),
     ],
     visibility = ["//visibility:public"],

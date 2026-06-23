@@ -11,14 +11,19 @@ autoconf(
             define = "HAVE_READLINKAT",
             subst = True,
         ),
-        # REPLACE_READLINKAT is set based on runtime checks
-        # Based on golden file: macOS=1, Linux=0
     ] + select({
-        "@platforms//os:linux": [
-            checks.AC_SUBST("REPLACE_READLINKAT", 0),
+        # M4 m4/readlinkat.m4 sets REPLACE_READLINKAT when the runtime
+        # trailing-slash probe fails. On macOS the SDK probe decides.
+        "@platforms//os:macos": [
+            checks.AC_SUBST(
+                "REPLACE_READLINKAT",
+                condition = "gl_cv_macos_sdk_modern",
+                if_true = "0",
+                if_false = "1",
+            ),
         ],
         "//conditions:default": [
-            checks.AC_SUBST("REPLACE_READLINKAT", 1),
+            checks.AC_SUBST("REPLACE_READLINKAT", "0"),
         ],
     }),
     visibility = ["//visibility:public"],

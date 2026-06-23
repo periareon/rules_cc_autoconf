@@ -62,18 +62,32 @@ autoconf(
         #    #include <stdint.h>
         #   #endif
         #   #include <uchar.h>
+        # Keep the AC_CHECK_DECL gate for the Haiku case (where c32rtomb is
+        # a static inline, so AC_CHECK_FUNC would miss it). Original include
+        # block unchanged so the probe matches what it always did on Linux;
+        # macOS doesn't need this gate because we force the feature defines
+        # in the link probe below.
         checks.AC_CHECK_DECL(
             "c32rtomb",
             name = "ac_cv_have_decl_c32rtomb",
             includes = ["#ifdef __HAIKU__\n#include <stdint.h>\n#endif\n#include <uchar.h>"],
         ),
         # M4: if test $ac_cv_have_decl_c32rtomb = yes; then AC_LINK_IFELSE(...)
-        # else gl_cv_func_c32rtomb=no
-        # We can't use AC_CHECK_FUNC because c32rtomb() is defined as a
-        # static inline function on Haiku 2020, so we use AC_TRY_LINK.
+        # else gl_cv_func_c32rtomb=no. We add _DARWIN_C_SOURCE / _GNU_SOURCE
+        # here because macOS gates <uchar.h> behind _DARWIN_C_SOURCE in C mode
+        # — without it the decl probe above fails on macOS and the link probe
+        # is skipped, leaving HAVE_C32RTOMB=0 even on macOS 13+ where the
+        # symbol is actually present. The macOS path therefore runs without
+        # the decl gate; on Linux/Haiku the gate still applies.
         checks.AC_TRY_LINK(
             name = "gl_cv_func_c32rtomb",
             code = """\
+#ifndef _DARWIN_C_SOURCE
+#define _DARWIN_C_SOURCE 1
+#endif
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE 1
+#endif
 #include <stdlib.h>
 #ifdef __HAIKU__
 #include <stdint.h>
@@ -99,55 +113,51 @@ int main(void) {
 # HAVE_WORKING_C32RTOMB.
 autoconf(
     name = "gl_C32RTOMB_SANITYCHECK",
+    # M4 m4/c32rtomb.m4:
+    #   if test $GNULIBHEADERS_OVERRIDE_CHAR32_T = 1 \
+    #      || test $gl_cv_func_c32rtomb = no; then
+    #       HAVE_WORKING_C32RTOMB=0
+    #   else
+    #       AC_RUN_IFELSE (zh_CN.GB18030 locale; cross-compile guess is
+    #       "yes" everywhere except non-Oracle Solaris)
+    #       case ... in *yes) HAVE_WORKING_C32RTOMB=1
+    #                         AC_DEFINE([HAVE_WORKING_C32RTOMB], [1])
+    #   fi
+    #
+    # The runtime probe can't be ported. We approximate the guess as "yes"
+    # (matching every platform we care about) and only need to check the
+    # two static gates: OVERRIDE_CHAR32_T and the c32rtomb link probe.
+    # `&&` short-circuits, so if OVERRIDE=1 (i.e. <uchar.h> char32_t is
+    # replaced) we never look at gl_cv_func_c32rtomb — which is important
+    # on platforms where the c32rtomb decl probe failed and the
+    # requires-gated link probe was skipped, leaving the cache var unset.
     checks = [
-        # M4: if test $GNULIBHEADERS_OVERRIDE_CHAR32_T = 1 || test $gl_cv_func_c32rtomb = no; then
-        #       HAVE_WORKING_C32RTOMB=0
-        #     else
-        #       AC_RUN_IFELSE (runtime probe in zh_CN.GB18030 locale)
-        #       case "$gl_cv_func_c32rtomb_sanitycheck" in
-        #         *yes) HAVE_WORKING_C32RTOMB=1; AC_DEFINE([HAVE_WORKING_C32RTOMB], [1]) ;;
-        #         *)    HAVE_WORKING_C32RTOMB=0 ;;
-        #       esac
-        #     fi
-        #     AC_SUBST([HAVE_WORKING_C32RTOMB])
-        # The runtime check isn't portable; cross-compile guess is "yes"
-        # everywhere except non-Oracle Solaris, which we don't target. So
-        # when neither GNULIBHEADERS_OVERRIDE_CHAR32_T nor gl_cv_func_c32rtomb
-        # forces 0, we assume the runtime check succeeds.
-        # Positive form: HAVE_WORKING_C32RTOMB=1 iff char32_t isn't overridden
-        # AND the function exists. `&&` short-circuits, so on macOS (where
-        # GNULIBHEADERS_OVERRIDE_CHAR32_T=1) the second arm — which references
-        # a cache var that may not exist when the c32rtomb decl check failed
-        # and the requires-gated link probe was skipped — is never evaluated.
-        # The negated OR form (`OVERRIDE==1 || func==0`) hits the missing-var
-        # evaluation and the whole condition errors out -> false -> wrong arm.
         checks.AC_SUBST(
             "HAVE_WORKING_C32RTOMB",
             condition = "GNULIBHEADERS_OVERRIDE_CHAR32_T==0 && gl_cv_func_c32rtomb==1",
-            if_false = "0",
             if_true = "1",
+            if_false = "0",
         ),
-        # M4 emits AC_DEFINE([HAVE_WORKING_C32RTOMB], [1]) only in the *yes
-        # branch of the runtime case statement (inside the "not overridden
-        # and function exists" arm); when either gate fires, the define is
-        # absent from config.h.
+        # M4 only emits the AC_DEFINE in the *yes branch of the runtime
+        # case statement (i.e. when both gates pass AND the runtime probe
+        # succeeds). When the condition is false the define is absent.
         checks.AC_DEFINE(
             "HAVE_WORKING_C32RTOMB",
             condition = "GNULIBHEADERS_OVERRIDE_CHAR32_T==0 && gl_cv_func_c32rtomb==1",
-            if_false = None,  # don't emit the define when condition is false
             if_true = 1,
+            if_false = None,
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # AC_REQUIRE([gl_TYPE_CHAR32_T]) - line 104 (provides GNULIBHEADERS_OVERRIDE_CHAR32_T)
+        # AC_REQUIRE([gl_TYPE_CHAR32_T]) - provides GNULIBHEADERS_OVERRIDE_CHAR32_T
         "//gnulib/m4/uchar_h",
-        # AC_REQUIRE([gl_CHECK_FUNC_C32RTOMB]) - line 105 (provides gl_cv_func_c32rtomb)
+        # AC_REQUIRE([gl_CHECK_FUNC_C32RTOMB]) - provides gl_cv_func_c32rtomb
         ":gl_CHECK_FUNC_C32RTOMB",
-        # AC_REQUIRE([AC_CANONICAL_HOST]) - line 107
+        # AC_REQUIRE([AC_CANONICAL_HOST])
         "//autoconf/macros/AC_CANONICAL_HOST",
-        # AC_REQUIRE([gt_LOCALE_ZH_CN]) - line 106 (runtime locale; only used
-        # by the un-modeled runtime probe but kept for graph completeness).
+        # AC_REQUIRE([gt_LOCALE_ZH_CN]) - runtime locale; only used by the
+        # un-modeled runtime probe but kept for graph completeness.
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

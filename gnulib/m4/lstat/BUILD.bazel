@@ -27,53 +27,59 @@ autoconf(
     ],
 )
 
-# Creates cache variable gl_cv_func_lstat_dereferences_slashed_symlink.
+# gl_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK — m4/lstat.m4
 #
-# Based on actual autoconf runtime test results:
-# - macOS: gl_cv_func_lstat_dereferences_slashed_symlink=no (lstat has bug)
-# - Linux: gl_cv_func_lstat_dereferences_slashed_symlink=yes (lstat works)
-# - Windows: gl_cv_func_lstat_dereferences_slashed_symlink=no (lstat has bug)
+# Upstream M4 runs a runtime probe (symlink + lstat with trailing slash).
+# Cross-compile guess table:
+#   linux-*|linux|midipix*|*-gnu*|gnu*    -> yes
+#   mingw*|windows*                       -> no
+#   * (incl. darwin, solaris, *bsd)       -> gl_cross_guess_normal ("no")
+#
+# We populate `gl_cv_func_lstat_dereferences_slashed_symlink` on every host
+# because gl_FUNC_LSTAT consumes it for REPLACE_LSTAT. On macOS the SDK
+# probe drives both that cache var AND the AC_DEFINE; Linux gets "yes"
+# unconditionally; Windows gets "no" (probe fails via #error).
 autoconf(
     name = "gl_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK",
     checks = select({
         "@platforms//os:macos": [
-            # macOS: lstat does NOT correctly handle trailing slash (per autoconf log)
-            # Create a check that fails
+            # M4's runtime probe is approximated via the shared gnulib-common
+            # SDK-version probe. We keep the upstream M4 cache var name
+            # (`gl_cv_func_lstat_dereferences_slashed_symlink`) populated
+            # because gl_FUNC_LSTAT references it for REPLACE_LSTAT; gate it
+            # on the SDK probe result so it flips to "0" on older macOS
+            # targets without losing the M4-faithful interface.
             checks.AC_TRY_LINK(
                 name = "gl_cv_func_lstat_dereferences_slashed_symlink",
-                code = """\
-/* macOS lstat does not correctly handle trailing slash */
-#error "LSTAT_SLASHED_SYMLINK_BUG"
-int main(void) { return 0; }
-""",
+                code = "int main(void) { return 0; }",
+                requires = ["gl_cv_macos_sdk_modern==1"],
             ),
-            # LSTAT_FOLLOWS_SLASHED_SYMLINK is NOT defined on macOS
+            checks.AC_DEFINE(
+                "LSTAT_FOLLOWS_SLASHED_SYMLINK",
+                requires = ["gl_cv_macos_sdk_modern==1"],
+                if_true = 1,
+            ),
         ],
         "@platforms//os:windows": [
-            # Windows: lstat has issues with slashed symlinks
+            # M4 cross-compile guess for mingw*/windows*: no.
             checks.AC_TRY_LINK(
                 name = "gl_cv_func_lstat_dereferences_slashed_symlink",
                 code = """\
-/* Windows lstat does not correctly handle trailing slash */
 #error "LSTAT_SLASHED_SYMLINK_BUG"
 int main(void) { return 0; }
 """,
             ),
-            # LSTAT_FOLLOWS_SLASHED_SYMLINK is NOT defined on Windows
         ],
         "//conditions:default": [
-            # Linux and other POSIX: lstat correctly handles slashed symlinks
+            # Linux/glibc: M4 cross-compile guess is "yes".
             checks.AC_TRY_LINK(
                 name = "gl_cv_func_lstat_dereferences_slashed_symlink",
-                code = """\
-/* Linux: lstat correctly handles trailing slash */
-int main(void) { return 0; }
-""",
+                code = "int main(void) { return 0; }",
             ),
-            # LSTAT_FOLLOWS_SLASHED_SYMLINK=1 when check passes
             checks.AC_DEFINE(
                 "LSTAT_FOLLOWS_SLASHED_SYMLINK",
                 requires = ["gl_cv_func_lstat_dereferences_slashed_symlink==1"],
+                if_true = 1,
             ),
         ],
     }),
@@ -81,6 +87,7 @@ int main(void) { return 0; }
     deps = [
         "//autoconf/macros/AC_CANONICAL_HOST",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/gnulib-common:gl_HOST_MACOS_SDK_MODERN",
     ],
 )
 

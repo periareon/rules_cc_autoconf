@@ -13,14 +13,19 @@ autoconf(
             define = "HAVE_UNLINKAT",
             subst = True,
         ),
-        # REPLACE_UNLINKAT is set based on runtime checks
-        # Based on golden file: macOS=1, Linux=0
     ] + select({
-        "@platforms//os:linux": [
-            checks.AC_SUBST("REPLACE_UNLINKAT", 0),
+        # M4 m4/unlinkat.m4 sets REPLACE_UNLINKAT when the trailing-slash /
+        # AT_REMOVEDIR probes fail. On macOS the SDK probe decides.
+        "@platforms//os:macos": [
+            checks.AC_SUBST(
+                "REPLACE_UNLINKAT",
+                condition = "gl_cv_macos_sdk_modern",
+                if_true = "0",
+                if_false = "1",
+            ),
         ],
         "//conditions:default": [
-            checks.AC_SUBST("REPLACE_UNLINKAT", 1),
+            checks.AC_SUBST("REPLACE_UNLINKAT", "0"),
         ],
     }),
     visibility = ["//visibility:public"],
