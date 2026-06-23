@@ -7,13 +7,54 @@ load("//gnulib:macros.bzl", gl_macros = "macros")
 autoconf(
     name = "gl_STDCOUNTOF_H",
     checks = [
+        # M4: AC_CHECK_HEADERS_ONCE([stdcountof.h])
+        # Sets ac_cv_header_stdcountof_h and (via `define`) emits
+        # `#define HAVE_STDCOUNTOF_H 1` in config.h when the probe
+        # succeeds.
         checks.AC_CHECK_HEADER(
             "stdcountof.h",
             define = "HAVE_STDCOUNTOF_H",
         ),
-        # Golden expects header not found (0) and NEXT_* for replacement header
-        checks.AC_SUBST("CXX_HAVE_STDCOUNTOF_H", "0"),
-        checks.AC_SUBST("HAVE_STDCOUNTOF_H", "0"),
+        # M4: HAVE_STDCOUNTOF_H = (probe == yes ? 1 : 0); AC_SUBST.
+        # Drives subst.h from the same probe result config.h is using,
+        # so the two stay consistent (previously this was hardcoded "0",
+        # which contradicted config.h on any toolchain that ships the
+        # header and caused goldens to flap whenever Apple toggled
+        # <stdcountof.h> in/out of Xcode 26.x).
+        checks.AC_SUBST(
+            "HAVE_STDCOUNTOF_H",
+            condition = "ac_cv_header_stdcountof_h",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # M4: CXX_HAVE_STDCOUNTOF_H defaults to 1; only set to 0 if the
+        # C++ compiler is present AND a C++ compile of
+        #     #include <stdcountof.h>
+        #     int a[] = { 86, 47 };
+        #     unsigned int a_n = countof (a);
+        # fails. The comment in upstream M4 calls out clang 21
+        # specifically: the header exists but uses _Countof, which isn't
+        # a C++ built-in. We model the probe directly via AC_TRY_COMPILE
+        # with language="cpp"; if the framework's CXX support is absent
+        # the probe fails and we emit 0 (a stricter result than upstream
+        # M4, which would keep the default 1 when $CXX = no — acceptable
+        # since gnulib's stdcountof.in.h treats CXX_HAVE_STDCOUNTOF_H==0
+        # as "generate the replacement", which is the safe direction).
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_cxx_have_stdcountof_h",
+            code = """\
+#include <stdcountof.h>
+int a[] = { 86, 47 };
+unsigned int a_n = countof (a);
+""",
+            language = "cpp",
+        ),
+        checks.AC_SUBST(
+            "CXX_HAVE_STDCOUNTOF_H",
+            condition = "gl_cv_cxx_have_stdcountof_h",
+            if_false = "0",
+            if_true = "1",
+        ),
     ] + gl_macros.GL_NEXT_HEADERS(["stdcountof.h"]),
     visibility = ["//visibility:public"],
     deps = [
