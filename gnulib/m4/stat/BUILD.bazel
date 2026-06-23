@@ -17,22 +17,22 @@ autoconf(
             define = "HAVE_SDKDDKVER_H",
         ),
     ] + select({
-        "@platforms//os:windows": [
-            checks.AC_DEFINE("REPLACE_FUNC_STAT_FILE", "1"),
-            checks.AC_SUBST("REPLACE_STAT", "1"),
-        ],
         "@platforms//os:macos": [
             checks.AC_DEFINE(
                 "REPLACE_FUNC_STAT_FILE",
-                requires = ["!gl_cv_macos_sdk_modern"],
                 if_true = "1",
+                requires = ["!gl_cv_macos_sdk_modern"],
             ),
             checks.AC_SUBST(
                 "REPLACE_STAT",
                 condition = "gl_cv_macos_sdk_modern",
-                if_true = "0",
                 if_false = "1",
+                if_true = "0",
             ),
+        ],
+        "@platforms//os:windows": [
+            checks.AC_DEFINE("REPLACE_FUNC_STAT_FILE", "1"),
+            checks.AC_SUBST("REPLACE_STAT", "1"),
         ],
         "//conditions:default": [
             checks.AC_SUBST("REPLACE_STAT", "0"),

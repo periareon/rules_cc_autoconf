@@ -12,8 +12,8 @@ autoconf(
         "@platforms//os:macos": [
             checks.AC_DEFINE(
                 "OPEN_TRAILING_SLASH_BUG",
-                requires = ["!gl_cv_macos_sdk_modern"],
                 if_true = 1,
+                requires = ["!gl_cv_macos_sdk_modern"],
             ),
         ],
         "//conditions:default": [],

@@ -33,6 +33,19 @@ autoconf(
 autoconf(
     name = "gl_FUNC_ACCESS",
     checks = select({
+        "@platforms//os:macos": [
+            checks.AC_DEFINE(
+                "ACCESS_TRAILING_SLASH_BUG",
+                if_true = 1,
+                requires = ["!gl_cv_macos_sdk_modern"],
+            ),
+            checks.AC_SUBST(
+                "REPLACE_ACCESS",
+                condition = "gl_cv_macos_sdk_modern",
+                if_false = "1",
+                if_true = "0",
+            ),
+        ],
         "@platforms//os:windows": [
             checks.AC_TRY_LINK(
                 name = "gl_cv_func_access_x_ok_works",
@@ -44,19 +57,6 @@ int main(void) { return 0; }
             checks.AC_SUBST(
                 "REPLACE_ACCESS",
                 condition = "!gl_cv_func_access_x_ok_works",
-            ),
-        ],
-        "@platforms//os:macos": [
-            checks.AC_DEFINE(
-                "ACCESS_TRAILING_SLASH_BUG",
-                requires = ["!gl_cv_macos_sdk_modern"],
-                if_true = 1,
-            ),
-            checks.AC_SUBST(
-                "REPLACE_ACCESS",
-                condition = "gl_cv_macos_sdk_modern",
-                if_true = "0",
-                if_false = "1",
             ),
         ],
         "//conditions:default": [

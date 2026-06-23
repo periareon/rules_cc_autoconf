@@ -21,8 +21,8 @@ autoconf(
             checks.AC_SUBST(
                 "REPLACE_FCHOWNAT",
                 condition = "gl_cv_macos_sdk_modern",
-                if_true = "0",
                 if_false = "1",
+                if_true = "0",
             ),
         ],
         "//conditions:default": [

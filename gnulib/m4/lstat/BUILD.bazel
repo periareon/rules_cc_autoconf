@@ -56,8 +56,8 @@ autoconf(
             ),
             checks.AC_DEFINE(
                 "LSTAT_FOLLOWS_SLASHED_SYMLINK",
-                requires = ["gl_cv_macos_sdk_modern==1"],
                 if_true = 1,
+                requires = ["gl_cv_macos_sdk_modern==1"],
             ),
         ],
         "@platforms//os:windows": [
@@ -78,8 +78,8 @@ int main(void) { return 0; }
             ),
             checks.AC_DEFINE(
                 "LSTAT_FOLLOWS_SLASHED_SYMLINK",
-                requires = ["gl_cv_func_lstat_dereferences_slashed_symlink==1"],
                 if_true = 1,
+                requires = ["gl_cv_func_lstat_dereferences_slashed_symlink==1"],
             ),
         ],
     }),
