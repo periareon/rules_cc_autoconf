@@ -1,5 +1,5 @@
 /* config.h.in */
-#define CHOWN_TRAILING_SLASH_BUG 1
+/* #undef CHOWN_TRAILING_SLASH_BUG */
 #define HAVE_CHOWN 1
 /* #undef HAVE_COPY_FILE_RANGE */
 /* #undef HAVE_DECL_ENVIRON */

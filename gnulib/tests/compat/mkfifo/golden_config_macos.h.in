@@ -11,7 +11,7 @@
 /* #undef HAVE_MKNOD */
 /* #undef HAVE_MKNODAT */
 /* #undef HAVE_UTIMENSAT */
-#define MKFIFO_TRAILING_SLASH_BUG 1
+/* #undef MKFIFO_TRAILING_SLASH_BUG */
 /* #undef REPLACE_CHMOD */
 /* #undef REPLACE_FCHMODAT */
 /* #undef REPLACE_FSTAT */

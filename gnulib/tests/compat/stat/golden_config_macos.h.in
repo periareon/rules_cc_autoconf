@@ -29,7 +29,7 @@
 /* #undef REPLACE_FCHMODAT */
 /* #undef REPLACE_FSTAT */
 /* #undef REPLACE_FSTATAT */
-#define REPLACE_FUNC_STAT_FILE 1
+/* #undef REPLACE_FUNC_STAT_FILE */
 /* #undef REPLACE_FUTIMENS */
 /* #undef REPLACE_LSTAT */
 /* #undef REPLACE_MKDIR */
