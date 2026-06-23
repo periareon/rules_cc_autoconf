@@ -53,6 +53,14 @@ autoconf(
                 if_true = "0",
             ),
         ],
+        # Windows: linkat doesn't exist. BCR overlay gates lib/linkat.c on
+        # REPLACE_LINKAT==1, so emit 1 to pull the replacement into the
+        # link. LINK_FOLLOWS_SYMLINKS=1 retained per the conservative
+        # non-Linux default.
+        "@platforms//os:windows": [
+            checks.AC_DEFINE("LINK_FOLLOWS_SYMLINKS", "1"),
+            checks.AC_SUBST("REPLACE_LINKAT", "1"),
+        ],
         "//conditions:default": [
             checks.AC_DEFINE("LINK_FOLLOWS_SYMLINKS", "1"),
             checks.AC_SUBST("REPLACE_LINKAT", 0),

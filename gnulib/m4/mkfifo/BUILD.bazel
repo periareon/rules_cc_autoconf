@@ -37,6 +37,13 @@ autoconf(
                 if_true = "0",
             ),
         ],
+        # Windows: mkfifo doesn't exist in MSVCRT. The BCR overlay gates
+        # inclusion of lib/mkfifo.c on REPLACE_MKFIFO==1, so emit 1 so the
+        # replacement is compiled in. The trailing-slash bug-define stays
+        # absent because the probe never ran (no function to probe).
+        "@platforms//os:windows": [
+            checks.AC_SUBST("REPLACE_MKFIFO", "1"),
+        ],
         "//conditions:default": [
             checks.AC_SUBST("REPLACE_MKFIFO", "0"),
         ],

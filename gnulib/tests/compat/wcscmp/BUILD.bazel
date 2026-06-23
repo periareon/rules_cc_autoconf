@@ -12,6 +12,10 @@ gnu_gnulib_diff_test_suite(
     golden_subst_h = select({
         "//gnulib/tests:linux_aarch64": "golden_subst_linux_aarch64.h.in",
         "@platforms//os:macos": "golden_subst_macos.h.in",
+        # Windows MSVC: per upstream M4 cross-compile fallback for non-glibc
+        # / non-musl, gl_cv_func_wcscmp_works = gl_cross_guess_normal = "no"
+        # → REPLACE_WCSCMP=1. Forked from golden_subst.h.in.
+        "@platforms//os:windows": "golden_subst_windows.h.in",
         "//conditions:default": "golden_subst.h.in",
     }),
     m4_files = ["@gnulib//:all_m4"],

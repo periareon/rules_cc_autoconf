@@ -57,7 +57,7 @@
 /* #undef HAVE_WMEMMOVE */
 /* #undef HAVE_WMEMPCPY */
 /* #undef HAVE_WMEMSET */
-/* #undef HAVE_WORKING_C32RTOMB */
+#define HAVE_WORKING_C32RTOMB 1
 #define HAVE_WORKING_MBRTOC32 1
 /* #undef LOCALE_EN_UTF8 */
 /* #undef LOCALE_FR */
