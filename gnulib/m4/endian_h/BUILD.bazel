@@ -13,15 +13,16 @@ autoconf(
             name = "ac_cv_header_endian_h",
         ),
         # macOS provides <sys/endian.h> as a compatibility shim in modern
-        # SDKs, but only when _DARWIN_C_SOURCE is in scope (without it the
-        # header is effectively empty). Real autoconf sets this via
-        # AC_USE_SYSTEM_EXTENSIONS; we hand-prepend the define so the probe
-        # matches reality on macOS without breaking the normal "compile"
-        # check semantics or the ac_cv_header_* naming convention.
+        # SDKs, but only when _DARWIN_C_SOURCE is set in the deployment
+        # target's feature defines. Real autoconf sets this via
+        # AC_USE_SYSTEM_EXTENSIONS; we pass it as a real -D flag via
+        # `compile_defines` so it lands BEFORE the auto-prepended
+        # AC_INCLUDES_DEFAULT — an inline `#define` after those headers
+        # is too late.
         checks.AC_CHECK_HEADER(
             "sys/endian.h",
             name = "ac_cv_header_sys_endian_h",
-            includes = ["#define _DARWIN_C_SOURCE 1"],
+            compile_defines = ["_DARWIN_C_SOURCE"],
         ),
         # HAVE_ENDIAN_H derives from the header check result
         checks.AC_DEFINE(
@@ -53,9 +54,12 @@ autoconf(
     ] + gl_macros.GL_CHECK_NEXT_HEADERS(["endian.h"]),
     visibility = ["//visibility:public"],
     deps = [
-        # gl_CHECK_NEXT_HEADERS requires gl_INCLUDE_NEXT which is defined in include_next module
-        "//gnulib/m4/include_next",
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        # Provides _DARWIN_C_SOURCE define (via AC_USE_SYSTEM_EXTENSIONS)
+        # that the sys/endian.h probe references through `compile_defines`.
+        "//gnulib/m4/extensions",
+        # gl_CHECK_NEXT_HEADERS requires gl_INCLUDE_NEXT which is defined in include_next module
+        "//gnulib/m4/include_next",
     ],
 )

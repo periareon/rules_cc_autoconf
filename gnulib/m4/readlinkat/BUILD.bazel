@@ -4,7 +4,7 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "readlinkat",
+    name = "gl_FUNC_READLINKAT",
     checks = [
         checks.AC_CHECK_FUNC(
             "readlinkat",
@@ -12,8 +12,7 @@ autoconf(
             subst = True,
         ),
     ] + select({
-        # M4 m4/readlinkat.m4 sets REPLACE_READLINKAT when the runtime
-        # trailing-slash probe fails. On macOS the SDK probe decides.
+        # On macOS the SDK probe decides.
         "@platforms//os:macos": [
             checks.AC_SUBST(
                 "REPLACE_READLINKAT",
@@ -21,6 +20,16 @@ autoconf(
                 if_false = "1",
                 if_true = "0",
             ),
+        ],
+        # M4 m4/readlinkat.m4 sets REPLACE_READLINKAT when the runtime
+        # trailing-slash probe fails. The BCR overlay maps lib/readlinkat.c
+        # inclusion to `REPLACE_READLINKAT==1`, so we have to bundle the
+        # "function missing" case (M4 normally signals via HAVE=0) under
+        # REPLACE_*=1 too — otherwise downstream consumers (e.g. patch on
+        # Windows) won't get the replacement compiled in and the link
+        # fails with unresolved `readlinkat`.
+        "@platforms//os:windows": [
+            checks.AC_SUBST("REPLACE_READLINKAT", "1"),
         ],
         "//conditions:default": [
             checks.AC_SUBST("REPLACE_READLINKAT", "0"),
@@ -30,5 +39,13 @@ autoconf(
     deps = [
         "//gnulib/m4/extensions",
         "//gnulib/m4/readlink",
+    ],
+)
+
+autoconf(
+    name = "readlinkat",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_READLINKAT",
     ],
 )

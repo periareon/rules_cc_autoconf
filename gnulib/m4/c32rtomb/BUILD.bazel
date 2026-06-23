@@ -62,32 +62,27 @@ autoconf(
         #    #include <stdint.h>
         #   #endif
         #   #include <uchar.h>
-        # Keep the AC_CHECK_DECL gate for the Haiku case (where c32rtomb is
-        # a static inline, so AC_CHECK_FUNC would miss it). Original include
-        # block unchanged so the probe matches what it always did on Linux;
-        # macOS doesn't need this gate because we force the feature defines
-        # in the link probe below.
+        # Keep the AC_CHECK_DECL gate for the Haiku case (where c32rtomb
+        # is a static inline, so AC_CHECK_FUNC would miss it). macOS
+        # gates the decl in <uchar.h> behind _DARWIN_C_SOURCE; pass it
+        # via `compile_defines` (as a real -D flag) so the macro is set
+        # BEFORE the auto-prepended AC_INCLUDES_DEFAULT pulls in any
+        # system header — an inline `#define` is too late at that point.
         checks.AC_CHECK_DECL(
             "c32rtomb",
             name = "ac_cv_have_decl_c32rtomb",
+            compile_defines = [
+                "_DARWIN_C_SOURCE",
+                "_GNU_SOURCE",
+            ],
             includes = ["#ifdef __HAIKU__\n#include <stdint.h>\n#endif\n#include <uchar.h>"],
         ),
         # M4: if test $ac_cv_have_decl_c32rtomb = yes; then AC_LINK_IFELSE(...)
-        # else gl_cv_func_c32rtomb=no. We add _DARWIN_C_SOURCE / _GNU_SOURCE
-        # here because macOS gates <uchar.h> behind _DARWIN_C_SOURCE in C mode
-        # — without it the decl probe above fails on macOS and the link probe
-        # is skipped, leaving HAVE_C32RTOMB=0 even on macOS 13+ where the
-        # symbol is actually present. The macOS path therefore runs without
-        # the decl gate; on Linux/Haiku the gate still applies.
+        # else gl_cv_func_c32rtomb=no. Same feature-define story as the
+        # decl probe — must be -D flags, not in-source.
         checks.AC_TRY_LINK(
             name = "gl_cv_func_c32rtomb",
             code = """\
-#ifndef _DARWIN_C_SOURCE
-#define _DARWIN_C_SOURCE 1
-#endif
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE 1
-#endif
 #include <stdlib.h>
 #ifdef __HAIKU__
 #include <stdint.h>
@@ -99,12 +94,20 @@ int main(void) {
     return c32rtomb(buf, 0, NULL) == 0;
 }
 """,
+            compile_defines = [
+                "_DARWIN_C_SOURCE",
+                "_GNU_SOURCE",
+            ],
             requires = ["ac_cv_have_decl_c32rtomb==1"],
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        # Provides _DARWIN_C_SOURCE / _GNU_SOURCE defines (via
+        # AC_USE_SYSTEM_EXTENSIONS) that both probes reference through
+        # `compile_defines` so they reach the compiler as -D flags.
+        "//gnulib/m4/extensions",
     ],
 )
 

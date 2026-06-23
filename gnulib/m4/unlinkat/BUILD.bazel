@@ -4,7 +4,7 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "unlinkat",
+    name = "gl_FUNC_UNLINKAT",
     checks = [
         # AC_CHECK_FUNCS_ONCE([unlinkat])
         # On macOS, unlinkat is available
@@ -14,8 +14,7 @@ autoconf(
             subst = True,
         ),
     ] + select({
-        # M4 m4/unlinkat.m4 sets REPLACE_UNLINKAT when the trailing-slash /
-        # AT_REMOVEDIR probes fail. On macOS the SDK probe decides.
+        # On macOS the SDK probe decides.
         "@platforms//os:macos": [
             checks.AC_SUBST(
                 "REPLACE_UNLINKAT",
@@ -23,6 +22,16 @@ autoconf(
                 if_false = "1",
                 if_true = "0",
             ),
+        ],
+        # M4 m4/unlinkat.m4 sets REPLACE_UNLINKAT when the trailing-slash /
+        # AT_REMOVEDIR probes fail. The BCR overlay maps lib/unlinkat.c
+        # inclusion to `REPLACE_UNLINKAT==1`, so we have to bundle the
+        # "function missing" case (M4 normally signals via HAVE=0) under
+        # REPLACE_*=1 too — otherwise downstream consumers (e.g. patch on
+        # Windows) won't get the replacement compiled in and the link
+        # fails with unresolved `unlinkat`.
+        "@platforms//os:windows": [
+            checks.AC_SUBST("REPLACE_UNLINKAT", "1"),
         ],
         "//conditions:default": [
             checks.AC_SUBST("REPLACE_UNLINKAT", "0"),
@@ -38,5 +47,13 @@ autoconf(
         "//gnulib/m4/lstat",
         # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "unlinkat",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_UNLINKAT",
     ],
 )
