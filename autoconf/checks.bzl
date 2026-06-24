@@ -273,6 +273,7 @@ def _ac_check_header(
         includes = None,
         language = "c",
         compile_defines = None,
+        copts = None,
         requires = None,
         subst = None):
     """Check for a header file.
@@ -313,6 +314,10 @@ def _ac_check_header(
             to add before includes (e.g., `["_GNU_SOURCE", "_DARWIN_C_SOURCE"]`).
             Each string must match the define name of a previous check. The values
             from those checks will be used automatically.
+        copts: Optional list of extra compiler flags for this check
+            (e.g., `["-std=c11", "-D_POSIX_C_SOURCE=200809L"]`). Appended after
+            the autoconf toolchain's own copts so they take precedence on
+            last-wins conflicts.
         requires: Requirements that must be met for this check to run.
             Can be define names (e.g., `"HAVE_FOO"`), negated (e.g., `"!HAVE_FOO"`),
             or value-based (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
@@ -347,6 +352,8 @@ def _ac_check_header(
         check["subst"] = subst
     if compile_defines:
         check["compile_defines"] = compile_defines
+    if copts:
+        check["copts"] = copts
     if requires:
         check["requires"] = requires
 
@@ -360,6 +367,8 @@ def _ac_check_func(
         code = None,
         language = "c",
         compile_defines = None,
+        copts = None,
+        linkopts = None,
         requires = None,
         subst = None):
     """Check for a function.
@@ -405,6 +414,12 @@ def _ac_check_func(
             to add before includes (e.g., `["_GNU_SOURCE", "_DARWIN_C_SOURCE"]`).
             Each string must match the define name of a previous check. The values
             from those checks will be used automatically.
+        copts: Optional list of extra compiler flags for this check
+            (e.g., `["-std=c11"]`). Appended after the autoconf toolchain's
+            own copts so they take precedence on last-wins conflicts.
+        linkopts: Optional list of extra linker flags for this check
+            (e.g., `["-pthread"]`). Appended after the toolchain's link
+            flags.
         requires: Requirements that must be met for this check to run.
             Can be define names (e.g., `"HAVE_FOO"`), negated (e.g., `"!HAVE_FOO"`),
             or value-based (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
@@ -433,6 +448,10 @@ def _ac_check_func(
     check["code"] = code
     if compile_defines:
         check["compile_defines"] = compile_defines
+    if copts:
+        check["copts"] = copts
+    if linkopts:
+        check["linkopts"] = linkopts
     if requires:
         check["requires"] = requires
 
@@ -459,6 +478,7 @@ def _ac_check_type(
         includes = None,
         language = "c",
         compile_defines = None,
+        copts = None,
         requires = None,
         if_true = None,
         if_false = None,
@@ -497,6 +517,9 @@ def _ac_check_type(
             to add before includes (e.g., `["_GNU_SOURCE", "_DARWIN_C_SOURCE"]`).
             Each string must match the define name of a previous check. The values
             from those checks will be used automatically.
+        copts: Optional list of extra compiler flags for this check
+            (e.g., `["-std=c11"]`). Appended after the autoconf toolchain's
+            own copts so they take precedence on last-wins conflicts.
         requires: Requirements that must be met for this check to run.
             Can be define names (e.g., `"HAVE_FOO"`), negated (e.g., `"!HAVE_FOO"`),
             or value-based (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
@@ -552,6 +575,8 @@ def _ac_check_type(
 
     if compile_defines:
         check["compile_defines"] = compile_defines
+    if copts:
+        check["copts"] = copts
     if requires:
         check["requires"] = requires
 
@@ -903,6 +928,7 @@ def _ac_check_sizeof(
         define = None,
         includes = None,
         language = "c",
+        copts = None,
         requires = None,
         if_true = None,
         if_false = None,
@@ -940,6 +966,9 @@ def _ac_check_sizeof(
             - `"SIZEOF_FOO"`: Create define with explicit name `SIZEOF_FOO` (implies `define=True`)
         includes: Optional list of header names to include (e.g. `["stddef.h"]`)
         language: Language to use for check (`"c"` or `"cpp"`)
+        copts: Optional list of extra compiler flags for this check
+            (e.g., `["-std=c11"]`). Appended after the autoconf toolchain's
+            own copts so they take precedence on last-wins conflicts.
         requires: Requirements that must be met for this check to run.
             Can be define names (e.g., `"HAVE_FOO"`), negated (e.g., `"!HAVE_FOO"`),
             or value-based (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
@@ -988,6 +1017,8 @@ def _ac_check_sizeof(
         "type": "sizeof",
     }
 
+    if copts:
+        check["copts"] = copts
     if requires:
         check["requires"] = requires
 
@@ -1022,6 +1053,7 @@ def _ac_check_alignof(
         define = None,
         includes = None,
         language = "c",
+        copts = None,
         requires = None,
         subst = None):
     """Check the alignment of a type.
@@ -1047,6 +1079,9 @@ def _ac_check_alignof(
         define: Custom define name (defaults to `ALIGNOF_<TYPE>`)
         includes: Optional list of header names to include (e.g. `["stddef.h"]`)
         language: Language to use for check (`"c"` or `"cpp"`)
+        copts: Optional list of extra compiler flags for this check
+            (e.g., `["-std=c11"]`). Appended after the autoconf toolchain's
+            own copts so they take precedence on last-wins conflicts.
         requires: List of requirements that must be met before this check runs.
             Can be simple define names (e.g., `"HAVE_FOO"`) or value-based
             requirements (e.g., `"REPLACE_FSTAT=1"` to require specific value)
@@ -1073,6 +1108,8 @@ def _ac_check_alignof(
         "name": cache_name,  # Cache variable name (use define name)
         "type": "alignof",
     }
+    if copts:
+        check["copts"] = copts
     if requires:
         check["requires"] = requires
 
@@ -1105,6 +1142,7 @@ def _ac_check_decl(
         define = None,
         includes = None,
         compile_defines = None,
+        copts = None,
         language = "c",
         requires = None,
         if_true = None,
@@ -1152,6 +1190,9 @@ def _ac_check_decl(
             to add before includes (e.g., `["_GNU_SOURCE", "_DARWIN_C_SOURCE"]`).
             Each string must match the define name of a previous check. The values
             from those checks will be used automatically.
+        copts: Optional list of extra compiler flags for this check
+            (e.g., `["-std=c11"]`). Appended after the autoconf toolchain's
+            own copts so they take precedence on last-wins conflicts.
         language: Language to use for check (`"c"` or `"cpp"`)
         requires: Requirements that must be met for this check to run.
             Can be define names (e.g., `"HAVE_FOO"`), negated (e.g., `"!HAVE_FOO"`),
@@ -1217,6 +1258,8 @@ def _ac_check_decl(
         check["subst"] = subst_name
     if compile_defines:
         check["compile_defines"] = compile_defines
+    if copts:
+        check["copts"] = copts
     if requires:
         check["requires"] = requires
 
@@ -1244,6 +1287,7 @@ def _ac_check_member(
         includes = None,
         language = "c",
         compile_defines = None,
+        copts = None,
         requires = None,
         if_true = None,
         if_false = None,
@@ -1272,6 +1316,9 @@ def _ac_check_member(
             to add before includes (e.g., `["_GNU_SOURCE", "_DARWIN_C_SOURCE"]`).
             Each string must match the define name of a previous check. The values
             from those checks will be used automatically.
+        copts: Optional list of extra compiler flags for this check
+            (e.g., `["-std=c11"]`). Appended after the autoconf toolchain's
+            own copts so they take precedence on last-wins conflicts.
         requires: Requirements that must be met for this check to run.
             Can be define names (e.g., `"HAVE_FOO"`), negated (e.g., `"!HAVE_FOO"`),
             or value-based (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
@@ -1302,6 +1349,8 @@ def _ac_check_member(
     }
     if compile_defines:
         check["compile_defines"] = compile_defines
+    if copts:
+        check["copts"] = copts
     if requires:
         check["requires"] = requires
 
@@ -1344,6 +1393,7 @@ def _ac_compute_int(
         *,
         includes = None,
         language = "c",
+        copts = None,
         requires = None,
         subst = None):
     """Compute an integer value at compile time.
@@ -1369,6 +1419,9 @@ def _ac_compute_int(
         expression: C expression that evaluates to an integer (second arg)
         includes: Optional list of header names to include (e.g. `["stdlib.h"]`)
         language: Language to use for check (`"c"` or `"cpp"`)
+        copts: Optional list of extra compiler flags for this check
+            (e.g., `["-std=c11"]`). Appended after the autoconf toolchain's
+            own copts for every probe in the binary-search loop.
         requires: List of requirements that must be met before this check runs.
             Can be simple define names (e.g., `"HAVE_FOO"`) or value-based
             requirements (e.g., `"REPLACE_FSTAT=1"` to require specific value)
@@ -1392,6 +1445,8 @@ def _ac_compute_int(
         "name": cache_name,  # Cache variable name (use define name)
         "type": "compute_int",
     }
+    if copts:
+        check["copts"] = copts
     if requires:
         check["requires"] = requires
 
@@ -1642,6 +1697,8 @@ def _ac_check_lib(
         define = None,
         code = None,
         language = "c",
+        copts = None,
+        linkopts = None,
         requires = None,
         if_true = None,
         if_false = None,
@@ -1672,6 +1729,12 @@ def _ac_check_lib(
         define: Custom define name (defaults to `HAVE_LIB<LIBRARY>`)
         code: Custom code to compile and link (optional)
         language: Language to use for check (`"c"` or `"cpp"`)
+        copts: Optional list of extra compiler flags for this check
+            (e.g., `["-std=c11"]`). Appended after the autoconf toolchain's
+            own copts so they take precedence on last-wins conflicts.
+        linkopts: Optional list of extra linker flags for this check
+            (e.g., `["-pthread"]`). Appended after the toolchain's link
+            flags AND after the `-l<library>` argument.
         requires: Requirements that must be met for this check to run.
             Can be define names (e.g., `"HAVE_FOO"`), negated (e.g., `"!HAVE_FOO"`),
             or value-based (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
@@ -1707,6 +1770,10 @@ def _ac_check_lib(
         check["code"] = _AC_CHECK_LIB_TEMPLATE.format(
             function = function,
         )
+    if copts:
+        check["copts"] = copts
+    if linkopts:
+        check["linkopts"] = linkopts
     if requires:
         check["requires"] = requires
 
@@ -1739,6 +1806,8 @@ def _ac_search_libs(
         name = None,
         code = None,
         language = "c",
+        copts = None,
+        linkopts = None,
         requires = None,
         subst = None):
     """Search for a function in libc, then in a list of libraries.
@@ -1768,6 +1837,12 @@ def _ac_search_libs(
         name: Cache variable name. Defaults to "ac_cv_search_<function>".
         code: Custom code to compile and link (optional).
         language: Language to use for check ("c" or "cpp").
+        copts: Optional list of extra compiler flags for this check
+            (e.g., `["-std=c11"]`). Applied to every link attempt in the
+            search loop.
+        linkopts: Optional list of extra linker flags for this check
+            (e.g., `["-pthread"]`). Applied to every link attempt; appended
+            after the optional `-l<library>` argument.
         requires: Requirements that must be met for this check to run.
         subst: Substitution variable name for the library flag result.
 
@@ -1790,6 +1865,10 @@ def _ac_search_libs(
     else:
         check["code"] = _AC_SEARCH_LIBS_TEMPLATE.format(function = function)
 
+    if copts:
+        check["copts"] = copts
+    if linkopts:
+        check["linkopts"] = linkopts
     if requires:
         check["requires"] = requires
 
