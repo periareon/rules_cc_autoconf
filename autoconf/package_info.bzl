@@ -155,10 +155,12 @@ def _package_info_impl(ctx):
         content = encode_result(ctx.attr.package_url),
     )
 
+    all_results = results | extra_results
     return [
         CcAutoconfInfo(
             owner = ctx.label,
-            define_results = results | extra_results,
+            define_results = all_results,
+            subst_results = all_results,
         ),
     ]
 
