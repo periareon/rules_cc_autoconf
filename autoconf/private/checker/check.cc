@@ -122,6 +122,12 @@ std::optional<Check> Check::from_json(const void* json_data) {
         check.code_ = json["code"].get<std::string>();
     }
 
+    // Optional second probe whose compile must FAIL for the check to
+    // succeed. Used by AC_CHECK_TYPE — see Check::code_must_fail().
+    if (json.contains("code_must_fail") && json["code_must_fail"].is_string()) {
+        check.code_must_fail_ = json["code_must_fail"].get<std::string>();
+    }
+
     // Parse define_value - always use dump() to preserve type information
     // String "1" -> "\"1\"" (renders as "1" in C code - a string literal)
     // Integer 1 -> "1" (renders as 1 in C code - a number)
