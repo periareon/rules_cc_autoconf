@@ -1,3 +1,3 @@
 """rules_cc_autoconf version"""
 
-VERSION = "0.14.1"
+VERSION = "0.15.0"
