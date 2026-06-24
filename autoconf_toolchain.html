@@ -243,6 +243,12 @@ identical implementations).</li>
 <li><strong>Cache variable names</strong> (<code>cache_results</code>) have no cross-dep
 conflict detection; content-based dedup is the identity signal.</li>
 </ul>
+<p><code>cache_deps</code> on the toolchain itself is intentionally exempt from
+define/subst conflict detection: it contributes only to the content
+cache and is meant to absorb broad sweeps of cache providers (e.g.,
+every gnulib m4 module) that legitimately publish overlapping symbols
+from different files. <code>defaults</code> and per-target <code>deps</code> still enforce
+conflicts.</p>
 <h3 id="resolving-conflicts"><a class="header" href="#resolving-conflicts">Resolving conflicts</a></h3>
 <p>The typical fix for <em>"Define 'X' is defined both locally and in
 dependencies with different result files"</em>:</p>
@@ -255,7 +261,7 @@ provides it.</li>
 <p><strong>ATTRIBUTES</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Type</th><th style="text-align: left">Mandatory</th><th style="text-align: left">Default</th></tr></thead><tbody>
 <tr><td style="text-align: left"><a id="autoconf_toolchain-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_toolchain-cache_deps"></a>cache_deps</td><td style="text-align: left">Targets whose check results are available for action deduplication in <code>autoconf</code> targets.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_toolchain-cache_deps"></a>cache_deps</td><td style="text-align: left">Targets whose check results are available for action deduplication in <code>autoconf</code> targets. Only the content cache is exposed downstream; define/subst conflicts among these targets are NOT detected, so a broad sweep of cache providers with overlapping symbols (e.g., every gnulib m4 module) can be passed safely.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
 <tr><td style="text-align: left"><a id="autoconf_toolchain-defaults"></a>defaults</td><td style="text-align: left">Targets whose results provide baseline values for <code>autoconf_hdr</code> rendering.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
 </tbody></table>
 </div>
