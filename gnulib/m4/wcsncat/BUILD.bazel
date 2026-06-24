@@ -23,7 +23,7 @@ autoconf(
         ),
     ] + select({
         # aarch64 glibc: passes the wcsncat(y, NULL, 0) == y runtime check.
-        "//gnulib/tests:linux_aarch64": [
+        "//gnulib/m4/gnulib-common:linux_aarch64": [
             checks.AC_SUBST("REPLACE_WCSNCAT", "0"),
         ],
         # x86_64 glibc (modern, e.g. Ubuntu 24.04): fails the runtime check.
