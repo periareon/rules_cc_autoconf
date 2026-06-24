@@ -172,11 +172,17 @@ class CheckRunner {
      * @param code Source code to compile and link.
      * @param library Library name (without -l prefix) to link against.
      * @param language Language of the code ("c" or "cpp").
+     * @param extra_copts Additional compiler flags appended after toolchain
+     * flags.
+     * @param extra_linkopts Additional linker flags appended after toolchain
+     * flags.
      * @return true if compilation and linking succeeded, false otherwise.
      */
-    bool try_compile_and_link_with_lib(const std::string& code,
-                                       const std::string& library,
-                                       const std::string& language = "c");
+    bool try_compile_and_link_with_lib(
+        const std::string& code, const std::string& library,
+        const std::string& language = "c",
+        const std::vector<std::string>& extra_copts = {},
+        const std::vector<std::string>& extra_linkopts = {});
 
     /**
      * @brief Filter out flags that promote warnings to errors.
@@ -259,7 +265,8 @@ class CheckRunner {
      * found.
      */
     std::optional<int> find_compile_time_value_with_static_assert(
-        const std::string& base_code_template, const std::string& language);
+        const std::string& base_code_template, const std::string& language,
+        const std::vector<std::string>& extra_copts = {});
 
     /**
      * @brief Find compile-time constant value using binary search .
@@ -267,12 +274,15 @@ class CheckRunner {
      * @language language Language of the code ("c" or "cpp").
      * @param search_begin search begin (inclusive), default -1024
      * @param search_end search end (inclusive), default 1024
+     * @param extra_copts Additional compiler flags appended after toolchain
+     * flags for every probe in the binary-search loop.
      * @return The value of $EXPR evaluate, throw exception
      *         if $EXPR is not valid or out of search range
      * */
     std::optional<int> find_compile_time_int_bisect(
         const std::string& base_code_template, const std::string& language,
-        const int search_begin = -1024, const int search_end = 1024);
+        const int search_begin = -1024, const int search_end = 1024,
+        const std::vector<std::string>& extra_copts = {});
 
     /**
      * @brief Resolve compile_defines from check and build #define
