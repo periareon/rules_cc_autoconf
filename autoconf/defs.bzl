@@ -18,6 +18,10 @@ load(
     _autoconf_srcs = "autoconf_srcs",
 )
 load(
+    ":autoconf_toolchain.bzl",
+    _autoconf_toolchain = "autoconf_toolchain",
+)
+load(
     ":checks.bzl",
     _checks = "checks",
     _macros = "macros",
@@ -28,9 +32,11 @@ load(
 )
 
 autoconf = _autoconf
+
 autoconf_hdr = _autoconf_hdr
 autoconf_linkopts = _autoconf_linkopts
 autoconf_srcs = _autoconf_srcs
+autoconf_toolchain = _autoconf_toolchain
 checks = _checks
 macros = _macros
 package_info = _package_info

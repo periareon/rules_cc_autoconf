@@ -6,7 +6,7 @@ Defines:
   - HAVE_POSIX_TERMIOS (if supported)
 """
 
-load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(

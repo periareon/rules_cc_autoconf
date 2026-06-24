@@ -6,7 +6,7 @@ This macro doesn't produce any defines - it just sets up the search path
 for auxiliary files. In Bazel, this is handled by the build system.
 """
 
-load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 
 autoconf(
     name = "AC_CONFIG_AUX_DIR_DEFAULT",

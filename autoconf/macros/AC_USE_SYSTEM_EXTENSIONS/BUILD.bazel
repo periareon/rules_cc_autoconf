@@ -9,7 +9,7 @@ enable platform-specific extensions.
 See: https://www.gnu.org/software/autoconf/manual/autoconf-2.72/html_node/Particular-Headers.html
 """
 
-load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(

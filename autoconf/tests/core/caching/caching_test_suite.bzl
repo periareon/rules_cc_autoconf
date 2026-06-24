@@ -7,6 +7,7 @@ in its deps, the check action is skipped and the dep's result file is reused.
 """
 
 load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts")
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
@@ -911,6 +912,76 @@ def caching_test_suite(*, name, **kwargs):
         target_under_test = ":sibling_conflict_consumer",
     )
     tests.append(":test_sibling_conflict_fails")
+
+    # ============================================================================
+    # Test 13: toolchain cache_deps tolerates define/subst conflicts
+    #
+    # Two `autoconf_cache` providers declare the same define name with
+    # different values (distinct content keys). Listing both in a toolchain's
+    # `cache_deps` must NOT fail analysis — the cache_deps path is explicitly
+    # exempt from define/subst conflict detection so that broad sweeps of
+    # cache providers (e.g., every gnulib m4 module) can be passed.  Compare
+    # with test 12 above, which still fires the same conflict when the two
+    # providers are listed as `deps` on an `autoconf` consumer.
+    # ============================================================================
+
+    autoconf_cache(
+        name = "tc_relaxed_conflict_a",
+        checks = [
+            checks.AC_DEFINE("TC_RELAXED_DEFINE", 1),
+        ],
+        tags = ["manual"],
+    )
+
+    autoconf_cache(
+        name = "tc_relaxed_conflict_b",
+        checks = [
+            checks.AC_DEFINE("TC_RELAXED_DEFINE", 999),
+        ],
+        tags = ["manual"],
+    )
+
+    autoconf_toolchain(
+        name = "tc_relaxed_toolchain_impl",
+        cache_deps = [
+            ":tc_relaxed_conflict_a",
+            ":tc_relaxed_conflict_b",
+        ],
+        visibility = ["//visibility:public"],
+        tags = ["manual"],
+    )
+
+    native.toolchain(
+        name = "tc_relaxed_toolchain",
+        toolchain = ":tc_relaxed_toolchain_impl",
+        toolchain_type = "//autoconf:toolchain_type",
+        visibility = ["//visibility:public"],
+        tags = ["manual"],
+    )
+
+    # Build a consumer through the relaxed toolchain so the toolchain is
+    # actually resolved during analysis. The consumer doesn't need to use the
+    # conflicting define — the relaxation under test happens when the
+    # toolchain's cache_deps are collected, before any consumer participates.
+    autoconf(
+        name = "tc_relaxed_consumer_inner",
+        checks = [
+            checks.AC_DEFINE("TC_RELAXED_LOCAL", 1),
+        ],
+        tags = ["manual"],
+    )
+
+    _autoconf_with_toolchain(
+        name = "tc_relaxed_consumer_wrapper",
+        autoconf_target = ":tc_relaxed_consumer_inner",
+        toolchain = "//autoconf/tests/core/caching:tc_relaxed_toolchain",
+    )
+
+    build_test(
+        name = "test_tc_cache_deps_tolerates_conflict",
+        targets = [":tc_relaxed_consumer_wrapper"],
+    )
+    tests.append(":test_tc_cache_deps_tolerates_conflict")
 
     # ============================================================================
     # Starlark unit tests — provider-level cache hit verification

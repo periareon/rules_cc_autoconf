@@ -7,7 +7,7 @@ Defines:
   - STRERROR_R_CHAR_P (if returns char*)
 """
 
-load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
