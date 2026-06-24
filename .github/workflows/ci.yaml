@@ -174,6 +174,54 @@ jobs:
           }
         if: startswith(runner.os, 'Windows')
 
+  ci-integration-tests-musl:
+    # musl libc coverage for the gnulib integration tests. GitHub doesn't
+    # offer Alpine/musl hosted runners, so we run the test inside an
+    # Alpine container on a glibc Ubuntu runner. The container image
+    # (`node:20-alpine`) ships node 20, which is required for GitHub
+    # Actions to execute JS-based actions (actions/checkout, etc.); all
+    # other deps are installed via `apk`.
+    #
+    # Why this matters: gnulib has many gl_cv_* probes whose results
+    # legitimately differ between glibc and musl (e.g. _GNU_SOURCE
+    # availability, behavior of edge-case POSIX functions). Without a
+    # musl runner, a port that compiles on Ubuntu can silently break for
+    # downstream consumers building on Alpine.
+    runs-on: ubuntu-24.04
+    container:
+      image: node:20-alpine
+    name: "integration-gnulib_integrations (alpine-musl)"
+    steps:
+      - name: Install Alpine packages
+        # bash so subsequent steps can use `shell: bash`. build-base
+        # pulls gcc + musl-dev. openjdk needed by Bazel. autoconf et al
+        # match the install_test_deps.sh contract used on Ubuntu/macOS.
+        run: |
+          apk add --no-cache \
+            bash curl wget git \
+            build-base linux-headers \
+            python3 \
+            openjdk21-jre-headless \
+            autoconf automake libtool m4 \
+            ca-certificates
+
+      - uses: actions/checkout@v4
+
+      - name: Install Bazelisk
+        # ubuntu-24.04 hosted runners are x86_64-only — no arch detection needed.
+        shell: bash
+        run: |
+          wget -q "https://github.com/bazelbuild/bazelisk/releases/download/v1.20.0/bazelisk-linux-amd64" \
+            -O /usr/local/bin/bazel
+          chmod +x /usr/local/bin/bazel
+
+      - name: Test
+        shell: bash
+        working-directory: "${{ github.workspace }}/gnulib/tests/integration"
+        run: |
+          echo "common --keep_going" >> ./user.bazelrc
+          bazel ${BAZEL_STARTUP_FLAGS} test //...
+
   ci-format:
     runs-on: ubuntu-24.04
     steps:
