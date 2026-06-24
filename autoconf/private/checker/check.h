@@ -91,6 +91,24 @@ class Check {
     const std::optional<std::string>& code() const { return code_; }
 
     /**
+     * @brief Get the optional "must-fail" probe code for this check.
+     *
+     * Used by AC_CHECK_TYPE to faithfully match upstream autoconf's
+     * _AC_CHECK_TYPE_NEW_BODY: the primary `code` is `sizeof(TYPE)`
+     * (must compile), and `code_must_fail` is `sizeof((TYPE))` (must
+     * NOT compile). The two-probe pattern distinguishes types from
+     * variables — sizeof works on both, but `sizeof((TYPE))` is only
+     * valid when `TYPE` is a variable (parenthesized expression) and
+     * is an invalid cast operator when `TYPE` is a real type.
+     *
+     * @return Optional string containing a second probe whose compile
+     * must FAIL for the check to succeed, or std::nullopt if not used.
+     */
+    const std::optional<std::string>& code_must_fail() const {
+        return code_must_fail_;
+    }
+
+    /**
      * @brief Get the optional define value when check succeeds.
      * @return Optional string containing the value to use for the define if the
      * check succeeds, or std::nullopt if not provided.
@@ -186,6 +204,10 @@ class Check {
     std::optional<std::string> define_{};  /// Optional preprocessor define name
     std::string language_{};               /// Language ("c" or "cpp")
     std::optional<std::string> code_{};    /// Optional custom code
+    std::optional<std::string>
+        code_must_fail_{};  /// Optional second probe whose compile must FAIL
+                            /// (used by AC_CHECK_TYPE to distinguish a type
+                            /// from a variable)
     std::optional<std::string> define_value_{};  /// Value if check succeeds
     std::optional<std::string> define_value_fail_{};  /// Value if check fails
     std::optional<std::string> library_{};  /// Library name for lib checks

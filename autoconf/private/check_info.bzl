@@ -7,6 +7,7 @@ validation (used only by the validation aspect).
 
 KNOWN_CHECK_FIELDS = {
     "code": "str: C/C++ source code to compile or link for this check.",
+    "code_must_fail": "str: Optional second probe whose compile must FAIL for the check to succeed. Used by AC_CHECK_TYPE to distinguish a type from a variable.",
     "compile_defines": "list[str]: Preprocessor define names from previous checks to add before includes.",
     "condition": "str: Boolean expression that selects between if_true/if_false values.",
     "copts": "list[str]: Extra compiler flags for this check (e.g. ['-msse2', '-std=c11']).",
@@ -78,6 +79,7 @@ def _autoconf_check_init(
         type,
         name,
         code = None,
+        code_must_fail = None,
         compile_defines = None,
         condition = None,
         copts = None,
@@ -119,6 +121,7 @@ def _autoconf_check_init(
 
     return {
         "code": code,
+        "code_must_fail": code_must_fail,
         "compile_defines": compile_defines,
         "condition": condition,
         "copts": copts,

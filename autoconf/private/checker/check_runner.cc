@@ -259,25 +259,34 @@ CheckResult CheckRunner::check_lib(const Check& check) {
 }
 
 CheckResult CheckRunner::check_type_check(const Check& check) {
-    std::string type_name = check.name();
-    std::string code{};
-
     if (!check.code().has_value()) {
         throw std::runtime_error("Type check missing code: " + check_id(check));
     }
-    code = *check.code();
 
-    // Resolve compile_defines and prepend to code
+    // Resolve compile_defines once — same prelude prepended to both probes.
     std::string defines_code = resolve_compile_defines(check);
-    if (!defines_code.empty()) {
-        code = defines_code + code;
-    }
-
     std::vector<std::string> extra_copts;
     if (check.copts().has_value()) {
         extra_copts = *check.copts();
     }
-    bool success = try_compile(code, check.language(), extra_copts);
+
+    // Two-probe pattern per upstream _AC_CHECK_TYPE_NEW_BODY:
+    //   Probe 1: `sizeof(TYPE)` must COMPILE — succeeds for both real
+    //            types and for variables (sizeof works on both).
+    //   Probe 2: `sizeof((TYPE))` must NOT COMPILE — `(TYPE)` is an
+    //            invalid cast operator with no operand when TYPE is a
+    //            real type, but a valid parenthesized expression when
+    //            TYPE is a variable. Without it we'd false-positive
+    //            when callers pass a variable name to AC_CHECK_TYPE.
+    // `code_must_fail` is optional; when absent we degrade to a single-
+    // probe check (used by callers that only need "does TYPE compile?").
+    bool success = try_compile(defines_code + *check.code(), check.language(),
+                               extra_copts);
+    if (success && check.code_must_fail().has_value()) {
+        success = !try_compile(defines_code + *check.code_must_fail(),
+                               check.language(), extra_copts);
+    }
+
     return CheckResult(check.name(), success ? "1" : "0", success,
                        check_type_is_define(check.type()),
                        check.subst().has_value(), check.type(), check.define(),
