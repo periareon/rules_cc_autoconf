@@ -27,7 +27,7 @@ autoconf(
     ] + select({
         # aarch64 glibc: roundf(-0.0) loses sign bit -> REPLACE=1; pulls in
         # floor/ceil deps so HAVE_DECL_CEILF / HAVE_DECL_FLOORF get defined.
-        "//gnulib/tests:linux_aarch64": [
+        "//gnulib/m4/gnulib-common:linux_aarch64": [
             checks.AC_SUBST("REPLACE_ROUNDF", 1),
             checks.AC_DEFINE("HAVE_FLOORF_AND_CEILF", "1"),
         ],
@@ -44,7 +44,7 @@ autoconf(
         # When REPLACE_ROUNDF=1 the replacement needs floor/ceil; pull in
         # the dep modules so their HAVE_DECL_FLOORF / HAVE_DECL_CEILF land
         # in config.h to match upstream gnulib's flow.
-        "//gnulib/tests:linux_aarch64": [
+        "//gnulib/m4/gnulib-common:linux_aarch64": [
             "//gnulib/m4/ceilf",
             "//gnulib/m4/floorf",
         ],

@@ -26,7 +26,7 @@ autoconf(
         checks.AC_SUBST("ROUND_LIBM", ""),
     ] + select({
         # aarch64 glibc: known to fail the IEEE round(-0.0) sign-bit test.
-        "//gnulib/tests:linux_aarch64": [
+        "//gnulib/m4/gnulib-common:linux_aarch64": [
             checks.AC_SUBST("REPLACE_ROUND", 1),
         ],
         # Everywhere else (x86_64 Linux glibc, macOS, Windows): M4 guess "yes" -> REPLACE=0

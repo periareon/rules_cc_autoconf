@@ -43,8 +43,11 @@ build --incompatible_disallow_empty_glob=true
 # https://github.com/bazelbuild/bazel/issues/12821
 build --nolegacy_external_runfiles
 
-# https://github.com/bazelbuild/bazel/issues/23043.
+# https://github.com/bazelbuild/bazel/issues/23043
 build --incompatible_autoload_externally=
+
+# https://github.com/bazelbuild/bazel/issues/12933
+build --incompatible_config_setting_private_default_visibility
 
 ###############################################################################
 ## Compiler warnings

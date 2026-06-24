@@ -27,12 +27,12 @@ autoconf(
     ] + select({
         # aarch64 Linux: glibc 2.37+ exhibits bug (c). Real ./configure on
         # Ubuntu 24.04 aarch64 confirms REPLACE_WCSCMP=1.
-        "//gnulib/tests:linux_aarch64": [
+        "//gnulib/m4/gnulib-common:linux_aarch64": [
             checks.AC_SUBST("REPLACE_WCSCMP", "1"),
         ],
         # x86_64 Linux glibc: all three sub-probes pass. Real ./configure
         # on Ubuntu 24.04 x86_64 confirms REPLACE_WCSCMP=0.
-        "//gnulib/tests:linux_x86_64": [
+        "//gnulib/m4/gnulib-common:linux_x86_64": [
             checks.AC_SUBST("REPLACE_WCSCMP", "0"),
         ],
         # macOS / Windows / other (incl. untested Linux CPUs): per M4
