@@ -1,32 +1,132 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/exponentl.m4"""
 
+load("@bazel_skylib//lib:selects.bzl", "selects")
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
-# gl_LONG_DOUBLE_EXPONENT_LOCATION determines where the exponent bits are in a long double.
-# The values differ based on the long double format used:
+# gl_LONG_DOUBLE_EXPONENT_LOCATION sets LDBL_EXPBIT0_WORD / LDBL_EXPBIT0_BIT
+# based on the `long double` bit layout. Upstream `m4/exponentl.m4` performs
+# this with AC_RUN_IFELSE; the cross-compile fallback is a `host_cpu` case
+# table. We model the cross-compile fallback exactly here. Both consts are
+# CPU-dependent for "normal" Unixes; macOS and MSVC override to the double
+# layout because those toolchains define `long double` == `double` regardless
+# of CPU.
 #
-# x86_64 Linux: Uses 80-bit extended precision (Intel extended format)
-#   - LDBL_EXPBIT0_WORD = 3, LDBL_EXPBIT0_BIT = 16 (for 16-byte aligned)
-#
-# arm64 Linux: Uses IEEE 754 binary128 (true quad precision)
-#   - LDBL_EXPBIT0_WORD = 3, LDBL_EXPBIT0_BIT = 16
-#
-# arm64 macOS: long double is same as double (binary64)
-#   - LDBL_EXPBIT0_WORD = 1, LDBL_EXPBIT0_BIT = 20
+# Upstream guess table (from m4/exponentl.m4):
+#   i?86 | x86_64 | ia86*               -> word 2 bit 0  (Intel 80-bit ext)
+#   m68k*                               -> word 0 bit 16 (big-endian 80-bit padded to 96)
+#   alpha* | aarch64 | loongarch64
+#     | riscv32 | riscv64 | sh4         -> word 3 bit 16 (LE IEEE 754 quad)
+#   s390* | sparc | sparc64             -> word 0 bit 16 (BE IEEE 754 quad)
+#   arm (LE) / mips (LE)                -> word 3 bit 16
+#   arm (BE) / mips (BE)                -> word 0 bit 16
+#   powerpc64le                         -> word 1 bit 20 (LE double-double)
+#   powerpc* | rs6000                   -> word 0 bit 20 (BE double-double)
+
+# OS+CPU combos. macOS/Windows take precedence over CPU because their
+# toolchains override `long double` to `double` (so the CPU's native layout
+# doesn't apply).
+
+selects.config_setting_group(
+    name = "_linux_x86_64",
+    match_all = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+selects.config_setting_group(
+    name = "_linux_x86_32",
+    match_all = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_32",
+    ],
+)
+
+selects.config_setting_group(
+    name = "_linux_aarch64",
+    match_all = [
+        "@platforms//os:linux",
+        "@platforms//cpu:aarch64",
+    ],
+)
+
+selects.config_setting_group(
+    name = "_linux_ppc64le",
+    match_all = [
+        "@platforms//os:linux",
+        "@platforms//cpu:ppc64le",
+    ],
+)
+
+selects.config_setting_group(
+    name = "_linux_ppc",
+    match_all = [
+        "@platforms//os:linux",
+        "@platforms//cpu:ppc",
+    ],
+)
+
+selects.config_setting_group(
+    name = "_linux_s390x",
+    match_all = [
+        "@platforms//os:linux",
+        "@platforms//cpu:s390x",
+    ],
+)
+
+# Conservative default if we land on an unmodelled OS+CPU pair: IEEE 754
+# quad layout (the most common modern non-x86 layout). Same value the M4's
+# `*) gl_cv_cc_long_double_expbit0="unknown"` case ends up at after the
+# resolver below filters word/bit out — for Bazel we have to pick a value,
+# so pick the modern-arm default.
 
 autoconf(
     name = "exponentl",
     checks = select({
-        # Linux (both x86_64 and arm64): 16-byte long double with exponent at word 3, bit 16
-        "@platforms//os:linux": [
+        # ARM64 Linux: IEEE 754 binary128 (quad)
+        ":_linux_aarch64": [
             checks.AC_DEFINE("LDBL_EXPBIT0_WORD", "3"),
             checks.AC_DEFINE("LDBL_EXPBIT0_BIT", "16"),
         ],
-        # macOS: long double is same as double (binary64)
-        "//conditions:default": [
+        # PowerPC BE: double-double
+        ":_linux_ppc": [
+            checks.AC_DEFINE("LDBL_EXPBIT0_WORD", "0"),
+            checks.AC_DEFINE("LDBL_EXPBIT0_BIT", "20"),
+        ],
+        # PowerPC LE: double-double
+        ":_linux_ppc64le": [
             checks.AC_DEFINE("LDBL_EXPBIT0_WORD", "1"),
             checks.AC_DEFINE("LDBL_EXPBIT0_BIT", "20"),
+        ],
+        # s390x: big-endian IEEE 754 quad
+        ":_linux_s390x": [
+            checks.AC_DEFINE("LDBL_EXPBIT0_WORD", "0"),
+            checks.AC_DEFINE("LDBL_EXPBIT0_BIT", "16"),
+        ],
+        ":_linux_x86_32": [
+            checks.AC_DEFINE("LDBL_EXPBIT0_WORD", "2"),
+            checks.AC_DEFINE("LDBL_EXPBIT0_BIT", "0"),
+        ],
+        # x86: Intel 80-bit extended precision
+        ":_linux_x86_64": [
+            checks.AC_DEFINE("LDBL_EXPBIT0_WORD", "2"),
+            checks.AC_DEFINE("LDBL_EXPBIT0_BIT", "0"),
+        ],
+        # macOS: long double == double (Apple Silicon and current Intel macOS)
+        "@platforms//os:macos": [
+            checks.AC_DEFINE("LDBL_EXPBIT0_WORD", "1"),
+            checks.AC_DEFINE("LDBL_EXPBIT0_BIT", "20"),
+        ],
+        # MSVC / clang-cl: long double == double
+        "@platforms//os:windows": [
+            checks.AC_DEFINE("LDBL_EXPBIT0_WORD", "1"),
+            checks.AC_DEFINE("LDBL_EXPBIT0_BIT", "20"),
+        ],
+        # Default: assume LE IEEE 754 quad (modern non-x86 ARM/RISC-V Linux)
+        "//conditions:default": [
+            checks.AC_DEFINE("LDBL_EXPBIT0_WORD", "3"),
+            checks.AC_DEFINE("LDBL_EXPBIT0_BIT", "16"),
         ],
     }),
     visibility = ["//visibility:public"],

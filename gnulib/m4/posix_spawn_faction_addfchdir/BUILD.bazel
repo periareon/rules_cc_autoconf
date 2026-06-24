@@ -6,22 +6,77 @@ load("//autoconf:checks.bzl", "checks")
 autoconf(
     name = "posix_spawn_faction_addfchdir",
     checks = [
-        # On macOS, this function exists
+        # _np variant: standard AC_CHECK_FUNC works on systems where it's
+        # exposed without extra feature defines (Linux, macOS).
         checks.AC_CHECK_FUNC(
             "posix_spawn_file_actions_addfchdir_np",
             define = "HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR_NP",
         ),
-        # This function is not yet standardized, so always replace the system's implementation
-        # REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR=1 is set by defaults if function exists
-        # HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR=0 on macOS (not available)
-        checks.AC_SUBST("HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR", "0"),
+    ] + select({
+        # macOS: same SDK-substitute as the addchdir module — header-based
+        # probes for the POSIX-2024 name consistently fail under Bazel's
+        # macOS toolchain even on macOS 13+ where the symbol is in
+        # libSystem. See gl_FUNC_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR for the
+        # full rationale.
+        "@platforms//os:macos": [
+            checks.AC_TRY_COMPILE(
+                name = "ac_cv_func_posix_spawn_file_actions_addfchdir",
+                code = """\
+#include <Availability.h>
+#if !defined(__MAC_OS_X_VERSION_MIN_REQUIRED) \\
+    || __MAC_OS_X_VERSION_MIN_REQUIRED < 110000
+#error "macOS deployment target is older than 11.0 (Big Sur)"
+#endif
+int main(void) { return 0; }
+""",
+            ),
+        ],
+        # POSIX-standardized name (POSIX.1-2024).
+        "//conditions:default": [
+            checks.AC_TRY_LINK(
+                name = "ac_cv_func_posix_spawn_file_actions_addfchdir",
+                code = """\
+#include <spawn.h>
+int main(void) {
+    posix_spawn_file_actions_t a;
+    return posix_spawn_file_actions_addfchdir(&a, 0);
+}
+""",
+                compile_defines = [
+                    "_DARWIN_C_SOURCE",
+                    "_GNU_SOURCE",
+                ],
+            ),
+        ],
+    }) + [
+        # AC_DEFINE for config.h alongside the AC_SUBST for subst.h —
+        # AC_CHECK_FUNCS_ONCE emits both when the function is present.
+        checks.AC_DEFINE(
+            "HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR",
+            requires = ["ac_cv_func_posix_spawn_file_actions_addfchdir==1"],
+        ),
+        checks.AC_SUBST(
+            "HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR",
+            condition = "ac_cv_func_posix_spawn_file_actions_addfchdir",
+            if_false = "0",
+            if_true = "1",
+        ),
+        checks.AC_SUBST(
+            "REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR",
+            condition = "ac_cv_func_posix_spawn_file_actions_addfchdir",
+            if_false = "0",
+            if_true = "1",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # Use gl_POSIX_SPAWN_MINIMAL instead of posix_spawn to avoid HAVE_POSIX_SPAWNATTR_T
-        "//gnulib/m4/posix_spawn:gl_POSIX_SPAWN_MINIMAL",
-        # Note: gl_SPAWN_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
         # For test compatibility - need basic header defines
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        # Provides _DARWIN_C_SOURCE / _GNU_SOURCE defines (via
+        # AC_USE_SYSTEM_EXTENSIONS) that the link probe references through
+        # `compile_defines` so they reach the compiler as -D flags.
+        "//gnulib/m4/extensions",
+        # Use gl_POSIX_SPAWN_MINIMAL instead of posix_spawn to avoid HAVE_POSIX_SPAWNATTR_T
+        "//gnulib/m4/posix_spawn:gl_POSIX_SPAWN_MINIMAL",
     ],
 )

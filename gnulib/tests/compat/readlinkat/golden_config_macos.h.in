@@ -57,7 +57,7 @@
 /* #undef HAVE_UNLINKAT */
 /* #undef HAVE_USLEEP */
 #define HAVE_WCHAR_H 1
-#define READLINK_TRAILING_SLASH_BUG 1
+/* #undef READLINK_TRAILING_SLASH_BUG */
 /* #undef REPLACE_ACCESS */
 /* #undef REPLACE_CHOWN */
 /* #undef REPLACE_CLOSE */

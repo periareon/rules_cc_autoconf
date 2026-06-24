@@ -12,17 +12,27 @@ autoconf(
             subst = True,
         ),
     ] + select({
-        "@platforms//os:linux": [
-            checks.AC_SUBST("REPLACE_OPENAT", 0),
+        "@platforms//os:macos": [
+            checks.AC_SUBST(
+                "REPLACE_OPENAT",
+                condition = "gl_cv_macos_sdk_modern",
+                if_false = "1",
+                if_true = "0",
+            ),
         ],
-        "//conditions:default": [
-            # macOS/Solaris: openat exists but has bugs, replace it
+        # M4 m4/openat.m4: runtime bug probes drive REPLACE_OPENAT. On
+        # macOS the SDK probe decides; only Windows still needs replacement
+        # when openat exists.
+        "@platforms//os:windows": [
             checks.AC_SUBST(
                 "REPLACE_OPENAT",
                 condition = "ac_cv_func_openat",
                 if_false = 0,
                 if_true = 1,
             ),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_OPENAT", 0),
         ],
     }),
     visibility = ["//visibility:public"],

@@ -42,6 +42,11 @@ if [[ "$1" == "--amd64" ]]; then
     ARCH_DESC="x86_64 (emulated)"
     IMAGE_NAME="rules-cc-autoconf-linux-amd64:latest"
     shift
+elif [[ "$1" == "--arm64" ]]; then
+    PLATFORM_FLAG="--platform linux/arm64"
+    ARCH_DESC="aarch64 (emulated)"
+    IMAGE_NAME="rules-cc-autoconf-linux-arm64:latest"
+    shift
 fi
 
 if [[ $# -eq 0 ]]; then

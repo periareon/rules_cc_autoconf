@@ -1,14 +1,16 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/roundf-ieee.m4
 
-gl_FUNC_ROUNDF_IEEE:
-- m4_divert_text([INIT_PREPARE], [gl_roundf_required=ieee])
-- AC_REQUIRE([gl_FUNC_ROUNDF])
+gl_FUNC_ROUNDF_IEEE: same shape as round-ieee but for the float variant. The
+runtime check (AC_RUN_IFELSE) fails on aarch64 glibc (roundf(-0.0) loses
+sign bit), so REPLACE_ROUNDF=1 there. When REPLACE_ROUNDF=1, gl_FUNC_ROUNDF
+also calls gl_FUNC_FLOOR_LIBS/gl_FUNC_CEIL_LIBS which expose
+HAVE_DECL_FLOORF and HAVE_DECL_CEILF; we model that dep too.
 
-The divert_text sets gl_roundf_required=ieee BEFORE gl_FUNC_ROUNDF runs, causing it to
-also run the IEEE compliance test (roundf(-0.0) sign bit preservation). On Linux glibc,
-roundf(-0.0) returns +0.0 (loses sign bit), so REPLACE_ROUNDF=1.
-When REPLACE_ROUNDF=1, gl_FUNC_ROUNDF also calls gl_FUNC_FLOOR_LIBS and gl_FUNC_CEIL_LIBS
-to find floor/ceil needed for the replacement implementation.
+Upstream m4/roundf.m4 IEEE-check cross-compile fallback (case "$host_os"):
+  *-gnu* | gnu*  -> "guessing yes" -> REPLACE=0
+  ... (other libcs similar)
+The M4 guess for *-gnu* is "yes" but real autoconf on aarch64 glibc finds
+the bug present, so we override per CPU.
 """
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
@@ -23,15 +25,13 @@ autoconf(
         ),
         checks.AC_SUBST("ROUNDF_LIBM", ""),
     ] + select({
-        # On Linux: glibc's roundf(-0.0) returns +0.0 (loses sign bit),
-        # failing the IEEE compliance test → REPLACE_ROUNDF=1
-        # HAVE_FLOORF_AND_CEILF is set because floorf/ceilf modules provide
-        # the declarations (depended on conditionally below)
-        "@platforms//os:linux": [
+        # aarch64 glibc: roundf(-0.0) loses sign bit -> REPLACE=1; pulls in
+        # floor/ceil deps so HAVE_DECL_CEILF / HAVE_DECL_FLOORF get defined.
+        "//gnulib/tests:linux_aarch64": [
             checks.AC_SUBST("REPLACE_ROUNDF", 1),
             checks.AC_DEFINE("HAVE_FLOORF_AND_CEILF", "1"),
         ],
-        # On macOS: roundf passes IEEE compliance test
+        # Other libcs: M4 cross-compile guess "yes" -> REPLACE=0
         "//conditions:default": [
             checks.AC_SUBST("REPLACE_ROUNDF", 0),
         ],
@@ -41,9 +41,10 @@ autoconf(
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/extensions",
     ] + select({
-        # On Linux: replacement needs floor/ceil, so depend on floorf/ceilf
-        # modules which provide HAVE_DECL_FLOORF and HAVE_DECL_CEILF
-        "@platforms//os:linux": [
+        # When REPLACE_ROUNDF=1 the replacement needs floor/ceil; pull in
+        # the dep modules so their HAVE_DECL_FLOORF / HAVE_DECL_CEILF land
+        # in config.h to match upstream gnulib's flow.
+        "//gnulib/tests:linux_aarch64": [
             "//gnulib/m4/ceilf",
             "//gnulib/m4/floorf",
         ],

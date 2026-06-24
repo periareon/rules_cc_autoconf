@@ -37,6 +37,41 @@ autoconf(
     deps = ["//autoconf/macros/AC_C_BIGENDIAN"],
 )
 
+# gl_HOST_MACOS_SDK_MODERN — rules_cc_autoconf-specific helper.
+#
+# Several upstream gnulib m4 files use AC_RUN_IFELSE to detect OS bugs that
+# Apple has fixed in recent macOS releases (trailing-slash handling in
+# access/chown/open/mkfifo/readlink/rename, lstat-on-symlink-with-slash, etc).
+# rules_cc_autoconf has no AC_TRY_RUN equivalent and adding one would break
+# cross-compilation, so we substitute the closest static signal: the macOS
+# deployment-target version. If the binary is compiled with
+# `-mmacosx-version-min >= 11.0` (Big Sur, 2020), it can only run on a kernel
+# where those bugs are fixed.
+#
+# Cache var: gl_cv_macos_sdk_modern (1 on modern macOS targets, 0 elsewhere).
+# Consumers gate their bug-defines / REPLACE_* substs on this. The threshold
+# (11.0) is conservative — most of the bugs in question were fixed by macOS
+# 10.6 (2009), but lacking authoritative per-bug release dates we keep some
+# margin; lowering would just affect older macOS targets, where we'd
+# correctly fall back to "bug present" (gnulib's M4 cross-compile guess).
+autoconf(
+    name = "gl_HOST_MACOS_SDK_MODERN",
+    checks = [
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_macos_sdk_modern",
+            code = """\
+#include <Availability.h>
+#if !defined(__MAC_OS_X_VERSION_MIN_REQUIRED) \\
+    || __MAC_OS_X_VERSION_MIN_REQUIRED < 110000
+#error "macOS deployment target is older than 11.0 (Big Sur)"
+#endif
+int main(void) { return 0; }
+""",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)
+
 # AC_C_RESTRICT - defined in gnulib-common.m4 (overrides Autoconf 2.60-2.70)
 # Re-export from autoconf macro so modules can depend on gnulib-common for it.
 autoconf(
