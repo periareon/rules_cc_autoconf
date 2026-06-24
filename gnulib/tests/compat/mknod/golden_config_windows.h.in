@@ -21,7 +21,7 @@
 /* #undef HAVE_UNISTD_H */
 /* #undef HAVE_UTIMENSAT */
 #define HAVE_WCHAR_H 1
-#define MKFIFO_TRAILING_SLASH_BUG 1
+/* #undef MKFIFO_TRAILING_SLASH_BUG */
 /* #undef MKNOD_FIFO_BUG */
 /* #undef REPLACE_CHMOD */
 /* #undef REPLACE_FCHMODAT */

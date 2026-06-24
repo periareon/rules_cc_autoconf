@@ -436,9 +436,10 @@ bool CheckRunner::try_compile_and_link(
     return try_link(obj, exe, language, extra_linkopts);
 }
 
-bool CheckRunner::try_compile_and_link_with_lib(const std::string& code,
-                                                const std::string& library,
-                                                const std::string& language) {
+bool CheckRunner::try_compile_and_link_with_lib(
+    const std::string& code, const std::string& library,
+    const std::string& language, const std::vector<std::string>& extra_copts,
+    const std::vector<std::string>& extra_linkopts) {
     BuildDir tmp(source_id_, source_dir_);
     std::optional<std::filesystem::path> source_file =
         tmp.write_source(code, get_file_extension(language));
@@ -447,16 +448,23 @@ bool CheckRunner::try_compile_and_link_with_lib(const std::string& code,
     std::vector<std::string> cmd = get_compiler_and_link_flags(language);
     bool msvc = config_.compiler_type.rfind("msvc", 0) == 0;
 
+    // Per-check copts go after the toolchain copts (which means they win on
+    // conflict — matches how `bazel build --copt=...` last-wins semantics
+    // are layered on top of toolchain defaults).
+    for (const std::string& opt : extra_copts) cmd.push_back(opt);
+
     if (msvc) {
         std::filesystem::path exe = tmp.dir / (tmp.safe_id + ".exe");
         cmd.push_back("/Fe" + exe.string());
         cmd.push_back(source_file->string());
         cmd.push_back(library + ".lib");
+        for (const std::string& opt : extra_linkopts) cmd.push_back(opt);
     } else {
         cmd.push_back(source_file->string());
         cmd.push_back("-o");
         cmd.push_back((tmp.dir / tmp.safe_id).string());
         cmd.push_back("-l" + library);
+        for (const std::string& opt : extra_linkopts) cmd.push_back(opt);
     }
 
     return run_command("compile and link", cmd) == 0;

@@ -11,14 +11,19 @@ autoconf(
             define = "HAVE_LCHOWN",
         ),
     ] + select({
-        "@platforms//os:linux": [
-            checks.AC_SUBST("REPLACE_LCHOWN", "0"),
-        ],
-        "@platforms//os:windows": [
-            checks.AC_SUBST("REPLACE_LCHOWN", "0"),
+        # M4 m4/lchown.m4: REPLACE_LCHOWN is driven by the chown bug probes
+        # propagated via gl_FUNC_CHOWN. On macOS the SDK probe decides;
+        # Linux/Windows already produced "0".
+        "@platforms//os:macos": [
+            checks.AC_SUBST(
+                "REPLACE_LCHOWN",
+                condition = "gl_cv_macos_sdk_modern",
+                if_false = "1",
+                if_true = "0",
+            ),
         ],
         "//conditions:default": [
-            checks.AC_SUBST("REPLACE_LCHOWN", "1"),
+            checks.AC_SUBST("REPLACE_LCHOWN", "0"),
         ],
     }),
     visibility = ["//visibility:public"],

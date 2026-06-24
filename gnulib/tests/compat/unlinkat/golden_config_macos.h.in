@@ -57,7 +57,7 @@
 #define HAVE_UNLINKAT 1
 /* #undef HAVE_USLEEP */
 #define HAVE_WCHAR_H 1
-/* #undef LSTAT_FOLLOWS_SLASHED_SYMLINK */
+#define LSTAT_FOLLOWS_SLASHED_SYMLINK 1
 /* #undef REPLACE_ACCESS */
 /* #undef REPLACE_CHOWN */
 /* #undef REPLACE_CLOSE */

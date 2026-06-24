@@ -1,5 +1,30 @@
 # gnulib tests package
 
+load("@bazel_skylib//lib:selects.bzl", "selects")
+
 exports_files([
     "deps.bzl",
 ])
+
+# Shared OS+CPU config_setting_groups used by per-test golden selects.
+# Some gnulib runtime checks produce CPU-specific results on the same OS
+# (e.g. aarch64 glibc 2.37+ has known wcscmp/round/LDBL behaviours that
+# differ from x86_64 glibc), so test goldens fork by `linux_<cpu>`.
+
+selects.config_setting_group(
+    name = "linux_x86_64",
+    match_all = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    visibility = ["//gnulib/tests:__subpackages__"],
+)
+
+selects.config_setting_group(
+    name = "linux_aarch64",
+    match_all = [
+        "@platforms//os:linux",
+        "@platforms//cpu:aarch64",
+    ],
+    visibility = ["//gnulib/tests:__subpackages__"],
+)

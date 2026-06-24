@@ -46,7 +46,13 @@ RUN ARCH=$(dpkg --print-architecture) && \
         -o /usr/local/bin/bazel && \
     chmod +x /usr/local/bin/bazel
 
+# Run as a non-root user so runtime probes that branch on geteuid()==0 (e.g.
+# gnulib's mknod FIFO probe) behave like a real CI runner rather than treating
+# every host as "root, indeterminate". GitHub's ubuntu-24.04 runner uses the
+# `runner` user (uid 1001) — match that so behavior is identical.
+RUN useradd --create-home --uid 1001 --user-group runner
 WORKDIR /workspace
-COPY . .
+COPY --chown=runner:runner . .
+USER runner
 RUN git config --global --add safe.directory /workspace
 RUN bazel version || true

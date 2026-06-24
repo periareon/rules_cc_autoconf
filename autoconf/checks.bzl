@@ -105,8 +105,18 @@ _AC_INCLUDES_DEFAULT = """\
 #endif
 """
 
-# Template used by AC_LANG_PROGRAM and by AC_TRY_COMPILE/AC_TRY_LINK for
-# the includes+code path. Exported for use in checks.bzl.
+# AC_LANG_PROGRAM(C) template — used by AC_TRY_COMPILE / AC_TRY_LINK
+# and as the base for several other probes.
+#
+# Source of truth:
+#   https://git.savannah.gnu.org/cgit/autoconf.git/tree/lib/autoconf/c.m4?h=v2.72
+#   GitHub mirror: https://github.com/autotools-mirror/autoconf/blob/v2.72/lib/autoconf/c.m4
+#   Macro: AC_LANG_PROGRAM(C)
+#
+# Equivalent to upstream: prologue, then `int main (void) { BODY ;
+# return 0; }`. The trailing `;` after BODY is what lets BODY contain
+# CPP directives in upstream's macro expansion; we don't need that
+# flexibility here, so we emit `BODY\n    return 0;` directly.
 _AC_LANG_PROGRAM_TEMPLATE = """\
 {}
 
@@ -122,34 +132,85 @@ def _header_code_from_includes(includes_list):
         return ""
     return "\n".join([h.strip() for h in includes_list])
 
-# AC_CHECK_FUNC default code template (GNU Autoconf extern declaration pattern).
-# Overrides any GCC internal prototype to avoid errors. Uses char return type
-# because int might match a GCC builtin's return type and its argument prototype
-# would still apply. MSVC doesn't have GCC builtins so int is safe there.
-# On MSVC 2015+, many CRT functions (printf, scanf, etc.) are inlined in UCRT
-# headers and not exported as linker symbols, so we link against
-# legacy_stdio_definitions.lib to make them available for link tests.
+# AC_CHECK_FUNC default code template.
+#
+# Source of truth (compare against this when upstream changes):
+#   https://git.savannah.gnu.org/cgit/autoconf.git/tree/lib/autoconf/c.m4?h=v2.72
+#   GitHub mirror: https://github.com/autotools-mirror/autoconf/blob/v2.72/lib/autoconf/c.m4
+#   Macro: AC_LANG_FUNC_LINK_TRY(C)
+#
+# C comments are intentionally stripped — they bake into every check
+# spec JSON and every compile invocation. Each remaining line is
+# load-bearing:
+#
+#   - innocuous-define / <limits.h> / #undef dance neutralizes any
+#     conflicting prototype <limits.h> drags in (HP-UX 11i's gettimeofday
+#     is the canonical case) so our `char FUNC (void);` isn't shadowed.
+#   - `(void)` on the prototype and call. Empty `()` is K&R "unspecified
+#     args" — clang ≥ 15 / clang-cl error on this under -Wstrict-prototypes,
+#     which silently fails the probe and reports the function ABSENT.
+#   - `__stub_FUNC` / `__stub___FUNC` guard catches glibc functions that
+#     always return ENOSYS. Without it we'd report HAVE_FUNC=1 and
+#     consumers would call the stub at runtime.
+#
+# MSVC deviation: upstream autoconf has no MSVC story. The `_MSC_VER`
+# branch returns `int` (no GCC builtins to confuse) and links
+# legacy_stdio_definitions.lib so probes for the stdio family resolve
+# against UCRT, which inlines those functions in headers rather than
+# exporting linker symbols.
 _AC_CHECK_FUNC_DEFAULT_TEMPLATE = """\
+#define {function} innocuous_{function}
+#include <limits.h>
+#undef {function}
 #ifdef __cplusplus
 extern "C"
 #endif
 #if defined _MSC_VER
 #pragma comment(lib, "legacy_stdio_definitions.lib")
-int {function} ();
+int {function} (void);
 #else
-char {function} ();
+char {function} (void);
 #endif
-
-int main(void) {{
-    return {function}();
-}}
+#if defined __stub_{function} || defined __stub___{function}
+choke me
+#endif
+int main(void) {{ return {function}(); }}
 """
 
-# Type check code template with includes
-_AC_CHECK_TYPE_WITH_INCLUDES_TEMPLATE = """\
+# Same template — AC_CHECK_LIB and AC_SEARCH_LIBS both probe a function
+# symbol via AC_LANG_CALL → AC_LANG_FUNC_LINK_TRY upstream, so they
+# share the exact same C body. Aliasing rather than duplicating ensures
+# a future tweak to the probe shape lands everywhere in one edit.
+_AC_CHECK_LIB_TEMPLATE = _AC_CHECK_FUNC_DEFAULT_TEMPLATE
+_AC_SEARCH_LIBS_TEMPLATE = _AC_CHECK_FUNC_DEFAULT_TEMPLATE
+
+# AC_CHECK_TYPE probe template.
+#
+# Source of truth:
+#   https://git.savannah.gnu.org/cgit/autoconf.git/tree/lib/autoconf/types.m4?h=v2.72
+#   GitHub mirror: https://github.com/autotools-mirror/autoconf/blob/v2.72/lib/autoconf/types.m4
+#   Macro: _AC_CHECK_TYPE_NEW_BODY
+#
+# Upstream does TWO compiles — both are required to faithfully
+# distinguish a real type from a variable:
+#
+#   1. `sizeof({type_name})` must COMPILE — succeeds for types and for
+#      variables (sizeof works on both).
+#   2. `sizeof(({type_name}))` must FAIL TO COMPILE — only types fail,
+#      because `({type_name})` is a cast operator without an operand.
+#      For a variable, the parenthesized form is a valid expression and
+#      sizeof accepts it.
+#
+# Type is confirmed iff (probe 1 succeeds AND probe 2 fails). Without
+# the second probe we'd false-positive when callers pass a variable
+# name to AC_CHECK_TYPE.
+#
+# `{expr}` is the substitution slot — the runner emits the primary
+# probe with `expr=TYPE` and the must-fail probe with `expr=(TYPE)`.
+_AC_CHECK_TYPE_TEMPLATE = """\
 {header_code}
 int main(void) {{
-    if (sizeof({type_name}))
+    if (sizeof({expr}))
         return 0;
     return 1;
 }}
@@ -273,6 +334,7 @@ def _ac_check_header(
         includes = None,
         language = "c",
         compile_defines = None,
+        copts = None,
         requires = None,
         subst = None):
     """Check for a header file.
@@ -313,6 +375,10 @@ def _ac_check_header(
             to add before includes (e.g., `["_GNU_SOURCE", "_DARWIN_C_SOURCE"]`).
             Each string must match the define name of a previous check. The values
             from those checks will be used automatically.
+        copts: Optional list of extra compiler flags for this check
+            (e.g., `["-std=c11", "-D_POSIX_C_SOURCE=200809L"]`). Appended after
+            the autoconf toolchain's own copts so they take precedence on
+            last-wins conflicts.
         requires: Requirements that must be met for this check to run.
             Can be define names (e.g., `"HAVE_FOO"`), negated (e.g., `"!HAVE_FOO"`),
             or value-based (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
@@ -347,6 +413,8 @@ def _ac_check_header(
         check["subst"] = subst
     if compile_defines:
         check["compile_defines"] = compile_defines
+    if copts:
+        check["copts"] = copts
     if requires:
         check["requires"] = requires
 
@@ -360,6 +428,8 @@ def _ac_check_func(
         code = None,
         language = "c",
         compile_defines = None,
+        copts = None,
+        linkopts = None,
         requires = None,
         subst = None):
     """Check for a function.
@@ -405,6 +475,12 @@ def _ac_check_func(
             to add before includes (e.g., `["_GNU_SOURCE", "_DARWIN_C_SOURCE"]`).
             Each string must match the define name of a previous check. The values
             from those checks will be used automatically.
+        copts: Optional list of extra compiler flags for this check
+            (e.g., `["-std=c11"]`). Appended after the autoconf toolchain's
+            own copts so they take precedence on last-wins conflicts.
+        linkopts: Optional list of extra linker flags for this check
+            (e.g., `["-pthread"]`). Appended after the toolchain's link
+            flags.
         requires: Requirements that must be met for this check to run.
             Can be define names (e.g., `"HAVE_FOO"`), negated (e.g., `"!HAVE_FOO"`),
             or value-based (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
@@ -433,6 +509,10 @@ def _ac_check_func(
     check["code"] = code
     if compile_defines:
         check["compile_defines"] = compile_defines
+    if copts:
+        check["copts"] = copts
+    if linkopts:
+        check["linkopts"] = linkopts
     if requires:
         check["requires"] = requires
 
@@ -443,14 +523,6 @@ def _ac_check_func(
 
     return make_check(check)
 
-_AC_TEST_TYPE_CODE_TEMPLATE = _AC_INCLUDES_DEFAULT + """
-int main(void) {{
-    if (sizeof({type_name}))
-        return 0;
-    return 1;
-}}
-"""
-
 def _ac_check_type(
         type_name,
         *,
@@ -459,6 +531,7 @@ def _ac_check_type(
         includes = None,
         language = "c",
         compile_defines = None,
+        copts = None,
         requires = None,
         if_true = None,
         if_false = None,
@@ -497,6 +570,9 @@ def _ac_check_type(
             to add before includes (e.g., `["_GNU_SOURCE", "_DARWIN_C_SOURCE"]`).
             Each string must match the define name of a previous check. The values
             from those checks will be used automatically.
+        copts: Optional list of extra compiler flags for this check
+            (e.g., `["-std=c11"]`). Appended after the autoconf toolchain's
+            own copts so they take precedence on last-wins conflicts.
         requires: Requirements that must be met for this check to run.
             Can be define names (e.g., `"HAVE_FOO"`), negated (e.g., `"!HAVE_FOO"`),
             or value-based (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
@@ -540,18 +616,25 @@ def _ac_check_type(
         "type": "type",
     }
 
-    if includes:
-        header_code = _header_code_from_includes(includes)
-        check["code"] = _AC_CHECK_TYPE_WITH_INCLUDES_TEMPLATE.format(
-            header_code = header_code,
-            type_name = type_name,
-        )
-    else:
-        # Use default headers like GNU Autoconf's AC_INCLUDES_DEFAULT
-        check["code"] = _AC_TEST_TYPE_CODE_TEMPLATE.format(type_name = type_name)
+    # Two probes per the upstream _AC_CHECK_TYPE_NEW_BODY contract — see
+    # _AC_CHECK_TYPE_TEMPLATE for full rationale. The primary probe uses
+    # `sizeof(TYPE)` (must compile); `code_must_fail` uses `sizeof((TYPE))`
+    # (must NOT compile — only types fail it, variables don't). The runner
+    # confirms the type iff primary succeeds AND code_must_fail fails.
+    header_code = (_header_code_from_includes(includes) if includes else _AC_INCLUDES_DEFAULT)
+    check["code"] = _AC_CHECK_TYPE_TEMPLATE.format(
+        header_code = header_code,
+        expr = type_name,
+    )
+    check["code_must_fail"] = _AC_CHECK_TYPE_TEMPLATE.format(
+        header_code = header_code,
+        expr = "(" + type_name + ")",
+    )
 
     if compile_defines:
         check["compile_defines"] = compile_defines
+    if copts:
+        check["copts"] = copts
     if requires:
         check["requires"] = requires
 
@@ -812,6 +895,9 @@ def _ac_try_link(
     _add_conditionals(check, if_true, if_false)
     return make_check(check)
 
+# Equivalent to AC_LANG_PROGRAM(C) with empty prologue and empty body.
+# Used for compiler/linker availability probes where the test is just
+# "does the toolchain produce a runnable artifact?".
 _AC_SIMPLE_MAIN_TEMPLATE = """\
 int main(void) { return 0; }
 """
@@ -882,9 +968,21 @@ def _ac_prog_cxx(requires = None):
         requires = requires,
     )
 
-# Uses negative array size to verify sizeof at compile time. The checker
-# iterates candidate values, substituting {value}; compilation succeeds only
-# when sizeof matches. Portable across all C compilers including MSVC.
+# AC_CHECK_SIZEOF probe template.
+#
+# Source of truth:
+#   https://git.savannah.gnu.org/cgit/autoconf.git/tree/lib/autoconf/types.m4?h=v2.72
+#   GitHub mirror: https://github.com/autotools-mirror/autoconf/blob/v2.72/lib/autoconf/types.m4
+#   Macro: AC_CHECK_SIZEOF (uses _AC_CACHE_CHECK_INT → _AC_COMPUTE_INT_COMPILE)
+#
+# Upstream uses the same negative-array-size trick wrapped in
+# AC_LANG_BOOL_COMPILE_TRY: `static int test_array[1 - 2 * !(EXPR)]`.
+# We use the typedef variant `typedef int X[(EXPR) ? 1 : -1]` —
+# equivalent compile-error mechanism, with no storage and no
+# -Wunused-variable concern.
+#
+# The checker iterates candidate values, substituting {value}; compile
+# succeeds iff sizeof matches.
 _AC_CHECK_SIZEOF_TEMPLATE = """\
 {}
 #include <stddef.h>
@@ -903,6 +1001,7 @@ def _ac_check_sizeof(
         define = None,
         includes = None,
         language = "c",
+        copts = None,
         requires = None,
         if_true = None,
         if_false = None,
@@ -940,6 +1039,9 @@ def _ac_check_sizeof(
             - `"SIZEOF_FOO"`: Create define with explicit name `SIZEOF_FOO` (implies `define=True`)
         includes: Optional list of header names to include (e.g. `["stddef.h"]`)
         language: Language to use for check (`"c"` or `"cpp"`)
+        copts: Optional list of extra compiler flags for this check
+            (e.g., `["-std=c11"]`). Appended after the autoconf toolchain's
+            own copts so they take precedence on last-wins conflicts.
         requires: Requirements that must be met for this check to run.
             Can be define names (e.g., `"HAVE_FOO"`), negated (e.g., `"!HAVE_FOO"`),
             or value-based (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
@@ -988,6 +1090,8 @@ def _ac_check_sizeof(
         "type": "sizeof",
     }
 
+    if copts:
+        check["copts"] = copts
     if requires:
         check["requires"] = requires
 
@@ -997,9 +1101,16 @@ def _ac_check_sizeof(
     _add_conditionals(check, if_true, if_false)
     return make_check(check)
 
-# Uses negative array size to verify alignment at compile time. The checker
-# iterates candidate values, substituting {value}; compilation succeeds only
-# when offsetof matches. Portable across all C compilers including MSVC.
+# AC_CHECK_ALIGNOF probe template.
+#
+# Source of truth:
+#   https://git.savannah.gnu.org/cgit/autoconf.git/tree/lib/autoconf/types.m4?h=v2.72
+#   GitHub mirror: https://github.com/autotools-mirror/autoconf/blob/v2.72/lib/autoconf/types.m4
+#   Macro: AC_CHECK_ALIGNOF
+#
+# Same compile-time bisection mechanism as _AC_CHECK_SIZEOF_TEMPLATE,
+# applied to `offsetof(struct {char c; TYPE x;}, x)` which equals the
+# alignment of TYPE.
 _AC_CHECK_ALIGNOF_TEMPLATE = """\
 {}
 #include <stddef.h>
@@ -1022,6 +1133,7 @@ def _ac_check_alignof(
         define = None,
         includes = None,
         language = "c",
+        copts = None,
         requires = None,
         subst = None):
     """Check the alignment of a type.
@@ -1047,6 +1159,9 @@ def _ac_check_alignof(
         define: Custom define name (defaults to `ALIGNOF_<TYPE>`)
         includes: Optional list of header names to include (e.g. `["stddef.h"]`)
         language: Language to use for check (`"c"` or `"cpp"`)
+        copts: Optional list of extra compiler flags for this check
+            (e.g., `["-std=c11"]`). Appended after the autoconf toolchain's
+            own copts so they take precedence on last-wins conflicts.
         requires: List of requirements that must be met before this check runs.
             Can be simple define names (e.g., `"HAVE_FOO"`) or value-based
             requirements (e.g., `"REPLACE_FSTAT=1"` to require specific value)
@@ -1073,6 +1188,8 @@ def _ac_check_alignof(
         "name": cache_name,  # Cache variable name (use define name)
         "type": "alignof",
     }
+    if copts:
+        check["copts"] = copts
     if requires:
         check["requires"] = requires
 
@@ -1081,6 +1198,18 @@ def _ac_check_alignof(
 
     return make_check(check)
 
+# AC_CHECK_DECL probe template.
+#
+# Source of truth:
+#   https://git.savannah.gnu.org/cgit/autoconf.git/tree/lib/autoconf/general.m4?h=v2.72
+#   GitHub mirror: https://github.com/autotools-mirror/autoconf/blob/v2.72/lib/autoconf/general.m4
+#   Macro: _AC_CHECK_DECL_BODY
+#
+# Deviation from upstream: when SYMBOL is checked under C++, upstream
+# emits a fabricated call (`(void) ((SYMBOL) 0& (0& (0));`) to handle
+# overloaded symbols. We use `(void) SYMBOL;` in both branches, which
+# is equivalent for non-overloaded symbols (the only kind we currently
+# probe). Revisit if we ever need to probe C++ overloads.
 _AC_CHECK_DECL_TEMPLATE = """\
 {0}
 
@@ -1105,6 +1234,7 @@ def _ac_check_decl(
         define = None,
         includes = None,
         compile_defines = None,
+        copts = None,
         language = "c",
         requires = None,
         if_true = None,
@@ -1152,6 +1282,9 @@ def _ac_check_decl(
             to add before includes (e.g., `["_GNU_SOURCE", "_DARWIN_C_SOURCE"]`).
             Each string must match the define name of a previous check. The values
             from those checks will be used automatically.
+        copts: Optional list of extra compiler flags for this check
+            (e.g., `["-std=c11"]`). Appended after the autoconf toolchain's
+            own copts so they take precedence on last-wins conflicts.
         language: Language to use for check (`"c"` or `"cpp"`)
         requires: Requirements that must be met for this check to run.
             Can be define names (e.g., `"HAVE_FOO"`), negated (e.g., `"!HAVE_FOO"`),
@@ -1217,6 +1350,8 @@ def _ac_check_decl(
         check["subst"] = subst_name
     if compile_defines:
         check["compile_defines"] = compile_defines
+    if copts:
+        check["copts"] = copts
     if requires:
         check["requires"] = requires
 
@@ -1226,12 +1361,31 @@ def _ac_check_decl(
     _add_conditionals(check, if_true, if_false)
     return make_check(check)
 
+# AC_CHECK_MEMBER probe template.
+#
+# Source of truth:
+#   https://git.savannah.gnu.org/cgit/autoconf.git/tree/lib/autoconf/types.m4?h=v2.72
+#   GitHub mirror: https://github.com/autotools-mirror/autoconf/blob/v2.72/lib/autoconf/types.m4
+#   Macro: _AC_CHECK_MEMBER_BODY
+#
+# Deviation from upstream: autoconf does two compiles — first
+# `if (ac_aggr.MEMBER)` (requires the member be bool-convertible), then
+# falls back to `if (sizeof ac_aggr.MEMBER)` for non-bool-convertible
+# types like arrays. We use `offsetof()` which works for ANY member
+# type in one compile, so the upstream fallback is unnecessary.
+#
+# The `static` qualifier on the aggregate variable defeats
+# `-Wunused-variable -Werror` since the variable is otherwise unused
+# (offsetof operates on the type, not the instance — but declaring the
+# variable also serves as a "the type is concrete" check). The
+# alternative `(void)s;` works too but is slightly noisier in C.
 _AC_CHECK_MEMBER_TEMPLATE = """
 {}
 #include <stddef.h>
 
 int main(void) {{
-    {} s;
+    static {} s;
+    (void)s;
     return offsetof({}, {});
 }}
 """
@@ -1244,6 +1398,7 @@ def _ac_check_member(
         includes = None,
         language = "c",
         compile_defines = None,
+        copts = None,
         requires = None,
         if_true = None,
         if_false = None,
@@ -1272,6 +1427,9 @@ def _ac_check_member(
             to add before includes (e.g., `["_GNU_SOURCE", "_DARWIN_C_SOURCE"]`).
             Each string must match the define name of a previous check. The values
             from those checks will be used automatically.
+        copts: Optional list of extra compiler flags for this check
+            (e.g., `["-std=c11"]`). Appended after the autoconf toolchain's
+            own copts so they take precedence on last-wins conflicts.
         requires: Requirements that must be met for this check to run.
             Can be define names (e.g., `"HAVE_FOO"`), negated (e.g., `"!HAVE_FOO"`),
             or value-based (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
@@ -1302,6 +1460,8 @@ def _ac_check_member(
     }
     if compile_defines:
         check["compile_defines"] = compile_defines
+    if copts:
+        check["copts"] = copts
     if requires:
         check["requires"] = requires
 
@@ -1313,15 +1473,28 @@ def _ac_check_member(
     _add_conditionals(check, if_true, if_false)
     return make_check(check)
 
-# Template for compile-time integer detection via binary search. The checker
-# compiles this repeatedly, substituting {lhs}/{rhs} with comparison operands.
-# On gcc/clang the negative-array-size trick reliably rejects non-constant
-# expressions at file scope. MSVC lacks variable-length array support and
-# mishandles the array trick for non-constant expressions, so we use a
-# switch-case duplication trick instead: case labels must be integer constant
-# expressions in all C standards (C89+), so non-constant expressions like
-# rand() are rejected consistently.
-# See https://learn.microsoft.com/en-us/cpp/build/reference/std-specify-language-standard-version
+# AC_COMPUTE_INT probe template — compile-time binary search.
+#
+# Source of truth:
+#   https://git.savannah.gnu.org/cgit/autoconf.git/tree/lib/autoconf/general.m4?h=v2.72
+#   GitHub mirror: https://github.com/autotools-mirror/autoconf/blob/v2.72/lib/autoconf/general.m4
+#   Macros: _AC_COMPUTE_INT_COMPILE, AC_LANG_BOOL_COMPILE_TRY(C)
+#
+# Upstream uses a single negative-array-size probe uniformly:
+#   static int test_array[1 - 2 * !(EXPR)];
+#   test_array[0] = 0; return test_array[0];
+# (the assignment/return defeats -Wunused-variable -Werror).
+#
+# Deviation from upstream: we use a typedef variant on gcc/clang and a
+# switch-case duplicate-label variant on MSVC. The MSVC variant exists
+# because MSVC's `typedef int X[(EXPR) ? 1 : -1]` does not reliably
+# reject non-constant expressions (a real concern for AC_COMPUTE_INT
+# which is used with arbitrary expressions, not just sizeof); the
+# `case (EXPR):` trick relies on case labels requiring an integer
+# constant expression in every C standard, so MSVC consistently rejects
+# non-constants. Verify on a real MSVC toolchain before consolidating.
+# Refs:
+#   https://learn.microsoft.com/en-us/cpp/build/reference/std-specify-language-standard-version
 _AC_COMPUTE_INT_TEMPLATE = """
 {}
 {{{}}}
@@ -1344,6 +1517,7 @@ def _ac_compute_int(
         *,
         includes = None,
         language = "c",
+        copts = None,
         requires = None,
         subst = None):
     """Compute an integer value at compile time.
@@ -1369,6 +1543,9 @@ def _ac_compute_int(
         expression: C expression that evaluates to an integer (second arg)
         includes: Optional list of header names to include (e.g. `["stdlib.h"]`)
         language: Language to use for check (`"c"` or `"cpp"`)
+        copts: Optional list of extra compiler flags for this check
+            (e.g., `["-std=c11"]`). Appended after the autoconf toolchain's
+            own copts for every probe in the binary-search loop.
         requires: List of requirements that must be met before this check runs.
             Can be simple define names (e.g., `"HAVE_FOO"`) or value-based
             requirements (e.g., `"REPLACE_FSTAT=1"` to require specific value)
@@ -1392,6 +1569,8 @@ def _ac_compute_int(
         "name": cache_name,  # Cache variable name (use define name)
         "type": "compute_int",
     }
+    if copts:
+        check["copts"] = copts
     if requires:
         check["requires"] = requires
 
@@ -1400,6 +1579,19 @@ def _ac_compute_int(
 
     return make_check(check)
 
+# AC_C_RESTRICT probe template.
+#
+# Source of truth:
+#   https://git.savannah.gnu.org/cgit/autoconf.git/tree/lib/autoconf/c.m4?h=v2.72
+#   GitHub mirror: https://github.com/autotools-mirror/autoconf/blob/v2.72/lib/autoconf/c.m4
+#   Macro: AC_C_RESTRICT
+#
+# Simplified vs upstream: autoconf probes several `restrict` use shapes
+# (function-prototype parameter, etc.) and falls back through __restrict
+# and __restrict__ keywords. We test the most direct shape — a local
+# `int *restrict ptr` — which all current gcc/clang/MSVC support.
+# Functionally equivalent for our use case; if we ever need the
+# fallback keyword detection, port that logic here.
 _AC_C_RESTRICT_TEMPLATE = """\
 int main(void) {
     int *restrict ptr = (int*)0x1000;
@@ -1616,24 +1808,6 @@ def _ac_check_cxx_compiler_flag(
 
     return make_check(check)
 
-# AC_CHECK_LIB code template. Same GCC builtin / MSVC prototype strategy as
-# _AC_CHECK_FUNC_DEFAULT_TEMPLATE (see comment there for rationale).
-_AC_CHECK_LIB_TEMPLATE = """\
-#ifdef __cplusplus
-extern "C"
-#endif
-#if defined _MSC_VER
-#pragma comment(lib, "legacy_stdio_definitions.lib")
-int {function} ();
-#else
-char {function} ();
-#endif
-
-int main(void) {{
-    return {function}();
-}}
-"""
-
 def _ac_check_lib(
         library,
         function,
@@ -1642,6 +1816,8 @@ def _ac_check_lib(
         define = None,
         code = None,
         language = "c",
+        copts = None,
+        linkopts = None,
         requires = None,
         if_true = None,
         if_false = None,
@@ -1672,6 +1848,12 @@ def _ac_check_lib(
         define: Custom define name (defaults to `HAVE_LIB<LIBRARY>`)
         code: Custom code to compile and link (optional)
         language: Language to use for check (`"c"` or `"cpp"`)
+        copts: Optional list of extra compiler flags for this check
+            (e.g., `["-std=c11"]`). Appended after the autoconf toolchain's
+            own copts so they take precedence on last-wins conflicts.
+        linkopts: Optional list of extra linker flags for this check
+            (e.g., `["-pthread"]`). Appended after the toolchain's link
+            flags AND after the `-l<library>` argument.
         requires: Requirements that must be met for this check to run.
             Can be define names (e.g., `"HAVE_FOO"`), negated (e.g., `"!HAVE_FOO"`),
             or value-based (e.g., `"REPLACE_FSTAT==1"`, `"REPLACE_FSTAT!=0"`).
@@ -1707,6 +1889,10 @@ def _ac_check_lib(
         check["code"] = _AC_CHECK_LIB_TEMPLATE.format(
             function = function,
         )
+    if copts:
+        check["copts"] = copts
+    if linkopts:
+        check["linkopts"] = linkopts
     if requires:
         check["requires"] = requires
 
@@ -1716,22 +1902,6 @@ def _ac_check_lib(
     _add_conditionals(check, if_true, if_false)
     return make_check(check)
 
-_AC_SEARCH_LIBS_TEMPLATE = """\
-#ifdef __cplusplus
-extern "C"
-#endif
-#if defined _MSC_VER
-#pragma comment(lib, "legacy_stdio_definitions.lib")
-int {function} ();
-#else
-char {function} ();
-#endif
-
-int main(void) {{
-    return {function}();
-}}
-"""
-
 def _ac_search_libs(
         function,
         libraries,
@@ -1739,6 +1909,8 @@ def _ac_search_libs(
         name = None,
         code = None,
         language = "c",
+        copts = None,
+        linkopts = None,
         requires = None,
         subst = None):
     """Search for a function in libc, then in a list of libraries.
@@ -1768,6 +1940,12 @@ def _ac_search_libs(
         name: Cache variable name. Defaults to "ac_cv_search_<function>".
         code: Custom code to compile and link (optional).
         language: Language to use for check ("c" or "cpp").
+        copts: Optional list of extra compiler flags for this check
+            (e.g., `["-std=c11"]`). Applied to every link attempt in the
+            search loop.
+        linkopts: Optional list of extra linker flags for this check
+            (e.g., `["-pthread"]`). Applied to every link attempt; appended
+            after the optional `-l<library>` argument.
         requires: Requirements that must be met for this check to run.
         subst: Substitution variable name for the library flag result.
 
@@ -1790,6 +1968,10 @@ def _ac_search_libs(
     else:
         check["code"] = _AC_SEARCH_LIBS_TEMPLATE.format(function = function)
 
+    if copts:
+        check["copts"] = copts
+    if linkopts:
+        check["linkopts"] = linkopts
     if requires:
         check["requires"] = requires
 

@@ -210,7 +210,16 @@ CheckResult CheckRunner::check_function(const Check& check) {
     // AC_CHECK_FUNC should use linking (not just compilation) to match GNU
     // Autoconf behavior This ensures functions that exist but aren't declared
     // in headers are detected
-    bool success = try_compile_and_link(code, check.language());
+    std::vector<std::string> extra_copts;
+    if (check.copts().has_value()) {
+        extra_copts = *check.copts();
+    }
+    std::vector<std::string> extra_linkopts;
+    if (check.linkopts().has_value()) {
+        extra_linkopts = *check.linkopts();
+    }
+    bool success = try_compile_and_link(code, check.language(), extra_copts,
+                                        extra_linkopts);
     return CheckResult(check.name(), success ? "1" : "0", success,
                        check_type_is_define(check.type()),
                        check.subst().has_value(), check.type(), check.define(),
@@ -233,8 +242,16 @@ CheckResult CheckRunner::check_lib(const Check& check) {
     }
     code = *check.code();
 
-    bool success =
-        try_compile_and_link_with_lib(code, library, check.language());
+    std::vector<std::string> extra_copts;
+    if (check.copts().has_value()) {
+        extra_copts = *check.copts();
+    }
+    std::vector<std::string> extra_linkopts;
+    if (check.linkopts().has_value()) {
+        extra_linkopts = *check.linkopts();
+    }
+    bool success = try_compile_and_link_with_lib(
+        code, library, check.language(), extra_copts, extra_linkopts);
     return CheckResult(check.name(), success ? "1" : "0", success,
                        check_type_is_define(check.type()),
                        check.subst().has_value(), check.type(), check.define(),
@@ -242,21 +259,34 @@ CheckResult CheckRunner::check_lib(const Check& check) {
 }
 
 CheckResult CheckRunner::check_type_check(const Check& check) {
-    std::string type_name = check.name();
-    std::string code{};
-
     if (!check.code().has_value()) {
         throw std::runtime_error("Type check missing code: " + check_id(check));
     }
-    code = *check.code();
 
-    // Resolve compile_defines and prepend to code
+    // Resolve compile_defines once — same prelude prepended to both probes.
     std::string defines_code = resolve_compile_defines(check);
-    if (!defines_code.empty()) {
-        code = defines_code + code;
+    std::vector<std::string> extra_copts;
+    if (check.copts().has_value()) {
+        extra_copts = *check.copts();
     }
 
-    bool success = try_compile(code, check.language());
+    // Two-probe pattern per upstream _AC_CHECK_TYPE_NEW_BODY:
+    //   Probe 1: `sizeof(TYPE)` must COMPILE — succeeds for both real
+    //            types and for variables (sizeof works on both).
+    //   Probe 2: `sizeof((TYPE))` must NOT COMPILE — `(TYPE)` is an
+    //            invalid cast operator with no operand when TYPE is a
+    //            real type, but a valid parenthesized expression when
+    //            TYPE is a variable. Without it we'd false-positive
+    //            when callers pass a variable name to AC_CHECK_TYPE.
+    // `code_must_fail` is optional; when absent we degrade to a single-
+    // probe check (used by callers that only need "does TYPE compile?").
+    bool success = try_compile(defines_code + *check.code(), check.language(),
+                               extra_copts);
+    if (success && check.code_must_fail().has_value()) {
+        success = !try_compile(defines_code + *check.code_must_fail(),
+                               check.language(), extra_copts);
+    }
+
     return CheckResult(check.name(), success ? "1" : "0", success,
                        check_type_is_define(check.type()),
                        check.subst().has_value(), check.type(), check.define(),
@@ -395,9 +425,13 @@ CheckResult CheckRunner::check_sizeof(const Check& check) {
         code_template = defines_code + code_template;
     }
 
+    std::vector<std::string> extra_copts;
+    if (check.copts().has_value()) {
+        extra_copts = *check.copts();
+    }
     // Use static_assert to find the sizeof value at compile time
     std::optional<int> size = find_compile_time_value_with_static_assert(
-        code_template, check.language());
+        code_template, check.language(), extra_copts);
 
     if (size.has_value()) {
         return CheckResult(check.name(), std::to_string(*size), true,
@@ -426,9 +460,13 @@ CheckResult CheckRunner::check_alignof(const Check& check) {
         code_template = defines_code + code_template;
     }
 
+    std::vector<std::string> extra_copts;
+    if (check.copts().has_value()) {
+        extra_copts = *check.copts();
+    }
     // Use static_assert to find the alignment value at compile time
     std::optional<int> alignment = find_compile_time_value_with_static_assert(
-        code_template, check.language());
+        code_template, check.language(), extra_copts);
 
     if (alignment.has_value()) {
         return CheckResult(check.name(), std::to_string(*alignment), true,
@@ -451,8 +489,13 @@ CheckResult CheckRunner::check_compute_int(const Check& check) {
                            check.subst().has_value(), check.type());
     }
 
-    std::optional<int> value =
-        find_compile_time_int_bisect(*check.code(), check.language());
+    std::vector<std::string> extra_copts;
+    if (check.copts().has_value()) {
+        extra_copts = *check.copts();
+    }
+    std::optional<int> value = find_compile_time_int_bisect(
+        *check.code(), check.language(), /*search_begin=*/-1024,
+        /*search_end=*/1024, extra_copts);
 
     if (value.has_value()) {
         return CheckResult(id, std::to_string(*value), true,
@@ -477,7 +520,11 @@ CheckResult CheckRunner::check_decl(const Check& check) {
         code = defines_code + code;
     }
 
-    bool found = try_compile(code, check.language());
+    std::vector<std::string> extra_copts;
+    if (check.copts().has_value()) {
+        extra_copts = *check.copts();
+    }
+    bool found = try_compile(code, check.language(), extra_copts);
 
     std::optional<std::string> value;
     if (check.define_value().has_value()) {
@@ -522,7 +569,11 @@ CheckResult CheckRunner::check_member(const Check& check) {
         code = defines_code + code;
     }
 
-    bool success = try_compile(code, check.language());
+    std::vector<std::string> extra_copts;
+    if (check.copts().has_value()) {
+        extra_copts = *check.copts();
+    }
+    bool success = try_compile(code, check.language(), extra_copts);
     return CheckResult(check.name(), success ? "1" : "0", success,
                        check_type_is_define(check.type()),
                        check.subst().has_value(), check.type(), check.define(),
@@ -640,7 +691,8 @@ CheckResult CheckRunner::check_gl_next_header(const Check& check) {
 }
 
 std::optional<int> CheckRunner::find_compile_time_value_with_static_assert(
-    const std::string& base_code_template, const std::string& language) {
+    const std::string& base_code_template, const std::string& language,
+    const std::vector<std::string>& extra_copts) {
     std::vector<int> values_to_try = {1,  2,   4,   8,   16,  32,
                                       64, 128, 256, 512, 1024};
 
@@ -653,7 +705,7 @@ std::optional<int> CheckRunner::find_compile_time_value_with_static_assert(
             pos += value_str.length();
         }
 
-        if (try_compile(code, language)) {
+        if (try_compile(code, language, extra_copts)) {
             return value;
         }
     }
@@ -721,7 +773,8 @@ static std::pair<std::string, std::string> split_code_expr(
 
 std::optional<int> CheckRunner::find_compile_time_int_bisect(
     const std::string& base_code_template, const std::string& language,
-    const int search_begin, const int search_end) {
+    const int search_begin, const int search_end,
+    const std::vector<std::string>& extra_copts) {
     const std::pair<std::string, std::string> code_expr =
         split_code_expr(base_code_template);
     // int type for target might not be same as host
@@ -731,11 +784,11 @@ std::optional<int> CheckRunner::find_compile_time_int_bisect(
 
     if (try_compile(gen_less_compare(code_expr.first, code_expr.second,
                                      std::to_string(search_begin)),
-                    language) ||
+                    language, extra_copts) ||
         try_compile(
             gen_less_compare(code_expr.first, std::to_string(search_end),
                              code_expr.second),
-            language)) {
+            language, extra_copts)) {
         // value out of host int range, give up
         throw std::runtime_error(
             "Unable to determine compile-time value for constant '" +
@@ -746,10 +799,10 @@ std::optional<int> CheckRunner::find_compile_time_int_bisect(
     if (!try_compile(
             gen_less_compare(code_expr.first, std::to_string(search_begin),
                              code_expr.second),
-            language) &&
+            language, extra_copts) &&
         !try_compile(gen_less_compare(code_expr.first, code_expr.second,
                                       std::to_string(search_end)),
-                     language)) {
+                     language, extra_copts)) {
         // at least search_begin < constant or constant < search_end should
         // compile if none compile, means expr can't evaluate at compile time
         throw std::runtime_error(
@@ -775,7 +828,7 @@ std::optional<int> CheckRunner::find_compile_time_int_bisect(
         std::string code = gen_less_compare(code_expr.first, code_expr.second,
                                             std::to_string(middle));
 
-        if (try_compile(code, language)) {
+        if (try_compile(code, language, extra_copts)) {
             // value < middle
             r = middle - 1;
         } else {
@@ -812,7 +865,16 @@ CheckResult CheckRunner::check_search_libs(const Check& check) {
     // - "-l<lib>" if function was found in a library
     // - "" (empty) if function was not found (success=false)
 
-    if (try_compile_and_link(code, check.language())) {
+    std::vector<std::string> extra_copts;
+    if (check.copts().has_value()) {
+        extra_copts = *check.copts();
+    }
+    std::vector<std::string> extra_linkopts;
+    if (check.linkopts().has_value()) {
+        extra_linkopts = *check.linkopts();
+    }
+    if (try_compile_and_link(code, check.language(), extra_copts,
+                             extra_linkopts)) {
         DebugLogger::debug("search_libs: " + check.name() +
                            " found without extra library");
         return CheckResult(check.name(), std::string(""), true,
@@ -823,7 +885,8 @@ CheckResult CheckRunner::check_search_libs(const Check& check) {
 
     for (const auto& lib : libs) {
         DebugLogger::debug("search_libs: " + check.name() + " trying -l" + lib);
-        if (try_compile_and_link_with_lib(code, lib, check.language())) {
+        if (try_compile_and_link_with_lib(code, lib, check.language(),
+                                          extra_copts, extra_linkopts)) {
             DebugLogger::debug("search_libs: " + check.name() + " found in -l" +
                                lib);
             return CheckResult(check.name(), "-l" + lib, true,

@@ -4,19 +4,60 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "wcscmp",
+    name = "gl_FUNC_WCSCMP",
     checks = [
+        # AC_CHECK_FUNCS_ONCE([wcscmp]). On every platform we currently
+        # target wcscmp exists, but model the M4 explicitly anyway: when
+        # the function is absent we still emit HAVE_WCSCMP=0 via the
+        # subst override below.
         checks.AC_CHECK_FUNC(
             "wcscmp",
             define = "HAVE_WCSCMP",
         ),
-        # Gnulib replaces wcscmp when missing or broken; golden expects REPLACE_WCSCMP "1"
-        checks.AC_SUBST("REPLACE_WCSCMP", "1"),
-    ],
+        # M4: `if test $ac_cv_func_wcscmp = no; then HAVE_WCSCMP=0`. The
+        # gl_WCHAR_H_DEFAULTS toolchain default is 1; override to 0 when
+        # the function isn't found so subst.h matches what real configure
+        # produces on the (rare) platform missing wcscmp.
+        checks.AC_SUBST(
+            "HAVE_WCSCMP",
+            condition = "ac_cv_func_wcscmp",
+            if_false = "0",
+            if_true = "1",
+        ),
+    ] + select({
+        # aarch64 Linux: glibc 2.37+ exhibits bug (c). Real ./configure on
+        # Ubuntu 24.04 aarch64 confirms REPLACE_WCSCMP=1.
+        "//gnulib/tests:linux_aarch64": [
+            checks.AC_SUBST("REPLACE_WCSCMP", "1"),
+        ],
+        # x86_64 Linux glibc: all three sub-probes pass. Real ./configure
+        # on Ubuntu 24.04 x86_64 confirms REPLACE_WCSCMP=0.
+        "//gnulib/tests:linux_x86_64": [
+            checks.AC_SUBST("REPLACE_WCSCMP", "0"),
+        ],
+        # macOS / Windows / other (incl. untested Linux CPUs): per M4
+        # gl_cross_guess_normal == "no" → replacement needed. Real
+        # ./configure on macOS 14 + Apple Silicon also still produces
+        # REPLACE=1 (bug (a) hasn't been fixed there).
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_WCSCMP", "1"),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        # Note: wchar_h provides HAVE_DECL_WCSDUP, but golden file expects it undefined
-        # "//gnulib/m4/wchar_h",  # AC_REQUIRE([gl_WCHAR_H_DEFAULTS]) - but pulls in HAVE_DECL_WCSDUP
+        # AC_REQUIRE([gl_WCHAR_H_DEFAULTS]) supplies the HAVE_WCSCMP=1 and
+        # REPLACE_WCSCMP=0 defaults via the autoconf toolchain rather than
+        # a direct dep on //gnulib/m4/wchar_h: that aggregator also pulls
+        # in HAVE_DECL_WCSDUP, which conflicts with this module's golden
+        # (the golden expects HAVE_DECL_WCSDUP to stay undefined).
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "wcscmp",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_WCSCMP",
     ],
 )

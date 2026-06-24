@@ -11,14 +11,18 @@ autoconf(
             define = "HAVE_MKNOD",
         ),
     ] + select({
-        # On Linux: mknod has FIFO bug and needs replacement
-        "@platforms//os:linux": [
-            checks.AC_DEFINE("MKNOD_FIFO_BUG", "1"),
+        # M4 m4/mknod.m4 runs AC_RUN_IFELSE for the MKNOD_FIFO_BUG (creating
+        # a FIFO via mknod with S_IFIFO mode). Modern Linux glibc and modern
+        # macOS both pass the probe (verified via real ./configure on each
+        # host), so the bug-define and the replacement are both absent.
+        # Windows: mknod doesn't exist in MSVCRT. The BCR overlay gates
+        # lib/mknod.c on REPLACE_MKNOD==1, so emit 1 to pull the replacement
+        # into the link.
+        "@platforms//os:windows": [
             checks.AC_SUBST("REPLACE_MKNOD", "1"),
         ],
-        # On macOS: mknod has issues so we need replacement
         "//conditions:default": [
-            checks.AC_SUBST("REPLACE_MKNOD", "1"),
+            checks.AC_SUBST("REPLACE_MKNOD", "0"),
         ],
     }),
     visibility = ["//visibility:public"],

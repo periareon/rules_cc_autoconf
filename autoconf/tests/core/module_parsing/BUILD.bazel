@@ -658,3 +658,39 @@ diff_test(
     file1 = ":golden_config_direct_aliases.h.in",
     file2 = ":config_direct_aliases.h",
 )
+
+# Test case 16: Confirm subst behavior
+package_info(
+    name = "subst_info",
+    package_name = "subst_info",
+    package_version = "2.5.0",
+)
+
+autoconf_hdr(
+    name = "subst_hdr",
+    out = "subst.h",
+    mode = "subst",
+    template = ":subst.h.in",
+    deps = [":subst_info"],
+)
+
+write_file(
+    name = "golden_subst_h",
+    out = "golden_subst.h.in",
+    content = """\
+/* subst.h.in.  Generated from MODULE.bazel.  */
+
+/* Define to the full name of this package. */
+#define PACKAGE_NAME "subst_info"
+
+/* Define to the version of this package. */
+#define PACKAGE_VERSION "2.5.0"
+""".splitlines(),
+    newline = "unix",
+)
+
+diff_test(
+    name = "diff_test_header_subst",
+    file1 = ":subst_hdr",
+    file2 = ":golden_subst_h",
+)

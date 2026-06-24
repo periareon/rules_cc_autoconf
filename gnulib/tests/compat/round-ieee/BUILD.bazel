@@ -11,6 +11,7 @@ gnu_gnulib_diff_test_suite(
         "//conditions:default": "golden_config.h.in",
     }),
     golden_subst_h = select({
+        "//gnulib/tests:linux_aarch64": "golden_subst_linux_aarch64.h.in",
         "@platforms//os:macos": "golden_subst_macos.h.in",
         "@platforms//os:windows": "golden_subst_windows.h.in",
         "//conditions:default": "golden_subst.h.in",

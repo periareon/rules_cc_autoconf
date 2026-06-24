@@ -13,10 +13,20 @@ autoconf(
             subst = True,
         ),
     ] + select({
+        # M4 m4/symlinkat.m4 sets REPLACE_SYMLINKAT when the runtime probe
+        # for symlinkat trailing-slash behavior fails. On macOS the SDK
+        # probe decides.
         "@platforms//os:macos": [
-            checks.AC_SUBST("REPLACE_SYMLINKAT", "1"),
+            checks.AC_SUBST(
+                "REPLACE_SYMLINKAT",
+                condition = "gl_cv_macos_sdk_modern",
+                if_false = "1",
+                if_true = "0",
+            ),
         ],
-        "//conditions:default": [],
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_SYMLINKAT", "0"),
+        ],
     }),
     visibility = ["//visibility:public"],
     deps = [
