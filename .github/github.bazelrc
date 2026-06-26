@@ -18,3 +18,23 @@ common --keep_going
 
 # Avoid gnulib tests which are highly volatile on different platforms.
 test --test_tag_filters=-gnu_autoconf_test
+
+# ----- Windows compiler variants ----------------------------------------
+
+# Clang-CL. --extra_execution_platforms is REQUIRED — --extra_toolchains
+# alone registers the toolchain but resolution won't pick it without a
+# platform carrying the matching compiler constraint. See
+# gnulib/tests/integration/BUILD.bazel for the platform definitions.
+build:clang-cl --extra_toolchains=@local_config_cc//:cc-toolchain-x64_windows-clang-cl
+build:clang-cl --extra_execution_platforms=//:x64_windows-clang-cl
+build:clang-cl --compiler=clang-cl
+build:clang-cl --repo_env=BAZEL_LLVM="C:/Program Files/LLVM"
+
+# MinGW. cc-toolchain-x64_windows_mingw uses an underscore + no "-gcc"
+# suffix: this is the canonical name emitted by rules_cc's
+# BUILD.windows.tpl. The clang-cl variant uses dashes — the naming
+# convention is inconsistent between the two.
+build:mingw-gcc --extra_toolchains=@local_config_cc//:cc-toolchain-x64_windows_mingw
+build:mingw-gcc --extra_execution_platforms=//:x64_windows-mingw
+build:mingw-gcc --compiler=mingw-gcc
+build:mingw-gcc --repo_env=BAZEL_SH=C:/msys64/usr/bin/bash.exe
