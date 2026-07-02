@@ -174,6 +174,123 @@ jobs:
           }
         if: startswith(runner.os, 'Windows')
 
+  ci-integration-tests-windows-toolchains:
+    # Run the gnulib integration test under Windows toolchain variants
+    # (clang-cl, mingw-gcc) in addition to the default MSVC `cl.exe`
+    # that ci-integration-tests already covers. Catches toolchain-
+    # specific regressions (e.g. AC_CHECK_FUNC probes that pass under
+    # one Windows compiler but silently fail under another) before they
+    # ship to downstream consumers.
+    #
+    # Why only gnulib_integrations: it's the only test that pulls real
+    # BCR downstream code (m4, gmp, bison, ...) that would exercise the
+    # toolchain-specific code paths. simple and negative_compute_int
+    # are too small.
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        toolchain:
+          - name: clang-cl
+            continue_on_error: false
+          - name: mingw-gcc
+            # mingw + Bazel-on-Windows is historically finicky and the
+            # BCR dep graph (gmp, bison, etc.) may have unrelated
+            # breakage under it. Allow failures while we observe
+            # baseline behavior; tighten once it's known-green.
+            continue_on_error: true
+    continue-on-error: ${{ matrix.toolchain.continue_on_error }}
+    name: "integration-gnulib_integrations (windows-2022 ${{ matrix.toolchain.name }})"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pin LLVM to 20.1.4 (match downstream consumer)
+        # GHA windows-2022 ships with whichever LLVM is current at
+        # image-build time (currently ~18.x/19.x). Behaviour of clang-cl's
+        # CRT auto-linking and unprototyped-extern handling can drift
+        # between versions, which means a probe that passes on the
+        # default runner LLVM may silently fail on a downstream
+        # consumer's pinned version. Pin to 20.1.4 to match the
+        # downstream toolchain configuration that surfaced the
+        # _fseeki64 link-probe regression. clang-cl --version is logged
+        # immediately after install — `--allow-downgrade` can silently
+        # no-op, so seeing the actual version in the log is the only
+        # way to know the pin took.
+        if: matrix.toolchain.name == 'clang-cl'
+        run: |
+          choco install llvm --force --allow-downgrade --version=20.1.4
+          & "C:\Program Files\LLVM\bin\clang-cl.exe" --version
+
+      - uses: bazel-contrib/setup-bazel@0.14.0
+        with:
+          bazelisk-cache: true
+          disk-cache: ${{ github.workflow }}-${{ matrix.toolchain.name }}
+          repository-cache: true
+
+      - name: Setup Bazelrc
+        working-directory: "${{ github.workspace }}/gnulib/tests/integration"
+        run: |
+          echo "TEMP=$env:RUNNER_TEMP" >> "$env:GITHUB_ENV"
+          echo "TMP=$env:RUNNER_TEMP" >> "$env:GITHUB_ENV"
+          echo "startup --output_user_root=D:/bzl" > ./user.bazelrc
+          # Toolchain selection lives in .github/github.bazelrc as named
+          # configs (see `build:clang-cl` / `build:mingw-gcc` there).
+          # The Test step opts in via `--config=`.
+          if ("${{ matrix.toolchain.name }}" -eq "mingw-gcc") {
+            # Put mingw-w64 gcc on PATH so the toolchain auto-detection
+            # finds it ahead of any other gcc-named binary.
+            echo "C:\msys64\mingw64\bin" >> $env:GITHUB_PATH
+          }
+
+      - name: Verify toolchain selection
+        # aquery the transitive CppCompile actions and check that the
+        # expected compiler binary appears in at least one. This is the
+        # only reliable way to know what compiler will actually run:
+        # cquery on `current_cc_toolchain` returns the alias's own
+        # label (not the resolved toolchain), and grepping stderr for
+        # the variant name false-positives on `--config=<name>` chatter
+        # in Bazel's rc-file announcements.
+        working-directory: "${{ github.workspace }}/gnulib/tests/integration"
+        run: |
+          $expected = if ("${{ matrix.toolchain.name }}" -eq "clang-cl") { "clang-cl" } else { "gcc" }
+          $actions = bazel $env:BAZEL_STARTUP_FLAGS aquery `
+            --config=${{ matrix.toolchain.name }} `
+            'mnemonic("CppCompile", deps(//:m4_build_test))' `
+            --output=text 2>&1 | Out-String
+          if ([string]::IsNullOrWhiteSpace($actions)) {
+            Write-Error "aquery returned no output — deps(//:m4_build_test) has no CppCompile actions?"
+            exit 1
+          }
+          if ($actions -notmatch "$expected\.exe") {
+            Write-Host "===== aquery output (truncated) ====="
+            Write-Host $actions.Substring(0, [Math]::Min(4000, $actions.Length))
+            Write-Error "Expected compiler '$expected.exe' not found in any CppCompile action. Toolchain resolution likely fell back to MSVC (cl.exe)."
+            exit 1
+          }
+          Write-Host "Toolchain check OK: found $expected.exe in CppCompile actions"
+
+      - name: Verify m4 lib/fseeko.c is actually in the action graph
+        # Rules out the "build passes because the offending file was
+        # never compiled" possibility. If fseeko.c isn't in the action
+        # graph at all, our test isn't exercising the same code path
+        # verible hits — even with the right toolchain pinned, we'd
+        # never observe the failure they observe.
+        working-directory: "${{ github.workspace }}/gnulib/tests/integration"
+        run: |
+          $out = bazel $env:BAZEL_STARTUP_FLAGS aquery `
+            --config=${{ matrix.toolchain.name }} `
+            'mnemonic("CppCompile", deps(//:m4_build_test))' `
+            --output=text 2>&1 | Out-String
+          if (-not ($out -match 'fseeko\.c')) {
+            Write-Error "lib/fseeko.c not in the m4 CppCompile action graph. m4_build_test isn't actually exercising the file verible hits — investigate before drawing conclusions about the toolchain."
+            exit 1
+          }
+          Write-Host "fseeko.c found in action graph - test will exercise the path"
+
+      - name: Test
+        working-directory: "${{ github.workspace }}/gnulib/tests/integration"
+        run: bazel $env:BAZEL_STARTUP_FLAGS test --config=${{ matrix.toolchain.name }} //...
+
   ci-format:
     runs-on: ubuntu-24.04
     steps:

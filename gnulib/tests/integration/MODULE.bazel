@@ -10,6 +10,7 @@ local_path_override(
     path = "../../..",
 )
 
+bazel_dep(name = "rules_cc", version = "0.2.17")
 bazel_dep(name = "bazel_skylib", version = "1.9.0")
 bazel_dep(name = "bison", version = "3.8.2.bcr.7")
 bazel_dep(name = "ffmpeg", version = "7.1.1.bcr.beta.4")
@@ -28,3 +29,11 @@ bazel_dep(name = "readline", version = "8.3.bcr.1")
 bazel_dep(name = "tcpdump", version = "4.99.6")
 bazel_dep(name = "tftp-hpa", version = "5.2")
 bazel_dep(name = "x264", version = "2023.10.1.bcr.2")
+
+# Expose @local_config_cc so the alternate-toolchain configs in
+# .github/github.bazelrc (--config=clang-cl / --config=mingw-gcc) can
+# reference its `cc-toolchain-x64_windows-<variant>` targets via
+# --extra_toolchains. Under Bzlmod the repo isn't visible to a module
+# unless that module declares the extension and use_repo's the name.
+cc_configure = use_extension("@rules_cc//cc:extensions.bzl", "cc_configure_extension")
+use_repo(cc_configure, "local_config_cc")

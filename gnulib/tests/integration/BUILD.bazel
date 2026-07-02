@@ -1,5 +1,36 @@
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
 
+# Execution platforms carrying compiler-specific constraints. Required
+# for toolchain RESOLUTION to actually pick the alternate cc_toolchain
+# entries registered via --extra_toolchains — without a platform whose
+# constraint_values include the compiler marker, resolution silently
+# falls back to the default MSVC toolchain. See
+# .github/github.bazelrc `build:clang-cl` / `build:mingw-gcc` configs.
+#
+# `@rules_cc//cc/private/toolchain:{clang-cl,mingw}` are the same
+# constraint_values that rules_cc's auto-generated Windows cc_toolchains
+# reference in their `exec_compatible_with`, so a platform carrying them
+# is the exact match toolchain resolution looks for. The `private/` path
+# is misleading — it's the de-facto public interface for anyone
+# building an execution platform to target one of these toolchains.
+platform(
+    name = "x64_windows-clang-cl",
+    constraint_values = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:windows",
+        "@rules_cc//cc/private/toolchain:clang-cl",
+    ],
+)
+
+platform(
+    name = "x64_windows-mingw",
+    constraint_values = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:windows",
+        "@rules_cc//cc/private/toolchain:mingw",
+    ],
+)
+
 alias(
     name = "bison",
     actual = "@bison",
@@ -116,24 +147,27 @@ alias(
     actual = "@x264",
 )
 
-build_test(
-    name = "build_test",
-    targets = [
-        ":bison",
-        ":ffmpeg",
-        ":flex",
-        ":gmp",
-        ":libgd",
-        ":libmicrohttpd",
-        ":libpcap",
-        ":libssh2",
-        ":libwebsockets",
-        ":m4",
-        ":mosquitto",
-        ":patch",
-        ":readline",
-        ":tcpdump",
-        ":tftp-hpa",
-        ":x264",
-    ],
-)
+[
+    build_test(
+        name = "{}_build_test".format(name),
+        targets = [":{}".format(name)],
+    )
+    for name in [
+        "bison",
+        "ffmpeg",
+        "flex",
+        "gmp",
+        "libgd",
+        "libmicrohttpd",
+        "libpcap",
+        "libssh2",
+        "libwebsockets",
+        "m4",
+        "mosquitto",
+        "patch",
+        "readline",
+        "tcpdump",
+        "tftp-hpa",
+        "x264",
+    ]
+]
