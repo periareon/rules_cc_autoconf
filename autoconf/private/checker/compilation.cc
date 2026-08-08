@@ -1,3 +1,4 @@
+#include <cctype>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -242,20 +243,62 @@ struct BuildDir {
 
 std::vector<std::string> CheckRunner::filter_error_flags(
     const std::vector<std::string>& flags) {
+    // Strip warning-as-error promotions in BOTH dialects regardless of the
+    // active compiler — clang-cl accepts both /WX and -Werror; the Bazel
+    // toolchain may inject either. Filtering universally keeps probe
+    // behavior identical across compilers.
     std::vector<std::string> filtered;
+    filtered.reserve(flags.size());
     for (const std::string& flag : flags) {
-        if (flag == "-Werror" || flag == "/WX" || flag == "-Werror=all") {
+        // gcc/clang: -Werror, -Werror=all, -Werror=<name>
+        if (flag == "-Werror" || flag == "-Werror=all") continue;
+        if (flag.rfind("-Werror=", 0) == 0) continue;
+        // MSVC/clang-cl: /WX (all-as-error), /we<num> (single-as-error).
+        // Preserve /WX- (explicit disable) — it's not a promotion.
+        if (flag == "/WX") continue;
+        if (flag.rfind("/we", 0) == 0 && flag.size() > 3 &&
+            std::isdigit(static_cast<unsigned char>(flag[3]))) {
             continue;
         }
-        if (flag.rfind("-Werror=", 0) == 0) {
-            continue;
-        }
-        if (flag == "-Wincompatible-library-redeclaration") {
-            continue;
-        }
+        // Clang-only warning that breaks the K&R probe prototype.
+        if (flag == "-Wincompatible-library-redeclaration") continue;
         filtered.push_back(flag);
     }
     return filtered;
+}
+
+void CheckRunner::append_error_suppressions(
+    std::vector<std::string>& cmd) const {
+    // Modern clang/gcc escalate several C89-legacy warnings to errors by
+    // default (without -Werror). Emit dialect-appropriate suppressions so
+    // autoconf-shape probes (K&R prototypes, implicit int, etc.) survive.
+    if (is_msvc_like(config_.compiler_type)) {
+        // MSVC warning numbers; clang-cl maps these onto its clang-side
+        // diagnostics via the cl-driver compatibility layer.
+        //   C4013 implicit function declaration
+        //   C4028 formal parameter differs from declaration
+        //   C4029 declared parameter list different from definition
+        //   C4047 differs in levels of indirection
+        //   C4133 incompatible types (function pointer conversion)
+        static const std::string kMsvcSuppressions[] = {
+            "/wd4013", "/wd4028", "/wd4029", "/wd4047", "/wd4133",
+        };
+        cmd.insert(cmd.end(), std::begin(kMsvcSuppressions),
+                   std::end(kMsvcSuppressions));
+        return;
+    }
+    // gcc/clang: only suppressions BOTH understand — gcc errors out on
+    // unknown -Wno-error=; "incompatible-pointer-types" covers what clang
+    // spells "incompatible-function-pointer-types".
+    static const std::string kGnuSuppressions[] = {
+        "-Wno-error=strict-prototypes",
+        "-Wno-error=implicit-function-declaration",
+        "-Wno-error=implicit-int",
+        "-Wno-error=int-conversion",
+        "-Wno-error=incompatible-pointer-types",
+    };
+    cmd.insert(cmd.end(), std::begin(kGnuSuppressions),
+               std::end(kGnuSuppressions));
 }
 
 std::vector<std::string> CheckRunner::replace_marker(
@@ -288,6 +331,7 @@ std::vector<std::string> CheckRunner::get_compiler_and_flags(
         auto processed = replace_marker(filtered, kCoptsMarker, extra_copts);
         cmd.insert(cmd.end(), processed.begin(), processed.end());
     }
+    append_error_suppressions(cmd);
     return cmd;
 }
 
@@ -302,6 +346,7 @@ std::vector<std::string> CheckRunner::get_compiler_and_link_flags(
         auto filtered = filter_error_flags(config_.cpp_flags);
         auto processed = replace_marker(filtered, kCoptsMarker, extra_copts);
         cmd.insert(cmd.end(), processed.begin(), processed.end());
+        append_error_suppressions(cmd);
         auto link_filtered = filter_error_flags(config_.cpp_link_flags);
         auto link_processed =
             replace_marker(link_filtered, kLinkoptsMarker, extra_linkopts);
@@ -313,6 +358,7 @@ std::vector<std::string> CheckRunner::get_compiler_and_link_flags(
         auto filtered = filter_error_flags(config_.c_flags);
         auto processed = replace_marker(filtered, kCoptsMarker, extra_copts);
         cmd.insert(cmd.end(), processed.begin(), processed.end());
+        append_error_suppressions(cmd);
         auto link_filtered = filter_error_flags(config_.c_link_flags);
         auto link_processed =
             replace_marker(link_filtered, kLinkoptsMarker, extra_linkopts);
@@ -335,7 +381,7 @@ bool CheckRunner::try_compile(const std::string& code,
 
     std::vector<std::string> cmd =
         get_compiler_and_flags(language, extra_copts);
-    bool msvc = config_.compiler_type.rfind("msvc", 0) == 0;
+    bool msvc = is_msvc_like(config_.compiler_type);
 
     if (msvc) {
         cmd.push_back("/c");
@@ -356,7 +402,7 @@ bool CheckRunner::try_link(const std::filesystem::path& object_file,
                            const std::string& language,
                            const std::vector<std::string>& extra_linkopts) {
     std::vector<std::string> cmd;
-    bool msvc = config_.compiler_type.rfind("msvc", 0) == 0;
+    bool msvc = is_msvc_like(config_.compiler_type);
 
     if (msvc) {
         cmd.push_back(config_.linker);
@@ -401,7 +447,7 @@ bool CheckRunner::try_compile_and_link(
         tmp.write_source(code, get_file_extension(language));
     if (!source_file) return false;
 
-    bool msvc = config_.compiler_type.rfind("msvc", 0) == 0;
+    bool msvc = is_msvc_like(config_.compiler_type);
 
     if (msvc) {
         // On MSVC, compile and link in one cl.exe invocation. Using cl.exe
@@ -445,26 +491,22 @@ bool CheckRunner::try_compile_and_link_with_lib(
         tmp.write_source(code, get_file_extension(language));
     if (!source_file) return false;
 
-    std::vector<std::string> cmd = get_compiler_and_link_flags(language);
-    bool msvc = config_.compiler_type.rfind("msvc", 0) == 0;
-
-    // Per-check copts go after the toolchain copts (which means they win on
-    // conflict — matches how `bazel build --copt=...` last-wins semantics
-    // are layered on top of toolchain defaults).
-    for (const std::string& opt : extra_copts) cmd.push_back(opt);
+    // Extras go through the marker-substituting helper so -Wno-error=
+    // suppressions stay after any caller-supplied -Werror=… (last-wins).
+    std::vector<std::string> cmd =
+        get_compiler_and_link_flags(language, extra_copts, extra_linkopts);
+    bool msvc = is_msvc_like(config_.compiler_type);
 
     if (msvc) {
         std::filesystem::path exe = tmp.dir / (tmp.safe_id + ".exe");
         cmd.push_back("/Fe" + exe.string());
         cmd.push_back(source_file->string());
         cmd.push_back(library + ".lib");
-        for (const std::string& opt : extra_linkopts) cmd.push_back(opt);
     } else {
         cmd.push_back(source_file->string());
         cmd.push_back("-o");
         cmd.push_back((tmp.dir / tmp.safe_id).string());
         cmd.push_back("-l" + library);
-        for (const std::string& opt : extra_linkopts) cmd.push_back(opt);
     }
 
     return run_command("compile and link", cmd) == 0;

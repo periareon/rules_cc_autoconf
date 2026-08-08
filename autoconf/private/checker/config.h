@@ -50,4 +50,16 @@ struct Config {
         const std::filesystem::path& config_path);
 };
 
+/**
+ * @brief True iff compiler_type names an MSVC-style toolchain.
+ *
+ * Selects the /-flag command-line dialect over the -flag dialect. Includes
+ * both cl.exe (compiler_type matches "msvc*") and clang-cl (which drives
+ * the clang backend through a cl.exe-compatible command line). Matches
+ * _MSVC_LIKE_COMPILERS = ("msvc-cl", "clang-cl") on the Starlark side.
+ */
+inline bool is_msvc_like(const std::string& compiler_type) {
+    return compiler_type.rfind("msvc", 0) == 0 || compiler_type == "clang-cl";
+}
+
 }  // namespace rules_cc_autoconf
