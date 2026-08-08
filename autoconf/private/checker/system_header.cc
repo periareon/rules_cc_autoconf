@@ -11,6 +11,7 @@
 #include <windows.h>
 #endif
 
+#include "autoconf/private/checker/config.h"
 #include "autoconf/private/checker/debug_logger.h"
 #include "autoconf/private/common/file_util.h"
 
@@ -104,7 +105,7 @@ std::optional<std::filesystem::path> find_system_header_path(
     const std::string& compiler, const std::vector<std::string>& flags,
     const std::string& compiler_type, const std::string& header,
     const std::string& source_id, const std::filesystem::path& source_dir) {
-    bool msvc = compiler_type.rfind("msvc", 0) == 0;
+    bool msvc = is_msvc_like(compiler_type);
 
     // Write a minimal source file that includes the target header
     std::string extension = ".c";

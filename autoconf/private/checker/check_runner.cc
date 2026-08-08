@@ -620,7 +620,7 @@ CheckResult CheckRunner::check_gl_next_header(const Check& check) {
         find_system_header_path(compiler, flags, config_.compiler_type, header,
                                 source_id_, source_dir_);
 
-    bool msvc = config_.compiler_type.rfind("msvc", 0) == 0;
+    bool msvc = is_msvc_like(config_.compiler_type);
 
     if (!sys_path.has_value()) {
         // MSVC: return empty so the template's `# @INCLUDE_NEXT@ @NEXT_*@`

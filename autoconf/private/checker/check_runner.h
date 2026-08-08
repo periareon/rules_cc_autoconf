@@ -185,12 +185,19 @@ class CheckRunner {
         const std::vector<std::string>& extra_linkopts = {});
 
     /**
-     * @brief Filter out flags that promote warnings to errors.
-     * @param flags Original compiler flags.
-     * @return Filtered flags safe for configuration checks.
+     * @brief Strip flags that promote warnings to errors (-Werror family).
+     *        Safe for both compile and link flag lists.
      */
     std::vector<std::string> filter_error_flags(
         const std::vector<std::string>& flags);
+
+    /**
+     * @brief Append -Wno-error= suppressions for warnings that modern
+     *        clang/gcc escalate to errors by default (strict-prototypes,
+     *        implicit-function-declaration, ...). Compile-only — no-op on
+     *        MSVC cl.exe (does not understand -W… syntax).
+     */
+    void append_error_suppressions(std::vector<std::string>& cmd) const;
 
     /**
      * @brief Replace a sentinel marker in a flags vector with replacement
