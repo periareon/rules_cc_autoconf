@@ -4,7 +4,8 @@ Checks the signature of strerror_r().
 
 Defines:
   - HAVE_DECL_STRERROR_R (if declared)
-  - STRERROR_R_CHAR_P (if returns char*)
+  - HAVE_STRERROR_R (if the function exists at link time)
+  - STRERROR_R_CHAR_P (if the return type is char*, i.e. the GNU signature)
 """
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
@@ -45,6 +46,40 @@ autoconf(
     ],
 )
 
+# Upstream (functions.m4) probes the return type with a compile test:
+# assigning `*strerror_r(...)` to a `char` and its return value to a `char *`
+# only compiles when strerror_r returns `char *` (the GNU signature). Under
+# the POSIX signature (`int`), `*strerror_r(...)` is an invalid dereference
+# of an int and the initialization of `char *p` from an int is a type error.
+autoconf(
+    name = "ac_cv_func_strerror_r_char_p",
+    checks = [
+        checks.AC_TRY_COMPILE(
+            name = "ac_cv_func_strerror_r_char_p",
+            code = """\
+#include <string.h>
+int main(void) {
+    char buf[100];
+    char x = *strerror_r(0, buf, sizeof buf);
+    char *p = strerror_r(0, buf, sizeof buf);
+    return !p || x;
+}
+""",
+            # glibc exposes the GNU (char*) signature only under
+            # _GNU_SOURCE; the POSIX int signature is the default. Upstream
+            # relies on AC_USE_SYSTEM_EXTENSIONS having been AC_REQUIRE'd
+            # already; we thread it explicitly.
+            compile_defines = ["_GNU_SOURCE"],
+            requires = ["ac_cv_have_decl_strerror_r"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":ac_cv_have_decl_strerror_r",
+        "//autoconf/macros/AC_USE_SYSTEM_EXTENSIONS",
+    ],
+)
+
 autoconf(
     name = "HAVE_STRERROR_R",
     checks = [
@@ -53,20 +88,21 @@ autoconf(
         # HAVE_DECL_STRERROR_R is the one that gets substituted.
         checks.AC_DEFINE(
             "HAVE_STRERROR_R",
+            "1",
             condition = "ac_cv_func_strerror_r",
             if_false = None,
         ),
-    ] + select({
-        # On Linux with glibc, strerror_r returns char* (GNU extension)
-        "@platforms//os:linux": [
-            checks.AC_DEFINE("STRERROR_R_CHAR_P", 1),
-        ],
-        # On macOS/POSIX, strerror_r returns int
-        "//conditions:default": [],
-    }),
+        checks.AC_DEFINE(
+            "STRERROR_R_CHAR_P",
+            "1",
+            condition = "ac_cv_func_strerror_r_char_p",
+            if_false = None,
+        ),
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":ac_cv_func_strerror_r",
+        ":ac_cv_func_strerror_r_char_p",
     ],
 )
 
