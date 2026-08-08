@@ -145,17 +145,14 @@ def _header_code_from_includes(includes_list):
 #
 #   - innocuous-define / <limits.h> / #undef dance neutralizes any
 #     conflicting prototype <limits.h> drags in (HP-UX 11i's gettimeofday
-#     is the canonical case) so our `char FUNC ();` isn't shadowed.
-#   - `char FUNC ()` — K&R "unspecified args" prototype, matching
-#     upstream autoconf 2.72 (`AC_LANG_FUNC_LINK_TRY`).  An explicit
-#     `(void)` collides with any real declaration `int FUNC(struct
-#     foo *)` that leaks in via a header (e.g. Apple's `<limits.h>`
-#     chain reaches `<sys/utsname.h>` on macOS), making the probe
-#     fail to compile and silently reporting the function ABSENT.
-#     Modern clang (≥ 15/16) can escalate `-Wstrict-prototypes` /
-#     `-Wimplicit-function-declaration` to hard errors by default;
-#     `CheckRunner::filter_error_flags` counters that by dropping
-#     `-Werror*` and appending `-Wno-error=…` for those categories.
+#     is the canonical case) so our `char FUNC (void);` isn't shadowed.
+#   - `char FUNC (void);` prototype — verbatim from upstream autoconf
+#     2.72 `AC_LANG_FUNC_LINK_TRY(C)`, which likewise uses the explicit
+#     `(void)` form (NOT K&R empty parens).  Explicit `(void)` keeps
+#     the probe compiling on modern clang, which escalates
+#     `-Wstrict-prototypes` / `-Wimplicit-function-declaration` to
+#     errors by default — a K&R probe would silently fail and report
+#     the function ABSENT.
 #   - `__stub_FUNC` / `__stub___FUNC` guard catches glibc functions that
 #     always return ENOSYS. Without it we'd report HAVE_FUNC=1 and
 #     consumers would call the stub at runtime.
@@ -174,14 +171,14 @@ extern "C"
 #endif
 #if defined _MSC_VER
 #pragma comment(lib, "legacy_stdio_definitions.lib")
-int {function} ();
+int {function} (void);
 #else
-char {function} ();
+char {function} (void);
 #endif
 #if defined __stub_{function} || defined __stub___{function}
 choke me
 #endif
-int main () {{ return {function} (); }}
+int main(void) {{ return {function}(); }}
 """
 
 # Same template — AC_CHECK_LIB and AC_SEARCH_LIBS both probe a function
