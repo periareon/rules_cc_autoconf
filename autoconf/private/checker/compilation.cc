@@ -267,40 +267,6 @@ std::vector<std::string> CheckRunner::filter_error_flags(
     return filtered;
 }
 
-void CheckRunner::append_error_suppressions(
-    std::vector<std::string>& cmd) const {
-    // Modern clang/gcc escalate several C89-legacy warnings to errors by
-    // default (without -Werror). Emit dialect-appropriate suppressions so
-    // autoconf-shape probes (K&R prototypes, implicit int, etc.) survive.
-    if (is_msvc_like(config_.compiler_type)) {
-        // MSVC warning numbers; clang-cl maps these onto its clang-side
-        // diagnostics via the cl-driver compatibility layer.
-        //   C4013 implicit function declaration
-        //   C4028 formal parameter differs from declaration
-        //   C4029 declared parameter list different from definition
-        //   C4047 differs in levels of indirection
-        //   C4133 incompatible types (function pointer conversion)
-        static const std::string kMsvcSuppressions[] = {
-            "/wd4013", "/wd4028", "/wd4029", "/wd4047", "/wd4133",
-        };
-        cmd.insert(cmd.end(), std::begin(kMsvcSuppressions),
-                   std::end(kMsvcSuppressions));
-        return;
-    }
-    // gcc/clang: only suppressions BOTH understand — gcc errors out on
-    // unknown -Wno-error=; "incompatible-pointer-types" covers what clang
-    // spells "incompatible-function-pointer-types".
-    static const std::string kGnuSuppressions[] = {
-        "-Wno-error=strict-prototypes",
-        "-Wno-error=implicit-function-declaration",
-        "-Wno-error=implicit-int",
-        "-Wno-error=int-conversion",
-        "-Wno-error=incompatible-pointer-types",
-    };
-    cmd.insert(cmd.end(), std::begin(kGnuSuppressions),
-               std::end(kGnuSuppressions));
-}
-
 std::vector<std::string> CheckRunner::replace_marker(
     const std::vector<std::string>& flags, const char* marker,
     const std::vector<std::string>& replacement) {
@@ -331,7 +297,6 @@ std::vector<std::string> CheckRunner::get_compiler_and_flags(
         auto processed = replace_marker(filtered, kCoptsMarker, extra_copts);
         cmd.insert(cmd.end(), processed.begin(), processed.end());
     }
-    append_error_suppressions(cmd);
     return cmd;
 }
 
@@ -346,7 +311,6 @@ std::vector<std::string> CheckRunner::get_compiler_and_link_flags(
         auto filtered = filter_error_flags(config_.cpp_flags);
         auto processed = replace_marker(filtered, kCoptsMarker, extra_copts);
         cmd.insert(cmd.end(), processed.begin(), processed.end());
-        append_error_suppressions(cmd);
         auto link_filtered = filter_error_flags(config_.cpp_link_flags);
         auto link_processed =
             replace_marker(link_filtered, kLinkoptsMarker, extra_linkopts);
@@ -358,7 +322,6 @@ std::vector<std::string> CheckRunner::get_compiler_and_link_flags(
         auto filtered = filter_error_flags(config_.c_flags);
         auto processed = replace_marker(filtered, kCoptsMarker, extra_copts);
         cmd.insert(cmd.end(), processed.begin(), processed.end());
-        append_error_suppressions(cmd);
         auto link_filtered = filter_error_flags(config_.c_link_flags);
         auto link_processed =
             replace_marker(link_filtered, kLinkoptsMarker, extra_linkopts);
