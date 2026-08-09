@@ -979,23 +979,32 @@ def _ac_prog_cxx(requires = None):
 #   GitHub mirror: https://github.com/autotools-mirror/autoconf/blob/v2.72/lib/autoconf/types.m4
 #   Macro: AC_CHECK_SIZEOF (uses _AC_CACHE_CHECK_INT → _AC_COMPUTE_INT_COMPILE)
 #
-# Upstream uses the same negative-array-size trick wrapped in
-# AC_LANG_BOOL_COMPILE_TRY: `static int test_array[1 - 2 * !(EXPR)]`.
-# We use the typedef variant `typedef int X[(EXPR) ? 1 : -1]` —
-# equivalent compile-error mechanism, with no storage and no
-# -Wunused-variable concern.
-#
-# The checker iterates candidate values, substituting {value}; compile
-# succeeds iff sizeof matches.
-_AC_CHECK_SIZEOF_TEMPLATE = """\
+# Upstream uses the negative-array-size trick wrapped in
+# AC_LANG_BOOL_COMPILE_TRY: `static int test_array[1 - 2 * !(EXPR)]`
+# where EXPR is `sizeof(TYPE) <= mid`, then binary-searches for the
+# tightest bound. We share the exact same shape as
+# _AC_COMPUTE_INT_TEMPLATE: the runner extracts `sizeof(TYPE)` from
+# the `{sizeof(TYPE)}` marker, then bisects over `{lhs} < {rhs}`
+# probes. The typedef variant `typedef int X[(EXPR) ? 1 : -1]` is
+# equivalent to upstream's array trick — same compile-error mechanism,
+# no storage, no -Wunused-variable concern. The MSVC switch/case
+# variant matches _AC_COMPUTE_INT_TEMPLATE's MSVC path.
+_AC_CHECK_SIZEOF_TEMPLATE = """
 {}
 #include <stddef.h>
 
-typedef int _sizeof_check_type[sizeof({}) == {{value}} ? 1 : -1];
-
+{{$sizeof({})}}
+#ifdef _MSC_VER
+int main(void) {{
+    switch(0) {{ case 0: break; case ({{lhs}} < {{rhs}}): break; }}
+    return 0;
+}}
+#else
+typedef int _sizeof_check_type[{{lhs}} < {{rhs}} ? 1 : -1];
 int main(void) {{
     return 0;
 }}
+#endif
 """
 
 def _ac_check_sizeof(
@@ -1112,10 +1121,10 @@ def _ac_check_sizeof(
 #   GitHub mirror: https://github.com/autotools-mirror/autoconf/blob/v2.72/lib/autoconf/types.m4
 #   Macro: AC_CHECK_ALIGNOF
 #
-# Same compile-time bisection mechanism as _AC_CHECK_SIZEOF_TEMPLATE,
-# applied to `offsetof(struct {char c; TYPE x;}, x)` which equals the
-# alignment of TYPE.
-_AC_CHECK_ALIGNOF_TEMPLATE = """\
+# Same shape as _AC_CHECK_SIZEOF_TEMPLATE / _AC_COMPUTE_INT_TEMPLATE:
+# runner extracts `offsetof(struct align_check, x)` from the marker,
+# then bisects. Value equals the alignment of TYPE.
+_AC_CHECK_ALIGNOF_TEMPLATE = """
 {}
 #include <stddef.h>
 
@@ -1124,11 +1133,18 @@ struct align_check {{
     {} x;
 }};
 
-typedef int _alignof_check_type[offsetof(struct align_check, x) == {{value}} ? 1 : -1];
-
+{{$offsetof(struct align_check, x)}}
+#ifdef _MSC_VER
+int main(void) {{
+    switch(0) {{ case 0: break; case ({{lhs}} < {{rhs}}): break; }}
+    return 0;
+}}
+#else
+typedef int _alignof_check_type[{{lhs}} < {{rhs}} ? 1 : -1];
 int main(void) {{
     return 0;
 }}
+#endif
 """
 
 def _ac_check_alignof(
@@ -1501,7 +1517,7 @@ def _ac_check_member(
 #   https://learn.microsoft.com/en-us/cpp/build/reference/std-specify-language-standard-version
 _AC_COMPUTE_INT_TEMPLATE = """
 {}
-{{{}}}
+{{${}}}
 #ifdef _MSC_VER
 int main(void) {{
     switch(0) {{ case 0: break; case ({{lhs}} < {{rhs}}): break; }}

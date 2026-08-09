@@ -1,23 +1,68 @@
 """AC_TYPE_PID_T - Autoconf builtin macro
 
-Checks if pid_t type is defined.
+Checks if pid_t type is defined; if not, defines it to a signed integer
+type capable of holding a process identifier.
 
 Defines:
-  - pid_t (if not defined, defined to int)
+  - pid_t = int         (if pid_t missing, and target is not 64-bit Windows)
+  - pid_t = __int64     (if pid_t missing, and target is 64-bit Windows LLP64)
 """
 
+load("@bazel_skylib//lib:selects.bzl", "selects")
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
+
+# Upstream (types.m4) picks the fallback via a compile probe: it tries to
+# compile a program whose body is bare `LLP64` guarded by
+# `#if defined _WIN64 && !defined __CYGWIN__`. On 64-bit Windows the bare
+# identifier is a syntax error → __int64; elsewhere the block is dead → int.
+#
+# Bazel's target platform is already known statically, so we do the same
+# discrimination via a config_setting_group instead of a compile probe.
+# Windows on x86_64 or aarch64 is LLP64; 32-bit Windows uses int.
+selects.config_setting_group(
+    name = "_win64",
+    match_any = [
+        ":_windows_x86_64",
+        ":_windows_aarch64",
+    ],
+)
+
+selects.config_setting_group(
+    name = "_windows_x86_64",
+    match_all = [
+        "@platforms//os:windows",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+selects.config_setting_group(
+    name = "_windows_aarch64",
+    match_all = [
+        "@platforms//os:windows",
+        "@platforms//cpu:aarch64",
+    ],
+)
 
 autoconf(
     name = "AC_TYPE_PID_T",
     checks = [
         checks.AC_CHECK_TYPE("pid_t"),
-        checks.AC_DEFINE(
-            "pid_t",
-            "int",
-            requires = ["!ac_cv_type_pid_t"],
-        ),
-    ],
+    ] + select({
+        ":_win64": [
+            checks.AC_DEFINE(
+                "pid_t",
+                "__int64",
+                requires = ["!ac_cv_type_pid_t"],
+            ),
+        ],
+        "//conditions:default": [
+            checks.AC_DEFINE(
+                "pid_t",
+                "int",
+                requires = ["!ac_cv_type_pid_t"],
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
 )

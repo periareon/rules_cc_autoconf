@@ -1,26 +1,37 @@
 """AC_HEADER_MAJOR - Autoconf builtin macro
 
-Checks where major() macro is defined (sys/types.h or sys/mkdev.h).
+Checks where the major(), minor(), and makedev() macros are defined.
 
 Defines:
-  - MAJOR_IN_MKDEV (if in sys/mkdev.h)
-  - MAJOR_IN_SYSMACROS (if in sys/syschecks.h)
+  - MAJOR_IN_MKDEV (if declared in sys/mkdev.h)
+  - MAJOR_IN_SYSMACROS (if declared in sys/sysmacros.h and not in sys/mkdev.h)
 """
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
+# Upstream order (headers.m4): probe sys/mkdev.h first; only fall back to
+# sys/sysmacros.h if sys/mkdev.h is absent. On systems where both exist
+# (some legacy Solaris), MAJOR_IN_MKDEV wins.
 autoconf(
     name = "AC_HEADER_MAJOR",
     checks = [
-        # Check for major() macro in various headers
-        checks.AC_CHECK_DECL(
-            "major",
-            includes = [
-                "#include <sys/mkdev.h>",
-                "#include <sys/syschecks.h>",
-                "#include <sys/types.h>",
-            ],
+        checks.AC_CHECK_HEADER("sys/mkdev.h"),
+        checks.AC_DEFINE(
+            "MAJOR_IN_MKDEV",
+            "1",
+            condition = "ac_cv_header_sys_mkdev_h",
+            if_false = None,
+        ),
+        checks.AC_CHECK_HEADER(
+            "sys/sysmacros.h",
+            requires = ["!ac_cv_header_sys_mkdev_h"],
+        ),
+        checks.AC_DEFINE(
+            "MAJOR_IN_SYSMACROS",
+            "1",
+            condition = "ac_cv_header_sys_sysmacros_h",
+            if_false = None,
         ),
     ],
     visibility = ["//visibility:public"],

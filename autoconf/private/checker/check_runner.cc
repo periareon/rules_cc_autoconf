@@ -429,9 +429,21 @@ CheckResult CheckRunner::check_sizeof(const Check& check) {
     if (check.copts().has_value()) {
         extra_copts = *check.copts();
     }
-    // Use static_assert to find the sizeof value at compile time
-    std::optional<int> size = find_compile_time_value_with_static_assert(
-        code_template, check.language(), extra_copts);
+    // Match upstream `_AC_COMPUTE_INT_COMPILE` (general.m4:3375-3413):
+    // compile-time bisection using the negative-array-size trick. The
+    // template exposes `sizeof(TYPE)` via a `{sizeof(TYPE)}` marker and
+    // `{lhs} < {rhs}` probes; `find_compile_time_int_bisect` iterates.
+    // Range [0, 65536] handles every realistic type/struct size in log
+    // steps. On out-of-range or non-evaluable (e.g. unknown type), the
+    // bisector throws — treat as "size unknown" (success=false).
+    std::optional<int> size;
+    try {
+        size = find_compile_time_int_bisect(code_template, check.language(),
+                                            /*search_begin=*/0,
+                                            /*search_end=*/65536, extra_copts);
+    } catch (const std::runtime_error&) {
+        size = std::nullopt;
+    }
 
     if (size.has_value()) {
         return CheckResult(check.name(), std::to_string(*size), true,
@@ -464,9 +476,18 @@ CheckResult CheckRunner::check_alignof(const Check& check) {
     if (check.copts().has_value()) {
         extra_copts = *check.copts();
     }
-    // Use static_assert to find the alignment value at compile time
-    std::optional<int> alignment = find_compile_time_value_with_static_assert(
-        code_template, check.language(), extra_copts);
+    // Same bisect approach as check_sizeof. Alignment is naturally
+    // small (typically ≤ 128) but leave headroom for exotic
+    // over-aligned types.
+    std::optional<int> alignment;
+    try {
+        alignment =
+            find_compile_time_int_bisect(code_template, check.language(),
+                                         /*search_begin=*/1,
+                                         /*search_end=*/4096, extra_copts);
+    } catch (const std::runtime_error&) {
+        alignment = std::nullopt;
+    }
 
     if (alignment.has_value()) {
         return CheckResult(check.name(), std::to_string(*alignment), true,
@@ -523,6 +544,19 @@ CheckResult CheckRunner::check_decl(const Check& check) {
     std::vector<std::string> extra_copts;
     if (check.copts().has_value()) {
         extra_copts = *check.copts();
+    }
+    // Match upstream `_AC_UNDECLARED_BUILTIN` (general.m4:3106-3156):
+    // remove the compiler's built-in symbol knowledge so a probe of
+    // `(void) SYMBOL;` only succeeds when SYMBOL is declared by the
+    // includes. Without this, GCC/Clang know libc names like `strchr`,
+    // `printf`, `memcpy` as builtins and AC_CHECK_DECL false-reports
+    // HAVE_DECL_<sym>=1 even when no header declares it. On modern
+    // GCC/Clang the flag is a no-op for well-declared symbols; on
+    // older versions it forces the semantic upstream selects via
+    // its `''` / `-fno-builtin` probe cascade. MSVC's builtin surface
+    // does not affect this class of probe in practice, so skip it.
+    if (!is_msvc_like(config_.compiler_type)) {
+        extra_copts.push_back("-fno-builtin");
     }
     bool found = try_compile(code, check.language(), extra_copts);
 
@@ -746,21 +780,28 @@ static std::string gen_less_compare(const std::string& base_code_template,
 
 static std::pair<std::string, std::string> split_code_expr(
     const std::string& base_code_template) {
-    const size_t begin = base_code_template.find('{');
+    // Look for the `{$...}` marker specifically. Anchoring on `{$`
+    // rather than any `{` lets templates freely emit `struct {...};`
+    // or C99 designated initializers before the expression marker
+    // (needed by AC_CHECK_ALIGNOF, which declares a struct so the
+    // `offsetof(...)` expression can reference it).
+    const size_t begin = base_code_template.find("{$");
     const char* const error =
-        "Code template must contains '{$EXPR}' placeholder for expr value "
+        "Code template must contain '{$EXPR}' placeholder for expr value "
         "evaluation";
     if (begin == std::string::npos) {
         throw std::runtime_error(error);
     }
 
-    const size_t end = base_code_template.find('}', begin + 1);
+    // Skip past the `{$` prefix; the expression starts after it.
+    const size_t expr_start = begin + 2;
+    const size_t end = base_code_template.find('}', expr_start);
     if (end == std::string::npos) {
         throw std::runtime_error(error);
     }
 
     const std::string expr =
-        base_code_template.substr(begin + 1, end - begin - 1);
+        base_code_template.substr(expr_start, end - expr_start);
 
     if (expr.empty()) {
         throw std::runtime_error(error);
