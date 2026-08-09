@@ -94,6 +94,15 @@ alias(
 )
 
 alias(
+    name = "tclsh",
+    actual = "@tcl_lang//:tclsh",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
+alias(
     name = "tcpdump",
     actual = "@tcpdump",
     target_compatible_with = select({
@@ -116,9 +125,12 @@ alias(
     actual = "@x264",
 )
 
-build_test(
-    name = "build_test",
-    targets = [
+[
+    build_test(
+        name = "{}_build_test".format(target.lstrip(":")),
+        targets = [target],
+    )
+    for target in [
         ":bison",
         ":ffmpeg",
         ":flex",
@@ -135,5 +147,6 @@ build_test(
         ":tcpdump",
         ":tftp-hpa",
         ":x264",
-    ],
-)
+        ":tclsh",
+    ]
+]
