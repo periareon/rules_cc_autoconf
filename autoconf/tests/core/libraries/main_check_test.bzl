@@ -15,6 +15,12 @@ _CUSTOM_CODE = "int main(void) { return 23; }"
 def _spec(check):
     return json.decode(check)
 
+def _normalize_newlines(value):
+    return value.replace("\r\n", "\n")
+
+def _assert_generated_code_equals(env, expected, actual):
+    asserts.equals(env, _normalize_newlines(expected), _normalize_newlines(actual))
+
 def _main_check_test_impl(ctx):
     env = unittest.begin(ctx)
 
@@ -30,10 +36,10 @@ def _main_check_test_impl(ctx):
     asserts.equals(env, "ac_cv_lib_m_main", lib["name"])
     asserts.equals(env, "m", lib["library"])
     asserts.equals(env, "HAVE_LIBM", lib["define"])
-    asserts.equals(env, _C_MAIN_CODE, lib["code"])
-    asserts.equals(env, _C_MAIN_CODE, search["code"])
-    asserts.equals(env, _CPP_MAIN_CODE, cpp_lib["code"])
-    asserts.equals(env, _CPP_MAIN_CODE, cpp_search["code"])
+    _assert_generated_code_equals(env, _C_MAIN_CODE, lib["code"])
+    _assert_generated_code_equals(env, _C_MAIN_CODE, search["code"])
+    _assert_generated_code_equals(env, _CPP_MAIN_CODE, cpp_lib["code"])
+    _assert_generated_code_equals(env, _CPP_MAIN_CODE, cpp_search["code"])
 
     asserts.equals(env, _CUSTOM_CODE, _spec(checks.AC_CHECK_LIB(
         "m",
