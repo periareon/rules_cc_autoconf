@@ -17,3 +17,5 @@
 - [Gnulib](./gnulib.md)
 
 - [Migrating M4 macros](./migration.md)
+
+- [MSVC](./msvc.md)
