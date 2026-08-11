@@ -6,6 +6,25 @@ dependency graph wiring matches what the C++ condition evaluator expects.
 
 _COMPARISON_OPS = ["<=", ">=", "!=", "==", "<", ">", "="]
 
+def strip_macro_args(name):
+    """Return the bare identifier from a possibly function-like define name.
+
+    `AC_DEFINE("FOO(a, b)", ...)` writes `#define FOO(a, b) ...` in the
+    generated header, but the C symbol identity — and what the cache
+    variable / duplicate-detection registry key on — is just `FOO`.
+
+    Args:
+        name: A define name, optionally including a function-like macro
+            argument list (e.g. ``"FOO"`` or ``"FOO(a, b)"``).
+
+    Returns:
+        The bare identifier with any ``(...)`` argument list removed.
+    """
+    paren = name.find("(")
+    if paren < 0:
+        return name
+    return name[:paren].rstrip(" \t")
+
 def _strip_leading_negations(token):
     """Strip all leading '!' characters from a token."""
     for _ in range(len(token)):

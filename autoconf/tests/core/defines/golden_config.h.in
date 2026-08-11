@@ -77,3 +77,6 @@
 
 /* Indented value */
 /* #     undef INDENTED_VALUE_3 */
+
+/* Multiplication macro */
+#define MY_MULT(a, b) ((a) * (b))

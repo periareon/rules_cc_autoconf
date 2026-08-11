@@ -4,6 +4,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "autoconf/private/checker/check_result.h"
@@ -94,6 +95,9 @@ class SourceGenerator {
             results_by_name;  // Map from define name to result
         std::set<std::string>
             builtins;  // Set of builtin names that need processing
+        // (bare identifier, result*) pairs for every define — populated once
+        // in load_and_parse_data so downstream passes don't re-strip.
+        std::vector<std::pair<std::string, const CheckResult*>> define_entries;
     };
 
     /**

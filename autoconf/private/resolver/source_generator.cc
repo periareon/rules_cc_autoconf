@@ -23,6 +23,25 @@ struct UndefReplacement {
 };
 
 /**
+ * @brief Extract the bare identifier from a define name, stripping any
+ * function-like macro argument list.
+ *
+ * `AC_DEFINE([FOO(a, b)], ...)` writes `#undef FOO` into config.h.in but
+ * emits `#define FOO(a, b) ...` in the generated config.h — so the lookup
+ * key must be the bare "FOO" even when the emitted line carries the full
+ * "FOO(a, b)".
+ */
+std::string strip_macro_args(const std::string& define_name) {
+    size_t paren = define_name.find('(');
+    if (paren == std::string::npos) {
+        return define_name;
+    }
+    size_t last = define_name.find_last_not_of(" \t", paren - 1);
+    return last == std::string::npos ? std::string()
+                                     : define_name.substr(0, last + 1);
+}
+
+/**
  * @brief Parse a single #undef line, extracting the spacing, name, and trailing
  * newlines.
  *
@@ -251,21 +270,19 @@ SourceGenerator::ProcessedData SourceGenerator::load_and_parse_data() const {
         data.results_by_name[result.name] = &result;
     }
 
-    // Process define_results for config.h
+    // Process define_results for config.h. Key everything by the bare
+    // identifier so downstream `#undef NAME` lookups match even when the
+    // define is function-like (e.g., "PRINTF_FORMAT(a, b)").
+    data.define_entries.reserve(define_results_.size());
     for (const CheckResult& result : define_results_) {
-        // Use the define name from the check if available, otherwise use cache
-        // variable name
         std::string define_name =
             result.define.has_value() ? *result.define : result.name;
+        std::string lookup_key = strip_macro_args(define_name);
 
-        // Store result by define name for template replacement
-        data.results_by_name[define_name] = &result;
-
-        // Store define value
-        data.define_values[define_name] = result.value.value_or("");
-
-        // Drain builtin from set
-        data.builtins.erase(define_name);
+        data.results_by_name[lookup_key] = &result;
+        data.define_values[lookup_key] = result.value.value_or("");
+        data.builtins.erase(lookup_key);
+        data.define_entries.emplace_back(std::move(lookup_key), &result);
     }
 
     // Process subst_results for subst.h
@@ -298,8 +315,9 @@ std::string SourceGenerator::process_defines_replacement(
     // Build a replacement map for all defines in a single pass
     std::unordered_map<std::string, UndefReplacement> replacements;
 
-    for (const CheckResult& result : define_results_) {
-        std::string define_name =
+    for (const auto& [lookup_key, result_ptr] : data.define_entries) {
+        const CheckResult& result = *result_ptr;
+        const std::string& define_name =
             result.define.has_value() ? *result.define : result.name;
 
         // Determine whether to create a #define or comment out the #undef
@@ -332,9 +350,9 @@ std::string SourceGenerator::process_defines_replacement(
                     replacement_text += " /**/";
                 }
             }
-            replacements[define_name] = {replacement_text, false};
+            replacements[lookup_key] = {replacement_text, false};
         } else {
-            replacements[define_name] = {"", true};
+            replacements[lookup_key] = {"", true};
         }
     }
 
@@ -441,13 +459,11 @@ std::string SourceGenerator::process_subst_replacements(
 
 // Step 4b: Comment out #undef statements for defines in subst mode
 std::string SourceGenerator::comment_out_define_undefs(
-    std::string content, const ProcessedData& /* data */) const {
+    std::string content, const ProcessedData& data) const {
     // Build a map of all define names → comment out
     std::unordered_map<std::string, UndefReplacement> replacements;
-    for (const CheckResult& result : define_results_) {
-        std::string define_name =
-            result.define.has_value() ? *result.define : result.name;
-        replacements[define_name] = {"", true};
+    for (const auto& [lookup_key, _] : data.define_entries) {
+        replacements[lookup_key] = {"", true};
     }
 
     return batch_replace_undefs(content, replacements, false);

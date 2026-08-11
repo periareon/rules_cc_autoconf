@@ -82,6 +82,7 @@ The parameter `headers` is a deprecated alias for `includes`; prefer `includes`.
 """
 
 load("//autoconf/private:check_info.bzl", "make_check")
+load("//autoconf/private:condition_utils.bzl", "strip_macro_args")
 
 # Used by AC_CHECK_HEADER (single header name -> #include line)
 _AC_INCLUDE_FORMAT_WITH_NEWLINE = "#include <{}>\n"
@@ -2032,11 +2033,13 @@ def _ac_define_common(
     _validate_not_select(if_true, "if_true", "AC_DEFINE")
     _validate_not_select(if_false, "if_false", "AC_DEFINE")
 
+    # Function-like macro args (e.g. "FOO(a, b)") mustn't leak into the cache
+    # variable name — the cache name is used verbatim as a Bazel filename.
     check = {
         "code": "",
         "define": define,
         "language": "c",
-        "name": "ac_cv_define_{}".format(define),
+        "name": "ac_cv_define_{}".format(strip_macro_args(define)),
         "type": "define",
     }
 

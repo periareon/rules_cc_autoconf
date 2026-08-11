@@ -17,5 +17,10 @@ int main(void) {
     assert(UNQUOTED_HEX == 0x1000);
     assert(UNQUOTED_NUM == 42);
 
+    // Verify function-like macro expansion. If MY_MULT is left as a bare
+    // identifier (bug), the `#define` is dropped and this call to an
+    // undefined identifier fails to compile.
+    assert(MY_MULT(3, 4) == 12);
+
     return 0;
 }

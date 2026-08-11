@@ -39,6 +39,15 @@ autoconf(
         checks.AC_DEFINE_UNQUOTED("UNQUOTED_HEX", "0x1000"),
         # Test AC_DEFINE_UNQUOTED with numeric string - should render as 42 (not "42")
         checks.AC_DEFINE_UNQUOTED("UNQUOTED_NUM", "42"),
+        # Test AC_DEFINE with a function-like macro name — matches real
+        # autoconf, which writes `#undef MY_MULT` in config.h.in but emits
+        # `#define MY_MULT(a, b) ...` in the generated config.h. Value is a
+        # portable C expression so the C test compiles under both GCC/Clang
+        # and MSVC.
+        checks.AC_DEFINE(
+            "MY_MULT(a, b)",
+            value = "((a) * (b))",
+        ),
     ],
     deps = [":package"],
 )

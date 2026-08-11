@@ -14,7 +14,7 @@ load(
     "get_environment_variables",
     "write_config_json",
 )
-load("//autoconf/private:condition_utils.bzl", "extract_condition_vars")
+load("//autoconf/private:condition_utils.bzl", "extract_condition_vars", "strip_macro_args")
 load("//autoconf/private:ctx_actions_write.bzl", "write")
 load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
 
@@ -116,8 +116,9 @@ def _process_build_settings(
         subst = metadata.get("subst")
         unquote = metadata.get("unquote", False)
 
-        define_name = _coerce_name(name, define)
-        subst_name = _coerce_name(name, _coerce_name(define_name, subst))
+        define_full = _coerce_name(name, define)
+        define_key = strip_macro_args(define_full)
+        subst_name = _coerce_name(name, _coerce_name(define_key, subst))
 
         value = target[BuildSettingInfo].value
         content_key = json.encode([
@@ -149,11 +150,11 @@ def _process_build_settings(
         }
 
         if define:
-            _assert_no_duplicate("Define", define_name, define_checks, ctx, source_desc)
-            define_checks[define_name] = source_desc
-            define_results[define_name] = output
+            _assert_no_duplicate("Define", define_key, define_checks, ctx, source_desc)
+            define_checks[define_key] = source_desc
+            define_results[define_full] = output
             if unquote:
-                unquoted_defines.append(define_name)
+                unquoted_defines.append(define_full)
 
         if subst:
             _assert_no_duplicate("Subst", subst_name, subst_checks, ctx, source_desc)
@@ -213,11 +214,16 @@ def autoconf_impl_common(ctx, resolve_toolchain):
 
         name = check["name"]
         define = check.get("define")
-        define_name = _coerce_name(name, define)
+
+        # `define_full` (e.g. "FOO(a, b)") flows through the manifest so the
+        # emitted `#define` keeps its arg list; `define_key` ("FOO") is what
+        # duplicate detection and the resolver's `#undef` lookup key on.
+        define_full = _coerce_name(name, define)
+        define_key = strip_macro_args(define_full)
         subst = check.get("subst")
 
         # Subst will prefer the define name if it's available.
-        subst_name = _coerce_name(name, _coerce_name(define_name, subst))
+        subst_name = _coerce_name(name, _coerce_name(define_key, subst))
 
         # Compute content key from implementation fields only
         content_key = _check_content_key(check)
@@ -249,13 +255,15 @@ def autoconf_impl_common(ctx, resolve_toolchain):
 
         # Define/subst conflict detection: different cache variable claiming same symbol = error
         if define:
-            check["define"] = define_name
-            _assert_no_duplicate("Define", define_name, define_checks, ctx, check)
-            define_checks[define_name] = check
-            define_results[define_name] = output
+            check["define"] = define_full
+            _assert_no_duplicate("Define", define_key, define_checks, ctx, check)
+            define_checks[define_key] = check
+
+            # Keyed by full text — flows into the manifest as `result.define`.
+            define_results[define_full] = output
 
             if check.get("unquote", False):
-                unquoted_defines.append(define_name)
+                unquoted_defines.append(define_full)
 
         if subst:
             check["subst"] = subst_name
