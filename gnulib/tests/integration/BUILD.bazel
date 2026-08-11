@@ -85,6 +85,11 @@ alias(
 )
 
 alias(
+    name = "pq",
+    actual = "@postgres//:pq",
+)
+
+alias(
     name = "readline",
     actual = "@readline",
     target_compatible_with = select({
@@ -143,6 +148,7 @@ alias(
         ":m4",
         ":mosquitto",
         ":patch",
+        ":pq",
         ":readline",
         ":tcpdump",
         ":tftp-hpa",
