@@ -1,4 +1,4 @@
-"""Source-generation tests for AC_LANG_CALL([main])."""
+"""Source-generation tests for AC_CHECK_LIB / AC_SEARCH_LIBS probes."""
 
 load("@bazel_skylib//lib:unittest.bzl", "asserts", "unittest")
 load("//autoconf:checks.bzl", "checks")
@@ -9,6 +9,14 @@ namespace conftest {
 extern "C" int main();
 }
 int main(void) { return conftest::main(); }
+"""
+
+# C++ branch must not gate on function == "main".
+_CPP_FOO_CODE = """\
+namespace conftest {
+extern "C" int foo();
+}
+int main(void) { return conftest::foo(); }
 """
 _CUSTOM_CODE = "int main(void) { return 23; }"
 
@@ -40,6 +48,9 @@ def _main_check_test_impl(ctx):
     _assert_generated_code_equals(env, _C_MAIN_CODE, search["code"])
     _assert_generated_code_equals(env, _CPP_MAIN_CODE, cpp_lib["code"])
     _assert_generated_code_equals(env, _CPP_MAIN_CODE, cpp_search["code"])
+
+    cpp_foo = _spec(checks.AC_CHECK_LIB("mylib", "foo", language = "cpp"))
+    _assert_generated_code_equals(env, _CPP_FOO_CODE, cpp_foo["code"])
 
     asserts.equals(env, _CUSTOM_CODE, _spec(checks.AC_CHECK_LIB(
         "m",

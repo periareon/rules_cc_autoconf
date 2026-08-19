@@ -182,30 +182,27 @@ choke me
 int main(void) {{ return {function}(); }}
 """
 
-# GNU Autoconf's C AC_LANG_CALL omits the external function declaration when
-# FUNCTION is `main`: AC_LANG_PROGRAM necessarily defines main itself, and a
-# generic `char main (void);` declaration would conflict with that definition.
-_AC_LANG_CALL_MAIN_TEMPLATE = """\
-int main(void) { return main(); }
-"""
-
-_AC_LANG_CALL_CPP_MAIN_TEMPLATE = """\
-namespace conftest {
-extern "C" int main();
-}
-int main(void) { return conftest::main(); }
+# Upstream AC_LANG_CALL(C++) uses this shape for every function
+# (https://github.com/autotools-mirror/autoconf/blob/v2.73/lib/autoconf/c.m4#L251-L266)
+# — no main-branch, unlike AC_LANG_CALL(C).
+_AC_LANG_CALL_CPP_TEMPLATE = """\
+namespace conftest {{
+extern "C" int {function}();
+}}
+int main(void) {{ return conftest::{function}(); }}
 """
 
 def _library_function_link_test_code(function, language):
     """Return source for AC_CHECK_LIB/AC_SEARCH_LIBS function-link probes."""
-    if function == "main":
-        if language in ["cpp", "c++"]:
-            return _AC_LANG_CALL_CPP_MAIN_TEMPLATE
-        return _AC_LANG_CALL_MAIN_TEMPLATE
+    if language in ["cpp", "c++"]:
+        return _AC_LANG_CALL_CPP_TEMPLATE.format(function = function)
 
-    # Preserve the repository's historical AC_CHECK_FUNC-shaped probe for
-    # ordinary library symbols. Its stub detection and MSVC handling differ
-    # from upstream AC_LANG_CALL; changing those results is outside this fix.
+    # C main-branch: AC_LANG_PROGRAM already defines main, so no external
+    # decl (https://github.com/autotools-mirror/autoconf/blob/v2.73/lib/autoconf/c.m4#L127-L139).
+    if function == "main":
+        return "int main(void) { return main(); }\n"
+
+    # TODO: replace with upstream AC_LANG_CALL(C) shape (PR #175 follow-up).
     return _AC_CHECK_FUNC_DEFAULT_TEMPLATE.format(function = function)
 
 # AC_CHECK_TYPE probe template.
