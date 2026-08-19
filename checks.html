@@ -555,6 +555,11 @@ macros.AC_CHECK_LIB("pthread", "pthread_create")
 This checks if the specified function is available in the given library.
 It attempts to link against <code>-l&lt;library&gt;</code> to verify the library provides
 the function.</p>
+<pre><code>GNU Autoconf treats `function = "main"` specially. The generated program
+supplies its own `main`, so this form tests whether the complete link
+command accepts `-l&lt;library&gt;`; it does not require the library to export
+a symbol named `main`.
+</code></pre>
 <p><strong>PARAMETERS</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
 <tr><td style="text-align: left"><a id="checks.AC_CHECK_LIB-library"></a>library</td><td style="text-align: left">Library name without the <code>-l</code> prefix (e.g., <code>"m"</code>, <code>"pthread"</code>)</td><td style="text-align: left">none</td></tr>
@@ -964,6 +969,9 @@ checks.AC_SEARCH_LIBS(<a href="#checks.AC_SEARCH_LIBS-function">function</a>, <a
 <p>Search for a function in libc, then in a list of libraries.</p>
 <p>Mirrors GNU autoconf's AC_SEARCH_LIBS. The checker tries linking the
 function without any extra library first, then with each library in order.</p>
+<p>For <code>function = "main"</code>, the generated program supplies its own <code>main</code>.
+Consequently, a working linker succeeds on the initial no-library attempt
+and no candidate library is selected, matching GNU Autoconf.</p>
 <p>When <code>subst</code> is specified, a substitution variable is produced with the
 library flag value: <code>""</code> if the function is in libc or not found,
 <code>"-l&lt;lib&gt;"</code> if found in a library.</p>
