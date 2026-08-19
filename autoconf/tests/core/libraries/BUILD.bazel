@@ -5,6 +5,7 @@ load("//autoconf:checks.bzl", "checks")
 load("//autoconf:package_info.bzl", "package_info")
 load("//autoconf/tests:diff_test.bzl", "diff_test")
 load("//autoconf/tests:gnu_autoconf_configure_test.bzl", "gnu_autoconf_configure_test")
+load(":main_check_test.bzl", "main_check_test")
 
 package_info(
     name = "package",
@@ -15,13 +16,25 @@ package_info(
 autoconf(
     name = "autoconf",
     checks = [
-        checks.AC_CHECK_LIB("m", "cos"),  # Check for math library
+        checks.AC_CHECK_LIB("m", "cos"),  # Check for a symbol in the math library
+        checks.AC_CHECK_LIB(
+            "m",
+            "main",
+            define = "HAVE_LIBM_MAIN",
+        ),  # Check whether the linker accepts the math library
         checks.AC_CHECK_LIB("pthread", "pthread_create"),  # Check for pthread library
         checks.AC_CHECK_LIB("kernel32", "GetLastError"),  # Check for Windows kernel library (Windows only)
         checks.AC_CHECK_LIB("nonexistent", "fake_function"),  # Check for non-existent library
+        checks.AC_CHECK_LIB(
+            "nonexistent",
+            "main",
+            define = "HAVE_LIBNONEXISTENT_MAIN",
+        ),  # Ensure main does not force success
     ],
     deps = [":package"],
 )
+
+main_check_test(name = "main_check_test")
 
 autoconf_hdr(
     name = "config",

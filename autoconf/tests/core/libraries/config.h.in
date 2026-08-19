@@ -3,8 +3,14 @@
 /* Define to 1 if you have the `m' library (-lm). */
 #undef HAVE_LIBM
 
+/* Define to 1 if the linker accepts the `m' library (-lm). */
+#undef HAVE_LIBM_MAIN
+
 /* Define to 1 if you have the `nonexistent' library (-lnonexistent). */
 #undef HAVE_LIBNONEXISTENT
+
+/* Define to 1 if the linker accepts the `nonexistent' library. */
+#undef HAVE_LIBNONEXISTENT_MAIN
 
 /* Define to 1 if you have the `pthread' library (-lpthread). */
 #undef HAVE_LIBPTHREAD

@@ -182,12 +182,31 @@ choke me
 int main(void) {{ return {function}(); }}
 """
 
-# Same template — AC_CHECK_LIB and AC_SEARCH_LIBS both probe a function
-# symbol via AC_LANG_CALL → AC_LANG_FUNC_LINK_TRY upstream, so they
-# share the exact same C body. Aliasing rather than duplicating ensures
-# a future tweak to the probe shape lands everywhere in one edit.
-_AC_CHECK_LIB_TEMPLATE = _AC_CHECK_FUNC_DEFAULT_TEMPLATE
-_AC_SEARCH_LIBS_TEMPLATE = _AC_CHECK_FUNC_DEFAULT_TEMPLATE
+# GNU Autoconf's C AC_LANG_CALL omits the external function declaration when
+# FUNCTION is `main`: AC_LANG_PROGRAM necessarily defines main itself, and a
+# generic `char main (void);` declaration would conflict with that definition.
+_AC_LANG_CALL_MAIN_TEMPLATE = """\
+int main(void) { return main(); }
+"""
+
+_AC_LANG_CALL_CPP_MAIN_TEMPLATE = """\
+namespace conftest {
+extern "C" int main();
+}
+int main(void) { return conftest::main(); }
+"""
+
+def _library_function_link_test_code(function, language):
+    """Return source for AC_CHECK_LIB/AC_SEARCH_LIBS function-link probes."""
+    if function == "main":
+        if language in ["cpp", "c++"]:
+            return _AC_LANG_CALL_CPP_MAIN_TEMPLATE
+        return _AC_LANG_CALL_MAIN_TEMPLATE
+
+    # Preserve the repository's historical AC_CHECK_FUNC-shaped probe for
+    # ordinary library symbols. Its stub detection and MSVC handling differ
+    # from upstream AC_LANG_CALL; changing those results is outside this fix.
+    return _AC_CHECK_FUNC_DEFAULT_TEMPLATE.format(function = function)
 
 # AC_CHECK_TYPE probe template.
 #
@@ -1862,6 +1881,11 @@ def _ac_check_lib(
         It attempts to link against `-l<library>` to verify the library provides
         the function.
 
+        GNU Autoconf treats `function = "main"` specially. The generated program
+        supplies its own `main`, so this form tests whether the complete link
+        command accepts `-l<library>`; it does not require the library to export
+        a symbol named `main`.
+
     Args:
         library: Library name without the `-l` prefix (e.g., `"m"`, `"pthread"`)
         function: Function name to check for in the library (e.g., `"cos"`, `"pthread_create"`)
@@ -1903,13 +1927,10 @@ def _ac_check_lib(
     }
 
     # If custom code is provided, use it; otherwise generate default function check code
-    if code:
+    if code != None:
         check["code"] = code
     else:
-        # Generate default code similar to AC_CHECK_FUNC
-        check["code"] = _AC_CHECK_LIB_TEMPLATE.format(
-            function = function,
-        )
+        check["code"] = _library_function_link_test_code(function, language)
     if copts:
         check["copts"] = copts
     if linkopts:
@@ -1938,6 +1959,10 @@ def _ac_search_libs(
 
     Mirrors GNU autoconf's AC_SEARCH_LIBS. The checker tries linking the
     function without any extra library first, then with each library in order.
+
+    For `function = "main"`, the generated program supplies its own `main`.
+    Consequently, a working linker succeeds on the initial no-library attempt
+    and no candidate library is selected, matching GNU Autoconf.
 
     When `subst` is specified, a substitution variable is produced with the
     library flag value: `""` if the function is in libc or not found,
@@ -1984,10 +2009,10 @@ def _ac_search_libs(
         "type": "search_libs",
     }
 
-    if code:
+    if code != None:
         check["code"] = code
     else:
-        check["code"] = _AC_SEARCH_LIBS_TEMPLATE.format(function = function)
+        check["code"] = _library_function_link_test_code(function, language)
 
     if copts:
         check["copts"] = copts
