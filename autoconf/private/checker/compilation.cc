@@ -421,6 +421,14 @@ bool CheckRunner::try_compile_and_link(
             get_compiler_and_link_flags(language, extra_copts, extra_linkopts);
         std::filesystem::path exe = tmp.executable_path();
         cmd.push_back("/Fe" + exe.string());
+        // Without /Fo, cl writes the intermediate object into the current
+        // working directory -- the execroot, which every configuration shares
+        // -- under a name derived from the source basename. safe_id is the
+        // same for a given check in every configuration, so two configurations
+        // running that check concurrently race on one path and one of them
+        // fails with LNK1181 or C1083. A failed probe is indistinguishable
+        // from an absent feature, so the check silently reports "no".
+        cmd.push_back("/Fo" + tmp.object_path(true).string());
         cmd.push_back(source_file->string());
         return run_command("compile and link", cmd) == 0;
     }
@@ -463,6 +471,9 @@ bool CheckRunner::try_compile_and_link_with_lib(
     if (msvc) {
         std::filesystem::path exe = tmp.dir / (tmp.safe_id + ".exe");
         cmd.push_back("/Fe" + exe.string());
+        // See try_compile_and_link: /Fo keeps the intermediate object out of
+        // the shared execroot, where concurrent configurations would collide.
+        cmd.push_back("/Fo" + tmp.object_path(true).string());
         cmd.push_back(source_file->string());
         cmd.push_back(library + ".lib");
     } else {
