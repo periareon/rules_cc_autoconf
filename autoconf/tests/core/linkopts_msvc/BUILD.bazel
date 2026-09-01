@@ -1,0 +1,87 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:checks.bzl", "checks")
+load("//autoconf:package_info.bzl", "package_info")
+load("//autoconf/tests:diff_test.bzl", "diff_test")
+
+# Regression test: per-check `linkopts` must reach the linker on MSVC.
+# See CheckRunner::append_msvc_link_block for why they previously did not.
+#
+# CommandLineToArgvW is the discriminator. It lives in shell32.lib, which the
+# MSVC toolchain does not link by default, so the probe can only succeed if
+# /DEFAULTLIB:shell32.lib actually reaches the linker.
+
+package_info(
+    name = "package",
+    package_name = "test_linkopts_msvc",
+    package_version = "1.0.0",
+)
+
+_PROBE_CODE = "int n; LPWSTR *argv = CommandLineToArgvW(L\"\", &n); (void)argv;"
+
+_PROBE_INCLUDES = [
+    "#include <windows.h>",
+    "#include <shellapi.h>",
+]
+
+autoconf(
+    name = "autoconf",
+    checks = [
+        # Positive: linkopts name the library that provides the symbol.
+        # Resolves to 0 unless linkopts reach link.exe.
+        checks.AC_TRY_LINK(
+            code = _PROBE_CODE,
+            define = "HAVE_COMMANDLINETOARGVW_WITH_LINKOPTS",
+            includes = _PROBE_INCLUDES,
+            linkopts = ["/DEFAULTLIB:shell32.lib"],
+        ),
+        # Negative control: the identical probe with no linkopts. This must
+        # stay 0. If shell32.lib ever became a default library the positive
+        # check above would pass for the wrong reason, and this catches that.
+        checks.AC_TRY_LINK(
+            code = _PROBE_CODE,
+            define = "HAVE_COMMANDLINETOARGVW_NO_LINKOPTS",
+            includes = _PROBE_INCLUDES,
+        ),
+        # AC_CHECK_LIB passes the library as a bare positional (shell32.lib),
+        # which cl forwards to the linker on its own. This path was already
+        # working; pin it so the /link change does not regress it.
+        checks.AC_CHECK_LIB(
+            "shell32",
+            "CommandLineToArgvW",
+            define = "HAVE_LIBSHELL32_COMMANDLINETOARGVW",
+        ),
+    ],
+    deps = [":package"],
+)
+
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    template = "config.h.in",
+    deps = [":autoconf"],
+)
+
+diff_test(
+    name = "diff_test",
+    file1 = "golden_config_windows.h.in",
+    file2 = ":config.h",
+    target_compatible_with = select({
+        "@platforms//os:windows": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
+
+cc_test(
+    name = "test_linkopts_msvc",
+    srcs = [
+        "test_linkopts_msvc.c",
+        ":config.h",
+    ],
+    linkopts = ["-DEFAULTLIB:shell32.lib"],
+    target_compatible_with = select({
+        "@platforms//os:windows": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)

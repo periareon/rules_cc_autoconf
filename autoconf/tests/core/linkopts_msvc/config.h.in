@@ -1,0 +1,28 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Define to 1 if CommandLineToArgvW links when linkopts name shell32. */
+#undef HAVE_COMMANDLINETOARGVW_WITH_LINKOPTS
+
+/* Define to 1 if CommandLineToArgvW links with no linkopts at all. */
+#undef HAVE_COMMANDLINETOARGVW_NO_LINKOPTS
+
+/* Define to 1 if you have the `shell32' library (-lshell32). */
+#undef HAVE_LIBSHELL32_COMMANDLINETOARGVW
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
