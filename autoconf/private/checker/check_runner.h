@@ -224,22 +224,41 @@ class CheckRunner {
         const std::vector<std::string>& extra_copts = {});
 
     /**
-     * @brief Get compiler command with both compile and link flags.
+     * @brief Get the link flags alone, with no compiler path or compile flags.
      *
-     * Per-check copts and linkopts replace their respective markers at the
-     * toolchain-determined positions, matching cc_library behavior.
+     * This is the linker's own command line (built from
+     * ACTION_NAMES.cpp_link_executable), with the linkopts marker replaced by
+     * the per-check linkopts and any toolchain-supplied output flag dropped
+     * (the checker names the output itself). Compile and link flags are kept
+     * separate because MSVC cannot accept them interleaved -- see
+     * append_msvc_link_block.
      *
      * @param language Language ("c" or "cpp").
-     * @param extra_copts Per-check compiler flags that replace the copts
-     * marker.
      * @param extra_linkopts Per-check linker flags that replace the linkopts
      *                       marker.
-     * @return Vector of compiler command parts (compiler path followed by
-     * compile and link flags).
+     * @return Vector of link flags.
      */
-    std::vector<std::string> get_compiler_and_link_flags(
+    std::vector<std::string> get_link_only_flags(
         const std::string& language,
-        const std::vector<std::string>& extra_copts = {},
+        const std::vector<std::string>& extra_linkopts = {});
+
+    /**
+     * @brief Append the trailing `/link` block to a cl.exe command line.
+     *
+     * cl hands everything after `/link` to link.exe, so this must be called
+     * last, once @p cmd is complete through the source file and any bare
+     * `.lib` arguments. Without it the linker's flags are parsed as *compiler*
+     * options and never reach the linker: most are silently ignored, and
+     * /D-prefixed ones such as /DEFAULTLIB:foo.lib are absorbed as
+     * preprocessor defines with no diagnostic at all.
+     *
+     * @param cmd The command line to append to.
+     * @param language Language ("c" or "cpp").
+     * @param extra_linkopts Per-check linker flags that replace the linkopts
+     *                       marker.
+     */
+    void append_msvc_link_block(
+        std::vector<std::string>& cmd, const std::string& language,
         const std::vector<std::string>& extra_linkopts = {});
 
     /**

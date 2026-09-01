@@ -1,8 +1,11 @@
+#include <algorithm>
 #include <cctype>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <iterator>
 #include <sstream>
+#include <string_view>
 #include <system_error>
 
 #ifndef _WIN32
@@ -114,6 +117,22 @@ bool is_cpp(const std::string& language) {
 }
 
 /**
+ * @brief Match an MSVC linker output option: /OUT:, -out:, /Out: and so on.
+ *
+ * MSVC options take either `/` or `-` as the leading character and are
+ * case-insensitive.
+ */
+bool is_msvc_output_flag(std::string_view arg) {
+    constexpr std::string_view kOut = "OUT:";
+    if (arg.size() <= kOut.size()) return false;
+    if (arg[0] != '/' && arg[0] != '-') return false;
+    return std::equal(
+        kOut.begin(), kOut.end(), arg.begin() + 1, [](char upper, char c) {
+            return upper == std::toupper(static_cast<unsigned char>(c));
+        });
+}
+
+/**
  * @brief Build a shell command string from a vector of arguments.
  *
  * On Windows, the first argument (compiler/linker path) is converted to
@@ -198,6 +217,10 @@ struct BuildDir {
         file_remove(dir / (safe_id + ".o"), ec);
         file_remove(dir / (safe_id + ".obj"), ec);
         file_remove(dir / (safe_id + ".exe"), ec);
+        // The toolchain's /DEBUG reaches link.exe now that MSVC probes emit a
+        // /link block, so a probe leaves debug artifacts alongside the exe.
+        file_remove(dir / (safe_id + ".pdb"), ec);
+        file_remove(dir / (safe_id + ".ilk"), ec);
         file_remove(dir / safe_id, ec);
     }
 
@@ -283,51 +306,46 @@ std::vector<std::string> CheckRunner::replace_marker(
 
 std::vector<std::string> CheckRunner::get_compiler_and_flags(
     const std::string& language, const std::vector<std::string>& extra_copts) {
-    std::vector<std::string> cmd;
-    if (is_cpp(language)) {
-        DebugLogger::debug("C++ compiler path: [" + config_.cpp_compiler + "]");
-        cmd.push_back(config_.cpp_compiler);
-        auto filtered = filter_error_flags(config_.cpp_flags);
-        auto processed = replace_marker(filtered, kCoptsMarker, extra_copts);
-        cmd.insert(cmd.end(), processed.begin(), processed.end());
-    } else {
-        DebugLogger::debug("C compiler path: [" + config_.c_compiler + "]");
-        cmd.push_back(config_.c_compiler);
-        auto filtered = filter_error_flags(config_.c_flags);
-        auto processed = replace_marker(filtered, kCoptsMarker, extra_copts);
-        cmd.insert(cmd.end(), processed.begin(), processed.end());
-    }
+    const bool cpp = is_cpp(language);
+    const std::string& compiler =
+        cpp ? config_.cpp_compiler : config_.c_compiler;
+    DebugLogger::debug(std::string(cpp ? "C++" : "C") + " compiler path: [" +
+                       compiler + "]");
+
+    std::vector<std::string> cmd{compiler};
+    auto filtered =
+        filter_error_flags(cpp ? config_.cpp_flags : config_.c_flags);
+    auto processed = replace_marker(filtered, kCoptsMarker, extra_copts);
+    cmd.insert(cmd.end(), processed.begin(), processed.end());
     return cmd;
 }
 
-std::vector<std::string> CheckRunner::get_compiler_and_link_flags(
-    const std::string& language, const std::vector<std::string>& extra_copts,
+std::vector<std::string> CheckRunner::get_link_only_flags(
+    const std::string& language,
     const std::vector<std::string>& extra_linkopts) {
-    std::vector<std::string> cmd;
-    if (is_cpp(language)) {
-        DebugLogger::debug("C++ compiler path (for linking): [" +
-                           config_.cpp_compiler + "]");
-        cmd.push_back(config_.cpp_compiler);
-        auto filtered = filter_error_flags(config_.cpp_flags);
-        auto processed = replace_marker(filtered, kCoptsMarker, extra_copts);
-        cmd.insert(cmd.end(), processed.begin(), processed.end());
-        auto link_filtered = filter_error_flags(config_.cpp_link_flags);
-        auto link_processed =
-            replace_marker(link_filtered, kLinkoptsMarker, extra_linkopts);
-        cmd.insert(cmd.end(), link_processed.begin(), link_processed.end());
-    } else {
-        DebugLogger::debug("C compiler path (for linking): [" +
-                           config_.c_compiler + "]");
-        cmd.push_back(config_.c_compiler);
-        auto filtered = filter_error_flags(config_.c_flags);
-        auto processed = replace_marker(filtered, kCoptsMarker, extra_copts);
-        cmd.insert(cmd.end(), processed.begin(), processed.end());
-        auto link_filtered = filter_error_flags(config_.c_link_flags);
-        auto link_processed =
-            replace_marker(link_filtered, kLinkoptsMarker, extra_linkopts);
-        cmd.insert(cmd.end(), link_processed.begin(), link_processed.end());
-    }
-    return cmd;
+    auto filtered = filter_error_flags(is_cpp(language) ? config_.cpp_link_flags
+                                                        : config_.c_link_flags);
+    auto flags = replace_marker(filtered, kLinkoptsMarker, extra_linkopts);
+    // The checker owns the output path -- /Fe in the one-step MSVC probe,
+    // the /OUT: try_link appends itself, -o everywhere else -- so a toolchain
+    // /OUT: could only fight with it. Bazel emits none today (the marker is
+    // the sole user_link_flags entry and no output file is set); dropping it
+    // here rather than at one call site keeps the rule true for every path
+    // that links.
+    flags.erase(std::remove_if(flags.begin(), flags.end(), is_msvc_output_flag),
+                flags.end());
+    return flags;
+}
+
+void CheckRunner::append_msvc_link_block(
+    std::vector<std::string>& cmd, const std::string& language,
+    const std::vector<std::string>& extra_linkopts) {
+    std::vector<std::string> link_flags =
+        get_link_only_flags(language, extra_linkopts);
+    if (link_flags.empty()) return;
+    cmd.push_back("/link");
+    cmd.insert(cmd.end(), std::make_move_iterator(link_flags.begin()),
+               std::make_move_iterator(link_flags.end()));
 }
 
 std::string CheckRunner::get_file_extension(const std::string& language) {
@@ -370,11 +388,8 @@ bool CheckRunner::try_link(const std::filesystem::path& object_file,
     if (msvc) {
         cmd.push_back(config_.linker);
         DebugLogger::debug("Linker tool path: [" + config_.linker + "]");
-        auto link_flags = filter_error_flags(
-            is_cpp(language) ? config_.cpp_link_flags : config_.c_link_flags);
-        auto processed =
-            replace_marker(link_flags, kLinkoptsMarker, extra_linkopts);
-        cmd.insert(cmd.end(), processed.begin(), processed.end());
+        auto link_flags = get_link_only_flags(language, extra_linkopts);
+        cmd.insert(cmd.end(), link_flags.begin(), link_flags.end());
         cmd.push_back("/OUT:" + executable.string());
         cmd.push_back(object_file.string());
     } else {
@@ -388,11 +403,8 @@ bool CheckRunner::try_link(const std::filesystem::path& object_file,
             DebugLogger::debug("Using compiler as linker: [" + link_tool + "]");
         }
         cmd.push_back(link_tool);
-        auto link_flags = filter_error_flags(
-            is_cpp(language) ? config_.cpp_link_flags : config_.c_link_flags);
-        auto processed =
-            replace_marker(link_flags, kLinkoptsMarker, extra_linkopts);
-        cmd.insert(cmd.end(), processed.begin(), processed.end());
+        auto link_flags = get_link_only_flags(language, extra_linkopts);
+        cmd.insert(cmd.end(), link_flags.begin(), link_flags.end());
         cmd.push_back(object_file.string());
         cmd.push_back("-o");
         cmd.push_back(executable.string());
@@ -417,8 +429,10 @@ bool CheckRunner::try_compile_and_link(
         // directly (instead of separate cl.exe /c + link.exe) ensures that
         // default libraries are linked, including legacy_stdio_definitions.lib
         // which provides linker symbols for UCRT inline functions like printf.
+        // Link flags are held back for the trailing /link block rather than
+        // mixed in with the compile flags -- see append_msvc_link_block.
         std::vector<std::string> cmd =
-            get_compiler_and_link_flags(language, extra_copts, extra_linkopts);
+            get_compiler_and_flags(language, extra_copts);
         std::filesystem::path exe = tmp.executable_path();
         cmd.push_back("/Fe" + exe.string());
         // Without /Fo, cl writes the intermediate object into the current
@@ -430,6 +444,7 @@ bool CheckRunner::try_compile_and_link(
         // from an absent feature, so the check silently reports "no".
         cmd.push_back("/Fo" + tmp.object_path(true).string());
         cmd.push_back(source_file->string());
+        append_msvc_link_block(cmd, language, extra_linkopts);
         return run_command("compile and link", cmd) == 0;
     }
 
@@ -465,23 +480,30 @@ bool CheckRunner::try_compile_and_link_with_lib(
     // Extras go through the marker-substituting helper so -Wno-error=
     // suppressions stay after any caller-supplied -Werror=… (last-wins).
     std::vector<std::string> cmd =
-        get_compiler_and_link_flags(language, extra_copts, extra_linkopts);
-    bool msvc = is_msvc_like(config_.compiler_type);
+        get_compiler_and_flags(language, extra_copts);
 
-    if (msvc) {
-        std::filesystem::path exe = tmp.dir / (tmp.safe_id + ".exe");
-        cmd.push_back("/Fe" + exe.string());
-        // See try_compile_and_link: /Fo keeps the intermediate object out of
-        // the shared execroot, where concurrent configurations would collide.
+    if (is_msvc_like(config_.compiler_type)) {
+        // Shaped like try_compile_and_link: /Fo keeps the intermediate object
+        // out of the shared execroot, and the link flags go in the trailing
+        // /link block rather than among the compile flags.
+        cmd.push_back("/Fe" + tmp.executable_path().string());
         cmd.push_back("/Fo" + tmp.object_path(true).string());
         cmd.push_back(source_file->string());
+        // A bare .lib is a positional input that cl already forwards to the
+        // linker, so it stays before /link rather than inside the block.
         cmd.push_back(library + ".lib");
-    } else {
-        cmd.push_back(source_file->string());
-        cmd.push_back("-o");
-        cmd.push_back((tmp.dir / tmp.safe_id).string());
-        cmd.push_back("-l" + library);
+        append_msvc_link_block(cmd, language, extra_linkopts);
+        return run_command("compile and link", cmd) == 0;
     }
+
+    // GCC/Clang drive the linker themselves, so link flags can sit among the
+    // compile flags -- but they must precede the source and -l<library>.
+    auto link_flags = get_link_only_flags(language, extra_linkopts);
+    cmd.insert(cmd.end(), link_flags.begin(), link_flags.end());
+    cmd.push_back(source_file->string());
+    cmd.push_back("-o");
+    cmd.push_back((tmp.dir / tmp.safe_id).string());
+    cmd.push_back("-l" + library);
 
     return run_command("compile and link", cmd) == 0;
 }
