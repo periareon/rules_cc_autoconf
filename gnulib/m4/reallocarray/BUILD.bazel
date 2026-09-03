@@ -28,8 +28,7 @@ autoconf(
             code = """\
 #include <stdlib.h>
 int main(void) {
-    (void)reallocarray;
-    return 0;
+    return reallocarray(NULL, 1, 1) == NULL;
 }
 """,
         ),
