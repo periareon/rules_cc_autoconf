@@ -59,7 +59,7 @@
 /* #undef HAVE_UNISTD_H */
 /* #undef HAVE_UNLINKAT */
 /* #undef HAVE_USLEEP */
-/* #undef HAVE_WINSOCK2_H */
+#define HAVE_WINSOCK2_H 1
 /* #undef INCLUDE_NEXT */
 /* #undef INCLUDE_NEXT_AS_FIRST_DIRECTIVE */
 /* #undef NEXT_AS_FIRST_DIRECTIVE_SYS_SELECT_H */
