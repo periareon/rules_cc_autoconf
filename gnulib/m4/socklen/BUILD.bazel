@@ -3,25 +3,65 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
+SOCKET_HEADERS = [
+    "#include <sys/types.h>",
+    "#if HAVE_SYS_SOCKET_H",
+    "# include <sys/socket.h>",
+    "#elif HAVE_WS2TCPIP_H",
+    "# include <ws2tcpip.h>",
+    "#endif",
+]
+
 autoconf(
     name = "socklen",
     checks = [
-        # gl_TYPE_SOCKLEN_T checks for socklen_t type
-        # Note: HAVE_WS2TCPIP_H is provided by sys_socket_h
-        checks.AC_CHECK_TYPE(
-            "socklen_t",
-            define = "HAVE_SOCKLEN_T",
-            # buildifier: leave-alone
-            includes = [
-                "#include <sys/types.h>",
-                "#include <sys/socket.h>",
-            ],
+        checks.AC_SUBST(
+            "HAVE_SYS_SOCKET_H",
+            condition = "ac_cv_header_sys_socket_h",
+            if_false = 0,
+            if_true = 1,
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/sys_socket_h:gl_SYS_SOCKET_H",
-        # For test compatibility - need basic header defines
+        ":gl_CHECK_SOCKET_HEADERS",
+        ":gl_TYPE_SOCKLEN_T",
+    ],
+)
+
+autoconf(
+    name = "gl_TYPE_SOCKLEN_T",
+    checks = [
+        checks.AC_CHECK_TYPE(
+            "socklen_t",
+            compile_defines = [
+                "HAVE_SYS_SOCKET_H",
+                "HAVE_WS2TCPIP_H",
+            ],
+            includes = SOCKET_HEADERS,
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_CHECK_SOCKET_HEADERS",
+    ],
+)
+
+autoconf(
+    name = "gl_CHECK_SOCKET_HEADERS",
+    checks = [
+        checks.AC_CHECK_HEADER(
+            "sys/socket.h",
+            define = "HAVE_SYS_SOCKET_H",
+        ),
+        checks.AC_CHECK_HEADER(
+            "ws2tcpip.h",
+            define = "HAVE_WS2TCPIP_H",
+            requires = ["!ac_cv_header_sys_socket_h"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

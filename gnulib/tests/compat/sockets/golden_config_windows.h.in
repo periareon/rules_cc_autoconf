@@ -57,7 +57,7 @@
 /* #undef HAVE_UNISTD_H */
 /* #undef HAVE_UNLINKAT */
 /* #undef HAVE_USLEEP */
-/* #undef HAVE_WINSOCK2_H */
+#define HAVE_WINSOCK2_H 1
 /* #undef REPLACE_ACCESS */
 /* #undef REPLACE_CHOWN */
 /* #undef REPLACE_CLOSE */

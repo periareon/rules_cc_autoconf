@@ -18,7 +18,7 @@ autoconf(
     deps = [
         "//gnulib/macros/HAVE_SYS_PARAM_H",
         # Deduplicate globally AC_CHECK_HEADERS_ONCE([sys/socket.h])
-        "//gnulib/m4/sys_socket_h:HAVE_SYS_SOCKET_H",
+        "//gnulib/m4/socklen:gl_CHECK_SOCKET_HEADERS",
         "//gnulib/m4/sys_socket_h:gl_PREREQ_SYS_H_WINSOCK2",
         "//gnulib/m4/netdb_h",
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
