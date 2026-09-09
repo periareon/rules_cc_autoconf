@@ -2,26 +2,23 @@
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 autoconf(
     name = "mkostemp",
-    checks = [
-        # gl_CHECK_FUNCS_ANDROID is similar to AC_CHECK_FUNC but with Android-specific handling
-        # Use internal define to avoid conflict with substitution variable
-        checks.AC_CHECK_FUNC(
-            "mkostemp",
-            name = "_gl_cv_func_mkostemp",
-        ),
-
-        # Set HAVE_MKOSTEMP as define if function exists
-        checks.AC_DEFINE(
+    checks = gl_macros.GL_CHECK_FUNCS_ANDROID(
+        ["mkostemp"],
+        includes = ["#include <stdlib.h>"],
+    ) + [
+        checks.AC_SUBST(
             "HAVE_MKOSTEMP",
-            "1",
-            requires = ["_gl_cv_func_mkostemp==1"],
+            condition = "ac_cv_func_mkostemp",
+            if_false = 0,
+            if_true = 1,
         ),
-
-        # Otherwise, REPLACE_MKOSTEMP=0 (default)
-        # Based on golden file, REPLACE_MKOSTEMP=0 on macOS
+        # Upstream gnulib sets this to 1 when mkostemp is unavailable, but
+        # is available in a future version of Android. That state is not
+        # currently modeled.
         checks.AC_SUBST("REPLACE_MKOSTEMP", 0),
     ],
     visibility = ["//visibility:public"],
