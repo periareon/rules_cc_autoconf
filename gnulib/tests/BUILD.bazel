@@ -1,10 +1,13 @@
 # gnulib tests package
 
 load("@bazel_skylib//lib:selects.bzl", "selects")
+load(":macros_test.bzl", "conditional_next_headers_test")
 
 exports_files([
     "deps.bzl",
 ])
+
+conditional_next_headers_test(name = "conditional_next_headers_test")
 
 # Shared OS+CPU config_setting_groups used by per-test golden selects.
 # Some gnulib runtime checks produce CPU-specific results on the same OS

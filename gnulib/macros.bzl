@@ -182,7 +182,7 @@ def _check_funcs_android_macos(
         requires = requires,
     )
 
-def _gl_next_header(header, name = None):
+def _gl_next_header(header, name = None, requires = None):
     """Resolve NEXT_*_H for a header, inlining system header content when #include_next is unavailable.
 
     On GCC/Clang: the checker returns `<header>` (normal angle-bracket include).
@@ -195,18 +195,23 @@ def _gl_next_header(header, name = None):
         header: Header name (e.g., "stddef.h").
         name: Override for the substitution variable name. Defaults to
             NEXT_<HEADER_UPPER> (e.g., "NEXT_STDDEF_H").
+        requires: Optional conditions that must hold before resolving the
+            system header.
 
     Returns:
         A JSON-encoded check string for use with the autoconf rule.
     """
     subst_name = name or ("NEXT_" + header.upper().replace("/", "_").replace(".", "_"))
-    return make_check({
+    check = {
         "code": header,
         "input_deps": ["INCLUDE_NEXT"],
         "name": subst_name,
         "subst": subst_name,
         "type": "GL_NEXT_HEADER",
-    })
+    }
+    if requires:
+        check["requires"] = requires
+    return make_check(check)
 
 def _next_headers_internal(headers, value = None, condition = None):
     """Shared logic for NEXT_* variables (gl_NEXT_HEADERS_INTERNAL with include_next=yes).
@@ -215,9 +220,10 @@ def _next_headers_internal(headers, value = None, condition = None):
     1. NEXT_<HEADER_UPPER>
     2. NEXT_AS_FIRST_DIRECTIVE_<HEADER_UPPER>
 
-    When no explicit `value` or `condition` is given, uses the GL_NEXT_HEADER
-    check type which automatically handles #include_next on GCC/Clang and
-    system header inlining on MSVC.
+    When no explicit `value` is given, uses the GL_NEXT_HEADER check type which
+    automatically handles #include_next on GCC/Clang and system header inlining
+    on MSVC. A condition gates that check without replacing it with a static
+    angle-bracket include.
 
     When `value` is provided, uses a static AC_SUBST (the caller knows the
     exact value to use). When `condition` is provided, uses a conditional
@@ -227,10 +233,9 @@ def _next_headers_internal(headers, value = None, condition = None):
         headers: List of header names.
         value: Override value for all headers. None means auto-detect via
             GL_NEXT_HEADER.
-        condition: When provided, makes the value conditional. If condition is
-            true, uses the header value; if false, uses empty string. Supports
-            define names (e.g., `"HAVE_FOO"`), negated (e.g., `"!HAVE_FOO"`),
-            or value-based (e.g., `"REPLACE_FSTAT==1"`).
+        condition: When provided, resolves the header only when the condition
+            is true. Supports define names (e.g., `"HAVE_FOO"`), negated (e.g.,
+            `"!HAVE_FOO"`), or value-based (e.g., `"REPLACE_FSTAT==1"`).
     """
     if not headers:
         return []
@@ -240,16 +245,17 @@ def _next_headers_internal(headers, value = None, condition = None):
         header_upper = header.upper().replace("/", "_").replace(".", "_").replace("-", "_")
         next_var = "NEXT_{}".format(header_upper)
         next_as_first_var = "NEXT_AS_FIRST_DIRECTIVE_{}".format(header_upper)
-        if condition:
+        if value == None:
+            requires = [condition] if condition else None
+            result.append(_gl_next_header(header, name = next_var, requires = requires))
+            result.append(_gl_next_header(header, name = next_as_first_var, requires = requires))
+        elif condition:
             header_value = value if value != None else "<{}>".format(header)
             result.append(autoconf_checks.AC_SUBST(next_var, condition = condition, if_true = header_value, if_false = ""))
             result.append(autoconf_checks.AC_SUBST(next_as_first_var, condition = condition, if_true = header_value, if_false = ""))
-        elif value != None:
+        else:
             result.append(autoconf_checks.AC_SUBST(next_var, value))
             result.append(autoconf_checks.AC_SUBST(next_as_first_var, value))
-        else:
-            result.append(_gl_next_header(header, name = next_var))
-            result.append(_gl_next_header(header, name = next_as_first_var))
     return result
 
 def _check_next_headers(headers, value = None, condition = None):
