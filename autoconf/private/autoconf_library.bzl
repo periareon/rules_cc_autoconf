@@ -37,8 +37,8 @@ _CONTENT_KEY_FIELDS = (
     "members",
 )
 
-def _check_content_key(check):
-    """Compute a deterministic content key from a check's implementation fields.
+def _check_content_key(check, toolchain_info):
+    """Compute a deterministic key from a check and its compiler context.
 
     Consumer metadata (name, define, subst, unquote) is excluded so that
     identical checks with different consumer names share the same key.
@@ -48,7 +48,34 @@ def _check_content_key(check):
         for k in _CONTENT_KEY_FIELDS
         if k in check
     ])
-    return json.encode(pairs)
+    return json.encode({
+        "c_flags": toolchain_info.c_flags,
+        "c_link_flags": toolchain_info.c_link_flags,
+        "check": pairs,
+        "cpp_flags": toolchain_info.cpp_flags,
+        "cpp_link_flags": toolchain_info.cpp_link_flags,
+    })
+
+def _autoconf_options_transition_impl(settings, attr):
+    return {
+        "//command_line_option:copt": settings["//command_line_option:copt"] + attr.copts,
+        "//command_line_option:cxxopt": settings["//command_line_option:cxxopt"] + attr.cxxopts,
+        "//command_line_option:linkopt": settings["//command_line_option:linkopt"] + attr.linkopts,
+    }
+
+_autoconf_options_transition = transition(
+    implementation = _autoconf_options_transition_impl,
+    inputs = [
+        "//command_line_option:copt",
+        "//command_line_option:cxxopt",
+        "//command_line_option:linkopt",
+    ],
+    outputs = [
+        "//command_line_option:copt",
+        "//command_line_option:cxxopt",
+        "//command_line_option:linkopt",
+    ],
+)
 
 def _same_content_key(file_a, file_b, path_to_content_key):
     """Return True when two files represent the same check implementation.
@@ -226,7 +253,7 @@ def autoconf_impl_common(ctx, resolve_toolchain):
         subst_name = _coerce_name(name, _coerce_name(define_key, subst))
 
         # Compute content key from implementation fields only
-        content_key = _check_content_key(check)
+        content_key = _check_content_key(check, toolchain_info)
 
         # Same check implementation already processed in this target — idempotent skip
         if content_key in content_cache and name in cache_results:
@@ -532,9 +559,25 @@ COMMON_ATTRS = {
         doc = "List of JSON-encoded checks from checks (e.g., `checks.AC_CHECK_HEADER('stdio.h')`).",
         default = [],
     ),
+    "copts": attr.string_list(
+        doc = "C/C++ compiler options applied to this target's checks and all transitive autoconf dependencies.",
+        default = [],
+    ),
+    "cxxopts": attr.string_list(
+        doc = "C++ compiler options applied to this target's C++ checks and all transitive autoconf dependencies.",
+        default = [],
+    ),
     "deps": attr.label_list(
         doc = "Additional `autoconf`, `autoconf_library`, or `package_info` dependencies.",
+        cfg = _autoconf_options_transition,
         providers = [CcAutoconfInfo],
+    ),
+    "linkopts": attr.string_list(
+        doc = "Linker options applied to this target's link checks and all transitive autoconf dependencies.",
+        default = [],
+    ),
+    "_allowlist_function_transition": attr.label(
+        default = Label("@bazel_tools//tools/allowlists/function_transition_allowlist"),
     ),
     "_checker": attr.label(
         cfg = "exec",

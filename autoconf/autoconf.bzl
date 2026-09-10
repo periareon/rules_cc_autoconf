@@ -11,7 +11,10 @@ def autoconf(
         name,
         build_settings = None,
         checks = None,
+        copts = None,
+        cxxopts = None,
         deps = None,
+        linkopts = None,
         **kwargs):
     """Run autoconf-like checks and produce results.
 
@@ -48,8 +51,14 @@ def autoconf(
             `BuildSettingInfo`) with autoconf-style defines and substitutions.
         checks: List of JSON-encoded checks from `checks`
             (e.g., `checks.AC_CHECK_HEADER('stdio.h')`).
+        copts: C/C++ compiler options applied to this target's checks and all
+            transitive autoconf dependencies.
+        cxxopts: C++ compiler options applied to this target's C++ checks and
+            all transitive autoconf dependencies.
         deps: Additional `autoconf`, `autoconf_cache`, or `package_info`
             dependencies.
+        linkopts: Linker options applied to this target's link checks and all
+            transitive autoconf dependencies.
         **kwargs: Standard Bazel attributes (e.g. `visibility`, `tags`).
     """
 
@@ -65,6 +74,9 @@ def autoconf(
         name = name,
         build_settings = to_build_settings_dict(build_settings),
         checks = checks or [],
+        copts = copts or [],
+        cxxopts = cxxopts or [],
         deps = deps or [],
+        linkopts = linkopts or [],
         **kwargs
     )
