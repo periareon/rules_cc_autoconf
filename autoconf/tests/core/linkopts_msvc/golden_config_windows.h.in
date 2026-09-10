@@ -6,6 +6,12 @@
 /* Define to 1 if CommandLineToArgvW links with no linkopts at all. */
 /* #undef HAVE_COMMANDLINETOARGVW_NO_LINKOPTS */
 
+/* Define to 1 if rule linkopts reach a direct check. */
+#define HAVE_RULE_LINKOPTS 1
+
+/* Define to 1 if rule linkopts reach a transitive check. */
+#define HAVE_TRANSITIVE_LINKOPTS 1
+
 /* Define to 1 if you have the `shell32' library (-lshell32). */
 #define HAVE_LIBSHELL32_COMMANDLINETOARGVW 1
 
