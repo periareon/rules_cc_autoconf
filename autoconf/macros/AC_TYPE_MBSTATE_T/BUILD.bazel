@@ -7,7 +7,7 @@ Defines:
 """
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
-load("//autoconf:checks.bzl", "checks")
+load("//autoconf:checks.bzl", "checks", "utils")
 
 autoconf(
     name = "AC_TYPE_MBSTATE_T",
@@ -17,7 +17,10 @@ autoconf(
         checks.AC_CHECK_TYPE(
             "mbstate_t",
             name = "ac_cv_type_mbstate_t",
-            includes = ["#include <wchar.h>"],
+            includes = [
+                utils.AC_INCLUDES_DEFAULT,
+                "#include <wchar.h>",
+            ],
         ),
         checks.AC_DEFINE(
             "mbstate_t",
@@ -27,12 +30,12 @@ autoconf(
         # Define HAVE_MBSTATE_T if type exists
         checks.AC_DEFINE(
             "HAVE_MBSTATE_T",
-            condition = "ac_cv_type_mbstate_t",
-            if_true = 1,
+            requires = ["ac_cv_type_mbstate_t==1"],
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//autoconf/macros/AC_USE_SYSTEM_EXTENSIONS",
     ],
 )

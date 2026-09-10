@@ -4,25 +4,8 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "mbrtoc16",
+    name = "gl_FUNC_MBRTOC16",
     checks = [
-        # Note: The m4 uses __HAIKU__ in compile_defines, but that's a platform define, not a check result.
-        checks.AC_CHECK_DECL(
-            "mbrtoc16",
-            name = "ac_cv_have_decl_mbrtoc16",
-            includes = ["#include <uchar.h>"],
-        ),
-
-        # If declaration is found, check for function
-        checks.AC_CHECK_FUNC(
-            "mbrtoc16",
-            name = "gl_cv_func_mbrtoc16",
-            requires = ["ac_cv_have_decl_mbrtoc16==1"],
-        ),
-
-        # Define HAVE_MBRTOC16 in config.h if function exists
-        # Also set as substitution variable
-        # If function doesn't exist, leave undefined (/* #undef */) not #define 0
         checks.AC_DEFINE(
             "HAVE_MBRTOC16",
             requires = ["gl_cv_func_mbrtoc16==1"],
@@ -30,22 +13,6 @@ autoconf(
         # Subst variable - on macOS, function doesn't exist so HAVE_MBRTOC16="0"
         checks.AC_SUBST(
             "HAVE_MBRTOC16",
-            condition = "gl_cv_func_mbrtoc16",
-            if_false = "0",
-            if_true = "1",
-        ),
-
-        # Sets HAVE_WORKING_MBRTOC16 based on runtime checks
-        # Based on golden files:
-        # - macOS: /* #undef HAVE_WORKING_MBRTOC16 */ (function doesn't exist or doesn't work)
-        # - Linux: #define HAVE_WORKING_MBRTOC16 1 (function exists and works)
-        # If function doesn't exist, leave undefined (/* #undef */) not #define 0
-        checks.AC_DEFINE(
-            "HAVE_WORKING_MBRTOC16",
-            requires = ["gl_cv_func_mbrtoc16==1"],
-        ),
-        checks.AC_SUBST(
-            "HAVE_WORKING_MBRTOC16",
             condition = "gl_cv_func_mbrtoc16",
             if_false = "0",
             if_true = "1",
@@ -65,6 +32,12 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
+        ":gl_CHECK_FUNC_MBRTOC16",
+        ":gl_MBRTOC16_C_LOCALE",
+        ":gl_MBRTOC16_EMPTY_INPUT",
+        ":gl_MBRTOC16_NULL_DESTINATION",
+        ":gl_MBRTOC16_RETVAL",
+        ":gl_MBRTOC16_SANITYCHECK",
         # Note: gl_UCHAR_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
         "//autoconf/macros/AC_TYPE_MBSTATE_T",
         # Provides REPLACE_MBSTATE_T
@@ -73,12 +46,100 @@ autoconf(
         "//gnulib/m4/uchar_h",
         # Handled above
         # Handled above
-        # Note: mbrtowc provides HAVE_MBRTOWC, HAVE_MBSINIT, HAVE_MBSTATE_T, HAVE_LANGINFO_CODESET
-        # and system extension defines
-        # Use mbrtowc_base: golden expects REPLACE_MBRTOWC=0 on Linux
-        "//gnulib/m4/mbrtowc:mbrtowc_base",
+        "//gnulib/m4/mbrtowc:gl_MBSTATE_T_BROKEN",
         "//gnulib/m4/locale-fr",
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "gl_CHECK_FUNC_MBRTOC16",
+    checks = [
+        checks.AC_CHECK_DECL(
+            "mbrtoc16",
+            includes = [
+                "#ifdef __HAIKU__\n#include <stdint.h>\n#endif",
+                "#include <uchar.h>",
+            ],
+        ),
+        checks.AC_CHECK_FUNC(
+            "mbrtoc16",
+            name = "gl_cv_func_mbrtoc16",
+            requires = ["ac_cv_have_decl_mbrtoc16==1"],
+        ),
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+)
+
+autoconf(
+    name = "gl_MBRTOC16_NULL_DESTINATION",
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//gnulib/m4/locale-en",
+        "//gnulib/m4/uchar_h",
+    ],
+)
+
+autoconf(
+    name = "gl_MBRTOC16_RETVAL",
+    visibility = ["//gnulib:__subpackages__"],
+    deps = ["//autoconf/macros/AC_CANONICAL_HOST"],
+)
+
+autoconf(
+    name = "gl_MBRTOC16_EMPTY_INPUT",
+    visibility = ["//gnulib:__subpackages__"],
+    deps = ["//autoconf/macros/AC_CANONICAL_HOST"],
+)
+
+autoconf(
+    name = "gl_MBRTOC16_C_LOCALE",
+    visibility = ["//gnulib:__subpackages__"],
+    deps = ["//autoconf/macros/AC_CANONICAL_HOST"],
+)
+
+autoconf(
+    name = "gl_MBRTOC16_SANITYCHECK",
+    checks = [
+        checks.AC_DEFINE(
+            "HAVE_WORKING_MBRTOC16",
+            requires = ["gl_cv_func_mbrtoc16==1"],
+        ),
+        checks.AC_SUBST(
+            "HAVE_WORKING_MBRTOC16",
+            condition = "gl_cv_func_mbrtoc16",
+            if_false = 0,
+            if_true = 1,
+        ),
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        ":gl_CHECK_FUNC_MBRTOC16",
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//gnulib/m4/locale-fr",
+        "//gnulib/m4/locale-zh",
+        "//gnulib/m4/uchar_h",
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_MBRTOC16",
+    visibility = ["//gnulib:__subpackages__"],
+)
+
+autoconf(
+    name = "mbrtoc16",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_CHECK_FUNC_MBRTOC16",
+        ":gl_FUNC_MBRTOC16",
+        ":gl_MBRTOC16_C_LOCALE",
+        ":gl_MBRTOC16_EMPTY_INPUT",
+        ":gl_MBRTOC16_NULL_DESTINATION",
+        ":gl_MBRTOC16_RETVAL",
+        ":gl_MBRTOC16_SANITYCHECK",
+        ":gl_PREREQ_MBRTOC16",
     ],
 )
