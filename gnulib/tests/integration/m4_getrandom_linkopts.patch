@@ -1,0 +1,40 @@
+diff --git a/BUILD.bazel b/BUILD.bazel
+index bd9f70a..a8d8bd0 100644
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -2,6 +2,7 @@ load("@bazel_skylib//rules:write_file.bzl", "write_file")
+ load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+ load("@rules_cc//cc:cc_library.bzl", "cc_library")
+ load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
+ load("@rules_cc_autoconf//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
++load("@rules_cc_autoconf//autoconf:autoconf_linkopts.bzl", "autoconf_linkopts")
+ load("@rules_cc_autoconf//autoconf:autoconf_srcs.bzl", "autoconf_srcs")
+ load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+@@ -1170,6 +1171,12 @@ M4_LINKOPTS = select({
+     "//conditions:default": [],
+ })
+ 
++autoconf_linkopts(
++    name = "getrandom_linkopts",
++    vars = ["GETRANDOM_LIB"],
++    deps = [":configure_ac"],
++)
++
+ cc_binary(
+     name = "m4",
+     srcs = glob(
+@@ -1186,7 +1193,6 @@ cc_binary(
+     linkopts = M4_LINKOPTS + select({
+         "@platforms//os:linux": ["-lpthread"],
+         "@platforms//os:macos": ["-liconv"],
+-        "@platforms//os:windows": ["advapi32.lib"],
+         "//conditions:default": [],
+     }),
+     local_defines = LOCAL_DEFINES,
+@@ -1195,5 +1201,6 @@ cc_binary(
+     visibility = ["//visibility:public"],
+     deps = [
++        ":getrandom_linkopts",
+         ":libm4",
+     ],
+ )
