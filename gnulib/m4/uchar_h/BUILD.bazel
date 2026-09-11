@@ -72,6 +72,9 @@ int main() { return 0; }
     }) + gl_macros.GL_CHECK_NEXT_HEADERS(["uchar.h"]),
     visibility = ["//visibility:public"],
     deps = [
+        ":gl_TYPE_CHAR16_T",
+        ":gl_TYPE_CHAR32_T",
+        ":gl_TYPE_CHAR8_T",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/include_next",
     ],
@@ -88,7 +91,7 @@ autoconf(
             name = "gl_cv_type_char8_t_works",
             code = """\
 #ifdef __HAIKU__
-#include <stdchar.h>
+#include <stdint.h>
 #endif
 #include <uchar.h>
 int verify[(char8_t)(-1) >= 0 && sizeof (char8_t) == sizeof (unsigned char) ? 1 : -1];
@@ -98,8 +101,8 @@ int main(void) { return 0; }
         checks.AC_SUBST(
             "GNULIBHEADERS_OVERRIDE_CHAR8_T",
             condition = "gl_cv_type_char8_t_works",
-            if_false = "1",
-            if_true = "0",
+            if_false = 1,
+            if_true = 0,
         ),
     ],
     visibility = ["//visibility:public"],
@@ -116,7 +119,7 @@ autoconf(
             name = "gl_cv_type_char16_t_works",
             code = """\
 #ifdef __HAIKU__
-#include <stdchar.h>
+#include <stdint.h>
 #endif
 #include <uchar.h>
 int verify[(char16_t)(-1) >= 0 && sizeof (char16_t) == sizeof (unsigned short) ? 1 : -1];
@@ -126,8 +129,8 @@ int main(void) { return 0; }
         checks.AC_SUBST(
             "GNULIBHEADERS_OVERRIDE_CHAR16_T",
             condition = "gl_cv_type_char16_t_works",
-            if_false = "1",
-            if_true = "0",
+            if_false = 1,
+            if_true = 0,
         ),
     ],
     visibility = ["//visibility:public"],
@@ -144,7 +147,7 @@ autoconf(
             name = "gl_cv_type_char32_t_works",
             code = """\
 #ifdef __HAIKU__
-#include <stdchar.h>
+#include <stdint.h>
 #endif
 #include <uchar.h>
 int verify[(char32_t)(-1) >= 0 && sizeof (char32_t) == sizeof (unsigned int) ? 1 : -1];
@@ -176,40 +179,23 @@ autoconf(
     visibility = ["//visibility:public"],
 )
 
-# gl_UCHAR_H_DEFAULTS - lines 246-254
-# Note: These default values are also provided by the autoconf toolchain
-# defaults (via defaults=True in autoconf_hdr). Individual modules like
-# c32rtomb, mbrtoc16, mbrtoc32 override these with their actual check results.
-# The GNULIBHEADERS_OVERRIDE_CHAR*_T defaults are 0 on Linux (char types
-# exist in <uchar.h>), 1 on macOS (no <uchar.h> in C mode).
-# The uchar_h aggregator overrides these via gl_TYPE_CHAR*_T compile checks.
-autoconf(
-    name = "gl_UCHAR_H_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("HAVE_C32RTOMB", 1),
-        checks.AC_SUBST("HAVE_MBRTOC16", 1),
-        checks.AC_SUBST("HAVE_MBRTOC32", 1),
-        checks.AC_SUBST("REPLACE_C32RTOMB", 0),
-        checks.AC_SUBST("REPLACE_MBRTOC16", 0),
-        checks.AC_SUBST("REPLACE_MBRTOC32", 0),
-    ] + select({
-        "@platforms//os:linux": [
-            checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR8_T", 0),
-            checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR16_T", 0),
-            checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR32_T", 0),
-        ],
-        "//conditions:default": [
-            checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR8_T", 1),
-            checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR16_T", 1),
-            checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR32_T", 1),
-        ],
-    }),
-    visibility = ["//visibility:private"],
-)
-
 # gl_UCHAR_H_REQUIRE_DEFAULTS - lines 209-244
 autoconf(
     name = "gl_UCHAR_H_REQUIRE_DEFAULTS",
+    visibility = ["//visibility:private"],
+)
+
+# gl_UCHAR_H_DEFAULTS - lines 246-254
+# The M4 macro establishes initial shell values before later macros override
+# them. Bazel supplies those initial values through the autoconf toolchain so
+# they do not overwrite computed values when dependency results are merged.
+autoconf(
+    name = "gl_UCHAR_H_DEFAULTS",
+    visibility = ["//visibility:private"],
+)
+
+autoconf(
+    name = "gl_UCHAR_H_REQUIRE_DEFAULT_VALUES",
     checks = [
         checks.AC_SUBST("GNULIB_BTOC32", 0),
         checks.AC_SUBST("GNULIB_C32ISALNUM", 0),
@@ -244,16 +230,27 @@ autoconf(
         checks.AC_SUBST("GNULIB_MBSTOC32S", 0),
     ],
     visibility = ["//visibility:private"],
-    deps = [
-        ":gl_UCHAR_H_DEFAULTS",
+)
+
+autoconf(
+    name = "gl_UCHAR_H_DEFAULT_VALUES",
+    checks = [
+        checks.AC_SUBST("HAVE_C32RTOMB", 1),
+        checks.AC_SUBST("HAVE_MBRTOC16", 1),
+        checks.AC_SUBST("HAVE_MBRTOC32", 1),
+        checks.AC_SUBST("REPLACE_C32RTOMB", 0),
+        checks.AC_SUBST("REPLACE_MBRTOC16", 0),
+        checks.AC_SUBST("REPLACE_MBRTOC32", 0),
     ],
+    visibility = ["//visibility:private"],
 )
 
 autoconf(
     name = "defaults",
     visibility = ["//visibility:public"],
     deps = [
-        ":gl_UCHAR_H_REQUIRE_DEFAULTS",
+        ":gl_UCHAR_H_DEFAULT_VALUES",
+        ":gl_UCHAR_H_REQUIRE_DEFAULT_VALUES",
     ],
 )
 
