@@ -40,6 +40,67 @@ def encode_result(value, success = True):
         "value": json.encode(value) if value != None else None,
     }, indent = " " * 4) + "\n"
 
+# Every character the constant fast path accepts inside a string value.  The
+# checker (nlohmann::json) and Starlark's `json.encode` agree on how to escape
+# these; anything outside this set falls back to the checker so the result
+# file stays byte-identical regardless of which path produced it.
+_ASCII_PRINTABLE = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
+
+_CONSTANT_CHECK_TYPES = ("define", "m4_variable")
+
+# Fields that make the checker consult other results at execution time.  A
+# check using any of them must still run through the checker.
+_RUNTIME_INPUT_FIELDS = ("condition", "requires", "compile_defines", "input_deps")
+
+def constant_check_result(check):
+    """Return the result-file content for a check that needs no execution.
+
+    `AC_DEFINE` / `AC_SUBST` / `M4_VARIABLE` style checks with a literal value
+    and no `condition`/`requires` never touch a compiler: `check_define`
+    simply echoes the value back.  (It also ignores `code`, so the placeholder
+    program `M4_VARIABLE` carries does not disqualify it.)  For those the
+    result can be written at analysis time instead of spawning a
+    `CcAutoconfCheck` action.  The content produced here
+    mirrors `checker.cc` exactly (`{success, type, value}` with 4-space
+    indent, sorted keys, trailing newline) so downstream consumers cannot
+    tell the two apart.
+
+    Args:
+        check: Decoded check dict (as passed in the `checks` attribute).
+
+    Returns:
+        The file content as a string, or `None` when the check must run
+        through the checker.
+    """
+    check_type = check.get("type")
+    if check_type not in _CONSTANT_CHECK_TYPES:
+        return None
+    for field in _RUNTIME_INPUT_FIELDS:
+        if check.get(field):
+            return None
+
+    # Missing or `None` both reach `check_define` as "no value" -> "".
+    value = check.get("define_value")
+    if value == None:
+        value = ""
+    value_type = type(value)
+    if value_type == "string":
+        for char in value.elems():
+            if char not in _ASCII_PRINTABLE:
+                return None
+    elif value_type == "int":
+        # nlohmann parses the dumped integer back into a 64-bit number.
+        if value >= 9223372036854775808 or value < -9223372036854775808:
+            return None
+    elif value_type != "bool":
+        return None
+
+    return json.encode_indent({
+        "success": True,
+        "type": check_type,
+        "value": value,
+    }, indent = " " * 4) + "\n"
+
 def get_autoconf_toolchain_cache(ctx):
     """Get the content-based cache from the autoconf toolchain.
 
