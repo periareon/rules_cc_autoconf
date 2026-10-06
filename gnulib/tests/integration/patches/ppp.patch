@@ -1,0 +1,20 @@
+# ppp 2.5.2.bcr.1: pppd/sys-linux.c passes an int32_t* where time() wants a
+# time_t*. GCC only warns (-Wincompatible-pointer-types); clang >= 16 makes it
+# an error (seen with the hermetic_llvm config). Keep it a warning under
+# clang, silenced by the existing -w, until upstream fixes the call.
+#
+# Remove once the overlay on the Bazel Central Registry is updated.
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -414,7 +414,10 @@
+ ################################################################################
+ 
+ COPTS = select({
+-    "@rules_cc//cc/compiler:clang": ["-w"],
++    "@rules_cc//cc/compiler:clang": [
++        "-w",
++        "-Wno-error=incompatible-pointer-types",
++    ],
+     "@rules_cc//cc/compiler:gcc": ["-w"],
+     "//conditions:default": [],
+ })

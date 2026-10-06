@@ -4,7 +4,7 @@ module(
     name = "gnulib_integration_test",
 )
 
-bazel_dep(name = "rules_cc_autoconf", version = "0.24.0")
+bazel_dep(name = "rules_cc_autoconf", version = "0.0.0")
 local_path_override(
     module_name = "rules_cc_autoconf",
     path = "../../..",
@@ -12,7 +12,6 @@ local_path_override(
 
 bazel_dep(name = "bazel_skylib", version = "1.9.2")
 bazel_dep(name = "bison", version = "3.8.2.bcr.10")
-bazel_dep(name = "ffmpeg", version = "9.0.1.beta.bcr.5")
 bazel_dep(name = "flex", version = "2.6.4.bcr.7")
 bazel_dep(name = "gmp", version = "6.3.0.bcr.2")
 bazel_dep(name = "libgd", version = "2.3.3")
@@ -26,28 +25,235 @@ bazel_dep(name = "patch", version = "2.8.bcr.2")
 bazel_dep(name = "platforms", version = "1.1.0")
 bazel_dep(name = "postgres", version = "18.4")
 bazel_dep(name = "readline", version = "8.3.bcr.1")
+bazel_dep(name = "rules_bison", version = "0.4.bcr.1")
+bazel_dep(name = "rules_m4", version = "0.3.bcr.1")
 bazel_dep(name = "tcl_lang", version = "9.0.4")
 bazel_dep(name = "tcpdump", version = "4.99.6")
 bazel_dep(name = "tftp-hpa", version = "6.0")
 bazel_dep(name = "x264", version = "2023.10.1.bcr.6")
+bazel_dep(name = "cpio", version = "2.15")
+bazel_dep(name = "gawk", version = "5.4.0.bcr.2")
+bazel_dep(name = "grep", version = "3.12")
+bazel_dep(name = "gzip", version = "1.15")
+bazel_dep(name = "iverilog", version = "13.0.bcr.1")
+bazel_dep(name = "libde265", version = "1.0.18")
+bazel_dep(name = "libgpiod", version = "2.1.3")
+bazel_dep(name = "libheif", version = "1.21.2")
+bazel_dep(name = "libpaper", version = "2.2.7.bcr.1")
+bazel_dep(name = "libzip", version = "1.12")
+bazel_dep(name = "linuxptp", version = "4.4")
+bazel_dep(name = "make", version = "4.4.1.bcr.1")
+bazel_dep(name = "mpc", version = "1.4.1.bcr.2")
+bazel_dep(name = "mpfr", version = "4.2.2.bcr.1")
+bazel_dep(name = "nasm", version = "3.02")
+bazel_dep(name = "nvc", version = "1.21.0.bcr.1")
+bazel_dep(name = "pkgconf", version = "3.0.7")
+bazel_dep(name = "ppp", version = "2.5.2.bcr.1")
+bazel_dep(name = "rules_kconfig", version = "0.4.0")
+bazel_dep(name = "sed", version = "4.10.bcr.1")
+bazel_dep(name = "teckit", version = "2.5.12")
+bazel_dep(name = "texlive", version = "2026.1.bcr.1")  # archive_override below
+bazel_dep(name = "tre", version = "0.9.0")
+bazel_dep(name = "wget", version = "1.25.0")
+bazel_dep(name = "wget2", version = "2.3.0")
+bazel_dep(name = "x265", version = "4.1.bcr.1")
+bazel_dep(name = "xkbcommon", version = "1.9.2.bcr.beta.1")
+bazel_dep(name = "xpdf", version = "4.06")
+bazel_dep(name = "zziplib", version = "0.13.72")
 
-# The BCR overlays of these modules predate GNU-faithful Windows results from
-# the gnulib ports; the patches adapt them (see patches/*.patch).
+# Alternate C/C++ toolchains the integration tests also run with, each
+# enabled by a `--config` in `.bazelrc`. None of these modules registers
+# toolchains on its own, so without a config the default toolchain is used.
+
+# hermeticbuild/hermetic-llvm
+bazel_dep(name = "llvm", version = "0.8.24")
+
+# hermetic-llvm trims the macOS SDK to a handful of frameworks. gnulib's
+# INTL_MACOSX_LIBS links CoreServices as well ("framework not found for
+# -framework CoreServices" from wget2), so it is added here. The tag's list
+# replaces the module's defaults rather than extending them, hence the full
+# set.
+osx = use_extension("@llvm//extensions:osx.bzl", "osx")
+osx.frameworks(names = [
+    # hermetic-llvm defaults
+    "CoreFoundation",
+    "Foundation",
+    "Kernel",
+    "OSLog",
+    "Security",
+    "SystemConfiguration",
+    # gnulib INTL_MACOSX_LIBS. CoreServices.tbd re-exports CFNetwork, and
+    # ld64.lld refuses a stub whose re-export it cannot locate ("unable to
+    # locate re-export with install name .../CFNetwork").
+    "CoreServices",
+    "CFNetwork",
+])
+
+# bazel-contrib/toolchains_llvm
+bazel_dep(name = "toolchains_llvm", version = "1.11.2")
+
+toolchains_llvm = use_extension("@toolchains_llvm//toolchain/extensions:llvm.bzl", "llvm")
+toolchains_llvm.toolchain(
+    name = "llvm_toolchain",
+    # The range toolchains_llvm's own BCR test module is verified with.
+    llvm_versions = {"": "latest:>=17.0.0,<20"},
+)
+use_repo(toolchains_llvm, "llvm_toolchain")
+
+# rules_m4 / rules_bison toolchains backed by the BCR `m4` and `bison` modules
+# built here, instead of the sources those rule sets bundle (see
+# toolchains/BUILD.bazel). Root registrations win over the rule sets' own.
+register_toolchains("//toolchains:all")
+
+# The BCR overlays of these modules predate the current gnulib ports
+# (GNU-faithful Windows results, conditions spelled with the upstream probe
+# names) or trip over a Bazel toolchain quirk; each patch under patches/
+# documents what it changes and why. Drop them as the overlays are updated.
 
 single_version_override(
     module_name = "bison",
     patch_strip = 1,
-    patches = ["//patches:bison.patch"],
+    patches = [
+        "//patches:bison.patch",
+        "//patches:bison_mingw.patch",
+    ],
 )
 
 single_version_override(
     module_name = "m4",
     patch_strip = 1,
-    patches = ["//patches:m4.patch"],
+    patches = [
+        "//patches:m4.patch",
+        "//patches:m4_debug.patch",
+        "//patches:m4_mingw.patch",
+    ],
 )
 
 single_version_override(
     module_name = "patch",
     patch_strip = 1,
-    patches = ["//patches:patch.patch"],
+    patches = [
+        "//patches:patch.patch",
+        "//patches:patch_mingw.patch",
+    ],
+)
+
+single_version_override(
+    module_name = "cpio",
+    patch_strip = 1,
+    patches = ["//patches:cpio.patch"],
+)
+
+single_version_override(
+    module_name = "grep",
+    patch_strip = 1,
+    patches = ["//patches:grep.patch"],
+)
+
+single_version_override(
+    module_name = "gzip",
+    patch_strip = 1,
+    patches = ["//patches:gzip.patch"],
+)
+
+single_version_override(
+    module_name = "iverilog",
+    patch_strip = 1,
+    patches = ["//patches:iverilog.patch"],
+)
+
+single_version_override(
+    module_name = "libzip",
+    patch_strip = 1,
+    patches = ["//patches:libzip.patch"],
+)
+
+single_version_override(
+    module_name = "flex",
+    patch_strip = 1,
+    patches = ["//patches:flex.patch"],
+)
+
+single_version_override(
+    module_name = "pkgconf",
+    patch_strip = 1,
+    patches = ["//patches:pkgconf.patch"],
+)
+
+single_version_override(
+    module_name = "postgres",
+    patch_strip = 1,
+    patches = ["//patches:postgres.patch"],
+)
+
+single_version_override(
+    module_name = "ppp",
+    patch_strip = 1,
+    patches = ["//patches:ppp.patch"],
+)
+
+single_version_override(
+    module_name = "sed",
+    patch_strip = 1,
+    patches = ["//patches:sed.patch"],
+)
+
+single_version_override(
+    module_name = "wget",
+    patch_strip = 1,
+    patches = ["//patches:wget.patch"],
+)
+
+single_version_override(
+    module_name = "wget2",
+    patch_strip = 1,
+    patches = ["//patches:wget2.patch"],
+)
+
+# openssl (reached through libssh2, postgres and others) only recognises
+# msvc-cl, clang-cl and mingw-gcc on Windows; plain clang targeting MinGW
+# (the hermetic_llvm config) fell through to an empty perlasm flavour.
+single_version_override(
+    module_name = "openssl",
+    patch_strip = 1,
+    patches = ["//patches:openssl.patch"],
+)
+
+# texlive 2026.1.bcr.1 is not on the Bazel Central Registry yet
+# (https://github.com/bazelbuild/bazel-central-registry/pull/10989); this
+# reproduces that registry entry: its source archive, its overlay (as an
+# add-files patch) and its own patches. Replace with the plain bazel_dep once
+# the PR merges.
+archive_override(
+    module_name = "texlive",
+    integrity = "sha256-yxINMU086yOsYIrxfd0sYjr88CMx9ACg8l7q1bisHXA=",
+    patch_strip = 1,
+    patches = [
+        "//patches:texlive_overlay.patch",
+        "//patches:texlive_texk_psutils_unistd_msvc.patch",
+        "//patches:texlive_utils_ps2eps_bbox_c_msvc.patch",
+    ],
+    strip_prefix = "texlive-20260301-source",
+    urls = [
+        # The mirrors from source.json come first: texlive.info is slow and
+        # has handed CI a corrupt download (Bazel stops at the first checksum
+        # mismatch instead of trying the next URL). mirror.bazel.build only
+        # carries the archive once the registry PR merges.
+        "https://ftp.tu-chemnitz.de/pub/tug/historic/systems/texlive/2026/texlive-20260301-source.tar.xz",
+        "https://mirrors.tuna.tsinghua.edu.cn/tex-historic-archive/systems/texlive/2026/texlive-20260301-source.tar.xz",
+        "https://mirror.nju.edu.cn/tex-historic/systems/texlive/2026/texlive-20260301-source.tar.xz",
+        "https://texlive.info/historic/systems/texlive/2026/texlive-20260301-source.tar.xz",
+    ],
+)
+
+single_version_override(
+    module_name = "x264",
+    patch_strip = 1,
+    patches = ["//patches:x264.patch"],
+)
+
+single_version_override(
+    module_name = "zziplib",
+    patch_strip = 1,
+    patches = ["//patches:zziplib.patch"],
 )

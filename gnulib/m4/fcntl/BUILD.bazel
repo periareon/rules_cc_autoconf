@@ -27,6 +27,15 @@ autoconf(
             if_true = 1,
         ),
 
+        # if test $ac_cv_func_fcntl = no; then HAVE_FCNTL=0
+        # Lowers the gl_FCNTL_H_DEFAULTS substitution so fcntl.in.h declares
+        # the gnulib replacement where the libc has no fcntl (MSVC, MinGW).
+        checks.AC_SUBST(
+            "HAVE_FCNTL",
+            condition = "ac_cv_func_fcntl",
+            if_false = 0,
+            if_true = 1,
+        ),
         # gl_REPLACE_FCNTL logic:
         # - If function doesn't exist: HAVE_FCNTL=0, REPLACE_FCNTL stays 0
         # - If function exists but F_DUPFD doesn't work correctly, REPLACE_FCNTL=1

@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "autoconf/private/common/file_util.h"
+#include "autoconf/private/linkopts_gen/flag_list.h"
 #include "tools/json/json.h"
 
 namespace rules_cc_autoconf {
@@ -165,22 +166,13 @@ int run(int argc, char* argv[]) {
         return 1;
     }
 
-    std::vector<std::string> flags;
+    std::vector<std::string> values;
     for (const auto& var : vars) {
-        std::string flag = extract_flag_value(var.file_path, var.name);
-        if (!flag.empty()) {
-            bool found = false;
-            for (const auto& existing : flags) {
-                if (existing == flag) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                flags.push_back(flag);
-            }
-        }
+        values.push_back(extract_flag_value(var.file_path, var.name));
     }
+    // One option per line (linker response file format); see flatten_flags
+    // for why values are split and how repeats are dropped.
+    std::vector<std::string> flags = flatten_flags(values);
 
     auto ofs = open_ofstream(output_path);
     if (!ofs.is_open()) {

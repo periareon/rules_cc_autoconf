@@ -1,4 +1,37 @@
+load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
+load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
+
+# Which C++ toolchain the run was configured with; set by the matching
+# `--config` in .bazelrc so targets can opt out of one toolchain on one OS.
+string_flag(
+    name = "toolchain",
+    build_setting_default = "default",
+    values = [
+        "default",
+        "hermetic_llvm",
+        "toolchains_llvm",
+    ],
+)
+
+config_setting(
+    name = "hermetic_llvm",
+    flag_values = {":toolchain": "hermetic_llvm"},
+)
+
+# hermetic-llvm builds Windows with clang for the MinGW ABI. Overlays whose
+# Windows configuration is MSVC-shaped (and that upstream does not build for
+# MinGW either) are excluded there; they still run with the MSVC toolchain.
+selects.config_setting_group(
+    name = "hermetic_llvm_windows",
+    match_all = [
+        ":hermetic_llvm",
+        "@platforms//os:windows",
+    ],
+)
+
+# One alias per BCR module that depends on `rules_cc_autoconf`.  Platform
+# restrictions mirror each module's own BCR `presubmit.yml` platform list.
 
 alias(
     name = "bison",
@@ -6,8 +39,8 @@ alias(
 )
 
 alias(
-    name = "ffmpeg",
-    actual = "@ffmpeg",
+    name = "cpio",
+    actual = "@cpio",
     target_compatible_with = select({
         "@platforms//os:windows": ["@platforms//:incompatible"],
         "//conditions:default": [],
@@ -19,14 +52,63 @@ alias(
     actual = "@flex",
 )
 
+# gawk's Windows build compiles its pc/ sources with MSVC-only assumptions
+# (no -Ipc for <dlfcn.h>/<langinfo.h>, MSVC-only mbrtoc32/socket shims).
+alias(
+    name = "gawk",
+    actual = "@gawk",
+    target_compatible_with = select({
+        ":hermetic_llvm_windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
 alias(
     name = "gmp",
     actual = "@gmp",
 )
 
 alias(
+    name = "grep",
+    actual = "@grep",
+)
+
+alias(
+    name = "gzip",
+    actual = "@gzip",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
+alias(
+    name = "iverilog",
+    actual = "@iverilog",
+)
+
+alias(
+    name = "libde265",
+    actual = "@libde265",
+)
+
+alias(
     name = "libgd",
     actual = "@libgd",
+)
+
+alias(
+    name = "libgpiod",
+    actual = "@libgpiod",
+    target_compatible_with = select({
+        "@platforms//os:linux": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
+
+alias(
+    name = "libheif",
+    actual = "@libheif",
 )
 
 alias(
@@ -36,6 +118,11 @@ alias(
         "@platforms//os:windows": ["@platforms//:incompatible"],
         "//conditions:default": [],
     }),
+)
+
+alias(
+    name = "libpaper",
+    actual = "@libpaper",
 )
 
 alias(
@@ -50,10 +137,6 @@ alias(
 alias(
     name = "libssh2",
     actual = "@libssh2",
-    target_compatible_with = select({
-        "@platforms//os:windows": ["@platforms//:incompatible"],
-        "//conditions:default": [],
-    }),
 )
 
 alias(
@@ -66,8 +149,27 @@ alias(
 )
 
 alias(
+    name = "libzip",
+    actual = "@libzip",
+)
+
+alias(
+    name = "linuxptp",
+    actual = "@linuxptp//:ptp4l",
+    target_compatible_with = select({
+        "@platforms//os:linux": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
+
+alias(
     name = "m4",
     actual = "@m4",
+)
+
+alias(
+    name = "make",
+    actual = "@make",
 )
 
 alias(
@@ -80,13 +182,60 @@ alias(
 )
 
 alias(
+    name = "mpc",
+    actual = "@mpc",
+)
+
+alias(
+    name = "mpfr",
+    actual = "@mpfr",
+)
+
+alias(
+    name = "nasm",
+    actual = "@nasm",
+)
+
+# Kept manual: nvc 1.21.0.bcr.1 analyzes cleanly against HEAD (the duplicate
+# PACKAGE_VERSION subst of 1.21.0 is gone), but it builds llvm-project 17
+# from source, which is too expensive for every integration run.
+alias(
+    name = "nvc",
+    actual = "@nvc",
+    tags = ["manual"],
+    target_compatible_with = select({
+        "@platforms//os:linux": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
+
+alias(
     name = "patch",
     actual = "@patch",
 )
 
 alias(
+    name = "pkgconf",
+    actual = "@pkgconf",
+)
+
+alias(
+    name = "ppp",
+    actual = "@ppp//:pppd",
+    target_compatible_with = select({
+        "@platforms//os:linux": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
+
+# libpq's Windows port assumes MSVC (socklen_t, localtime_r, its own dirent).
+alias(
     name = "pq",
     actual = "@postgres//:pq",
+    target_compatible_with = select({
+        ":hermetic_llvm_windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
 )
 
 alias(
@@ -96,6 +245,11 @@ alias(
         "@platforms//os:windows": ["@platforms//:incompatible"],
         "//conditions:default": [],
     }),
+)
+
+alias(
+    name = "sed",
+    actual = "@sed",
 )
 
 alias(
@@ -117,8 +271,52 @@ alias(
 )
 
 alias(
+    name = "teckit",
+    actual = "@teckit//:TECkit",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
+# texlive runs gawk as a build tool, so it follows gawk's exclusion; its
+# chktex target already excludes MSVC and clang-cl itself, so this leaves
+# texlive with no Windows configuration until gawk builds for MinGW.
+alias(
+    name = "texlive",
+    actual = "@texlive//texk/chktex:chktex",
+    target_compatible_with = select({
+        ":hermetic_llvm_windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
+alias(
     name = "tftp-hpa",
     actual = "@tftp-hpa//:tftp",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
+alias(
+    name = "tre",
+    actual = "@tre",
+)
+
+alias(
+    name = "wget",
+    actual = "@wget",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
+alias(
+    name = "wget2",
+    actual = "@wget2",
     target_compatible_with = select({
         "@platforms//os:windows": ["@platforms//:incompatible"],
         "//conditions:default": [],
@@ -130,29 +328,81 @@ alias(
     actual = "@x264",
 )
 
+alias(
+    name = "x265",
+    actual = "@x265",
+)
+
+alias(
+    name = "xkbcommon",
+    actual = "@xkbcommon",
+)
+
+alias(
+    name = "xpdf",
+    actual = "@xpdf",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
+alias(
+    name = "zziplib",
+    actual = "@zziplib",
+)
+
 [
     build_test(
         name = "{}_build_test".format(target.lstrip(":")),
+        tags = ["manual"] if target == ":nvc" else [],
         targets = [target],
     )
     for target in [
         ":bison",
-        ":ffmpeg",
+        ":cpio",
         ":flex",
+        ":gawk",
         ":gmp",
+        ":grep",
+        ":gzip",
+        ":iverilog",
+        ":libde265",
         ":libgd",
+        ":libgpiod",
+        ":libheif",
         ":libmicrohttpd",
+        ":libpaper",
         ":libpcap",
         ":libssh2",
         ":libwebsockets",
+        ":libzip",
+        ":linuxptp",
         ":m4",
+        ":make",
         ":mosquitto",
+        ":mpc",
+        ":mpfr",
+        ":nasm",
+        ":nvc",
         ":patch",
+        ":pkgconf",
+        ":ppp",
         ":pq",
         ":readline",
-        ":tcpdump",
-        ":tftp-hpa",
-        ":x264",
+        ":sed",
         ":tclsh",
+        ":tcpdump",
+        ":teckit",
+        ":texlive",
+        ":tftp-hpa",
+        ":tre",
+        ":wget",
+        ":wget2",
+        ":x264",
+        ":x265",
+        ":xkbcommon",
+        ":xpdf",
+        ":zziplib",
     ]
 ]

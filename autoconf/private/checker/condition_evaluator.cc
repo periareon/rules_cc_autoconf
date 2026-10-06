@@ -202,6 +202,15 @@ std::string result_value(const CheckResult* r) {
     return r->value.value_or("");
 }
 
+// The text a comparison sees. A define with no value is `/* #undef X */` in
+// config.h, which the preprocessor compares as 0 (`#if X == 0` holds), so
+// `X==0` and `!X` agree on an absent define. Substs always carry a value, and
+// an explicitly empty one ("") keeps shell semantics (`test "$X" = 0` fails).
+std::string comparison_value(const CheckResult* r) {
+    if (r && r->is_define && !r->value.has_value()) return "0";
+    return result_value(r);
+}
+
 bool compare_values(const std::string& actual, CmpOp op,
                     const std::string& expected) {
     switch (op) {
@@ -246,7 +255,8 @@ bool eval_cond(const Cond& c,
         case Cond::Var: {
             const CheckResult* r = find_result(c.name, results);
             if (!c.cmp_value.empty()) {
-                return compare_values(result_value(r), c.cmp_op, c.cmp_value);
+                return compare_values(comparison_value(r), c.cmp_op,
+                                      c.cmp_value);
             }
             return is_truthy(r);
         }

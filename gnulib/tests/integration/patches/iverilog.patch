@@ -1,0 +1,28 @@
+# iverilog 13.0.bcr.1: driver/main.c uses _NSGetExecutablePath on macOS but
+# never includes <mach-o/dyld.h> (upstream relies on Apple clang treating the
+# implicit declaration as a warning). Upstream clang, as used by the
+# toolchains_llvm and hermetic_llvm configs, makes it an error ("call to
+# undeclared function '_NSGetExecutablePath'"). Pre-include the header on
+# macOS.
+#
+# Remove once the overlay on the Bazel Central Registry is updated.
+--- a/driver/BUILD.bazel
++++ b/driver/BUILD.bazel
+@@ -54,7 +54,16 @@
+         '-DIVL_LIB=\\"\\"',
+         '-DDLLIB=\\"\\"',
+         '-DIVL_INCLUDE_INSTALL_DIR=\\"\\"',
+-    ],
++    ] + select({
++        # main.c calls _NSGetExecutablePath without including <mach-o/dyld.h>.
++        # Apple clang only warns about the implicit declaration; upstream
++        # clang (toolchains_llvm, hermetic-llvm) rejects it.
++        "@platforms//os:macos": [
++            "-include",
++            "mach-o/dyld.h",
++        ],
++        "//conditions:default": [],
++    }),
+     includes = ["."],
+     visibility = ["//visibility:public"],
+     deps = [

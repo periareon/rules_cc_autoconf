@@ -1,0 +1,37 @@
+# pkgconf 3.0.7: advapi32 was linked as `advapi32.lib` for every Windows
+# build, which only MSVC-style drivers understand; clang targeting MinGW (the
+# hermetic_llvm config) wants `-ladvapi32`. Select by compiler, not by OS.
+#
+# Remove once the overlay on the Bazel Central Registry is updated.
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -35,6 +35,14 @@
+ load("@rules_cc_autoconf//autoconf:package_info.bzl", "package_info")
+ load(":utils.bzl", "pkg_config_alias", "runfiles_filelist")
+ 
++# clang driving the MinGW target (rules_cc reports it as plain `clang`), as
++# used by the hermetic-llvm BCR toolchain on Windows.
++config_setting(
++    name = "windows_clang",
++    constraint_values = ["@platforms//os:windows"],
++    flag_values = {"@rules_cc//cc/compiler": "clang"},
++)
++
+ # Upstream's install rules, linked above, put pkg.m4 under share/aclocal and
+ # COPYING under share/doc/pkgconf.
+ exports_files([
+@@ -308,8 +316,12 @@
+     includes = ["."],
+     linkopts = select({
+         # libpkgconf/path.c reads the search paths out of the registry and
+-        # Bazel's MSVC toolchain does not link advapi32 by default.
+-        "@platforms//os:windows": ["advapi32.lib"],
++        # Bazel's MSVC toolchain does not link advapi32 by default. MSVC-style
++        # drivers take the .lib name; clang/gcc for the MinGW target take -l.
++        "@rules_cc//cc/compiler:clang-cl": ["advapi32.lib"],
++        "@rules_cc//cc/compiler:msvc-cl": ["advapi32.lib"],
++        "@rules_cc//cc/compiler:mingw-gcc": ["-ladvapi32"],
++        ":windows_clang": ["-ladvapi32"],
+         "//conditions:default": [],
+     }),
+     local_defines = _LOCAL_DEFINES,

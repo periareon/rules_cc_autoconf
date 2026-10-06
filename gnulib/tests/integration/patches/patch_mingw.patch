@@ -1,0 +1,94 @@
+# patch 2.8.bcr.2 (applied after patch.patch), for clang targeting MinGW (the
+# hermetic_llvm config on Windows). The overlay treated "Windows" and "MSVC"
+# as the same thing:
+#
+#   - lib/msvc-inval.c, lib/msvc-nothrow.c, lib/stat-w32.c and lib/at-func2.c
+#     were compiled for MSVC only; gnulib needs them on every Windows libc
+#     (HAVE_MSVC_INVALID_PARAMETER_HANDLER is 1 for MinGW too, and
+#     HAVE_RENAMEAT is 0), so the MinGW link lost gl_msvc_inval_ensure_handler,
+#     _gl_nothrow_get_osfhandle, _gl_fstat_by_handle,
+#     _gl_convert_FILETIME_to_POSIX and at_func2.
+#   - lib/group-member.c needs gid_t / struct group / getgroups, which no
+#     Windows libc has; it was excluded for MSVC only.
+#   - lib/realloc.c was compiled only for Linux (via a hand-set
+#     REPLACE_REALLOC). gnulib's realloc-posix compiles it whenever
+#     REPLACE_REALLOC_FOR_REALLOC_POSIX != 0 (2 on Windows and glibc):
+#     stdlib.h declares rpl_realloc as a C99 inline and realloc.c holds the
+#     out-of-line copy that non-inlined calls reference under GNU inline
+#     semantics ("undefined symbol: rpl_realloc" from xmalloc/ialloc/fchdir).
+#   - The Windows link libraries were spelled as `.lib` files, which only
+#     MSVC-style drivers understand; the GNU-style driver wants
+#     `-ladvapi32 -lbcrypt` ("undefined symbol: BCryptGenRandom").
+#
+# Remove once the overlay on the Bazel Central Registry is updated.
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -822,7 +822,7 @@
+         "lib/readdir.c": "!ac_cv_func_readdir || REPLACE_READDIR",
+         "lib/readlink.c": "!ac_cv_func_readlink || REPLACE_READLINK",
+         "lib/readlinkat.c": "!ac_cv_func_readlinkat || REPLACE_READLINKAT",
+-        "lib/realloc.c": "REPLACE_REALLOC",
++        "lib/realloc.c": "REPLACE_REALLOC || REPLACE_REALLOC_FOR_REALLOC_POSIX",
+         "lib/reallocarray.c": "COMPILE_REALLOCARRAY",
+         "lib/rename.c": "REPLACE_RENAME",
+         "lib/renameat.c": "!ac_cv_func_renameat || REPLACE_RENAMEAT",
+@@ -857,6 +857,14 @@
+ # Compiler options
+ # ---------------------------------------------------------------------------
+ 
++# clang driving the MinGW target (rules_cc reports it as plain `clang`), as
++# used by the hermetic-llvm BCR toolchain on Windows.
++config_setting(
++    name = "windows_clang",
++    constraint_values = ["@platforms//os:windows"],
++    flag_values = {"@rules_cc//cc/compiler": "clang"},
++)
++
+ COPTS = select({
+     "@rules_cc//cc/compiler:clang": [
+         "-w",
+@@ -937,15 +945,19 @@
+     ] + [
+         ":gnulib_conditional_srcs",
+     ] + select({
+-        "@rules_cc//cc/compiler:msvc-cl": [
+-            # MSVC-specific gnulib support files (no autoconf_srcs condition)
++        # Windows-only gnulib support files (no autoconf_srcs condition). Every
++        # Windows libc needs them, whichever compiler drives the build: gnulib
++        # defines HAVE_MSVC_INVALID_PARAMETER_HANDLER for MinGW as well.
++        "@platforms//os:windows": [
+             "lib/msvc-inval.c",
+             "lib/msvc-nothrow.c",
+             "lib/stat-w32.c",
+-            # at-func2.c is a standalone file needed when HAVE_RENAMEAT=0 (MSVC).
+-            # On Linux/macOS, renameatu.c takes the HAVE_RENAMEAT path instead.
++            # at-func2.c is a standalone file needed when HAVE_RENAMEAT=0
++            # (Windows). On Linux/macOS, renameatu.c takes the HAVE_RENAMEAT
++            # path instead.
+             "lib/at-func2.c",
+         ],
++        # group-member.c needs gid_t / struct group / getgroups (POSIX only).
+         "//conditions:default": ["lib/group-member.c"],
+     }),
+     hdrs = [
+@@ -1007,10 +1019,20 @@
+     ],
+     linkopts = select({
+         "@platforms//os:linux": ["-lpthread"],
++        # MSVC-style drivers take .lib names; GNU-style drivers targeting
++        # MinGW take -l.
+         "@rules_cc//cc/compiler:msvc-cl": [
+             "advapi32.lib",
+             "bcrypt.lib",
+         ],
++        "@rules_cc//cc/compiler:mingw-gcc": [
++            "-ladvapi32",
++            "-lbcrypt",
++        ],
++        ":windows_clang": [
++            "-ladvapi32",
++            "-lbcrypt",
++        ],
+         "//conditions:default": [],
+     }),
+     local_defines = LOCAL_DEFINES + [

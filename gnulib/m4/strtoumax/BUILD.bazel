@@ -32,6 +32,14 @@ autoconf(
             condition = "ac_cv_have_decl_strtoumax",
             if_true = 1,
         ),
+        # if test "$ac_cv_have_decl_strtoumax" = yes; then ... else HAVE_DECL_STRTOUMAX=0; fi
+        # (lowers the gl_INTTYPES_H_DEFAULTS substitution)
+        checks.AC_SUBST(
+            "HAVE_DECL_STRTOUMAX",
+            condition = "ac_cv_have_decl_strtoumax",
+            if_false = 0,
+            if_true = 1,
+        ),
         # Set REPLACE_STRTOUMAX if declaration exists but function doesn't
         # Based on golden files, REPLACE_STRTOUMAX=0 on macOS (both function and declaration exist)
         checks.AC_SUBST("REPLACE_STRTOUMAX", 0),

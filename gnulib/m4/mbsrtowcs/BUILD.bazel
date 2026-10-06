@@ -29,6 +29,14 @@ autoconf(
             condition = "ac_cv_func_mbsrtowcs",
             if_true = 1,
         ),
+        # if test $ac_cv_func_mbsrtowcs = no; then HAVE_MBSRTOWCS=0; fi
+        # (lowers the gl_WCHAR_H_DEFAULTS substitution)
+        checks.AC_SUBST(
+            "HAVE_MBSRTOWCS",
+            condition = "ac_cv_func_mbsrtowcs",
+            if_false = 0,
+            if_true = 1,
+        ),
 
         # Check for mbsrtowcs declaration (for Minix 3.1.8 which declares but doesn't have it)
         checks.AC_CHECK_DECL(

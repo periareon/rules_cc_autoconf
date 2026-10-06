@@ -43,6 +43,24 @@ build --incompatible_autoload_externally=
 build --incompatible_config_setting_private_default_visibility
 
 ###############################################################################
+## Alternate toolchains
+##
+## The integration tests run with the default (auto-configured host) C/C++
+## toolchain and with each config below. The toolchain modules are declared in
+## `MODULE.bazel` but register nothing; a config activates one via
+## `--extra_toolchains`, which takes precedence over the default toolchain.
+## CI runs every config here (see `.github/workflows/ci.yaml`).
+###############################################################################
+
+# hermeticbuild/hermetic-llvm (`llvm` module)
+common:hermetic_llvm --extra_toolchains=@llvm//toolchain:all
+common:hermetic_llvm --//:toolchain=hermetic_llvm
+
+# bazel-contrib/toolchains_llvm
+common:toolchains_llvm --extra_toolchains=@llvm_toolchain//:all
+common:toolchains_llvm --//:toolchain=toolchains_llvm
+
+###############################################################################
 ## Remote Cache
 ###############################################################################
 

@@ -1,0 +1,22 @@
+# m4 1.4.21.bcr.5 (applied after m4.patch): Bazel's Apple toolchain passes
+# -DDEBUG in fastbuild and dbg, which src/m4.h reads as a request for m4's
+# DEBUG_INCL / DEBUG_INPUT / DEBUG_SYM dump helpers. Those are spelled
+# `static void MAYBE_UNUSED func (void)`; with current Apple clang (17 in the
+# CI logs) in C11 mode gnulib expands MAYBE_UNUSED to [[__maybe_unused__]],
+# which is invalid in that position ("'maybe_unused' attribute cannot be
+# applied to types"). GNU builds never define DEBUG, so drop it here too.
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -829,10 +829,12 @@
+     "@rules_cc//cc/compiler:clang": [
+         "-w",
+         "-std=c11",
++        "-UDEBUG",
+     ],
+     "@rules_cc//cc/compiler:gcc": [
+         "-w",
+         "-std=c11",
++        "-UDEBUG",
+     ],
+     "@rules_cc//cc/compiler:msvc-cl": [
+         "/wd4116",

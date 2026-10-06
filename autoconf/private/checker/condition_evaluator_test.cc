@@ -282,6 +282,37 @@ void test_eval_eq_no_match() {
     assert(e.compute(results) == false);
 }
 
+// An AC_DEFINE whose condition failed (`if_false = None`) has no value: it is
+// `#undef` in config.h, which `#if X == 0` treats as 0. gnulib overlays spell
+// "function missing" as `ac_cv_define_HAVE_X==0`, so this must hold.
+void test_eval_eq_zero_matches_undefined_define() {
+    std::map<std::string, CheckResult> results;
+    results.emplace("ac_cv_define_HAVE_FOO",
+                    CheckResult("ac_cv_define_HAVE_FOO", std::nullopt, false,
+                                /*is_define=*/true, /*is_subst=*/false,
+                                CheckType::kDefine, "HAVE_FOO"));
+    ConditionEvaluator eq("ac_cv_define_HAVE_FOO==0");
+    assert(eq.compute(results) == true);
+    ConditionEvaluator neq("ac_cv_define_HAVE_FOO!=0");
+    assert(neq.compute(results) == false);
+    ConditionEvaluator one("ac_cv_define_HAVE_FOO==1");
+    assert(one.compute(results) == false);
+    // Looked up through the define name as well.
+    ConditionEvaluator by_define("HAVE_FOO==0");
+    assert(by_define.compute(results) == true);
+}
+
+// A subst with an explicitly empty value is not 0 (shell semantics).
+void test_eval_eq_zero_rejects_empty_subst() {
+    std::map<std::string, CheckResult> results;
+    results.emplace("ac_cv_subst_LIBS",
+                    CheckResult("ac_cv_subst_LIBS", std::string(""), true,
+                                /*is_define=*/false, /*is_subst=*/true,
+                                CheckType::kM4Variable, std::nullopt, "LIBS"));
+    ConditionEvaluator e("ac_cv_subst_LIBS==0");
+    assert(e.compute(results) == false);
+}
+
 void test_eval_neq_match() {
     std::map<std::string, CheckResult> results;
     results.emplace("FOO", make_result("FOO", "0", true));
@@ -460,6 +491,8 @@ int main() {
     RUN(test_eval_negation);
     RUN(test_eval_eq_match);
     RUN(test_eval_eq_no_match);
+    RUN(test_eval_eq_zero_matches_undefined_define);
+    RUN(test_eval_eq_zero_rejects_empty_subst);
     RUN(test_eval_neq_match);
     RUN(test_eval_neq_no_match);
     RUN(test_eval_relational);

@@ -43,6 +43,21 @@ cc_library(
 )
 
 cc_library(
+    name = "int_bisect",
+    srcs = ["int_bisect.cc"],
+    hdrs = ["int_bisect.h"],
+    cxxopts = cxxopts(),
+    visibility = ["//autoconf/private:__subpackages__"],
+)
+
+cc_test(
+    name = "int_bisect_test",
+    srcs = ["int_bisect_test.cc"],
+    cxxopts = cxxopts(),
+    deps = [":int_bisect"],
+)
+
+cc_library(
     name = "check_runner",
     srcs = [
         "check_runner.cc",
@@ -59,6 +74,7 @@ cc_library(
         ":check_types",
         ":config",
         ":debug_logger",
+        ":int_bisect",
         "//autoconf/private/common:file_util",
         "//tools/json",
     ],

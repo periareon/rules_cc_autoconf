@@ -25,6 +25,14 @@ autoconf(
             condition = "ac_cv_have_decl_strtoimax",
             if_true = 1,
         ),
+        # if test "$ac_cv_have_decl_strtoimax" != yes; then HAVE_DECL_STRTOIMAX=0; fi
+        # (lowers the gl_INTTYPES_H_DEFAULTS substitution)
+        checks.AC_SUBST(
+            "HAVE_DECL_STRTOIMAX",
+            condition = "ac_cv_have_decl_strtoimax",
+            if_false = 0,
+            if_true = 1,
+        ),
 
         # if test "$ac_cv_func_strtoimax" = yes; then
         #   case "$gl_cv_func_strtoimax" in

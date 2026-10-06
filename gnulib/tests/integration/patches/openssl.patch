@@ -1,0 +1,58 @@
+# openssl 3.5.8.bcr.0: `configs/BUILD.bazel` already defines `windows_clang`
+# (clang driving the MinGW target, which the hermetic_llvm config uses on
+# Windows) and uses it for the system libraries, but the `*_non_msvc` groups
+# that pick the perlasm assembly flavour only list clang-cl and mingw-gcc. With
+# plain clang the flavour fell through to "" and the generated x86_64 .s files
+# came out in ELF syntax (`.type ..., @function`), which the COFF assembler
+# rejects. Treat clang like mingw-gcc there. The same gap exists in 4.0.1.bcr.0.
+#
+# Remove once the overlay on the Bazel Central Registry is updated.
+--- a/configs/BUILD.bazel
++++ b/configs/BUILD.bazel
+@@ -149,6 +149,7 @@
+ selects.config_setting_group(
+     name = "windows_non_msvc",
+     match_any = [
++        ":windows_clang",
+         ":windows_clang_cl",
+         ":windows_mingw",
+     ],
+@@ -158,6 +159,7 @@
+ selects.config_setting_group(
+     name = "windows_x64_non_msvc",
+     match_any = [
++        ":windows_x64_clang",
+         ":windows_x64_clang_cl",
+         ":windows_x64_mingw",
+     ],
+@@ -167,11 +169,30 @@
+ selects.config_setting_group(
+     name = "windows_arm64_non_msvc",
+     match_any = [
++        ":windows_arm64_clang",
+         ":windows_arm64_clang_cl",
+         ":windows_arm64_mingw",
+     ],
+     visibility = ["//visibility:public"],
+ )
++
++selects.config_setting_group(
++    name = "windows_x64_clang",
++    match_all = [
++        ":windows_x64",
++        ":windows_clang",
++    ],
++    visibility = ["//visibility:public"],
++)
++
++selects.config_setting_group(
++    name = "windows_arm64_clang",
++    match_all = [
++        ":windows_arm64",
++        ":windows_clang",
++    ],
++    visibility = ["//visibility:public"],
++)
+ 
+ # clang on Windows is the LLVM mingw/gnullvm driver, which links GNU-style
+ # ("-l") -- unlike clang-cl, which uses the MSVC linker.
