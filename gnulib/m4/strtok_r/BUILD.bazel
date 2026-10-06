@@ -3,9 +3,8 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
-# gl_PREREQ_STRTOK_R - lines 62-64 (empty)
 autoconf(
-    name = "strtok_r",
+    name = "gl_FUNC_STRTOK_R",
     checks = [
         checks.AC_CHECK_FUNC(
             "strtok_r",
@@ -18,10 +17,12 @@ autoconf(
         #   esac
         # else
         # fi
-        # Define HAVE_STRTOK_R in config.h if function exists
+        # AC_CHECK_FUNCS([strtok_r]) defines HAVE_STRTOK_R in config.h only
+        # when the function is found; otherwise the macro stays undefined.
         checks.AC_DEFINE(
             "HAVE_STRTOK_R",
             condition = "ac_cv_func_strtok_r",
+            if_false = None,
             if_true = 1,
         ),
         checks.AC_CHECK_DECL(
@@ -30,12 +31,21 @@ autoconf(
             includes = ["#include <string.h>"],
         ),
 
-        #   HAVE_DECL_STRTOK_R=0
-        # fi
-        # Define HAVE_DECL_STRTOK_R in config.h if declaration exists
+        # AC_CHECK_DECLS_ONCE([strtok_r]) defines HAVE_DECL_STRTOK_R to 1 or 0.
         checks.AC_DEFINE(
             "HAVE_DECL_STRTOK_R",
             condition = "ac_cv_have_decl_strtok_r",
+            if_true = 1,
+        ),
+
+        # if test $ac_cv_have_decl_strtok_r = no; then
+        #   HAVE_DECL_STRTOK_R=0
+        # fi
+        # Overrides the gl_STRING_H_DEFAULTS value of 1 (e.g. MSVC has no strtok_r).
+        checks.AC_SUBST(
+            "HAVE_DECL_STRTOK_R",
+            condition = "ac_cv_have_decl_strtok_r",
+            if_false = 0,
             if_true = 1,
         ),
         # Based on golden files, strtok_r works on macOS, so:
@@ -46,9 +56,25 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
-        "//autoconf/macros/AC_C_RESTRICT",
-        "//gnulib/m4/string_h",
+        "//autoconf/macros/AC_C_RESTRICT",  # AC_REQUIRE([AC_C_RESTRICT])
+        "//gnulib/m4/string_h",  # AC_REQUIRE([gl_STRING_H_DEFAULTS])
+    ],
+)
+
+# gl_PREREQ_STRTOK_R - lines 73-75 (empty)
+autoconf(
+    name = "gl_PREREQ_STRTOK_R",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "strtok_r",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_STRTOK_R",
+        ":gl_PREREQ_STRTOK_R",
     ],
 )

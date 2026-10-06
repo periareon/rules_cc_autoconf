@@ -4,20 +4,38 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "pselect",
+    name = "gl_FUNC_PSELECT",
     checks = [
-        # gl_FUNC_PSELECT checks for pselect function
+        # AC_CHECK_FUNCS_ONCE([pselect])
         # On macOS, pselect is available
         checks.AC_CHECK_FUNC(
             "pselect",
             define = "HAVE_PSELECT",
         ),
+        # if test $ac_cv_func_pselect = no || test $gl_cv_sig_pselect = no; then
+        #   REPLACE_PSELECT=1
+        # fi
+        # (The runtime EBADF check and the signature check pass on glibc/macOS;
+        # on MSVC there is no pselect at all.)
+        checks.AC_SUBST(
+            "REPLACE_PSELECT",
+            condition = "ac_cv_func_pselect",
+            if_false = "1",
+            if_true = "0",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/sys_select_h",
-        "//gnulib/m4/sys_socket_h:gl_SYS_SOCKET_H",
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//gnulib/m4/sys_select_h",  # AC_REQUIRE([gl_SYS_SELECT_H])
+    ],
+)
+
+autoconf(
+    name = "pselect",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_PSELECT",
         # For test compatibility - need basic header defines
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],

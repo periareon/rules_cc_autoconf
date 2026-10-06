@@ -1,4 +1,5 @@
 /* config.h.in */
+#undef HAVE_C_STATIC_ASSERT
 #undef INCLUDE_NEXT
 #undef INCLUDE_NEXT_AS_FIRST_DIRECTIVE
 #undef NEXT_ASSERT_H

@@ -13,8 +13,12 @@ autoconf(
         ),
     ] + select({
         "@platforms//os:windows": [
-            # On Windows, always replace ftruncate
-            checks.AC_SUBST("REPLACE_FTRUNCATE", 1),
+            # On Windows, replace ftruncate when it exists (gl_LARGEFILE is
+            # defined); when it is missing (MSVC) HAVE_FTRUNCATE=0 instead.
+            checks.AC_SUBST(
+                "REPLACE_FTRUNCATE",
+                condition = "ac_cv_func_ftruncate",
+            ),
         ],
         "//conditions:default": [
             # On non-Windows, replace only if ftruncate doesn't exist

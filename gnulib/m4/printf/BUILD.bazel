@@ -29,6 +29,12 @@ autoconf(
         "@platforms//os:linux": [
             checks.AC_DEFINE("HAVE_WORKING_SWPRINTF", "1"),
         ],
+        # MSVC's UCRT swprintf passes the runtime test (null wide characters in
+        # the output) even though the cross-compile guess for mingw/windows is
+        # "no" (mingw's msvcrt is broken).
+        "@platforms//os:windows": [
+            checks.AC_DEFINE("HAVE_WORKING_SWPRINTF", "1"),
+        ],
         # On macOS: swprintf does not work correctly (golden shows #undef)
         "//conditions:default": [],
     }),
@@ -246,11 +252,9 @@ autoconf(
 
 autoconf(
     name = "printf",
-    checks = [
-        # APPLE_UNIVERSAL_BUILD comes from multiarch dependency
-    ],
     visibility = ["//visibility:public"],
     deps = [
+        # APPLE_UNIVERSAL_BUILD comes from the multiarch dependency
         ":gl_SNPRINTF_PRESENCE",
         ":gl_SWPRINTF_WORKS",
         ":gl_PRINTF_SIZES_C99",

@@ -1,0 +1,219 @@
+# Windows (MSVC) fixes for the patch 2.8.bcr.2 overlay against GNU-faithful
+# rules_cc_autoconf results.
+#
+# gnulib compiles a replacement source when HAVE_X = 0 || REPLACE_X = 1
+# (m4/gnulib-comp.m4, GL_COND_OBJ_*), but the overlay only checks REPLACE_X.
+# The cache variables of the probes (ac_cv_func_*, _gl_cv_func_fstatat,
+# _gl_cv_func_opendir,
+# _gl_have_closedir, ac_cv_func_dirfd / gl_cv_func_dirfd_macro for the plain
+# shell variable HAVE_DIRFD) are used where the HAVE_* name is published both
+# as define and as subst. On MSVC none of closedir, dirfd, faccessat, fchmodat,
+# fcntl, fdopendir, fstatat, futimens, getdtablesize, getprogname, openat,
+# opendir, readdir, readlink, readlinkat, renameat, setenv, stpcpy,
+# symlinkat, timegm, unlinkat, unsetenv and utimensat exist (HAVE_*=0,
+# REPLACE_*=0, exactly as GNU configure reports), and localtime_r/gmtime_r
+# are missing too (HAVE_LOCALTIME_R=0 selects time_r.c).
+# fchdir.c is compiled when HAVE_FCHDIR = 0 || REPLACE_FCHDIR = 1, which is
+# exactly when gl_FUNC_FCHDIR AC_DEFINEs REPLACE_FCHDIR in config.h; the
+# define is referenced through its cache name ac_cv_define_REPLACE_FCHDIR
+# because the bare name also matches the gl_UNISTD_H_DEFAULTS subst.
+# The ports now report REPLACE_MBRTOWC=1 on MSVC (the overlay hard-codes
+# COMPILE_MBRTOWC=0 there), so mbrtowc.c also follows REPLACE_MBRTOWC.
+# strerror-override.c follows GNU's rule
+#   test -n "$ERRNO_H" || test $REPLACE_STRERROR_0 = 1
+# (ERRNO_H is non-empty iff gl_cv_header_errno_h_complete=no, and
+# REPLACE_STRERROR_0 is AC_DEFINEd iff the strerror(0) probe fails) instead of
+# the per-OS COMPILE_STRERROR_OVERRIDE hard-code: on MSVC the generated errno.h
+# defines errno values, so strerror.c (REPLACE_STRERROR=1) calls the extern
+# strerror_override().
+# The hard-coded MSVC source list that re-added closedir.c ... utimensat.c
+# (duplicating what autoconf_srcs now selects, LNK4006) and the local
+# HAVE_TIMESPEC_GET / REPLACE_FCHDIR defines (now in config.h) are removed.
+# getrandom.c calls BCryptGenRandom on MSVC, so bcrypt.lib is linked.
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -13,18 +13,6 @@
+ ] + select({
+     "@platforms//os:macos": [
+         "_DARWIN_C_SOURCE",
+-    ],
+-    "//conditions:default": [],
+-}) + select({
+-    # MSVC 2015+ provides timespec_get (C11). The gnulib AC_CHECK_FUNC for
+-    # timespec_get may fail on MSVC, but the function is always available.
+-    # Without this, gettime.c falls through to gettimeofday (unavailable).
+-    "@rules_cc//cc/compiler:msvc-cl": [
+-        "HAVE_TIMESPEC_GET",
+-        # gnulib's dirent.h defines its own DIR type on MSVC
+-        # (GNULIB_defined_DIR=1). fdopendir.c requires REPLACE_FCHDIR
+-        # to be set as a preprocessor macro when this is the case.
+-        "REPLACE_FCHDIR=1",
+     ],
+     "//conditions:default": [],
+ })
+@@ -426,17 +414,14 @@
+     ] + select({
+         "@platforms//os:linux": [
+             checks.AC_SUBST("COMPILE_OPEN", "0"),
+-            checks.AC_SUBST("COMPILE_STRERROR_OVERRIDE", "0"),
+             checks.AC_SUBST("COMPILE_MBRTOWC", "1"),
+         ],
+         "@platforms//os:macos": [
+             checks.AC_SUBST("COMPILE_OPEN", "1"),
+-            checks.AC_SUBST("COMPILE_STRERROR_OVERRIDE", "1"),
+             checks.AC_SUBST("COMPILE_MBRTOWC", "0"),
+         ],
+         "//conditions:default": [
+             checks.AC_SUBST("COMPILE_OPEN", "0"),
+-            checks.AC_SUBST("COMPILE_STRERROR_OVERRIDE", "0"),
+             checks.AC_SUBST("COMPILE_MBRTOWC", "0"),
+         ],
+     }),
+@@ -783,35 +768,35 @@
+         "lib/chmod.c": "REPLACE_CHMOD",
+         "lib/chown.c": "REPLACE_CHOWN",
+         "lib/close.c": "REPLACE_CLOSE",
+-        "lib/closedir.c": "REPLACE_CLOSEDIR",
+-        "lib/dirfd.c": "REPLACE_DIRFD",
++        "lib/closedir.c": "!_gl_have_closedir || REPLACE_CLOSEDIR",
++        "lib/dirfd.c": "(!ac_cv_func_dirfd && !gl_cv_func_dirfd_macro) || REPLACE_DIRFD",
+         "lib/dup.c": "REPLACE_DUP",
+         "lib/dup2.c": "REPLACE_DUP2",
+ 
+         # Custom COMPILE_* gated
+         "lib/error.c": "COMPILE_ERROR",
+         "lib/euidaccess.c": "COMPILE_EUIDACCESS",
+-        "lib/faccessat.c": "REPLACE_FACCESSAT",
+-        "lib/fchdir.c": "REPLACE_FCHDIR",
+-        "lib/fchmodat.c": "REPLACE_FCHMODAT",
++        "lib/faccessat.c": "!ac_cv_func_faccessat || REPLACE_FACCESSAT",
++        "lib/fchdir.c": "ac_cv_define_REPLACE_FCHDIR",
++        "lib/fchmodat.c": "!ac_cv_func_fchmodat || REPLACE_FCHMODAT",
+         "lib/fchownat.c": "REPLACE_FCHOWNAT",
+-        "lib/fcntl.c": "REPLACE_FCNTL",
+-        "lib/fdopendir.c": "REPLACE_FDOPENDIR",
++        "lib/fcntl.c": "!ac_cv_func_fcntl || REPLACE_FCNTL",
++        "lib/fdopendir.c": "!ac_cv_func_fdopendir || REPLACE_FDOPENDIR",
+         "lib/fpending.c": "COMPILE_FPENDING",
+         "lib/free.c": "REPLACE_FREE",
+         "lib/fseek.c": "REPLACE_FSEEK",
+         "lib/fseeko.c": "gl_cv_func_fseeko==0 || REPLACE_FSEEKO==1",
+         "lib/fstat.c": "REPLACE_FSTAT",
+-        "lib/fstatat.c": "REPLACE_FSTATAT",
++        "lib/fstatat.c": "!_gl_cv_func_fstatat || REPLACE_FSTATAT",
+         "lib/ftell.c": "REPLACE_FTELL",
+         "lib/ftello.c": "gl_cv_func_ftello==0 || REPLACE_FTELLO==1",
+-        "lib/futimens.c": "REPLACE_FUTIMENS",
++        "lib/futimens.c": "!ac_cv_func_futimens || REPLACE_FUTIMENS",
+         "lib/getcwd-lgpl.c": "REPLACE_GETCWD",
+-        "lib/getdtablesize.c": "REPLACE_GETDTABLESIZE",
++        "lib/getdtablesize.c": "!ac_cv_func_getdtablesize || REPLACE_GETDTABLESIZE",
+         "lib/getgroups.c": "REPLACE_GETGROUPS",
+         "lib/getopt.c": "COMPILE_GETOPT",
+         "lib/getopt1.c": "COMPILE_GETOPT",
+-        "lib/getprogname.c": "REPLACE_GETPROGNAME",
++        "lib/getprogname.c": "!ac_cv_func_getprogname || REPLACE_GETPROGNAME",
+         "lib/getrandom.c": "COMPILE_GETRANDOM",
+         "lib/gettimeofday.c": "REPLACE_GETTIMEOFDAY",
+         # group-member.c excluded on MSVC: uses gid_t/struct group (POSIX-only)
+@@ -821,7 +806,7 @@
+         "lib/lseek.c": "REPLACE_LSEEK",
+         "lib/lstat.c": "REPLACE_LSTAT",
+         "lib/mbrtoc32.c": "COMPILE_MBRTOC32",
+-        "lib/mbrtowc.c": "COMPILE_MBRTOWC",
++        "lib/mbrtowc.c": "COMPILE_MBRTOWC || REPLACE_MBRTOWC",
+         "lib/mbsinit.c": "REPLACE_MBSINIT",
+         "lib/memchr.c": "REPLACE_MEMCHR",
+         "lib/mempcpy.c": "COMPILE_MEMPCPY",
+@@ -830,39 +815,39 @@
+         "lib/mkdirat.c": "COMPILE_MKDIRAT",
+         "lib/mktime.c": "REPLACE_MKTIME",
+         "lib/open.c": "COMPILE_OPEN",
+-        "lib/openat.c": "REPLACE_OPENAT",
+-        "lib/opendir.c": "REPLACE_OPENDIR",
++        "lib/openat.c": "!ac_cv_func_openat || REPLACE_OPENAT",
++        "lib/opendir.c": "!_gl_cv_func_opendir || REPLACE_OPENDIR",
+         "lib/raise.c": "REPLACE_RAISE",
+         "lib/rawmemchr.c": "COMPILE_RAWMEMCHR",
+-        "lib/readdir.c": "REPLACE_READDIR",
+-        "lib/readlink.c": "REPLACE_READLINK",
+-        "lib/readlinkat.c": "REPLACE_READLINKAT",
++        "lib/readdir.c": "!ac_cv_func_readdir || REPLACE_READDIR",
++        "lib/readlink.c": "!ac_cv_func_readlink || REPLACE_READLINK",
++        "lib/readlinkat.c": "!ac_cv_func_readlinkat || REPLACE_READLINKAT",
+         "lib/realloc.c": "REPLACE_REALLOC",
+         "lib/reallocarray.c": "COMPILE_REALLOCARRAY",
+         "lib/rename.c": "REPLACE_RENAME",
+-        "lib/renameat.c": "REPLACE_RENAMEAT",
++        "lib/renameat.c": "!ac_cv_func_renameat || REPLACE_RENAMEAT",
+         "lib/rmdir.c": "REPLACE_RMDIR",
+-        "lib/setenv.c": "REPLACE_SETENV",
++        "lib/setenv.c": "!ac_cv_func_setenv || REPLACE_SETENV",
+         "lib/setlocale-lock.c": "COMPILE_SETLOCALE_LOCK",
+         "lib/stat.c": "REPLACE_STAT",
+         "lib/stdio-read.c": "REPLACE_STDIO_READ_FUNCS",
+         "lib/stdio-write.c": "REPLACE_STDIO_WRITE_FUNCS",
+-        "lib/stpcpy.c": "REPLACE_STPCPY",
++        "lib/stpcpy.c": "!ac_cv_func_stpcpy || REPLACE_STPCPY",
+         "lib/strdup.c": "REPLACE_STRDUP",
+-        "lib/strerror-override.c": "COMPILE_STRERROR_OVERRIDE",
++        "lib/strerror-override.c": "!gl_cv_header_errno_h_complete || !_gl_cv_func_strerror_0_works",
+         "lib/strerror.c": "REPLACE_STRERROR",
+         "lib/symlink.c": "REPLACE_SYMLINK",
+-        "lib/symlinkat.c": "REPLACE_SYMLINKAT",
+-        "lib/time_r.c": "REPLACE_LOCALTIME_R",
++        "lib/symlinkat.c": "!ac_cv_func_symlinkat || REPLACE_SYMLINKAT",
++        "lib/time_r.c": "!ac_cv_func_localtime_r || REPLACE_LOCALTIME_R",
+         "lib/time_rz.c": "COMPILE_TIME_RZ",
+-        "lib/timegm.c": "REPLACE_TIMEGM",
++        "lib/timegm.c": "!ac_cv_func_timegm || REPLACE_TIMEGM",
+         "lib/tzset.c": "REPLACE_TZSET",
+         "lib/unictype/ctype_print.c": "COMPILE_UNICTYPE_CTYPE_PRINT",
+         "lib/unlink.c": "REPLACE_UNLINK",
+-        "lib/unlinkat.c": "REPLACE_UNLINKAT",
+-        "lib/unsetenv.c": "REPLACE_UNSETENV",
++        "lib/unlinkat.c": "!ac_cv_func_unlinkat || REPLACE_UNLINKAT",
++        "lib/unsetenv.c": "!ac_cv_func_unsetenv || REPLACE_UNSETENV",
+         "lib/utime.c": "REPLACE_UTIME",
+-        "lib/utimensat.c": "REPLACE_UTIMENSAT",
++        "lib/utimensat.c": "!ac_cv_func_utimensat || REPLACE_UTIMENSAT",
+     },
+     defaults = True,
+     deps = [":configure_ac"],
+@@ -960,24 +945,6 @@
+             # at-func2.c is a standalone file needed when HAVE_RENAMEAT=0 (MSVC).
+             # On Linux/macOS, renameatu.c takes the HAVE_RENAMEAT path instead.
+             "lib/at-func2.c",
+-            # Gnulib replacements whose REPLACE_*/COMPILE_* checks evaluate
+-            # to 0 on MSVC via rules_cc_autoconf (autoconf_srcs wraps these
+-            # in #if 0, so we compile them directly here):
+-            "lib/closedir.c",
+-            "lib/dirfd.c",
+-            "lib/fchdir.c",
+-            "lib/fchmodat.c",
+-            "lib/fdopendir.c",
+-            "lib/getprogname.c",
+-            "lib/openat.c",
+-            "lib/opendir.c",
+-            "lib/readdir.c",
+-            "lib/renameat.c",
+-            "lib/setenv.c",
+-            "lib/symlinkat.c",
+-            "lib/timegm.c",
+-            "lib/unsetenv.c",
+-            "lib/utimensat.c",
+         ],
+         "//conditions:default": ["lib/group-member.c"],
+     }),
+@@ -1040,7 +1007,10 @@
+     ],
+     linkopts = select({
+         "@platforms//os:linux": ["-lpthread"],
+-        "@rules_cc//cc/compiler:msvc-cl": ["advapi32.lib"],
++        "@rules_cc//cc/compiler:msvc-cl": [
++            "advapi32.lib",
++            "bcrypt.lib",
++        ],
+         "//conditions:default": [],
+     }),
+     local_defines = LOCAL_DEFINES + [

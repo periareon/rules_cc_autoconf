@@ -1,6 +1,7 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/lseek.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
+load("//autoconf:checks.bzl", "checks")
 
 # gl_FUNC_LSEEK macro from lseek.m4
 # HAVE_UNISTD_H comes from unistd_h dependency
@@ -8,11 +9,30 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 # and SEEK_DATA compatibility that require file system operations
 
 autoconf(
-    name = "lseek",
-    checks = [],
+    name = "gl_FUNC_LSEEK",
+    checks = select({
+        # case "$host_os" in mingw* | windows*) gl_cv_func_lseek_pipe=no ;;
+        # -> REPLACE_LSEEK=1 and LSEEK_PIPE_BROKEN.
+        "@platforms//os:windows": [
+            checks.AC_DEFINE("LSEEK_PIPE_BROKEN", 1),
+            checks.AC_SUBST("REPLACE_LSEEK", 1),
+        ],
+        # Elsewhere the native probe detects pipes, WINDOWS_64_BIT_OFF_T is 0
+        # and the SEEK_DATA incompatibility preprocessor probe never fires.
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/sys_types_h",  # AC_REQUIRE([gl_SYS_TYPES_H])
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//gnulib/m4/sys_types_h:gl_SYS_TYPES_H",  # AC_REQUIRE([gl_SYS_TYPES_H])
         # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency - provides HAVE_UNISTD_H
+    ],
+)
+
+autoconf(
+    name = "lseek",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_LSEEK",
     ],
 )

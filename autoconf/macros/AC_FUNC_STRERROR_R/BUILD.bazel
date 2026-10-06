@@ -37,7 +37,6 @@ autoconf(
         checks.AC_DEFINE(
             "HAVE_DECL_STRERROR_R",
             condition = "ac_cv_have_decl_strerror_r",
-            subst = True,
         ),
     ],
     visibility = ["//visibility:public"],

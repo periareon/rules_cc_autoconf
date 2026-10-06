@@ -1,3 +1,0 @@
-/* config.h.in */
-/* #undef HAVE_STRUCT_TMS */
-#define HAVE_TIMES 1

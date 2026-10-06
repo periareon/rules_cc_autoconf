@@ -1,3 +1,0 @@
-/* config.h.in */
-/* #undef HAVE_FPATHCONF */
-#define HAVE_LONG_FILE_NAMES 1

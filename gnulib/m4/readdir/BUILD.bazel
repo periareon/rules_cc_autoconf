@@ -11,19 +11,24 @@ autoconf(
             name = "ac_cv_func_readdir",
         ),
         # if test $ac_cv_func_readdir = no; then
+        #   HAVE_READDIR=0
         # else
-        #   if test $DIR_HAS_FD_MEMBER = 0; then
-        #   fi
+        #   if test $DIR_HAS_FD_MEMBER = 0; then REPLACE_READDIR=1; fi
         # fi
         # Define HAVE_READDIR in config.h if function exists
         checks.AC_DEFINE(
             "HAVE_READDIR",
             requires = ["ac_cv_func_readdir==1"],
         ),
-        # Set HAVE_READDIR as substitution variable
-        # Only set to "0" if function doesn't exist, otherwise "1"
-        # On macOS, DIR_HAS_FD_MEMBER=1 (not mingw/windows/os2), so REPLACE_READDIR remains 0
-        checks.AC_SUBST("REPLACE_READDIR", 0),
+        checks.AC_SUBST(
+            "HAVE_READDIR",
+            condition = "ac_cv_func_readdir",
+        ),
+        # On macOS/Linux, DIR_HAS_FD_MEMBER=1 (not mingw/windows/os2), so REPLACE_READDIR remains 0
+        checks.AC_SUBST(
+            "REPLACE_READDIR",
+            condition = "ac_cv_func_readdir && DIR_HAS_FD_MEMBER==0",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [

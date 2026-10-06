@@ -1211,7 +1211,12 @@ bazel build //gnulib/m4/c32rtomb:c32rtomb
 bazel test //gnulib/tests/compatibility/c32rtomb:all
 ```
 
-Compare test output against golden files and fix any discrepancies.
+The `<module>_test_gnu_conformance` test is the oracle: it runs the pinned GNU
+`aclocal`/`autoconf`/`configure` with the Bazel C++ toolchain's compiler and flags and
+requires the Bazel-generated headers to match byte for byte. Fix the port until it
+passes; list only intentional differences from upstream m4 in `known_divergences`.
+No platform needs a checked-in expected output; the oracle produces it. See
+[How the gnulib ports are tested](./gnulib.md#how-the-gnulib-ports-are-tested).
 
 ### Step 8: Test on Linux (if needed)
 
@@ -1298,7 +1303,10 @@ autoconf(
 
 ### 5. Test Your Migration
 
-Run diff tests against golden files to verify your migration produces correct output:
+For gnulib ports, `gnu_gnulib_diff_test_suite` runs GNU autoconf itself against the
+Bazel output (see [How the gnulib ports are tested](./gnulib.md#how-the-gnulib-ports-are-tested)).
+For your own checks, run diff tests against golden files to verify your migration
+produces correct output:
 
 ```python
 diff_test(
@@ -1307,44 +1315,6 @@ diff_test(
     file2 = ":config.h",
 )
 ```
-
-### 6. Only Split Golden Files When Necessary
-
-Golden files should only be split into platform-specific versions (`golden_config_linux.h.in`, `golden_config_macos.h.in`) when there are **genuine differences** in the expected output between platforms.
-
-**Use a single golden file when:**
-- The output is identical across all platforms
-- Any platform differences are handled in the Bazel targets (not the expected output)
-
-```python
-# GOOD: Single golden file when content is the same
-gnu_gnulib_diff_test_suite(
-    name = "sig_atomic_t_test",
-    golden_config_h = "golden_config.h.in",
-    golden_subst_h = "golden_subst.h.in",
-    ...
-)
-```
-
-**Split golden files only when:**
-- The `gnu_autoconf` test produces genuinely different outputs on different platforms
-- Platform-specific defines have different values (e.g., `REPLACE_FSTAT` is `1` on macOS, `0` on Linux)
-
-```python
-# ONLY when content genuinely differs between platforms
-gnu_gnulib_diff_test_suite(
-    name = "fstat_test",
-    golden_config_h = {
-        "linux": "golden_config_linux.h.in",
-        "macos": "golden_config_macos.h.in",
-    },
-    ...
-)
-```
-
-**Anti-pattern:** Don't split golden files just because you're unsure — first verify the content differs by running `gnu_autoconf` tests on both platforms.
-
----
 
 ## Cross-Compilation Considerations
 

@@ -19,11 +19,12 @@ autoconf(
             "mbrtowc",
             name = "ac_cv_func_mbrtowc",
         ),
-        # Define HAVE_MBRTOWC if function exists
+        # AC_CHECK_FUNCS semantics: defined to 1 when found, else undefined.
         checks.AC_DEFINE(
             "HAVE_MBRTOWC",
             condition = "ac_cv_func_mbrtowc",
-            if_true = "1",
+            if_false = None,
+            if_true = 1,
         ),
         # Subst HAVE_MBRTOWC so mbrtowc and btowc don't duplicate
         checks.AC_SUBST(

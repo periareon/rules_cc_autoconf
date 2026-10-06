@@ -285,8 +285,8 @@ cc_test(
 # GNU Autoconf renders AC_DEFINE_UNQUOTED values as unquoted (e.g., `yes_it_worked`),
 # but our current implementation renders them as quoted (e.g., `"yes_it_worked"`).
 # Once `unquote` field is implemented, this test should pass.
-# gnu_autoconf_configure_test(
-#     name = "gnu_autoconf_configure_test",
+# gnu_autoconf_conformance_test(
+#     name = "gnu_autoconf_conformance_test",
 #     config_h_in = "config.h.in",
 #     configure_ac = "configure.ac",
 #     golden_config_h = "golden_config.h.in",

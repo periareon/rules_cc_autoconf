@@ -1,2 +1,0 @@
-/* subst.h.in */
-#define SUBST_APPLE_UNIVERSAL_BUILD "0"

@@ -4,7 +4,7 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "mbsinit",
+    name = "gl_FUNC_MBSINIT",
     checks = [
         # Note: gl_WCHAR_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
 
@@ -28,32 +28,56 @@ autoconf(
 
         # Note: HAVE_MBSINIT is already provided by mbrtowc dependency
 
-        # Check for mbsinit declaration (for Minix 3.1.8 which declares but doesn't have it)
+        # if test $ac_cv_func_mbsinit = no; then HAVE_MBSINIT=0 (overrides the
+        # gl_WCHAR_H_DEFAULTS value of 1; MSVC only has an inline mbsinit).
+        checks.AC_SUBST(
+            "HAVE_MBSINIT",
+            condition = "_gl_cv_func_mbsinit",
+            if_false = "0",
+            if_true = "1",
+        ),
+
+        # AC_CHECK_DECLS([mbsinit]) - only when the function is missing; defines
+        # HAVE_DECL_MBSINIT to 1 or 0 (Minix 3.1.8 and MSVC declare it without
+        # providing a linkable function).
         checks.AC_CHECK_DECL(
             "mbsinit",
             name = "ac_cv_have_decl_mbsinit",
+            define = "HAVE_DECL_MBSINIT",
             includes = ["#include <wchar.h>"],
             requires = ["!_gl_cv_func_mbsinit"],  # Only check if function doesn't exist
         ),
 
-        # Set REPLACE_MBSINIT based on conditions:
-        # 1. If function not found but declared, REPLACE_MBSINIT=1 (Minix case)
-        # 2. If function found and REPLACE_MBSTATE_T=1, REPLACE_MBSINIT=1
-        # 3. If function found and on mingw/windows, REPLACE_MBSINIT=1
-        # 4. Otherwise, REPLACE_MBSINIT=0 (default)
-        # Based on golden files, REPLACE_MBSINIT=0 on macOS/Linux
-        # The m4 logic is complex, but for macOS/Linux the function exists and works,
-        # so REPLACE_MBSINIT=0. For Minix (function doesn't exist but is declared),
-        # we'd set it to 1, but that's a rare case we can't easily detect in Bazel.
-        # So we default to 0.
-        checks.AC_SUBST("REPLACE_MBSINIT", 0),
-    ],
+        # REPLACE_MBSINIT:
+        #   function missing but declared            -> 1 (Minix, MSVC)
+        #   function present and REPLACE_MBSTATE_T=1 -> 1
+        #   function present on mingw/windows        -> 1 (mbsinit always returns 1)
+        #   otherwise                                -> 0 (gl_WCHAR_H_DEFAULTS)
+    ] + select({
+        "@platforms//os:windows": [
+            checks.AC_SUBST(
+                "REPLACE_MBSINIT",
+                condition = "_gl_cv_func_mbsinit || ac_cv_have_decl_mbsinit",
+                if_false = "0",
+                if_true = "1",
+            ),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST(
+                "REPLACE_MBSINIT",
+                condition = "(!_gl_cv_func_mbsinit && ac_cv_have_decl_mbsinit) || (_gl_cv_func_mbsinit && REPLACE_MBSTATE_T==1)",
+                if_false = "0",
+                if_true = "1",
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_WCHAR_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
-        "//autoconf/macros/AC_CANONICAL_HOST",
-        "//autoconf/macros/AC_TYPE_MBSTATE_T",
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//autoconf/macros/AC_TYPE_MBSTATE_T",  # AC_REQUIRE([AC_TYPE_MBSTATE_T])
         # Provides REPLACE_MBSTATE_T
+        "//gnulib/m4/mbrtowc:gl_MBSTATE_T_BROKEN",  # gl_MBSTATE_T_BROKEN
         "//gnulib/m4/mbstate_t",
         # Note: mbrtowc provides HAVE_MBRTOWC, HAVE_MBSTATE_T, HAVE_LANGINFO_CODESET
         # and system extension defines
@@ -61,5 +85,21 @@ autoconf(
         # Use mbrtowc_base: golden expects REPLACE_MBRTOWC=0 on Linux
         "//gnulib/m4/mbrtowc:mbrtowc_base",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_PREREQ_MBSINIT: prerequisites of lib/mbsinit.c (none).
+autoconf(
+    name = "gl_PREREQ_MBSINIT",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "mbsinit",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_MBSINIT",
+        ":gl_PREREQ_MBSINIT",
     ],
 )

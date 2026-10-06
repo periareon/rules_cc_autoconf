@@ -11,7 +11,16 @@ autoconf(
             "timegm",
             define = "HAVE_TIMEGM",
         ),
+        # if test $ac_cv_func_timegm = yes; then ... else HAVE_TIMEGM=0 fi
+        checks.AC_SUBST(
+            "HAVE_TIMEGM",
+            condition = "ac_cv_func_timegm",
+            if_false = 0,
+            if_true = 1,
+        ),
     ] + select({
+        # if test "$gl_cv_func_working_mktime" != yes; then REPLACE_TIMEGM=1
+        # (mktime is considered broken on macOS, see mktime/BUILD.bazel)
         "@platforms//os:macos": [
             checks.AC_SUBST("REPLACE_TIMEGM", "1"),
         ],

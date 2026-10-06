@@ -4,17 +4,11 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 load("//gnulib:macros.bzl", gl_macros = "macros")
 
-# See if we need to provide futimens replacement.
+# gl_CHECK_FUNCS_ANDROID([futimens], [[#include <sys/stat.h>]]): probe and
+# config.h define, shared with gl_UTIMENS (which never substitutes HAVE_FUTIMENS).
 autoconf(
-    name = "futimens",
-    checks = [
-        # Note: gl_SYS_STAT_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
-
-        # This handles:
-        # - Checking if futimens exists
-        # - AC_DEFINE HAVE_FUTIMENS in config.h ONLY when function exists
-        # - AC_SUBST HAVE_FUTIMENS in subst.h ALWAYS (0 or 1)
-    ] + gl_macros.GL_CHECK_FUNCS_ANDROID(
+    name = "gl_CHECK_FUNCS_ANDROID_futimens",
+    checks = gl_macros.GL_CHECK_FUNCS_ANDROID(
         ["futimens"],
         code = """\
 #include <sys/stat.h>
@@ -25,22 +19,50 @@ int main(void) {
     return futimens(0, NULL);
 }
 """,
-    ) + select({
+    ),
+    visibility = ["//visibility:public"],
+)
+
+# See if we need to provide futimens replacement.
+autoconf(
+    name = "gl_FUNC_FUTIMENS",
+    checks = [
+        # Note: gl_SYS_STAT_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        # AC_SUBST HAVE_FUTIMENS in subst.h ALWAYS (0 or 1)
+        # if test $ac_cv_func_futimens = no; then HAVE_FUTIMENS=0
+        checks.AC_SUBST(
+            "HAVE_FUTIMENS",
+            condition = "ac_cv_func_futimens",
+        ),
+    ] + select({
         # On Linux, futimens works correctly
         "@platforms//os:linux": [
             checks.AC_SUBST("REPLACE_FUTIMENS", "0"),
         ],
-        # On macOS, futimens exists but doesn't work correctly
+        # On macOS, futimens exists but doesn't work correctly; without
+        # futimens (Windows) the M4 leaves REPLACE_FUTIMENS alone.
         "//conditions:default": [
-            checks.AC_SUBST("REPLACE_FUTIMENS", "1"),
+            checks.AC_SUBST(
+                "REPLACE_FUTIMENS",
+                condition = "ac_cv_func_futimens",
+            ),
         ],
     }),
     visibility = ["//visibility:public"],
     deps = [
+        ":gl_CHECK_FUNCS_ANDROID_futimens",
         # Note: gl_SYS_STAT_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
         "//autoconf/macros/AC_CANONICAL_HOST",
         "//gnulib/m4/extensions",
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "futimens",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_FUTIMENS",
     ],
 )

@@ -18,7 +18,6 @@ autoconf(
         "//gnulib/m4/vasnprintf:gl_REPLACE_VASNPRINTF",
         # Additional dependencies for the golden file:
         "//gnulib/m4/exponentd",
-        "//gnulib/m4/alloca",
         # Note: HAVE_DECL__SNPRINTF is now checked directly in this module
         "//gnulib/m4/intmax_t",
         "//gnulib/m4/inttypes_h",

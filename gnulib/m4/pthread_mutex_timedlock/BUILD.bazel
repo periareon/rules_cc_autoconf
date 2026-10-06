@@ -4,7 +4,7 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "pthread_mutex_timedlock",
+    name = "gl_FUNC_PTHREAD_MUTEX_TIMEDLOCK",
     checks = [
         # Note: gl_PTHREAD_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
 
@@ -32,16 +32,15 @@ int main(void) {
             language = "c",
             requires = ["ac_cv_have_decl_pthread_mutex_timedlock==1"],
         ),
-    ] + select({
-        # On Linux: pthread_mutex_timedlock is available
-        "@platforms//os:linux": [
-            checks.AC_SUBST("HAVE_PTHREAD_MUTEX_TIMEDLOCK", "1"),
-        ],
-        # On macOS and other platforms: pthread_mutex_timedlock may not be available
-        "//conditions:default": [
-            checks.AC_SUBST("HAVE_PTHREAD_MUTEX_TIMEDLOCK", "0"),
-        ],
-    }) + [
+
+        # HAVE_PTHREAD_MUTEX_TIMEDLOCK=0 when the declaration is missing (macOS,
+        # MSVC without <pthread.h>) or when the link test fails (FreeBSD 5.2.1).
+        checks.AC_SUBST(
+            "HAVE_PTHREAD_MUTEX_TIMEDLOCK",
+            condition = "ac_cv_have_decl_pthread_mutex_timedlock && _gl_cv_func_pthread_mutex_timedlock",
+            if_false = "0",
+            if_true = "1",
+        ),
 
         # Note: HAVE_PTHREAD_MUTEX_TIMEDLOCK is not defined in config.h, only as substitution variable
         # The golden file shows it's undefined in config.h but set to 0 in subst.h on macOS
@@ -60,5 +59,13 @@ int main(void) {
         "//gnulib/m4/threadlib",
         # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "pthread_mutex_timedlock",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_PTHREAD_MUTEX_TIMEDLOCK",
     ],
 )

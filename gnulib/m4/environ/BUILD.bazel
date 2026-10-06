@@ -3,21 +3,21 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
+# gt_CHECK_VAR_DECL(includes, variable) - m4 line 31. A parameterised macro;
+# this target models its single instantiation, gt_CHECK_VAR_DECL([...], [environ])
+# from gl_ENVIRON (line 16).
 autoconf(
-    name = "environ",
+    name = "gt_CHECK_VAR_DECL",
     checks = [
-        # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
-
-        # Already checked by AC_CHECK_INCLUDES_DEFAULT dependency
-
-        # Uses AC_COMPILE_IFELSE to check if variable can be redeclared
-        # If compile succeeds, environ is NOT properly declared (we can redeclare it)
-        # If compile fails, environ IS properly declared (compiler complains)
+        # gt_CHECK_VAR_DECL([...], [environ]): the program redeclares environ
+        # with an incompatible type, so it compiles only when the headers do
+        # NOT declare environ.  gt_cv_var_environ_declaration=yes when the
+        # compilation FAILS.
         checks.AC_TRY_COMPILE(
             name = "gt_cv_var_environ_declaration_compile_succeeds",
             code = """\
 #if HAVE_UNISTD_H
-# include <unistd.h>
+#include <unistd.h>
 #endif
 /* mingw, BeOS, Haiku declare environ in <stdlib.h>, not in <unistd.h>.  */
 #include <stdlib.h>
@@ -28,41 +28,65 @@ int main(void) {
     return 0;
 }
 """,
+            # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]): glibc declares environ in
+            # <unistd.h> only under _GNU_SOURCE.
+            # HAVE_UNISTD_H for the `#if` in the program; _GNU_SOURCE and
+            # _DARWIN_C_SOURCE for AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]):
+            # glibc declares environ in <unistd.h> only under _GNU_SOURCE.
+            compile_defines = [
+                "HAVE_UNISTD_H",
+                "_GNU_SOURCE",
+                "_DARWIN_C_SOURCE",
+            ],
             language = "c",
         ),
-
-        # gt_CHECK_VAR_DECL logic:
-        # If compile succeeds (gt_cv_var_environ_declaration_compile_succeeds=1):
-        #   gt_cv_var=no (environ is NOT properly declared)
-        # If compile fails (gt_cv_var_environ_declaration_compile_succeeds=0):
-        #   gt_cv_var=yes (environ IS properly declared)
-        # if test $gt_cv_var_environ_declaration != yes; then
-        # fi
-        # gt_CHECK_VAR_DECL defines HAVE_ENVIRON_DECL if found
-    ] + select({
-        # On Linux, environ is properly declared in <unistd.h>
-        "@platforms//os:linux": [
-            checks.AC_DEFINE("HAVE_ENVIRON_DECL", 1),
-            checks.AC_SUBST("HAVE_DECL_ENVIRON", 1),
-            checks.AC_DEFINE("HAVE__DECL", 1),
-        ],
-        # On macOS, environ is properly declared
-        # Use the compile check result for HAVE_DECL_ENVIRON
-        "//conditions:default": [
-            checks.AC_SUBST(
-                "HAVE_DECL_ENVIRON",
-                condition = "!gt_cv_var_environ_declaration_compile_succeeds",
-            ),
-            checks.AC_DEFINE("HAVE__DECL", 1),
-        ],
-    }),
+        # if test $gt_cv_var = yes; then AC_DEFINE([HAVE_ENVIRON_DECL], 1)
+        checks.AC_DEFINE(
+            "HAVE_ENVIRON_DECL",
+            condition = "!gt_cv_var_environ_declaration_compile_succeeds",
+            if_false = None,
+            if_true = 1,
+        ),
+        # Artifact of gt_CHECK_VAR_DECL's m4 quoting: configure also records
+        # gt_cv_var__declaration=yes and defines HAVE__DECL.
+        checks.AC_DEFINE("HAVE__DECL", 1),
+    ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/extensions",
-        # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
-        # Note: environ needs HAVE_UNISTD_H for the compile check, but it should remain as @HAVE_UNISTD_H@
-        # We don't include unistd_h here to avoid transitive defines
-        # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",
+    ],
+)
+
+autoconf(
+    name = "gl_ENVIRON",
+    checks = [
+        # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+
+        # AC_CHECK_HEADERS_ONCE([unistd.h]) - HAVE_UNISTD_H comes from
+        # AC_CHECK_INCLUDES_DEFAULT.
+
+        # if test $gt_cv_var_environ_declaration != yes; then HAVE_DECL_ENVIRON=0
+        checks.AC_SUBST(
+            "HAVE_DECL_ENVIRON",
+            condition = "!gt_cv_var_environ_declaration_compile_succeeds",
+            if_false = 0,
+            if_true = 1,
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gt_CHECK_VAR_DECL",  # gt_CHECK_VAR_DECL([...], [environ])
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+    ],
+)
+
+autoconf(
+    name = "environ",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_ENVIRON",
+        ":gt_CHECK_VAR_DECL",
     ],
 )

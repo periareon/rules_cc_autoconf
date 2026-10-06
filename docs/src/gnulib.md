@@ -61,3 +61,37 @@ autoconf_hdr(
     deps = [":autoconf"],
 )
 ```
+
+## How the gnulib ports are tested
+
+Every `//gnulib/m4/<module>` port has a suite under `//gnulib/tests/compat/<module>`
+created by `gnu_gnulib_diff_test_suite`. The oracle is **GNU autoconf itself**: the
+`<module>_test_gnu_conformance` test runs the pinned `aclocal`, `autoconf` and
+`configure` on the module's `configure.ac` using the m4 files from the pinned gnulib
+commit, with the **same compiler, flags and environment** the `autoconf` rule uses
+(both read them from the same Starlark helper), and requires the rendered `config.h`
+and `subst.h` to match the Bazel-generated headers byte for byte. There are no
+checked-in expected outputs for Linux and macOS; GNU autoconf produces them on the
+machine running the test.
+
+The autotools are hermetic dev dependencies: autoconf and automake tarballs are
+fetched and installed by `//autoconf/tests/gnu:deps.bzl`, perl comes from
+`rules_perl`, m4 from the Bazel Central Registry `m4` module, and the shell from
+`rules_shell`. Only the POSIX shell and userland come from the host. Run the bundled
+tools directly with, for example, `bazel run //autoconf/tests/gnu:autoconf -- --version`.
+
+Every comparison leaves its inputs where a reviewer can read them. A conformance
+test's undeclared outputs directory (`bazel-testlogs/.../test.outputs/`) contains
+`gnu/` (the configure work tree with `config.h`, `subst.h`, `config.log`, tool logs
+and the exact environment configure ran with), `bazel/` (the Bazel headers), a
+`config.h.diff` / `subst.h.diff` when they differ, `versions.json` and
+`fingerprint.json`. A `diff_test` leaves `expected/`, `actual/` and `diff.patch`.
+
+On Windows the same conformance test runs under the MSYS2 bash from `rules_shell`,
+with Strawberry Perl from `rules_perl` and MSVC driven through gnulib's `compile`
+wrapper. There are no checked-in expected outputs on any platform.
+
+When a port intentionally differs from upstream m4, list the variable in the suite's
+`known_divergences` with a reason; it is masked from the comparison and always
+printed in the test log. Every gnulib module has a conformance test; there is no
+opt-out.

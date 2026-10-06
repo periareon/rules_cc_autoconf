@@ -59,17 +59,27 @@ int main() { return 0; }
             if_false = "0",
             if_true = "1",
         ),
-    ] + select({
-        # CXX_HAS_UCHAR_TYPES: only checked when HAVE_UCHAR_H=0 (M4 line 71-91)
-        # On Linux: HAVE_UCHAR_H=1 → check skipped → 0
-        # On macOS: HAVE_UCHAR_H=0 → C++ has char16_t/char32_t → 1
-        "@platforms//os:linux": [
-            checks.AC_SUBST("CXX_HAS_UCHAR_TYPES", "0"),
-        ],
-        "//conditions:default": [
-            checks.AC_SUBST("CXX_HAS_UCHAR_TYPES", "1"),
-        ],
-    }) + gl_macros.GL_CHECK_NEXT_HEADERS(["uchar.h"]),
+        # CXX_HAS_UCHAR_TYPES=0
+        # if test $HAVE_UCHAR_H = 0; then  (M4 lines 62-87)
+        #   gl_cv_cxx_has_uchar_types: does the C++ compiler predefine
+        #   char16_t/char32_t?  (Linux/MSVC: <uchar.h> exists, check skipped,
+        #   stays 0.  macOS: no C <uchar.h>, clang++ predefines them, 1.)
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_cxx_has_uchar_types",
+            code = """#include <stddef.h>
+char16_t a;
+char32_t b;
+""",
+            language = "cpp",
+            requires = ["!ac_cv_header_uchar_h"],
+        ),
+        checks.AC_SUBST(
+            "CXX_HAS_UCHAR_TYPES",
+            condition = "gl_cv_cxx_has_uchar_types",
+            if_false = "0",
+            if_true = "1",
+        ),
+    ] + gl_macros.GL_CHECK_NEXT_HEADERS(["uchar.h"]),
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
@@ -195,6 +205,13 @@ autoconf(
     ] + select({
         "@platforms//os:linux": [
             checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR8_T", 0),
+            checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR16_T", 0),
+            checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR32_T", 0),
+        ],
+        # MSVC's <uchar.h> has working char16_t/char32_t (gl_TYPE_CHAR16_T and
+        # gl_TYPE_CHAR32_T say yes) but no char8_t in C mode.
+        "@platforms//os:windows": [
+            checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR8_T", 1),
             checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR16_T", 0),
             checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR32_T", 0),
         ],

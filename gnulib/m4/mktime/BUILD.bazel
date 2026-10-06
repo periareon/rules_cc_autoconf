@@ -61,6 +61,12 @@ autoconf(
             ),
             checks.AC_SUBST("REPLACE_MKTIME", "1"),
             checks.AC_DEFINE("NEED_MKTIME_WINDOWS", "1"),
+            # gl_cv_func_working_mktime is an AC_RUN_IFELSE whose outcome on
+            # Windows depends on the machine (GitHub's runners report no, a
+            # developer box with a DST time zone reports yes).  A Bazel probe
+            # cannot run the program, so take the m4's own guess for
+            # mingw*/windows* hosts: "guessing no" -> NEED_MKTIME_WORKING=1.
+            checks.AC_DEFINE("NEED_MKTIME_WORKING", "1"),
             checks.AC_DEFINE(
                 "mktime_internal",
                 "__mktime_internal",

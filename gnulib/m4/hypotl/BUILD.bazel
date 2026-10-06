@@ -1,24 +1,108 @@
-"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/hypotl.m4"""
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/hypotl.m4
+
+gl_FUNC_HYPOTL:
+- AC_REQUIRE([gl_MATH_H_DEFAULTS])
+- AC_REQUIRE([gl_FUNC_HYPOT])
+- AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+- AC_CHECK_FUNCS([hypotl]) with LIBS="$LIBS $HYPOT_LIBM"
+- if found: gl_FUNC_HYPOTL_WORKS -> REPLACE_HYPOTL=1 when it fails
+- else: HAVE_HYPOTL=0; AC_CHECK_DECLS([hypotl], [REPLACE_HYPOTL=1], , [[#include <math.h>]])
+- AC_SUBST([HYPOTL_LIBM])
+
+gl_FUNC_HYPOTL_WORKS is exposed as its own target.
+"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
+# m4 line 147: gl_FUNC_HYPOTL_WORKS test program (AC_RUN_IFELSE).
+_HYPOTL_WORKS_CODE = """\
+#include <float.h>
+#include <math.h>
+static long double
+my_ldexpl (long double x, int d)
+{
+  for (; d > 0; d--)
+    x *= 2.0L;
+  for (; d < 0; d++)
+    x *= 0.5L;
+  return x;
+}
+volatile long double x;
+volatile long double y;
+volatile long double z;
+int main ()
+{
+  long double err;
+
+  x = 2.5541394760659556563446062497337725156L;
+  y = 7.7893454113437840832487794525518765265L;
+  z = hypotl (x, y);
+  err = z * z - (x * x + y * y);
+  err = my_ldexpl (err, LDBL_MANT_DIG);
+  if (err < 0)
+    err = - err;
+  if (err > 1000.0L)
+    return 1;
+  return 0;
+}
+"""
+
 autoconf(
-    name = "hypotl",
+    name = "gl_FUNC_HYPOTL_WORKS",
     checks = [
+        # m4 line 141: whether hypotl works (AC_RUN_IFELSE, modelled as a link
+        # test; the program compiles and links wherever GNU's run reports yes).
+        checks.AC_TRY_LINK(
+            name = "gl_cv_func_hypotl_works",
+            code = _HYPOTL_WORKS_CODE,
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+    ],
+)
+
+autoconf(
+    name = "gl_FUNC_HYPOTL",
+    checks = [
+        # m4 line 21: AC_CHECK_FUNCS([hypotl])
+        # On MSVC hypotl is an inline in <math.h>, so the plain link probe fails
+        # (as in GNU's config.log) even though the function is declared.
         checks.AC_CHECK_FUNC(
             "hypotl",
             define = "HAVE_HYPOTL",
         ),
+        # m4 line 73: HAVE_HYPOTL=0 when the function was not found
+        checks.AC_SUBST(
+            "HAVE_HYPOTL",
+            condition = "ac_cv_func_hypotl",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # m4 line 74: AC_CHECK_DECLS([hypotl], [REPLACE_HYPOTL=1], , [[#include <math.h>]])
+        # only runs in the "not found" branch; AC_CHECK_DECLS defines HAVE_DECL_HYPOTL to 1/0.
         checks.AC_CHECK_DECL(
             "hypotl",
             define = "HAVE_DECL_HYPOTL",
             includes = ["#include <math.h>"],
+            requires = ["!ac_cv_func_hypotl"],
         ),
+        # m4 line 30/74: REPLACE_HYPOTL=1 when hypotl exists but does not work,
+        # or when it is only declared.
+        checks.AC_SUBST(
+            "REPLACE_HYPOTL",
+            condition = "(ac_cv_func_hypotl && !gl_cv_func_hypotl_works) || (!ac_cv_func_hypotl && ac_cv_have_decl_hypotl)",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # m4 line 76-100: HYPOTL_LIBM is HYPOT_LIBM / FABSL+FREXPL+LDEXPL+SQRTL libs (all empty here)
         checks.AC_SUBST("HYPOTL_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        ":gl_FUNC_HYPOTL_WORKS",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/extensions",
         "//gnulib/m4/fabsl",
@@ -26,5 +110,14 @@ autoconf(
         "//gnulib/m4/hypot",
         "//gnulib/m4/ldexpl",
         "//gnulib/m4/sqrtl",
+    ],
+)
+
+autoconf(
+    name = "hypotl",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_HYPOTL",
+        ":gl_FUNC_HYPOTL_WORKS",
     ],
 )

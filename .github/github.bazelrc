@@ -16,9 +16,6 @@ common --show_timestamps
 # Show all failures
 common --keep_going
 
-# Avoid gnulib tests which are highly volatile on different platforms.
-test --test_tag_filters=-gnu_autoconf_test
-
 # Use the BuildBuddy remote cache. The config is defined in each workspace's
 # `.bazelrc`; credentials come from the home `.bazelrc` written by
 # `.github/actions/buildbuddy`, which also disables the cache when no API key

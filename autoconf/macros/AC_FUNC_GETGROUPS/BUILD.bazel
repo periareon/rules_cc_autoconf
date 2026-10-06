@@ -16,7 +16,6 @@ autoconf(
         checks.AC_CHECK_FUNC(
             "getgroups",
             define = "HAVE_GETGROUPS",
-            subst = True,
         ),
     ],
     visibility = ["//visibility:public"],

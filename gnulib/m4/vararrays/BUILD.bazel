@@ -3,17 +3,77 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
+# AC_C_VARARRAYS (autoconf 2.72):
+#   ac_cv_c_vararrays=yes when __STDC_NO_VLA__ is not defined and a
+#   variable-length array compiles (and the compiler does not pretend it is
+#   a C90 one); then HAVE_C_VARARRAYS=1, otherwise __STDC_NO_VLA__=1.
+autoconf(
+    name = "AC_C_VARARRAYS",
+    checks = [
+        checks.AC_TRY_COMPILE(
+            name = "ac_cv_c_vararrays",
+            code = """\
+#ifdef __STDC_NO_VLA__
+#error __STDC_NO_VLA__ defined
+#endif
+/* Test for VLA support.  This test is partly inspired
+   from examples in the C standard.  Use at least two VLA
+   functions to detect the GCC 3.4.3 bug described in:
+   https://lists.gnu.org/archive/html/bug-gnulib/2014-08/msg00014.html
+   */
+#ifdef __STDC_NO_VLA__
+   syntax error;
+#else
+   extern int n;
+   int B[100];
+   int fvla (int m, int C[m][m]);
+
+   int
+   simple (int count, int all[static count])
+   {
+     return all[count - 1];
+   }
+
+   int
+   fvla (int m, int C[m][m])
+   {
+     typedef int VLA[m][m];
+     VLA x;
+     int D[m];
+     static int (*q)[m] = &B;
+     int (*s)[n] = q;
+     return C && &x[0][0] == &D[0] && &D[0] == s[0];
+   }
+#endif
+
+int main(void) {
+    return 0;
+}
+""",
+            language = "c",
+        ),
+        checks.AC_DEFINE(
+            "HAVE_C_VARARRAYS",
+            condition = "ac_cv_c_vararrays",
+            if_false = None,
+            if_true = 1,
+        ),
+        # Defined only when VLAs are unsupported (the condition is inverted
+        # because a successful AC_DEFINE always renders, even with a None value).
+        checks.AC_DEFINE(
+            "__STDC_NO_VLA__",
+            condition = "!ac_cv_c_vararrays",
+            if_false = None,
+            if_true = 1,
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)
+
 autoconf(
     name = "vararrays",
-    checks = [
-        checks.AC_DEFINE("HAVE_C_VARARRAYS", "1"),
-    ] + select({
-        # On macOS, VLAs are supported by clang
-        "@platforms//os:macos": [],
-        # On older compilers/systems, VLAs may not be supported
-        "//conditions:default": [
-            checks.AC_DEFINE("__STDC_NO_VLA__", "1"),
-        ],
-    }),
     visibility = ["//visibility:public"],
+    deps = [
+        ":AC_C_VARARRAYS",
+    ],
 )

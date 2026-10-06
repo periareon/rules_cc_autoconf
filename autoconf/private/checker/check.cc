@@ -155,10 +155,11 @@ std::optional<Check> Check::from_json(const void* json_data) {
         }
     }
 
-    // Parse define_value_fail - always use dump() to preserve type information
-    // Exception: If value is already a JSON-encoded string, use it as-is
-    // Note: null values are now handled (set to nullopt) to match define_value
-    // behavior
+    // Parse define_value_fail - always use dump() to preserve type information,
+    // exactly like define_value.  A string that happens to start and end with
+    // a quote (PRIPTR_PREFIX's "ll") is a value whose quotes are content; it
+    // must not be mistaken for an already encoded string or they are lost.
+    // Note: null values are kept as nullopt to match define_value behavior.
     if (json.contains("define_value_fail")) {
         if (json["define_value_fail"].is_null()) {
             // Explicit None/null - keep as nullopt to render as /**/ (matches
@@ -166,18 +167,7 @@ std::optional<Check> Check::from_json(const void* json_data) {
             check.define_value_fail_ = std::nullopt;
         } else {
             if (json["define_value_fail"].is_string()) {
-                std::string str_value =
-                    json["define_value_fail"].get<std::string>();
-                // Check if it's already a JSON-encoded string (starts and ends
-                // with quotes)
-                if (str_value.size() >= 2 && str_value.front() == '"' &&
-                    str_value.back() == '"') {
-                    // Already JSON-encoded, use as-is
-                    check.define_value_fail_ = str_value;
-                } else {
-                    // Regular string, use dump()
-                    check.define_value_fail_ = json["define_value_fail"].dump();
-                }
+                check.define_value_fail_ = json["define_value_fail"].dump();
             } else {
                 // Non-string, use dump()
                 check.define_value_fail_ = json["define_value_fail"].dump();

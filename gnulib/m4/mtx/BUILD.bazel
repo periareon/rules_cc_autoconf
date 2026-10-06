@@ -1,24 +1,31 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/mtx.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
-load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
+# gl_CHECK_FUNCS_ANDROID([mtx_init], [[#include <threads.h>]]) is an
+# unconditional link test (no <threads.h> needed): glibc >= 2.28 and MSVC's
+# UCRT link it, macOS does not. The "future*" branch (REPLACE_MTX_*=1) is
+# Android-only.
 autoconf(
-    name = "mtx",
-    checks = select({
-        # On Linux with glibc 2.28+: C11 threads are available
-        "@platforms//os:linux": [
-            checks.AC_DEFINE("HAVE_MTX_INIT", "1"),
-        ],
-        "//conditions:default": [
-            # gl_FUNC_MTX_INIT requires gl_THREADS_H
-        ],
-    }),
+    name = "gl_FUNC_MTX_INIT",
+    checks = gl_macros.GL_CHECK_FUNCS_ANDROID(
+        ["mtx_init"],
+        includes = ["#include <threads.h>"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/include_next",  # Required for INCLUDE_NEXT variables
         "//gnulib/m4/threadlib",
-        "//gnulib/m4/threads_h",
+        "//gnulib/m4/threads_h:gl_THREADS_H",  # AC_REQUIRE([gl_THREADS_H])
+    ],
+)
+
+autoconf(
+    name = "mtx",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_MTX_INIT",
     ],
 )

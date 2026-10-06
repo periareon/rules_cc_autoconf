@@ -4,56 +4,39 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "isprint_l",
-    checks = select({
-        # On Linux, isprint_l is in <ctype.h> with _GNU_SOURCE
-        "@platforms//os:linux": [
-            checks.AC_TRY_LINK(
-                name = "_gl_cv_func_isprint_l",
-                code = """\
-#define _GNU_SOURCE 1
-#include <ctype.h>
-#include <locale.h>
-int main(void) {
-    isprint_l('a', (locale_t)0);
-    return 0;
-}
-""",
-            ),
-            checks.AC_DEFINE(
-                "HAVE_ISPRINT_L",
-                "1",
-                requires = ["_gl_cv_func_isprint_l==1"],
-                subst = True,
-            ),
-        ],
-        # On macOS/BSD, isprint_l is in <xlocale.h>
-        "//conditions:default": [
-            checks.AC_TRY_LINK(
-                name = "_gl_cv_func_isprint_l",
-                code = """\
-#include <xlocale.h>
-#include <ctype.h>
-#include <locale.h>
-int main(void) {
-    isprint_l('a', (locale_t)0);
-    return 0;
-}
-""",
-            ),
-            checks.AC_DEFINE(
-                "HAVE_ISPRINT_L",
-                "1",
-                requires = ["_gl_cv_func_isprint_l==1"],
-                subst = True,
-            ),
-        ],
-    }),
+    name = "gl_FUNC_ISPRINT_L",
+    checks = [
+        # AC_CHECK_FUNCS_ONCE([isprint_l]): autoconf's plain link probe, which
+        # declares the function itself.  A probe through <ctype.h> would miss
+        # it on macOS, where isprint_l is declared only via <xlocale.h>.
+        checks.AC_CHECK_FUNC(
+            "isprint_l",
+            define = "HAVE_ISPRINT_L",
+        ),
+        # if test $ac_cv_func_isprint_l = no; then HAVE_ISPRINT_L=0; fi
+        # Overrides the gl_CTYPE_H_DEFAULTS value of 1 (e.g. MSVC has no isprint_l).
+        checks.AC_SUBST(
+            "HAVE_ISPRINT_L",
+            condition = "ac_cv_func_isprint_l",
+            if_false = "0",
+            if_true = "1",
+        ),
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
-        "//gnulib/m4/c-strtod",
-        "//gnulib/m4/ctype_h",
+        "//gnulib/m4/ctype_h",  # AC_REQUIRE([gl_CTYPE_H_DEFAULTS])
         "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS]) - needed for isprint_l to be declared
+        "//gnulib/m4/intl-thread-locale:gt_FUNC_USELOCALE",  # AC_REQUIRE([gt_FUNC_USELOCALE])
+    ],
+)
+
+# Umbrella target kept for existing dependants.
+autoconf(
+    name = "isprint_l",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_ISPRINT_L",
+        "//gnulib/m4/c-strtod",  # kept from the previous shape for existing dependants
     ],
 )

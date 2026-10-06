@@ -4,7 +4,7 @@ load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
 load("//autoconf:checks.bzl", "checks")
 load("//autoconf:package_info.bzl", "package_info")
 load("//autoconf/tests:diff_test.bzl", "diff_test")
-load("//autoconf/tests:gnu_autoconf_configure_test.bzl", "gnu_autoconf_configure_test")
+load("//autoconf/tests/gnu:conformance.bzl", "gnu_autoconf_conformance_test")
 
 package_info(
     name = "package",
@@ -88,9 +88,9 @@ cc_test(
     ],
 )
 
-gnu_autoconf_configure_test(
-    name = "gnu_autoconf_configure_test",
+gnu_autoconf_conformance_test(
+    name = "gnu_autoconf_conformance_test",
+    bazel_config_h = ":config",
     config_h_in = "config.h.in",
     configure_ac = "configure.ac",
-    golden_config_h = "golden_config_unix.h.in",
 )

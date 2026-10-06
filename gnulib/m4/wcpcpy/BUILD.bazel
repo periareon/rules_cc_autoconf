@@ -4,12 +4,21 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "wcpcpy",
+    name = "gl_FUNC_WCPCPY",
     checks = [
         # gl_FUNC_WCPCPY checks for wcpcpy function
         checks.AC_CHECK_FUNC(
             "wcpcpy",
             define = "HAVE_WCPCPY",
+        ),
+        # M4: if test $ac_cv_func_wcpcpy = no; then HAVE_WCPCPY=0; fi
+        # Override the gl_WCHAR_H_DEFAULTS value of 1 when the function is
+        # absent (e.g. MSVC).
+        checks.AC_SUBST(
+            "HAVE_WCPCPY",
+            condition = "ac_cv_func_wcpcpy",
+            if_false = "0",
+            if_true = "1",
         ),
     ],
     visibility = ["//visibility:public"],
@@ -20,5 +29,13 @@ autoconf(
         "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
         # For test compatibility - need basic header defines
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "wcpcpy",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_WCPCPY",
     ],
 )

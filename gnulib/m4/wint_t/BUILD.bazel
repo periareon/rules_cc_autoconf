@@ -59,22 +59,17 @@ autoconf(
 autoconf(
     name = "gl_TYPE_WINT_T_PREREQ",
     checks = [
-        # Note: In the m4, this creates ac_cv_header_crtdefs_h cache variable,
-        # but does NOT create HAVE_CRTDEFS_H as a define in config.h.
-        # We need to check for the header without creating a define.
-        # Use a compile check with a custom define name to avoid conflict.
-        checks.AC_TRY_COMPILE(
-            name = "_gl_have_crtdefs_h",
-            code = """#include <crtdefs.h>
-int main(void) { return 0; }
-""",
-            language = "c",
+        # AC_CHECK_HEADERS_ONCE([crtdefs.h]) - creates ac_cv_header_crtdefs_h and
+        # defines HAVE_CRTDEFS_H in config.h when the header exists (MSVC/mingw).
+        checks.AC_CHECK_HEADER(
+            "crtdefs.h",
+            define = "HAVE_CRTDEFS_H",
         ),
-        # This creates HAVE_CRTDEFS_H as a substitution variable (affects subst.h only).
-        # In the m4, it's set to 1 if ac_cv_header_crtdefs_h=yes, or 0 otherwise.
+        # if test $ac_cv_header_crtdefs_h = yes; then HAVE_CRTDEFS_H=1 else HAVE_CRTDEFS_H=0 fi
+        # AC_SUBST([HAVE_CRTDEFS_H])
         checks.AC_SUBST(
             "HAVE_CRTDEFS_H",
-            condition = "_gl_have_crtdefs_h",
+            condition = "ac_cv_header_crtdefs_h",
             if_false = 0,
             if_true = 1,
         ),

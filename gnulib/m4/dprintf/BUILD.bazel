@@ -3,17 +3,19 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
-# gl_FUNC_DPRINTF - lines 10-18
+# gl_CHECK_FUNCS_ANDROID([dprintf], [[#include <stdio.h>]]) - shared by
+# gl_FUNC_DPRINTF and gl_FUNC_DPRINTF_IS_POSIX (dprintf-posix).
 autoconf(
-    name = "gl_FUNC_DPRINTF",
+    name = "ac_cv_func_dprintf",
     checks = [
-        # gl_CHECK_FUNCS_ANDROID([dprintf], [[#include <stdio.h>]])
         checks.AC_CHECK_FUNC("dprintf"),
+        # AC_CHECK_FUNCS defines HAVE_DPRINTF in config.h only when the
+        # function is found (e.g. MSVC has no dprintf).
         checks.AC_DEFINE(
             "HAVE_DPRINTF",
             condition = "ac_cv_func_dprintf",
+            if_false = None,
             if_true = 1,
-            subst = True,
         ),
     ],
     visibility = ["//visibility:public"],
@@ -22,13 +24,35 @@ autoconf(
     ],
 )
 
-# gl_REPLACE_DPRINTF - lines 20-33
-# Sets REPLACE_DPRINTF=1 when dprintf exists (replacement mode);
-# stays 0 when the function is absent.
+# gl_FUNC_DPRINTF - lines 10-18
+# if test $ac_cv_func_dprintf = no; then
+#   HAVE_DPRINTF=0
+#   gl_REPLACE_DPRINTF   (leaves REPLACE_DPRINTF=0: the function is absent)
+# fi
+autoconf(
+    name = "gl_FUNC_DPRINTF",
+    checks = [
+        # Overrides the gl_STDIO_H_DEFAULTS value of 1.
+        checks.AC_SUBST(
+            "HAVE_DPRINTF",
+            condition = "ac_cv_func_dprintf",
+            if_false = 0,
+            if_true = 1,
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":ac_cv_func_dprintf",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_REPLACE_DPRINTF - lines 20-33, when invoked unconditionally (dprintf-posix):
+# sets REPLACE_DPRINTF=1 when dprintf exists (replacement mode); stays 0
+# when the function is absent. HAVE_DPRINTF keeps its default of 1 here.
 autoconf(
     name = "gl_REPLACE_DPRINTF",
     checks = [
-        # if test $ac_cv_func_dprintf = yes ...; then REPLACE_DPRINTF=1; fi
         checks.AC_SUBST(
             "REPLACE_DPRINTF",
             condition = "ac_cv_func_dprintf",
@@ -38,16 +62,25 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        ":gl_FUNC_DPRINTF",
+        ":ac_cv_func_dprintf",
+        ":gl_PREREQ_DPRINTF",  # gl_PREREQ_DPRINTF (line 30)
     ],
 )
 
-# gl_PREREQ_DPRINTF - line 35 (no-op)
+# gl_PREREQ_DPRINTF - line 34 (no-op)
+autoconf(
+    name = "gl_PREREQ_DPRINTF",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
 
+# gl_REPLACE_DPRINTF is deliberately not part of the package target: gl_FUNC_DPRINTF
+# only reaches it when dprintf is absent, where it leaves REPLACE_DPRINTF=0.
 autoconf(
     name = "dprintf",
     visibility = ["//visibility:public"],
     deps = [
         ":gl_FUNC_DPRINTF",
+        ":gl_PREREQ_DPRINTF",
     ],
 )

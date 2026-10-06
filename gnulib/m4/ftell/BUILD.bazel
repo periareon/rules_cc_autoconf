@@ -1,12 +1,21 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/ftell.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "ftell",
+    name = "gl_FUNC_FTELL",
     checks = [
-        # gl_FUNC_FTELL macro from ftell.m4 sets REPLACE_FTELL based on ftello.
-        # No direct checks needed.
+        # if test $HAVE_FTELLO = 0 || test $REPLACE_FTELLO = 1; then
+        #   REPLACE_FTELL=1
+        # fi
+        # HAVE_FTELLO=0 iff the gl_cv_func_ftello link probe fails (MSVC).
+        checks.AC_SUBST(
+            "REPLACE_FTELL",
+            condition = "!gl_cv_func_ftello || REPLACE_FTELLO==1",
+            if_false = "0",
+            if_true = "1",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -14,5 +23,13 @@ autoconf(
         # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
         "//gnulib/m4/extensions",  # Need extension defines (_ALL_SOURCE, etc.)
         "//gnulib/m4/sys_types_h",  # Need _USE_STD_STAT
+    ],
+)
+
+autoconf(
+    name = "ftell",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_FTELL",
     ],
 )

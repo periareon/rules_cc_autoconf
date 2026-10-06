@@ -4,7 +4,7 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "ptsname",
+    name = "gl_FUNC_PTSNAME",
     checks = [
         # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
         checks.AC_CHECK_FUNC(
@@ -18,9 +18,11 @@ autoconf(
         # fi
         # Set HAVE_PTSNAME as substitution variable
         # Define HAVE_PTSNAME in config.h
+        # AC_CHECK_FUNCS([ptsname]) only defines HAVE_PTSNAME when found.
         checks.AC_DEFINE(
             "HAVE_PTSNAME",
             condition = "ac_cv_func_ptsname",
+            if_false = None,
             if_true = 1,
         ),
 
@@ -49,5 +51,14 @@ autoconf(
     deps = [
         # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "ptsname",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_PTSNAME",
+        ":gl_PREREQ_PTSNAME",
     ],
 )

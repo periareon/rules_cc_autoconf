@@ -8,11 +8,12 @@ load("//gnulib:macros.bzl", gl_macros = "macros")
 autoconf(
     name = "gl_HAVE_DECL__SNPRINTF",
     checks = [
+        # AC_CHECK_DECLS([_snprintf], , , [[#include <stdio.h>]]) in
+        # gl_PREREQ_VASNPRINTF: config.h define only, never an AC_SUBST.
         checks.AC_CHECK_DECL(
             "_snprintf",
             define = "HAVE_DECL__SNPRINTF",
             includes = ["#include <stdio.h>"],
-            subst = True,
         ),
     ],
     visibility = ["//visibility:public"],
@@ -21,12 +22,20 @@ autoconf(
     ],
 )
 
+# gl_STDIO_H_EARLY - m4 lines 9-29: AC_DEFINE([__USE_MINGW_ANSI_STDIO]) must
+# happen early because several printf/snprintf probes depend on it.
 autoconf(
-    name = "stdio_h",
+    name = "gl_STDIO_H_EARLY",
     checks = [
         # This makes printf/scanf use GNU-style format specifiers
         checks.AC_DEFINE("__USE_MINGW_ANSI_STDIO", "1"),
+    ],
+    visibility = ["//visibility:public"],
+)
 
+autoconf(
+    name = "gl_STDIO_H",
+    checks = [
         # From gl_STDIO_H: Check which flavor of printf attribute matches inttypes macros
         # Lines 39-53: AC_CACHE_CHECK + AC_COMPILE_IFELSE
         # Sets GNULIB_PRINTF_ATTRIBUTE_FLAVOR_GNU=1 when compilation FAILS (gnu printf flavor)
@@ -79,15 +88,57 @@ int main(void) { return 0; }
         ),
 
         # ac_cv_have_decl__snprintf from gl_HAVE_DECL__SNPRINTF (shared with vasnprintf)
-    ],
+    ] + select({
+        # m4_ifdef([gl_NONBLOCKING_IO], [gl_NONBLOCKING_IO
+        #   if test $gl_cv_have_nonblocking != yes; then
+        #     REPLACE_STDIO_READ_FUNCS=1 / REPLACE_STDIO_WRITE_FUNCS=1 ...])
+        # gl_NONBLOCKING_IO_BODY decides gl_cv_have_nonblocking purely from
+        # $host_os: "no" on mingw/windows, "yes" everywhere else.
+        "@platforms//os:windows": [
+            checks.AC_SUBST("REPLACE_STDIO_READ_FUNCS", 1),
+            checks.AC_SUBST("REPLACE_STDIO_WRITE_FUNCS", 1),
+        ],
+        # m4_ifdef([gl_SIGNAL_SIGPIPE], [gl_SIGNAL_SIGPIPE
+        #   if test $gl_cv_header_signal_h_SIGPIPE != yes; then
+        #     REPLACE_STDIO_WRITE_FUNCS=1 ...])
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_STDIO_READ_FUNCS", 0),
+            checks.AC_SUBST(
+                "REPLACE_STDIO_WRITE_FUNCS",
+                condition = "gl_cv_header_signal_h_SIGPIPE",
+                if_false = 1,
+                if_true = 0,
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         ":gl_HAVE_DECL__SNPRINTF",
+        "//gnulib/m4/sigpipe:gl_SIGNAL_SIGPIPE",  # m4_ifdef([gl_SIGNAL_SIGPIPE], [gl_SIGNAL_SIGPIPE])
         # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
         # The defaults are provided by the toolchain/defaults target
         "//gnulib/m4/include_next",
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_STDIO_MODULE_INDICATOR([modulename]): gl_STDIO_H_REQUIRE_DEFAULTS (the
+# defaults are supplied through the toolchain's :defaults target) and
+# GNULIB_<module>=1 for the named module; no checks of its own.
+autoconf(
+    name = "gl_STDIO_MODULE_INDICATOR",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "stdio_h",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_STDIO_H",
+        ":gl_STDIO_H_EARLY",
+        ":gl_STDIO_MODULE_INDICATOR",
     ],
 )
 

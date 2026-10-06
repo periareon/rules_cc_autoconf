@@ -15,8 +15,46 @@ autoconf(
             define = "HAVE_STDCKDINT_H",
             subst = "HAVE_STDCKDINT_H",
         ),
-        checks.AC_SUBST("HAVE_CXX_STDCKDINT_H", "0"),
-        checks.AC_SUBST("HAVE_WORKING_CXX_STDCKDINT_H", "0"),
+        # gl_cv_header_cxx_stdckdint_h: can stdckdint.h be included in C++?
+        # Upstream only probes when the C header exists; the probe fails
+        # (and both substs are 0) when the framework has no C++ compiler.
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_header_cxx_stdckdint_h",
+            code = """\
+#include <stdckdint.h>
+""",
+            language = "cpp",
+            requires = ["ac_cv_header_stdckdint_h"],
+        ),
+        checks.AC_SUBST(
+            "HAVE_CXX_STDCKDINT_H",
+            condition = "gl_cv_header_cxx_stdckdint_h",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # gl_cv_header_cxx_stdckdint_h_works: ISO C++26 compliant?
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_header_cxx_stdckdint_h_works",
+            code = """\
+#include <stdckdint.h>
+int
+main (void)
+{
+  int r;
+  int a = 1;
+  int b = 1;
+  return !!(ckd_add (&r, a, b) || ckd_sub (&r, a, b) || ckd_mul (&r, a, b));
+}
+""",
+            language = "cpp",
+            requires = ["gl_cv_header_cxx_stdckdint_h"],
+        ),
+        checks.AC_SUBST(
+            "HAVE_WORKING_CXX_STDCKDINT_H",
+            condition = "gl_cv_header_cxx_stdckdint_h_works",
+            if_false = "0",
+            if_true = "1",
+        ),
         # gl_cv_header_c_stdckdint_h: can stdckdint.h be included in C?
         checks.AC_TRY_COMPILE(
             name = "gl_cv_header_c_stdckdint_h",

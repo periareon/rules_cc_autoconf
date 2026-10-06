@@ -7,8 +7,31 @@ load("//gnulib:macros.bzl", gl_macros = "macros")
 autoconf(
     name = "gl_ASSERT_H",
     checks = [
-        # Equivalent to gl_ASSERT_H macro from assert_h.m4
+        # Equivalent to gl_ASSERT_H macro from assert_h.m4.
+        # gl_cv_static_assert="yes, a keyword": static_assert works without
+        # including <assert.h>.  Only this variant defines HAVE_C_STATIC_ASSERT
+        # (the "<assert.h> macro" variant does not).
         checks.AC_TRY_COMPILE(
+            code = """#if defined __clang__ && __STDC_VERSION__ < 202311
+#pragma clang diagnostic error "-Wc2x-extensions"
+#pragma clang diagnostic error "-Wc++1z-extensions"
+#endif
+static_assert (2 + 2 == 4, "arithmetic does not work");
+static_assert (2 + 2 == 4);
+
+int main(void) {
+    static_assert (sizeof (char) == 1, "sizeof does not work");
+    static_assert (sizeof (char) == 1);
+    return 0;
+}""",
+            define = "HAVE_C_STATIC_ASSERT",
+            language = "c",
+        ),
+        # Second iteration of the m4's loop (gl_working="yes, a macro"): the
+        # same program with <assert.h> included. Neither defines
+        # HAVE_C_STATIC_ASSERT nor generates the wrapper; only "no" does.
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_static_assert_macro",
             code = """#if defined __clang__ && __STDC_VERSION__ < 202311
 #pragma clang diagnostic error "-Wc2x-extensions"
 #pragma clang diagnostic error "-Wc++1z-extensions"
@@ -22,7 +45,6 @@ int main(void) {
     static_assert (sizeof (char) == 1);
     return 0;
 }""",
-            define = "HAVE_C_STATIC_ASSERT",
             language = "c",
         ),
         # GL_GENERATE_ASSERT_H: true when static_assert is unavailable and the
@@ -31,13 +53,13 @@ int main(void) {
         # gnulib assert.h wrapper (matching upstream GL_GENERATE_ASSERT_H).
         checks.AC_SUBST(
             "GL_GENERATE_ASSERT_H",
-            condition = "!HAVE_C_STATIC_ASSERT",
+            condition = "!HAVE_C_STATIC_ASSERT && !gl_cv_static_assert_macro",
             if_false = "false",
             if_true = "true",
         ),
     ] + gl_macros.GL_NEXT_HEADERS(
         ["assert.h"],
-        condition = "!HAVE_C_STATIC_ASSERT",
+        condition = "!HAVE_C_STATIC_ASSERT && !gl_cv_static_assert_macro",
     ),
     visibility = ["//visibility:public"],
     deps = [

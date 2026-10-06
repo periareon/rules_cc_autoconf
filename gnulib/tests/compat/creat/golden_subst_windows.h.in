@@ -1,3 +1,0 @@
-/* subst.h.in */
-#define SUBST_HAVE_LSTAT "0"
-#define SUBST_OPEN_TRAILING_SLASH_BUG "@OPEN_TRAILING_SLASH_BUG@"

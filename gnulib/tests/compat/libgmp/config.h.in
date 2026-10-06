@@ -1,4 +1,5 @@
 /* config.h.in */
+#undef HAVE_GMP_H
 #undef HAVE_INTTYPES_H
 #undef HAVE_LIBGMP
 #undef HAVE_STDINT_H

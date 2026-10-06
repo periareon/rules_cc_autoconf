@@ -1,31 +1,69 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/lock.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
-load("//autoconf:checks.bzl", "checks")
+load("//autoconf:checks.bzl", "checks", "utils")
 
 autoconf(
-    name = "lock",
-    checks = [
-        # Mac OS X 10.1 lacks the pthread_rwlock_t type and the pthread_rwlock_* functions
-        checks.AC_CHECK_TYPE(
-            "pthread_rwlock_t",
-            define = "HAVE_PTHREAD_RWLOCK",
-            includes = ["#include <pthread.h>"],
-        ),
+    name = "gl_LOCK",
+    checks = select({
+        # if test "$gl_threads_api" = posix: on Windows gl_THREADLIB picks
+        # the native Windows API, so the <pthread.h> probes are skipped and
+        # HAVE_PTHREAD_RWLOCK / HAVE_PTHREAD_MUTEX_RECURSIVE stay undefined.
+        "@platforms//os:windows": [],
+        "//conditions:default": [
+            # Mac OS X 10.1 lacks the pthread_rwlock_t type and the pthread_rwlock_* functions
+            checks.AC_CHECK_TYPE(
+                "pthread_rwlock_t",
+                define = "HAVE_PTHREAD_RWLOCK",
+                includes = ["#include <pthread.h>"],
+            ),
 
-        # glibc defines PTHREAD_MUTEX_RECURSIVE as enum, not as a macro
-        # The test checks if PTHREAD_MUTEX_RECURSIVE can be used as an integer
-        # On macOS >= 10.7, this should work
-        # Based on golden files, on macOS, HAVE_PTHREAD_MUTEX_RECURSIVE=1
-        checks.AC_DEFINE("HAVE_PTHREAD_MUTEX_RECURSIVE", "1"),
-    ],
+            # glibc defines PTHREAD_MUTEX_RECURSIVE as enum, not as a macro.
+            # AC_COMPILE_IFELSE: define HAVE_PTHREAD_MUTEX_RECURSIVE only when
+            # PTHREAD_MUTEX_RECURSIVE can be used as an integer.
+            checks.AC_TRY_COMPILE(
+                code = utils.AC_LANG_PROGRAM(
+                    ["#include <pthread.h>"],
+                    [
+                        "#if __FreeBSD__ == 4",
+                        'error "No, in FreeBSD 4.0 recursive mutexes actually don\'t work."',
+                        "#elif (defined __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ \\",
+                        "       && __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1070)",
+                        'error "No, in Mac OS X < 10.7 recursive mutexes actually don\'t work."',
+                        "#else",
+                        "int x = (int)PTHREAD_MUTEX_RECURSIVE;",
+                        "return !x;",
+                        "#endif",
+                    ],
+                ),
+                define = "HAVE_PTHREAD_MUTEX_RECURSIVE",
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
+        ":gl_PREREQ_LOCK",  # gl_PREREQ_LOCK
         # gl_THREADLIB sets gl_threads_api and USE_POSIX_THREADS
-        "//gnulib/m4/threadlib:gl_THREADLIB",
-        "//gnulib/m4/pthread_rwlock_rdlock",
+        "//gnulib/m4/threadlib:gl_THREADLIB",  # AC_REQUIRE([gl_THREADLIB])
+        "//gnulib/m4/pthread_rwlock_rdlock",  # gl_PTHREAD_RWLOCK_RDLOCK_PREFER_WRITER
 
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_PREREQ_LOCK: prerequisites of lib/glthread/lock.c (none).
+autoconf(
+    name = "gl_PREREQ_LOCK",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "lock",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_LOCK",
+        ":gl_PREREQ_LOCK",
     ],
 )

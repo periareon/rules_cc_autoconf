@@ -4,7 +4,7 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "getdtablesize",
+    name = "gl_FUNC_GETDTABLESIZE",
     checks = [
         # Standard header defines are provided by AC_CHECK_INCLUDES_DEFAULT dependency
         # Equivalent to gl_FUNC_GETDTABLESIZE macro from getdtablesize.m4
@@ -20,12 +20,13 @@ autoconf(
             define = "HAVE_DECL_GETDTABLESIZE",
             includes = ["#include <unistd.h>"],
         ),
-        checks.AC_SUBST(
-            "REPLACE_GETDTABLESIZE",
-            condition = "ac_cv_func_getdtablesize",
-            if_false = 1,
-            if_true = 0,
-        ),
+        # REPLACE_GETDTABLESIZE=1 only when getdtablesize exists, is declared
+        # and the AC_RUN_IFELSE probe fails (cross-compile guess "no" on
+        # Cygwin only); without the function the M4 sets HAVE_GETDTABLESIZE=0
+        # and leaves REPLACE_GETDTABLESIZE alone (0); consumers compile
+        # lib/getdtablesize.c when HAVE_GETDTABLESIZE==0 ||
+        # REPLACE_GETDTABLESIZE==1 (gnulib GL_COND_OBJ_GETDTABLESIZE).
+        checks.AC_SUBST("REPLACE_GETDTABLESIZE", 0),
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -35,5 +36,21 @@ autoconf(
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
 
         # Note: AC_REQUIRE([AC_CANONICAL_HOST]) is a standard autoconf macro
+    ],
+)
+
+# AC_DEFUN([gl_PREREQ_GETDTABLESIZE], [:])
+autoconf(
+    name = "gl_PREREQ_GETDTABLESIZE",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "getdtablesize",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_GETDTABLESIZE",
+        ":gl_PREREQ_GETDTABLESIZE",
     ],
 )

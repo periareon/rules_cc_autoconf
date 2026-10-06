@@ -3,19 +3,96 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
+# AC_CHECK_FUNCS([chown]) / AC_CHECK_FUNCS_ONCE([chown]) - the bare probe plus
+# its config.h define. Modules such as copy-file only run this probe and must
+# not touch the HAVE_CHOWN subst, which gl_FUNC_CHOWN alone lowers from its
+# gl_UNISTD_H_DEFAULTS value (1).
 autoconf(
-    name = "chown",
+    name = "AC_CHECK_FUNCS_ONCE_chown",
     checks = [
-        # Standard header defines are provided by AC_CHECK_INCLUDES_DEFAULT dependency
-        # AC_FUNC_CHOWN checks for chown function
         checks.AC_CHECK_FUNC(
             "chown",
-            name = "ac_cv_func_chown",
+            define = "HAVE_CHOWN",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# m4 line 20: AC_FUNC_CHOWN (gnulib's override) - AC_CHECK_HEADERS([unistd.h])
+# and the "for working chown" run test (ac_cv_func_chown_works), which
+# defines HAVE_CHOWN when chown works. The run test is not modelled: the
+# HAVE_CHOWN define comes from the AC_CHECK_FUNCS_ONCE_chown probe, and
+# HAVE_UNISTD_H from AC_CHECK_INCLUDES_DEFAULT.
+autoconf(
+    name = "AC_FUNC_CHOWN",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":AC_CHECK_FUNCS_ONCE_chown",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_FUNC_CHOWN_FOLLOWS_SYMLINK - Determine whether chown follows symlinks.
+#
+# M4 runs the program below (AC_RUN_IFELSE, cross-compile guess "yes"). A
+# conforming chown fails with ENOENT on a dangling symlink, so a host that can
+# build the program passes; on native Windows (no <unistd.h>, no chown) the
+# build fails and the M4 records "no", defining CHOWN_MODIFIES_SYMLINK.
+autoconf(
+    name = "gl_FUNC_CHOWN_FOLLOWS_SYMLINK",
+    checks = [
+        checks.AC_TRY_LINK(
+            name = "gl_cv_func_chown_follows_symlink",
+            code = """\
+#include <unistd.h>
+#include <stdlib.h>
+#include <errno.h>
+
+        int
+        main ()
+        {
+          int result = 0;
+          char const *dangling_symlink = "conftest.dangle";
+
+          unlink (dangling_symlink);
+          if (symlink ("conftest.no-such", dangling_symlink))
+            abort ();
+
+          /* Exit successfully on a conforming system,
+             i.e., where chown must fail with ENOENT.  */
+          if (chown (dangling_symlink, getuid (), getgid ()) == 0)
+            result |= 1;
+          if (errno != ENOENT)
+            result |= 2;
+          return result;
+        }
+""",
         ),
         checks.AC_DEFINE(
+            "CHOWN_MODIFIES_SYMLINK",
+            requires = ["!gl_cv_func_chown_follows_symlink"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "gl_FUNC_CHOWN",
+    checks = [
+        # Standard header defines are provided by AC_CHECK_INCLUDES_DEFAULT dependency
+        # AC_FUNC_CHOWN checks for a working chown; gl_FUNC_CHOWN does
+        # AC_CHECK_FUNCS_ONCE([chown fchown]) and
+        #   if test $ac_cv_func_chown = no; then HAVE_CHOWN=0
+        checks.AC_SUBST(
             "HAVE_CHOWN",
-            requires = ["ac_cv_func_chown==1"],
-            subst = True,
+            condition = "ac_cv_func_chown",
         ),
         checks.AC_CHECK_FUNC(
             "fchown",
@@ -28,7 +105,7 @@ autoconf(
     ] + select({
         # M4 m4/chown.m4 sets CHOWN_TRAILING_SLASH_BUG + REPLACE_CHOWN=1 when
         # the runtime probe finds the bug. On macOS we delegate to the shared
-        # gnulib-common SDK-version probe (Big Sur+ → bug fixed); otherwise
+        # gnulib-common SDK-version probe (Big Sur+ -> bug fixed); otherwise
         # fall back to the M4 cross-compile guess "bug present".
         "@platforms//os:macos": [
             checks.AC_DEFINE(
@@ -50,7 +127,20 @@ autoconf(
     }),
     visibility = ["//visibility:public"],
     deps = [
+        ":AC_CHECK_FUNCS_ONCE_chown",  # AC_CHECK_FUNCS_ONCE([chown fchown])
+        ":AC_FUNC_CHOWN",  # AC_REQUIRE([AC_FUNC_CHOWN])
+        ":gl_FUNC_CHOWN_FOLLOWS_SYMLINK",  # AC_REQUIRE([gl_FUNC_CHOWN_FOLLOWS_SYMLINK])
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/gnulib-common:gl_HOST_MACOS_SDK_MODERN",
+    ],
+)
+
+autoconf(
+    name = "chown",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":AC_FUNC_CHOWN",
+        ":gl_FUNC_CHOWN",
+        ":gl_FUNC_CHOWN_FOLLOWS_SYMLINK",
     ],
 )

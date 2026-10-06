@@ -11,36 +11,98 @@ gl_FUNC_FOPEN:
 gl_FUNC_FOPEN_GNU:
 - AC_REQUIRE([gl_FUNC_FOPEN])
 - Sets REPLACE_FOPEN_FOR_FOPEN_GNU based on mode 'x' and 'e' support
+
+gl_PREREQ_FOPEN: no-op.
 """
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "fopen",
+    name = "gl_FUNC_FOPEN_ITSELF",
     checks = select({
-        # On Linux (glibc): REPLACE_FCLOSE=1 → REPLACE_FOPEN=1
-        # Mode 'x' and 'e' are supported on glibc, so REPLACE_FOPEN_FOR_FOPEN_GNU=REPLACE_FOPEN
+        # gl_FUNC_FOPEN_ITSELF:
+        #   case "$host_os" in
+        #     mingw* | windows* | pw*)
+        #       REPLACE_FOPEN=1
+        #       gl_cv_func_fopen_slash="guessing no"
+        #   case "$gl_cv_func_fopen_slash" in
+        #     *no) AC_DEFINE([FOPEN_TRAILING_SLASH_BUG], [1]); REPLACE_FOPEN=1
+        # REPLACE_FOPEN itself is emitted by :gl_FUNC_FOPEN, which folds in
+        # the REPLACE_FCLOSE propagation (a subst may only be produced once).
+        "@platforms//os:windows": [
+            checks.AC_DEFINE("FOPEN_TRAILING_SLASH_BUG", 1),
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+    ],
+)
+
+autoconf(
+    name = "gl_FUNC_FOPEN",
+    checks = select({
+        # On Linux (glibc): REPLACE_FCLOSE=1 -> REPLACE_FOPEN=1
         "@platforms//os:linux": [
             checks.AC_SUBST("REPLACE_FOPEN", "1"),
-            checks.AC_SUBST("REPLACE_FOPEN_FOR_FOPEN_GNU", "1"),
         ],
-        # On macOS: REPLACE_FCLOSE=1 → REPLACE_FOPEN=1
-        # Also REPLACE_FOPEN_FOR_FOPEN_GNU=1 because fopen mode 'x' and 'e' are not fully supported
+        # On macOS: REPLACE_FCLOSE=1 -> REPLACE_FOPEN=1
         "@platforms//os:macos": [
             checks.AC_SUBST("REPLACE_FOPEN", "1"),
-            checks.AC_SUBST("REPLACE_FOPEN_FOR_FOPEN_GNU", "1"),
         ],
-        # On Windows: trailing slash bug and fclose issues
+        # Windows: REPLACE_FOPEN=1 already from gl_FUNC_FOPEN_ITSELF
+        # (and REPLACE_FCLOSE=1 as well).
         "@platforms//os:windows": [
             checks.AC_SUBST("REPLACE_FOPEN", "1"),
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_FOPEN_ITSELF",  # AC_REQUIRE([gl_FUNC_FOPEN_ITSELF])
+        "//gnulib/m4/fclose",  # AC_REQUIRE([gl_FUNC_FCLOSE])
+    ],
+)
+
+autoconf(
+    name = "gl_FUNC_FOPEN_GNU",
+    checks = select({
+        # Mode 'x' and 'e' are supported on glibc, so REPLACE_FOPEN_FOR_FOPEN_GNU=REPLACE_FOPEN
+        "@platforms//os:linux": [
+            checks.AC_SUBST("REPLACE_FOPEN_FOR_FOPEN_GNU", "1"),
+        ],
+        # On macOS: REPLACE_FOPEN_FOR_FOPEN_GNU=1 because fopen mode 'x' and 'e' are not fully supported
+        "@platforms//os:macos": [
+            checks.AC_SUBST("REPLACE_FOPEN_FOR_FOPEN_GNU", "1"),
+        ],
+        # Windows: gl_cv_func_fopen_mode_x / gl_cv_func_fopen_mode_e = "guessing no"
+        "@platforms//os:windows": [
             checks.AC_SUBST("REPLACE_FOPEN_FOR_FOPEN_GNU", "1"),
         ],
         "//conditions:default": [],
     }),
     visibility = ["//visibility:public"],
     deps = [
-        "//autoconf/macros/AC_CANONICAL_HOST",
-        "//gnulib/m4/fclose",  # AC_REQUIRE([gl_FUNC_FCLOSE])
+        ":gl_FUNC_FOPEN",  # AC_REQUIRE([gl_FUNC_FOPEN])
+    ],
+)
+
+# AC_DEFUN([gl_PREREQ_FOPEN], [:])
+autoconf(
+    name = "gl_PREREQ_FOPEN",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "fopen",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_FOPEN",
+        ":gl_FUNC_FOPEN_GNU",
+        ":gl_FUNC_FOPEN_ITSELF",
+        ":gl_PREREQ_FOPEN",
     ],
 )

@@ -5,7 +5,7 @@ load("//autoconf:checks.bzl", "checks")
 
 # REPLACE_MKFIFOAT, and REPLACE_MKNODAT
 autoconf(
-    name = "mkfifoat",
+    name = "gl_FUNC_MKFIFOAT",
     checks = select({
         # On Linux: mkfifoat and mknodat exist and work correctly
         "@platforms//os:linux": [
@@ -13,6 +13,14 @@ autoconf(
             checks.AC_DEFINE("HAVE_MKNODAT", "1"),
             checks.AC_SUBST("HAVE_MKFIFOAT", "1"),
             checks.AC_SUBST("HAVE_MKNODAT", "1"),
+            checks.AC_SUBST("REPLACE_MKFIFOAT", 0),
+            checks.AC_SUBST("REPLACE_MKNODAT", 0),
+        ],
+        # On Windows: mkfifoat and mknodat don't exist; the M4 sets HAVE_*=0
+        # and leaves REPLACE_* alone (no "future" declaration there).
+        "@platforms//os:windows": [
+            checks.AC_SUBST("HAVE_MKFIFOAT", "0"),
+            checks.AC_SUBST("HAVE_MKNODAT", "0"),
             checks.AC_SUBST("REPLACE_MKFIFOAT", 0),
             checks.AC_SUBST("REPLACE_MKNODAT", 0),
         ],
@@ -28,12 +36,20 @@ autoconf(
     visibility = ["//visibility:public"],
     deps = [
         # AC_REQUIRE([gl_SYS_STAT_H_DEFAULTS]) - line 15 (ignore, it's a _DEFAULTS function)
-        "//autoconf/macros/AC_CANONICAL_HOST",
-        "//gnulib/m4/extensions",
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
         # Note: openat provides HAVE_OPENAT and other defines, but might also provide HAVE_LSTAT
         # which should not be defined according to golden file. Let's check if we need to filter it.
-        "//gnulib/m4/openat",
+        "//gnulib/m4/openat:gl_FUNC_OPENAT",  # AC_REQUIRE([gl_FUNC_OPENAT])
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "mkfifoat",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_MKFIFOAT",
     ],
 )

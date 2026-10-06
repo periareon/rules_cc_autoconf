@@ -134,10 +134,41 @@ std::string CheckRunner::resolve_compile_defines(const Check& check) const {
                        // value)
         }
 
-        std::string value = *result.value;
-        defines << "#define " << define_name << " " << value << "\n";
+        // CheckResult::from_json keeps values JSON-encoded so that the header
+        // generator can tell `1` from `"1"`; a string result therefore arrives
+        // as `"20"`, quotes included. Decode it the way
+        // SourceGenerator::format_value_for_define does for config.h, or the
+        // probe sees `#define LDBL_EXPBIT0_BIT "20"` and `#if` on it fails.
+        std::string value = decode_result_value(*result.value);
+        defines << "#define " << define_name;
+        if (!value.empty()) {
+            defines << " " << value;
+        } else {
+            // AC_DEFINE([NAME], []) renders as `#define NAME /**/`.
+            defines << " /**/";
+        }
+        defines << "\n";
     }
     return defines.str();
+}
+
+std::string CheckRunner::decode_result_value(const std::string& value) {
+    try {
+        nlohmann::json parsed = nlohmann::json::parse(value);
+        if (parsed.is_string()) {
+            return parsed.get<std::string>();
+        }
+        if (parsed.is_boolean()) {
+            return parsed.get<bool>() ? "true" : "false";
+        }
+        if (parsed.is_null()) {
+            return "";
+        }
+        return parsed.dump();
+    } catch (const nlohmann::json::parse_error&) {
+        // Not JSON-encoded (legacy result files): use as-is.
+        return value;
+    }
 }
 
 CheckResult CheckRunner::run_check(const Check& check) {

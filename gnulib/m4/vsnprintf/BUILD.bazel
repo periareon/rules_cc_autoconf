@@ -22,7 +22,7 @@ autoconf(
 )
 
 autoconf(
-    name = "vsnprintf",
+    name = "gl_FUNC_VSNPRINTF",
     checks = [
         # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
         checks.AC_CHECK_FUNC(
@@ -47,11 +47,12 @@ autoconf(
         # can't be done in Bazel. Based on golden files, vsnprintf is not usable on macOS,
         # so we always call gl_REPLACE_VSNPRINTF.
 
-        # Define HAVE_VSNPRINTF in config.h if function exists
-        # On macOS, vsnprintf exists, so HAVE_VSNPRINTF=1
+        # AC_CHECK_FUNCS([vsnprintf]) defines HAVE_VSNPRINTF in config.h only
+        # when the function is found; otherwise the macro stays undefined.
         checks.AC_DEFINE(
             "HAVE_VSNPRINTF",
             condition = "ac_cv_func_vsnprintf",
+            if_false = None,
             if_true = 1,
         ),
         checks.AC_CHECK_DECL(
@@ -69,13 +70,41 @@ autoconf(
             1,  # Integer, not string - renders as unquoted 1
             subst = True,  # Also create substitution variable
         ),
-    ],
+    ] + select({
+        # gl_cv_func_vsnprintf_usable=no
+        # if test $ac_cv_func_vsnprintf = yes; then
+        #   gl_SNPRINTF_SIZE1 / gl_SNPRINTF_RETVAL_C99 / gl_PRINTF_POSITIONS
+        #   all *yes -> gl_cv_func_vsnprintf_usable=yes
+        # fi
+        # if test $gl_cv_func_vsnprintf_usable = no; then gl_REPLACE_VSNPRINTF; fi
+        # These are runtime tests. On native Windows gl_PRINTF_POSITIONS is "no"
+        # (MSVC's printf has no positional arguments; the cross-compile guess
+        # for mingw/windows says the same), so vsnprintf is not usable and
+        # gl_REPLACE_VSNPRINTF sets REPLACE_VSNPRINTF=1 because vsnprintf is
+        # declared. Same constant as vsnprintf-posix so both can share a graph.
+        "@platforms//os:windows": [
+            checks.AC_SUBST("REPLACE_VSNPRINTF", "1"),
+        ],
+        # glibc and macOS pass all three runtime tests: vsnprintf is usable.
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        ":gl_REPLACE_VSNPRINTF",  # invoked when gl_cv_func_vsnprintf_usable = no (modelled by the select above)
         "//gnulib/macros/AC_FUNC_SNPRINTF",
         # Note: The m4 file requires gl_SNPRINTF_SIZE1, gl_SNPRINTF_RETVAL_C99, gl_PRINTF_POSITIONS
         # for runtime checks, but since we're using golden file expectations, we don't need them.
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "vsnprintf",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_VSNPRINTF",
+        ":gl_PREREQ_VSNPRINTF",
+        ":gl_REPLACE_VSNPRINTF",
     ],
 )

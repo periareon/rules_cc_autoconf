@@ -33,12 +33,6 @@ autoconf(
             define = "HAVE_SYS_FS_TYPES_H",
         ),
 
-        # This checks for getmntent function and searches for it in libraries
-        checks.AC_CHECK_FUNC(
-            "getmntent",
-            define = "HAVE_GETMNTENT",
-        ),
-
         # getmntinfo check - exists on macOS/BSD but not Linux
         checks.AC_CHECK_FUNC(
             "getmntinfo",
@@ -58,12 +52,6 @@ autoconf(
             "fs_info.h",
             define = "HAVE_FS_INFO_H",
         ),
-
-        # AC_CHECK_HEADERS([sys/mntent.h]) - from gl_PREREQ_MOUNTLIST_EXTRA
-        checks.AC_CHECK_HEADER(
-            "sys/mntent.h",
-            define = "HAVE_SYS_MNTENT_H",
-        ),
     ] + select({
         # Linux: uses getmntent with one argument (glibc, HP-UX style)
         # This codepath also checks for setmntent, endmntent, hasmntopt
@@ -77,6 +65,11 @@ autoconf(
             # gl_cv_list_mounted_fs: "yes" when a mount-listing mechanism exists.
             checks.M4_VARIABLE("gl_cv_list_mounted_fs", "yes"),
         ],
+        # Native Windows: none of the probes succeed; the M4 then marks the
+        # list as found (mingw* | windows*) without defining any MOUNTED_*.
+        "@platforms//os:windows": [
+            checks.M4_VARIABLE("gl_cv_list_mounted_fs", "yes"),
+        ],
         # macOS/BSD: uses getmntinfo instead of getmntent
         "//conditions:default": [
             # MOUNTED_GETMNTINFO indicates getmntinfo is used
@@ -86,23 +79,61 @@ autoconf(
     }),
     visibility = ["//visibility:public"],
     deps = [
-        "//autoconf/macros/AC_CANONICAL_HOST",
-        "//gnulib/macros/HAVE_SYS_PARAM_H",
-        "//gnulib/m4/mntent_h",
-        "//gnulib/m4/fstypename",
+        ":AC_FUNC_GETMNTENT",  # AC_FUNC_GETMNTENT
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//gnulib/macros/HAVE_SYS_PARAM_H",  # AC_CHECK_HEADERS_ONCE([sys/param.h ...])
+        "//gnulib/m4/mntent_h",  # AC_CHECK_HEADERS([mntent.h ...])
         # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ] + select({
         # On Linux (getmntent1 codepath):
         # - HAVE_HASMNTOPT_DEFINE and HAVE_SETMNTENT_DEFINE for config.h defines
-        # - sys_types_h for MAJOR_IN_SYSMACROS
         "@platforms//os:linux": [
             "//gnulib/m4/hasmntopt:HAVE_HASMNTOPT_DEFINE",
             "//gnulib/m4/hasmntopt:HAVE_SETMNTENT_DEFINE",
-            "//gnulib/m4/sys_types_h",
         ],
         # On macOS (getmntinfo codepath): no additional deps needed
         # SUBST values come from mntent_h:defaults (HAVE_HASMNTOPT=1, HAVE_SETMNTENT=1)
+        "//conditions:default": [],
+    }),
+)
+
+# AC_FUNC_GETMNTENT: gnulib's replacement of the autoconf macro
+# (AC_SEARCH_LIBS([getmntent], [gen]) + AC_CHECK_FUNCS([getmntent])).
+autoconf(
+    name = "AC_FUNC_GETMNTENT",
+    checks = [
+        # This checks for getmntent function and searches for it in libraries
+        checks.AC_CHECK_FUNC(
+            "getmntent",
+            define = "HAVE_GETMNTENT",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_PREREQ_MOUNTLIST_EXTRA: prerequisites of lib/mountlist.c not done by gl_MOUNTLIST.
+autoconf(
+    name = "gl_PREREQ_MOUNTLIST_EXTRA",
+    checks = [
+        # AC_CHECK_HEADERS([sys/mntent.h])
+        checks.AC_CHECK_HEADER(
+            "sys/mntent.h",
+            define = "HAVE_SYS_MNTENT_H",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/fstypename",  # gl_FSTYPENAME
+    ] + select({
+        # AC_HEADER_MAJOR: sys_types_h for MAJOR_IN_SYSMACROS on Linux
+        "@platforms//os:linux": [
+            "//gnulib/m4/sys_types_h",
+        ],
         "//conditions:default": [],
     }),
 )
@@ -111,6 +142,8 @@ autoconf(
     name = "mountlist",
     visibility = ["//visibility:public"],
     deps = [
+        ":AC_FUNC_GETMNTENT",
         ":gl_MOUNTLIST",
+        ":gl_PREREQ_MOUNTLIST_EXTRA",
     ],
 )

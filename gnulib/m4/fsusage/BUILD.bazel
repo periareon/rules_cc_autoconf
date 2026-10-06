@@ -74,10 +74,40 @@ autoconf(
                 "!fu_cv_sys_stat_statvfs64",
             ],
         ),
-        # macOS uses BSD-style statfs with f_bsize member (statvfs check fails)
+        # macOS uses BSD-style statfs with f_bsize member (statvfs check fails).
+        # M4 runs the program below (AC_RUN_IFELSE, cross-compile guess "no");
+        # hosts without <sys/mount.h>/<sys/vfs.h> or statfs (Windows) fail to
+        # build it.
+        checks.AC_TRY_LINK(
+            name = "fu_cv_sys_stat_statfs2_bsize",
+            code = """\
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_MOUNT_H
+#include <sys/mount.h>
+#endif
+#ifdef HAVE_SYS_VFS_H
+#include <sys/vfs.h>
+#endif
+  int
+  main ()
+  {
+    struct statfs fsd;
+    fsd.f_bsize = 0;
+    return statfs (".", &fsd) != 0;
+  }
+""",
+            compile_defines = [
+                "HAVE_SYS_MOUNT_H",
+                "HAVE_SYS_PARAM_H",
+                "HAVE_SYS_VFS_H",
+            ],
+            requires = ["!fu_cv_sys_stat_statvfs"],
+        ),
         checks.AC_DEFINE(
             "STAT_STATFS2_BSIZE",
-            requires = ["!fu_cv_sys_stat_statvfs"],
+            requires = ["fu_cv_sys_stat_statfs2_bsize"],
         ),
     ] + select({
         # Linux also has statfs with f_frsize member
@@ -89,6 +119,11 @@ autoconf(
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_SYS_LARGEFILE",
+        # HAVE_SYS_MOUNT_H / HAVE_SYS_PARAM_H / HAVE_SYS_VFS_H for the statfs
+        # probe (gl_FSUSAGE checks these headers before gl_FILE_SYSTEM_USAGE)
+        "//gnulib/m4/mountlist",
+        "//gnulib/macros/HAVE_SYS_PARAM_H",
+        "//gnulib/macros/HAVE_SYS_VFS_H",
     ],
 )
 

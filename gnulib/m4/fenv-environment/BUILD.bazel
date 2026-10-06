@@ -3,21 +3,97 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
+# Stands in for the m4 host triple case
+#   *86*-*-mingw* | *86*-*-windows*) gl_cv_func_<f>_works="guessing no" ;;
+# The compile succeeds (i.e. the guess is "yes") only on non-x86 Windows
+# hosts, where the m4 falls through to its generic AC_RUN_IFELSE whose
+# cross-compilation guess is "guessing yes".
+_X86_WINDOWS_GUESS_NO = """\
+#if defined __i386__ || defined __x86_64__ || defined _M_IX86 || defined _M_X64
+ #error "guessing no on x86 mingw and MSVC"
+#endif
+int main(void) { return 0; }
+"""
+
 autoconf(
-    name = "fenv-environment",
+    name = "gl_FENV_ENVIRONMENT",
     checks = [
-        # gl_FENV_ENVIRONMENT checks if FE_DFL_ENV is usable
-        # On macOS, FE_DFL_ENV is available
+        # AC_CACHE_CHECK([whether FE_DFL_ENV is usable], ...): only probed on
+        # netbsd*/cygwin*, "guessing yes" elsewhere
+        # -> AC_DEFINE([HAVE_FE_DFL_ENV], [1]).
         checks.AC_DEFINE("HAVE_FE_DFL_ENV", "1"),
-        # AC_SUBST([FENV_ENVIRONMENT_LIBM]) - library needed for fenv functions
-        # On macOS/Linux, fenv functions are in libc, so FENV_ENVIRONMENT_LIBM is empty
+        # gl_MATHFUNC([fesetenv], ...): fesetenv links without -lm on the
+        # platforms we target, so FENV_ENVIRONMENT_LIBM is empty.
         checks.AC_SUBST("FENV_ENVIRONMENT_LIBM", ""),
-        # AC_SUBST([FESETENV_LIBM]) - library needed for fesetenv
         checks.AC_SUBST("FESETENV_LIBM", ""),
-    ],
+    ] + select({
+        "@platforms//os:windows": [
+            # AC_CACHE_CHECK([whether feholdexcept works], ...):
+            #   mingw* | windows*) gl_cv_func_feholdexcept_works="guessing no"
+            # (it does not clear the exception trap bits on mingw and may
+            # even fail on MSVC) -> REPLACE_FEHOLDEXCEPT=1.
+            checks.AC_SUBST("REPLACE_FEHOLDEXCEPT", "1"),
+            # AC_CACHE_CHECK([whether fegetenv works], ...): "guessing yes"
+            # here (only glibc <= 2.19/x86_64 and Mac OS X/x86 guess no).
+            #
+            # AC_CACHE_CHECK([whether fesetenv works], ...):
+            #   *86*-*-mingw* | *86*-*-windows*) "guessing no"
+            # (fesetenv (FE_DFL_ENV) does not reset the rounding direction
+            # on mingw; MSVC 14 fails to restore the exception trap bits).
+            checks.AC_TRY_COMPILE(
+                name = "gl_cv_func_fesetenv_works",
+                code = _X86_WINDOWS_GUESS_NO,
+                language = "c",
+            ),
+            # case "$gl_cv_func_fesetenv_works" in *yes) ;; *) REPLACE_FESETENV=1
+            checks.AC_SUBST(
+                "REPLACE_FESETENV",
+                condition = "gl_cv_func_fesetenv_works",
+                if_false = "1",
+                if_true = "0",
+            ),
+            # dnl Two functions are in the same compilation unit.
+            # if test $REPLACE_FEGETENV = 1 || test $REPLACE_FESETENV = 1; then
+            #   REPLACE_FEGETENV=1
+            #   REPLACE_FESETENV=1
+            # fi
+            checks.AC_SUBST(
+                "REPLACE_FEGETENV",
+                condition = "gl_cv_func_fesetenv_works",
+                if_false = "1",
+                if_true = "0",
+            ),
+            # AC_CACHE_CHECK([whether feupdateenv works], ...):
+            #   *86*-*-mingw* | *86*-*-windows*) "guessing no"
+            checks.AC_TRY_COMPILE(
+                name = "gl_cv_func_feupdateenv_works",
+                code = _X86_WINDOWS_GUESS_NO,
+                language = "c",
+            ),
+            # case "$gl_cv_func_feupdateenv_works" in *yes) ;; *) REPLACE_FEUPDATEENV=1
+            checks.AC_SUBST(
+                "REPLACE_FEUPDATEENV",
+                condition = "gl_cv_func_feupdateenv_works",
+                if_false = "1",
+                if_true = "0",
+            ),
+        ],
+        # Linux/macOS: the AC_RUN_IFELSE probes pass (or their cross guesses
+        # are "yes"), so the gl_FENV_H_DEFAULTS values of 0 stand.
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
-        "//gnulib/m4/fenv_h",
+        "//gnulib/m4/fenv_h",  # AC_REQUIRE([gl_FENV_H_DEFAULTS])
+    ],
+)
+
+autoconf(
+    name = "fenv-environment",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FENV_ENVIRONMENT",
     ],
 )

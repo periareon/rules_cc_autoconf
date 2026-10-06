@@ -3,16 +3,16 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
-# HAVE_FACCESSAT - Check for faccessat function existence only
-# For modules that just need to check if faccessat exists (like euidaccess)
-# without pulling in the replacement logic.
+# gl_CHECK_FUNCS_ANDROID([faccessat]) - the probe plus its config.h define.
+# For modules that just need to check if faccessat exists (euidaccess,
+# canonicalize) without the HAVE_FACCESSAT subst, which only gl_FUNC_FACCESSAT
+# lowers from its gl_UNISTD_H_DEFAULTS value (1).
 autoconf(
-    name = "HAVE_FACCESSAT",
+    name = "gl_CHECK_FUNCS_ANDROID_faccessat",
     checks = [
         checks.AC_CHECK_FUNC(
             "faccessat",
             define = "HAVE_FACCESSAT",
-            subst = True,
         ),
     ],
     visibility = ["//gnulib:__subpackages__"],
@@ -21,19 +21,33 @@ autoconf(
     ],
 )
 
+# HAVE_FACCESSAT subst: if test $ac_cv_func_faccessat = no; then HAVE_FACCESSAT=0
+autoconf(
+    name = "HAVE_FACCESSAT",
+    checks = [
+        checks.AC_SUBST(
+            "HAVE_FACCESSAT",
+            condition = "ac_cv_func_faccessat",
+        ),
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        ":gl_CHECK_FUNCS_ANDROID_faccessat",
+    ],
+)
+
 #
 # REPLACE_FACCESSAT is set based on:
-# 1. If faccessat doesn't exist (HAVE_FACCESSAT=0) - might need replacement
-# 2. If lstat doesn't correctly handle slashed symlinks - needs replacement
+# 1. If faccessat doesn't exist (HAVE_FACCESSAT=0) - no replacement
+#    (only a "future" Android declaration would set it)
+# 2. If faccessat exists but lstat doesn't correctly handle slashed symlinks -
+#    needs replacement
 autoconf(
     name = "gl_FUNC_FACCESSAT",
     checks = [
-        # REPLACE_FACCESSAT is set based on gl_cv_func_lstat_dereferences_slashed_symlink
-        # from lstat module. If lstat doesn't handle slashed symlinks correctly,
-        # faccessat needs replacement.
         checks.AC_SUBST(
             "REPLACE_FACCESSAT",
-            condition = "!gl_cv_func_lstat_dereferences_slashed_symlink",
+            condition = "ac_cv_func_faccessat && !gl_cv_func_lstat_dereferences_slashed_symlink",
         ),
     ],
     visibility = ["//visibility:public"],

@@ -30,9 +30,11 @@ autoconf(
             includes = ["#include <signal.h>"],
             requires = ["HAVE_SIGACTION==1"],
         ),
+        # Only lowered to 0 when sigaction exists but lacks the member; when
+        # sigaction is missing the default of 1 is kept.
         checks.AC_SUBST(
             "HAVE_STRUCT_SIGACTION_SA_SIGACTION",
-            condition = "ac_cv_member_struct_sigaction_sa_sigaction",
+            condition = "!ac_cv_func_sigaction || ac_cv_member_struct_sigaction_sa_sigaction",
             if_false = 0,
             if_true = 1,
         ),

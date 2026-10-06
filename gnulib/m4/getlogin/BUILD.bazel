@@ -3,7 +3,8 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
-# Shared AC_CHECK_DECL(getlogin) used by getlogin and getlogin_r.
+# AC_CHECK_DECLS_ONCE([getlogin]): config.h HAVE_DECL_GETLOGIN only.  Shared
+# with getlogin_r (gl_PREREQ_GETLOGIN_R), which does not touch the subst.
 autoconf(
     name = "gl_HAVE_DECL_GETLOGIN",
     checks = [
@@ -11,7 +12,6 @@ autoconf(
             "getlogin",
             define = "HAVE_DECL_GETLOGIN",
             includes = ["#include <unistd.h>"],
-            subst = True,
         ),
     ],
     visibility = ["//visibility:public"],
@@ -20,30 +20,63 @@ autoconf(
     ],
 )
 
+# gl_LIB_GETLOGIN
+#   case $host_os in
+#     mingw* | windows*) GETLOGIN_LIB='-ladvapi32' ;;
+#     *)                 GETLOGIN_LIB= ;;
+#   esac
+#   LIB_GETLOGIN="$GETLOGIN_LIB"
 autoconf(
-    name = "getlogin",
+    name = "gl_LIB_GETLOGIN",
+    checks = select({
+        "@platforms//os:windows": [
+            checks.AC_SUBST("GETLOGIN_LIB", "-ladvapi32"),
+            checks.AC_SUBST("LIB_GETLOGIN", "-ladvapi32"),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST("GETLOGIN_LIB", ""),
+            checks.AC_SUBST("LIB_GETLOGIN", ""),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+    ],
+)
+
+# gl_FUNC_GETLOGIN
+autoconf(
+    name = "gl_FUNC_GETLOGIN",
     checks = [
-        # Standard header defines are provided by AC_CHECK_INCLUDES_DEFAULT dependency
-        # Equivalent to gl_FUNC_GETLOGIN macro from getlogin.m4
-        # ac_cv_have_decl_getlogin from gl_HAVE_DECL_GETLOGIN (shared with getlogin_r)
+        # if test $ac_cv_have_decl_getlogin = no; then HAVE_DECL_GETLOGIN=0
+        checks.AC_SUBST(
+            "HAVE_DECL_GETLOGIN",
+            condition = "ac_cv_have_decl_getlogin",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # AC_CHECK_FUNCS_ONCE([getlogin]); if no then HAVE_GETLOGIN=0
         checks.AC_CHECK_FUNC(
             "getlogin",
             define = "HAVE_GETLOGIN",
             subst = True,
         ),
-        # gl_LIB_GETLOGIN sets GETLOGIN_LIB and LIB_GETLOGIN
-        # On Windows: GETLOGIN_LIB='-ladvapi32', otherwise empty
-        # On macOS (non-Windows): empty string
-        checks.AC_SUBST("GETLOGIN_LIB", ""),
-        checks.AC_SUBST("LIB_GETLOGIN", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        ":gl_HAVE_DECL_GETLOGIN",
-        # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency,
-
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        ":gl_HAVE_DECL_GETLOGIN",  # AC_CHECK_DECLS_ONCE([getlogin])
+        # gl_LIB_GETLOGIN is a separate macro (not invoked by gl_FUNC_GETLOGIN);
+        # the :getlogin umbrella collects both.
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "getlogin",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_GETLOGIN",
+        ":gl_LIB_GETLOGIN",
     ],
 )

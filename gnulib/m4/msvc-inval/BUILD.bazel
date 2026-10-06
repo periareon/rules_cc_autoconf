@@ -4,30 +4,31 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 # gl_MSVC_INVAL macro from msvc-inval.m4
-# - On Windows with MSVC: checks for _set_invalid_parameter_handler
-#   - If found: HAVE_MSVC_INVALID_PARAMETER_HANDLER=1 (AC_DEFINE + AC_SUBST)
-#   - If not: HAVE_MSVC_INVALID_PARAMETER_HANDLER=0 (AC_SUBST only)
-# - On non-Windows: HAVE_MSVC_INVALID_PARAMETER_HANDLER=0 (AC_SUBST only)
+# - AC_CHECK_FUNCS_ONCE([_set_invalid_parameter_handler]) defines
+#   HAVE__SET_INVALID_PARAMETER_HANDLER in config.h when found (MSVC).
+# - If found: HAVE_MSVC_INVALID_PARAMETER_HANDLER=1 (AC_DEFINE + AC_SUBST)
+# - If not: HAVE_MSVC_INVALID_PARAMETER_HANDLER=0 (AC_SUBST only)
 
 autoconf(
     name = "gl_MSVC_INVAL",
-    checks = select({
-        "@platforms//os:windows": [
-            # If found, defines HAVE_MSVC_INVALID_PARAMETER_HANDLER=1
-            # The check produces success=true with value "1" or success=false with value "0"
-            checks.AC_CHECK_FUNC(
-                "_set_invalid_parameter_handler",
-                define = "HAVE_MSVC_INVALID_PARAMETER_HANDLER",
-            ),
-            # AC_SUBST - always exports the variable (value set by AC_CHECK_FUNC)
-            checks.AC_SUBST("HAVE_MSVC_INVALID_PARAMETER_HANDLER", 1),
-        ],
-        "//conditions:default": [
-            # On non-Windows, the function doesn't exist
-            # AC_SUBST exports HAVE_MSVC_INVALID_PARAMETER_HANDLER=0
-            checks.AC_SUBST("HAVE_MSVC_INVALID_PARAMETER_HANDLER", 0),
-        ],
-    }),
+    checks = [
+        checks.AC_CHECK_FUNC(
+            "_set_invalid_parameter_handler",
+            define = "HAVE__SET_INVALID_PARAMETER_HANDLER",
+        ),
+        checks.AC_DEFINE(
+            "HAVE_MSVC_INVALID_PARAMETER_HANDLER",
+            condition = "ac_cv_func__set_invalid_parameter_handler",
+            if_false = None,
+            if_true = 1,
+        ),
+        checks.AC_SUBST(
+            "HAVE_MSVC_INVALID_PARAMETER_HANDLER",
+            condition = "ac_cv_func__set_invalid_parameter_handler",
+            if_false = 0,
+            if_true = 1,
+        ),
+    ],
     visibility = ["//visibility:public"],
 )
 

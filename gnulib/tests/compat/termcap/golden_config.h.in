@@ -1,4 +1,0 @@
-/* config.h.in */
-/* #undef HAVE_TERMCAP */
-/* #undef HAVE_TERMINFO */
-/* #undef INCTERMCAP */

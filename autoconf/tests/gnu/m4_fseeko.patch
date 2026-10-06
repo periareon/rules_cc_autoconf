@@ -1,0 +1,181 @@
+# Upstream gnulib compiles fseeko.c / ftello.c when
+#   test $HAVE_FSEEKO = 0 || test $REPLACE_FSEEKO = 1
+# (see gnulib modules/fseeko, modules/ftello). The BCR overlay only checks
+# REPLACE_*, which leaves fseeko/ftello unresolved on MSVC where the functions
+# do not exist (HAVE_FSEEKO=0, REPLACE_FSEEKO=0). Remove once the overlay is
+# fixed on the Bazel Central Registry (this is the same patch
+# gnulib/tests/integration applies to m4 1.4.21.bcr.5). The gl_cv_func_* cache variables are
+# used instead of HAVE_* because several deps publish HAVE_FSEEKO/HAVE_FTELLO
+# substs and autoconf_srcs refuses ambiguous names.
+#
+# Likewise, gnulib compiles isnand.c / isnanf.c / isnanl.c (modules
+# isnand-nolibm, isnanf-nolibm, isnanl-nolibm, see m4/gnulib-comp.m4) when
+#   test $gl_func_isnan?_no_libm != yes
+# i.e. when the function cannot be used without libm or does not pass
+# gl_*_WORKS. On MSVC the isnanf/isnanl "works" programs do not compile
+# (0.0L / 0.0L is a hard error), so vasnprintf references rpl_isnanl.
+#
+# The same applies to fpurge.c, stpcpy.c, strchrnul.c, strsignal.c and
+# vasprintf.c (gnulib compiles them when HAVE_* = 0 || REPLACE_* = 1); on
+# MSVC these functions do not exist, so HAVE_*=0 and REPLACE_*=0.
+# On MSVC the ports also report REPLACE_MBRTOWC=1 (the overlay hard-codes
+# COMPILE_MBRTOWC=0 there), REPLACE_SETLOCALE=1 (whose setlocale.c needs
+# gl_locale_name_default from localename-unsafe.c) and a getrandom that calls
+# BCryptGenRandom, so mbrtowc.c, localename-unsafe.c and bcrypt.lib are added.
+#
+# fcntl.c, getdtablesize.c, mkstemp.c, readlink.c, opendir.c, readdir.c,
+# closedir.c, rewinddir.c and dirfd.c follow the same HAVE_* = 0 ||
+# REPLACE_* = 1 rule in m4/gnulib-comp.m4 (GL_COND_OBJ_*); on MSVC none of
+# these functions exist, so the ports report HAVE_*=0 and REPLACE_*=0 exactly
+# like GNU configure does, and the cache variables of the probes
+# (ac_cv_func_*, _gl_cv_func_opendir, _gl_have_closedir, ac_cv_func_dirfd /
+# gl_cv_func_dirfd_macro for the plain shell variable HAVE_DIRFD) are used
+# because the HAVE_* names are published both as define and as subst.
+# fchdir.c is compiled when HAVE_FCHDIR = 0 || REPLACE_FCHDIR = 1, which is
+# exactly when gl_FUNC_FCHDIR AC_DEFINEs REPLACE_FCHDIR in config.h; the
+# define is referenced through its cache name ac_cv_define_REPLACE_FCHDIR
+# because the bare name also matches the gl_UNISTD_H_DEFAULTS subst (as for
+# REPLACE_POSIX_SPAWN). The replacement getcwd.c (REPLACE_GETCWD=1 on MSVC,
+# no <unistd.h> so getcwd has no POSIX signature) needs the dirent
+# replacements above.
+#
+# GNULIB_FDOPEN and GNULIB_WRITE: in GNU m4 the fdopen and write modules are
+# tests-only (m4/gnulib-comp.m4 runs gl_FUNC_FDOPEN / gl_FUNC_WRITE in the
+# gltests section, where gl_MODULE_INDICATOR_CONDITION is IN_M4_GNULIB_TESTS
+# and the sources live in tests/, not lib/), so lib/stdio.h and lib/unistd.h
+# never map fdopen/write to rpl_fdopen/rpl_write. The overlay hard-codes the
+# indicators to 1, which makes src/builtin.c and lib/c-stack.c reference
+# rpl_fdopen/rpl_write without an implementation as soon as the ports report
+# REPLACE_FDOPEN=1 / REPLACE_WRITE=1 (the GNU values on MSVC: the MSVC invalid
+# parameter handler exists, <signal.h> has no SIGPIPE, no non-blocking I/O).
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -158,7 +158,7 @@
+ 
+         # gl_STDIO_MODULE_INDICATOR (AC_SUBST for stdio.in.h)
+         checks.AC_SUBST("GNULIB_FCLOSE", 1),
+-        checks.AC_SUBST("GNULIB_FDOPEN", 1),
++        checks.AC_SUBST("GNULIB_FDOPEN", 0),
+         checks.AC_SUBST("GNULIB_FFLUSH", 1),
+         checks.AC_SUBST("GNULIB_FGETC", 1),
+         checks.AC_SUBST("GNULIB_FGETS", 1),
+@@ -213,7 +213,7 @@
+         checks.AC_SUBST("GNULIB_RMDIR", 1),
+         checks.AC_SUBST("GNULIB_SLEEP", 1),
+         checks.AC_SUBST("GNULIB_SYMLINK", 1),
+-        checks.AC_SUBST("GNULIB_WRITE", 1),
++        checks.AC_SUBST("GNULIB_WRITE", 0),
+         checks.AC_SUBST("GNULIB_UNISTD_H_GETOPT", 1),
+         checks.AC_SUBST("GNULIB_FTRUNCATE", 1),
+ 
+@@ -850,18 +850,18 @@
+         "lib/btowc.c": "REPLACE_BTOWC",
+         "lib/canonicalize-lgpl.c": "REPLACE_CANONICALIZE_FILE_NAME",
+         "lib/close.c": "REPLACE_CLOSE",
+-        "lib/closedir.c": "REPLACE_CLOSEDIR",
+-        "lib/dirfd.c": "REPLACE_DIRFD",
++        "lib/closedir.c": "!_gl_have_closedir || REPLACE_CLOSEDIR",
++        "lib/dirfd.c": "(!ac_cv_func_dirfd && !gl_cv_func_dirfd_macro) || REPLACE_DIRFD",
+         "lib/dup.c": "REPLACE_DUP",
+         "lib/dup2.c": "REPLACE_DUP2",
+-        "lib/fchdir.c": "REPLACE_FCHDIR",
++        "lib/fchdir.c": "ac_cv_define_REPLACE_FCHDIR",
+         "lib/fclose.c": "REPLACE_FCLOSE",
+-        "lib/fcntl.c": "REPLACE_FCNTL",
++        "lib/fcntl.c": "!ac_cv_func_fcntl || REPLACE_FCNTL",
+         "lib/fdopendir.c": "REPLACE_FDOPENDIR",
+         "lib/fflush.c": "REPLACE_FFLUSH",
+         "lib/fopen.c": "REPLACE_FOPEN",
+         "lib/fpending.c": "COMPILE_FPENDING",
+-        "lib/fpurge.c": "REPLACE_FPURGE",
++        "lib/fpurge.c": "!ac_cv_func_fpurge || REPLACE_FPURGE",
+         "lib/free.c": "REPLACE_FREE",
+         "lib/fseek.c": "REPLACE_FSEEK",
+         "lib/fseeko.c": "gl_cv_func_fseeko==0 || REPLACE_FSEEKO==1",
+@@ -871,7 +871,7 @@
+         "lib/ftell.c": "REPLACE_FTELL",
+         "lib/ftello.c": "gl_cv_func_ftello==0 || REPLACE_FTELLO==1",
+         "lib/getcwd.c": "REPLACE_GETCWD",
+-        "lib/getdtablesize.c": "REPLACE_GETDTABLESIZE",
++        "lib/getdtablesize.c": "!ac_cv_func_getdtablesize || REPLACE_GETDTABLESIZE",
+         "lib/getopt.c": "COMPILE_GETOPT",
+         "lib/getopt1.c": "COMPILE_GETOPT",
+         "lib/getprogname.c": "COMPILE_GETPROGNAME",
+@@ -879,34 +879,38 @@
+         "lib/iconv.c": "REPLACE_ICONV",
+         "lib/iconv_close.c": "REPLACE_ICONV",
+         "lib/iconv_open.c": "REPLACE_ICONV_OPEN",
++        "lib/isnand.c": "!gl_cv_func_isnand_no_libm",
++        "lib/isnanf.c": "!gl_cv_func_isnanf_no_libm || !gl_cv_func_isnanf_works",
++        "lib/isnanl.c": "!gl_cv_func_isnanl_no_libm || !gl_cv_func_isnanl_works",
+         "lib/lseek.c": "REPLACE_LSEEK",
+         "lib/lstat.c": "REPLACE_LSTAT",
+         "lib/mbrtoc32.c": "COMPILE_MBRTOC32",
+-        "lib/mbrtowc.c": "COMPILE_MBRTOWC",
++        "lib/mbrtowc.c": "COMPILE_MBRTOWC || REPLACE_MBRTOWC",
+         "lib/mbsinit.c": "REPLACE_MBSINIT",
+         "lib/mbtowc.c": "REPLACE_MBTOWC",
+         "lib/memchr.c": "REPLACE_MEMCHR",
+         "lib/mempcpy.c": "COMPILE_MEMPCPY",
+         "lib/memrchr.c": "COMPILE_MEMRCHR",
+         "lib/mkdir.c": "REPLACE_MKDIR",
+-        "lib/mkstemp.c": "REPLACE_MKSTEMP",
++        "lib/mkstemp.c": "!ac_cv_func_mkstemp || REPLACE_MKSTEMP",
+         "lib/obstack.c": "COMPILE_OBSTACK",
+         "lib/open.c": "REPLACE_OPEN",
+         "lib/openat.c": "REPLACE_OPENAT",
+-        "lib/opendir.c": "REPLACE_OPENDIR",
++        "lib/opendir.c": "!_gl_cv_func_opendir || REPLACE_OPENDIR",
+         "lib/raise.c": "REPLACE_RAISE",
+         "lib/rawmemchr.c": "COMPILE_RAWMEMCHR",
+-        "lib/readdir.c": "REPLACE_READDIR",
+-        "lib/readlink.c": "REPLACE_READLINK",
++        "lib/readdir.c": "!ac_cv_func_readdir || REPLACE_READDIR",
++        "lib/readlink.c": "!ac_cv_func_readlink || REPLACE_READLINK",
+         "lib/realloc.c": "REPLACE_REALLOC_FOR_REALLOC_POSIX",
+         "lib/reallocarray.c": "COMPILE_REALLOCARRAY",
+         "lib/regex.c": "COMPILE_REGEX",
+         "lib/rename.c": "REPLACE_RENAME",
+-        "lib/rewinddir.c": "REPLACE_REWINDDIR",
++        "lib/rewinddir.c": "!ac_cv_func_rewinddir || REPLACE_REWINDDIR",
+         "lib/rmdir.c": "REPLACE_RMDIR",
+         "lib/secure_getenv.c": "COMPILE_SECURE_GETENV",
+         "lib/setlocale-fixes.c": "REPLACE_SETLOCALE",
+         "lib/setlocale-lock.c": "REPLACE_SETLOCALE",
++        "lib/localename-unsafe.c": "REPLACE_SETLOCALE",
+         "lib/setlocale.c": "REPLACE_SETLOCALE",
+         "lib/snprintf.c": "REPLACE_SNPRINTF",
+         "lib/spawn.c": "ac_cv_define_REPLACE_POSIX_SPAWN",
+@@ -924,16 +928,16 @@
+         "lib/spawni.c": "ac_cv_define_REPLACE_POSIX_SPAWN",
+         "lib/spawnp.c": "ac_cv_define_REPLACE_POSIX_SPAWN",
+         "lib/stat.c": "REPLACE_STAT",
+-        "lib/stpcpy.c": "REPLACE_STPCPY",
+-        "lib/strchrnul.c": "REPLACE_STRCHRNUL",
++        "lib/stpcpy.c": "!ac_cv_func_stpcpy || REPLACE_STPCPY",
++        "lib/strchrnul.c": "!ac_cv_func_strchrnul || REPLACE_STRCHRNUL",
+         "lib/strdup.c": "REPLACE_STRDUP",
+         "lib/strerror-override.c": "COMPILE_STRERROR_OVERRIDE",
+         "lib/strerror.c": "REPLACE_STRERROR",
+         "lib/strnlen.c": "REPLACE_STRNLEN",
+-        "lib/strsignal.c": "REPLACE_STRSIGNAL",
++        "lib/strsignal.c": "!ac_cv_func_strsignal || REPLACE_STRSIGNAL",
+         "lib/strstr.c": "REPLACE_STRSTR",
+         "lib/strtod.c": "REPLACE_STRTOD",
+-        "lib/vasprintf.c": "REPLACE_VASPRINTF",
++        "lib/vasprintf.c": "!ac_cv_func_vasprintf || REPLACE_VASPRINTF",
+         "lib/wcrtomb.c": "REPLACE_WCRTOMB",
+         "lib/wctype.c": "REPLACE_WCTYPE",
+         "lib/wcwidth.c": "REPLACE_WCWIDTH",
+@@ -1199,7 +1203,10 @@
+     linkopts = M4_LINKOPTS + select({
+         "@platforms//os:linux": ["-lpthread"],
+         "@platforms//os:macos": ["-liconv"],
+-        "@platforms//os:windows": ["advapi32.lib"],
++        "@platforms//os:windows": [
++            "advapi32.lib",
++            "bcrypt.lib",
++        ],
+         "//conditions:default": [],
+     }),
+     local_defines = LOCAL_DEFINES,

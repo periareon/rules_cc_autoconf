@@ -1,21 +1,23 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/windows-stat-inodes.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
-load("//autoconf:checks.bzl", "checks")
+
+# gl_WINDOWS_STAT_INODES only sets the shell variable WINDOWS_STAT_INODES
+# (1 on mingw*/windows*, 0 elsewhere); it neither AC_DEFINEs nor AC_SUBSTs it.
+# The AC_SUBST lives in gl_SYS_TYPES_H (sys_types_h), matching the real m4.
+autoconf(
+    name = "gl_WINDOWS_STAT_INODES",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+    ],
+)
 
 autoconf(
     name = "windows-stat-inodes",
-    checks = select({
-        # gl_WINDOWS_STAT_INODES sets a shell variable WINDOWS_STAT_INODES=1 on Windows.
-        # On Windows, stat() doesn't use traditional inodes, so this is defined.
-        # The AC_SUBST for WINDOWS_STAT_INODES lives in sys_types_h (matching the real m4).
-        "@platforms//os:windows": [
-            checks.AC_DEFINE("WINDOWS_STAT_INODES", "1"),
-        ],
-        "//conditions:default": [
-            # On non-Windows systems, WINDOWS_STAT_INODES remains undefined
-            # (matches golden file expectation)
-        ],
-    }),
     visibility = ["//visibility:public"],
+    deps = [
+        ":gl_WINDOWS_STAT_INODES",
+    ],
 )

@@ -1,26 +1,180 @@
-"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/isnanf.m4"""
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/isnanf.m4
+
+gl_FUNC_ISNANF:
+- AC_REQUIRE([gl_MATH_H_DEFAULTS])
+- gl_HAVE_ISNANF_NO_LIBM (gl_cv_func_isnanf_no_libm)
+- gl_HAVE_ISNANF_IN_LIBM (gl_cv_func_isnanf_in_libm) when not usable without libm
+- gl_ISNANF_WORKS (gl_cv_func_isnanf_works)
+- HAVE_ISNANF=0 unless isnanf links and works
+- AC_SUBST([ISNANF_LIBM])
+
+gl_FUNC_ISNANF_NO_LIBM:
+- AC_DEFINE([HAVE_ISNANF_IN_LIBC]) when isnanf links without libm and works
+
+gl_PREREQ_ISNANF:
+- gl_FLOAT_EXPONENT_LOCATION
+
+gl_HAVE_ISNANF_NO_LIBM / gl_HAVE_ISNANF_IN_LIBM / gl_ISNANF_WORKS are exposed
+as their own targets.
+"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
-load("//autoconf:checks.bzl", "checks")
+load("//autoconf:checks.bzl", "checks", "utils")
+
+# m4 line 74: AC_LANG_PROGRAM used by gl_HAVE_ISNANF_NO_LIBM and gl_HAVE_ISNANF_IN_LIBM.
+_ISNANF_LINK_CODE = utils.AC_LANG_PROGRAM(
+    [
+        "#include <math.h>",
+        "#if (__GNUC__ >= 4) || (__clang_major__ >= 4)",
+        "# undef isnanf",
+        "# define isnanf(x) __builtin_isnan ((float)(x))",
+        "#elif defined isnan",
+        "# undef isnanf",
+        "# define isnanf(x) isnan ((float)(x))",
+        "#endif",
+        "float x;",
+    ],
+    "return isnanf (x);",
+)
+
+# m4 line 127: gl_ISNANF_WORKS test program (AC_RUN_IFELSE).
+# MSVC rejects the constant expression 1.0f / 0.0f (error C2124), so this
+# fails to compile there, matching GNU's "whether isnan(float) works... no".
+_ISNANF_WORKS_CODE = """\
+#include <math.h>
+#if (__GNUC__ >= 4) || (__clang_major__ >= 4)
+# undef isnanf
+# define isnanf(x) __builtin_isnan ((float)(x))
+#elif defined isnan
+# undef isnanf
+# define isnanf(x) isnan ((float)(x))
+#endif
+int main()
+{
+  int result = 0;
+
+  if (isnanf (1.0f / 0.0f))
+    result |= 1;
+
+  return result;
+}
+"""
 
 autoconf(
-    name = "isnanf",
+    name = "gl_HAVE_ISNANF_NO_LIBM",
     checks = [
-        # gl_FUNC_ISNANF checks for isnanf function
-        checks.AC_CHECK_FUNC(
-            "isnanf",
-            name = "_gl_cv_func_isnanf",
+        # m4 line 68: whether isnan(float) can be used without linking with libm
+        checks.AC_TRY_LINK(
+            name = "gl_cv_func_isnanf_no_libm",
+            code = _ISNANF_LINK_CODE,
         ),
-        # HAVE_ISNANF_IN_LIBC: isnanf() is available in libc without -lm
-        checks.AC_DEFINE("HAVE_ISNANF_IN_LIBC", "1"),
-        # AC_SUBST([ISNANF_LIBM]) - library needed for isnanf
-        # On macOS/Linux, if isnanf exists, it's in libc, so ISNANF_LIBM is empty
-        checks.AC_SUBST("ISNANF_LIBM", ""),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_HAVE_ISNANF_IN_LIBM",
+    checks = [
+        # m4 line 91: whether isnan(float) can be used with libm (gl_FUNC_ISNANF
+        # only invokes it when not usable without libm)
+        checks.AC_TRY_LINK(
+            name = "gl_cv_func_isnanf_in_libm",
+            code = _ISNANF_LINK_CODE,
+            linkopts = ["-lm"],
+            requires = ["!gl_cv_func_isnanf_no_libm"],
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        ":gl_HAVE_ISNANF_NO_LIBM",
+    ],
+)
+
+autoconf(
+    name = "gl_ISNANF_WORKS",
+    checks = [
+        # m4 line 118: whether isnan(float) works (AC_RUN_IFELSE, modelled as a
+        # link test; the program compiles and links wherever GNU's run reports
+        # yes).  Only invoked once isnanf links, with or without libm.
+        checks.AC_TRY_LINK(
+            name = "gl_cv_func_isnanf_works",
+            code = _ISNANF_WORKS_CODE,
+            requires = ["gl_cv_func_isnanf_no_libm || gl_cv_func_isnanf_in_libm"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_HAVE_ISNANF_IN_LIBM",
+        ":gl_HAVE_ISNANF_NO_LIBM",
+        "//gnulib/m4/exponentf",  # AC_REQUIRE([gl_FLOAT_EXPONENT_LOCATION])
+    ],
+)
+
+autoconf(
+    name = "gl_FUNC_ISNANF",
+    checks = [
+        # m4 line 35: HAVE_ISNANF=0 unless gl_func_isnanf = yes
+        checks.AC_SUBST(
+            "HAVE_ISNANF",
+            condition = "gl_cv_func_isnanf_works",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # m4 line 19/30: ISNANF_LIBM=-lm only when isnanf needs libm and works.
+        checks.AC_SUBST(
+            "ISNANF_LIBM",
+            condition = "gl_cv_func_isnanf_in_libm && gl_cv_func_isnanf_works",
+            if_false = "",
+            if_true = "-lm",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_HAVE_ISNANF_IN_LIBM",
+        ":gl_HAVE_ISNANF_NO_LIBM",
+        ":gl_ISNANF_WORKS",
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+    ],
+)
+
+autoconf(
+    name = "gl_FUNC_ISNANF_NO_LIBM",
+    checks = [
+        # m4 line 55 (gl_FUNC_ISNANF_NO_LIBM): AC_DEFINE([HAVE_ISNANF_IN_LIBC], [1])
+        # when isnanf links without libm and works.
+        checks.AC_DEFINE(
+            "HAVE_ISNANF_IN_LIBC",
+            condition = "gl_cv_func_isnanf_no_libm && gl_cv_func_isnanf_works",
+            if_false = None,
+            if_true = 1,
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_HAVE_ISNANF_NO_LIBM",
+        ":gl_ISNANF_WORKS",
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_ISNANF",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/exponentf",  # gl_FLOAT_EXPONENT_LOCATION
+    ],
+)
+
+autoconf(
+    name = "isnanf",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_ISNANF",
+        ":gl_FUNC_ISNANF_NO_LIBM",
+        ":gl_HAVE_ISNANF_IN_LIBM",
+        ":gl_HAVE_ISNANF_NO_LIBM",
+        ":gl_ISNANF_WORKS",
+        ":gl_PREREQ_ISNANF",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
-        "//gnulib/m4/exponentf",
-        "//gnulib/m4/math_h",
     ],
 )

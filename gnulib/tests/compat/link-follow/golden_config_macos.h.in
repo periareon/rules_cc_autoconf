@@ -1,3 +1,0 @@
-/* config.h.in */
-#define HAVE_READLINK 1
-#define LINK_FOLLOWS_SYMLINKS 1

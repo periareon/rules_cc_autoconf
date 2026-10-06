@@ -5,16 +5,14 @@ gnu_gnulib_diff_test_suite(
     bazel_autoconf_target = "//gnulib/m4/unlockpt",
     config_h_in = "config.h.in",
     configure_ac = "configure.ac",
-    golden_config_h = select({
-        "@platforms//os:macos": "golden_config_macos.h.in",
-        "@platforms//os:windows": "golden_config_windows.h.in",
-        "//conditions:default": "golden_config.h.in",
-    }),
-    golden_subst_h = select({
-        "@platforms//os:macos": "golden_subst_macos.h.in",
-        "@platforms//os:windows": "golden_subst_windows.h.in",
-        "//conditions:default": "golden_subst.h.in",
-    }),
+    known_divergences = {
+        # gl_FUNC_UNLOCKPT lowers HAVE_UNLOCKPT when unlockpt is missing but only
+        # AC_REQUIREs gl_UNISTD_H_DEFAULTS; the AC_SUBST lives in
+        # gl_STDLIB_H_DEFAULTS, which a full gnulib configure always has.
+        # Standalone GNU therefore leaves the placeholder, while the shared
+        # port must substitute the lowered value for full builds.
+        "HAVE_UNLOCKPT": "AC_SUBST owned by gl_STDLIB_H_DEFAULTS, which unlockpt.m4 does not require",
+    },
     m4_files = ["@gnulib//:all_m4"],
     subst_h_in = "subst.h.in",
     test_c = "test_unlockpt.c",

@@ -159,10 +159,12 @@ def _header_code_from_includes(includes_list):
 #     consumers would call the stub at runtime.
 #
 # MSVC deviation: upstream autoconf has no MSVC story. The `_MSC_VER`
-# branch returns `int` (no GCC builtins to confuse) and links
-# legacy_stdio_definitions.lib so probes for the stdio family resolve
-# against UCRT, which inlines those functions in headers rather than
-# exporting linker symbols.
+# branch returns `int` (no GCC builtins to confuse).  Nothing else is
+# added: UCRT defines printf, snprintf, vsnprintf, swprintf and friends
+# inline in its headers, so this probe reports them absent exactly as
+# GNU autoconf does on MSVC.  gnulib relies on that outcome (probe no,
+# AC_CHECK_DECL yes) to name its replacements rpl_* instead of clashing
+# with the inline definitions; see gl_REPLACE_SNPRINTF in snprintf.m4.
 _AC_CHECK_FUNC_DEFAULT_TEMPLATE = """\
 #define {function} innocuous_{function}
 #include <limits.h>
@@ -171,7 +173,6 @@ _AC_CHECK_FUNC_DEFAULT_TEMPLATE = """\
 extern "C"
 #endif
 #if defined _MSC_VER
-#pragma comment(lib, "legacy_stdio_definitions.lib")
 int {function} (void);
 #else
 char {function} (void);

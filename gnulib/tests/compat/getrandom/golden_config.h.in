@@ -1,4 +1,0 @@
-/* config.h.in */
-/* #undef GETRANDOM_LIB */
-#define HAVE_GETRANDOM 1
-/* #undef REPLACE_GETRANDOM */

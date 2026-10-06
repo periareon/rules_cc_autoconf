@@ -23,6 +23,8 @@ autoconf(
         checks.AC_DEFINE(
             "HAVE_NL_LANGINFO",
             condition = "ac_cv_func_nl_langinfo",
+            # AC_CHECK_FUNCS leaves the macro undefined when the function is absent.
+            if_false = None,
             if_true = "1",
         ),
     ],

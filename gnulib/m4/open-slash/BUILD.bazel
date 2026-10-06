@@ -4,7 +4,7 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "open-slash",
+    name = "gl_OPEN_TRAILING_SLASH_BUG",
     # gl_OPEN_TRAILING_SLASH_BUG runs AC_RUN_IFELSE; cross-compile guess
     # for darwin falls to gl_cross_guess_normal ("no" = bug present). On
     # macOS the SDK probe decides; elsewhere M4's guess of "yes" applies.
@@ -20,9 +20,19 @@ autoconf(
     }),
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/gnulib-common:gl_HOST_MACOS_SDK_MODERN",
-        # HAVE_LSTAT define (single source of truth)
-        "//gnulib/m4/lstat:HAVE_LSTAT",
+        # AC_CHECK_FUNCS_ONCE([lstat]) - probe + config.h define only; the
+        # HAVE_LSTAT subst keeps its gl_SYS_STAT_H_DEFAULTS value.
+        "//gnulib/m4/lstat:AC_CHECK_FUNCS_ONCE_lstat",
+    ],
+)
+
+autoconf(
+    name = "open-slash",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_OPEN_TRAILING_SLASH_BUG",
     ],
 )

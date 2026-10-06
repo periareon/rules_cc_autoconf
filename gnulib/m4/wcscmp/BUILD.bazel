@@ -35,7 +35,12 @@ autoconf(
         "//gnulib/m4/gnulib-common:linux_x86_64": [
             checks.AC_SUBST("REPLACE_WCSCMP", "0"),
         ],
-        # macOS / Windows / other (incl. untested Linux CPUs): per M4
+        # Native Windows (MSVC/mingw): all three sub-probes pass. Real
+        # ./configure with MSVC confirms gl_cv_func_wcscmp_works=yes.
+        "@platforms//os:windows": [
+            checks.AC_SUBST("REPLACE_WCSCMP", "0"),
+        ],
+        # macOS / other (incl. untested Linux CPUs): per M4
         # gl_cross_guess_normal == "no" → replacement needed. Real
         # ./configure on macOS 14 + Apple Silicon also still produces
         # REPLACE=1 (bug (a) hasn't been fixed there).

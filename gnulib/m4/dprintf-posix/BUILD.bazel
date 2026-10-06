@@ -6,20 +6,47 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 # The m4 file has a complex check (gl_FUNC_DPRINTF_IS_POSIX) that checks many
 # printf features. Based on golden files, on macOS dprintf is not POSIX compliant,
 # so we need to replace it.
+
+# gl_FUNC_DPRINTF_IS_POSIX - lines 21-130: AC_REQUIREs the gl_PRINTF_* probes
+# (reached through vasnprintf below), gl_CHECK_FUNCS_ANDROID([dprintf]) and
+# the host_os guess for gl_cv_func_dprintf_posix (not modelled as a value).
 autoconf(
-    name = "dprintf-posix",
+    name = "gl_FUNC_DPRINTF_IS_POSIX",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/dprintf:ac_cv_func_dprintf",  # gl_CHECK_FUNCS_ANDROID([dprintf]) in gl_FUNC_DPRINTF_IS_POSIX
+    ],
+)
+
+# gl_FUNC_DPRINTF_POSIX - lines 9-17:
+#   AC_REQUIRE([gl_FUNC_DPRINTF_IS_POSIX])
+#   if test $gl_cv_func_dprintf_posix = no; then
+#     gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS; gl_REPLACE_VASNPRINTF; gl_REPLACE_DPRINTF
+#   fi
+autoconf(
+    name = "gl_FUNC_DPRINTF_POSIX",
     checks = [
         # gl_FUNC_DPRINTF_POSIX checks if dprintf is POSIX compliant.
         # If not (macOS), it conditionally calls gl_REPLACE_DPRINTF.
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
-        "//gnulib/m4/dprintf",
+        ":gl_FUNC_DPRINTF_IS_POSIX",  # AC_REQUIRE([gl_FUNC_DPRINTF_IS_POSIX])
         "//gnulib/m4/vasnprintf",
     ] + select({
         # On macOS, dprintf is not POSIX compliant → gl_REPLACE_DPRINTF is invoked
         "@platforms//os:linux": [],
         "//conditions:default": ["//gnulib/m4/dprintf:gl_REPLACE_DPRINTF"],
     }),
+)
+
+autoconf(
+    name = "dprintf-posix",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_DPRINTF_IS_POSIX",
+        ":gl_FUNC_DPRINTF_POSIX",
+    ],
 )

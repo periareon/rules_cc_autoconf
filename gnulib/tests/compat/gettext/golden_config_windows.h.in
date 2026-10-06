@@ -1,6 +1,0 @@
-/* config.h.in */
-/* #undef ENABLE_NLS */
-/* #undef HAVE_CFLOCALECOPYPREFERREDLANGUAGES */
-/* #undef HAVE_CFPREFERENCESCOPYAPPVALUE */
-/* #undef HAVE_DCGETTEXT */
-/* #undef HAVE_GETTEXT */

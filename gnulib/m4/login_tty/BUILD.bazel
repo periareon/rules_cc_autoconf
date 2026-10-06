@@ -4,7 +4,7 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "login_tty",
+    name = "gl_FUNC_LOGIN_TTY",
     checks = [
         # gl_LOGIN_TTY checks for login_tty function
         # On macOS, login_tty is available
@@ -17,10 +17,20 @@ autoconf(
     deps = [
         # Use HAVE_UTMP_H target without the AC_SUBST to avoid substituting HAVE_UTMP_H
         "//gnulib/m4/utmp_h:HAVE_UTMP_H",
-        "//gnulib/m4/termios_h",
-        "//gnulib/m4/pty_h",
-        "//gnulib/m4/pty:gl_PTY_LIB",
+        "//gnulib/m4/termios_h:HAVE_TERMIOS_H",  # AC_CHECK_HEADERS_ONCE([... termios.h])
+        # AC_CHECK_HEADERS_ONCE([... util.h libutil.h ...]): config.h defines
+        # only; gl_PTY_H is never required, so nothing substitutes HAVE_UTIL_H.
+        "//gnulib/m4/pty_h:AC_CHECK_HEADERS_ONCE_util_h",
+        "//gnulib/m4/pty:gl_PTY_LIB",  # AC_REQUIRE([gl_PTY_LIB])
         # For test compatibility - need basic header defines
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "login_tty",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_LOGIN_TTY",
     ],
 )

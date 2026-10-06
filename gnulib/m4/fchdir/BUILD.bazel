@@ -3,15 +3,18 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
-# gl_HAVE_FCHDIR - shared fchdir function check (ac_cv_func_fchdir, HAVE_FCHDIR)
-# Used by both fchdir and gl_FUNC_FCHDIR_FOR_CLOSE to avoid duplicate
+# AC_CHECK_FUNCS_ONCE([fchdir]) - the bare probe plus its config.h define.
+#
+# Modules whose M4 never reaches gl_TEST_FCHDIR on some hosts (close, open:
+# REPLACE_*=1 is decided first on Windows; closedir, opendir: the function
+# itself is missing there; save-cwd: only AC_CHECK_FUNCS_ONCE) depend on this
+# target so the HAVE_FCHDIR subst keeps its gl_UNISTD_H_DEFAULTS value (1).
 autoconf(
-    name = "gl_HAVE_FCHDIR",
+    name = "AC_CHECK_FUNCS_ONCE_fchdir",
     checks = [
         checks.AC_CHECK_FUNC(
             "fchdir",
             define = "HAVE_FCHDIR",
-            subst = True,
         ),
     ],
     visibility = ["//visibility:public"],
@@ -21,33 +24,110 @@ autoconf(
     ],
 )
 
+# gl_TEST_FCHDIR - Determine whether to use the overrides in lib/fchdir.c.
+#   if test $ac_cv_func_fchdir = no; then HAVE_FCHDIR=0
 autoconf(
-    name = "fchdir",
+    name = "gl_TEST_FCHDIR",
     checks = [
-        # ac_cv_func_fchdir and HAVE_FCHDIR from gl_HAVE_FCHDIR dependency
+        checks.AC_SUBST(
+            "HAVE_FCHDIR",
+            condition = "ac_cv_func_fchdir",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":AC_CHECK_FUNCS_ONCE_fchdir",  # AC_CHECK_FUNCS_ONCE([fchdir])
+    ],
+)
+
+# gl_HAVE_FCHDIR - shared fchdir function check (ac_cv_func_fchdir, HAVE_FCHDIR)
+# Kept as an alias of gl_TEST_FCHDIR for existing consumers.
+autoconf(
+    name = "gl_HAVE_FCHDIR",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_TEST_FCHDIR",
+    ],
+)
+
+autoconf(
+    name = "gl_FUNC_FCHDIR",
+    checks = [
+        # ac_cv_func_fchdir and HAVE_FCHDIR from gl_TEST_FCHDIR dependency
         checks.AC_CHECK_DECL(
             "fchdir",
             define = "HAVE_DECL_FCHDIR",
             includes = ["#include <unistd.h>"],
             subst = True,
         ),
-    ],
+        # if test $HAVE_FCHDIR = 1; then
+        #   if test $DIR_HAS_FD_MEMBER = 0; then REPLACE_FCHDIR=1
+        # (no supported host has fchdir without a DIR fd member, so the
+        # REPLACE_FCHDIR subst keeps its gl_UNISTD_H_DEFAULTS value)
+        # if test $HAVE_FCHDIR = 0 || test $REPLACE_FCHDIR = 1; then
+        #   AC_DEFINE([REPLACE_FCHDIR], [1])
+        # i.e. whenever fchdir is missing or dirfd() does not work. Consumers
+        # gating lib/fchdir.c must reference this define through its cache
+        # name `ac_cv_define_REPLACE_FCHDIR` (the bare name also matches the
+        # gl_UNISTD_H_DEFAULTS subst, as for REPLACE_POSIX_SPAWN).
+        checks.AC_DEFINE(
+            "REPLACE_FCHDIR",
+            condition = "!ac_cv_func_fchdir || DIR_HAS_FD_MEMBER==0",
+            if_false = None,
+            if_true = 1,
+        ),
+    ] + select({
+        # gl_cv_func_open_directory_works is an AC_RUN_IFELSE probe inside the
+        # branch above; M4 cross-compile guess for mingw*/windows* is "no"
+        # (and natively open(".") fails on Windows), so REPLACE_OPEN_DIRECTORY
+        # is defined there. Linux/glibc guess "yes" and never enter the branch.
+        "@platforms//os:windows": [
+            checks.AC_DEFINE(
+                "REPLACE_OPEN_DIRECTORY",
+                condition = "!ac_cv_func_fchdir || DIR_HAS_FD_MEMBER==0",
+                if_false = None,
+                if_true = 1,
+            ),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        ":gl_HAVE_FCHDIR",
-        "//autoconf/macros/AC_CANONICAL_HOST",
-        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        ":gl_TEST_FCHDIR",  # AC_REQUIRE([gl_TEST_FCHDIR])
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",  # AC_CHECK_DECLS_ONCE([fchdir])
         "//gnulib/m4/dirent_h",
+        "//gnulib/m4/dirent_h:gl_DIRENT_DIR",  # AC_REQUIRE([gl_DIRENT_DIR])
     ],
 )
 
-# This target is used by modules like close, dup, dup2 that need HAVE_FCHDIR but not HAVE_DECL_FCHDIR
+# m4 line 78: gl_PREREQ_FCHDIR - prerequisites of lib/fchdir.c (no-op).
+autoconf(
+    name = "gl_PREREQ_FCHDIR",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "fchdir",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_FCHDIR",
+        ":gl_PREREQ_FCHDIR",
+        ":gl_TEST_FCHDIR",
+    ],
+)
+
+# This target is used by modules like dup, dup2, fcntl, fstat whose M4 runs
+# gl_TEST_FCHDIR unconditionally (HAVE_FCHDIR subst follows the probe) but
+# does not need HAVE_DECL_FCHDIR.
 autoconf(
     name = "gl_FUNC_FCHDIR_FOR_CLOSE",
     checks = [],
     visibility = ["//visibility:public"],
     deps = [
-        ":gl_HAVE_FCHDIR",
+        ":gl_TEST_FCHDIR",
         "//autoconf/macros/AC_CANONICAL_HOST",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],

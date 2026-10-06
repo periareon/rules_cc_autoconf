@@ -4,13 +4,50 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "libgmp",
+    name = "gl_LIBGMP",
     checks = [
-        checks.AC_SUBST("HAVE_LIBGMP", "no"),
+        # AC_CHECK_HEADERS([gmp.h gmp/gmp.h], [break])
+        checks.AC_CHECK_HEADER(
+            "gmp.h",
+            define = "HAVE_GMP_H",
+        ),
+        checks.AC_CHECK_HEADER(
+            "gmp/gmp.h",
+            define = "HAVE_GMP_GMP_H",
+            requires = ["!ac_cv_header_gmp_h"],
+        ),
+        # Without the havelib module: AC_SEARCH_LIBS([__gmpz_roinit_n], [gmp]),
+        # only attempted when a header was found.
+        checks.AC_SEARCH_LIBS(
+            "__gmpz_roinit_n",
+            ["gmp"],
+            requires = ["ac_cv_header_gmp_h"],
+            subst = "LIBGMP",
+        ),
+        checks.AC_SUBST(
+            "HAVE_LIBGMP",
+            condition = "ac_cv_search___gmpz_roinit_n",
+            if_false = "no",
+            if_true = "yes",
+        ),
+        checks.AC_SUBST(
+            "LTLIBGMP",
+            condition = "ac_cv_search___gmpz_roinit_n",
+            if_false = "",
+            if_true = "-lgmp",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
         # For test compatibility - need basic header defines
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "libgmp",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_LIBGMP",
     ],
 )

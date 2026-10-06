@@ -2,33 +2,262 @@
 
 gl_FUNC_FREXPL:
 - AC_REQUIRE([gl_MATH_H_DEFAULTS])
+- AC_REQUIRE([gl_LONG_DOUBLE_VS_DOUBLE])
 - AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
-- AC_REQUIRE([gl_FUNC_FREXP])
-- AC_CHECK_FUNCS([frexpl])
+- AC_CHECK_DECL([frexpl], , [HAVE_DECL_FREXPL=0], [[#include <math.h>]])
+- gl_CHECK_FREXPL_NO_LIBM (gl_cv_func_frexpl_no_libm)
+- gl_cv_func_frexpl_in_libm (link with -lm) when not usable without libm
+- gl_FUNC_FREXPL_WORKS (gl_cv_func_frexpl_works)
+- AC_DEFINE([HAVE_FREXPL]) only when frexpl links and works; else REPLACE_FREXPL=1
 - AC_SUBST([FREXPL_LIBM])
+
+gl_FUNC_FREXPL_NO_LIBM:
+- AC_CHECK_DECL([frexpl]) (same probe as gl_FUNC_FREXPL)
+- AC_DEFINE([HAVE_FREXPL_IN_LIBC]) when frexpl links without libm and works
+
+gl_CHECK_FREXPL_NO_LIBM / gl_FUNC_FREXPL_WORKS are exposed as their own targets.
 """
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
-load("//autoconf:checks.bzl", "checks")
+load("//autoconf:checks.bzl", "checks", "utils")
+
+# m4 line 16: AC_LANG_PROGRAM used by gl_CHECK_FREXPL_NO_LIBM and the -lm variant.
+_FREXPL_LINK_CODE = utils.AC_LANG_PROGRAM(
+    [
+        "#include <math.h>",
+        "long double x;",
+    ],
+    "int e; return frexpl (x, &e) > 0;",
+)
+
+# m4 line 100: gl_FUNC_FREXPL_WORKS test program (AC_RUN_IFELSE).
+# On MSVC the UCRT frexpl is an inline in <math.h>; this program links and
+# runs fine there, which is why GNU reports HAVE_FREXPL on Windows.
+_FREXPL_WORKS_CODE = r"""
+#include <float.h>
+#include <math.h>
+/* Override the values of <float.h>, like done in float.in.h.  */
+#if defined __i386__ && (defined __BEOS__ || defined __OpenBSD__)
+# undef LDBL_MIN_EXP
+# define LDBL_MIN_EXP    (-16381)
+#endif
+#if defined __i386__ && (defined __FreeBSD__ || defined __DragonFly__)
+# undef LDBL_MIN_EXP
+# define LDBL_MIN_EXP    (-16381)
+#endif
+#if (defined _ARCH_PPC || defined _POWER) && defined _AIX && (LDBL_MANT_DIG == 106) && defined __GNUC__
+# undef LDBL_MIN_EXP
+# define LDBL_MIN_EXP DBL_MIN_EXP
+#endif
+extern
+#ifdef __cplusplus
+"C"
+#endif
+long double frexpl (long double, int *);
+long double zero = 0.0L;
+int main()
+{
+  int result = 0;
+  volatile long double x;
+  /* Test on finite numbers that fails on AIX 5.1.  */
+  x = 16.0L;
+  {
+    int exp = -9999;
+    frexpl (x, &exp);
+    if (exp != 5)
+      result |= 1;
+  }
+  /* Test on finite numbers that fails on Mac OS X 10.4, because its frexpl
+     function returns an invalid (incorrectly normalized) value: it returns
+               y = { 0x3fe028f5, 0xc28f5c28, 0x3c9eb851, 0xeb851eb8 }
+     but the correct result is
+          0.505L = { 0x3fe028f5, 0xc28f5c29, 0xbc547ae1, 0x47ae1480 }  */
+  x = 1.01L;
+  {
+    int exp = -9999;
+    long double y = frexpl (x, &exp);
+    if (!(exp == 1 && y == 0.505L))
+      result |= 2;
+  }
+  /* Test on large finite numbers.  This fails on BeOS at i = 16322, while
+     LDBL_MAX_EXP = 16384.
+     In the loop end test, we test x against Infinity, rather than comparing
+     i with LDBL_MAX_EXP, because BeOS <float.h> has a wrong LDBL_MAX_EXP.  */
+  {
+    int i;
+    for (i = 1, x = 1.0L; x != x + x; i++, x *= 2.0L)
+      {
+        int exp = -9999;
+        frexpl (x, &exp);
+        if (exp != i)
+          {
+            result |= 4;
+            break;
+          }
+      }
+  }
+  /* Test on denormalized numbers.  */
+  {
+    int i;
+    for (i = 1, x = 1.0L; i >= LDBL_MIN_EXP; i--, x *= 0.5L)
+      ;
+    if (x > 0.0L)
+      {
+        int exp;
+        long double y = frexpl (x, &exp);
+        /* On machines with IEEE854 arithmetic: x = 1.68105e-4932,
+           exp = -16382, y = 0.5.  On Mac OS X 10.5: exp = -16384, y = 0.5.  */
+        if (exp != LDBL_MIN_EXP - 1)
+          result |= 8;
+      }
+  }
+  /* Test on infinite numbers.  */
+  /* The Microsoft MSVC 14 compiler chokes on the expression 1.0 / 0.0.  */
+  x = 1.0L / zero;
+  {
+    int exp;
+    long double y = frexpl (x, &exp);
+    if (y != x)
+      result |= 16;
+  }
+  return result;
+}
+"""
 
 autoconf(
-    name = "frexpl",
+    name = "gl_CHECK_FREXPL_NO_LIBM",
     checks = [
-        checks.AC_CHECK_FUNC(
-            "frexpl",
-            define = "HAVE_FREXPL",
+        # m4 line 105: whether frexpl() can be used without linking with libm
+        checks.AC_TRY_LINK(
+            name = "gl_cv_func_frexpl_no_libm",
+            code = _FREXPL_LINK_CODE,
         ),
-        # HAVE_FREXPL_IN_LIBC: frexpl() is available in libc without -lm
-        checks.AC_DEFINE("HAVE_FREXPL_IN_LIBC", "1"),
-        # FREXPL_LIBM is empty on macOS
-        checks.AC_SUBST("FREXPL_LIBM", ""),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_FUNC_FREXPL_WORKS",
+    checks = [
+        # m4 line 122: whether frexpl works (AC_RUN_IFELSE, modelled as a link
+        # test; the program compiles and links wherever GNU's run reports yes).
+        checks.AC_TRY_LINK(
+            name = "gl_cv_func_frexpl_works",
+            code = _FREXPL_WORKS_CODE,
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+    ],
+)
+
+autoconf(
+    name = "gl_FUNC_FREXPL",
+    checks = [
+        # m4 line 19: AC_CHECK_DECL([frexpl], , [HAVE_DECL_FREXPL=0], [[#include <math.h>]])
+        # Plain AC_CHECK_DECL: cache variable only, no HAVE_DECL_FREXPL in config.h.
+        checks.AC_CHECK_DECL(
+            "frexpl",
+            includes = ["#include <math.h>"],
+        ),
+        checks.AC_SUBST(
+            "HAVE_DECL_FREXPL",
+            condition = "ac_cv_have_decl_frexpl",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # m4 line 25: whether frexpl() can be used with libm (only when it is
+        # declared and gl_CHECK_FREXPL_NO_LIBM said no)
+        checks.AC_TRY_LINK(
+            name = "gl_cv_func_frexpl_in_libm",
+            code = _FREXPL_LINK_CODE,
+            linkopts = ["-lm"],
+            requires = [
+                "ac_cv_have_decl_frexpl",
+                "!gl_cv_func_frexpl_no_libm",
+            ],
+        ),
+        # m4 line 57: AC_DEFINE([HAVE_FREXPL], [1]) only when gl_func_frexpl = yes,
+        # i.e. frexpl is declared, links (with or without libm) and works.
+        checks.AC_DEFINE(
+            "HAVE_FREXPL",
+            condition = "ac_cv_have_decl_frexpl && (gl_cv_func_frexpl_no_libm || gl_cv_func_frexpl_in_libm) && gl_cv_func_frexpl_works",
+            if_false = None,
+            if_true = 1,
+        ),
+        # m4 line 51: REPLACE_FREXPL=1 when frexpl links but does not work
+        checks.AC_SUBST(
+            "REPLACE_FREXPL",
+            condition = "ac_cv_have_decl_frexpl && (gl_cv_func_frexpl_no_libm || gl_cv_func_frexpl_in_libm) && !gl_cv_func_frexpl_works",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # m4 line 40/69: FREXPL_LIBM=-lm only when frexpl needs libm and works;
+        # otherwise it falls back to FREXP_LIBM (empty here) or empty.
+        checks.AC_SUBST(
+            "FREXPL_LIBM",
+            condition = "gl_cv_func_frexpl_in_libm && gl_cv_func_frexpl_works",
+            if_false = "",
+            if_true = "-lm",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_CHECK_FREXPL_NO_LIBM",
+        ":gl_FUNC_FREXPL_WORKS",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
         "//gnulib/m4/frexp",  # AC_REQUIRE([gl_FUNC_FREXP])
         "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+        "//gnulib/m4/math_h:long-double-vs-double",  # AC_REQUIRE([gl_LONG_DOUBLE_VS_DOUBLE])
+    ],
+)
+
+autoconf(
+    name = "gl_FUNC_FREXPL_NO_LIBM",
+    checks = [
+        # m4 line 83: AC_CHECK_DECL([frexpl], , [HAVE_DECL_FREXPL=0], [[#include <math.h>]])
+        # (same probe as in gl_FUNC_FREXPL; shared by content)
+        checks.AC_CHECK_DECL(
+            "frexpl",
+            includes = ["#include <math.h>"],
+        ),
+        checks.AC_SUBST(
+            "HAVE_DECL_FREXPL",
+            condition = "ac_cv_have_decl_frexpl",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # m4 line 98: AC_DEFINE([HAVE_FREXPL_IN_LIBC], [1]) when frexpl is declared,
+        # links without libm and works.
+        checks.AC_DEFINE(
+            "HAVE_FREXPL_IN_LIBC",
+            condition = "ac_cv_have_decl_frexpl && gl_cv_func_frexpl_no_libm && gl_cv_func_frexpl_works",
+            if_false = None,
+            if_true = 1,
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_CHECK_FREXPL_NO_LIBM",
+        ":gl_FUNC_FREXPL_WORKS",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+        "//gnulib/m4/math_h:long-double-vs-double",  # AC_REQUIRE([gl_LONG_DOUBLE_VS_DOUBLE])
+    ],
+)
+
+# Umbrella target kept for existing dependants; it mirrors the frexpl
+# conformance test configure.ac, which invokes all four macros.
+autoconf(
+    name = "frexpl",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_CHECK_FREXPL_NO_LIBM",
+        ":gl_FUNC_FREXPL",
+        ":gl_FUNC_FREXPL_NO_LIBM",
+        ":gl_FUNC_FREXPL_WORKS",
         "//gnulib/m4/mktime",
     ],
 )

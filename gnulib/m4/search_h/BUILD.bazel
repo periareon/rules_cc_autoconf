@@ -1,7 +1,7 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/search_h.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
-load("//autoconf:checks.bzl", "checks")
+load("//autoconf:checks.bzl", "checks", "utils")
 load("//gnulib:macros.bzl", gl_macros = "macros")
 
 # Core search_h checks without HAVE_SEARCH_H subst
@@ -13,7 +13,33 @@ autoconf(
             "search.h",
             define = "HAVE_SEARCH_H",
         ),
-        checks.AC_SUBST("HAVE_TYPE_VISIT", "1"),
+        # if test $HAVE_SEARCH_H = 1; then
+        #   AC_CACHE_CHECK([for type VISIT], [gl_cv_type_VISIT], [AC_COMPILE_IFELSE(...)])
+        # else
+        #   gl_cv_type_VISIT=no
+        # fi
+        # MSVC ships <search.h> (for lfind/lsearch) but without the VISIT enum.
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_type_VISIT",
+            code = utils.AC_LANG_PROGRAM(
+                [
+                    "#if HAVE_SEARCH_H",
+                    " #include <search.h>",
+                    "#endif",
+                ],
+                "static VISIT x; x = postorder;",
+            ),
+            compile_defines = ["HAVE_SEARCH_H"],
+            language = "c",
+            requires = ["ac_cv_header_search_h"],
+        ),
+        # if test $gl_cv_type_VISIT = yes; then HAVE_TYPE_VISIT=1; else HAVE_TYPE_VISIT=0; fi
+        checks.AC_SUBST(
+            "HAVE_TYPE_VISIT",
+            condition = "gl_cv_type_VISIT",
+            if_false = 0,
+            if_true = 1,
+        ),
     ] + gl_macros.GL_CHECK_NEXT_HEADERS(["search.h"]),
     visibility = ["//gnulib:__subpackages__"],
     deps = [
@@ -22,15 +48,37 @@ autoconf(
     ],
 )
 
+# gl_SEARCH_H (AC_DEFUN_ONCE)
 autoconf(
-    name = "search_h",
+    name = "gl_SEARCH_H",
     checks = [
+        # if test $ac_cv_header_search_h = yes; then HAVE_SEARCH_H=1 else 0
         # Golden expects HAVE_SEARCH_H "1"
         checks.AC_SUBST("HAVE_SEARCH_H", "1"),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        # Note: gl_SEARCH_H_DEFAULTS is a _DEFAULTS function, so we do not track it as a dependency
         ":gl_SEARCH_H_CORE",
+    ],
+)
+
+# gl_SEARCH_MODULE_INDICATOR([modulename])
+# Ensures defaults are expanded; sets GNULIB_<module> for the given module.
+# Deliberately not a dependency of :gl_SEARCH_H_REQUIRE_DEFAULTS, so that the
+# HAVE_TSEARCH / REPLACE_TSEARCH defaults do not collide with gl_FUNC_TSEARCH.
+autoconf(
+    name = "gl_SEARCH_MODULE_INDICATOR",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "search_h",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_SEARCH_H",
+        ":gl_SEARCH_MODULE_INDICATOR",
     ],
 )
 

@@ -3,23 +3,16 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
+# gl_SET_LARGEFILE_SOURCE is a workaround for Autoconf <= 2.71, whose
+# AC_FUNC_FSEEKO did not set _LARGEFILE_SOURCE on HP-UX. gnulib defines the
+# macro as empty whenever Autoconf provides AC_SYS_YEAR2038 (2.72 and later),
+# so with the pinned autoconf 2.73 it contributes nothing: in particular it
+# does not define HAVE_FSEEKO (that comes from gl_FUNC_FSEEKO / AC_FUNC_FSEEKO
+# in the modules that need it).
 autoconf(
     name = "gl_SET_LARGEFILE_SOURCE",
-    checks = [
-        # TODO: For `hpux*` hosts, set `_LARGEFILE_SOURCE=1`
-    ],
+    checks = [],
     visibility = ["//visibility:public"],
-    deps = select({
-        # On Linux, include HAVE_FSEEKO from gl_PREREQ_FSEEKO
-        "@platforms//os:linux": [
-            "//gnulib/m4/fseeko:gl_FUNC_FSEEKO",
-            "//gnulib/m4/fseeko:gl_PREREQ_FSEEKO",
-        ],
-        # On macOS, don't include gl_PREREQ_FSEEKO (golden expects HAVE_FSEEKO undef)
-        "//conditions:default": [
-            "//gnulib/m4/fseeko:gl_FUNC_FSEEKO",
-        ],
-    }),
 )
 
 autoconf(

@@ -4,17 +4,27 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "raise",
+    name = "gl_FUNC_RAISE",
     checks = [
+        # AC_CHECK_FUNCS([raise]); if test $ac_cv_func_raise = no; then HAVE_RAISE=0
         checks.AC_CHECK_FUNC(
             "raise",
             define = "HAVE_RAISE",
             subst = True,
         ),
-        # if test $ac_cv_func_raise = no; then
         # else
-        # fi
-        # Note: The conditional logic for REPLACE_RAISE is handled via dependencies
+        #   AC_REQUIRE([gl_MSVC_INVAL])
+        #   if test $HAVE_MSVC_INVALID_PARAMETER_HANDLER = 1; then REPLACE_RAISE=1
+        #   gl_SIGNALBLOCKING
+        #   if test $HAVE_POSIX_SIGNALBLOCKING = 0; then
+        #     gl_SIGNAL_SIGPIPE
+        #     if test $gl_cv_header_signal_h_SIGPIPE != yes; then REPLACE_RAISE=1
+        checks.AC_SUBST(
+            "REPLACE_RAISE",
+            condition = "ac_cv_func_raise && (ac_cv_func__set_invalid_parameter_handler || (!HAVE_SIGNALBLOCKING && !gl_cv_header_signal_h_SIGPIPE))",
+            if_false = 0,
+            if_true = 1,
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -26,5 +36,21 @@ autoconf(
         "//gnulib/m4/sigpipe:gl_SIGNAL_SIGPIPE",  # m4_ifdef([gl_SIGNAL_SIGPIPE], [gl_SIGNAL_SIGPIPE])
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_PREREQ_RAISE: AC_DEFUN([gl_PREREQ_RAISE], [:]) - nothing to do.
+autoconf(
+    name = "gl_PREREQ_RAISE",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "raise",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_RAISE",
+        ":gl_PREREQ_RAISE",
     ],
 )

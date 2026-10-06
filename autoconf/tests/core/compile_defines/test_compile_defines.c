@@ -20,5 +20,13 @@ int main(void) {
     // (or is #undef, which means it's not defined)
 #endif
 
+// HAVE_FEATURE_C should be 1: the string-valued _FEATURE_C_LEVEL ("20") was
+// handed to the probe as an integer constant usable in `#if`.
+#ifdef HAVE_FEATURE_C
+    assert(HAVE_FEATURE_C == 1);
+#else
+    assert(0 && "HAVE_FEATURE_C should be defined");
+#endif
+
     return 0;
 }

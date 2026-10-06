@@ -1,30 +1,178 @@
-"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/ldexpl.m4"""
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/ldexpl.m4
+
+gl_FUNC_LDEXPL:
+- AC_REQUIRE([gl_MATH_H_DEFAULTS])
+- AC_REQUIRE([gl_LONG_DOUBLE_VS_DOUBLE])
+- AC_REQUIRE([gl_FUNC_ISNANL]) for ISNANL_LIBM
+- AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+- AC_CHECK_DECL([ldexpl], , [HAVE_DECL_LDEXPL=0], [[#include <math.h>]])
+- gl_CHECK_LDEXPL_NO_LIBM (gl_cv_func_ldexpl_no_libm)
+- gl_cv_func_ldexpl_in_libm (link with -lm) when not usable without libm
+- gl_FUNC_LDEXPL_WORKS (gl_cv_func_ldexpl_works)
+- AC_DEFINE([HAVE_LDEXPL]) only when ldexpl links and works; else REPLACE_LDEXPL=1
+- AC_SUBST([LDEXPL_LIBM])
+"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
-load("//autoconf:checks.bzl", "checks")
+load("//autoconf:checks.bzl", "checks", "utils")
+
+# m4 line 17: AC_LANG_PROGRAM used by gl_CHECK_LDEXPL_NO_LIBM and the -lm variant.
+_LDEXPL_LINK_CODE = utils.AC_LANG_PROGRAM(
+    [
+        "#include <math.h>",
+        "long double x;",
+    ],
+    "return ldexpl (x, -1) > 0;",
+)
+
+# m4 line 101: gl_FUNC_LDEXPL_WORKS test program (AC_RUN_IFELSE).
+# On MSVC the UCRT ldexpl is an inline in <math.h>; this program links and
+# runs fine there, which is why GNU reports HAVE_LDEXPL on Windows.
+_LDEXPL_WORKS_CODE = """\
+#include <math.h>
+extern
+#ifdef __cplusplus
+"C"
+#endif
+long double ldexpl (long double, int);
+int main()
+{
+  int result = 0;
+  {
+    volatile long double x = 1.0;
+    volatile long double y = ldexpl (x, -1);
+    if (y != 0.5L)
+      result |= 1;
+  }
+  {
+    volatile long double x = 1.73205L;
+    volatile long double y = ldexpl (x, 0);
+    if (y != x)
+      result |= 2;
+  }
+  return result;
+}
+"""
 
 autoconf(
-    name = "ldexpl",
+    name = "gl_CHECK_LDEXPL_NO_LIBM",
     checks = [
-        # gl_FUNC_LDEXPL checks for ldexpl function
-        checks.AC_CHECK_FUNC(
-            "ldexpl",
-            define = "HAVE_LDEXPL",
+        # m4 line 83: whether ldexpl() can be used without linking with libm
+        checks.AC_TRY_LINK(
+            name = "gl_cv_func_ldexpl_no_libm",
+            code = _LDEXPL_LINK_CODE,
         ),
-        # HAVE_LDEXPL_IN_LIBC: ldexpl() is available in libc without -lm
-        checks.AC_DEFINE("HAVE_LDEXPL_IN_LIBC", "1"),
-        # AC_SUBST([LDEXPL_LIBM]) - library needed for ldexpl
-        # On macOS/Linux, ldexpl is in libc, so LDEXPL_LIBM is empty
-        checks.AC_SUBST("LDEXPL_LIBM", ""),
-        # LDEXP_LIBM comes from ldexp dependency
+    ],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_FUNC_LDEXPL_WORKS",
+    checks = [
+        # m4 line 99: whether ldexpl works (AC_RUN_IFELSE, modelled as a link
+        # test; the program compiles and links wherever GNU's run reports yes).
+        checks.AC_TRY_LINK(
+            name = "gl_cv_func_ldexpl_works",
+            code = _LDEXPL_WORKS_CODE,
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+    ],
+)
+
+# printf-frexpl.m4 line 42 / strtold.m4 line 179: AC_DEFINE([HAVE_LDEXPL_IN_LIBC], [1])
+# when ldexpl can be used without libm (and, in printf-frexpl.m4, works).
+autoconf(
+    name = "HAVE_LDEXPL_IN_LIBC",
+    checks = [
+        checks.AC_DEFINE(
+            "HAVE_LDEXPL_IN_LIBC",
+            condition = "gl_cv_func_ldexpl_no_libm && gl_cv_func_ldexpl_works",
+            if_false = None,
+            if_true = 1,
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_CHECK_LDEXPL_NO_LIBM",
+        ":gl_FUNC_LDEXPL_WORKS",
+    ],
+)
+
+autoconf(
+    name = "gl_FUNC_LDEXPL",
+    checks = [
+        # m4 line 20: AC_CHECK_DECL([ldexpl], , [HAVE_DECL_LDEXPL=0], [[#include <math.h>]])
+        # Plain AC_CHECK_DECL: cache variable only, no HAVE_DECL_LDEXPL in config.h.
+        checks.AC_CHECK_DECL(
+            "ldexpl",
+            includes = ["#include <math.h>"],
+        ),
+        checks.AC_SUBST(
+            "HAVE_DECL_LDEXPL",
+            condition = "ac_cv_have_decl_ldexpl",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # m4 line 26: whether ldexpl() can be used with libm (only when it is
+        # declared and gl_CHECK_LDEXPL_NO_LIBM said no)
+        checks.AC_TRY_LINK(
+            name = "gl_cv_func_ldexpl_in_libm",
+            code = _LDEXPL_LINK_CODE,
+            linkopts = ["-lm"],
+            requires = [
+                "ac_cv_have_decl_ldexpl",
+                "!gl_cv_func_ldexpl_no_libm",
+            ],
+        ),
+        # m4 line 58: AC_DEFINE([HAVE_LDEXPL], [1]) only when gl_func_ldexpl = yes,
+        # i.e. ldexpl is declared, links (with or without libm) and works.
+        checks.AC_DEFINE(
+            "HAVE_LDEXPL",
+            condition = "ac_cv_have_decl_ldexpl && (gl_cv_func_ldexpl_no_libm || gl_cv_func_ldexpl_in_libm) && gl_cv_func_ldexpl_works",
+            if_false = None,
+            if_true = 1,
+        ),
+        # m4 line 52: REPLACE_LDEXPL=1 when ldexpl links but does not work
+        checks.AC_SUBST(
+            "REPLACE_LDEXPL",
+            condition = "ac_cv_have_decl_ldexpl && (gl_cv_func_ldexpl_no_libm || gl_cv_func_ldexpl_in_libm) && !gl_cv_func_ldexpl_works",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # m4 line 41/70: LDEXPL_LIBM=-lm only when ldexpl needs libm and works;
+        # otherwise it falls back to LDEXP_LIBM / ISNANL_LIBM (both empty here).
+        checks.AC_SUBST(
+            "LDEXPL_LIBM",
+            condition = "gl_cv_func_ldexpl_in_libm && gl_cv_func_ldexpl_works",
+            if_false = "",
+            if_true = "-lm",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_CHECK_LDEXPL_NO_LIBM",
+        ":gl_FUNC_LDEXPL_WORKS",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
-        "//gnulib/m4/extensions",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
         "//gnulib/m4/isnand",
-        "//gnulib/m4/isnanl",
-        "//gnulib/m4/ldexp",
-        "//gnulib/m4/math_h",
+        "//gnulib/m4/isnanl",  # AC_REQUIRE([gl_FUNC_ISNANL])
+        "//gnulib/m4/ldexp",  # AC_REQUIRE([gl_FUNC_LDEXP])
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+        "//gnulib/m4/math_h:long-double-vs-double",  # AC_REQUIRE([gl_LONG_DOUBLE_VS_DOUBLE])
+    ],
+)
+
+# Umbrella target kept for existing dependants.
+autoconf(
+    name = "ldexpl",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":HAVE_LDEXPL_IN_LIBC",
+        ":gl_CHECK_LDEXPL_NO_LIBM",
+        ":gl_FUNC_LDEXPL",
+        ":gl_FUNC_LDEXPL_WORKS",
     ],
 )

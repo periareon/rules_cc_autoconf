@@ -3,183 +3,272 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
-# Prerequisites of lib/netdb.in.h and lib/getaddrinfo.c
+# The probes use `#if HAVE_X` rather than the m4's `#ifdef HAVE_X`: with
+# autoconf HAVE_X is either 1 or undefined, so both forms agree, but the
+# Bazel checker also injects `#define HAVE_X 0` for failed dependency probes.
+
+# Prologue used by most probes in getaddrinfo.m4.  The HAVE_* guards are
+# resolved through compile_defines from the header checks in the deps.
+_GAI_INCLUDES = [
+    "#include <sys/types.h>",
+    "#if HAVE_SYS_SOCKET_H",
+    "#include <sys/socket.h>",
+    "#endif",
+    "#if HAVE_NETDB_H",
+    "#include <netdb.h>",
+    "#endif",
+    "#if HAVE_WS2TCPIP_H",
+    "#include <ws2tcpip.h>",
+    "#endif",
+    "#include <stddef.h>",
+]
+
+_GAI_COMPILE_DEFINES = [
+    "HAVE_SYS_SOCKET_H",
+    "HAVE_NETDB_H",
+    "HAVE_WS2TCPIP_H",
+]
+
+# gl_PREREQ_GETADDRINFO - prerequisites of lib/netdb.in.h and lib/getaddrinfo.c
 autoconf(
     name = "gl_PREREQ_GETADDRINFO",
     checks = [
-        # Note: gl_NETDB_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
-        checks.AC_TRY_COMPILE(
-            code = """\
-#include <sys/types.h>
-#include <sys/socket.h>
-
-int main(void) {
-    struct sockaddr sa;
-    (void)sa.sa_len;
-    return 0;
-}
-""",
+        # AC_CHECK_MEMBERS([struct sockaddr.sa_len], , , [#include <sys/types.h>
+        # #include <sys/socket.h>])
+        checks.AC_CHECK_MEMBER(
+            "struct sockaddr.sa_len",
             define = "HAVE_STRUCT_SOCKADDR_SA_LEN",
-            language = "c",
-            requires = ["HAVE_SYS_SOCKET_H"],
-        ),
-
-        # Note: HAVE_NETINET_IN_H is provided by netinet_in_h dependency, skipping duplicate check
-        checks.AC_CHECK_DECL(
-            "getaddrinfo",
-            define = "HAVE_DECL_GETADDRINFO",
             includes = [
-                "#include <netdb.h>",
                 "#include <sys/socket.h>",
                 "#include <sys/types.h>",
             ],
-            requires = [
-                "HAVE_SYS_SOCKET_H",
-                "HAVE_NETDB_H",
-            ],
+            requires = ["HAVE_SYS_SOCKET_H"],
+        ),
+        # AC_CHECK_HEADERS_ONCE([netinet/in.h]) is provided by gl_SOCKET_FAMILIES.
+        # AC_CHECK_DECLS([getaddrinfo, freeaddrinfo, getnameinfo],,,[...])
+        checks.AC_CHECK_DECL(
+            "getaddrinfo",
+            compile_defines = _GAI_COMPILE_DEFINES,
+            define = "HAVE_DECL_GETADDRINFO",
+            includes = _GAI_INCLUDES,
         ),
         checks.AC_CHECK_DECL(
             "freeaddrinfo",
+            compile_defines = _GAI_COMPILE_DEFINES,
             define = "HAVE_DECL_FREEADDRINFO",
-            includes = [
-                "#include <netdb.h>",
-                "#include <sys/socket.h>",
-                "#include <sys/types.h>",
-            ],
-            requires = [
-                "HAVE_SYS_SOCKET_H",
-                "HAVE_NETDB_H",
-            ],
+            includes = _GAI_INCLUDES,
         ),
         checks.AC_CHECK_DECL(
             "getnameinfo",
+            compile_defines = _GAI_COMPILE_DEFINES,
             define = "HAVE_DECL_GETNAMEINFO",
-            includes = [
-                "#include <netdb.h>",
-                "#include <sys/socket.h>",
-                "#include <sys/types.h>",
-            ],
-            requires = [
-                "HAVE_SYS_SOCKET_H",
-                "HAVE_NETDB_H",
-            ],
+            includes = _GAI_INCLUDES,
         ),
+        # if test $ac_cv_have_decl_getaddrinfo = no; then HAVE_DECL_GETADDRINFO=0 (etc.)
+        checks.AC_SUBST(
+            "HAVE_DECL_GETADDRINFO",
+            condition = "ac_cv_have_decl_getaddrinfo",
+            if_false = "0",
+            if_true = "1",
+        ),
+        checks.AC_SUBST(
+            "HAVE_DECL_FREEADDRINFO",
+            condition = "ac_cv_have_decl_freeaddrinfo",
+            if_false = "0",
+            if_true = "1",
+        ),
+        checks.AC_SUBST(
+            "HAVE_DECL_GETNAMEINFO",
+            condition = "ac_cv_have_decl_getnameinfo",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # AC_CHECK_TYPES([struct addrinfo],,,[...]); if absent HAVE_STRUCT_ADDRINFO=0
         checks.AC_CHECK_TYPE(
             "struct addrinfo",
+            compile_defines = _GAI_COMPILE_DEFINES,
             define = "HAVE_STRUCT_ADDRINFO",
-            # buildifier: leave-alone
-            includes = [
-                "#include <sys/types.h>",
-                "#include <sys/socket.h>",
-                "#include <netdb.h>",
-            ],
-            requires = [
-                "HAVE_SYS_SOCKET_H",
-                "HAVE_NETDB_H",
-            ],
+            includes = _GAI_INCLUDES,
+        ),
+        checks.AC_SUBST(
+            "HAVE_STRUCT_ADDRINFO",
+            condition = "ac_cv_type_struct_addrinfo",
+            if_false = "0",
+            if_true = "1",
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # Note: gl_NETDB_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        # AC_REQUIRE([gl_NETDB_H_DEFAULTS]) is satisfied by the toolchain.
         "//gnulib/m4/sys_socket_h:gl_SYS_SOCKET_H",
         "//gnulib/m4/hostent",
         "//gnulib/m4/servent",
-        "//gnulib/m4/inet_ntop",
+        "//gnulib/m4/inet_ntop:gl_FUNC_INET_NTOP",
         "//autoconf/macros/AC_C_RESTRICT",
-        # Note: socket_families module not yet ported, skipping dependency
+        "//gnulib/m4/sockpfaf:gl_SOCKET_FAMILIES",
         "//gnulib/m4/extensions",
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
+        "//gnulib/m4/netdb_h",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
 
+# gl_GETADDRINFO - getaddrinfo / gai_strerror probes; invokes gl_PREREQ_GETADDRINFO.
 autoconf(
-    name = "getaddrinfo",
+    name = "gl_GETADDRINFO",
     checks = [
-        # HAVE_SYS_SOCKET_H comes from sys_socket_h dependency
-        # HAVE_NETDB_H comes from netdb_h dependency
-
-        # This searches for getaddrinfo in libraries (socket, network, net)
-        # On modern systems, getaddrinfo is in libc, so we use AC_TRY_LINK to check
+        # AC_SEARCH_LIBS([getaddrinfo], [socket network net]) finds it in libc on
+        # glibc/macOS (GETADDRINFO_LIB stays empty).
+        # AC_CACHE_CHECK([for getaddrinfo], [gl_cv_func_getaddrinfo], link test)
         checks.AC_TRY_LINK(
-            name = "_gl_cv_func_getaddrinfo",
-            code = """\
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <stddef.h>
+            name = "gl_cv_func_getaddrinfo",
+            code = "\n".join(_GAI_INCLUDES) + """
 
 int main(void) {
     getaddrinfo("", "", NULL, NULL);
     return 0;
 }
 """,
-            compile_defines = [
-                "HAVE_SYS_SOCKET_H",
-                "HAVE_NETDB_H",
-            ],
+            compile_defines = _GAI_COMPILE_DEFINES,
             language = "c",
         ),
-
-        # Create HAVE_GETADDRINFO define (defaults to 1 if function exists, 0 otherwise) - lines 29, 43-89
+        # if test $gl_cv_func_getaddrinfo = no; then
+        #   AC_CACHE_CHECK([for getaddrinfo in ws2tcpip.h and -lws2_32],
+        #                  [gl_cv_w32_getaddrinfo], link test with -lws2_32)
+        checks.AC_CHECK_LIB(
+            "ws2_32",
+            "getaddrinfo",
+            name = "gl_cv_w32_getaddrinfo",
+            code = """#if HAVE_WS2TCPIP_H
+#include <ws2tcpip.h>
+#endif
+#include <stddef.h>
+int main(void) {
+    getaddrinfo(NULL, NULL, NULL, NULL);
+    return 0;
+}
+""",
+            copts = ["-DHAVE_WS2TCPIP_H=1"],
+            define = "gl_cv_w32_getaddrinfo",
+            requires = [
+                "!gl_cv_func_getaddrinfo",
+                "HAVE_WS2TCPIP_H==1",
+            ],
+        ),
+        #   if yes: GETADDRINFO_LIB="-lws2_32"
+        checks.AC_SUBST(
+            "GETADDRINFO_LIB",
+            condition = "gl_cv_w32_getaddrinfo",
+            if_false = "",
+            if_true = "-lws2_32",
+        ),
+        #     AC_CACHE_CHECK([for getaddrinfo with POSIX signature],
+        #       [gl_cv_func_getaddrinfo_posix_signature], ...)
+        #     if no: REPLACE_GETADDRINFO=1
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_func_getaddrinfo_posix_signature",
+            code = "\n".join(_GAI_INCLUDES) + """
+extern
+#ifdef __cplusplus
+"C"
+#endif
+int getaddrinfo (const char *, const char *, const struct addrinfo *, struct addrinfo **);
+int main(void) { return 0; }
+""",
+            compile_defines = _GAI_COMPILE_DEFINES,
+            language = "c",
+            requires = ["gl_cv_w32_getaddrinfo"],
+        ),
+        #   else HAVE_GETADDRINFO=0
+        # fi
+        # AC_DEFINE_UNQUOTED([HAVE_GETADDRINFO], [$HAVE_GETADDRINFO]) - always 1 or 0
         checks.AC_DEFINE(
             "HAVE_GETADDRINFO",
-            condition = "_gl_cv_func_getaddrinfo",
+            condition = "gl_cv_func_getaddrinfo || gl_cv_w32_getaddrinfo",
             if_false = 0,
             if_true = 1,
         ),
-
-        # This is handled by the AC_DEFINE above
+        # AC_CHECK_DECLS([gai_strerror], [], [], [...])
         checks.AC_CHECK_DECL(
             "gai_strerror",
+            compile_defines = _GAI_COMPILE_DEFINES,
             define = "HAVE_DECL_GAI_STRERROR",
-            includes = [
-                "#include <netdb.h>",
-                "#include <sys/socket.h>",
-                "#include <sys/types.h>",
-            ],
-            requires = [
-                "HAVE_SYS_SOCKET_H",
-                "HAVE_NETDB_H",
-            ],
+            includes = _GAI_INCLUDES,
         ),
+        checks.AC_SUBST(
+            "HAVE_DECL_GAI_STRERROR",
+            condition = "ac_cv_have_decl_gai_strerror",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # if test $ac_cv_have_decl_gai_strerror = yes; then
+        #   AC_CHECK_DECLS([gai_strerrorA], [], [], [...])
         checks.AC_CHECK_DECL(
             "gai_strerrorA",
             name = "_gl_cv_have_decl_gai_strerrorA",
-            includes = [
-                "#include <netdb.h>",
-                "#include <sys/socket.h>",
-                "#include <sys/types.h>",
-            ],
-            requires = [
-                "HAVE_SYS_SOCKET_H",
-                "HAVE_NETDB_H",
-            ],
+            compile_defines = _GAI_COMPILE_DEFINES,
+            define = "HAVE_DECL_GAI_STRERRORA",
+            includes = _GAI_INCLUDES,
+            requires = ["ac_cv_have_decl_gai_strerror"],
         ),
-        checks.AC_DEFINE(
-            "HAVE_DECL_GAI_STRERRORA",
-            condition = "_gl_cv_have_decl_gai_strerrorA",
-            if_false = 0,
-            if_true = 1,
+        #   AC_CACHE_CHECK([for gai_strerror with POSIX signature],
+        #     [gl_cv_func_gai_strerror_posix_signature], ...)
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_func_gai_strerror_posix_signature",
+            code = "\n".join(_GAI_INCLUDES) + """
+extern
+#ifdef __cplusplus
+"C"
+#endif
+const char *gai_strerror(int);
+int main(void) { return 0; }
+""",
+            compile_defines = _GAI_COMPILE_DEFINES,
+            language = "c",
+            requires = ["ac_cv_have_decl_gai_strerror"],
         ),
-
-        # Note: AC_RUN_IFELSE for gl_cv_func_getaddrinfo_works (AI_NUMERICSERV check, lines 93-131)
-        # and gl_cv_w32_getaddrinfo (Windows check, lines 44-88) are not directly
-        # portable to Bazel's cross-compilation environment. REPLACE_GETADDRINFO and
-        # REPLACE_GAI_STRERROR are set based on golden file expectations for macOS/Linux.
-        # On macOS/Linux, getaddrinfo works correctly, so REPLACE_GETADDRINFO=0 and REPLACE_GAI_STRERROR=0
-
-        # GETADDRINFO_LIB is set based on library search results (empty on modern systems)
-        checks.AC_SUBST("GETADDRINFO_LIB", ""),
-    ],
+        #   if no: REPLACE_GAI_STRERROR=1
+        # fi
+        checks.AC_SUBST(
+            "REPLACE_GAI_STRERROR",
+            condition = "ac_cv_have_decl_gai_strerror && !gl_cv_func_gai_strerror_posix_signature",
+            if_false = "0",
+            if_true = "1",
+        ),
+    ] + select({
+        # if test $HAVE_GETADDRINFO != 0; then
+        #   gl_cv_func_getaddrinfo_works (AI_NUMERICHOST / AI_NUMERICSERV):
+        #   "Guess no on Solaris, native Windows" and the native MSVC run agrees
+        #   -> REPLACE_GETADDRINFO=1.  The POSIX-signature failure path also
+        #   sets it.
+        "@platforms//os:windows": [
+            checks.AC_SUBST(
+                "REPLACE_GETADDRINFO",
+                condition = "gl_cv_func_getaddrinfo || gl_cv_w32_getaddrinfo",
+                if_false = "0",
+                if_true = "1",
+            ),
+        ],
+        # glibc/macOS: the runtime check passes; REPLACE_GETADDRINFO keeps the
+        # gl_NETDB_H_DEFAULTS value of 0.
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
+        # AC_REQUIRE([gl_SYS_SOCKET_H]) dnl for HAVE_SYS_SOCKET_H, HAVE_WINSOCK2_H
         "//gnulib/m4/sys_socket_h:gl_SYS_SOCKET_H",
+        # AC_REQUIRE([gl_NETDB_H]) dnl for HAVE_NETDB_H
         "//gnulib/m4/netdb_h",
         "//autoconf/macros/AC_CANONICAL_HOST",
         ":gl_PREREQ_GETADDRINFO",
-        # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "getaddrinfo",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_GETADDRINFO",
+        ":gl_PREREQ_GETADDRINFO",
     ],
 )

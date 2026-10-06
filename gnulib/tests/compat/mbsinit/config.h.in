@@ -1,5 +1,6 @@
 /* config.h.in */
 #undef HAVE_BTOWC
+#undef HAVE_DECL_MBSINIT
 #undef HAVE_DECL_WCSDUP
 #undef HAVE_DECL_WCWIDTH
 #undef HAVE_INTTYPES_H
@@ -79,6 +80,7 @@
 #undef REPLACE_WMEMPCPY
 #undef STDC_HEADERS
 #undef _ALL_SOURCE
+#undef _COSMO_SOURCE
 #undef _DARWIN_C_SOURCE
 #undef _GNU_SOURCE
 #undef _HPUX_ALT_XOPEN_SOCKET_API

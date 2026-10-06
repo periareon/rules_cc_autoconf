@@ -56,14 +56,14 @@ locale_t x;
         checks.AC_SUBST(
             "HAVE_LOCALE_T",
             condition = "gl_cv_have_locale_t",
-            if_false = "0",
-            if_true = "1",
+            if_false = 0,
+            if_true = 1,
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        ":HAVE_XLOCALE_H",
-        "//gnulib/m4/extensions",
+        ":HAVE_XLOCALE_H",  # AC_CHECK_HEADERS_ONCE([xlocale.h])
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
     ],
 )
 
@@ -164,11 +164,14 @@ int main(void) { return 0; }
     ],
     visibility = ["//visibility:public"],
     deps = [
-        ":gl_LOCALE_T",
+        ":gl_LOCALE_T",  # AC_REQUIRE([gl_LOCALE_T])
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
-        "//gnulib/m4/extensions",
-        "//gnulib/m4/include_next",  # For gl_CHECK_NEXT_HEADERS
-        "//gnulib/m4/stddef_h",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+        "//gnulib/m4/include_next",  # gl_NEXT_HEADERS([locale.h])
+        "//gnulib/m4/stddef_h",  # AC_REQUIRE([gl_STDDEF_H])
+        # AC_REQUIRE([gl_LOCALE_H_DEFAULTS]) is delivered through :defaults
+        # (toolchain-level defaults), see gl_LOCALE_H_DEFAULTS below.
     ],
 )
 
@@ -219,11 +222,24 @@ autoconf(
     ],
 )
 
+# gl_LOCALE_MODULE_INDICATOR([modulename]): gl_LOCALE_H_REQUIRE_DEFAULTS +
+# gl_MODULE_INDICATOR_SET_VARIABLE; the GNULIB_* defaults are toolchain-level
+# (:defaults), so this is modelled like gl_UNISTD_MODULE_INDICATOR.
+autoconf(
+    name = "gl_LOCALE_MODULE_INDICATOR",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_LOCALE_H",
+    ],
+)
+
 autoconf(
     name = "locale_h",
     visibility = ["//visibility:public"],
     deps = [
         ":gl_LOCALE_H",
+        ":gl_LOCALE_MODULE_INDICATOR",
         ":gl_LOCALE_T",
     ],
 )

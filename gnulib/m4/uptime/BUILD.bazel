@@ -3,14 +3,28 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
+# gl_SYS_PROC_UPTIME: `test -f /proc/uptime && cat /proc/uptime` at configure
+# time.  This is a property of the shell environment configure runs in, not
+# of the compiler: it is true on Linux and also on Windows, where configure
+# runs under MSYS/Git bash, which emulates /proc/uptime.
 autoconf(
-    name = "uptime",
+    name = "gl_SYS_PROC_UPTIME",
     checks = select({
-        # On Linux, /proc/uptime exists
         "@platforms//os:linux": [
+            checks.AC_DEFINE("HAVE_PROC_UPTIME", 1),
+        ],
+        "@platforms//os:windows": [
             checks.AC_DEFINE("HAVE_PROC_UPTIME", 1),
         ],
         "//conditions:default": [],
     }),
     visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "uptime",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_SYS_PROC_UPTIME",
+    ],
 )

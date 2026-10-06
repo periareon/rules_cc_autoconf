@@ -4,7 +4,7 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "closedir",
+    name = "gl_FUNC_CLOSEDIR",
     checks = [
         # Use internal define to avoid conflict with AC_SUBST
         checks.AC_CHECK_FUNC(
@@ -12,31 +12,29 @@ autoconf(
             name = "_gl_have_closedir",
         ),
 
-        # Create HAVE_CLOSEDIR define if function exists
-        # Also set as substitution variable
-        # If closedir not found: HAVE_CLOSEDIR=0
-        # If closedir found: HAVE_CLOSEDIR=1
+        # AC_CHECK_FUNCS([closedir]) defines HAVE_CLOSEDIR only when found;
+        # the subst is 0 when closedir is missing, 1 otherwise.
         checks.AC_DEFINE(
+            "HAVE_CLOSEDIR",
+            condition = "_gl_have_closedir",
+            if_false = None,
+            if_true = 1,
+        ),
+        checks.AC_SUBST(
             "HAVE_CLOSEDIR",
             condition = "_gl_have_closedir",
             if_false = 0,
             if_true = 1,
-            subst = True,
         ),
 
-        # Note: closedir only needs the function check (not declaration), but we use fchdir's cache variable
-
-        # REPLACE_CLOSEDIR is set to 1 if:
-        # - DIR_HAS_FD_MEMBER = 0 (DIR structure doesn't have fd member, e.g., on Windows)
-        # - HAVE_FCHDIR = 0 (fchdir function not available)
-        # Otherwise, REPLACE_CLOSEDIR=0 (default)
-        # DIR_HAS_FD_MEMBER is a substitution variable from dirent_h (can't check in condition)
-        # HAVE_FCHDIR is checked above (from gl_TEST_FCHDIR behavior)
-        # Note: DIR_HAS_FD_MEMBER is set based on platform (0 on Windows, 1 on others)
-        # On non-Windows platforms with HAVE_FCHDIR=1, REPLACE_CLOSEDIR=0 (matches golden file)
+        # REPLACE_CLOSEDIR is set to 1 only when closedir exists and
+        # - DIR_HAS_FD_MEMBER = 0 (DIR structure doesn't have fd member, e.g., on Windows), or
+        # - gl_TEST_FCHDIR finds HAVE_FCHDIR = 0.
+        # Without closedir the M4 sets HAVE_CLOSEDIR=0 and never runs
+        # gl_TEST_FCHDIR, so the HAVE_FCHDIR subst keeps its default there.
         checks.AC_SUBST(
             "REPLACE_CLOSEDIR",
-            condition = "!ac_cv_func_fchdir",  # If fchdir not available, replace closedir (from fchdir module)
+            condition = "_gl_have_closedir && (DIR_HAS_FD_MEMBER==0 || !ac_cv_func_fchdir)",
             if_false = 0,
             if_true = 1,
         ),
@@ -44,16 +42,21 @@ autoconf(
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_DIRENT_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
-        # "//gnulib/m4/dirent_h",  # Ignored - _DEFAULTS function
-        "//autoconf/macros/AC_CANONICAL_HOST",
-        # This comes from dirent_h module (via gl_DIRENT_DIR)
-        # Note: DIR_HAS_FD_MEMBER is set in dirent_h:defaults, but since we ignore _DEFAULTS,
-        # we need to check if it's available elsewhere or if we need to set it ourselves
-        # Actually, DIR_HAS_FD_MEMBER should be available from dirent_h dependency
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        # DIR_HAS_FD_MEMBER comes from dirent_h (gl_DIRENT_DIR)
         "//gnulib/m4/dirent_h",
-        # Note: closedir only needs the function check (not declaration), so use gl_FUNC_FCHDIR_FOR_CLOSE
-        "//gnulib/m4/fchdir:gl_FUNC_FCHDIR_FOR_CLOSE",
+        "//gnulib/m4/dirent_h:gl_DIRENT_DIR",  # AC_REQUIRE([gl_DIRENT_DIR])
+        # AC_CHECK_FUNCS_ONCE([fchdir]) - probe + config.h define only
+        "//gnulib/m4/fchdir:AC_CHECK_FUNCS_ONCE_fchdir",
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "closedir",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_CLOSEDIR",
     ],
 )

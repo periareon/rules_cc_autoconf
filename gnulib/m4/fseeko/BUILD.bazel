@@ -60,8 +60,10 @@ autoconf(
         checks.AC_SUBST(
             "REPLACE_FSEEKO",
             condition = "gl_cv_func_fseeko==1 && (WINDOWS_64_BIT_OFF_T==1 || !gl_cv_var_stdin_large_offset || !gl_cv_func_fflush_stdin)",
-            if_false = "0",
-            if_true = "1",
+            # Integers: fseek compares `REPLACE_FSEEKO==1`, which a quoted
+            # string value never satisfies.
+            if_false = 0,
+            if_true = 1,
         ),
     ],
     visibility = ["//visibility:public"],

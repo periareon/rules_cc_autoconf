@@ -100,13 +100,121 @@ autoconf(
     deps = ["//autoconf/macros/AC_C_RESTRICT"],
 )
 
+# gl_PROG_AR_RANLIB
+# AC_CHECK_TOOL([AR], [ar], [ar]) falls back to plain `ar` even when nothing is
+# found, ARFLAGS defaults to `cr`, and AC_PROG_RANLIB yields `ranlib` wherever
+# binutils (or MSYS2 on Windows) is installed. The Minix/Amsterdam compiler
+# branch is not modelled.
+autoconf(
+    name = "gl_PROG_AR_RANLIB",
+    checks = [
+        checks.AC_SUBST("AR", "ar"),
+        checks.AC_SUBST("ARFLAGS", "cr"),
+        checks.AC_SUBST("RANLIB", "ranlib"),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# gl_CC_ALLOW_WARNINGS: `-Wno-error` if the C compiler accepts it silently.
+# cl.exe accepts unknown -W options with a D9002 warning, which upstream
+# detects by comparing stderr line counts; the checker only sees the exit
+# status, so MSVC is handled explicitly.
+autoconf(
+    name = "gl_CC_ALLOW_WARNINGS",
+    checks = select({
+        "@rules_cc//cc/compiler:msvc-cl": [
+            checks.AC_SUBST("GL_CFLAG_ALLOW_WARNINGS", ""),
+        ],
+        "//conditions:default": [
+            checks.AC_TRY_COMPILE(
+                name = "gl_cv_cc_wallow",
+                code = "int dummy;\n",
+                copts = ["-Wno-error"],
+                language = "c",
+            ),
+            checks.AC_SUBST(
+                "GL_CFLAG_ALLOW_WARNINGS",
+                condition = "gl_cv_cc_wallow",
+                if_false = "",
+                if_true = "-Wno-error",
+            ),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+)
+
+# gl_CXX_ALLOW_WARNINGS: same for the C++ compiler.
+autoconf(
+    name = "gl_CXX_ALLOW_WARNINGS",
+    checks = select({
+        "@rules_cc//cc/compiler:msvc-cl": [
+            checks.AC_SUBST("GL_CXXFLAG_ALLOW_WARNINGS", ""),
+        ],
+        "//conditions:default": [
+            checks.AC_TRY_COMPILE(
+                name = "gl_cv_cxx_wallow",
+                code = "int dummy;\n",
+                copts = ["-Wno-error"],
+                language = "cpp",
+            ),
+            checks.AC_SUBST(
+                "GL_CXXFLAG_ALLOW_WARNINGS",
+                condition = "gl_cv_cxx_wallow",
+                if_false = "",
+                if_true = "-Wno-error",
+            ),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+)
+
+# gl_CC_GNULIB_WARNINGS: upstream preprocesses a list of warning options
+# guarded by compiler-version #ifs and collects the survivors (with a leading
+# space per option). Every compiler this repo targets is newer than all the
+# version thresholds, so the result depends only on the compiler family.
+autoconf(
+    name = "gl_CC_GNULIB_WARNINGS",
+    checks = select({
+        "@rules_cc//cc/compiler:clang": [
+            checks.AC_SUBST(
+                "GL_CFLAG_GNULIB_WARNINGS",
+                " -Wno-cast-qual -Wno-conversion -Wno-float-equal -Wno-sign-compare" +
+                " -Wno-undef -Wno-unused-function -Wno-unused-parameter" +
+                " -Wno-float-conversion -Wimplicit-fallthrough -Wno-pedantic" +
+                " -Wno-string-plus-int -Wno-tautological-constant-out-of-range-compare" +
+                " -Wno-sign-conversion -Wno-type-limits -Wno-unused-const-variable",
+            ),
+        ],
+        "@rules_cc//cc/compiler:gcc": [
+            checks.AC_SUBST(
+                "GL_CFLAG_GNULIB_WARNINGS",
+                " -Wno-cast-qual -Wno-conversion -Wno-float-equal -Wno-sign-compare" +
+                " -Wno-undef -Wno-unused-function -Wno-unused-parameter" +
+                " -Wno-float-conversion -Wimplicit-fallthrough -Wno-pedantic" +
+                " -Wno-sign-conversion -Wno-type-limits -Wno-unused-const-variable" +
+                " -Wno-unsuffixed-float-constants",
+            ),
+        ],
+        # No GL_CFLAG_ALLOW_WARNINGS, so no list.
+        "//conditions:default": [
+            checks.AC_SUBST("GL_CFLAG_GNULIB_WARNINGS", ""),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [":gl_CC_ALLOW_WARNINGS"],
+)
+
 # gnulib-common - top-level
 autoconf(
     name = "gnulib-common",
     checks = [],
     visibility = ["//visibility:public"],
     deps = [
+        ":gl_CC_ALLOW_WARNINGS",
+        ":gl_CC_GNULIB_WARNINGS",
+        ":gl_CXX_ALLOW_WARNINGS",
         ":gl_FEATURES_H",
+        ":gl_PROG_AR_RANLIB",
         "//gnulib/m4/00gnulib",
         "//gnulib/m4/zzgnulib",
     ],

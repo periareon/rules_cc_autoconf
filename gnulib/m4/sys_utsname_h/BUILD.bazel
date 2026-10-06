@@ -6,25 +6,38 @@ load("//gnulib:macros.bzl", gl_macros = "macros")
 
 # Configure a replacement for <sys/utsname.h>
 autoconf(
-    name = "sys_utsname_h",
+    name = "gl_SYS_UTSNAME_H",
     checks = [
         # Note: gl_SYS_UTSNAME_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
         checks.AC_CHECK_HEADER(
             "sys/utsname.h",
             name = "ac_cv_header_sys_utsname_h",
         ),
-        checks.AC_SUBST("HAVE_SYS_UTSNAME_H", "1"),
-        checks.AC_SUBST("HAVE_STRUCT_UTSNAME", "1"),
-    ] + gl_macros.GL_CHECK_NEXT_HEADERS(["sys/utsname.h"]) + [
-
         # if test $ac_cv_header_sys_utsname_h != yes; then
-        #   HAVE_STRUCT_UTSNAME=0
+        #   HAVE_SYS_UTSNAME_H=0; HAVE_STRUCT_UTSNAME=0
         # else
+        #   HAVE_SYS_UTSNAME_H=1
+        #   AC_CHECK_TYPES([struct utsname], [], [HAVE_STRUCT_UTSNAME=0], ...)
         # fi
-        # Define HAVE_SYS_UTSNAME_H in config.h if the header exists
+        checks.AC_SUBST(
+            "HAVE_SYS_UTSNAME_H",
+            condition = "ac_cv_header_sys_utsname_h",
+            if_false = "0",
+            if_true = "1",
+        ),
+        checks.AC_SUBST(
+            "HAVE_STRUCT_UTSNAME",
+            condition = "ac_cv_type_struct_utsname",
+            if_false = "0",
+            if_true = "1",
+        ),
+    ] + gl_macros.GL_CHECK_NEXT_HEADERS(["sys/utsname.h"]) + [
+        # AC_CHECK_HEADERS_ONCE (via gl_CHECK_NEXT_HEADERS) defines
+        # HAVE_SYS_UTSNAME_H in config.h only when the header exists.
         checks.AC_DEFINE(
             "HAVE_SYS_UTSNAME_H",
             condition = "ac_cv_header_sys_utsname_h",
+            if_false = None,
             if_true = 1,
         ),
         checks.AC_CHECK_TYPE(
@@ -38,17 +51,18 @@ autoconf(
             requires = ["ac_cv_header_sys_utsname_h==1"],
         ),
 
-        # Set HAVE_STRUCT_UTSNAME based on type check result
-        # Define HAVE_STRUCT_UTSNAME in config.h if the type exists
+        # AC_CHECK_TYPES defines HAVE_STRUCT_UTSNAME in config.h only when the
+        # type exists (the check is skipped when the header is missing).
         checks.AC_DEFINE(
             "HAVE_STRUCT_UTSNAME",
             condition = "ac_cv_type_struct_utsname",
+            if_false = None,
             if_true = 1,
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/include_next",
+        "//gnulib/m4/include_next",  # gl_CHECK_NEXT_HEADERS([sys/utsname.h])
         # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
@@ -85,3 +99,21 @@ autoconf(
 )
 
 # with_defaults - For external consumers who don't use the toolchain
+
+# gl_SYS_UTSNAME_MODULE_INDICATOR([modulename]): gl_SYS_UTSNAME_H_REQUIRE_DEFAULTS (the
+# defaults are supplied through the toolchain's :defaults target) and
+# GNULIB_<module>=1 for the named module; no checks of its own.
+autoconf(
+    name = "gl_SYS_UTSNAME_MODULE_INDICATOR",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "sys_utsname_h",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_SYS_UTSNAME_H",
+        ":gl_SYS_UTSNAME_MODULE_INDICATOR",
+    ],
+)

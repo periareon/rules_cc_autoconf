@@ -44,28 +44,22 @@ autoconf(
             if_true = "struct sigaltstack",
             requires = ["!ac_cv_type_stack_t"],
         ),
-    ] + select({
-        "@platforms//os:windows": [
-            # sigaltstack doesn't exist on Windows
-            checks.AC_DEFINE("HAVE_WORKING_SIGALTSTACK", "0"),
-        ],
-        "//conditions:default": [
-            # AC_LINK_IFELSE - lines 36-41 (macOS) and lines 80-84 (cross-compile fallback)
-            # Both paths use the same link test
-            checks.AC_TRY_LINK(
-                name = "sv_cv_sigaltstack",
-                code = utils.AC_LANG_PROGRAM(
-                    ["#include <signal.h>"],
-                    "int x = SA_ONSTACK; stack_t ss; sigaltstack ((stack_t*)0, &ss);",
-                ),
+        # AC_LINK_IFELSE - lines 36-41 (macOS) and lines 80-84 (cross-compile fallback)
+        # Both paths use the same link test.  Where sigaltstack does not exist
+        # (Windows) the probe fails and sv_cv_sigaltstack=no.
+        checks.AC_TRY_LINK(
+            name = "sv_cv_sigaltstack",
+            code = utils.AC_LANG_PROGRAM(
+                ["#include <signal.h>"],
+                "int x = SA_ONSTACK; stack_t ss; sigaltstack ((stack_t*)0, &ss);",
             ),
-            # Lines 104-105: if sv_cv_sigaltstack != no
-            checks.AC_DEFINE(
-                "HAVE_WORKING_SIGALTSTACK",
-                requires = ["sv_cv_sigaltstack==1"],
-            ),
-        ],
-    }),
+        ),
+        # Lines 104-105: if sv_cv_sigaltstack != no
+        checks.AC_DEFINE(
+            "HAVE_WORKING_SIGALTSTACK",
+            requires = ["sv_cv_sigaltstack==1"],
+        ),
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":HAVE_SIGALTSTACK",

@@ -1,2 +1,0 @@
-/* config.h.in */
-#define MALLOC_ALIGNMENT 16

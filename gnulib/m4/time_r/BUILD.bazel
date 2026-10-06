@@ -9,34 +9,58 @@ autoconf(
         checks.AC_CHECK_DECL(
             "localtime_r",
             name = "ac_cv_have_decl_localtime_r",
-            includes = ["#include <time.h>"],
+            # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]): glibc and Solaris declare
+            # localtime_r only with the extensions enabled.
+            compile_defines = [
+                "_GNU_SOURCE",
+                "_DARWIN_C_SOURCE",
+                "_POSIX_PTHREAD_SEMANTICS",
+            ],
+            includes = ["""/* mingw's <time.h> provides the functions asctime_r, ctime_r,
+   gmtime_r, localtime_r only if <unistd.h> or <pthread.h> has
+   been included before.  */
+#if defined __MINGW32__
+# include <unistd.h>
+#endif
+#include <time.h>"""],
         ),
-
-        #   HAVE_DECL_LOCALTIME_R=0
-        # fi
+        # AC_CHECK_DECLS always defines HAVE_DECL_LOCALTIME_R (0 or 1) ...
         checks.AC_DEFINE(
             "HAVE_DECL_LOCALTIME_R",
             condition = "ac_cv_have_decl_localtime_r",
             if_false = 0,
             if_true = 1,
         ),
+        # ... and
+        # if test $ac_cv_have_decl_localtime_r = no; then
+        #   HAVE_DECL_LOCALTIME_R=0
+        # fi
+        checks.AC_SUBST(
+            "HAVE_DECL_LOCALTIME_R",
+            condition = "ac_cv_have_decl_localtime_r",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # AC_CHECK_FUNCS_ONCE([localtime_r]): HAVE_LOCALTIME_R is only
+        # #defined when the function exists.
         checks.AC_CHECK_FUNC(
             "localtime_r",
             name = "ac_cv_func_localtime_r",
         ),
-
-        #   fi
-        # else
-        #   fi
-        # fi
         checks.AC_DEFINE(
             "HAVE_LOCALTIME_R",
             condition = "ac_cv_func_localtime_r",
+            if_false = None,
             if_true = 1,
         ),
+        # if test $ac_cv_func_localtime_r = yes; then
+        #   HAVE_LOCALTIME_R=1
+        #   AC_CACHE_CHECK([whether localtime_r is compatible with its POSIX signature],
+        #     [gl_cv_time_r_posix], ...)
         checks.AC_TRY_COMPILE(
             name = "gl_cv_time_r_posix",
             code = """\
+\
 /* mingw's <time.h> provides the functions asctime_r, ctime_r,
    gmtime_r, localtime_r only if <unistd.h> or <pthread.h> has
    been included before.  */
@@ -60,9 +84,39 @@ int main(void) {
             language = "c",
             requires = ["ac_cv_func_localtime_r"],
         ),
+        # else
+        #   HAVE_LOCALTIME_R=0
+        #   AC_CACHE_CHECK([whether localtime_r exists as an inline function],
+        #     [gl_cv_func_localtime_r_inline], ...)
+        checks.AC_TRY_LINK(
+            name = "gl_cv_func_localtime_r_inline",
+            code = """\
+\
+/* mingw's <time.h> provides the functions asctime_r, ctime_r,
+   gmtime_r, localtime_r only if <unistd.h> or <pthread.h> has
+   been included before.  */
+#if defined __MINGW32__
+# include <unistd.h>
+#endif
+#include <time.h>
+
+int main(void) {
+    time_t a;
+    struct tm r;
+    localtime_r (&a, &r);
+    return 0;
+}
+""",
+            language = "c",
+            requires = ["!ac_cv_func_localtime_r"],
+        ),
+        # REPLACE_LOCALTIME_R=1 either when the function exists with a
+        # non-POSIX signature, or when it only exists as an inline function.
         checks.AC_SUBST(
             "REPLACE_LOCALTIME_R",
-            condition = "!gl_cv_time_r_posix",
+            condition = "(ac_cv_func_localtime_r && !gl_cv_time_r_posix) || (!ac_cv_func_localtime_r && gl_cv_func_localtime_r_inline)",
+            if_false = 0,
+            if_true = 1,
         ),
     ],
     visibility = ["//visibility:public"],
@@ -74,10 +128,18 @@ int main(void) {
     ],
 )
 
+# gl_PREREQ_TIME_R - lines 98-100 (empty)
+autoconf(
+    name = "gl_PREREQ_TIME_R",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
 autoconf(
     name = "time_r",
     visibility = ["//visibility:public"],
     deps = [
+        ":gl_PREREQ_TIME_R",
         ":gl_TIME_R",
     ],
 )

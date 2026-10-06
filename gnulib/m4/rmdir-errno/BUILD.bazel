@@ -4,12 +4,16 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "rmdir-errno",
+    name = "gl_FUNC_RMDIR_NOTEMPTY",
     checks = select({
         # gl_FUNC_RMDIR_NOTEMPTY determines the errno value when rmdir fails on non-empty directory
         # On Linux: ENOTEMPTY = 39
         "@platforms//os:linux": [
             checks.AC_DEFINE("RMDIR_ERRNO_NOT_EMPTY", "39"),
+        ],
+        # On native Windows (MSVC CRT): ENOTEMPTY = 41
+        "@platforms//os:windows": [
+            checks.AC_DEFINE("RMDIR_ERRNO_NOT_EMPTY", "41"),
         ],
         # On macOS: ENOTEMPTY = 66
         "//conditions:default": [
@@ -21,5 +25,13 @@ autoconf(
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
         # For test compatibility - need basic header defines
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "rmdir-errno",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_RMDIR_NOTEMPTY",
     ],
 )

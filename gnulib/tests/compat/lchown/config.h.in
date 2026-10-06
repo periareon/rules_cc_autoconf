@@ -1,4 +1,5 @@
 /* config.h.in */
+#undef CHOWN_MODIFIES_SYMLINK
 #undef CHOWN_TRAILING_SLASH_BUG
 #undef HAVE_CHOWN
 #undef HAVE_COPY_FILE_RANGE

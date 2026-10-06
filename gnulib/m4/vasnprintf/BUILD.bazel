@@ -145,13 +145,23 @@ autoconf(
             define = "HAVE_DECL_WCSNLEN",
             includes = ["#include <wchar.h>"],
         ),
-        # Golden shows this defined on both Linux and macOS
-        checks.AC_DEFINE("NEED_WPRINTF_DIRECTIVE_C", "1"),
+        # NEED_WPRINTF_DIRECTIVE_C: unless both gl_cv_func_mbrtowc_C_locale_sans_EILSEQ
+        #   and gl_cv_func_swprintf_C_locale_sans_EILSEQ are yes (runtime tests).
+        # NEED_WPRINTF_DIRECTIVE_LA: unless gl_cv_func_swprintf_directive_la is yes.
+        # NEED_WPRINTF_DIRECTIVE_LC: unless gl_cv_func_swprintf_directive_lc is yes.
     ] + select({
-        # On Linux: swprintf handles 'lc' correctly
-        "@platforms//os:linux": [],
-        # On macOS: swprintf doesn't handle 'lc' correctly
+        # glibc: swprintf (L"%c", '\377') fails in the C locale (glibc 2.35);
+        # 'La' and 'lc' work.
+        "@platforms//os:linux": [
+            checks.AC_DEFINE("NEED_WPRINTF_DIRECTIVE_C", "1"),
+        ],
+        # MSVC: 'c' and 'lc' work, 'La' produces wrong values.
+        "@platforms//os:windows": [
+            checks.AC_DEFINE("NEED_WPRINTF_DIRECTIVE_LA", "1"),
+        ],
+        # macOS: 'c' and 'lc' are broken, 'La' works.
         "//conditions:default": [
+            checks.AC_DEFINE("NEED_WPRINTF_DIRECTIVE_C", "1"),
             checks.AC_DEFINE("NEED_WPRINTF_DIRECTIVE_LC", "1"),
         ],
     }) + [
@@ -301,9 +311,18 @@ autoconf(
 autoconf(
     name = "gl_PREREQ_VASNPRINTF_FLAG_GROUPING",
     checks = select({
-        # On Linux: glibc handles grouping flag correctly
+        #   *) case "$gl_cv_func_printf_flag_grouping,$gl_cv_func_printf_flag_grouping_multibyte" in
+        #        *yes,*yes) case "$gl_cv_func_printf_flag_grouping_int_precision" in
+        #                     *yes) ;;
+        #                     *) AC_DEFINE([NEED_PRINTF_FLAG_GROUPING_INT], [1]) ;;
+        #        *) AC_DEFINE([NEED_PRINTF_FLAG_GROUPING], [1]) ;;
+        # Runtime tests: glibc passes all three; macOS fails the int-precision one.
         "@platforms//os:linux": [],
-        # On macOS: needs grouping int workaround
+        # case "$host_os" in
+        #   mingw* | windows*) AC_DEFINE([NEED_PRINTF_FLAG_GROUPING], [1]) ;;
+        "@platforms//os:windows": [
+            checks.AC_DEFINE("NEED_PRINTF_FLAG_GROUPING", "1"),
+        ],
         "//conditions:default": [
             checks.AC_DEFINE("NEED_PRINTF_FLAG_GROUPING_INT", "1"),
         ],
@@ -438,7 +457,6 @@ autoconf(
         ":gl_PREREQ_VASNPRINTF_DIRECTIVE_UPPERCASE_B",
         # HAVE_SAME_LONG_DOUBLE_AS_DOUBLE from math_h module
         "//gnulib/m4/math_h:long-double-vs-double",
-        "//gnulib/m4/alloca:gl_FUNC_ALLOCA",
         "//gnulib/m4/multiarch",
         # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",

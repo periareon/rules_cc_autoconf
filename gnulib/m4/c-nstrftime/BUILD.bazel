@@ -4,41 +4,31 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "c-nstrftime",
-    checks = select({
-        # On Linux, strftime_l exists
-        "@platforms//os:linux": [
-            checks.AC_DEFINE("HAVE_STRFTIME_L", 1),
-            checks.AC_CHECK_FUNC(
-                "strftime_lz",
-                define = "HAVE_STRFTIME_LZ",
-            ),
-        ],
-        # On macOS/other, use the compile check
-        "//conditions:default": [
-            checks.AC_TRY_COMPILE(
-                code = """#include <time.h>
-
-#ifdef __cplusplus
-extern "C"
-#endif
-char strftime_l ();
-
-int main(void) {
-    return strftime_l();
-}""",
-                define = "HAVE_STRFTIME_L",
-                language = "c",
-            ),
-            checks.AC_CHECK_FUNC(
-                "strftime_lz",
-                define = "HAVE_STRFTIME_LZ",
-            ),
-        ],
-    }),
+    name = "gl_C_GNU_STRFTIME",
+    checks = [
+        # gl_CHECK_FUNCS_ANDROID([strftime_l], [[#include <time.h>]]):
+        # a link test; HAVE_STRFTIME_L is only defined when the function exists.
+        checks.AC_CHECK_FUNC(
+            "strftime_l",
+            define = "HAVE_STRFTIME_L",
+        ),
+        # AC_CHECK_FUNCS_ONCE([strftime_lz])
+        checks.AC_CHECK_FUNC(
+            "strftime_lz",
+            define = "HAVE_STRFTIME_LZ",
+        ),
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/tm_gmtoff",  # AC_REQUIRE([gl_TM_GMTOFF])
         # Note: AC_REQUIRE([AC_C_RESTRICT]) is a standard autoconf macro
+    ],
+)
+
+autoconf(
+    name = "c-nstrftime",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_C_GNU_STRFTIME",
     ],
 )

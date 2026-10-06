@@ -5,21 +5,30 @@ load("//autoconf:checks.bzl", "checks")
 load("//gnulib:macros.bzl", gl_macros = "macros")
 
 # gl_FUNC_EXECVPE: Check for execvpe; set HAVE_EXECVPE and REPLACE_EXECVPE.
-# execvpe is missing on macOS, Windows, and many other platforms.
 autoconf(
     name = "gl_FUNC_EXECVPE",
-    checks = gl_macros.GL_CHECK_FUNCS_ANDROID(
-        ["execvpe"],
-        includes = ["#include <unistd.h>"],
-    ) + select({
-        # On Linux, execvpe exists in glibc
-        "@platforms//os:linux": [
-            checks.AC_SUBST("HAVE_EXECVPE", "1"),
-            checks.AC_SUBST("REPLACE_EXECVPE", "0"),
+    checks = select({
+        # case "$host_os" in
+        #   mingw* | windows*) REPLACE_EXECVPE=1 ;;
+        # (no function check at all: HAVE_EXECVPE stays undefined / 1)
+        "@platforms//os:windows": [
+            checks.AC_SUBST("REPLACE_EXECVPE", "1"),
         ],
-        # On macOS, execvpe doesn't exist
-        "//conditions:default": [
-            checks.AC_SUBST("HAVE_EXECVPE", "0"),
+        #   *)
+        #     gl_CHECK_FUNCS_ANDROID([execvpe], [[#include <unistd.h>]])
+        #     if test $ac_cv_func_execvpe != yes; then
+        #       HAVE_EXECVPE=0
+        #       ...
+        "//conditions:default": gl_macros.GL_CHECK_FUNCS_ANDROID(
+            ["execvpe"],
+            includes = ["#include <unistd.h>"],
+        ) + [
+            checks.AC_SUBST(
+                "HAVE_EXECVPE",
+                condition = "ac_cv_func_execvpe",
+                if_false = "0",
+                if_true = "1",
+            ),
             checks.AC_SUBST("REPLACE_EXECVPE", "0"),
         ],
     }),

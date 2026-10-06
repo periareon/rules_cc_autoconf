@@ -5,9 +5,9 @@
 
 int main(void) {
 // Test that required checks work correctly
-// HAVE_PRINTF should be 1 because HAVE_STDIO_H is 1
-#if HAVE_PRINTF != 1
-#error "HAVE_PRINTF should be 1 (required by HAVE_STDIO_H)"
+// HAVE_PUTS should be 1 because HAVE_STDIO_H is 1
+#if HAVE_PUTS != 1
+#error "HAVE_PUTS should be 1 (required by HAVE_STDIO_H)"
 #endif
 
 // HAVE_MALLOC should be 1 because HAVE_STDLIB_H is 1

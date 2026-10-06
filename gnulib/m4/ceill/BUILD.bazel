@@ -4,7 +4,7 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "ceill",
+    name = "gl_FUNC_CEILL",
     checks = [
         checks.AC_CHECK_DECL(
             "ceill",
@@ -16,9 +16,26 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/ceil",
-        "//gnulib/m4/extensions",
-        "//gnulib/m4/isnanl",
+        "//gnulib/m4/ceil",  # AC_REQUIRE([gl_FUNC_CEIL])
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
         "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+    ],
+)
+
+# m4 line 120: gl_FUNC_CEILL_LIBS - gl_cv_func_ceill_libm link probe setting
+# CEILL_LIBM. Not invoked by gl_FUNC_CEILL and not modelled; CEILL_LIBM is
+# substituted by gl_FUNC_CEILL above.
+autoconf(
+    name = "gl_FUNC_CEILL_LIBS",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "ceill",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_CEILL",
+        ":gl_FUNC_CEILL_LIBS",
     ],
 )
