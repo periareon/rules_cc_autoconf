@@ -5,6 +5,7 @@ load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@rules_cc//cc:find_cc_toolchain.bzl", "use_cc_toolchain")
 load(
     "//autoconf/private:autoconf_config.bzl",
+    "AUTOCONF_EXEC_GROUP",
     "collect_deps",
     "collect_transitive_results",
     "create_config_dict",
@@ -455,6 +456,7 @@ def autoconf_impl_common(ctx, resolve_toolchain):
             args.add_all([file_path], before_each = "--dep", format_each = "{}=%s".format(lookup_name))
 
         ctx.actions.run(
+            exec_group = AUTOCONF_EXEC_GROUP,
             executable = ctx.executable._checker,
             arguments = [args],
             inputs = depset(inputs + [check_json] + check_deps),
@@ -537,7 +539,7 @@ COMMON_ATTRS = {
         providers = [CcAutoconfInfo],
     ),
     "_checker": attr.label(
-        cfg = "exec",
+        cfg = config.exec(AUTOCONF_EXEC_GROUP),
         executable = True,
         default = Label("//autoconf/private/checker:checker_bin"),
     ),
@@ -575,7 +577,8 @@ or wrapped source files.
 """,
     attrs = COMMON_ATTRS,
     fragments = ["cpp"],
-    toolchains = use_cc_toolchain() + [
+    exec_groups = {AUTOCONF_EXEC_GROUP: exec_group(toolchains = use_cc_toolchain())},
+    toolchains = [
         config_common.toolchain_type("@rules_cc_autoconf//autoconf:toolchain_type", mandatory = False),
     ],
     provides = [CcAutoconfInfo],
@@ -599,6 +602,6 @@ has a result in transitive ``deps``, the action is skipped.
 """,
     attrs = COMMON_ATTRS,
     fragments = ["cpp"],
-    toolchains = use_cc_toolchain(),
+    exec_groups = {AUTOCONF_EXEC_GROUP: exec_group(toolchains = use_cc_toolchain())},
     provides = [CcAutoconfInfo],
 )

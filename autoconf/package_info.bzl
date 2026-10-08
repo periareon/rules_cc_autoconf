@@ -74,6 +74,7 @@ def _package_info_impl(ctx):
                 runner_alias_outputs.append(extra_results[key])
 
         ctx.actions.run(
+            toolchain = None,
             mnemonic = "ModuleBazelParse",
             outputs = [
                 results["PACKAGE_NAME"],

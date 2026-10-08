@@ -19,6 +19,7 @@ load("@rules_cc//cc:find_cc_toolchain.bzl", "use_cc_toolchain")
 load("//autoconf:cc_autoconf_info.bzl", "CcAutoconfInfo")
 load(
     "//autoconf/private:autoconf_config.bzl",
+    "AUTOCONF_EXEC_GROUP",
     "create_config_dict",
     "get_cc_toolchain_info",
     "get_environment_variables",
@@ -96,6 +97,7 @@ def _ac_c_restrict_impl(ctx):
         args.add("--results", result_file)
 
         ctx.actions.run(
+            exec_group = AUTOCONF_EXEC_GROUP,
             executable = ctx.executable._checker,
             arguments = [args],
             inputs = depset([config_json, check_json]),
@@ -118,6 +120,7 @@ def _ac_c_restrict_impl(ctx):
     resolver_args.add("--output", restrict_result)
 
     ctx.actions.run(
+        toolchain = None,
         executable = ctx.executable._resolver,
         arguments = [resolver_args],
         inputs = depset(check_result_files),
@@ -158,7 +161,7 @@ compatible with the standard `autoconf` rule for use as a dependency.
 """,
     attrs = {
         "_checker": attr.label(
-            cfg = "exec",
+            cfg = config.exec(AUTOCONF_EXEC_GROUP),
             executable = True,
             default = Label("//autoconf/private/checker:checker_bin"),
         ),
@@ -169,6 +172,6 @@ compatible with the standard `autoconf` rule for use as a dependency.
         ),
     },
     fragments = ["cpp"],
-    toolchains = use_cc_toolchain(),
+    exec_groups = {AUTOCONF_EXEC_GROUP: exec_group(toolchains = use_cc_toolchain())},
     provides = [CcAutoconfInfo],
 )
