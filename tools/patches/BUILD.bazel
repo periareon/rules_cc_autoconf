@@ -1,0 +1,4 @@
+exports_files([
+    "protobuf-auto-exec-groups.patch",
+    "rules_venv-auto-exec-groups.patch",
+])
