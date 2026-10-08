@@ -9,3 +9,12 @@ diff --git a/python/venv/private/utils.bzl b/python/venv/private/utils.bzl
      )
  
      return [DefaultInfo(
+diff --git a/python/venv/private/venv_common.bzl b/python/venv/private/venv_common.bzl
+--- a/python/venv/private/venv_common.bzl
++++ b/python/venv/private/venv_common.bzl
+@@ -286,4 +286,5 @@ def _create_runfiles_collection(*, ctx, venv_toolchain, py_toolchain, runfiles, exclude_files = depset(), name = None, use_zip = False):
+         arguments = [python_args, runfiles_args],
+         env = ctx.configuration.default_shell_env,
+         resource_set = resource_set,
++        toolchain = None,
+     )
