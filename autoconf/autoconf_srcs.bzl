@@ -194,6 +194,7 @@ def _autoconf_srcs_impl(ctx):
         args.add_all([(in_file, condition, out)], before_each = "--src", map_each = _arg_map_src)
 
         ctx.actions.run(
+            toolchain = None,
             executable = ctx.executable._runner,
             arguments = [args],
             inputs = [in_file] + dep_files,

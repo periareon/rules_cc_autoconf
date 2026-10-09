@@ -13,8 +13,16 @@ bazel_dep(name = "nlohmann_json", version = "3.12.0.bcr.1")
 
 bazel_dep(name = "rules_rust_mdbook", version = "0.74.0", dev_dependency = True)
 bazel_dep(name = "rules_shell", version = "0.8.0", dev_dependency = True)
-bazel_dep(name = "rules_venv", version = "0.23.0", dev_dependency = True)
+bazel_dep(name = "rules_venv", version = "0.33.0", dev_dependency = True)
 bazel_dep(name = "stardoc", version = "0.8.0", dev_dependency = True)
+
+# Temporary compatibility patches for actions used by the development tools.
+single_version_override(
+    module_name = "protobuf",
+    patch_strip = 1,
+    patches = ["//tools/patches:protobuf-auto-exec-groups.patch"],
+    version = "33.4",
+)
 
 register_toolchains(
     "//gnulib/toolchain",

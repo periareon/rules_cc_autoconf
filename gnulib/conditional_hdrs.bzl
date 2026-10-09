@@ -93,6 +93,7 @@ def _cc_gnulib_conditional_hdrs_impl(ctx):
         inputs.append(hdr_file)
 
     ctx.actions.run(
+        toolchain = None,
         executable = ctx.executable._runner,
         arguments = [args],
         inputs = inputs,

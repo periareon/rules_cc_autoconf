@@ -1,0 +1,56 @@
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_toolchain.bzl", "autoconf_cache", "autoconf_toolchain")
+load("//autoconf:checks.bzl", "checks")
+load(":tests.bzl", "auto_exec_groups_test")
+
+# Keep the regular autoconf test independent of the registered gnulib cache.
+autoconf_toolchain(
+    name = "toolchain_impl",
+)
+
+toolchain(
+    name = "toolchain",
+    toolchain = ":toolchain_impl",
+    toolchain_type = "//autoconf:toolchain_type",
+)
+
+autoconf(
+    name = "checks",
+    testonly = True,
+    checks = [checks.AC_TRY_COMPILE(
+        name = "aeg_compile",
+        code = "int main(void) { return 0; }",
+    )],
+    exec_properties = {"autoconf.test": "true"},
+    tags = ["manual"],
+)
+
+autoconf_cache(
+    name = "cache",
+    testonly = True,
+    checks = [checks.AC_TRY_COMPILE(
+        name = "aeg_cache_compile",
+        code = "int main(void) { return 0; }",
+    )],
+    exec_properties = {"autoconf.test": "true"},
+    tags = ["manual"],
+)
+
+auto_exec_groups_test(
+    name = "autoconf_test",
+    size = "small",
+    target_under_test = ":checks",
+)
+
+auto_exec_groups_test(
+    name = "cache_test",
+    size = "small",
+    target_under_test = ":cache",
+)
+
+auto_exec_groups_test(
+    name = "restrict_test",
+    size = "small",
+    expected_checks = 3,
+    target_under_test = "//autoconf/macros/AC_C_RESTRICT",
+)

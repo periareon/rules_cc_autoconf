@@ -53,6 +53,7 @@ def _ac_c_inline_impl(ctx):
     resolver_args.add("--output", resolved_result)
 
     ctx.actions.run(
+        toolchain = None,
         executable = ctx.executable._resolver,
         arguments = [resolver_args],
         inputs = input_files,

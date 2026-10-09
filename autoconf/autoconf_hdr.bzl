@@ -123,6 +123,7 @@ def _autoconf_hdr_impl(ctx):
         args.add("--subst", json.encode(ctx.attr.substitutions))
 
     ctx.actions.run(
+        toolchain = None,
         executable = ctx.executable._resolver,
         arguments = [args],
         inputs = inputs,
