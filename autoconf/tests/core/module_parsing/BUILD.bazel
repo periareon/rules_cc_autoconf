@@ -1,6 +1,6 @@
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
-load("//autoconf:package_info.bzl", "package_info")
+load("//autoconf:autoconf_package_info.bzl", "autoconf_package_info")
 load("//autoconf/tests:diff_test.bzl", "diff_test")
 
 # Test case 1: Basic module definition with standard spacing
@@ -15,7 +15,7 @@ write_file(
     ],
 )
 
-package_info(
+autoconf_package_info(
     name = "module_info_basic",
     module_bazel = ":module_basic.bazel",
 )
@@ -39,7 +39,7 @@ write_file(
     ],
 )
 
-package_info(
+autoconf_package_info(
     name = "module_info_no_spaces",
     module_bazel = ":module_no_spaces.bazel",
 )
@@ -63,7 +63,7 @@ write_file(
     ],
 )
 
-package_info(
+autoconf_package_info(
     name = "module_info_extra_whitespace",
     module_bazel = ":module_extra_whitespace.bazel",
 )
@@ -84,7 +84,7 @@ write_file(
     ],
 )
 
-package_info(
+autoconf_package_info(
     name = "module_info_single_line",
     module_bazel = ":module_single_line.bazel",
 )
@@ -112,7 +112,7 @@ write_file(
     ],
 )
 
-package_info(
+autoconf_package_info(
     name = "module_info_with_comments",
     module_bazel = ":module_with_comments.bazel",
 )
@@ -137,7 +137,7 @@ write_file(
     ],
 )
 
-package_info(
+autoconf_package_info(
     name = "module_info_special_chars",
     module_bazel = ":module_special_chars.bazel",
 )
@@ -193,7 +193,7 @@ write_file(
     ],
 )
 
-package_info(
+autoconf_package_info(
     name = "module_info_nested",
     module_bazel = ":module_nested.bazel",
 )
@@ -273,7 +273,7 @@ write_file(
     ],
 )
 
-package_info(
+autoconf_package_info(
     name = "module_info_with_forced_name",
     package_name = "forced_module_name",
     module_bazel = ":module_with_forced_name.bazel",
@@ -315,7 +315,7 @@ write_file(
     ],
 )
 
-package_info(
+autoconf_package_info(
     name = "module_info_with_forced_version",
     module_bazel = ":module_with_forced_version.bazel",
     package_version = "9.9.9",
@@ -357,7 +357,7 @@ write_file(
     ],
 )
 
-package_info(
+autoconf_package_info(
     name = "module_info_with_forced_name_and_version",
     package_name = "custom_package",
     module_bazel = ":module_with_forced_name_and_version.bazel",
@@ -400,7 +400,7 @@ write_file(
     ],
 )
 
-package_info(
+autoconf_package_info(
     name = "module_info_with_different_forced_values",
     package_name = "overridden_name",
     module_bazel = ":module_with_different_forced_values.bazel",
@@ -468,7 +468,7 @@ write_file(
     ],
 )
 
-package_info(
+autoconf_package_info(
     name = "module_info_bcr_version",
     module_bazel = ":module_bcr_version.bazel",
     strip_bcr_version = True,
@@ -515,7 +515,7 @@ write_file(
     ],
 )
 
-package_info(
+autoconf_package_info(
     name = "module_info_no_bcr_version",
     module_bazel = ":module_no_bcr_version.bazel",
     strip_bcr_version = True,
@@ -569,7 +569,7 @@ write_file(
     ],
 )
 
-package_info(
+autoconf_package_info(
     name = "module_info_aliases",
     aliases = {
         "PACKAGE": "PACKAGE_TARNAME",
@@ -614,7 +614,7 @@ diff_test(
 )
 
 # Test case 15: Aliases with direct mode (no module_bazel)
-package_info(
+autoconf_package_info(
     name = "direct_info_aliases",
     package_name = "direct_pkg",
     aliases = {
@@ -660,7 +660,7 @@ diff_test(
 )
 
 # Test case 16: Confirm subst behavior
-package_info(
+autoconf_package_info(
     name = "subst_info",
     package_name = "subst_info",
     package_version = "2.5.0",

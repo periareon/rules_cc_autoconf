@@ -535,7 +535,7 @@ COMMON_ATTRS = {
         default = [],
     ),
     "deps": attr.label_list(
-        doc = "Additional `autoconf`, `autoconf_library`, or `package_info` dependencies.",
+        doc = "Additional `autoconf`, `autoconf_library`, or `autoconf_package_info` dependencies.",
         providers = [CcAutoconfInfo],
     ),
     "_checker": attr.label(

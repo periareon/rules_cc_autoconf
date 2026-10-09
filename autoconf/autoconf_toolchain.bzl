@@ -198,7 +198,7 @@ def autoconf_cache(
             `BuildSettingInfo`) with autoconf-style defines and substitutions.
         checks: List of JSON-encoded checks from `checks`
             (e.g., `checks.AC_CHECK_HEADER('stdio.h')`).
-        deps: Additional `autoconf`, `autoconf_cache`, or `package_info`
+        deps: Additional `autoconf`, `autoconf_cache`, or `autoconf_package_info`
             dependencies.
         **kwargs: Standard Bazel attributes (e.g. `visibility`, `tags`).
     """
