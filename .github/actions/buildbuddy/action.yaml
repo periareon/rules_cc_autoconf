@@ -1,0 +1,53 @@
+name: Setup BuildBuddy
+description: |
+  Write BuildBuddy credentials to the home `.bazelrc` so every Bazel
+  invocation in the job picks them up. The remote cache itself is enabled
+  via `--config=remote_cache` in `.github/github.bazelrc`; this action only
+  provides (or, when no key is available, neutralizes) that config.
+
+inputs:
+  api_key:
+    description: |
+      BuildBuddy API key. Empty when secrets are unavailable, e.g. pull
+      requests from forks, in which case the remote cache is disabled.
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Write home bazelrc
+      shell: bash
+      env:
+        BUILDBUDDY_API_KEY: ${{ inputs.api_key }}
+      run: |
+        set -euo pipefail
+
+        # Bazel reads `$HOME/.bazelrc` (`%USERPROFILE%\.bazelrc` on Windows,
+        # which is the same directory on GitHub runners) after the workspace
+        # `.bazelrc` and before any `--bazelrc=` file. Append rather than
+        # overwrite in case the runner image already has one.
+        rc="${HOME}/.bazelrc"
+
+        if [[ -n "${BUILDBUDDY_API_KEY}" ]]; then
+          {
+            echo "# Written by .github/actions/buildbuddy"
+            echo "common:remote_cache --remote_header=x-buildbuddy-api-key=${BUILDBUDDY_API_KEY}"
+          } >> "${rc}"
+          echo "BuildBuddy API key written to ${rc}; remote cache enabled."
+        else
+          # The workspace .bazelrc defines the remote_cache config with
+          # `common:` lines; these override them because the home rc is read
+          # later. They must stay `common:` too, since Bazel expands all
+          # `common:` config lines before any `build:` lines.
+          {
+            echo "# Written by .github/actions/buildbuddy"
+            echo "# No BuildBuddy API key is available (e.g. a pull request from a fork)."
+            echo "# Neutralize the remote_cache config enabled by github.bazelrc so Bazel"
+            echo "# does not fail with PERMISSION_DENIED against BuildBuddy. These lines"
+            echo "# also keep the config defined in workspaces that have no .bazelrc."
+            echo "common:remote_cache --remote_cache="
+            echo "common:remote_cache --bes_backend="
+          } >> "${rc}"
+          echo "::notice::BUILDBUDDY_API_KEY is not set; remote cache disabled for this job."
+        fi

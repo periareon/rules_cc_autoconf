@@ -38,6 +38,10 @@ jobs:
           disk-cache: ${{ github.workflow }}
           repository-cache: true
 
+      - uses: ./.github/actions/buildbuddy
+        with:
+          api_key: ${{ secrets.BUILDBUDDY_API_KEY }}
+
       - name: Setup Bazelrc (Windows)
         run: |
           echo "TEMP=$env:RUNNER_TEMP" >> "$env:GITHUB_ENV"
@@ -83,6 +87,10 @@ jobs:
           bazelisk-cache: true
           disk-cache: ${{ github.workflow }}
           repository-cache: true
+
+      - uses: ./.github/actions/buildbuddy
+        with:
+          api_key: ${{ secrets.BUILDBUDDY_API_KEY }}
 
       - name: Setup Bazelrc (Windows)
         run: |
@@ -143,6 +151,10 @@ jobs:
           bazelisk-cache: true
           disk-cache: ${{ github.workflow }}
           repository-cache: true
+
+      - uses: ./.github/actions/buildbuddy
+        with:
+          api_key: ${{ secrets.BUILDBUDDY_API_KEY }}
 
       - name: Setup Bazelrc (Windows)
         working-directory: "${{ github.workspace }}/${{ matrix.test.path }}"

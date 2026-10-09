@@ -73,6 +73,16 @@ build:windows --copt=/W3
 build:windows --per_file_copt=external/.*@/W0
 
 ###############################################################################
+## Remote Cache
+###############################################################################
+
+common:remote_cache --bes_results_url=https://periareon.buildbuddy.io/invocation/
+common:remote_cache --bes_backend=grpcs://periareon.buildbuddy.io
+common:remote_cache --remote_cache=grpcs://periareon.buildbuddy.io
+common:remote_cache --remote_download_toplevel
+common:remote_cache --remote_timeout=10m
+
+###############################################################################
 ## Custom user flags
 ##
 ## This should always be the last thing in the `.bazelrc` file to ensure
