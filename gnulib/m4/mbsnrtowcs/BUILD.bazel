@@ -2,15 +2,19 @@
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 autoconf(
-    name = "mbsnrtowcs",
-    checks = [
-        # gl_FUNC_MBSNRTOWCS checks for mbsnrtowcs function
-        checks.AC_CHECK_FUNC(
-            "mbsnrtowcs",
-            define = "HAVE_MBSNRTOWCS",
-            subst = True,
+    name = "gl_FUNC_MBSNRTOWCS",
+    checks = gl_macros.GL_CHECK_FUNCS_ANDROID(
+        ["mbsnrtowcs"],
+        includes = ["#include <wchar.h>"],
+    ) + [
+        checks.AC_SUBST(
+            "HAVE_MBSNRTOWCS",
+            condition = "ac_cv_func_mbsnrtowcs",
+            if_false = 0,
+            if_true = 1,
         ),
     ] + select({
         # On Linux: mbsnrtowcs may have issues, needs replacement
@@ -24,14 +28,34 @@ autoconf(
     }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/macros/AC_FUNC_MBRTOWC",
-        # Use mbrtowc_base: mbsnrtowcs.m4's AC_REQUIRE chain does not call
-        # gl_FUNC_MBRTOWC (the full gnulib check that sets REPLACE_MBRTOWC=1
-        # on Linux). Golden expects REPLACE_MBRTOWC=0 on both platforms.
-        "//gnulib/m4/mbrtowc:mbrtowc_base",
+        ":gl_MBSNRTOWCS_WORKS_IN_TRADITIONAL_LOCALE",
+        "//autoconf/macros/AC_TYPE_MBSTATE_T",
         "//gnulib/m4/extensions",
-        # Locale modules for gl_MBSNRTOWCS_* checks
+        "//gnulib/m4/mbrtowc:gl_MBRTOWC_C_LOCALE",
+        "//gnulib/m4/mbrtowc:gl_MBSTATE_T_BROKEN",
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_MBSNRTOWCS",
+    visibility = ["//gnulib:__subpackages__"],
+)
+
+autoconf(
+    name = "gl_MBSNRTOWCS_WORKS_IN_TRADITIONAL_LOCALE",
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
         "//gnulib/m4/locale-fr",
-        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "mbsnrtowcs",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_MBSNRTOWCS",
+        ":gl_MBSNRTOWCS_WORKS_IN_TRADITIONAL_LOCALE",
+        ":gl_PREREQ_MBSNRTOWCS",
     ],
 )

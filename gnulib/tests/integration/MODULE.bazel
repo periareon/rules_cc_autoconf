@@ -12,6 +12,13 @@ local_path_override(
 
 bazel_dep(name = "bazel_skylib", version = "1.9.0")
 bazel_dep(name = "bison", version = "3.8.2.bcr.7")
+single_version_override(
+    module_name = "bison",
+    patch_strip = 1,
+    patches = ["//:bison_mbsinit.patch"],
+    version = "3.8.2.bcr.7",
+)
+
 bazel_dep(name = "ffmpeg", version = "7.1.1.bcr.beta.4")
 bazel_dep(name = "flex", version = "2.6.4.bcr.5")
 bazel_dep(name = "gmp", version = "6.3.0.bcr.1")

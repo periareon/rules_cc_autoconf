@@ -1,0 +1,12 @@
+diff --git a/BUILD.bazel b/BUILD.bazel
+index ed01007..2f7f7ea 100644
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -749,6 +749,7 @@ autoconf_srcs(
+         "lib/iconv_open.c": "REPLACE_ICONV_OPEN",
+         "lib/lstat.c": "REPLACE_LSTAT",
+         "lib/mbrtowc.c": "COMPILE_MBRTOWC",
++        "lib/mbsinit.c": "REPLACE_MBSINIT",
+         "lib/mempcpy.c": "COMPILE_MEMPCPY",
+         "lib/obstack_printf.c": "COMPILE_OBSTACK_PRINTF",
+         "lib/open.c": "COMPILE_OPEN",
