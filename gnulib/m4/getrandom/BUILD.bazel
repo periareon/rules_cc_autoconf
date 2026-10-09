@@ -27,12 +27,58 @@ int main(void) {
             "HAVE_GETRANDOM",
             condition = "ac_cv_func_getrandom",
         ),
-        # GETRANDOM_LIB and LIB_GETRANDOM are set to empty strings on non-Windows
-        checks.AC_SUBST("GETRANDOM_LIB", ""),
-        checks.AC_SUBST("LIB_GETRANDOM", ""),
         # REPLACE_GETRANDOM is set to 0 when getrandom doesn't exist (macOS)
         checks.AC_SUBST("REPLACE_GETRANDOM", 0),
-    ],
+    ] + select({
+        # case "$host_os" in
+        #   mingw* | windows*)
+        #     AC_CHECK_HEADERS([bcrypt.h], [], [], [[#include <windows.h>]])
+        #     gl_cv_lib_assume_bcrypt: _WIN32_WINNT >= _WIN32_WINNT_WIN7 ?
+        #     if yes: AC_DEFINE([HAVE_LIB_BCRYPT], [1]); GETRANDOM_LIB='-lbcrypt'
+        #     else    GETRANDOM_LIB='-ladvapi32'
+        "@platforms//os:windows": [
+            checks.AC_CHECK_HEADER(
+                "bcrypt.h",
+                define = "HAVE_BCRYPT_H",
+                includes = ["#include <windows.h>"],
+            ),
+            checks.AC_TRY_COMPILE(
+                name = "gl_cv_lib_assume_bcrypt",
+                code = """#include <windows.h>
+int main(void) {
+#if !(_WIN32_WINNT >= _WIN32_WINNT_WIN7)
+  cannot assume it
+#endif
+    return 0;
+}
+""",
+                language = "c",
+            ),
+            checks.AC_DEFINE(
+                "HAVE_LIB_BCRYPT",
+                condition = "gl_cv_lib_assume_bcrypt",
+                if_false = None,
+                if_true = 1,
+            ),
+            checks.AC_SUBST(
+                "GETRANDOM_LIB",
+                condition = "gl_cv_lib_assume_bcrypt",
+                if_false = "-ladvapi32",
+                if_true = "-lbcrypt",
+            ),
+            checks.AC_SUBST(
+                "LIB_GETRANDOM",
+                condition = "gl_cv_lib_assume_bcrypt",
+                if_false = "-ladvapi32",
+                if_true = "-lbcrypt",
+            ),
+        ],
+        #   *) GETRANDOM_LIB= ;;
+        "//conditions:default": [
+            checks.AC_SUBST("GETRANDOM_LIB", ""),
+            checks.AC_SUBST("LIB_GETRANDOM", ""),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_SYS_RANDOM_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency

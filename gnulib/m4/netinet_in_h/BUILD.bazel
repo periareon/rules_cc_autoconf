@@ -53,26 +53,8 @@ autoconf(
             includes = ["#include <netinet/in.h>"],
         ),
 
-        # IPv4/IPv6 support (shared by inet_ntop and inet_pton)
-        checks.AC_TRY_COMPILE(
-            code = """#include <netinet/in.h>
-int main(void) {
-    struct sockaddr_in sa;
-    (void)sa;
-    return 0;
-}""",
-            define = "HAVE_IPV4",
-        ),
-        checks.AC_TRY_COMPILE(
-            code = """#include <netinet/in.h>
-int main(void) {
-    struct sockaddr_in6 sa;
-    (void)sa;
-    return 0;
-}""",
-            define = "HAVE_IPV6",
-        ),
-
+        # HAVE_IPV4 / HAVE_IPV6 are defined by gl_SOCKET_FAMILIES (sockpfaf.m4),
+        # not by gl_HEADER_NETINET_IN.
         # gl_CHECK_NEXT_HEADERS([netinet/in.h]) - only called when not self-contained
     ] + gl_macros.GL_NEXT_HEADERS(
         ["netinet/in.h"],
@@ -89,12 +71,20 @@ int main(void) {
 # downstream modules (inet_ntop, sockpfaf, etc.) depend on :gl_HEADER_NETINET_IN
 # for header checks only. In Bazel, substs propagate through deps -- placing it
 # on gl_HEADER_NETINET_IN would substitute @HAVE_NETINET_IN_H@ in their templates.
-# The M4 equivalent AC_SUBST([HAVE_NETINET_IN_H]) is only called when the header
-# is not self-contained, which never happens on modern platforms (value is always "").
+# The M4 equivalent AC_SUBST([HAVE_NETINET_IN_H]) is only reached when the header
+# is not self-contained; otherwise the variable is registered but never assigned,
+# so configure substitutes "" (a check skipped by `requires` renders the same).
+# On MSVC <netinet/in.h> does not exist at all: not self-contained -> "0".
 autoconf(
     name = "gl_HEADER_NETINET_IN_subst",
     checks = [
-        checks.AC_SUBST("HAVE_NETINET_IN_H", ""),
+        checks.AC_SUBST(
+            "HAVE_NETINET_IN_H",
+            condition = "ac_cv_header_netinet_in_h",
+            if_false = "0",
+            if_true = "1",
+            requires = ["!gl_cv_header_netinet_in_h_selfcontained"],
+        ),
     ],
     visibility = ["//gnulib:__subpackages__"],
     deps = [":gl_HEADER_NETINET_IN"],

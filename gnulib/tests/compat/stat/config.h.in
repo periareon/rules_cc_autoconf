@@ -11,6 +11,7 @@
 #undef HAVE_MKFIFOAT
 #undef HAVE_MKNOD
 #undef HAVE_MKNODAT
+#undef HAVE_SDKDDKVER_H
 #undef HAVE_STDINT_H
 #undef HAVE_STDIO_H
 #undef HAVE_STDLIB_H

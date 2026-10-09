@@ -4,7 +4,7 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "tm_gmtoff",
+    name = "gl_TM_GMTOFF",
     checks = [
         # AC_CHECK_MEMBERS([struct tm.tm_gmtoff, struct tm.tm_zone])
         checks.AC_CHECK_MEMBER(
@@ -17,18 +17,30 @@ autoconf(
             define = "HAVE_STRUCT_TM_TM_ZONE",
             includes = ["#include <time.h>"],
         ),
-        # Backward compatibility: define HAVE_TM_GMTOFF if tm_gmtoff member exists
+        # Backward compatibility: AC_DEFINE([HAVE_TM_GMTOFF]) only when the
+        # tm_gmtoff member exists; otherwise the macro stays undefined.
         checks.AC_DEFINE(
             "HAVE_TM_GMTOFF",
             condition = "HAVE_STRUCT_TM_TM_GMTOFF",
+            if_false = None,
             if_true = 1,
         ),
-        # Backward compatibility: define HAVE_TM_ZONE if tm_zone member exists
+        # AC_STRUCT_TIMEZONE (required by gl_TZNAME) defines HAVE_TM_ZONE the
+        # same way when struct tm has tm_zone.
         checks.AC_DEFINE(
             "HAVE_TM_ZONE",
             condition = "HAVE_STRUCT_TM_TM_ZONE",
+            if_false = None,
             if_true = 1,
         ),
     ],
     visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "tm_gmtoff",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_TM_GMTOFF",
+    ],
 )

@@ -427,8 +427,8 @@ bool CheckRunner::try_compile_and_link(
     if (msvc) {
         // On MSVC, compile and link in one cl.exe invocation. Using cl.exe
         // directly (instead of separate cl.exe /c + link.exe) ensures that
-        // default libraries are linked, including legacy_stdio_definitions.lib
-        // which provides linker symbols for UCRT inline functions like printf.
+        // the CRT default libraries are linked, as they are for configure's
+        // own `cl conftest.c` probes.
         // Link flags are held back for the trailing /link block rather than
         // mixed in with the compile flags -- see append_msvc_link_block.
         std::vector<std::string> cmd =

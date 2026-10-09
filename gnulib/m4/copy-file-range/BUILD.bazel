@@ -5,7 +5,7 @@ load("//autoconf:checks.bzl", "checks")
 
 # copy_file_range is a Linux-specific syscall, not available on macOS
 autoconf(
-    name = "copy-file-range",
+    name = "gl_FUNC_COPY_FILE_RANGE",
     checks = select({
         # On Linux, copy_file_range exists in glibc 2.27+
         "@platforms//os:linux": [
@@ -16,10 +16,16 @@ autoconf(
         "@platforms//os:macos": [
             checks.AC_SUBST("HAVE_COPY_FILE_RANGE", "0"),  # golden expects 0 on macOS
         ],
+        # Other hosts: gl_CHECK_FUNCS_ANDROID([copy_file_range]); when the
+        # function is missing (Windows) HAVE_COPY_FILE_RANGE=0.
         "//conditions:default": [
             checks.AC_CHECK_FUNC(
                 "copy_file_range",
                 define = "HAVE_COPY_FILE_RANGE",
+            ),
+            checks.AC_SUBST(
+                "HAVE_COPY_FILE_RANGE",
+                condition = "ac_cv_func_copy_file_range",
             ),
         ],
     }),
@@ -30,5 +36,13 @@ autoconf(
 
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "copy-file-range",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_COPY_FILE_RANGE",
     ],
 )

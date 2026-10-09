@@ -1,26 +1,125 @@
-"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/isnand.m4"""
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/isnand.m4
+
+gl_FUNC_ISNAND:
+- AC_REQUIRE([gl_MATH_H_DEFAULTS])
+- gl_HAVE_ISNAND_NO_LIBM (gl_cv_func_isnand_no_libm)
+- gl_HAVE_ISNAND_IN_LIBM (gl_cv_func_isnand_in_libm) when not usable without libm
+- HAVE_ISNAND=0 unless isnand links
+- AC_SUBST([ISNAND_LIBM])
+
+gl_FUNC_ISNAND_NO_LIBM:
+- AC_DEFINE([HAVE_ISNAND_IN_LIBC]) when isnand links without libm
+
+gl_PREREQ_ISNAND:
+- AC_REQUIRE([gl_DOUBLE_EXPONENT_LOCATION])
+
+gl_HAVE_ISNAND_NO_LIBM / gl_HAVE_ISNAND_IN_LIBM are exposed as their own targets.
+"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
-load("//autoconf:checks.bzl", "checks")
+load("//autoconf:checks.bzl", "checks", "utils")
+
+# m4 line 60: AC_LANG_PROGRAM used by gl_HAVE_ISNAND_NO_LIBM and gl_HAVE_ISNAND_IN_LIBM.
+_ISNAND_LINK_CODE = utils.AC_LANG_PROGRAM(
+    [
+        "#include <math.h>",
+        "#if (__GNUC__ >= 4) || (__clang_major__ >= 4)",
+        "# undef isnand",
+        "# define isnand(x) __builtin_isnan ((double)(x))",
+        "#else",
+        "# undef isnand",
+        "# define isnand(x) isnan ((double)(x))",
+        "#endif",
+        "double x;",
+    ],
+    "return isnand (x);",
+)
 
 autoconf(
-    name = "isnand",
+    name = "gl_HAVE_ISNAND_NO_LIBM",
     checks = [
-        # gl_FUNC_ISNAND checks for isnand function
-        checks.AC_CHECK_FUNC(
-            "isnand",
-            name = "_gl_cv_func_isnand",
+        # m4 line 54: whether isnan(double) can be used without linking with libm
+        checks.AC_TRY_LINK(
+            name = "gl_cv_func_isnand_no_libm",
+            code = _ISNAND_LINK_CODE,
         ),
-        # HAVE_ISNAND_IN_LIBC: isnand() is available in libc without -lm
-        checks.AC_DEFINE("HAVE_ISNAND_IN_LIBC", "1"),
-        # AC_SUBST([ISNAND_LIBM]) - library needed for isnand
-        # On macOS/Linux, if isnand exists, it's in libc, so ISNAND_LIBM is empty
-        checks.AC_SUBST("ISNAND_LIBM", ""),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_HAVE_ISNAND_IN_LIBM",
+    checks = [
+        # m4 line 77: whether isnan(double) can be used with libm
+        checks.AC_TRY_LINK(
+            name = "gl_cv_func_isnand_in_libm",
+            code = _ISNAND_LINK_CODE,
+            linkopts = ["-lm"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_FUNC_ISNAND",
+    checks = [
+        # m4 line 25: HAVE_ISNAND=0 unless gl_func_isnand = yes (isnand links
+        # either without libm or, failing that, with -lm)
+        checks.AC_SUBST(
+            "HAVE_ISNAND",
+            condition = "gl_cv_func_isnand_no_libm || gl_cv_func_isnand_in_libm",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # m4 line 18: ISNAND_LIBM=-lm only when isnand needs libm.
+        checks.AC_SUBST(
+            "ISNAND_LIBM",
+            condition = "!gl_cv_func_isnand_no_libm && gl_cv_func_isnand_in_libm",
+            if_false = "",
+            if_true = "-lm",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        ":gl_HAVE_ISNAND_IN_LIBM",
+        ":gl_HAVE_ISNAND_NO_LIBM",
+        "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
+    ],
+)
+
+autoconf(
+    name = "gl_FUNC_ISNAND_NO_LIBM",
+    checks = [
+        # m4 line 40: AC_DEFINE([HAVE_ISNAND_IN_LIBC], [1]) when isnand links without libm
+        checks.AC_DEFINE(
+            "HAVE_ISNAND_IN_LIBC",
+            condition = "gl_cv_func_isnand_no_libm",
+            if_false = None,
+            if_true = 1,
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_HAVE_ISNAND_NO_LIBM",
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_ISNAND",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/exponentd",  # AC_REQUIRE([gl_DOUBLE_EXPONENT_LOCATION])
+    ],
+)
+
+# Umbrella target kept for existing dependants.
+autoconf(
+    name = "isnand",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_ISNAND",
+        ":gl_FUNC_ISNAND_NO_LIBM",
+        ":gl_PREREQ_ISNAND",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
-        "//gnulib/m4/exponentd",
-        "//gnulib/m4/math_h",
     ],
 )

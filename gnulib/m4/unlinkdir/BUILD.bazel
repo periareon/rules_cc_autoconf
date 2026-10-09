@@ -4,18 +4,30 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "unlinkdir",
+    name = "gl_UNLINKDIR",
     checks = select({
         # On Linux: unprivileged processes cannot unlink directories
         "@platforms//os:linux": [
+            checks.AC_DEFINE("UNLINK_CANNOT_UNLINK_DIR", "1"),
+        ],
+        # mingw* | windows*: never lets anyone unlink directories either
+        "@platforms//os:windows": [
             checks.AC_DEFINE("UNLINK_CANNOT_UNLINK_DIR", "1"),
         ],
         "//conditions:default": [],
     }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
-        # For test compatibility - need basic header defines
+        # gl_UNLINKDIR requires neither gl_UNISTD_H nor gl_UNISTD_H_DEFAULTS;
+        # HAVE_UNISTD_H is a config.h define only (AC_CHECK_HEADERS_ONCE).
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "unlinkdir",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_UNLINKDIR",
     ],
 )

@@ -31,7 +31,19 @@ autoconf(
             if_false = "0",
             if_true = "1",
         ),
-    ],
+    ] + select({
+        # (b) on native Windows the native run gives gl_cv_func_c32rtomb_retval=no
+        #     (c32rtomb (NULL, 0, NULL) != 1): C32RTOMB_RETVAL_BUG is defined.
+        #     REPLACE_C32RTOMB is already 1 there via HAVE_WORKING_MBRTOC32=0.
+        "@platforms//os:windows": [
+            checks.AC_DEFINE(
+                "C32RTOMB_RETVAL_BUG",
+                "1",
+                requires = ["gl_cv_func_c32rtomb==1"],
+            ),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         # AC_REQUIRE([gl_UCHAR_H_DEFAULTS]) is satisfied by the toolchain.

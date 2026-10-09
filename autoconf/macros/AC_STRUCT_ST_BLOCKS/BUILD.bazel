@@ -28,6 +28,8 @@ int main(void) {
         checks.AC_DEFINE(
             "HAVE_STRUCT_STAT_ST_BLOCKS",
             condition = "ac_cv_member_struct_stat_st_blocks",
+            # Left undefined when the member is absent, as AC_CHECK_MEMBERS does.
+            if_false = None,
             if_true = "1",
         ),
         # Check if st_blocks is available (as member or macro)
@@ -36,6 +38,8 @@ int main(void) {
         checks.AC_DEFINE(
             "HAVE_ST_BLOCKS",
             condition = "ac_cv_member_struct_stat_st_blocks",
+            # Left undefined when the member is absent, as AC_CHECK_MEMBERS does.
+            if_false = None,
             if_true = "1",
         ),
     ],

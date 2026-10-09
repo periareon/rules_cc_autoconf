@@ -1,2 +1,0 @@
-/* config.h.in */
-#define HAVE_ATOMIC_COMPARE_AND_SWAP_GCC41 1

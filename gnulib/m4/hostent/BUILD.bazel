@@ -4,7 +4,7 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "hostent",
+    name = "gl_HOSTENT",
     checks = [
         # Equivalent to gl_HOSTENT macro from hostent.m4
         checks.AC_CHECK_FUNC(
@@ -13,11 +13,50 @@ autoconf(
         ),
         # AC_SUBST([HOSTENT_LIB]) - library needed for gethostbyname
         # On macOS/Linux, gethostbyname is in libc, so HOSTENT_LIB is empty
-        checks.AC_SUBST("HOSTENT_LIB", ""),
+        # AC_SEARCH_LIBS([gethostbyname], [...]) finds it in libc on glibc/macOS
+        # (HOSTENT_LIB stays empty).  Otherwise, on native Windows:
+        # AC_CHECK_FUNCS([gethostbyname], , [
+        #   AC_CACHE_CHECK([for gethostbyname in winsock2.h and -lws2_32],
+        #     [gl_cv_w32_gethostbyname], link "gethostbyname(NULL);" with -lws2_32)
+        #   if yes: HOSTENT_LIB="-lws2_32"])
+        checks.AC_CHECK_LIB(
+            "ws2_32",
+            "gethostbyname",
+            name = "gl_cv_w32_gethostbyname",
+            code = """#ifdef HAVE_WINSOCK2_H
+#include <winsock2.h>
+#endif
+#include <stddef.h>
+int main(void) {
+    gethostbyname(NULL);
+    return 0;
+}
+""",
+            copts = ["-DHAVE_WINSOCK2_H=1"],
+            define = "gl_cv_w32_gethostbyname",
+            requires = [
+                "!ac_cv_func_gethostbyname",
+                "HAVE_WINSOCK2_H==1",
+            ],
+        ),
+        checks.AC_SUBST(
+            "HOSTENT_LIB",
+            condition = "gl_cv_w32_gethostbyname",
+            if_false = "",
+            if_true = "-lws2_32",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/sys_socket_h:gl_SYS_SOCKET_H",
+    ],
+)
+
+autoconf(
+    name = "hostent",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_HOSTENT",
     ],
 )

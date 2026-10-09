@@ -19,7 +19,6 @@ autoconf(
     deps = [
         ":gl_FUNC_VPRINTF_IS_POSIX",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
-        "//gnulib/m4/alloca:gl_FUNC_ALLOCA",
         "//gnulib/m4/multiarch",
         "//gnulib/m4/vasnprintf:gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS",
         "//gnulib/m4/vasnprintf:gl_REPLACE_VASNPRINTF",

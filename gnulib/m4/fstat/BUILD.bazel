@@ -22,16 +22,18 @@ autoconf(
     }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/fchdir:gl_FUNC_FCHDIR_FOR_CLOSE",  # Conditional dependency on gl_FUNC_FCHDIR - need HAVE_FCHDIR but NOT HAVE_DECL_FCHDIR
+        "//gnulib/m4/fchdir:gl_FUNC_FCHDIR_FOR_CLOSE",  # gl_TEST_FCHDIR - need HAVE_FCHDIR but NOT HAVE_DECL_FCHDIR
         "//gnulib/m4/sys_stat_h",  # AC_REQUIRE([gl_SYS_STAT_H_DEFAULTS]), AC_REQUIRE([gl_SYS_STAT_H])
         "//gnulib/m4/sys_types_h",  # Need _USE_STD_STAT
     ],
 )
 
+# Prerequisites of lib/fstat.c and lib/stat-w32.c.
 autoconf(
     name = "gl_PREREQ_FSTAT",
     visibility = ["//visibility:public"],
     deps = [
+        "//gnulib/m4/stat:gl_PREREQ_STAT_W32",  # AC_REQUIRE([gl_PREREQ_STAT_W32])
         "//gnulib/m4/sys_stat_h:gl_SYS_STAT_H",
     ],
 )
@@ -41,5 +43,6 @@ autoconf(
     visibility = ["//visibility:public"],
     deps = [
         ":gl_FUNC_FSTAT",
+        ":gl_PREREQ_FSTAT",
     ],
 )

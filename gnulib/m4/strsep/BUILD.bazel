@@ -4,7 +4,7 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "strsep",
+    name = "gl_FUNC_STRSEP",
     checks = [
         # Note: gl_STRING_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
         checks.AC_CHECK_FUNC(
@@ -12,14 +12,23 @@ autoconf(
             name = "ac_cv_func_strsep",
         ),
 
-        # if test $ac_cv_func_strsep = no; then
-        # fi
-        # Note: If the function is found, HAVE_STRSEP is left undefined (not set to 1)
-        # Only if it's not found, we set HAVE_STRSEP=0
-        # Define HAVE_STRSEP in config.h if the function exists
+        # AC_CHECK_FUNCS([strsep]) defines HAVE_STRSEP in config.h only when
+        # the function is found; otherwise the macro stays undefined.
         checks.AC_DEFINE(
             "HAVE_STRSEP",
             condition = "ac_cv_func_strsep",
+            if_false = None,
+            if_true = 1,
+        ),
+
+        # if test $ac_cv_func_strsep = no; then
+        #   HAVE_STRSEP=0
+        # fi
+        # Overrides the gl_STRING_H_DEFAULTS value of 1 (e.g. MSVC lacks strsep).
+        checks.AC_SUBST(
+            "HAVE_STRSEP",
+            condition = "ac_cv_func_strsep",
+            if_false = 0,
             if_true = 1,
         ),
     ],
@@ -33,4 +42,17 @@ autoconf(
 )
 
 # Prerequisites of lib/strsep.c (empty)
-# No separate target needed as it's empty
+autoconf(
+    name = "gl_PREREQ_STRSEP",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "strsep",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_STRSEP",
+        ":gl_PREREQ_STRSEP",
+    ],
+)

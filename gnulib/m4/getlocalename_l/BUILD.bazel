@@ -62,18 +62,56 @@ autoconf(
     visibility = ["//visibility:public"],
 )
 
-# gl_PREREQ_GETLOCALENAME_L_UNSAFE: deps only (newlocale/duplocale/freelocale, locale_t, langinfo)
+# gl_PREREQ_GETLOCALENAME_L_UNSAFE
 autoconf(
     name = "gl_PREREQ_GETLOCALENAME_L_UNSAFE",
+    checks = [
+        # AC_CHECK_HEADERS_ONCE([langinfo.h]) - config.h define only (the
+        # HAVE_LANGINFO_H subst belongs to gl_LANGINFO_H).
+        checks.AC_CHECK_HEADER(
+            "langinfo.h",
+            define = "HAVE_LANGINFO_H",
+        ),
+        # if test $HAVE_LOCALE_T = 1; then
+        #   gl_CHECK_FUNCS_ANDROID([newlocale]) / ([duplocale]) / ([freelocale])
+        # else  (e.g. MSVC: no locale_t)
+        #   gl_cv_onwards_func_{newlocale,duplocale,freelocale}='future OS version'
+        #   gl_func_{newlocale,duplocale,freelocale}=no
+        # fi
+        # if test $gl_func_newlocale != yes; then
+        #   HAVE_NEWLOCALE=0; case ... future*) REPLACE_NEWLOCALE=1 ;;
+        # fi  (same for duplocale and freelocale)
+        #
+        # HAVE_NEWLOCALE and REPLACE_NEWLOCALE come from
+        # //gnulib/m4/newlocale:gl_FUNC_NEWLOCALE, the one owner of those
+        # substitutions.  Its REPLACE_NEWLOCALE is a superset of the "future
+        # OS version" case above: on macOS it is also 1 for newlocale's
+        # null-base bug, which this macro alone would not detect (see the
+        # known divergence in //gnulib/tests/compat/getlocalename_l).
+        # HAVE_FREELOCALE and REPLACE_FREELOCALE likewise come from
+        # //gnulib/m4/freelocale, whose logic is identical to this macro's.
+        # HAVE_DUPLOCALE (define and subst) comes from the shared
+        # //gnulib/m4/duplocale:gl_CHECK_FUNC_DUPLOCALE probe target.
+        #
+        # REPLACE_DUPLOCALE: gl_FUNC_DUPLOCALE (duplocale.m4) never overrides
+        # the gl_LOCALE_H_DEFAULTS value of 0 on the platforms we target, so
+        # this macro owns the substitution.
+        checks.AC_SUBST(
+            "REPLACE_DUPLOCALE",
+            condition = "HAVE_LOCALE_T==0",
+            if_false = "0",
+            if_true = "1",
+        ),
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/locale_h:gl_LOCALE_T",
         "//gnulib/m4/intl-thread-locale",
-        "//gnulib/m4/langinfo_h",
-        # Use HAVE_NEWLOCALE only to avoid REPLACE_NEWLOCALE=1 from full newlocale (macOS)
-        "//gnulib/m4/newlocale:HAVE_NEWLOCALE",
-        "//gnulib/m4/duplocale",
+        # Function probes (duplocale's also carries the HAVE_DUPLOCALE subst).
+        "//gnulib/m4/newlocale:gl_FUNC_NEWLOCALE",
+        "//gnulib/m4/duplocale:gl_CHECK_FUNC_DUPLOCALE",
         "//gnulib/m4/freelocale",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )
 

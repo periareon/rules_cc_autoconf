@@ -83,7 +83,6 @@ autoconf(
         ":gl_REPLACE_FPRINTF",
         # APPLE_UNIVERSAL_BUILD comes from multiarch
         "//gnulib/m4/multiarch",
-        "//gnulib/m4/alloca:gl_FUNC_ALLOCA",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

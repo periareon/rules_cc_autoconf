@@ -4,7 +4,7 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "stpncpy",
+    name = "gl_FUNC_STPNCPY",
     checks = [
         # gl_FUNC_STPNCPY checks for stpncpy function
         checks.AC_CHECK_FUNC(
@@ -18,6 +18,19 @@ autoconf(
             includes = ["#include <string.h>"],
         ),
         # AC_CHECK_FUNCS_ONCE([mprotect])
+
+        # if test $ac_cv_func_stpncpy = yes; then
+        #   ... AC_RUN_IFELSE (gl_cv_func_stpncpy) only fails on AIX/FreeBSD ...
+        # else
+        #   HAVE_STPNCPY=0
+        # fi
+        # Overrides the gl_STRING_H_DEFAULTS value of 1 (e.g. MSVC has no stpncpy).
+        checks.AC_SUBST(
+            "HAVE_STPNCPY",
+            condition = "ac_cv_func_stpncpy",
+            if_false = 0,
+            if_true = 1,
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -25,10 +38,26 @@ autoconf(
         "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
         "//autoconf/macros/AC_C_RESTRICT",  # AC_REQUIRE([AC_C_RESTRICT])
         "//gnulib/m4/string_h",  # AC_REQUIRE([gl_STRING_H_DEFAULTS])
-        "//gnulib/m4/mmap-anon",
-        "//gnulib/m4/mprotect",
+        "//gnulib/m4/mmap-anon",  # gl_FUNC_MMAP_ANON
+        "//gnulib/m4/mprotect",  # AC_CHECK_FUNCS_ONCE([mprotect])
         "//gnulib/m4/wchar_h:gl_WCHAR_H_CORE",
         # For test compatibility - need basic header defines
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_PREREQ_STPNCPY - lines 164-166 (empty)
+autoconf(
+    name = "gl_PREREQ_STPNCPY",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "stpncpy",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_STPNCPY",
+        ":gl_PREREQ_STPNCPY",
     ],
 )

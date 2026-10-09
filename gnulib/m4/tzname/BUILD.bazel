@@ -1,18 +1,117 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/tzname.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
+load("//autoconf:checks.bzl", "checks", "utils")
 
+# AC_STRUCT_TIMEZONE (autoconf): the struct tm.tm_zone member comes from
+# gl_TM_GMTOFF (HAVE_STRUCT_TM_TM_ZONE / HAVE_TM_ZONE).  When it is missing:
+#   AC_CHECK_DECLS([tzname], , , [[#include <time.h>]])
+#   AC_LINK_IFELSE(... extern char *tzname[]; ... return tzname[0][0]; ...)
+#     -> ac_cv_var_tzname, AC_DEFINE([HAVE_TZNAME])
 autoconf(
-    name = "tzname",
+    name = "AC_STRUCT_TIMEZONE",
     checks = [
-        # gl_TZNAME checks for struct tm.tm_zone member
-        # AC_STRUCT_TIMEZONE checks for tm_zone
+        checks.AC_CHECK_DECL(
+            "tzname",
+            name = "ac_cv_have_decl_tzname",
+            includes = ["#include <time.h>"],
+            requires = ["!HAVE_STRUCT_TM_TM_ZONE"],
+        ),
+        checks.AC_DEFINE(
+            "HAVE_DECL_TZNAME",
+            condition = "ac_cv_have_decl_tzname",
+            if_false = 0,
+            if_true = 1,
+            requires = ["!HAVE_STRUCT_TM_TM_ZONE"],
+        ),
+        checks.AC_TRY_LINK(
+            name = "ac_cv_var_tzname",
+            code = utils.AC_LANG_PROGRAM(
+                [
+                    "#include <time.h>",
+                    "#if !HAVE_DECL_TZNAME",
+                    "extern char *tzname[];",
+                    "#endif",
+                ],
+                "return tzname[0][0];",
+            ),
+            compile_defines = ["HAVE_DECL_TZNAME"],
+            requires = ["!HAVE_STRUCT_TM_TM_ZONE"],
+        ),
+        checks.AC_DEFINE(
+            "HAVE_TZNAME",
+            condition = "ac_cv_var_tzname",
+            if_false = None,
+            if_true = 1,
+            requires = ["!HAVE_STRUCT_TM_TM_ZONE"],
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/tm_gmtoff",
+    ],
+)
+
+autoconf(
+    name = "gl_TZNAME",
+    checks = [
+        # if test "$ac_cv_member_struct_tm_tm_zone" != yes; then
+        #   if test $ac_cv_var_tzname = yes && test $ac_cv_have_decl_tzname != yes; then
+        #     AC_DEFINE([NEED_DECL_TZNAME], [1], ...)
+        #   fi
+        checks.AC_DEFINE(
+            "NEED_DECL_TZNAME",
+            condition = "ac_cv_var_tzname && !ac_cv_have_decl_tzname",
+            if_false = None,
+            if_true = 1,
+            requires = ["!HAVE_STRUCT_TM_TM_ZONE"],
+        ),
+        #   AC_CACHE_CHECK([for tzname array], [gl_cv_var_tzname], ...)
+        checks.AC_TRY_LINK(
+            name = "gl_cv_var_tzname",
+            code = utils.AC_LANG_PROGRAM(
+                [
+                    "#include <time.h>",
+                    "#if NEED_DECL_TZNAME",
+                    "extern char *tzname[];",
+                    "#endif",
+                    "#if defined _WIN32 && !defined __CYGWIN__",
+                    " #undef tzname",
+                    " #define tzname _tzname",
+                    "#endif",
+                ],
+                "return tzname[0][0];",
+            ),
+            compile_defines = ["NEED_DECL_TZNAME"],
+            requires = ["!HAVE_STRUCT_TM_TM_ZONE"],
+        ),
+        #   if test $gl_cv_var_tzname = yes; then
+        #     AC_DEFINE([HAVE_TZNAME_ARRAY], [1], ...)
+        #   fi
+        # fi
+        checks.AC_DEFINE(
+            "HAVE_TZNAME_ARRAY",
+            condition = "gl_cv_var_tzname",
+            if_false = None,
+            if_true = 1,
+            requires = ["!HAVE_STRUCT_TM_TM_ZONE"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":AC_STRUCT_TIMEZONE",  # AC_REQUIRE([AC_STRUCT_TIMEZONE])
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
         "//gnulib/m4/tm_gmtoff",
         # For test compatibility - need basic header defines
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "tzname",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_TZNAME",
     ],
 )

@@ -51,6 +51,8 @@ auto_exec_groups_test(
 auto_exec_groups_test(
     name = "restrict_test",
     size = "small",
-    expected_checks = 3,
+    # One probe per keyword of autoconf's AC_C_RESTRICT chain:
+    # __restrict__, __restrict, _Restrict, restrict.
+    expected_checks = 4,
     target_under_test = "//autoconf/macros/AC_C_RESTRICT",
 )

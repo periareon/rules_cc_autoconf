@@ -4,50 +4,46 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "unlockpt",
+    name = "gl_FUNC_UNLOCKPT",
     checks = [
-        # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+        # AC_CHECK_FUNCS([unlockpt]): HAVE_UNLOCKPT is only #defined when found.
         checks.AC_CHECK_FUNC(
             "unlockpt",
-            name = "ac_cv_func_unlockpt",
+            define = "HAVE_UNLOCKPT",
         ),
-
-        # if test $ac_cv_func_unlockpt = no; then
-        # fi
-        # Define HAVE_UNLOCKPT in config.h if the function exists
-        # Also set as substitution variable
-        checks.AC_DEFINE(
+        # if test $ac_cv_func_unlockpt = no; then HAVE_UNLOCKPT=0
+        checks.AC_SUBST(
             "HAVE_UNLOCKPT",
             condition = "ac_cv_func_unlockpt",
             if_false = 0,
             if_true = 1,
-            subst = True,
         ),
-        checks.AC_CHECK_FUNC(
-            "revoke",
-            name = "ac_cv_func_revoke",
-        ),
-    ] + select({
-        # On Linux, revoke() exists as a stub but original autoconf didn't find it
-        # config.h: undef (no define)
-        # subst.h: "1" (hardcoded default from configure.ac)
-        "@platforms//os:linux": [
-            checks.AC_SUBST("HAVE_REVOKE", "1"),
-        ],
-        # On macOS, revoke() is a real function
-        # config.h: 1, subst.h: "1"
-        "//conditions:default": [
-            checks.AC_DEFINE(
-                "HAVE_REVOKE",
-                "1",
-                subst = True,
-            ),
-        ],
-    }),
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
-        # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
+    ],
+)
+
+# Prerequisites of lib/unlockpt.c.
+autoconf(
+    name = "gl_PREREQ_UNLOCKPT",
+    checks = [
+        # gl_PREREQ_UNLOCKPT: AC_CHECK_FUNCS([revoke]) - config.h only.
+        checks.AC_CHECK_FUNC(
+            "revoke",
+            define = "HAVE_REVOKE",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "unlockpt",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_UNLOCKPT",
+        ":gl_PREREQ_UNLOCKPT",
     ],
 )

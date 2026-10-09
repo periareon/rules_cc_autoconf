@@ -4,7 +4,7 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks", "utils")
 
 autoconf(
-    name = "fpurge",
+    name = "gl_FUNC_FPURGE",
     checks = [
         checks.AC_CHECK_FUNC(
             "fpurge",
@@ -17,9 +17,20 @@ autoconf(
             ),
             define = "HAVE___FPURGE",
         ),
+        # AC_CHECK_DECLS([fpurge], , , [[#include <stdio.h>]])
+        # if test $ac_cv_func_fpurge = yes; then
+        #   HAVE_FPURGE=1
+        #   AC_CACHE_CHECK([whether fpurge works], [gl_cv_func_fpurge_works],
+        #     [if test $ac_cv_have_decl_fpurge = yes; then AC_RUN_IFELSE(...)
+        #      else gl_cv_func_fpurge_works=no; fi])
+        #   case "$gl_cv_func_fpurge_works" in *yes) ;; *) REPLACE_FPURGE=1 ;; esac
+        # else
+        #   HAVE_FPURGE=0
+        # fi
+        # if test "x$ac_cv_have_decl_fpurge" = xno; then HAVE_DECL_FPURGE=0; fi
     ] + select({
-        # On macOS, fpurge is declared in stdio.h (when _DARWIN_C_SOURCE is set via extensions)
-        # and needs replacement due to implementation issues
+        # macOS declares fpurge in <stdio.h> (under _DARWIN_C_SOURCE, set via
+        # AC_USE_SYSTEM_EXTENSIONS) and fails the runtime test (BSD bug).
         "@platforms//os:macos": [
             checks.AC_DEFINE(
                 "HAVE_DECL_FPURGE",
@@ -28,22 +39,23 @@ autoconf(
             ),
             checks.AC_SUBST("REPLACE_FPURGE", "1"),
         ],
-        "@platforms//os:windows": [
-            checks.AC_DEFINE(
-                "HAVE_DECL_FPURGE",
-                0,
-                subst = True,
-            ),
-            checks.AC_SUBST("REPLACE_FPURGE", "1"),
-        ],
-        # On Linux, fpurge is not declared (use __fpurge instead)
+        # glibc (only __fpurge) and MSVC (neither) do not declare fpurge.
         "//conditions:default": [
-            checks.AC_DEFINE(
-                "HAVE_DECL_FPURGE",
-                0,
+            checks.AC_CHECK_DECL(
+                "fpurge",
+                define = "HAVE_DECL_FPURGE",
+                includes = ["#include <stdio.h>"],
                 subst = True,
             ),
-            checks.AC_SUBST("REPLACE_FPURGE", "0"),
+            # An existing fpurge is replaced (the runtime test cannot pass
+            # without a declaration, and the cross-compile guess is "no");
+            # an absent fpurge is not.
+            checks.AC_SUBST(
+                "REPLACE_FPURGE",
+                condition = "ac_cv_func_fpurge",
+                if_false = "0",
+                if_true = "1",
+            ),
         ],
     }),
     visibility = ["//visibility:public"],
@@ -52,5 +64,13 @@ autoconf(
         "//gnulib/m4/extensions",
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "fpurge",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_FPURGE",
     ],
 )

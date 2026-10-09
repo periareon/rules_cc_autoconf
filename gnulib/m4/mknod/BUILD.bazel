@@ -4,32 +4,44 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "mknod",
+    name = "gl_FUNC_MKNOD",
     checks = [
         checks.AC_CHECK_FUNC(
             "mknod",
             define = "HAVE_MKNOD",
         ),
-    ] + select({
+        # if test $ac_cv_func_mknod = no; then HAVE_MKNOD=0
+        checks.AC_SUBST(
+            "HAVE_MKNOD",
+            condition = "ac_cv_func_mknod",
+        ),
         # M4 m4/mknod.m4 runs AC_RUN_IFELSE for the MKNOD_FIFO_BUG (creating
         # a FIFO via mknod with S_IFIFO mode). Modern Linux glibc and modern
         # macOS both pass the probe (verified via real ./configure on each
-        # host), so the bug-define and the replacement are both absent.
-        # Windows: mknod doesn't exist in MSVCRT. The BCR overlay gates
-        # lib/mknod.c on REPLACE_MKNOD==1, so emit 1 to pull the replacement
-        # into the link.
-        "@platforms//os:windows": [
-            checks.AC_SUBST("REPLACE_MKNOD", "1"),
-        ],
-        "//conditions:default": [
-            checks.AC_SUBST("REPLACE_MKNOD", "0"),
-        ],
-    }),
+        # host), so the bug-define is absent. Without mknod (Windows) the M4
+        # takes the HAVE_MKNOD=0 branch and never touches REPLACE_MKNOD (0);
+        # consumers must compile lib/mknod.c when HAVE_MKNOD==0 ||
+        # REPLACE_MKNOD==1 (gnulib GL_COND_OBJ_MKNOD). With mknod,
+        # REPLACE_MKNOD follows REPLACE_MKFIFO.
+        checks.AC_SUBST(
+            "REPLACE_MKNOD",
+            condition = "ac_cv_func_mknod && REPLACE_MKFIFO==1",
+        ),
+    ],
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
-        "//gnulib/m4/extensions",
-        "//gnulib/m4/mkfifo",
-        "//gnulib/m4/sys_stat_h",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+        "//gnulib/m4/mkfifo:gl_FUNC_MKFIFO",  # AC_REQUIRE([gl_FUNC_MKFIFO])
+        "//gnulib/m4/sys_stat_h",  # AC_REQUIRE([gl_SYS_STAT_H_DEFAULTS])
+    ],
+)
+
+autoconf(
+    name = "mknod",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_MKNOD",
     ],
 )

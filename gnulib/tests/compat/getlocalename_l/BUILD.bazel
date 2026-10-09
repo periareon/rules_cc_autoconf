@@ -5,16 +5,13 @@ gnu_gnulib_diff_test_suite(
     bazel_autoconf_target = "//gnulib/m4/getlocalename_l",
     config_h_in = "config.h.in",
     configure_ac = "configure.ac",
-    golden_config_h = select({
-        "@platforms//os:macos": "golden_config_macos.h.in",
-        "@platforms//os:windows": "golden_config_windows.h.in",
-        "//conditions:default": "golden_config.h.in",
-    }),
-    golden_subst_h = select({
-        "@platforms//os:macos": "golden_subst_macos.h.in",
-        "@platforms//os:windows": "golden_subst_windows.h.in",
-        "//conditions:default": "golden_subst.h.in",
-    }),
+    known_divergences = {
+        # Only one target may own a substitution.  REPLACE_NEWLOCALE is owned
+        # by gl_FUNC_NEWLOCALE, which on macOS also reports newlocale's
+        # null-base bug; gl_PREREQ_GETLOCALENAME_L_UNSAFE alone (this fixture)
+        # only knows the "future OS version" case, so GNU says 0 there.
+        "REPLACE_NEWLOCALE": "owned by gl_FUNC_NEWLOCALE, whose macOS null-base check this macro does not run",
+    },
     m4_files = ["@gnulib//:all_m4"],
     subst_h_in = "subst.h.in",
     test_c = "test_getlocalename_l.c",

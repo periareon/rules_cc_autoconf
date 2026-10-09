@@ -8,7 +8,7 @@ load("//autoconf:checks.bzl", "checks")
 # COMPLEX CASE: Uses AC_RUN_IFELSE to test futimesat(fd,NULL,time) behavior
 # on FreeBSD. The runtime test is NOT cross-compile friendly.
 autoconf(
-    name = "utimens",
+    name = "gl_UTIMENS",
     checks = [
         checks.AC_CHECK_FUNC(
             "futimes",
@@ -35,11 +35,22 @@ autoconf(
     deps = [
         "//gnulib/m4/time_h",  # AC_REQUIRE([gl_CHECK_TYPE_STRUCT_TIMESPEC])
         "//gnulib/m4/utimes",  # AC_REQUIRE([gl_FUNC_UTIMES])
-        "//gnulib/m4/futimens",
-        "//gnulib/m4/utimensat",
+        # gl_CHECK_FUNCS_ANDROID([futimens]) / ([utimensat]): config.h defines
+        # only; the HAVE_FUTIMENS / HAVE_UTIMENSAT substs belong to
+        # gl_FUNC_FUTIMENS / gl_FUNC_UTIMENSAT, which gl_UTIMENS never calls.
+        "//gnulib/m4/futimens:gl_CHECK_FUNCS_ANDROID_futimens",
+        "//gnulib/m4/utimensat:gl_CHECK_FUNCS_ANDROID_utimensat",
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         # (golden files include standard header checks even though not AC_REQUIREd)
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "utimens",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_UTIMENS",
     ],
 )

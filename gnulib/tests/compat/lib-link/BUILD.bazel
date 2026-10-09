@@ -6,14 +6,14 @@ gnu_gnulib_diff_test_suite(
     bazel_autoconf_target = "//gnulib/m4/lib-link",
     config_h_in = "config.h.in",
     configure_ac = "configure.ac",
-    golden_config_h = select({
-        "@platforms//os:macos": "golden_config_macos.h.in",
-        "//conditions:default": "golden_config.h.in",
-    }),
-    golden_subst_h = select({
-        "@platforms//os:macos": "golden_subst_macos.h.in",
-        "//conditions:default": "golden_subst.h.in",
-    }),
+    known_divergences = {
+        # The fixture instantiates AC_LIB_HAVE_LINKFLAGS with an empty library
+        # name, so the macro's shell variable is plain `LIB`.  On MSVC that is
+        # the linker's library search path; AC_LIB_LINKFLAGS_BODY resets it
+        # and GNU's link probe then fails with "cannot open file msvcrt.lib",
+        # an artifact of the empty name rather than of the macro.
+        "HAVE_LIB": "empty-name instantiation clobbers MSVC's LIB environment variable, so GNU's probe cannot link at all",
+    },
     m4_files = ["@gnulib//:all_m4"],
     subst_h_in = "subst.h.in",
     test_c = "test_lib-link.c",

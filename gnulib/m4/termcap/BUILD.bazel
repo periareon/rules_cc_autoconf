@@ -10,22 +10,43 @@ load("//autoconf:checks.bzl", "checks")
 autoconf(
     name = "gl_TERMCAP_BODY",
     checks = [
-        # Subst variables for library linkage
-        # On macOS (libncurses), INCTERMCAP is empty
+        # gl_cv_termcap: where tgetent/tgetnum/tgetstr/tgetflag come from:
+        # libc, then libncurses, libtermcap, libcurses.
+        checks.AC_SEARCH_LIBS(
+            "tgetent",
+            [
+                "ncurses",
+                "termcap",
+                "curses",
+            ],
+            name = "gl_cv_termcap",
+            code = """\
+extern int tgetent (char *, const char *);
+extern int tgetnum (const char *);
+extern char * tgetstr (const char *, char **);
+extern int tgetflag (const char *);
+int main (void)
+{
+  static char buf[10000];
+  return tgetent (buf, "xterm") + tgetnum ("co") + tgetflag ("hc")
+         + * tgetstr ("cl", (char **) 0);
+}
+""",
+            subst = "LIBTERMCAP",
+        ),
+        checks.AC_DEFINE(
+            "HAVE_TERMCAP",
+            1,
+            requires = ["gl_cv_termcap"],
+        ),
         checks.AC_SUBST("INCTERMCAP", ""),
-        checks.AC_SUBST("LIBTERMCAP", "-lncurses"),
-        checks.AC_SUBST("LTLIBTERMCAP", "-lncurses"),
-    ] + select({
-        # On macOS, termcap functions are found in libncurses
-        "@platforms//os:macos": [
-            checks.AC_DEFINE("HAVE_TERMCAP", "1"),
-        ],
-        # On Linux (Docker Ubuntu 22.04), termcap might not be available
-        # Golden shows HAVE_TERMCAP is undef
-        "//conditions:default": [
-            # Don't define HAVE_TERMCAP - let it be undef
-        ],
-    }),
+        checks.AC_SUBST(
+            "LTLIBTERMCAP",
+            condition = "gl_cv_termcap",
+            if_false = "",
+            if_true = "-lncurses",
+        ),
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",

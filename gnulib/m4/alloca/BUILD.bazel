@@ -10,9 +10,7 @@ autoconf(
         # Upstream uses AC_EGREP_CPP to look for `__GNUC__ || _AIX || _MSC_VER`.
         # AC_TRY_COMPILE gives the same yes/no answer: compilation succeeds
         # when one of the macros is defined and fails (via #error) otherwise.
-        # Only meaningful when alloca.h actually works, so gated on
-        # ac_cv_func_alloca (this port's analogue of upstream's
-        # ac_cv_working_alloca_h).
+        # Only checked when alloca.h actually works (ac_cv_working_alloca_h).
         checks.AC_TRY_COMPILE(
             name = "gl_cv_rpl_alloca",
             code = """\
@@ -22,22 +20,18 @@ autoconf(
 int main(void) { return 0; }
 """,
             language = "c",
-            requires = ["ac_cv_func_alloca"],
+            requires = ["ac_cv_working_alloca_h"],
         ),
 
-        # ALLOCA: empty when alloca is a compiler builtin (no replacement
-        # library needed). Upstream populates this via _AC_LIBOBJ_ALLOCA
-        # when falling back to alloca.c; the empty default matches the
-        # common Linux/macOS case where the compiler provides alloca.
-        checks.AC_SUBST("ALLOCA", ""),
+        # The AC_DEFINE([HAVE_ALLOCA]) in the rpl_alloca branch is implied by
+        # AC_FUNC_ALLOCA's own HAVE_ALLOCA (a working alloca.h means alloca
+        # works), so it is not repeated here.
 
-        # HAVE_ALLOCA_H: 1 when the header is present on the system. Upstream
-        # keys this off ac_cv_working_alloca_h; this port uses the header
-        # existence check from AC_FUNC_ALLOCA, which lines up on systems
-        # where the header existing implies it works.
+        # if test $ac_cv_working_alloca_h = yes; then HAVE_ALLOCA_H=1; else HAVE_ALLOCA_H=0; fi
+        # AC_SUBST([HAVE_ALLOCA_H])
         checks.AC_SUBST(
             "HAVE_ALLOCA_H",
-            condition = "ac_cv_header_alloca_h",
+            condition = "ac_cv_working_alloca_h",
         ),
 
         # GL_GENERATE_ALLOCA_H: plain shell variable in upstream serial 21
@@ -51,7 +45,7 @@ int main(void) { return 0; }
         # it without it leaking into config.h / subst.h.
         checks.M4_VARIABLE(
             "GL_GENERATE_ALLOCA_H",
-            condition = "ac_cv_func_alloca && !gl_cv_rpl_alloca",
+            condition = "ac_cv_working_alloca_h && !gl_cv_rpl_alloca",
             if_false = "true",
             if_true = "false",
         ),

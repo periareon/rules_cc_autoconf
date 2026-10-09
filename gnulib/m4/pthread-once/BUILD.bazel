@@ -4,12 +4,30 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "pthread-once",
+    name = "gl_PTHREAD_ONCE",
     checks = [
-        # gl_PTHREAD_ONCE requires gl_PTHREAD_H and gl_PTHREADLIB
-        # These are provided by dependencies
+        # PTHREAD_ONCE_LIB is LIBPTHREAD (or LIBPMULTITHREAD when pthread_once
+        # cannot be used without it); both are empty on the supported hosts.
         checks.AC_SUBST("PTHREAD_ONCE_LIB", ""),
-    ],
+    ] + select({
+        # case "$host_os" in mingw* | windows*) && test $gl_threads_api = windows
+        # (the Bazel default on @platforms//os:windows, see threadlib): gnulib
+        # replaces the functions, the HAVE_* defaults (1) are left alone.
+        "@platforms//os:windows": [
+            checks.AC_SUBST("REPLACE_PTHREAD_ONCE", "1"),
+        ],
+        # Elsewhere: if test $HAVE_PTHREAD_H = 0 then HAVE_PTHREAD_ONCE=0;
+        # otherwise AC_CACHE_CHECK([whether pthread_once works]) is a plain
+        # host_os guess ("guessing no" only on Cygwin).
+        "//conditions:default": [
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_ONCE",
+                condition = "ac_cv_header_pthread_h",
+                if_false = "0",
+                if_true = "1",
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/pthread_h",
@@ -19,5 +37,13 @@ autoconf(
         "//gnulib/m4/wchar_h:gl_WCHAR_H_CORE",
         # For test compatibility - need basic header defines
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "pthread-once",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_PTHREAD_ONCE",
     ],
 )

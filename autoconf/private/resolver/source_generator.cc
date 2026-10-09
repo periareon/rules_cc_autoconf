@@ -343,12 +343,12 @@ std::string SourceGenerator::process_defines_replacement(
                 std::string value =
                     format_value_for_define(*result.value, result.unquote);
                 replacement_text += " " + value;
-            } else {
-                if (result.unquote) {
-                    replacement_text += " ";
-                } else {
-                    replacement_text += " /**/";
-                }
+            } else if (!result.unquote) {
+                // AC_DEFINE with an empty value renders as `#define FOO /**/`.
+                // AC_DEFINE_UNQUOTED with an empty value renders as a bare
+                // `#define FOO` (autoconf 2.72+ no longer emits a trailing
+                // space; the GNU conformance tests pin autoconf 2.73).
+                replacement_text += " /**/";
             }
             replacements[lookup_key] = {replacement_text, false};
         } else {

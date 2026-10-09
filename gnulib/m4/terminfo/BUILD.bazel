@@ -4,27 +4,57 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "terminfo",
+    name = "gl_TERMINFO",
     checks = [
-        # Subst vars for Makefile/subst.h (gnulib terminfo.m4 sets these)
+        # gl_cv_terminfo: where setupterm/tigetnum/tigetflag/tigetstr come
+        # from: libc, then libncurses, libtermcap, libxcurses, libcurses.
+        checks.AC_SEARCH_LIBS(
+            "setupterm",
+            [
+                "ncurses",
+                "termcap",
+                "xcurses",
+                "curses",
+            ],
+            name = "gl_cv_terminfo",
+            code = """\
+extern int setupterm (const char *, int, int *);
+extern int tigetnum (const char *);
+extern int tigetflag (const char *);
+extern const char * tigetstr (const char *);
+int main (void)
+{
+  return setupterm ("xterm", 0, (int *)0)
+         + tigetnum ("colors")
+         + tigetflag ("hc") + * tigetstr ("oc");
+}
+""",
+            subst = "LIBTERMINFO",
+        ),
+        checks.AC_DEFINE(
+            "HAVE_TERMINFO",
+            1,
+            requires = ["gl_cv_terminfo"],
+        ),
         checks.AC_SUBST("INCTERMINFO", ""),
-    ] + select({
-        # On Linux, terminfo may not be available in minimal containers
-        # The golden expects HAVE_TERMINFO to be undef
-        "@platforms//os:linux": [
-            checks.AC_SUBST("LIBTERMINFO", ""),
-            checks.AC_SUBST("LTLIBTERMINFO", ""),
-        ],
-        # On macOS, terminfo is in ncurses and always available
-        "//conditions:default": [
-            checks.AC_DEFINE("HAVE_TERMINFO", 1),
-            checks.AC_SUBST("LIBTERMINFO", "-lncurses"),
-            checks.AC_SUBST("LTLIBTERMINFO", "-lncurses"),
-        ],
-    }),
+        checks.AC_SUBST(
+            "LTLIBTERMINFO",
+            condition = "gl_cv_terminfo",
+            if_false = "",
+            if_true = "-lncurses",
+        ),
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # For test compatibility - need basic header defines
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "terminfo",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_TERMINFO",
     ],
 )

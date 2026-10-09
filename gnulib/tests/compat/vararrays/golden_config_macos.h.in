@@ -1,2 +1,0 @@
-/* config.h.in */
-#define HAVE_C_VARARRAYS 1

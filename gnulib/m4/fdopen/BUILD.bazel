@@ -1,14 +1,52 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/fdopen.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "gl_FUNC_FDOPEN",
+    checks = [
+        # gl_FUNC_FDOPEN: REPLACE_FDOPEN=1 when gl_MSVC_INVAL finds the MSVC
+        # invalid parameter handler; otherwise an AC_RUN_IFELSE probe checks
+        # that fdopen(-1, "r") sets errno (M4 guesses "no" on mingw/windows,
+        # "yes" elsewhere - and on native Windows the handler is present).
+        # Consumers that map fdopen to rpl_fdopen through GNULIB_FDOPEN must
+        # compile lib/fdopen.c when REPLACE_FDOPEN is 1 (gnulib
+        # GL_COND_OBJ_FDOPEN).
+    ] + select({
+        # Native Windows: the handler exists, and the run-test guess is "no"
+        # either way.
+        "@platforms//os:windows": [
+            checks.AC_SUBST("REPLACE_FDOPEN", 1),
+        ],
+        # Linux/macOS: no handler, and fdopen (-1, "r") sets errno.
+        "//conditions:default": [
+            checks.AC_SUBST(
+                "REPLACE_FDOPEN",
+                condition = "ac_cv_func__set_invalid_parameter_handler",
+                if_false = 0,
+                if_true = 1,
+            ),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/msvc-inval",  # AC_REQUIRE([gl_MSVC_INVAL])
+    ],
+)
+
+# m4 line 53: gl_PREREQ_FDOPEN - prerequisites of lib/fdopen.c (empty).
+autoconf(
+    name = "gl_PREREQ_FDOPEN",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
 
 autoconf(
     name = "fdopen",
-    checks = [
-        # Note: fdopen.m4 may not exist in gnulib, or this module may not have checks
-    ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/msvc-inval",
+        ":gl_FUNC_FDOPEN",
+        ":gl_PREREQ_FDOPEN",
     ],
 )

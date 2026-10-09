@@ -80,9 +80,13 @@ autoconf(
             ),
             compile_defines = ["HAVE_XLOCALE_H"],
         ),
+        # gl_CHECK_FUNCS_ANDROID -> AC_CHECK_FUNCS: HAVE_STRTOLD_L is defined in
+        # config.h only when the function is found (unlike HAVE_STRTOD_L and
+        # HAVE_STRTOF_L, which are AC_DEFINE_UNQUOTED to 0 or 1).
         checks.AC_DEFINE(
             "HAVE_STRTOLD_L",
             condition = "gl_cv_func_strtold_l",
+            if_false = None,
         ),
     ],
     visibility = ["//visibility:public"],

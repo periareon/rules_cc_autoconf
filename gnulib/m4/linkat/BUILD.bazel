@@ -4,9 +4,10 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "linkat",
+    name = "gl_FUNC_LINKAT",
     checks = [
-        # Note: HAVE_SYMLINK is already provided by openat -> lstat -> symlink dependency
+        # Note: HAVE_SYMLINK is already provided by openat -> fcntl_h -> fcntl-o
+        # (AC_CHECK_FUNCS_ONCE([symlink]), config.h define only)
 
         # gl_CHECK_FUNCS_ANDROID is similar to AC_CHECK_FUNC but with Android-specific handling
         checks.AC_CHECK_FUNC(
@@ -15,27 +16,23 @@ autoconf(
             subst = True,
         ),
 
-        # AC_FUNC_READLINK provides HAVE_READLINK (avoids unistd_h transitive dependency)
+        # gl_FUNC_LINK_FOLLOWS_SYMLINK (AC_REQUIREd) provides LINK_FOLLOWS_SYMLINKS
+        # and the readlink probe (see link-follow).
 
         # Runtime checks for linkat behavior (lines 25-102) can't be easily ported
         # Based on golden files, on macOS:
         # - LINKAT_SYMLINK_NOTSUP=0 (linkat can create hardlinks to symlinks)
         # - LINKAT_TRAILING_SLASH_BUG=1 (linkat fails to recognize trailing slash)
         # - REPLACE_LINKAT=1 (linkat needs replacement due to bugs)
-        # gl_FUNC_LINK_FOLLOWS_SYMLINK (line 15) - sets LINK_FOLLOWS_SYMLINKS
-        # Based on golden files, on macOS/Linux, LINK_FOLLOWS_SYMLINKS=1
-        # This is a runtime check that can't be easily ported
     ] + select({
-        # Linux: linkat works; link() does NOT follow symlinks.
+        # Linux: linkat works.
         "@platforms//os:linux": [
-            checks.AC_DEFINE("LINK_FOLLOWS_SYMLINKS", "0"),
             checks.AC_SUBST("REPLACE_LINKAT", 0),
         ],
         # macOS: runtime probes for LINKAT_SYMLINK_NOTSUP /
         # LINKAT_TRAILING_SLASH_BUG; SDK probe drives both bug-defines and
-        # the REPLACE_LINKAT subst. LINK_FOLLOWS_SYMLINKS=1 (BSD heritage).
+        # the REPLACE_LINKAT subst.
         "@platforms//os:macos": [
-            checks.AC_DEFINE("LINK_FOLLOWS_SYMLINKS", "1"),
             checks.AC_DEFINE(
                 "LINKAT_SYMLINK_NOTSUP",
                 if_true = 0,
@@ -53,26 +50,30 @@ autoconf(
                 if_true = "0",
             ),
         ],
-        # Windows: linkat doesn't exist. BCR overlay gates lib/linkat.c on
-        # REPLACE_LINKAT==1, so emit 1 to pull the replacement into the
-        # link. LINK_FOLLOWS_SYMLINKS=1 retained per the conservative
-        # non-Linux default.
-        "@platforms//os:windows": [
-            checks.AC_DEFINE("LINK_FOLLOWS_SYMLINKS", "1"),
-            checks.AC_SUBST("REPLACE_LINKAT", "1"),
-        ],
+        # Windows: without linkat the M4 sets HAVE_LINKAT=0 and leaves
+        # REPLACE_LINKAT alone (0; no "future" declaration there). Consumers
+        # must compile lib/linkat.c when HAVE_LINKAT==0 || REPLACE_LINKAT==1
+        # (gnulib GL_COND_OBJ_LINKAT).
         "//conditions:default": [
-            checks.AC_DEFINE("LINK_FOLLOWS_SYMLINKS", "1"),
             checks.AC_SUBST("REPLACE_LINKAT", 0),
         ],
     }),
     visibility = ["//visibility:public"],
     deps = [
-        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
-        "//gnulib/m4/extensions",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
         "//gnulib/m4/gnulib-common:gl_HOST_MACOS_SDK_MODERN",
-        "//gnulib/m4/openat",
-        "//gnulib/macros/AC_FUNC_READLINK",
+        "//gnulib/m4/link-follow:gl_FUNC_LINK_FOLLOWS_SYMLINK",  # AC_REQUIRE([gl_FUNC_LINK_FOLLOWS_SYMLINK])
+        "//gnulib/m4/openat:gl_FUNC_OPENAT",  # AC_REQUIRE([gl_FUNC_OPENAT])
+        # AC_REQUIRE([gl_UNISTD_H_DEFAULTS]) is a _DEFAULTS macro (toolchain defaults).
+    ],
+)
+
+autoconf(
+    name = "linkat",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_LINKAT",
     ],
 )

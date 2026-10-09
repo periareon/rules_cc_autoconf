@@ -1,2 +1,0 @@
-/* subst.h.in */
-#define SUBST_FLEXIBLE_ARRAY_MEMBER "@FLEXIBLE_ARRAY_MEMBER@"

@@ -17,13 +17,9 @@ autoconf(
         checks.M4_VARIABLE("GL_GENERATE_STDDEF_H", "true"),
         # Check that stddef.h can be included
         checks.AC_CHECK_HEADER("stddef.h"),
-        # The m4 uses AC_LINK_IFELSE to check if unreachable() is available
-        # unreachable() requires C23 (-std=c2x), which Bazel may not enable by default
-        # On macOS with clang, unreachable() is available with C23, so HAVE_C_UNREACHABLE=1
-        # On Linux with older gcc, it may not be available, so HAVE_C_UNREACHABLE=0
-        # Since Bazel doesn't easily support C23 mode, we use platform-specific logic
-        # Note: The golden file expects "1" on macOS, suggesting the test environment
-        # has C23 enabled. We'll set it based on platform for now.
+        # unreachable() is C23; the probe runs in the toolchain's default
+        # language mode, exactly like GNU configure does under the
+        # conformance test (which pins ac_cv_prog_cc_c23=no).
         checks.AC_TRY_LINK(
             name = "gl_cv_c_func_unreachable",
             code = """#include <stddef.h>
@@ -34,27 +30,13 @@ int main(void) {
 """,
             language = "c",
         ),
-        # Set HAVE_C_UNREACHABLE based on platform
-        # On macOS, clang supports unreachable() with C23, so set to 1
-        # On Linux, it may not be available, so use the check result (which will be 0)
-        # The golden file expects "1" on macOS, so we set it conditionally
-        # Note: We can't use select() directly in checks, so we'll set it conditionally
-        # based on the check result, but override it on macOS
-    ] + select({
-        "@platforms//os:macos": [
-            # On macOS, clang supports unreachable() with C23, so HAVE_C_UNREACHABLE=1
-            checks.AC_SUBST("HAVE_C_UNREACHABLE", 1),
-        ],
-        "//conditions:default": [
-            # On other platforms, use the check result
-            checks.AC_SUBST(
-                "HAVE_C_UNREACHABLE",
-                condition = "gl_cv_c_func_unreachable",
-                if_false = 0,
-                if_true = 1,
-            ),
-        ],
-    }),
+        checks.AC_SUBST(
+            "HAVE_C_UNREACHABLE",
+            condition = "gl_cv_c_func_unreachable",
+            if_false = 0,
+            if_true = 1,
+        ),
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/include_next",

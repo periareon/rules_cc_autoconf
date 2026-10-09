@@ -1,3 +1,0 @@
-/* subst.h.in */
-#define SUBST_HAVE_LIBSIGSEGV "no"
-#define SUBST_LIBCSTACK ""

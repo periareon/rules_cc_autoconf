@@ -1,3 +1,0 @@
-/* config.h.in */
-#define HAVE_LSTAT 1
-/* #undef OPEN_TRAILING_SLASH_BUG */

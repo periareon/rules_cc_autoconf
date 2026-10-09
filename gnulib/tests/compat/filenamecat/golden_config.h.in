@@ -1,2 +1,0 @@
-/* config.h.in */
-#define HAVE_MEMPCPY 1

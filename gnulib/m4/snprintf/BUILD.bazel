@@ -56,11 +56,29 @@ autoconf(
         # This is handled via dependency, but REPLACE_SNPRINTF is set based on
         # gl_cv_func_snprintf_usable which depends on runtime tests.
         # Based on golden files, REPLACE_SNPRINTF is undefined (0) on macOS (snprintf is usable)
-    ],
+    ] + select({
+        # gl_cv_func_snprintf_usable=no
+        # if test $ac_cv_func_snprintf = yes; then
+        #   gl_SNPRINTF_SIZE1 / gl_SNPRINTF_RETVAL_C99 / gl_PRINTF_POSITIONS
+        #   all *yes -> gl_cv_func_snprintf_usable=yes
+        # fi
+        # if test $gl_cv_func_snprintf_usable = no; then gl_REPLACE_SNPRINTF; fi
+        # These are runtime tests. On native Windows gl_PRINTF_POSITIONS is "no"
+        # (MSVC's printf has no positional arguments; the cross-compile guess
+        # for mingw/windows says the same), so snprintf is not usable and
+        # gl_REPLACE_SNPRINTF sets REPLACE_SNPRINTF=1 because snprintf is
+        # declared. Same constant as snprintf-posix so both can share a graph.
+        "@platforms//os:windows": [
+            checks.AC_SUBST("REPLACE_SNPRINTF", "1"),
+        ],
+        # glibc and macOS pass all three runtime tests: snprintf is usable.
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
         # "//gnulib/m4/stdio_h",  # Ignored - _DEFAULTS function
+        ":gl_REPLACE_SNPRINTF",  # gl_REPLACE_SNPRINTF when snprintf is not usable
         "//gnulib/macros/AC_FUNC_SNPRINTF",
         "//gnulib/m4/printf:gl_SNPRINTF_SIZE1",
         "//gnulib/m4/printf:gl_SNPRINTF_RETVAL_C99",
@@ -77,5 +95,7 @@ autoconf(
     visibility = ["//visibility:public"],
     deps = [
         ":gl_FUNC_SNPRINTF",
+        ":gl_PREREQ_SNPRINTF",
+        ":gl_REPLACE_SNPRINTF",
     ],
 )

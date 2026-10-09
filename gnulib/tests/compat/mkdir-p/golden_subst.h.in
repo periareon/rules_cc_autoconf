@@ -1,3 +1,0 @@
-/* subst.h.in */
-#define SUBST_HAVE_FCHMOD "@HAVE_FCHMOD@"
-#define SUBST_HAVE_FCHOWN "@HAVE_FCHOWN@"

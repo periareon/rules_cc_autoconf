@@ -5,19 +5,13 @@ load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "gl_FUNC_FREE",
-    checks = select({
-        "@rules_cc//cc/compiler:msvc-cl": [
-            # MSVC's free preserves errno.  Replacing it causes C2375
-            # linkage conflicts because #define free rpl_free poisons the
-            # CRT's __declspec(dllimport) declaration in corecrt_malloc.h.
-            checks.AC_DEFINE("HAVE_FREE_POSIX"),
-            checks.AC_SUBST("REPLACE_FREE", 0),
-        ],
-        "//conditions:default": [
-            # AC_COMPILE_IFELSE checks for glibc >= 2.33, OpenBSD, or Solaris
-            checks.AC_TRY_COMPILE(
-                name = "gl_cv_func_free_preserves_errno",
-                code = """#include <stdlib.h>
+    checks = [
+        # AC_CACHE_CHECK([whether free is known to preserve errno],
+        #   [gl_cv_func_free_preserves_errno], [AC_COMPILE_IFELSE(...)])
+        # Only glibc >= 2.33, OpenBSD and Solaris are known to preserve errno.
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_func_free_preserves_errno",
+            code = """#include <stdlib.h>
 #if 2 < __GLIBC__ + (33 <= __GLIBC_MINOR__)
 #elif defined __OpenBSD__
 #elif defined __sun
@@ -25,21 +19,22 @@ autoconf(
   #error "'free' is not known to preserve errno"
 #endif
 int main(void) { return 0; }""",
-                language = "c",
-            ),
+            language = "c",
+        ),
 
-            # Use requires to gate the define - only creates it when check passes
-            checks.AC_DEFINE(
-                "HAVE_FREE_POSIX",
-                requires = ["gl_cv_func_free_preserves_errno==1"],
-            ),
-            # Set REPLACE_FREE=1 if free does not preserve errno
-            checks.AC_SUBST(
-                "REPLACE_FREE",
-                condition = "!gl_cv_func_free_preserves_errno",
-            ),
-        ],
-    }),
+        # case $gl_cv_func_free_preserves_errno in
+        #  *yes) AC_DEFINE([HAVE_FREE_POSIX], [1]) ;;
+        #  *) REPLACE_FREE=1 ;;
+        # esac
+        checks.AC_DEFINE(
+            "HAVE_FREE_POSIX",
+            requires = ["gl_cv_func_free_preserves_errno==1"],
+        ),
+        checks.AC_SUBST(
+            "REPLACE_FREE",
+            condition = "!gl_cv_func_free_preserves_errno",
+        ),
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_STDLIB_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
@@ -48,10 +43,18 @@ int main(void) { return 0; }""",
     ],
 )
 
+# AC_DEFUN([gl_PREREQ_FREE], [:])
+autoconf(
+    name = "gl_PREREQ_FREE",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
 autoconf(
     name = "free",
     visibility = ["//visibility:public"],
     deps = [
         ":gl_FUNC_FREE",
+        ":gl_PREREQ_FREE",
     ],
 )

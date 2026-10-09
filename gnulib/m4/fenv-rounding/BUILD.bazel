@@ -6,17 +6,66 @@ load("//autoconf:checks.bzl", "checks")
 autoconf(
     name = "gl_FENV_ROUNDING",
     checks = [
-        # gl_FENV_ROUNDING uses gl_MATHFUNC([fesetround], ...) and gl_MATHFUNC([fpsetround], ...)
-        # gl_MATHFUNC sets FESETROUND_LIBM, FPSETROUND_LIBM, and FENV_ROUNDING_LIBM variables
-        # On macOS, these functions don't need libm, so all should be empty strings
+        # gl_MATHFUNC([fesetround], ...) links without -lm on the platforms we
+        # target, so both *_LIBM substitutions are empty.
         checks.AC_SUBST("FENV_ROUNDING_LIBM", ""),
         checks.AC_SUBST("FESETROUND_LIBM", ""),
+    ] + select({
+        "@platforms//os:windows": [
+            # AC_CACHE_CHECK([whether fesetround works], ...):
+            #   mingw* | windows*)
+            #     AC_EGREP_CPP([Problem], [#ifndef __MINGW32__ Problem #endif],
+            #       [gl_cv_func_fesetround_works="guessing no"],
+            #       [gl_cv_func_fesetround_works="guessing yes"])
+            # i.e. "guessing no" on MSVC (fesetround does not work on MSVC 14).
+            checks.AC_TRY_COMPILE(
+                name = "gl_cv_func_fesetround_works",
+                code = """\
+#ifndef __MINGW32__
+ #error "guessing no: fesetround does not work on MSVC 14"
+#endif
+int main(void) { return 0; }
+""",
+                language = "c",
+            ),
+            # case "$gl_cv_func_fesetround_works" in *yes) ;; *) REPLACE_FESETROUND=1
+            checks.AC_SUBST(
+                "REPLACE_FESETROUND",
+                condition = "gl_cv_func_fesetround_works",
+                if_false = "1",
+                if_true = "0",
+            ),
+            # if test $REPLACE_FESETROUND = 1; then
+            #   dnl One more function is defined in the same compilation unit.
+            #   REPLACE_FEGETROUND=1
+            checks.AC_SUBST(
+                "REPLACE_FEGETROUND",
+                condition = "gl_cv_func_fesetround_works",
+                if_false = "1",
+                if_true = "0",
+            ),
+        ],
+        # Elsewhere gl_cv_func_fesetround_works="guessing yes" and the
+        # gl_FENV_H_DEFAULTS values of 0 stand.
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//gnulib/m4/fenv_h",  # AC_REQUIRE([gl_FENV_H_DEFAULTS])
+    ],
+)
+
+# m4 line 70: gl_PREREQ_FENV_ROUNDING - prerequisites of lib/fenv-round.c.
+autoconf(
+    name = "gl_PREREQ_FENV_ROUNDING",
+    checks = [
+        # gl_MATHFUNC([fpsetround], [fp_rnd], [(fp_rnd)], [#include <ieeefp.h>])
+        # finds nothing on the platforms we target (no <ieeefp.h>), so
+        # FPSETROUND_LIBM is empty and HAVE_FPSETROUND is never defined.
         checks.AC_SUBST("FPSETROUND_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
-    deps = [
-        "//gnulib/m4/fenv_h",
-    ],
 )
 
 autoconf(
@@ -24,5 +73,6 @@ autoconf(
     visibility = ["//visibility:public"],
     deps = [
         ":gl_FENV_ROUNDING",
+        ":gl_PREREQ_FENV_ROUNDING",
     ],
 )

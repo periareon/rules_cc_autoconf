@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Merge new #define / #undef entries from bazel-testlogs into base templates.
 
-After running `bazel test //gnulib/tests/compat/...`, the *_test_gnu_autoconf
-targets produce expected_config.h.in and expected_subst.h.in via GNU autoheader.
+After running `bazel test //gnulib/tests/compat/...`, the *_test_gnu_conformance
+targets produce expected_config.h.in and expected_subst.h.in from the GNU
+configure run (see //autoconf/tests/gnu).
 This script merges any NEW symbols from those outputs into the checked-in
 gnulib/tests/compat/<module>/ templates, preserving existing entries.
 """
@@ -16,7 +17,7 @@ from pathlib import Path
 
 EXPECTED_PREFIX = "expected_"
 TEST_OUTPUTS_DIR = "test.outputs"
-AUTOCONF_SUFFIX = "_test_gnu_autoconf"
+AUTOCONF_SUFFIX = "_test_gnu_conformance"
 COMPAT_REL = Path("gnulib") / "tests" / "compat"
 
 # Patterns for extracting symbol names from template lines.

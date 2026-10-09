@@ -6,6 +6,9 @@
 /* Define to 1 if feature B is available. */
 /* #undef HAVE_FEATURE_B */
 
+/* Define to 1 if feature C is available. */
+#define HAVE_FEATURE_C 1
+
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT ""
 

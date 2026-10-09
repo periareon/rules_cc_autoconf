@@ -30,9 +30,39 @@ autoconf(
             if_true = "1",
         ),
 
-        # Behavioral: on macOS, nanosleep mishandles large arguments
-        checks.AC_SUBST("REPLACE_NANOSLEEP", 1),
-        checks.AC_DEFINE("HAVE_BUG_BIG_NANOSLEEP", "1"),
+        # if test "x$ac_cv_search_nanosleep" != xno; then
+        #   "for working nanosleep" (AC_RUN_IFELSE): on the Unix hosts we
+        #   target the result is 'no (mishandles large arguments)', i.e.
+        #   REPLACE_NANOSLEEP=1 and HAVE_BUG_BIG_NANOSLEEP.
+        checks.AC_DEFINE(
+            "HAVE_BUG_BIG_NANOSLEEP",
+            condition = "_gl_cv_func_nanosleep",
+            if_false = None,
+            if_true = 1,
+        ),
+        # else
+        #   "for static inline nanosleep" (mingw's libwinpthreads inline):
+        #   if it compiles, REPLACE_NANOSLEEP=1; HAVE_NANOSLEEP=0.
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_static_inline_nanosleep",
+            code = """\
+#include <time.h>
+
+int main(void) {
+    static struct timespec ts1;
+    static struct timespec ts2;
+    return nanosleep (&ts1, &ts2);
+}
+""",
+            language = "c",
+            requires = ["!_gl_cv_func_nanosleep"],
+        ),
+        checks.AC_SUBST(
+            "REPLACE_NANOSLEEP",
+            condition = "_gl_cv_func_nanosleep || gl_cv_static_inline_nanosleep",
+            if_false = 0,
+            if_true = 1,
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [

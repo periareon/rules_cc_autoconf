@@ -29,14 +29,36 @@ autoconf(
 # getpass is not GNU getpass (glibc >= 2). We use platform select: Linux glibc = 0, else 1.
 autoconf(
     name = "gl_FUNC_GETPASS_GNU",
-    checks = select({
-        "@platforms//os:linux": [
-            checks.AC_SUBST("REPLACE_GETPASS_FOR_GETPASS_GNU", 0),
-        ],
-        "//conditions:default": [
-            checks.AC_SUBST("REPLACE_GETPASS_FOR_GETPASS_GNU", 1),
-        ],
-    }),
+    checks = [
+        # if test $ac_cv_func_getpass = yes; then
+        #   AC_CACHE_CHECK([for getpass without length limitations],
+        #     [gl_cv_func_getpass_good], [AC_EGREP_CPP([Lucky GNU user], ...)])
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_func_getpass_good",
+            code = """\
+#include <features.h>
+#ifdef __GNU_LIBRARY__
+ #if (__GLIBC__ >= 2) && !defined __UCLIBC__
+  #define LUCKY_GNU_USER 1
+ #endif
+#endif
+#ifndef LUCKY_GNU_USER
+ #error "not glibc"
+#endif
+int main(void) { return 0; }
+""",
+            language = "c",
+            requires = ["ac_cv_func_getpass"],
+        ),
+        #   if test $gl_cv_func_getpass_good != yes; then
+        #     REPLACE_GETPASS_FOR_GETPASS_GNU=1
+        checks.AC_SUBST(
+            "REPLACE_GETPASS_FOR_GETPASS_GNU",
+            condition = "ac_cv_func_getpass && !gl_cv_func_getpass_good",
+            if_false = 0,
+            if_true = 1,
+        ),
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_FUNC_GETPASS",
@@ -74,17 +96,16 @@ autoconf(
                 "#include <stdio_ext.h>",
             ],
         ),
+        # AC_CHECK_DECLS_ONCE([flockfile]) / ([funlockfile]): config.h defines only.
         checks.AC_CHECK_DECL(
             "flockfile",
             define = "HAVE_DECL_FLOCKFILE",
             includes = ["#include <stdio.h>"],
-            subst = True,
         ),
         checks.AC_CHECK_DECL(
             "funlockfile",
             define = "HAVE_DECL_FUNLOCKFILE",
             includes = ["#include <stdio.h>"],
-            subst = True,
         ),
         # gl_HAVE_TCGETATTR - line 69; via tcgetattr dep
         checks.AC_TRY_LINK(
@@ -110,8 +131,8 @@ autoconf(
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/extensions",
         "//gnulib/m4/fpurge",
-        "//gnulib/m4/tcgetattr",
-        "//gnulib/m4/termios_h",
+        "//gnulib/m4/tcgetattr",  # gl_HAVE_TCGETATTR
+        "//gnulib/m4/termios_h:HAVE_TERMIOS_H",  # AC_CHECK_HEADERS_ONCE([stdio_ext.h termios.h])
         "//gnulib/m4/unlocked-io",
     ],
 )

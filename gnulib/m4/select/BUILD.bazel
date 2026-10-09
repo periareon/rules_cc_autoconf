@@ -4,7 +4,7 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "select",
+    name = "gl_FUNC_SELECT",
     checks = [
         # HAVE_SELECT check (this module sets GNULIB_SELECT=1)
         # On macOS, select is available
@@ -15,8 +15,45 @@ autoconf(
         ),
         # SELECT_LIB is set by gl_SOCKETLIB (from sockets -> socketlib)
         # Based on golden file, SELECT_LIB="" on macOS (select is in libc)
-        checks.AC_SUBST("SELECT_LIB", ""),
-    ],
+        # if test "$ac_cv_header_winsock2_h" = yes; then REPLACE_SELECT=1
+        # else (runtime checks for select(0,...) and EBADF detection; they pass
+        # on glibc and macOS so REPLACE_SELECT keeps the default 0)
+        checks.AC_SUBST(
+            "REPLACE_SELECT",
+            condition = "ac_cv_header_winsock2_h",
+            if_false = "0",
+            if_true = "1",
+        ),
+    ] + select({
+        # SELECT_LIB="$LIBSOCKET"; if test $REPLACE_SELECT = 1:
+        "@platforms//os:windows": [
+            # case "$host_os" in mingw* | windows*)
+            #   AC_LINK_IFELSE([MsgWaitForMultipleObjects (0, NULL, 0, 0, 0);],
+            #     [], [SELECT_LIB="$SELECT_LIB -luser32"])
+            # (link.exe does not pull in user32.lib by default, so -luser32 is added.)
+            checks.AC_TRY_LINK(
+                name = "gl_cv_link_MsgWaitForMultipleObjects",
+                code = """#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+int main(void) {
+    MsgWaitForMultipleObjects (0, NULL, 0, 0, 0);
+    return 0;
+}
+""",
+                language = "c",
+            ),
+            checks.AC_SUBST(
+                "SELECT_LIB",
+                condition = "gl_cv_func_wsastartup && !gl_cv_link_MsgWaitForMultipleObjects",
+                if_false = "",
+                if_true = "-lws2_32 -luser32",
+            ),
+        ],
+        # LIBSOCKET is empty on glibc/macOS.
+        "//conditions:default": [
+            checks.AC_SUBST("SELECT_LIB", ""),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         # Depend on header only (not with_defaults since we override GNULIB_SELECT)
@@ -27,5 +64,13 @@ autoconf(
 
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "select",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_SELECT",
     ],
 )

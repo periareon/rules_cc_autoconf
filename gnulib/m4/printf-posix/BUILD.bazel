@@ -14,7 +14,6 @@ autoconf(
         ":gl_FUNC_PRINTF_IS_POSIX",
         ":gl_REPLACE_PRINTF",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
-        "//gnulib/m4/alloca:gl_FUNC_ALLOCA",
         "//gnulib/m4/vasnprintf:gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS",
         "//gnulib/m4/vasnprintf:gl_REPLACE_VASNPRINTF",
     ],

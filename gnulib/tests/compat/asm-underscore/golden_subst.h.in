@@ -1,3 +1,0 @@
-/* subst.h.in */
-#define SUBST_ASM_SYMBOL_PREFIX """"
-#define SUBST_USER_LABEL_PREFIX "@USER_LABEL_PREFIX@"

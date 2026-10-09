@@ -4,7 +4,7 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "wcrtomb",
+    name = "gl_FUNC_WCRTOMB",
     checks = [
         # Note: gl_WCHAR_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
         checks.AC_CHECK_FUNC(
@@ -36,8 +36,27 @@ autoconf(
         # - If function doesn't exist but declaration exists, REPLACE_WCRTOMB=1
         # - If function doesn't exist and declaration doesn't exist, REPLACE_WCRTOMB=0
         # Based on golden files, REPLACE_WCRTOMB=0 on macOS/Linux (function exists and works correctly)
-        checks.AC_SUBST("REPLACE_WCRTOMB", 0),
-    ],
+    ] + select({
+        # gl_cv_func_wcrtomb_retval: "Guess no on AIX 4, Solaris, native
+        # Windows"; the native MSVC run confirms wcrtomb (NULL, 0, NULL) != 1,
+        # so WCRTOMB_RETVAL_BUG is defined and REPLACE_WCRTOMB=1.
+        "@platforms//os:windows": [
+            checks.AC_DEFINE(
+                "WCRTOMB_RETVAL_BUG",
+                "1",
+                requires = ["ac_cv_func_wcrtomb"],
+            ),
+            checks.AC_SUBST(
+                "REPLACE_WCRTOMB",
+                condition = "ac_cv_func_wcrtomb",
+                if_false = "0",
+                if_true = "1",
+            ),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_WCRTOMB", 0),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_WCHAR_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
@@ -50,5 +69,18 @@ autoconf(
     ],
 )
 
-# Prerequisites of lib/wcrtomb.c (empty)
-# No separate target needed as it's empty
+# Prerequisites of lib/wcrtomb.c: AC_DEFUN([gl_PREREQ_WCRTOMB], [:]) does nothing.
+autoconf(
+    name = "gl_PREREQ_WCRTOMB",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "wcrtomb",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_WCRTOMB",
+        ":gl_PREREQ_WCRTOMB",
+    ],
+)

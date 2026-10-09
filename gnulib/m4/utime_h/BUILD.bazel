@@ -7,16 +7,15 @@ load("//gnulib:macros.bzl", gl_macros = "macros")
 autoconf(
     name = "gl_UTIME_H",
     checks = [
+        # AC_CHECK_HEADERS_ONCE([utime.h]) defines HAVE_UTIME_H only when found
         checks.AC_CHECK_HEADER(
             "utime.h",
-            name = "_gl_cv_header_utime_h",
+            define = "HAVE_UTIME_H",
         ),
-        # Set HAVE_UTIME_H as substitution variable
-        # On macOS, utime.h exists, so HAVE_UTIME_H=1
-        checks.AC_DEFINE(
+        # if test $ac_cv_header_utime_h = yes; then HAVE_UTIME_H=1 else 0
+        checks.AC_SUBST(
             "HAVE_UTIME_H",
-            "1",
-            subst = True,  # Also create substitution variable
+            condition = "ac_cv_header_utime_h",
         ),
     ] + gl_macros.GL_NEXT_HEADERS(["utime.h"]),
     visibility = ["//visibility:public"],
@@ -46,6 +45,19 @@ autoconf(
     visibility = ["//visibility:private"],
     deps = [
         ":gl_UTIME_H_DEFAULTS",
+    ],
+)
+
+# gl_UTIME_MODULE_INDICATOR([modulename]): expands gl_UTIME_H_REQUIRE_DEFAULTS
+# and sets GNULIB_<MODULE>; the per-module indicator itself is not modelled.
+# Deps-only; kept out of the umbrella because the defaults reach consumers via
+# the toolchain `defaults` attribute (see //gnulib/toolchain).
+autoconf(
+    name = "gl_UTIME_MODULE_INDICATOR",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_UTIME_H_REQUIRE_DEFAULTS",
     ],
 )
 

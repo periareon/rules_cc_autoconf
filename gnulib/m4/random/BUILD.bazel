@@ -1,19 +1,23 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/random.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
-load("//autoconf:checks.bzl", "checks")
+load("//autoconf:checks.bzl", "checks", "utils")
 
 autoconf(
-    name = "random",
+    name = "gl_FUNC_RANDOM",
     checks = [
-        # gl_FUNC_RANDOM checks for random, initstate, and setstate functions
-        # On macOS, random() exists but the golden file shows HAVE_RANDOM is undefined
-        # (likely because it's not used or there's a replacement)
-        # Note: random() is checked via AC_LINK_IFELSE, but we don't define HAVE_RANDOM
-        # checks.AC_CHECK_FUNC(
-        #     "random",
-        #     define = "HAVE_RANDOM",
-        # ),
+        # AC_CACHE_CHECK([for random], [gl_cv_func_random], [AC_LINK_IFELSE(...)])
+        # A link test rather than AC_CHECK_FUNC because random() is a static
+        # inline function on old Android. Fails on MSVC, which has no random().
+        checks.AC_TRY_LINK(
+            name = "gl_cv_func_random",
+            code = utils.AC_LANG_PROGRAM(
+                ["#include <stdlib.h>"],
+                "return random() == 0;",
+            ),
+        ),
+        # gl_CHECK_FUNCS_ANDROID([initstate]) / ([setstate]): HAVE_INITSTATE and
+        # HAVE_SETSTATE are defined in config.h only when the functions exist.
         checks.AC_CHECK_FUNC(
             "initstate",
             define = "HAVE_INITSTATE",
@@ -22,6 +26,33 @@ autoconf(
             "setstate",
             define = "HAVE_SETSTATE",
         ),
+        # if test $gl_cv_func_random = no; then
+        #   HAVE_RANDOM=0 HAVE_INITSTATE=0 HAVE_SETSTATE=0
+        # else
+        #   if test $ac_cv_func_initstate = no; then HAVE_INITSTATE=0; fi
+        #   if test $ac_cv_func_setstate = no; then HAVE_SETSTATE=0; fi
+        # fi
+        # These override the gl_STDLIB_H_DEFAULTS values of 1.
+        checks.AC_SUBST(
+            "HAVE_RANDOM",
+            condition = "gl_cv_func_random",
+            if_false = 0,
+            if_true = 1,
+        ),
+        checks.AC_SUBST(
+            "HAVE_INITSTATE",
+            condition = "gl_cv_func_random && ac_cv_func_initstate",
+            if_false = 0,
+            if_true = 1,
+        ),
+        checks.AC_SUBST(
+            "HAVE_SETSTATE",
+            condition = "gl_cv_func_random && ac_cv_func_setstate",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # AC_CHECK_DECLS_ONCE([initstate]) / ([setstate]) define HAVE_DECL_* to 1
+        # or 0; the m4 then sets HAVE_DECL_*=0 when not declared.
         checks.AC_CHECK_DECL(
             "initstate",
             define = "HAVE_DECL_INITSTATE",
@@ -32,18 +63,62 @@ autoconf(
             define = "HAVE_DECL_SETSTATE",
             includes = ["#include <stdlib.h>"],
         ),
+        checks.AC_SUBST(
+            "HAVE_DECL_INITSTATE",
+            condition = "ac_cv_have_decl_initstate",
+            if_false = 0,
+            if_true = 1,
+        ),
+        checks.AC_SUBST(
+            "HAVE_DECL_SETSTATE",
+            condition = "ac_cv_have_decl_setstate",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # dnl On several platforms, random() is not multithread-safe.
+        # if test $ac_cv_func_initstate = no || test $ac_cv_func_setstate = no
+        #    || case "$host_os" in darwin* | freebsd* | solaris* | cygwin* | haiku*) true ;; esac
+        # then
+        #   REPLACE_RANDOM=1
+        #   if test $ac_cv_func_initstate = yes; then REPLACE_INITSTATE=1; fi
+        #   if test $ac_cv_func_setstate = yes; then REPLACE_SETSTATE=1; fi
+        # fi
+        # (The REPLACE_*=1 for Android "future" functions is not modeled.)
     ] + select({
-        # On Linux: random functions work correctly, no replacement needed
-        "@platforms//os:linux": [
-            checks.AC_SUBST("REPLACE_INITSTATE", "0"),
-            checks.AC_SUBST("REPLACE_RANDOM", "0"),
-            checks.AC_SUBST("REPLACE_SETSTATE", "0"),
+        "@platforms//os:macos": [
+            checks.AC_SUBST("REPLACE_RANDOM", 1),
+            checks.AC_SUBST(
+                "REPLACE_INITSTATE",
+                condition = "ac_cv_func_initstate",
+                if_false = 0,
+                if_true = 1,
+            ),
+            checks.AC_SUBST(
+                "REPLACE_SETSTATE",
+                condition = "ac_cv_func_setstate",
+                if_false = 0,
+                if_true = 1,
+            ),
         ],
-        # On macOS and other platforms: random functions need replacement
         "//conditions:default": [
-            checks.AC_SUBST("REPLACE_INITSTATE", "1"),
-            checks.AC_SUBST("REPLACE_RANDOM", "1"),
-            checks.AC_SUBST("REPLACE_SETSTATE", "1"),
+            checks.AC_SUBST(
+                "REPLACE_RANDOM",
+                condition = "ac_cv_func_initstate && ac_cv_func_setstate",
+                if_false = 1,
+                if_true = 0,
+            ),
+            checks.AC_SUBST(
+                "REPLACE_INITSTATE",
+                condition = "ac_cv_func_initstate && !ac_cv_func_setstate",
+                if_false = 0,
+                if_true = 1,
+            ),
+            checks.AC_SUBST(
+                "REPLACE_SETSTATE",
+                condition = "ac_cv_func_setstate && !ac_cv_func_initstate",
+                if_false = 0,
+                if_true = 1,
+            ),
         ],
     }),
     visibility = ["//visibility:public"],
@@ -55,5 +130,21 @@ autoconf(
         "//gnulib/m4/wchar_h:gl_WCHAR_H_CORE",
         # For test compatibility - need basic header defines
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Prerequisites of lib/random.c: AC_DEFUN([gl_PREREQ_RANDOM], [:]) - nothing to do.
+autoconf(
+    name = "gl_PREREQ_RANDOM",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "random",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_RANDOM",
+        ":gl_PREREQ_RANDOM",
     ],
 )

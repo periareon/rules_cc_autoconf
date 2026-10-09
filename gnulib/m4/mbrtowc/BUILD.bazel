@@ -12,14 +12,34 @@ autoconf(
     checks = select({
         # On Linux (glibc):
         #   gl_MBRTOWC_C_LOCALE → no (EILSEQ in C locale) → MBRTOWC_IN_C_LOCALE_MAYBE_EILSEQ
-        #   gl_MBRTOWC_EMPTY_INPUT → no on glibc → MBRTOWC_EMPTY_INPUT_BUG
-        #   Both trigger REPLACE_MBRTOWC=1
+        #   (gl_MBRTOWC_EMPTY_INPUT passes natively on glibc 2.39)
+        #   That alone triggers REPLACE_MBRTOWC=1
         "@platforms//os:linux": [
-            checks.AC_SUBST("REPLACE_MBRTOWC", "1"),
+            checks.AC_SUBST("REPLACE_MBRTOWC", 1),
             checks.AC_DEFINE("MBRTOWC_IN_C_LOCALE_MAYBE_EILSEQ", "1"),
+            # gl_MBRTOWC_EMPTY_INPUT only guesses "no" for glibc when cross
+            # compiling; the native run on glibc 2.39 (Ubuntu CI) passes, so
+            # MBRTOWC_EMPTY_INPUT_BUG stays undefined there, as GNU leaves it.
         ],
-        # On macOS: all runtime checks pass → no bugs, no replacement needed
-        "//conditions:default": [],
+        # On native Windows (MSVC), the native run gives:
+        #   gl_cv_func_mbrtowc_retval=no             -> MBRTOWC_RETVAL_BUG
+        #   gl_cv_func_mbrtowc_stores_incomplete=yes -> MBRTOWC_STORES_INCOMPLETE_BUG
+        #   gl_cv_func_mbrtowc_empty_input=no        -> MBRTOWC_EMPTY_INPUT_BUG
+        #   gl_cv_func_mbrtowc_C_locale_sans_EILSEQ=yes, null_arg1=yes,
+        #   nul_retval="guessing yes" (no suitable locale)
+        # Each bug triggers REPLACE_MBRTOWC=1.
+        "@platforms//os:windows": [
+            checks.AC_SUBST("REPLACE_MBRTOWC", 1),
+            checks.AC_DEFINE("MBRTOWC_RETVAL_BUG", "1"),
+            checks.AC_DEFINE("MBRTOWC_STORES_INCOMPLETE_BUG", "1"),
+            checks.AC_DEFINE("MBRTOWC_EMPTY_INPUT_BUG", "1"),
+        ],
+        # On macOS: all runtime checks pass → no bugs, no replacement needed.
+        # The subst is still emitted so dependants (gl_FUNC_MBRLEN,
+        # gl_FUNC_MBSRTOWCS, ...) can condition on REPLACE_MBRTOWC everywhere.
+        "//conditions:default": [
+            checks.AC_SUBST("REPLACE_MBRTOWC", 0),
+        ],
     }),
     visibility = ["//visibility:public"],
     deps = [
@@ -41,8 +61,15 @@ autoconf(
 # Sets REPLACE_MBSTATE_T. On Linux/macOS this is 0 (mbstate_t works).
 autoconf(
     name = "gl_MBSTATE_T_BROKEN",
-    # REPLACE_MBSTATE_T=0 on Linux/macOS (both pass incomplete_state + sanitycheck)
-    # On Solaris 8 / AIX it would be 1
+    checks = [
+        # if test $gl_cv_func_mbrtowc_incomplete_state = yes         #    && test $gl_cv_func_mbrtowc_sanitycheck = yes; then :; else
+        #   REPLACE_MBSTATE_T=1
+        # Both AC_RUN_IFELSE probes pass (or guess yes) on glibc, macOS and
+        # native Windows; only AIX / Solaris 8 fail them. Emitted so that
+        # dependants (gl_FUNC_MBSINIT, gl_FUNC_WCSNRTOMBS, ...) can condition
+        # on REPLACE_MBSTATE_T.
+        checks.AC_SUBST("REPLACE_MBSTATE_T", 0),
+    ],
     visibility = ["//gnulib:__subpackages__"],
     deps = [
         ":gl_MBRTOWC_INCOMPLETE_STATE",
@@ -184,11 +211,14 @@ autoconf(
             "mbrtowc",
             includes = ["#include <wchar.h>"],
         ),
-        # AC_CHECK_FUNCS_ONCE([mbsinit]) - from gl_MBSTATE_T_BROKEN line 115
+        # AC_CHECK_FUNCS_ONCE([mbsinit]) - from gl_MBSTATE_T_BROKEN line 115.
+        # Only the config.h define; the HAVE_MBSINIT subst is owned by
+        # gl_FUNC_MBSINIT (mbsinit.m4) and otherwise keeps the
+        # gl_WCHAR_H_DEFAULTS value of 1 (on MSVC mbsinit is an inline
+        # function, so the link probe fails although the function is usable).
         checks.AC_CHECK_FUNC(
             "mbsinit",
             define = "HAVE_MBSINIT",
-            subst = True,
         ),
         # On macOS/Linux, mbrtowc is in libc, so MBRTOWC_LIB is empty
         checks.AC_SUBST("MBRTOWC_LIB", ""),
@@ -209,12 +239,24 @@ autoconf(
     ],
 )
 
+# AC_FUNC_MBRTOWC: gnulib's override of the autoconf macro (gl_cv_func_mbrtowc,
+# HAVE_MBRTOWC); the probe lives in //gnulib/macros/AC_FUNC_MBRTOWC.
+autoconf(
+    name = "AC_FUNC_MBRTOWC",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/macros/AC_FUNC_MBRTOWC",
+    ],
+)
+
 # mbrtowc — Package-level aggregator (matches package name).
 # No checks — just deps on all other targets (excluding *_DEFAULTS).
 autoconf(
     name = "mbrtowc",
     visibility = ["//visibility:public"],
     deps = [
+        ":AC_FUNC_MBRTOWC",
         ":gl_FUNC_MBRTOWC",
         ":gl_MBRTOWC_C_LOCALE",
         ":gl_MBRTOWC_EMPTY_INPUT",

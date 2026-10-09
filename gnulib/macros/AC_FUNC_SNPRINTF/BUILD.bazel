@@ -21,11 +21,14 @@ autoconf(
             "snprintf",
             name = "ac_cv_func_snprintf",
         ),
-        # Define HAVE_SNPRINTF if function exists
+        # AC_CHECK_FUNCS semantics: HAVE_SNPRINTF is defined to 1 when the
+        # probe links and left undefined otherwise (MSVC: UCRT inlines
+        # snprintf in <stdio.h>, so the probe reports it absent, as GNU does).
         checks.AC_DEFINE(
             "HAVE_SNPRINTF",
             condition = "ac_cv_func_snprintf",
-            if_true = "1",
+            if_false = None,
+            if_true = 1,
         ),
     ],
     visibility = ["//visibility:public"],

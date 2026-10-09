@@ -1,16 +1,17 @@
 /**
  * @brief Resolver tool for AC_C_RESTRICT keyword fallback chain.
  *
- * Reads the result JSON files from three compile checks (one per keyword
- * variant: restrict, __restrict__, __restrict) and writes a single result
- * JSON for the "restrict" define using the first keyword that compiled
+ * Reads the result JSON files from four compile checks (one per keyword
+ * variant: __restrict__, __restrict, _Restrict, restrict) and writes a single
+ * result JSON for the "restrict" define using the first keyword that compiled
  * successfully.
  *
- * Fallback order (matches GNU autoconf AC_C_RESTRICT):
- *   1. restrict      — if compiles, no #define needed (keyword is native)
- *   2. __restrict__  — if compiles, #define restrict __restrict__
- *   3. __restrict    — if compiles, #define restrict __restrict
- *   4. none          — #define restrict (empty, effectively removes it)
+ * Fallback order (GNU autoconf 2.72 AC_C_RESTRICT, lib/autoconf/c.m4):
+ *   1. __restrict__  — if compiles, #define restrict __restrict__
+ *   2. __restrict    — if compiles, #define restrict __restrict
+ *   3. _Restrict     — if compiles, #define restrict _Restrict
+ *   4. restrict      — if compiles, no #define needed (keyword is native)
+ *   5. none          — #define restrict (empty, effectively removes it)
  */
 
 #include <cstdlib>
@@ -78,6 +79,10 @@ struct RestrictResolverArgs {
      * (required) */
     std::string underscore_restrict_path{};
 
+    /** Path to the compile-check result JSON for "_Restrict" keyword
+     * (required) */
+    std::string capital_restrict_path{};
+
     /** Path to the output result JSON file (required) */
     std::string output_path{};
 
@@ -94,6 +99,8 @@ void print_usage(const char* program_name) {
                  "'__restrict__' keyword check (required)\n";
     std::cout << "  --_restrict <file>     Path to result JSON for "
                  "'__restrict' keyword check (required)\n";
+    std::cout << "  --_Restrict <file>     Path to result JSON for "
+                 "'_Restrict' keyword check (required)\n";
     std::cout << "  --output <file>        Path to output result JSON "
                  "(required)\n";
     std::cout << "  --help                 Show this help message\n";
@@ -159,6 +166,15 @@ std::optional<RestrictResolverArgs> parse_args(int argc, char* argv[]) {
                           << std::endl;
                 return std::nullopt;
             }
+        } else if (arg == "--_Restrict") {
+            if (i + 1 < expanded_argc) {
+                args.capital_restrict_path =
+                    std::string(expanded_argv_ptr[++i]);
+            } else {
+                std::cerr << "Error: --_Restrict requires a file path"
+                          << std::endl;
+                return std::nullopt;
+            }
         } else if (arg == "--output") {
             if (i + 1 < expanded_argc) {
                 args.output_path = std::string(expanded_argv_ptr[++i]);
@@ -184,6 +200,10 @@ std::optional<RestrictResolverArgs> parse_args(int argc, char* argv[]) {
     }
     if (args.underscore_restrict_path.empty()) {
         std::cerr << "Error: --_restrict is required" << std::endl;
+        return std::nullopt;
+    }
+    if (args.capital_restrict_path.empty()) {
+        std::cerr << "Error: --_Restrict is required" << std::endl;
         return std::nullopt;
     }
     if (args.output_path.empty()) {
@@ -251,7 +271,10 @@ int write_result(const std::string& path,
     }
 
     j["success"] = success;
-    j["type"] = "compile";
+    // AC_DEFINE semantics: the header generator emits a define for every
+    // successful "define" result, including an empty one; a "compile" result
+    // with an empty value would be rendered as `/* #undef restrict */`.
+    j["type"] = "define";
 
     std::ofstream out(path);
     if (!out.is_open()) {
@@ -266,30 +289,28 @@ int write_result(const std::string& path,
 /**
  * @brief Apply the AC_C_RESTRICT fallback chain.
  *
- * Reads the three compile-check results and writes the resolved restrict
- * define based on which keyword the compiler supports.
+ * Reads the four compile-check results and writes the resolved restrict
+ * define based on which keyword the compiler supports, in autoconf's order.
  *
  * @param args Parsed command-line arguments.
  * @return 0 on success, 1 on error.
  */
 int resolve_restrict(const RestrictResolverArgs& args) {
-    // Read the three compile check results.
-    auto restrict_ok = read_check_success(args.restrict_path);
+    // Read the four compile check results.
     auto restrict_dunder_ok = read_check_success(args.restrict_dunder_path);
     auto underscore_restrict_ok =
         read_check_success(args.underscore_restrict_path);
+    auto capital_restrict_ok = read_check_success(args.capital_restrict_path);
+    auto restrict_ok = read_check_success(args.restrict_path);
 
     if (!restrict_ok.has_value() || !restrict_dunder_ok.has_value() ||
-        !underscore_restrict_ok.has_value()) {
+        !underscore_restrict_ok.has_value() ||
+        !capital_restrict_ok.has_value()) {
         return 1;  // Error already printed.
     }
 
-    // Apply the fallback chain (matches GNU autoconf AC_C_RESTRICT order).
-    if (*restrict_ok) {
-        // Bare "restrict" keyword works — no #define needed.
-        return write_result(args.output_path, std::nullopt, true);
-    }
-
+    // Apply the fallback chain in GNU autoconf's order:
+    //   for ac_kw in __restrict__ __restrict _Restrict restrict
     if (*restrict_dunder_ok) {
         // __restrict__ works — #define restrict __restrict__
         return write_result(args.output_path, "__restrict__", true);
@@ -300,8 +321,20 @@ int resolve_restrict(const RestrictResolverArgs& args) {
         return write_result(args.output_path, "__restrict", true);
     }
 
-    // No keyword works — #define restrict /**/ (empty)
-    return write_result(args.output_path, std::string(""), false);
+    if (*capital_restrict_ok) {
+        // _Restrict works — #define restrict _Restrict
+        return write_result(args.output_path, "_Restrict", true);
+    }
+
+    if (*restrict_ok) {
+        // Bare "restrict" keyword works — no #define needed.
+        return write_result(args.output_path, std::nullopt, true);
+    }
+
+    // No keyword works — `AC_DEFINE([restrict], [])`, which autoheader renders
+    // as `#define restrict /**/`. The define is unquoted (see restrict.bzl), so
+    // the comment is passed as the literal value; cl.exe lands here.
+    return write_result(args.output_path, std::string("/**/"), true);
 }
 
 }  // namespace

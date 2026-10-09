@@ -24,7 +24,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-latest
+          # Pinned: SDK changes invalidate the macOS reference snapshots.
+          - os: macos-26
           - os: ubuntu-24.04
           - os: ubuntu-24.04-arm
           - os: windows-2022
@@ -52,15 +53,6 @@ jobs:
         run: |
           echo "common --keep_going" >> ./user.bazelrc
 
-      - name: Install Autoconf (Unix)
-        run: |
-          ./tools/test_deps/install_test_deps.sh
-        if: startswith(runner.os, 'Windows') != true
-      - name: Install Autoconf (Windows)
-        run: |
-          echo NOOP
-        if: startswith(runner.os, 'Windows')
-
       # Build and Test the code
       - name: Test (Unix)
         run: bazel ${BAZEL_STARTUP_FLAGS[@]} test //...
@@ -69,13 +61,37 @@ jobs:
         run: bazel $env:BAZEL_STARTUP_FLAGS test //...
         if: startswith(runner.os, 'Windows')
 
+      # Every comparison test leaves both sides, the diff, config.log and the
+      # configure environment in its undeclared outputs; keep them for review.
+      - name: Collect test outputs
+        if: failure()
+        shell: bash
+        run: |
+          testlogs="$(bazel ${BAZEL_STARTUP_FLAGS[@]} info bazel-testlogs)"
+          mkdir -p failed-test-outputs
+          find "$testlogs" -name test.xml | while read -r xml; do
+            if grep -q "<failure\|<error" "$xml"; then
+              dir="$(dirname "$xml")"
+              rel="${dir#"$testlogs"/}"
+              mkdir -p "failed-test-outputs/$rel"
+              cp -R "$dir"/. "failed-test-outputs/$rel/"
+            fi
+          done
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: failed-test-outputs-${{ github.job }}-${{ matrix.os }}
+          path: failed-test-outputs
+          if-no-files-found: ignore
+
   ci-path-mapping:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: macos-latest
+          # Pinned: SDK changes invalidate the macOS reference snapshots.
+          - os: macos-26
           - os: ubuntu-24.04
           - os: ubuntu-24.04-arm
     steps:
@@ -104,15 +120,6 @@ jobs:
           echo "common --keep_going" >> ./user.bazelrc
           echo "common --experimental_output_paths=strip" >> ./user.bazelrc
 
-      - name: Install Autoconf (Unix)
-        run: |
-          ./tools/test_deps/install_test_deps.sh
-        if: startswith(runner.os, 'Windows') != true
-      - name: Install Autoconf (Windows)
-        run: |
-          echo NOOP
-        if: startswith(runner.os, 'Windows')
-
       # Build and Test the code
       - name: Test (Unix)
         run: bazel ${BAZEL_STARTUP_FLAGS[@]} test //...
@@ -121,13 +128,36 @@ jobs:
         run: bazel $env:BAZEL_STARTUP_FLAGS test //...
         if: startswith(runner.os, 'Windows')
 
+      # Every comparison test leaves both sides, the diff, config.log and the
+      # configure environment in its undeclared outputs; keep them for review.
+      - name: Collect test outputs
+        if: failure()
+        shell: bash
+        run: |
+          testlogs="$(bazel ${BAZEL_STARTUP_FLAGS[@]} info bazel-testlogs)"
+          mkdir -p failed-test-outputs
+          find "$testlogs" -name test.xml | while read -r xml; do
+            if grep -q "<failure\|<error" "$xml"; then
+              dir="$(dirname "$xml")"
+              rel="${dir#"$testlogs"/}"
+              mkdir -p "failed-test-outputs/$rel"
+              cp -R "$dir"/. "failed-test-outputs/$rel/"
+            fi
+          done
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: failed-test-outputs-${{ github.job }}-${{ matrix.os }}
+          path: failed-test-outputs
+          if-no-files-found: ignore
+
   ci-integration-tests:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os:
-          - macos-latest
+          - macos-26
           - ubuntu-24.04
           - ubuntu-24.04-arm
           - windows-2022

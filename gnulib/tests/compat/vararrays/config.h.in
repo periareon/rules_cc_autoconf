@@ -1,2 +1,3 @@
 /* config.h.in */
 #undef HAVE_C_VARARRAYS
+#undef __STDC_NO_VLA__

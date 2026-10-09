@@ -41,9 +41,14 @@ autoconf(
         ),
     ] + gl_macros.GL_CHECK_NEXT_HEADERS(["wctype.h"]) + [
         # Note: HAVE_WINT_T is already provided by wint_t dependency
+
+        # M4 lines 82-105: the towlower probes only run when REPLACE_ISWCNTRL=0
+        # (on MSVC wint_t is too small, so REPLACE_ISWCNTRL=1 and towlower is
+        # never probed, leaving HAVE_TOWLOWER undefined).
         checks.AC_CHECK_FUNC(
             "towlower",
             define = "HAVE_TOWLOWER",
+            requires = ["REPLACE_ISWCNTRL==0"],
         ),
 
         # If towlower is not found, check for its declaration
@@ -52,6 +57,10 @@ autoconf(
             includes = [
                 "#include <wchar.h>",
                 "#include <wctype.h>",
+            ],
+            requires = [
+                "REPLACE_ISWCNTRL==0",
+                "!ac_cv_func_towlower",
             ],
         ),
 
@@ -115,10 +124,10 @@ int main(void) {
         ),
 
         # M4 lines 82-105: if REPLACE_ISWCNTRL=1 then REPLACE_TOWLOWER=1
-        # else check towlower function (exists on macOS/Linux → 0)
+        # else REPLACE_TOWLOWER=0 unless towlower is declared but missing (Minix).
         checks.AC_SUBST(
             "REPLACE_TOWLOWER",
-            condition = "REPLACE_ISWCNTRL",
+            condition = "REPLACE_ISWCNTRL==1 || (!ac_cv_func_towlower && ac_cv_have_decl_towlower)",
         ),
     ],
     visibility = ["//visibility:public"],
@@ -165,6 +174,19 @@ autoconf(
     visibility = ["//visibility:private"],
     deps = [
         ":gl_WCTYPE_H_DEFAULTS",
+    ],
+)
+
+# gl_WCTYPE_MODULE_INDICATOR([modulename]): expands gl_WCTYPE_H_REQUIRE_DEFAULTS
+# and sets GNULIB_<MODULE>; the per-module indicator itself is not modelled.
+# Deps-only; kept out of the umbrella because the defaults reach consumers via
+# the toolchain `defaults` attribute (see //gnulib/toolchain).
+autoconf(
+    name = "gl_WCTYPE_MODULE_INDICATOR",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_WCTYPE_H_REQUIRE_DEFAULTS",
     ],
 )
 

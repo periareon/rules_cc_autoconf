@@ -4,10 +4,13 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "atomic-cas",
+    name = "gl_ATOMIC_COMPARE_AND_SWAP",
     checks = [
-        # Equivalent to gl_ATOMIC_COMPARE_AND_SWAP macro from atomic-cas.m4
-        checks.AC_TRY_COMPILE(
+        # gl_ATOMIC_COMPARE_AND_SWAP: AC_LINK_IFELSE, not just a compile test.
+        # MSVC compiles the call as an implicit declaration (C4013) and only
+        # the link step reveals that __sync_val_compare_and_swap is missing.
+        checks.AC_TRY_LINK(
+            name = "gl_cv_builtin_sync_bool_compare_and_swap",
             code = """int cmpxchg (int* value, int comp_val, int new_val)
 {
     return __sync_val_compare_and_swap (value, comp_val, new_val);
@@ -17,9 +20,22 @@ int main(void) {
     int x = 0;
     return cmpxchg(&x, 0, 1);
 }""",
-            define = "HAVE_ATOMIC_COMPARE_AND_SWAP_GCC41",
             language = "c",
+        ),
+        checks.AC_DEFINE(
+            "HAVE_ATOMIC_COMPARE_AND_SWAP_GCC41",
+            condition = "gl_cv_builtin_sync_bool_compare_and_swap",
+            if_false = None,
+            if_true = 1,
         ),
     ],
     visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "atomic-cas",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_ATOMIC_COMPARE_AND_SWAP",
+    ],
 )

@@ -14,29 +14,124 @@ load("//autoconf:checks.bzl", "checks")
 # This cannot be fully translated to Bazel as it's meant to modify CFLAGS/CXXFLAGS
 # at configure time. In Bazel, warning flags are typically set in the toolchain
 # or build rules directly.
+# gl_COMPILER_OPTION_IF(OPTION, [IF-SUPPORTED], [IF-NOT-SUPPORTED], [PROGRAM]):
+# parametrised meta-macro (cache variable gl_cv_warn_<lang>_<option>, no define
+# or subst of its own); its instantiations are modelled by the callers below.
 autoconf(
-    name = "warnings",
+    name = "gl_COMPILER_OPTION_IF",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_UNKNOWN_WARNINGS_ARE_ERRORS_IMPL:
+#   gl_COMPILER_OPTION_IF([-Werror -Wunknown-warning-option], ...)
+# Only sets the shell variable gl_unknown_warnings_are_errors.
+autoconf(
+    name = "gl_UNKNOWN_WARNINGS_ARE_ERRORS_IMPL",
     checks = [
         checks.AC_CHECK_C_COMPILER_FLAG(
             "-Werror",
             define = "HAVE_WERROR",
         ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_COMPILER_OPTION_IF",
+    ],
+)
+
+# gl_UNKNOWN_WARNINGS_ARE_ERRORS: _AC_LANG_DISPATCH to the (C) / (C++) /
+# (Objective C) specialisations, which each run
+# gl_UNKNOWN_WARNINGS_ARE_ERRORS_IMPL inside AC_LANG_PUSH/POP.
+autoconf(
+    name = "gl_UNKNOWN_WARNINGS_ARE_ERRORS",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_UNKNOWN_WARNINGS_ARE_ERRORS_IMPL",
+    ],
+)
+
+# gl_WARN_ADD(OPTION, [VARIABLE = WARN_CFLAGS/WARN_CXXFLAGS], [PROGRAM]):
+#   AC_REQUIRE([gl_UNKNOWN_WARNINGS_ARE_ERRORS(<lang>)])
+#   gl_COMPILER_OPTION_IF([$1], [AS_VAR_APPEND(VARIABLE, [" $1"])])
+#   AC_SUBST([WARN_CFLAGS]) (when no VARIABLE is given)
+# The conformance configure.ac invokes gl_WARN_ADD without arguments, so
+# WARN_CFLAGS receives " " (the appended separator and an empty option).
+autoconf(
+    name = "gl_WARN_ADD",
+    checks = [
+        checks.AC_SUBST("WARN_CFLAGS", " "),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_COMPILER_OPTION_IF",
+        ":gl_UNKNOWN_WARNINGS_ARE_ERRORS",  # AC_REQUIRE([gl_UNKNOWN_WARNINGS_ARE_ERRORS(<lang>)])
+    ],
+)
+
+# gl_CC_INHIBIT_WARNINGS: gl_cv_cc_winhibit ('-w' or none, by comparing the
+# stderr line counts of a compile with and without -w), then
+# gl_WARN_ADD([-fno-analyzer], [GL_CFLAG_INHIBIT_WARNINGS]).
+autoconf(
+    name = "gl_CC_INHIBIT_WARNINGS",
+    checks = [
         checks.AC_CHECK_C_COMPILER_FLAG(
             "-w",
             define = "HAVE_W_INHIBIT",
         ),
-        # gl_CC_INHIBIT_WARNINGS / WARN_CFLAGS; golden expects these values
-        checks.AC_SUBST("GL_CXXFLAG_INHIBIT_WARNINGS", ""),
-        checks.AC_SUBST("WARN_CFLAGS", " "),
     ] + select({
-        # On Linux, also add -fno-analyzer
+        # gl_CC_INHIBIT_WARNINGS / gl_CXX_INHIBIT_WARNINGS: `-w` wherever a
+        # compiler exists, plus `-fno-analyzer` when the compiler accepts it
+        # (GCC on Linux). The C++ variant mirrors the C one.
         "@platforms//os:linux": [
             checks.AC_SUBST("GL_CFLAG_INHIBIT_WARNINGS", "-w -fno-analyzer"),
+        ],
+        # With MSVC, gl_cv_cc_winhibit/gl_cv_cxx_winhibit are 'none' (the
+        # stderr line-count comparison fails), so both variables are empty.
+        "@platforms//os:windows": [
+            checks.AC_SUBST("GL_CFLAG_INHIBIT_WARNINGS", ""),
         ],
         "//conditions:default": [
             checks.AC_SUBST("GL_CFLAG_INHIBIT_WARNINGS", "-w"),
         ],
-    }) + [
-    ],
+    }),
     visibility = ["//visibility:public"],
+    deps = [
+        ":gl_WARN_ADD",  # gl_WARN_ADD([-fno-analyzer], [GL_CFLAG_INHIBIT_WARNINGS])
+    ],
+)
+
+# gl_CXX_INHIBIT_WARNINGS: same as gl_CC_INHIBIT_WARNINGS for $CXX
+# (gl_cv_cxx_winhibit, GL_CXXFLAG_INHIBIT_WARNINGS).
+autoconf(
+    name = "gl_CXX_INHIBIT_WARNINGS",
+    checks = select({
+        "@platforms//os:linux": [
+            checks.AC_SUBST("GL_CXXFLAG_INHIBIT_WARNINGS", "-w -fno-analyzer"),
+        ],
+        "@platforms//os:windows": [
+            checks.AC_SUBST("GL_CXXFLAG_INHIBIT_WARNINGS", ""),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST("GL_CXXFLAG_INHIBIT_WARNINGS", "-w"),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_WARN_ADD",  # gl_WARN_ADD([-fno-analyzer], [GL_CXXFLAG_INHIBIT_WARNINGS])
+    ],
+)
+
+autoconf(
+    name = "warnings",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_CC_INHIBIT_WARNINGS",
+        ":gl_COMPILER_OPTION_IF",
+        ":gl_CXX_INHIBIT_WARNINGS",
+        ":gl_UNKNOWN_WARNINGS_ARE_ERRORS",
+        ":gl_UNKNOWN_WARNINGS_ARE_ERRORS_IMPL",
+        ":gl_WARN_ADD",
+    ],
 )

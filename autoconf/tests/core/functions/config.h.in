@@ -6,8 +6,8 @@
 /* Define to 1 if you have the `malloc' function. */
 #undef HAVE_MALLOC
 
-/* Define to 1 if you have the `printf' function. */
-#undef HAVE_PRINTF
+/* Define to 1 if you have the `puts' function. */
+#undef HAVE_PUTS
 
 /* Define to 1 if you have the `strlen' function. */
 #undef HAVE_STRLEN

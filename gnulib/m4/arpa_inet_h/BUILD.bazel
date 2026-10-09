@@ -21,7 +21,9 @@ autoconf(
         "//gnulib/m4/extensions",
         "//gnulib/m4/gnulib-common:gl_FEATURES_H",
         "//gnulib/m4/include_next",
-        "//gnulib/m4/sys_socket_h:gl_SYS_SOCKET_H",
+        # gl_PREREQ_SYS_H_WS2TCPIP (HAVE_WS2TCPIP_H); gl_ARPA_INET_H does not
+        # invoke gl_SYS_SOCKET_H / gl_PREREQ_SYS_H_SOCKET.
+        "//gnulib/m4/sys_socket_h:gl_PREREQ_SYS_H_WS2TCPIP",
     ],
 )
 

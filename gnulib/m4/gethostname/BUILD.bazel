@@ -16,13 +16,33 @@ autoconf(
     }),
     visibility = ["//visibility:public"],
     deps = [
+        # AC_CHECK_HEADERS_ONCE([sys/param.h]) / ([netdb.h]) - config.h defines
+        # only; the HAVE_SYS_PARAM_H / HAVE_NETDB_H substitutions belong to
+        # gl_UNISTD_H / gl_NETDB_H and keep their toolchain defaults here.
+        # AC_CHECK_HEADERS_ONCE([sys/param.h]): the shared config.h define.
         "//gnulib/macros/HAVE_SYS_PARAM_H",
+        ":gl_PREREQ_HOST_NAME_MAX_headers",
         # Deduplicate globally AC_CHECK_HEADERS_ONCE([sys/socket.h])
         "//gnulib/m4/socklen:gl_CHECK_SOCKET_HEADERS",
-        "//gnulib/m4/sys_socket_h:gl_PREREQ_SYS_H_WINSOCK2",
-        "//gnulib/m4/netdb_h",
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# AC_CHECK_HEADERS_ONCE([netdb.h]) from gl_PREREQ_HOST_NAME_MAX:
+# only the config.h defines (no substitution).
+autoconf(
+    name = "gl_PREREQ_HOST_NAME_MAX_headers",
+    checks = [
+        checks.AC_CHECK_HEADER(
+            "netdb.h",
+            define = "HAVE_NETDB_H",
+        ),
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/macros/HAVE_SYS_PARAM_H:ac_cv_header_sys_param_h",
     ],
 )
 
@@ -30,12 +50,19 @@ autoconf(
 autoconf(
     name = "gl_PREREQ_GETHOSTNAME",
     checks = [
-        # Standard header defines are provided by AC_CHECK_INCLUDES_DEFAULT dependency
-        # AC_CHECK_FUNCS([uname]) - line 107 (only if not Windows)
+        # if test "$gl_cv_w32_gethostname" != "yes"; then
+        #   AC_CHECK_FUNCS([uname])   (config.h define only; the HAVE_UNAME
+        #                              subst keeps the gl_SYS_UTSNAME_H_DEFAULTS value)
+        # fi
+        # gl_cv_w32_gethostname=yes is exactly GETHOSTNAME_LIB="-lws2_32".
+        # The probe is the shared //gnulib/m4/uname:AC_CHECK_FUNCS_uname: uname
+        # does not exist where gl_cv_w32_gethostname is yes, so the result is
+        # the same without gating on GETHOSTNAME_LIB.
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/uname",
+        ":gl_FUNC_GETHOSTNAME",
+        "//gnulib/m4/uname:AC_CHECK_FUNCS_uname",
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
@@ -55,9 +82,19 @@ autoconf(
             subst = True,
         ),
 
-        # On modern systems, gethostname is in libc, so GETHOSTNAME_LIB is empty
-        # On Windows, it might be in -lws2_32, but we don't handle that here
-        checks.AC_SUBST("GETHOSTNAME_LIB", ""),
+        # GETHOSTNAME_LIB=
+        # AC_CHECK_FUNCS([gethostname], , [
+        #   AC_CACHE_CHECK([for gethostname in winsock2.h and -lws2_32],
+        #     [gl_cv_w32_gethostname], link gethostname(NULL, 0) with -lws2_32)
+        #   if yes: GETHOSTNAME_LIB="-lws2_32"])
+        # On Unix gethostname is in libc ("" from the first search step); on
+        # native Windows it is only found in ws2_32 ("-lws2_32").
+        checks.AC_SEARCH_LIBS(
+            "gethostname",
+            ["ws2_32"],
+            name = "gl_cv_w32_gethostname",
+            subst = "GETHOSTNAME_LIB",
+        ),
 
         # Note: gl_PREREQ_HOST_NAME_MAX sets HAVE_SYS_PARAM_H subst variable
     ],
@@ -66,6 +103,8 @@ autoconf(
         # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
         # This sets HOST_NAME_MAX and checks for sys/param.h, sys/socket.h, netdb.h
         ":gl_PREREQ_HOST_NAME_MAX",
+        # gl_PREREQ_SYS_H_WINSOCK2 - line 15
+        "//gnulib/m4/sys_socket_h:gl_PREREQ_SYS_H_WINSOCK2",
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],

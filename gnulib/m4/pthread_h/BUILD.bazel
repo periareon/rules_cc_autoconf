@@ -14,10 +14,14 @@ gl_PTHREAD_H:
   - gl_PTHREAD_SPIN (sets HAVE_PTHREAD_SPIN_* and REPLACE_PTHREAD_SPIN_*)
   - AC_CACHE_CHECK for PTHREAD_CREATE_DETACHED, PTHREAD_MUTEX_RECURSIVE, PTHREAD_MUTEX_ROBUST, PTHREAD_PROCESS_SHARED
   - sets HAVE_*=0 if not found
+
+On mingw/windows with gl_threads_api = windows (the Bazel default on
+@platforms//os:windows, see threadlib), HAVE_PTHREAD_H is forced to 0 and
+gl_PTHREAD_SPIN sets REPLACE_PTHREAD_SPIN_*=1 instead of probing.
 """
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
-load("//autoconf:checks.bzl", "checks")
+load("//autoconf:checks.bzl", "checks", "utils")
 load("//gnulib:macros.bzl", gl_macros = "macros")
 
 # gl_PTHREAD_H_DEFAULTS - Default values for AC_SUBSTed shell variables
@@ -171,106 +175,203 @@ autoconf(
 # Provides:
 # - HAVE_PTHREAD_H (define + subst)
 # - HAVE_PTHREAD_T (define + subst, overrides default if check fails)
-# - HAVE_PTHREAD_SPINLOCK_T (subst, overrides default if type doesn't exist)
-# - HAVE_PTHREAD_SPIN_* (subst, set to 0 if HAVE_PTHREAD_SPINLOCK_T=0)
+# - HAVE_PTHREAD_SPINLOCK_T (define + subst, overrides default if type doesn't exist)
+# - HAVE_PTHREAD_SPIN_* / REPLACE_PTHREAD_SPIN_* (subst, gl_PTHREAD_SPIN logic)
 # - NEXT_PTHREAD_H, NEXT_AS_FIRST_DIRECTIVE_PTHREAD_H (subst)
 autoconf(
     name = "gl_PTHREAD_H_PART1",
     checks = gl_macros.GL_CHECK_NEXT_HEADERS(["pthread.h"]) + [
-
-        # HAVE_PTHREAD_H - use AC_DEFINE referencing cache var from threadlib
+        # AC_CHECK_HEADERS_ONCE([pthread.h]) (run by gl_CHECK_NEXT_HEADERS)
+        # defines HAVE_PTHREAD_H only when the header exists.
         checks.AC_DEFINE(
             "HAVE_PTHREAD_H",
             condition = "ac_cv_header_pthread_h",
+            if_false = None,
             if_true = 1,
         ),
-        checks.AC_SUBST("HAVE_PTHREAD_H", "1"),
-
-        # AC_CHECK_TYPES([pthread_t]) - macOS has pthread_t
-        checks.AC_CHECK_TYPE(
-            "pthread_t",
-            define = "HAVE_PTHREAD_T",
-            includes = ["#include <pthread.h>"],
-        ),
-        checks.AC_SUBST("HAVE_PTHREAD_T", "1"),
-
-        # AC_CHECK_TYPES([pthread_spinlock_t]) - macOS does NOT have pthread_spinlock_t
-        checks.AC_CHECK_TYPE(
-            "pthread_spinlock_t",
-            name = "ac_cv_type_pthread_spinlock_t",
-            includes = ["#include <pthread.h>"],
-        ),
     ] + select({
-        # On Linux: pthread_spinlock_t exists in glibc's pthread.h
-        "@platforms//os:linux": [
-            checks.AC_DEFINE("HAVE_PTHREAD_SPINLOCK_T", "1"),
-            checks.AC_SUBST("HAVE_PTHREAD_SPINLOCK_T", "1"),
+        # case "$host_os" in mingw* | windows*) && test $gl_threads_api = windows:
+        # HAVE_PTHREAD_H=0 even when a <pthread.h> (winpthreads) is present.
+        "@platforms//os:windows": [
+            checks.AC_SUBST("HAVE_PTHREAD_H", "0"),
         ],
-        # On macOS: pthread_spinlock_t doesn't exist
         "//conditions:default": [
             checks.AC_SUBST(
-                "HAVE_PTHREAD_SPINLOCK_T",
-                condition = "ac_cv_type_pthread_spinlock_t",
+                "HAVE_PTHREAD_H",
+                condition = "ac_cv_header_pthread_h",
                 if_false = "0",
                 if_true = "1",
             ),
         ],
     }) + [
-
-        # gl_PTHREAD_SPIN logic: if HAVE_PTHREAD_SPINLOCK_T=0, set HAVE_PTHREAD_SPIN_*=0
-        # On macOS, pthread_spinlock_t doesn't exist, so all spin functions are unavailable
+        # AC_CHECK_TYPES([pthread_t, pthread_spinlock_t], [], [],
+        #   [AC_INCLUDES_DEFAULT[ #if HAVE_PTHREAD_H #include <pthread.h> #endif]])
+        # HAVE_PTHREAD_T=0 / HAVE_PTHREAD_SPINLOCK_T=0 when the type is missing.
+        checks.AC_CHECK_TYPE(
+            "pthread_t",
+            define = "HAVE_PTHREAD_T",
+            includes = ["#include <pthread.h>"],
+        ),
         checks.AC_SUBST(
-            "HAVE_PTHREAD_SPIN_INIT",
+            "HAVE_PTHREAD_T",
+            condition = "ac_cv_type_pthread_t",
+            if_false = "0",
+            if_true = "1",
+        ),
+        checks.AC_CHECK_TYPE(
+            "pthread_spinlock_t",
+            define = "HAVE_PTHREAD_SPINLOCK_T",
+            includes = ["#include <pthread.h>"],
+        ),
+        checks.AC_SUBST(
+            "HAVE_PTHREAD_SPINLOCK_T",
             condition = "ac_cv_type_pthread_spinlock_t",
             if_false = "0",
             if_true = "1",
         ),
-        checks.AC_SUBST(
-            "HAVE_PTHREAD_SPIN_LOCK",
-            condition = "ac_cv_type_pthread_spinlock_t",
-            if_false = "0",
-            if_true = "1",
-        ),
-        checks.AC_SUBST(
-            "HAVE_PTHREAD_SPIN_TRYLOCK",
-            condition = "ac_cv_type_pthread_spinlock_t",
-            if_false = "0",
-            if_true = "1",
-        ),
-        checks.AC_SUBST(
-            "HAVE_PTHREAD_SPIN_UNLOCK",
-            condition = "ac_cv_type_pthread_spinlock_t",
-            if_false = "0",
-            if_true = "1",
-        ),
-        checks.AC_SUBST(
-            "HAVE_PTHREAD_SPIN_DESTROY",
-            condition = "ac_cv_type_pthread_spinlock_t",
-            if_false = "0",
-            if_true = "1",
-        ),
-    ],
+    ] + select({
+        # gl_PTHREAD_SPIN on mingw/windows with gl_threads_api = windows:
+        # gnulib's windows-spin implementation replaces the functions; the
+        # HAVE_PTHREAD_SPIN_* defaults (1) are left alone.
+        "@platforms//os:windows": [
+            checks.AC_SUBST("REPLACE_PTHREAD_SPIN_INIT", "1"),
+            checks.AC_SUBST("REPLACE_PTHREAD_SPIN_LOCK", "1"),
+            checks.AC_SUBST("REPLACE_PTHREAD_SPIN_TRYLOCK", "1"),
+            checks.AC_SUBST("REPLACE_PTHREAD_SPIN_UNLOCK", "1"),
+            checks.AC_SUBST("REPLACE_PTHREAD_SPIN_DESTROY", "1"),
+        ],
+        # gl_PTHREAD_SPIN elsewhere:
+        #   if test $HAVE_PTHREAD_H = 0 || test $HAVE_PTHREAD_SPINLOCK_T = 0:
+        #     HAVE_PTHREAD_SPIN_*=0
+        #   else AC_CACHE_CHECK([for pthread_spin_init]) (link test); when it
+        #     fails: HAVE_PTHREAD_SPIN_*=0 and REPLACE_PTHREAD_SPIN_*=1
+        "//conditions:default": [
+            checks.AC_TRY_LINK(
+                name = "gl_cv_func_pthread_spin_init_in_LIBMULTITHREAD",
+                code = utils.AC_LANG_PROGRAM(
+                    ["#include <pthread.h>"],
+                    [
+                        "pthread_spinlock_t lock;",
+                        "return pthread_spin_init (&lock, 0);",
+                    ],
+                ),
+                requires = [
+                    "ac_cv_header_pthread_h",
+                    "ac_cv_type_pthread_spinlock_t",
+                ],
+            ),
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_SPIN_INIT",
+                condition = "ac_cv_header_pthread_h && ac_cv_type_pthread_spinlock_t && gl_cv_func_pthread_spin_init_in_LIBMULTITHREAD",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_SPIN_LOCK",
+                condition = "ac_cv_header_pthread_h && ac_cv_type_pthread_spinlock_t && gl_cv_func_pthread_spin_init_in_LIBMULTITHREAD",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_SPIN_TRYLOCK",
+                condition = "ac_cv_header_pthread_h && ac_cv_type_pthread_spinlock_t && gl_cv_func_pthread_spin_init_in_LIBMULTITHREAD",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_SPIN_UNLOCK",
+                condition = "ac_cv_header_pthread_h && ac_cv_type_pthread_spinlock_t && gl_cv_func_pthread_spin_init_in_LIBMULTITHREAD",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_SPIN_DESTROY",
+                condition = "ac_cv_header_pthread_h && ac_cv_type_pthread_spinlock_t && gl_cv_func_pthread_spin_init_in_LIBMULTITHREAD",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_SPIN_INIT",
+                condition = "ac_cv_header_pthread_h && ac_cv_type_pthread_spinlock_t && !gl_cv_func_pthread_spin_init_in_LIBMULTITHREAD",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_SPIN_LOCK",
+                condition = "ac_cv_header_pthread_h && ac_cv_type_pthread_spinlock_t && !gl_cv_func_pthread_spin_init_in_LIBMULTITHREAD",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_SPIN_TRYLOCK",
+                condition = "ac_cv_header_pthread_h && ac_cv_type_pthread_spinlock_t && !gl_cv_func_pthread_spin_init_in_LIBMULTITHREAD",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_SPIN_UNLOCK",
+                condition = "ac_cv_header_pthread_h && ac_cv_type_pthread_spinlock_t && !gl_cv_func_pthread_spin_init_in_LIBMULTITHREAD",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_SPIN_DESTROY",
+                condition = "ac_cv_header_pthread_h && ac_cv_type_pthread_spinlock_t && !gl_cv_func_pthread_spin_init_in_LIBMULTITHREAD",
+                if_false = "0",
+                if_true = "1",
+            ),
+        ],
+    }),
     visibility = ["//gnulib:__subpackages__"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",  # For test compatibility
         "//gnulib/m4/extensions",
         "//gnulib/m4/include_next",
-        # gl_PTHREAD_H_PART1 only requires gl_PTHREADLIB (M4); not gl_STDTHREADLIB.
-        # gl_THREADLIB_BODY and gl_STDTHREADLIB_BODY needed to match golden (golden cannot be changed).
+        # AC_REQUIRE([gl_PTHREADLIB]). gl_THREADLIB_BODY because the m4 does
+        # AC_REQUIRE([gl_THREADLIB]) whenever threadlib.m4 is present (it
+        # always is); gl_STDTHREADLIB_BODY for the HAVE_THREADS_H template line.
         "//gnulib/m4/threadlib:gl_PTHREADLIB",
         "//gnulib/m4/threadlib:gl_STDTHREADLIB_BODY",
         "//gnulib/m4/threadlib:gl_THREADLIB_BODY",
     ],
 )
 
-# gl_PTHREAD_H - Full pthread.h checks including PTHREAD_MUTEX_ROBUST
+# gl_PTHREAD_H - Full pthread.h checks including the PTHREAD_* constants
 #
-# This adds the PTHREAD_MUTEX_ROBUST check on top of PART1.
+# AC_CACHE_CHECK([for PTHREAD_CREATE_DETACHED]) etc.: each is an
+# AC_COMPILE_IFELSE of `#include <pthread.h> int x = CONSTANT;`; when it
+# fails the corresponding HAVE_* subst becomes 0 (macOS lacks
+# PTHREAD_MUTEX_ROBUST, MSVC has no <pthread.h> at all).
 # Use this for modules that call gl_PTHREAD_H (not just gl_PTHREAD_SPIN).
 autoconf(
     name = "gl_PTHREAD_H",
     checks = [
-        # AC_CACHE_CHECK for PTHREAD_MUTEX_ROBUST - macOS does NOT have this constant
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_const_PTHREAD_CREATE_DETACHED",
+            code = """\
+#include <pthread.h>
+int x = PTHREAD_CREATE_DETACHED;
+""",
+        ),
+        checks.AC_SUBST(
+            "HAVE_PTHREAD_CREATE_DETACHED",
+            condition = "gl_cv_const_PTHREAD_CREATE_DETACHED",
+            if_false = "0",
+            if_true = "1",
+        ),
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_const_PTHREAD_MUTEX_RECURSIVE",
+            code = """\
+#include <pthread.h>
+int x = PTHREAD_MUTEX_RECURSIVE;
+""",
+        ),
+        checks.AC_SUBST(
+            "HAVE_PTHREAD_MUTEX_RECURSIVE",
+            condition = "gl_cv_const_PTHREAD_MUTEX_RECURSIVE",
+            if_false = "0",
+            if_true = "1",
+        ),
         checks.AC_TRY_COMPILE(
             name = "gl_cv_const_PTHREAD_MUTEX_ROBUST",
             code = """\
@@ -284,11 +385,35 @@ int x = PTHREAD_MUTEX_ROBUST;
             if_false = "0",
             if_true = "1",
         ),
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_const_PTHREAD_PROCESS_SHARED",
+            code = """\
+#include <pthread.h>
+int x = PTHREAD_PROCESS_SHARED;
+""",
+        ),
+        checks.AC_SUBST(
+            "HAVE_PTHREAD_PROCESS_SHARED",
+            condition = "gl_cv_const_PTHREAD_PROCESS_SHARED",
+            if_false = "0",
+            if_true = "1",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_PTHREAD_H_PART1",
     ],
+)
+
+# gl_PTHREAD_MODULE_INDICATOR([modulename])
+# Ensures defaults are expanded; sets GNULIB_<module> for the given module.
+# Deliberately not a dependency of :gl_PTHREAD_H_REQUIRE_DEFAULTS, so that the
+# HAVE_PTHREAD_* / REPLACE_PTHREAD_* defaults do not collide with the values
+# gl_PTHREAD_H_PART1 / gl_PTHREAD_H and the pthread-* modules set.
+autoconf(
+    name = "gl_PTHREAD_MODULE_INDICATOR",
+    checks = [],
+    visibility = ["//visibility:public"],
 )
 
 # Public pthread_h target
@@ -297,5 +422,6 @@ autoconf(
     visibility = ["//visibility:public"],
     deps = [
         ":gl_PTHREAD_H",
+        ":gl_PTHREAD_MODULE_INDICATOR",
     ],
 )

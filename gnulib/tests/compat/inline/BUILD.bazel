@@ -5,14 +5,12 @@ gnu_gnulib_diff_test_suite(
     bazel_autoconf_target = "//gnulib/m4/inline",
     config_h_in = "config.h.in",
     configure_ac = "configure.ac",
-    golden_config_h = select({
-        "@platforms//os:macos": "golden_config_macos.h.in",
-        "//conditions:default": "golden_config.h.in",
-    }),
-    golden_subst_h = select({
-        "@platforms//os:macos": "golden_subst_macos.h.in",
-        "//conditions:default": "golden_subst.h.in",
-    }),
+    known_divergences = {
+        # Upstream gl_INLINE also fails when __NO_INLINE__ is defined, i.e.
+        # whenever the compiler runs without optimisation. The port only tests
+        # the keyword so config.h does not flip between -c opt and -c fastbuild.
+        "HAVE_INLINE": "port ignores __NO_INLINE__ (optimisation level); see //gnulib/m4/inline",
+    },
     m4_files = ["@gnulib//:all_m4"],
     subst_h_in = "subst.h.in",
     test_c = "test_inline.c",

@@ -39,8 +39,8 @@ autoconf(
     checks = [
         # This should succeed because HAVE_STDIO_H is successful
         checks.AC_CHECK_FUNC(
-            "printf",
-            define = "HAVE_PRINTF",
+            "puts",
+            define = "HAVE_PUTS",
             requires = ["HAVE_STDIO_H"],
         ),
         # This should succeed because HAVE_STDLIB_H is successful

@@ -5,9 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_PAGEALIGN_ALLOC
 gl_PREREQ_PAGEALIGN_ALLOC
 
-# Account for global Bazel defaults
-HAVE_POSIX_MEMALIGN=1
-AC_SUBST([HAVE_POSIX_MEMALIGN])
-
 AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

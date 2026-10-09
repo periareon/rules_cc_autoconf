@@ -1,9 +1,33 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/pty.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
-load("//autoconf:checks.bzl", "checks")
+load("//autoconf:checks.bzl", "checks", "utils")
 
-# Define automake variable PTY_LIB to the library needed (if any)
+# The prologue shared by the forkpty/openpty declaration and signature probes.
+_PTY_PRELUDE = [
+    "/* <sys/types.h> is a prerequisite of <libutil.h> on FreeBSD 8.0.  */",
+    "#include <sys/types.h>",
+    "#if HAVE_PTY_H",
+    "# include <pty.h>",
+    "#endif",
+    "#if HAVE_UTIL_H",
+    "# include <util.h>",
+    "#endif",
+    "#if HAVE_LIBUTIL_H",
+    "# include <libutil.h>",
+    "#endif",
+    "#if HAVE_TERMIOS_H",
+    "# include <termios.h>",
+    "#endif",
+]
+
+_PTY_PRELUDE_DEFINES = [
+    "HAVE_PTY_H",
+    "HAVE_UTIL_H",
+    "HAVE_LIBUTIL_H",
+    "HAVE_TERMIOS_H",
+]
+
 autoconf(
     name = "gl_PTY_LIB",
     checks = [
@@ -18,134 +42,121 @@ autoconf(
 
 autoconf(
     name = "gl_FUNC_FORKPTY",
-    checks = select({
-        # On Linux: forkpty is in <pty.h>, function exists with correct signature
-        "@platforms//os:linux": [
-            checks.AC_CHECK_DECL(
-                "forkpty",
-                name = "ac_cv_have_decl_forkpty",
-                includes = [
-                    "#include <pty.h>",
-                    "#include <sys/types.h>",
-                    "#include <termios.h>",
-                ],
+    checks = [
+        # AC_CHECK_DECLS([forkpty],,, [[...]])
+        checks.AC_CHECK_DECL(
+            "forkpty",
+            name = "ac_cv_have_decl_forkpty",
+            compile_defines = _PTY_PRELUDE_DEFINES,
+            includes = _PTY_PRELUDE,
+        ),
+        checks.AC_DEFINE(
+            "HAVE_DECL_FORKPTY",
+            condition = "ac_cv_have_decl_forkpty",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # if test $ac_cv_have_decl_forkpty = yes; then
+        #   AC_CACHE_CHECK([for const-safe forkpty signature], [gl_cv_func_forkpty_const], ...)
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_func_forkpty_const",
+            code = utils.AC_LANG_PROGRAM(
+                _PTY_PRELUDE,
+                "int forkpty (int *, char *, struct termios const *, struct winsize const *);",
             ),
-            checks.AC_DEFINE(
-                "HAVE_FORKPTY",
-                condition = "ac_cv_have_decl_forkpty",
-                if_false = 0,
-                if_true = 1,
-                subst = True,
-            ),
-            checks.AC_DEFINE(
-                "HAVE_DECL_FORKPTY",
-                condition = "ac_cv_have_decl_forkpty",
-                if_false = 0,
-                if_true = 1,
-            ),
-            # On Linux, forkpty has correct signature: no replacement needed
-            checks.AC_SUBST("REPLACE_FORKPTY", 0),
-        ],
-        # On macOS: forkpty is in <util.h>, exists but not const-safe
-        "//conditions:default": [
-            checks.AC_CHECK_DECL(
-                "forkpty",
-                name = "ac_cv_have_decl_forkpty",
-                includes = [
-                    "#include <sys/types.h>",
-                    "#include <termios.h>",
-                    "#include <util.h>",
-                ],
-            ),
-            checks.AC_DEFINE(
-                "HAVE_FORKPTY",
-                condition = "ac_cv_have_decl_forkpty",
-                if_false = 0,
-                if_true = 1,
-                subst = True,
-            ),
-            checks.AC_DEFINE(
-                "HAVE_DECL_FORKPTY",
-                condition = "ac_cv_have_decl_forkpty",
-                if_false = 0,
-                if_true = 1,
-            ),
-            # On macOS, forkpty is not const-safe: needs replacement
-            checks.AC_SUBST("REPLACE_FORKPTY", 1),
-        ],
-    }),
+            compile_defines = _PTY_PRELUDE_DEFINES,
+            language = "c",
+            requires = ["ac_cv_have_decl_forkpty"],
+        ),
+        #   if test $gl_cv_func_forkpty_const != yes; then REPLACE_FORKPTY=1
+        checks.AC_SUBST(
+            "REPLACE_FORKPTY",
+            condition = "ac_cv_have_decl_forkpty && !gl_cv_func_forkpty_const",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # else HAVE_FORKPTY=0 fi
+        # AC_DEFINE_UNQUOTED([HAVE_FORKPTY], [$HAVE_FORKPTY])
+        checks.AC_DEFINE(
+            "HAVE_FORKPTY",
+            condition = "ac_cv_have_decl_forkpty",
+            if_false = 0,
+            if_true = 1,
+            subst = True,
+        ),
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_PTY_LIB",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/pty_h",
+        "//gnulib/m4/termios_h:HAVE_TERMIOS_H",
     ],
 )
 
 autoconf(
     name = "gl_FUNC_OPENPTY",
-    checks = select({
-        # On Linux: openpty is in <pty.h>, function exists with correct signature
-        "@platforms//os:linux": [
-            checks.AC_CHECK_DECL(
-                "openpty",
-                name = "ac_cv_have_decl_openpty",
-                includes = [
-                    "#include <pty.h>",
-                    "#include <sys/types.h>",
-                    "#include <termios.h>",
-                ],
+    checks = [
+        # AC_CHECK_DECLS([openpty],,, [[...]])
+        checks.AC_CHECK_DECL(
+            "openpty",
+            name = "ac_cv_have_decl_openpty",
+            compile_defines = _PTY_PRELUDE_DEFINES,
+            includes = _PTY_PRELUDE,
+        ),
+        checks.AC_DEFINE(
+            "HAVE_DECL_OPENPTY",
+            condition = "ac_cv_have_decl_openpty",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # if test $ac_cv_have_decl_openpty = yes; then
+        #   AC_DEFINE([HAVE_OPENPTY], [1], ...)
+        checks.AC_DEFINE(
+            "HAVE_OPENPTY",
+            condition = "ac_cv_have_decl_openpty",
+            if_false = None,
+            if_true = 1,
+        ),
+        #   AC_CACHE_CHECK([for const-safe openpty signature], [gl_cv_func_openpty_const], ...)
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_func_openpty_const",
+            code = utils.AC_LANG_PROGRAM(
+                _PTY_PRELUDE,
+                "int openpty (int *, int *, char *, struct termios const *, struct winsize const *);",
             ),
-            checks.AC_DEFINE(
-                "HAVE_OPENPTY",
-                condition = "ac_cv_have_decl_openpty",
-                if_false = 0,
-                if_true = 1,
-                subst = True,
-            ),
-            checks.AC_DEFINE(
-                "HAVE_DECL_OPENPTY",
-                condition = "ac_cv_have_decl_openpty",
-                if_false = 0,
-                if_true = 1,
-            ),
-            # On Linux, openpty has correct signature: no replacement needed
-            checks.AC_SUBST("REPLACE_OPENPTY", 0),
-        ],
-        # On macOS: openpty is in <util.h>, exists but not const-safe
-        "//conditions:default": [
-            checks.AC_CHECK_DECL(
-                "openpty",
-                name = "ac_cv_have_decl_openpty",
-                includes = [
-                    "#include <sys/types.h>",
-                    "#include <termios.h>",
-                    "#include <util.h>",
-                ],
-            ),
-            checks.AC_DEFINE(
-                "HAVE_OPENPTY",
-                condition = "ac_cv_have_decl_openpty",
-                if_false = 0,
-                if_true = 1,
-                subst = True,
-            ),
-            checks.AC_DEFINE(
-                "HAVE_DECL_OPENPTY",
-                condition = "ac_cv_have_decl_openpty",
-                if_false = 0,
-                if_true = 1,
-            ),
-            # On macOS, openpty is not const-safe: needs replacement
-            checks.AC_SUBST("REPLACE_OPENPTY", 1),
-        ],
-    }),
+            compile_defines = _PTY_PRELUDE_DEFINES,
+            language = "c",
+            requires = ["ac_cv_have_decl_openpty"],
+        ),
+        #   if test $gl_cv_func_openpty_const != yes; then REPLACE_OPENPTY=1
+        checks.AC_SUBST(
+            "REPLACE_OPENPTY",
+            condition = "ac_cv_have_decl_openpty && !gl_cv_func_openpty_const",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # else
+        #   HAVE_OPENPTY=0
+        #   gl_CHECK_FUNCS_ANDROID([posix_openpt], [[#include <stdlib.h>]])
+        # fi
+        checks.AC_SUBST(
+            "HAVE_OPENPTY",
+            condition = "ac_cv_have_decl_openpty",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # The posix_openpt probe and its HAVE_POSIX_OPENPT define have one
+        # home, shared with gl_FUNC_POSIX_OPENPT (see deps).
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_PTY_LIB",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/extensions",
+        "//gnulib/m4/posix_openpt:gl_CHECK_FUNCS_ANDROID_posix_openpt",
         "//gnulib/m4/pty_h",
+        "//gnulib/m4/termios_h:HAVE_TERMIOS_H",
     ],
 )
 

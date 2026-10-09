@@ -15,24 +15,94 @@ autoconf(
             if_false = "0",
             if_true = "1",
         ),
-        # BROKEN_THRD_START_T - only broken on AIX 7.1-7.2, 0 elsewhere
-        # AIX defines thrd_start_t as 'void * (*) (void *)' instead of 'int (*) (void *)'
-        checks.AC_SUBST("BROKEN_THRD_START_T", "0"),
-        # BROKEN_THRD_JOIN - only broken on AIX 7.3.1, 0 elsewhere
+        # AC_CACHE_CHECK([whether thrd_start_t is correct]) - only when
+        # HAVE_THREADS_H = 1. AIX 7.1-7.2 define thrd_start_t as
+        # 'void * (*) (void *)' instead of 'int (*) (void *)'.
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_thrd_start_t_correct",
+            code = """\
+#include <threads.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern void foo (thrd_start_t);
+extern void foo (int (*) (void *));
+#ifdef __cplusplus
+}
+#endif
+
+int main(void) {
+    return 0;
+}
+""",
+            requires = ["ac_cv_header_threads_h"],
+        ),
+        checks.AC_SUBST(
+            "BROKEN_THRD_START_T",
+            condition = "ac_cv_header_threads_h && !gl_cv_thrd_start_t_correct",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # BROKEN_THRD_JOIN - AC_RUN_IFELSE([whether thrd_join works]); the
+        # cross-compile guess is "yes" everywhere except AIX 7.3.1.
         checks.AC_SUBST("BROKEN_THRD_JOIN", "0"),
-        # HAVE_THREAD_LOCAL - supported on macOS and Linux with modern compilers
-        # (GCC 4.9+, Clang 3.3+)
-        checks.AC_SUBST("HAVE_THREAD_LOCAL", "1"),
+        # AC_CACHE_CHECK([whether _Thread_local works]) - AC_COMPILE_IFELSE with
+        # the gl_THREAD_LOCAL_DEFINITION prologue (GCC/Clang: __thread,
+        # MSVC: __declspec (thread)).
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_thread_local_works",
+            code = """\
+/* The _Thread_local keyword of C11.  */
+#ifndef _Thread_local
+# if defined __GNUC__ || defined __CC_ARM || defined __xlC__ || defined __SUNPRO_C
+#  define _Thread_local __thread
+# elif defined _MSC_VER
+#  define _Thread_local __declspec (thread)
+# endif
+#endif
+_Thread_local int x;
+
+int main(void) {
+    x = 42;
+    return 0;
+}
+""",
+        ),
+        checks.AC_SUBST(
+            "HAVE_THREAD_LOCAL",
+            condition = "gl_cv_thread_local_works",
+            if_false = "0",
+            if_true = "1",
+        ),
         # LIBTHREADLOCAL - empty on macOS/Linux, only -lpthread on AIX
         checks.AC_SUBST("LIBTHREADLOCAL", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//autoconf/macros/AC_CANONICAL_HOST",
+        ":gl_THREAD_LOCAL_DEFINITION",  # prologue of the _Thread_local test program
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
         "//gnulib/m4/extensions",
-        "//gnulib/m4/include_next",  # Required for INCLUDE_NEXT variables
-        "//gnulib/m4/threadlib",
+        "//gnulib/m4/include_next",  # gl_CHECK_NEXT_HEADERS([threads.h])
+        "//gnulib/m4/threadlib",  # AC_REQUIRE([gl_STDTHREADLIB])
     ],
+)
+
+# gl_THREAD_LOCAL_DEFINITION - m4 lines 165-180: expands to the C prologue that
+# defines _Thread_local for pre-C11 compilers (inlined verbatim into the
+# gl_cv_thread_local_works program above); it performs no checks itself.
+autoconf(
+    name = "gl_THREAD_LOCAL_DEFINITION",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_THREADS_MODULE_INDICATOR([modulename]): gl_THREADS_H_REQUIRE_DEFAULTS (the
+# defaults are supplied through the toolchain's :defaults target) and
+# GNULIB_<module>=1 for the named module; no checks of its own.
+autoconf(
+    name = "gl_THREADS_MODULE_INDICATOR",
+    checks = [],
+    visibility = ["//visibility:public"],
 )
 
 autoconf(
@@ -98,5 +168,7 @@ autoconf(
     visibility = ["//visibility:public"],
     deps = [
         ":gl_THREADS_H",
+        ":gl_THREADS_MODULE_INDICATOR",
+        ":gl_THREAD_LOCAL_DEFINITION",
     ],
 )

@@ -1,3 +1,0 @@
-/* config.h.in */
-#define HAVE_MEMALIGN 1
-/* #undef REPLACE_MEMALIGN */

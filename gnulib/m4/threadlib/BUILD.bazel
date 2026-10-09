@@ -12,6 +12,7 @@ autoconf(
         ),
 
         # Upstream AC_LINK_IFELSE for pthread API detection (with proper includes).
+        # Only attempted when <pthread.h> exists: AS_IF([test "$gl_have_pthread_h" = yes]).
         checks.AC_TRY_LINK(
             name = "_gl_pthread_api_yes",
             code = """\
@@ -23,10 +24,16 @@ int main(void) {
 }
 """,
             language = "c",
+            requires = ["ac_cv_header_pthread_h"],
         ),
+
+        # AC_DEFINE([HAVE_PTHREAD_API]) only runs inside
+        # AS_IF([test $gl_pthread_api = yes]); otherwise the macro stays
+        # undefined (not 0).
         checks.AC_DEFINE(
             "HAVE_PTHREAD_API",
             condition = "_gl_pthread_api_yes",
+            if_false = None,
             if_true = 1,
         ),
 
@@ -54,6 +61,7 @@ int main(void) {
     ],
     visibility = ["//visibility:public"],
     deps = [
+        ":gl_ANYTHREADLIB_EARLY",  # AC_REQUIRE([gl_ANYTHREADLIB_EARLY])
         "//autoconf/macros/AC_CANONICAL_HOST",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
@@ -64,35 +72,41 @@ autoconf(
     checks = [],
     visibility = ["//visibility:public"],
     deps = [
-        ":gl_PTHREADLIB_BODY",
+        ":gl_ANYTHREADLIB_EARLY",  # AC_REQUIRE([gl_ANYTHREADLIB_EARLY])
+        ":gl_PTHREADLIB_BODY",  # gl_PTHREADLIB_BODY
     ],
 )
 
 autoconf(
     name = "gl_WEAK_SYMBOLS",
-    checks = [
-        # AC_RUN_IFELSE test for weak symbols is not portable to cross-compilation
-        # On most ELF platforms (Linux, etc.), weak symbols are supported
-        # On Windows (mingw, cygwin), weak symbols are not supported
-        checks.AC_TRY_LINK(
-            name = "gl_cv_have_weak_symbols",
-            code = """\
+    checks = select({
+        # AS_CASE([$host_os], [cygwin* | mingw* | windows*], ...): upstream
+        # forces gl_cv_have_weak="guessing no" without probing, because
+        # programs using weak pthread_in_use() references crash at runtime.
+        "@platforms//os:windows": [],
+        "//conditions:default": [
+            # AC_RUN_IFELSE test for weak symbols is not portable to cross-compilation
+            # On most ELF platforms (Linux, etc.), weak symbols are supported
+            checks.AC_TRY_LINK(
+                name = "gl_cv_have_weak_symbols",
+                code = """\
 extern void weakfunc(void) __attribute__((weak));
 int main(void) {
     if (weakfunc != (void*)0) weakfunc();
     return 0;
 }
 """,
-            language = "c",
-        ),
+                language = "c",
+            ),
 
-        # Use requires pattern to ensure undef (not 0) when not found
-        checks.AC_DEFINE(
-            "HAVE_WEAK_SYMBOLS",
-            "1",
-            requires = ["gl_cv_have_weak_symbols==1"],
-        ),
-    ],
+            # Use requires pattern to ensure undef (not 0) when not found
+            checks.AC_DEFINE(
+                "HAVE_WEAK_SYMBOLS",
+                "1",
+                requires = ["gl_cv_have_weak_symbols==1"],
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CANONICAL_HOST",
@@ -197,14 +211,25 @@ autoconf(
 # HAVE_THRD_CREATE lives here (not in gl_STDTHREADLIB_BODY) so that targets
 # that need only the threads.h check (e.g. pthread_h via gl_PTHREAD_H_PART1)
 # can depend on gl_STDTHREADLIB_BODY only and not get the C11 define.
+#
+# Upstream only runs gl_CHECK_FUNCS_ANDROID([thrd_create]) in the non-mingw
+# branch of AS_CASE([$host_os]); on mingw/windows it just sets LIBSTDTHREAD=
+# and HAVE_THRD_CREATE stays undefined (MSVC's UCRT would otherwise link it).
+# The same unconditional check target is shared with gl_FUNC_THRD_CREATE so
+# that both ports agree on the single HAVE_THRD_CREATE result.
 autoconf(
     name = "gl_STDTHREADLIB",
     checks = [],
     visibility = ["//visibility:public"],
     deps = [
-        ":gl_STDTHREADLIB_BODY",
-        "//gnulib/m4/thrd:HAVE_THRD_CREATE",
-    ],
+        ":gl_ANYTHREADLIB_EARLY",  # AC_REQUIRE([gl_ANYTHREADLIB_EARLY])
+        ":gl_STDTHREADLIB_BODY",  # gl_STDTHREADLIB_BODY
+    ] + select({
+        "@platforms//os:windows": [],
+        "//conditions:default": [
+            "//gnulib/m4/thrd:HAVE_THRD_CREATE",
+        ],
+    }),
 )
 
 # Adds CPPFLAGS like -D_THREAD_SAFE or -D_REENTRANT if needed
@@ -231,13 +256,25 @@ autoconf(
     visibility = ["//visibility:public"],
 )
 
-# Includes gl_DISABLE_THREADS because the threadlib test's configure.ac calls it
+# gl_AVOID_WINPTHREAD - m4 lines 609-611: m4_divert_text([INIT_PREPARE],
+# [gl_use_winpthreads_default=no]); it only matters for mingw builds that ship
+# winpthreads, so there is nothing to do here.
+autoconf(
+    name = "gl_AVOID_WINPTHREAD",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# Umbrella over the macros of threadlib.m4.  gl_DISABLE_THREADS is deliberately
+# left out: it is an opt-in macro (AVOID_ANY_THREADS) that would change the
+# result for every dependant (lock, thread, cond, ...) that expects threads to
+# be enabled; depend on :gl_DISABLE_THREADS explicitly when needed.
 autoconf(
     name = "threadlib",
-    checks = [],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_ANYTHREADLIB_EARLY",
+        ":gl_AVOID_WINPTHREAD",
         ":gl_PTHREADLIB",
         ":gl_PTHREADLIB_BODY",
         ":gl_STDTHREADLIB",

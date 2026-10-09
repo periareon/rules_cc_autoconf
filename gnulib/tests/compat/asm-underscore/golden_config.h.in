@@ -1,3 +1,0 @@
-/* config.h.in */
-/* #undef ASM_SYMBOL_PREFIX */
-#define USER_LABEL_PREFIX 

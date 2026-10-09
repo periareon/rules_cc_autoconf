@@ -1,22 +1,42 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/close.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "close",
+    name = "gl_FUNC_CLOSE",
     checks = [
-        # gl_FUNC_CLOSE macro from close.m4 sets REPLACE_CLOSE based on various
-        # conditions. No direct checks needed.
-
-        # Note: close expects @HAVE_SYS_SOCKET_H@ to remain unreplaced in subst.h
+        # gl_FUNC_CLOSE macro from close.m4 sets REPLACE_CLOSE=1 when
+        # - HAVE_MSVC_INVALID_PARAMETER_HANDLER = 1 (gl_MSVC_INVAL), or
+        # - UNISTD_H_HAVE_WINSOCK2_H = 1 (gl_PREREQ_SYS_H_WINSOCK2), or
+        # - otherwise gl_TEST_FCHDIR finds HAVE_FCHDIR = 0.
+        # The fchdir probe only lowers the HAVE_FCHDIR subst when the two
+        # earlier conditions are false (on Windows they are true, so
+        # HAVE_FCHDIR keeps its gl_UNISTD_H_DEFAULTS value); elsewhere fchdir
+        # exists, so the probe result equals the default anyway.
+        checks.AC_SUBST(
+            "REPLACE_CLOSE",
+            condition = "ac_cv_func__set_invalid_parameter_handler || UNISTD_H_HAVE_WINSOCK2_H==1 || !ac_cv_func_fchdir",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/msvc-inval",
+        "//gnulib/m4/msvc-inval",  # AC_REQUIRE([gl_MSVC_INVAL])
         # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
-        "//gnulib/m4/fchdir:gl_FUNC_FCHDIR_FOR_CLOSE",
-        "//gnulib/m4/sys_socket_h:gl_SYS_SOCKET_H",
+        "//gnulib/m4/fchdir:AC_CHECK_FUNCS_ONCE_fchdir",
+        # gl_PREREQ_SYS_H_WINSOCK2 (UNISTD_H_HAVE_WINSOCK2_H). gl_PREREQ_SYS_H_SOCKET
+        # is never reached from here, so HAVE_SYS_SOCKET_H stays a config.h
+        # define (AC_CHECK_HEADERS_ONCE) and is not substituted.
+        "//gnulib/m4/sys_socket_h:gl_PREREQ_SYS_H_WINSOCK2",
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "close",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_CLOSE",
     ],
 )

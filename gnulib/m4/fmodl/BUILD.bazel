@@ -1,31 +1,82 @@
-"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/fmodl.m4"""
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/fmodl.m4
+
+gl_FUNC_FMODL:
+- AC_REQUIRE([gl_MATH_H_DEFAULTS])
+- AC_REQUIRE([gl_LONG_DOUBLE_VS_DOUBLE])
+- AC_REQUIRE([gl_FUNC_FMOD])
+- AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+- AC_CHECK_DECL([fmodl], [ac_cv_have_decl_fmodl=yes], [ac_cv_have_decl_fmodl=no], [[#include <math.h>]])
+- AC_CHECK_FUNCS([fmodl]) with LIBS="$LIBS $FMOD_LIBM"
+- if found: REPLACE_FMODL=1 when not declared
+- else: HAVE_FMODL=0; AC_CHECK_DECLS([fmodl], [REPLACE_FMODL=1], , [[#include <math.h>]])
+- AC_SUBST([FMODL_LIBM])
+"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "fmodl",
+    name = "gl_FUNC_FMODL",
     checks = [
+        # m4 line 18: AC_CHECK_DECL([fmodl], ..., [[#include <math.h>]])
+        # Plain AC_CHECK_DECL: cache variable only.
+        checks.AC_CHECK_DECL(
+            "fmodl",
+            includes = ["#include <math.h>"],
+        ),
+        # m4 line 24: AC_CHECK_FUNCS([fmodl])
+        # On MSVC fmodl is an inline in <math.h>, so the plain link probe fails
+        # (as in GNU's config.log) even though the function is declared.
         checks.AC_CHECK_FUNC(
             "fmodl",
             define = "HAVE_FMODL",
         ),
-        checks.AC_CHECK_DECL(
-            "fmodl",
-            define = "HAVE_DECL_FMODL",
-            includes = ["#include <math.h>"],
+        # m4 line 32: HAVE_FMODL=0 when the function was not found
+        checks.AC_SUBST(
+            "HAVE_FMODL",
+            condition = "ac_cv_func_fmodl",
+            if_false = 0,
+            if_true = 1,
         ),
+        # m4 line 33: AC_CHECK_DECLS([fmodl], [REPLACE_FMODL=1], , [[#include <math.h>]])
+        # only in the "not found" branch; AC_CHECK_DECLS defines HAVE_DECL_FMODL to 1/0
+        # (the cached ac_cv_have_decl_fmodl result from line 18 is reused).
+        checks.AC_DEFINE(
+            "HAVE_DECL_FMODL",
+            condition = "ac_cv_have_decl_fmodl",
+            if_false = 0,
+            if_true = 1,
+            requires = ["!ac_cv_func_fmodl"],
+        ),
+        # m4 line 29/33: REPLACE_FMODL=1 when fmodl exists but is not declared,
+        # or when it is only declared.
+        checks.AC_SUBST(
+            "REPLACE_FMODL",
+            condition = "(ac_cv_func_fmodl && !ac_cv_have_decl_fmodl) || (!ac_cv_func_fmodl && ac_cv_have_decl_fmodl)",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # m4 line 35-66: FMODL_LIBM is FMOD_LIBM / FABSL+FREXPL+TRUNCL+LDEXPL+ISNANL libs (all empty here)
         checks.AC_SUBST("FMODL_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
-        "//gnulib/m4/extensions",
-        "//gnulib/m4/fabsl",
-        "//gnulib/m4/fmod",
-        "//gnulib/m4/frexpl",
-        "//gnulib/m4/isnanl",
-        "//gnulib/m4/ldexpl",
-        "//gnulib/m4/truncl",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+        "//gnulib/m4/fabsl",  # AC_REQUIRE([gl_FUNC_FABSL])
+        "//gnulib/m4/fmod",  # AC_REQUIRE([gl_FUNC_FMOD])
+        "//gnulib/m4/frexpl",  # AC_REQUIRE([gl_FUNC_FREXPL])
+        "//gnulib/m4/isnanl",  # AC_REQUIRE([gl_FUNC_ISNANL])
+        "//gnulib/m4/ldexpl",  # AC_REQUIRE([gl_FUNC_LDEXPL])
+        "//gnulib/m4/math_h:long-double-vs-double",  # AC_REQUIRE([gl_LONG_DOUBLE_VS_DOUBLE])
+        "//gnulib/m4/truncl",  # AC_REQUIRE([gl_FUNC_TRUNCL])
+    ],
+)
+
+autoconf(
+    name = "fmodl",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_FMODL",
     ],
 )

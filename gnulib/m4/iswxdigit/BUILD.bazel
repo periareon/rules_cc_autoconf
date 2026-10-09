@@ -1,21 +1,45 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/iswxdigit.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "iswxdigit",
+    name = "gl_FUNC_ISWXDIGIT",
     checks = [
         # Equivalent to gl_FUNC_ISWXDIGIT macro from iswxdigit.m4
-        # Note: Full implementation includes runtime locale-based checks
-        # that are not easily replicable in Bazel
+        # if test $HAVE_ISWCNTRL = 0 || test $REPLACE_ISWCNTRL = 1; then
+        #   REPLACE_ISWXDIGIT="$REPLACE_ISWCNTRL"
+        # else
+        #   AC_RUN_IFELSE locale-based check (passes on Linux/macOS, so
+        #   REPLACE_ISWXDIGIT keeps the gl_WCTYPE_H_DEFAULTS value of 0)
+        # fi
+        # On native Windows wint_t is too small, so REPLACE_ISWCNTRL=1 and the
+        # first branch applies.
+        checks.AC_SUBST(
+            "REPLACE_ISWXDIGIT",
+            condition = "REPLACE_ISWCNTRL==1",
+            if_false = 0,
+            if_true = 1,
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
-        "//gnulib/m4/codeset:AM_LANGINFO_CODESET",
-        "//gnulib/m4/locale-en",
-        "//gnulib/m4/locale-ja",
-        "//gnulib/m4/locale-zh",
-        "//gnulib/m4/wctype_h",
+        "//gnulib/m4/locale-en:gt_LOCALE_EN_UTF8",  # AC_REQUIRE([gt_LOCALE_EN_UTF8])
+        "//gnulib/m4/locale-ja:gt_LOCALE_JA",  # AC_REQUIRE([gt_LOCALE_JA])
+        "//gnulib/m4/locale-zh:gt_LOCALE_ZH_CN",  # AC_REQUIRE([gt_LOCALE_ZH_CN])
+        "//gnulib/m4/wctype_h",  # AC_REQUIRE([gl_WCTYPE_H_DEFAULTS])
+        "//gnulib/m4/wctype_h:gl_WCTYPE_H",  # AC_REQUIRE([gl_WCTYPE_H])
+    ],
+)
+
+# Umbrella target kept for existing dependants.
+autoconf(
+    name = "iswxdigit",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_ISWXDIGIT",
+        "//gnulib/m4/codeset:AM_LANGINFO_CODESET",  # kept from the previous shape for existing dependants
     ],
 )

@@ -22,7 +22,6 @@ autoconf(
         "//gnulib/m4/vasnprintf",  # gl_FUNC_VASNWPRINTF, gl_FUNC_VASNWPRINTF_IS_POSIX
         "//gnulib/m4/getpayload",
         "//gnulib/m4/math_h:long-double-vs-double",
-        "//gnulib/m4/alloca",
         # Note: We do NOT depend on wchar_h - it would AC_SUBST HAVE_WINT_T which the test doesn't expect
         # HAVE_WINT_T as a define (in config.h) comes from wint_t:gt_TYPE_WINT_T via vasnprintf deps
         "//gnulib/m4/mbrtowc",

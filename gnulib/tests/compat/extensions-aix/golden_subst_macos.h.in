@@ -1,2 +1,0 @@
-/* subst.h.in */
-#define SUBST__LINUX_SOURCE_COMPAT "@_LINUX_SOURCE_COMPAT@"
