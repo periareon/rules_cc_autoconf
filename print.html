@@ -684,7 +684,9 @@ autoconf's naming convention:</p>
 </li>
 </ul>
 <p>If the condition includes a comparison operator (e.g., <code>condition="ac_cv_header_foo_h==1"</code>),
-it performs value comparison instead of truthy check.</p>
+it performs value comparison instead of truthy check. A define that produced no
+value (<code>/* #undef X */</code> in config.h) compares as <code>0</code>, as it would in <code>#if X == 0</code>;
+a substitution whose value is the empty string does not.</p>
 <p>Example:</p>
 <pre><code class="language-python"># Check creates cache variable
 macros.AC_CHECK_HEADER("alloca.h")
