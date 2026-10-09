@@ -88,7 +88,7 @@ diff_test(
     file1 = "golden_config.h.in",
     file2 = ":config.h",
     target_compatible_with = select({
-        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//autoconf/tests:msvc_like": ["@platforms//:incompatible"],
         "//conditions:default": [],
     }),
 )
@@ -100,7 +100,7 @@ cc_test(
         ":config.h",
     ],
     target_compatible_with = select({
-        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//autoconf/tests:msvc_like": ["@platforms//:incompatible"],
         "//conditions:default": [],
     }),
 )

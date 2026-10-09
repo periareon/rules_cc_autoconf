@@ -90,6 +90,13 @@ _AC_INCLUDE_FORMAT_WITH_NEWLINE = "#include <{}>\n"
 # Default includes for AC_CHECK_DECL, AC_CHECK_TYPE, etc. (AC_INCLUDES_DEFAULT).
 # Exposed as utils.AC_INCLUDES_DEFAULT. All includes use the form #include <foo>.
 # See: https://www.gnu.org/savannah-checkouts/gnu/autoconf/manual/autoconf-2.72/autoconf.html#Default-Includes
+# Upstream guards the optional headers with the HAVE_*_H results of
+# AC_CHECK_INCLUDES_DEFAULT (`#ifdef HAVE_UNISTD_H` and so on).  Those results
+# are not visible to a probe here, so `__has_include` -- cl 19.11+, gcc 5+,
+# clang -- stands in for them.  Keying on the OS instead would be wrong on
+# both sides of Windows: MinGW ships all three headers, MSVC ships
+# <sys/types.h> and <sys/stat.h>.  Compilers without `__has_include` get the
+# POSIX set unconditionally, as every such compiler is a Unix one.
 _AC_INCLUDES_DEFAULT = """\
 #include <stdio.h>
 #include <stdlib.h>
@@ -97,12 +104,24 @@ _AC_INCLUDES_DEFAULT = """\
 #include <string.h>
 #include <inttypes.h>
 #include <stdint.h>
-#ifdef _WIN32
-/* Windows doesn't have POSIX headers */
+#if defined __has_include
+# if __has_include(<strings.h>)
+#  include <strings.h>
+# endif
+# if __has_include(<sys/types.h>)
+#  include <sys/types.h>
+# endif
+# if __has_include(<sys/stat.h>)
+#  include <sys/stat.h>
+# endif
+# if __has_include(<unistd.h>)
+#  include <unistd.h>
+# endif
 #else
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
+# include <strings.h>
+# include <sys/types.h>
+# include <sys/stat.h>
+# include <unistd.h>
 #endif
 """
 
