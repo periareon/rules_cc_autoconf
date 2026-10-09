@@ -134,7 +134,7 @@ std::optional<Check> Check::from_json(const void* json_data) {
     // Exception: null values are kept as nullopt (will render as /**/ for
     // AC_DEFINE) Exception: If value is already a JSON-encoded string (starts
     // and ends with quotes), use it as-is to avoid double-encoding (e.g.,
-    // package_info values)
+    // autoconf_package_info values)
     if (json.contains("define_value")) {
         if (json["define_value"].is_null()) {
             // Explicit None/null - keep as nullopt to render as /**/

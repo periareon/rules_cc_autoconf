@@ -51,9 +51,9 @@ AC_OUTPUT
 load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
 load("@rules_cc_autoconf//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
 load("@rules_cc_autoconf//autoconf:checks.bzl", "checks", "macros")
-load("@rules_cc_autoconf//autoconf:package_info.bzl", "package_info")
+load("@rules_cc_autoconf//autoconf:autoconf_package_info.bzl", "autoconf_package_info")
 
-package_info(
+autoconf_package_info(
     name = "package",
     module_bazel = "MODULE.bazel"
 )
@@ -88,7 +88,7 @@ Takes check results from `autoconf` targets and generates header files by proces
 - `mode = "defines"` — For `config.h` files (processes `#undef` directives)
 - `mode = "subst"` — For substitution files (processes `@VAR@` placeholders)
 
-### 3. `package_info` Rule
+### 3. `autoconf_package_info` Rule
 Provides package metadata (`PACKAGE_NAME`, `PACKAGE_VERSION`, etc.) equivalent to `AC_INIT`.
 
 ### 4. `autoconf_linkopts` Rule (optional)
@@ -99,7 +99,7 @@ Turns **subst** values that hold linker flags (often from `AC_SEARCH_LIBS`) into
 ```
 configure.ac         →    BUILD.bazel
      ↓                         ↓
-AC_INIT           →    package_info
+AC_INIT           →    autoconf_package_info
 AC_CHECK_*        →    autoconf (checks = [...])
 AC_CONFIG_HEADERS →    autoconf_hdr
 ```

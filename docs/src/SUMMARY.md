@@ -11,8 +11,8 @@
   - [autoconf_srcs](./autoconf_srcs.md)
   - [autoconf_linkopts](./autoconf_linkopts.md)
   - [autoconf_toolchain](./autoconf_toolchain.md)
+  - [autoconf_package_info](./autoconf_package_info.md)
   - [checks](./checks.md)
-  - [package_info](./package_info.md)
 
 - [Gnulib](./gnulib.md)
 

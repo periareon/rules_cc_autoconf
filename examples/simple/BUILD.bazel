@@ -1,10 +1,10 @@
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
 load("@rules_cc_autoconf//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("@rules_cc_autoconf//autoconf:autoconf_package_info.bzl", "autoconf_package_info")
 load("@rules_cc_autoconf//autoconf:checks.bzl", "macros")
-load("@rules_cc_autoconf//autoconf:package_info.bzl", "package_info")
 
-package_info(
+autoconf_package_info(
     name = "package",
     module_bazel = "//:MODULE.bazel",
 )

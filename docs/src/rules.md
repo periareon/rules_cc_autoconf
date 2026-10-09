@@ -5,5 +5,5 @@
 - [autoconf_srcs](./autoconf_srcs.md#autoconf_srcs)
 - [autoconf_linkopts](./autoconf_linkopts.md#autoconf_linkopts)
 - [autoconf_toolchain](./autoconf_toolchain.md#autoconf_toolchain)
-- [package_info](./package_info.md#package_info)
+- [autoconf_package_info](./autoconf_package_info.md#autoconf_package_info)
 - [checks](./checks.md#checks)
