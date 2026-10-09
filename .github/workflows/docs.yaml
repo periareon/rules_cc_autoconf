@@ -19,6 +19,7 @@ jobs:
       - uses: ./.github/actions/buildbuddy
         with:
           api_key: ${{ secrets.BUILDBUDDY_API_KEY }}
+          user: "Docs"
       - name: Run tests
         run: bazel ${BAZEL_STARTUP_FLAGS[@]} run --compilation_mode=opt --stamp //docs:publish_book
       - name: Deploy to GitHub Pages

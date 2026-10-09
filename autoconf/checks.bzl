@@ -28,7 +28,9 @@ When AC_DEFINE or AC_SUBST use a `condition` parameter that references a cache v
   - The value is falsy (empty string or "0")
 
 If the condition includes a comparison operator (e.g., `condition="ac_cv_header_foo_h==1"`),
-it performs value comparison instead of truthy check.
+it performs value comparison instead of truthy check. A define that produced no
+value (`/* #undef X */` in config.h) compares as `0`, as it would in `#if X == 0`;
+a substitution whose value is the empty string does not.
 
 Example:
 ```python

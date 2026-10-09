@@ -1,0 +1,56 @@
+# libzip 1.12: `_snprintf_s`, `_snwprintf_s` and `localtime_s` are
+# inline functions in the UCRT headers, not exports of ucrt.lib (only
+# legacy_stdio_definitions.lib carries out-of-line copies). CMake's
+# check_symbol_exists, which the overlay mirrors, compiles a call with the
+# header included and finds them; an AC_CHECK_FUNC link probe without the
+# header does not, so HAVE__SNWPRINTF_S stays undefined and lib/compat.h then
+# redefines `_snwprintf_s` as a macro over the SDK's own inline definition
+# (corecrt_wstdio.h: "error C2059: syntax error: '('"). Probe them the way
+# CMake does. Elsewhere the calls fail to compile or link, as before.
+#
+# `/w` is an MSVC-style flag: select it by compiler, not by OS, so clang
+# targeting MinGW gets `-w` ("clang: error: no such file or directory: '/w'").
+#
+# Remove once the overlay on the Bazel Central Registry is updated.
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -145,10 +145,18 @@
+         ),
+         checks.AC_CHECK_FUNC(
+             "_snprintf_s",
++            code = "\n".join([
++                "#include <stdio.h>",
++                "int main(void) { char buf[8]; return _snprintf_s(buf, 8, 7, \"%d\", 1) < 0; }",
++            ]) + "\n",
+             define = "HAVE__SNPRINTF_S",
+         ),
+         checks.AC_CHECK_FUNC(
+             "_snwprintf_s",
++            code = "\n".join([
++                "#include <stdio.h>",
++                "int main(void) { wchar_t buf[8]; return _snwprintf_s(buf, 8, 7, L\"%d\", 1) < 0; }",
++            ]) + "\n",
+             define = "HAVE__SNWPRINTF_S",
+         ),
+         checks.AC_CHECK_FUNC(
+@@ -217,6 +225,10 @@
+         ),
+         checks.AC_CHECK_FUNC(
+             "localtime_s",
++            code = "\n".join([
++                "#include <time.h>",
++                "int main(void) { struct tm t; time_t now = 0; return localtime_s(&t, &now) != 0; }",
++            ]) + "\n",
+             define = "HAVE_LOCALTIME_S",
+         ),
+         checks.AC_CHECK_FUNC(
+@@ -532,7 +544,8 @@
+         ":lib/zipconf.h",
+     ],
+     copts = select({
+-        "@platforms//os:windows": ["/w"],
++        "@rules_cc//cc/compiler:clang-cl": ["/w"],
++        "@rules_cc//cc/compiler:msvc-cl": ["/w"],
+         "//conditions:default": ["-w"],
+     }),
+     implementation_deps = [

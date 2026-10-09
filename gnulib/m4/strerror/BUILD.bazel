@@ -37,16 +37,18 @@ autoconf(
             ),
             language = "c",
         ),
-        # case "$gl_cv_func_strerror_0_works" in *yes) ;; *) REPLACE_STRERROR_0=1 ;; esac
-        # REPLACE_STRERROR_0 is a shell variable plus an AC_DEFINE when
-        # strerror(0) is broken; the m4 never AC_SUBSTs it.
-    ] + select({
-        "@platforms//os:macos": [
-            # macOS strerror(0) doesn't work.
-            checks.AC_DEFINE("REPLACE_STRERROR_0", "1"),
-        ],
-        "//conditions:default": [],
-    }),
+        # case "$gl_cv_func_strerror_0_works" in *yes) ;; *)
+        #   REPLACE_STRERROR_0=1; AC_DEFINE([REPLACE_STRERROR_0], [1], ...) ;;
+        # esac
+        # REPLACE_STRERROR_0 is a shell variable plus this AC_DEFINE; the m4
+        # never AC_SUBSTs it. The probe above fails exactly on the platforms
+        # the m4's runtime test reports as broken.
+        checks.AC_DEFINE(
+            "REPLACE_STRERROR_0",
+            "1",
+            requires = ["!_gl_cv_func_strerror_0_works"],
+        ),
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CANONICAL_HOST",

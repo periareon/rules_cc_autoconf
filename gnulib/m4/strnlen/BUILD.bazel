@@ -8,6 +8,15 @@ load("//autoconf:checks.bzl", "checks")
 autoconf(
     name = "strnlen",
     checks = [
+        # if test $ac_cv_have_decl_strnlen = no; then HAVE_DECL_STRNLEN=0; fi
+        # (the probe and the config.h define live in AC_FUNC_STRNLEN; this
+        # lowers the gl_STRING_H_DEFAULTS substitution).
+        checks.AC_SUBST(
+            "HAVE_DECL_STRNLEN",
+            condition = "ac_cv_have_decl_strnlen",
+            if_false = 0,
+            if_true = 1,
+        ),
         # Based on golden files, strnlen works on macOS, so REPLACE_STRNLEN=0
         checks.AC_SUBST("REPLACE_STRNLEN", 0),
     ],

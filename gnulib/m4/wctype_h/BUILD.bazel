@@ -11,11 +11,11 @@ autoconf(
             "iswcntrl",
             name = "ac_cv_func_iswcntrl",
         ),
-        # Set HAVE_ISWCNTRL as substitution variable
-        # if test $ac_cv_func_iswcntrl = yes; then
-        # else
-        # fi
-        # On macOS, iswcntrl exists, so HAVE_ISWCNTRL=1
+        # AC_CHECK_FUNCS_ONCE([iswcntrl]); if yes HAVE_ISWCNTRL=1 else 0
+        # (lines 19-25). Kept as a separate AC_DEFINE named
+        # ac_cv_define_HAVE_ISWCNTRL: published BCR overlays (cpio, wget,
+        # wget2) reference that cache name, and every supported libc has
+        # iswcntrl, so the constant is exact where it is used.
         checks.AC_DEFINE(
             "HAVE_ISWCNTRL",
             "1",

@@ -11,6 +11,7 @@
 
 #include "autoconf/private/checker/check.h"
 #include "autoconf/private/checker/debug_logger.h"
+#include "autoconf/private/checker/int_bisect.h"
 #include "autoconf/private/checker/system_header.h"
 
 namespace rules_cc_autoconf {
@@ -778,139 +779,15 @@ std::optional<int> CheckRunner::find_compile_time_value_with_static_assert(
     return std::nullopt;
 }
 
-static std::string gen_less_compare(const std::string& base_code_template,
-                                    const std::string& lhs,
-                                    const std::string& rhs) {
-    std::string code = base_code_template;
-    bool found_lhs = false;
-    for (size_t pos = code.find("{lhs}"); pos != std::string::npos;
-         pos = code.find("{lhs}", pos)) {
-        code.replace(pos, 5, lhs);
-        pos += lhs.length();
-        found_lhs = true;
-    }
-    if (!found_lhs) {
-        throw std::runtime_error(
-            "Code template must contain '{lhs}' placeholder for static_assert "
-            "checks");
-    }
-    bool found_rhs = false;
-    for (size_t pos = code.find("{rhs}"); pos != std::string::npos;
-         pos = code.find("{rhs}", pos)) {
-        code.replace(pos, 5, rhs);
-        pos += rhs.length();
-        found_rhs = true;
-    }
-    if (!found_rhs) {
-        throw std::runtime_error(
-            "Code template must contain '{rhs}' placeholder for static_assert "
-            "checks");
-    }
-    return code;
-}
-
-static std::pair<std::string, std::string> split_code_expr(
-    const std::string& base_code_template) {
-    // Look for the `{$...}` marker specifically. Anchoring on `{$`
-    // rather than any `{` lets templates freely emit `struct {...};`
-    // or C99 designated initializers before the expression marker
-    // (needed by AC_CHECK_ALIGNOF, which declares a struct so the
-    // `offsetof(...)` expression can reference it).
-    const size_t begin = base_code_template.find("{$");
-    const char* const error =
-        "Code template must contain '{$EXPR}' placeholder for expr value "
-        "evaluation";
-    if (begin == std::string::npos) {
-        throw std::runtime_error(error);
-    }
-
-    // Skip past the `{$` prefix; the expression starts after it.
-    const size_t expr_start = begin + 2;
-    const size_t end = base_code_template.find('}', expr_start);
-    if (end == std::string::npos) {
-        throw std::runtime_error(error);
-    }
-
-    const std::string expr =
-        base_code_template.substr(expr_start, end - expr_start);
-
-    if (expr.empty()) {
-        throw std::runtime_error(error);
-    }
-
-    std::string code = base_code_template;
-    code.replace(begin, end - begin + 1, "");
-    return {code, expr};
-}
-
 std::optional<int> CheckRunner::find_compile_time_int_bisect(
     const std::string& base_code_template, const std::string& language,
     const int search_begin, const int search_end,
     const std::vector<std::string>& extra_copts) {
-    const std::pair<std::string, std::string> code_expr =
-        split_code_expr(base_code_template);
-    // int type for target might not be same as host
-    // let's assume the value we detect (usually pre-defined constant value for
-    // syscall) live in sensible range
-    //
-
-    if (try_compile(gen_less_compare(code_expr.first, code_expr.second,
-                                     std::to_string(search_begin)),
-                    language, extra_copts) ||
-        try_compile(
-            gen_less_compare(code_expr.first, std::to_string(search_end),
-                             code_expr.second),
-            language, extra_copts)) {
-        // value out of host int range, give up
-        throw std::runtime_error(
-            "Unable to determine compile-time value for constant '" +
-            code_expr.second + "' because it is outside the search range " +
-            std::to_string(search_begin) + " ~ " + std::to_string(search_end));
-    }
-    // both compile false, might also indicate no such constant exist
-    if (!try_compile(
-            gen_less_compare(code_expr.first, std::to_string(search_begin),
-                             code_expr.second),
-            language, extra_copts) &&
-        !try_compile(gen_less_compare(code_expr.first, code_expr.second,
-                                      std::to_string(search_end)),
-                     language, extra_copts)) {
-        // at least search_begin < constant or constant < search_end should
-        // compile if none compile, means expr can't evaluate at compile time
-        throw std::runtime_error(
-            "'" + code_expr.second +
-            "' can't be evaluated (non-exist constant, invalid expression, or "
-            "can't evaluate at compile time)");
-    }
-
-    int l = search_begin;
-    int r = search_end;
-
-    // begin <= current value <= end
-    while (l < r) {
-        // search_end will decrease by middle - 1
-        // search_begin will increase with middle
-        // when search_begin + 1 = search_end, we choose middle = search_end
-        // so range will always shrink
-        // use delta/2 + begin to avoid int sum overflow
-        int middle = l + (r - l + 1) / 2;
-
-        // we use current_value < middle to detect range
-
-        std::string code = gen_less_compare(code_expr.first, code_expr.second,
-                                            std::to_string(middle));
-
-        if (try_compile(code, language, extra_copts)) {
-            // value < middle
-            r = middle - 1;
-        } else {
-            // middle <= value
-            l = middle;
-        }
-    }
-
-    assert(l == r);
-    return l;
+    return bisect_compile_time_int(base_code_template, search_begin, search_end,
+                                   [&](const std::string& code) {
+                                       return try_compile(code, language,
+                                                          extra_copts);
+                                   });
 }
 
 CheckResult CheckRunner::check_search_libs(const Check& check) {

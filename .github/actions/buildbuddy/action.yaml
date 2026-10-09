@@ -5,11 +5,22 @@ description: |
   via `--config=remote_cache` in `.github/github.bazelrc`; this action only
   provides (or, when no key is available, neutralizes) that config.
 
+  Optionally also labels every invocation with the job name, shown as the
+  "user" in BuildBuddy, so results from different jobs are easy to tell
+  apart.
+
 inputs:
   api_key:
     description: |
       BuildBuddy API key. Empty when secrets are unavailable, e.g. pull
       requests from forks, in which case the remote cache is disabled.
+    required: false
+    default: ""
+  user:
+    description: |
+      Name reported as the invocation user in BuildBuddy, typically the job's
+      display name (e.g. `integration-default (ubuntu-24.04)`). Replaces the
+      runner account that would otherwise be shown. Empty leaves the default.
     required: false
     default: ""
 
@@ -20,6 +31,7 @@ runs:
       shell: bash
       env:
         BUILDBUDDY_API_KEY: ${{ inputs.api_key }}
+        BUILDBUDDY_USER: ${{ inputs.user }}
       run: |
         set -euo pipefail
 
@@ -28,6 +40,16 @@ runs:
         # `.bazelrc` and before any `--bazelrc=` file. Append rather than
         # overwrite in case the runner image already has one.
         rc="${HOME}/.bazelrc"
+
+        if [[ -n "${BUILDBUDDY_USER}" ]]; then
+          # Quoted because job names contain spaces; bazelrc lines are
+          # tokenized shell-style.
+          {
+            echo "# Written by .github/actions/buildbuddy"
+            echo "common \"--build_metadata=USER=${BUILDBUDDY_USER}\""
+          } >> "${rc}"
+          echo "BuildBuddy invocation user set to '${BUILDBUDDY_USER}'."
+        fi
 
         if [[ -n "${BUILDBUDDY_API_KEY}" ]]; then
           {

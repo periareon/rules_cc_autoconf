@@ -1,0 +1,98 @@
+# gzip 1.15: the BCR overlay was written against an earlier rules_cc_autoconf
+# whose gnulib ports published some results differently. The ports now follow
+# gnulib itself, which changes how the source conditions have to be spelled:
+#
+#   - A HAVE_X operand (bare or as `ac_cv_subst_HAVE_X`) may resolve to the
+#     *_H_DEFAULTS substitution, which is always 1, instead of the value the
+#     function's module lowers. Where the port's probe (`ac_cv_func_x`,
+#     `ac_cv_have_decl_x`, ...) is visible it is used instead: it is unique
+#     and always carries a value, mirroring gnulib's own
+#     `test $ac_cv_func_x = no` tests.
+#   - REPLACE_STRERROR_0 is a shell variable (plus an AC_DEFINE when strerror(0)
+#     is broken) in m4/strerror.m4; it was never AC_SUBSTed. The port keeps the
+#     probe result as `_gl_cv_func_strerror_0_works`, so
+#       test -n "$ERRNO_H" || test $REPLACE_STRERROR_0 = 1
+#     becomes `GL_GENERATE_ERRNO_H==true || !_gl_cv_func_strerror_0_works`.
+#
+# Remove once the overlay on the Bazel Central Registry is updated against a
+# rules_cc_autoconf release that contains these ports.
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -686,7 +686,7 @@
+ 
+ GNULIB_COND_HDR_CONDITIONS = {
+     "stdbit": STDBIT_H_CONDITION,
+-    "stdcountof": "!(ac_cv_subst_HAVE_STDCOUNTOF_H==1 && ac_cv_subst_CXX_HAVE_STDCOUNTOF_H==1)",
++    "stdcountof": "!(ac_cv_header_stdcountof_h && ac_cv_subst_CXX_HAVE_STDCOUNTOF_H==1)",
+ }
+ 
+ cc_gnulib_conditional_hdrs(
+@@ -719,12 +719,12 @@
+     # The AC_LIBOBJ([calloc]) / ([malloc]) `if`s.
+     "GL_COND_OBJ_CALLOC": "REPLACE_CALLOC_FOR_CALLOC_GNU || REPLACE_CALLOC_FOR_CALLOC_POSIX",
+     "GL_COND_OBJ_CLOSE": "REPLACE_CLOSE",
+-    "GL_COND_OBJ_CLOSEDIR": "ac_cv_subst_HAVE_CLOSEDIR==0 || REPLACE_CLOSEDIR",
+-    "GL_COND_OBJ_DIRFD": "HAVE_DIRFD==0 || REPLACE_DIRFD",
++    "GL_COND_OBJ_CLOSEDIR": "!_gl_have_closedir || REPLACE_CLOSEDIR",
++    "GL_COND_OBJ_DIRFD": "!ac_cv_func_dirfd || REPLACE_DIRFD",
+     "GL_COND_OBJ_DUP2": "REPLACE_DUP2",
+     "GL_COND_OBJ_ERROR": "COMPILE_ERROR_C==1",
+     "GL_COND_OBJ_FCLOSE": "REPLACE_FCLOSE",
+-    "GL_COND_OBJ_FCNTL": "ac_cv_subst_HAVE_FCNTL==0 || REPLACE_FCNTL",
++    "GL_COND_OBJ_FCNTL": "!ac_cv_func_fcntl || REPLACE_FCNTL",
+     # The fdatasync/fpurge/fsync/gettimeofday/qsort_r/raise/readdir/utime
+     # ports fill HAVE_* from the probe rather than a real AC_SUBST, so the
+     # subst spelling would land on the <hdr>_h defaults (always 1); test the
+@@ -736,23 +736,23 @@
+     "GL_COND_OBJ_FPURGE": "!ac_cv_func_fpurge || REPLACE_FPURGE",
+     "GL_COND_OBJ_FREE": "REPLACE_FREE",
+     "GL_COND_OBJ_FSEEK": "REPLACE_FSEEK",
+-    "GL_COND_OBJ_FSEEKO": "ac_cv_subst_HAVE_FSEEKO==0 || REPLACE_FSEEKO",
++    "GL_COND_OBJ_FSEEKO": "!gl_cv_func_fseeko || REPLACE_FSEEKO",
+     # `test $ac_cv_func___fseterr = no`; the port records the probe as a
+     # define, absent when it failed.
+     "GL_COND_OBJ_FSETERR": "!HAVE___FSETERR",
+     "GL_COND_OBJ_FSTAT": "REPLACE_FSTAT",
+     "GL_COND_OBJ_FSYNC": "!ac_cv_func_fsync",
+     "GL_COND_OBJ_FTELL": "REPLACE_FTELL",
+-    "GL_COND_OBJ_FTELLO": "ac_cv_subst_HAVE_FTELLO==0 || REPLACE_FTELLO",
+-    "GL_COND_OBJ_GETDTABLESIZE": "ac_cv_subst_HAVE_GETDTABLESIZE==0 || REPLACE_GETDTABLESIZE",
++    "GL_COND_OBJ_FTELLO": "!gl_cv_func_ftello || REPLACE_FTELLO",
++    "GL_COND_OBJ_GETDTABLESIZE": "!ac_cv_func_getdtablesize || REPLACE_GETDTABLESIZE",
+     "GL_COND_OBJ_GETOPT": "REPLACE_GETOPT",
+-    "GL_COND_OBJ_GETPROGNAME": "ac_cv_subst_HAVE_GETPROGNAME==0 || REPLACE_GETPROGNAME",
++    "GL_COND_OBJ_GETPROGNAME": "!ac_cv_func_getprogname || REPLACE_GETPROGNAME",
+     "GL_COND_OBJ_GETTIMEOFDAY": "!ac_cv_func_gettimeofday || REPLACE_GETTIMEOFDAY",
+     "GL_COND_OBJ_LSEEK": "REPLACE_LSEEK",
+     "GL_COND_OBJ_LSTAT": "REPLACE_LSTAT",
+     "GL_COND_OBJ_MALLOC": "REPLACE_MALLOC_FOR_MALLOC_GNU || REPLACE_MALLOC_FOR_MALLOC_POSIX",
+-    "GL_COND_OBJ_MSVC_INVAL": "ac_cv_subst_HAVE_MSVC_INVALID_PARAMETER_HANDLER==1",
+-    "GL_COND_OBJ_MSVC_NOTHROW": "ac_cv_subst_HAVE_MSVC_INVALID_PARAMETER_HANDLER==1",
++    "GL_COND_OBJ_MSVC_INVAL": "ac_cv_func__set_invalid_parameter_handler",
++    "GL_COND_OBJ_MSVC_NOTHROW": "ac_cv_func__set_invalid_parameter_handler",
+     "GL_COND_OBJ_OPEN": "REPLACE_OPEN",
+     "GL_COND_OBJ_OPENDIR": "!_gl_cv_func_opendir || REPLACE_OPENDIR",
+     "GL_COND_OBJ_PTHREAD_SIGMASK": "!ac_cv_func_pthread_sigmask || REPLACE_PTHREAD_SIGMASK",
+@@ -762,8 +762,8 @@
+     "GL_COND_OBJ_QSORT_R": "ac_cv_func_qsort_r && REPLACE_QSORT_R==1",
+     "GL_COND_OBJ_RAISE": "!ac_cv_func_raise || REPLACE_RAISE",
+     "GL_COND_OBJ_READDIR": "!ac_cv_func_readdir || REPLACE_READDIR",
+-    "GL_COND_OBJ_READLINK": "ac_cv_subst_HAVE_READLINK==0 || REPLACE_READLINK",
+-    "GL_COND_OBJ_REALLOCARRAY": "ac_cv_subst_HAVE_REALLOCARRAY==0 || REPLACE_REALLOCARRAY",
++    "GL_COND_OBJ_READLINK": "!ac_cv_func_readlink || REPLACE_READLINK",
++    "GL_COND_OBJ_REALLOCARRAY": "!ac_cv_func_reallocarray || REPLACE_REALLOCARRAY",
+     # `!= 0`, and the port answers 2 on some platforms.
+     "GL_COND_OBJ_REALLOC_POSIX": "REPLACE_REALLOC_FOR_REALLOC_POSIX",
+     "GL_COND_OBJ_SIGACTION": "!ac_cv_func_sigaction",
+@@ -772,9 +772,9 @@
+     "GL_COND_OBJ_STDIO_CONSOLESAFE": "ac_cv_subst_USES_MSVCRT==1",
+     "GL_COND_OBJ_STDIO_READ": "REPLACE_STDIO_READ_FUNCS",
+     "GL_COND_OBJ_STDIO_WRITE": "REPLACE_STDIO_WRITE_FUNCS",
+-    "GL_COND_OBJ_STPCPY": "ac_cv_subst_HAVE_STPCPY==0 || REPLACE_STPCPY",
++    "GL_COND_OBJ_STPCPY": "!ac_cv_func_stpcpy || REPLACE_STPCPY",
+     "GL_COND_OBJ_STRERROR": "REPLACE_STRERROR",
+-    "GL_COND_OBJ_STRERROR_OVERRIDE": "GL_GENERATE_ERRNO_H==true || ac_cv_subst_REPLACE_STRERROR_0==1",
++    "GL_COND_OBJ_STRERROR_OVERRIDE": "GL_GENERATE_ERRNO_H==true || !_gl_cv_func_strerror_0_works",
+     "GL_COND_OBJ_TIME": "REPLACE_TIME",
+     "GL_COND_OBJ_UTIME": "!ac_cv_func_utime || REPLACE_UTIME",
+     # The automake conditionals of lib/gnulib.mk lines 203, 311, 407, 1313.

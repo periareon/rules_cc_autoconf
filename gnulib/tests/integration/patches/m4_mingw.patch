@@ -1,0 +1,66 @@
+# m4 1.4.21.bcr.5 (applied after m4.patch and m4_debug.patch), for clang
+# targeting MinGW (the hermetic_llvm config on Windows):
+#
+#   - The Windows link libraries were spelled as `.lib` files for every
+#     Windows build, which only MSVC-style drivers understand; the GNU-style
+#     driver wants `-ladvapi32 -lbcrypt` ("no such file or directory:
+#     'advapi32.lib'"). Select them by compiler instead of by OS.
+#   - lib/wcwidth.c was compiled only when REPLACE_WCWIDTH; gnulib's
+#     modules/wcwidth also compiles it when HAVE_WCWIDTH = 0, which is the
+#     MinGW case ("undefined symbol: wcwidth" from c32width).
+#
+# Remove once the overlay on the Bazel Central Registry is updated.
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -825,6 +825,13 @@
+     }.items()
+ ]
+ 
++# clang driving the MinGW target (rules_cc reports it as plain `clang`).
++config_setting(
++    name = "windows_clang",
++    constraint_values = ["@platforms//os:windows"],
++    flag_values = {"@rules_cc//cc/compiler": "clang"},
++)
++
+ M4_COPTS = select({
+     "@rules_cc//cc/compiler:clang": [
+         "-w",
+@@ -942,7 +949,7 @@
+         "lib/vasprintf.c": "!ac_cv_func_vasprintf || REPLACE_VASPRINTF",
+         "lib/wcrtomb.c": "REPLACE_WCRTOMB",
+         "lib/wctype.c": "REPLACE_WCTYPE",
+-        "lib/wcwidth.c": "REPLACE_WCWIDTH",
++        "lib/wcwidth.c": "!ac_cv_func_wcwidth || REPLACE_WCWIDTH",
+     },
+     defaults = True,
+     deps = [":configure_ac"],
+@@ -1205,10 +1212,27 @@
+     linkopts = M4_LINKOPTS + select({
+         "@platforms//os:linux": ["-lpthread"],
+         "@platforms//os:macos": ["-liconv"],
+-        "@platforms//os:windows": [
++        "//conditions:default": [],
++    }) + select({
++        # MSVC-style drivers take .lib names; clang and gcc driving the MinGW
++        # target take -l (the hermetic-llvm BCR toolchain is the former on
++        # Windows).
++        "@rules_cc//cc/compiler:clang-cl": [
+             "advapi32.lib",
+             "bcrypt.lib",
+         ],
++        "@rules_cc//cc/compiler:msvc-cl": [
++            "advapi32.lib",
++            "bcrypt.lib",
++        ],
++        "@rules_cc//cc/compiler:mingw-gcc": [
++            "-ladvapi32",
++            "-lbcrypt",
++        ],
++        ":windows_clang": [
++            "-ladvapi32",
++            "-lbcrypt",
++        ],
+         "//conditions:default": [],
+     }),
+     local_defines = LOCAL_DEFINES,

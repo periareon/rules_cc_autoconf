@@ -12,11 +12,19 @@ autoconf(
             name = "_gl_cv_func_mbrlen",
         ),
 
-        # Set HAVE_MBRLEN as define if function exists, or as substitution variable if not
+        # HAVE_MBRLEN in config.h only when the function exists
         checks.AC_DEFINE(
             "HAVE_MBRLEN",
             "1",
             requires = ["_gl_cv_func_mbrlen==1"],
+        ),
+        # if test $ac_cv_func_mbrlen = no; then HAVE_MBRLEN=0; fi
+        # (lowers the gl_WCHAR_H_DEFAULTS substitution)
+        checks.AC_SUBST(
+            "HAVE_MBRLEN",
+            condition = "_gl_cv_func_mbrlen",
+            if_false = 0,
+            if_true = 1,
         ),
         # Check for mbrlen declaration (for Minix 3.1.8 which declares but doesn't have it)
         # Lines 22-28

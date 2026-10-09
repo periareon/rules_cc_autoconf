@@ -37,19 +37,27 @@ namespace {
  * fails.
  */
 std::string get_short_path(const std::string& long_path) {
+    // cmd.exe accepts forward slashes in an absolute program path such as
+    // `C:/.../cl.exe`, but parses a relative one such as
+    // `external/<repo>/bin/clang.exe` (hermetic toolchains) as the command
+    // `external` followed by switches: "'external' is not recognized as an
+    // internal or external command". Use backslashes throughout.
+    std::string path = long_path;
+    std::replace(path.begin(), path.end(), '/', '\\');
+
     // Get the required buffer size
-    DWORD length = GetShortPathNameA(long_path.c_str(), nullptr, 0);
+    DWORD length = GetShortPathNameA(path.c_str(), nullptr, 0);
     if (length == 0) {
         // If conversion fails, return original path quoted
-        return "\"" + long_path + "\"";
+        return "\"" + path + "\"";
     }
 
     // Get the short path
     std::vector<char> buffer(length);
-    DWORD result = GetShortPathNameA(long_path.c_str(), buffer.data(), length);
+    DWORD result = GetShortPathNameA(path.c_str(), buffer.data(), length);
     if (result == 0 || result >= length) {
         // If conversion fails, return original path quoted
-        return "\"" + long_path + "\"";
+        return "\"" + path + "\"";
     }
 
     return std::string(buffer.data());

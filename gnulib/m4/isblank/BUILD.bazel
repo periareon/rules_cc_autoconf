@@ -11,10 +11,13 @@ autoconf(
             define = "HAVE_DECL_ISBLANK",
             includes = ["#include <ctype.h>"],
         ),
-        # Equivalent to gl_FUNC_ISBLANK macro from isblank.m4
+        # AC_CHECK_FUNCS_ONCE([isblank]): HAVE_ISBLANK in config.h only when
+        # found; if test $ac_cv_func_isblank = no; then HAVE_ISBLANK=0; fi
+        # (lowers the gl_CTYPE_H_DEFAULTS substitution).
         checks.AC_CHECK_FUNC(
             "isblank",
             define = "HAVE_ISBLANK",
+            subst = True,
         ),
     ],
     visibility = ["//visibility:public"],

@@ -1,0 +1,31 @@
+# flex 2.6.4.bcr.7: src/flexdef.h provides htonl/htons on Windows only for
+# MSVC (as _byteswap_* macros); there is no <netinet/in.h> on MinGW either, so
+# clang targeting MinGW (the hermetic_llvm config) sees them undeclared in
+# src/tables.c. Give the MinGW build the same little-endian byte-swap macros.
+#
+# Remove once the overlay on the Bazel Central Registry is updated.
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -8,9 +8,22 @@
+ 
+ exports_files(["src/FlexLexer.h"])
+ 
++# clang driving the MinGW target (rules_cc reports it as plain `clang`), as
++# used by the hermetic-llvm BCR toolchain on Windows.
++config_setting(
++    name = "windows_clang",
++    constraint_values = ["@platforms//os:windows"],
++    flag_values = {"@rules_cc//cc/compiler": "clang"},
++)
++
+ COPTS = select({
+     "@rules_cc//cc/compiler:msvc-cl": ["/W0"],
+     "@rules_cc//cc/compiler:clang-cl": ["/W0"],
++    ":windows_clang": [
++        "-w",
++        "-Dhtonl(x)=__builtin_bswap32(x)",
++        "-Dhtons(x)=__builtin_bswap16(x)",
++    ],
+     "//conditions:default": ["-w"],
+ })
+ 
