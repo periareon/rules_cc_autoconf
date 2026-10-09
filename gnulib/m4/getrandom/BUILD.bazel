@@ -1,15 +1,12 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/getrandom.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
-load("//autoconf:checks.bzl", "checks")
+load("//autoconf:checks.bzl", "checks", "utils")
 load("//gnulib:macros.bzl", gl_macros = "macros")
 
 autoconf(
     name = "gl_FUNC_GETRANDOM",
-    checks = [
-        # Note: On macOS, getrandom doesn't exist (it's a Linux-specific syscall)
-        # The golden file expects HAVE_GETRANDOM=0
-    ] + gl_macros.GL_CHECK_FUNCS_ANDROID(
+    checks = gl_macros.GL_CHECK_FUNCS_ANDROID(
         ["getrandom"],
         code = """\
 /* Additional includes are needed before <sys/random.h> on uClibc
@@ -26,13 +23,66 @@ int main(void) {
         checks.AC_SUBST(
             "HAVE_GETRANDOM",
             condition = "ac_cv_func_getrandom",
+            if_false = 0,
+            if_true = 1,
         ),
-        # GETRANDOM_LIB and LIB_GETRANDOM are set to empty strings on non-Windows
-        checks.AC_SUBST("GETRANDOM_LIB", ""),
-        checks.AC_SUBST("LIB_GETRANDOM", ""),
-        # REPLACE_GETRANDOM is set to 0 when getrandom doesn't exist (macOS)
-        checks.AC_SUBST("REPLACE_GETRANDOM", 0),
-    ],
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_func_getrandom_ok",
+            code = utils.AC_LANG_PROGRAM(
+                [
+                    "#include <sys/types.h>",
+                    "#include <stdlib.h>",
+                    "#include <sys/random.h>",
+                    "ssize_t getrandom (void *, size_t, unsigned int);",
+                ],
+                "",
+            ),
+            requires = ["ac_cv_func_getrandom==1"],
+        ),
+        checks.AC_SUBST(
+            "REPLACE_GETRANDOM",
+            condition = "ac_cv_func_getrandom && !gl_cv_func_getrandom_ok",
+            if_false = 0,
+            if_true = 1,
+        ),
+    ] + select({
+        "@platforms//os:windows": [
+            checks.AC_CHECK_HEADER(
+                "bcrypt.h",
+                define = "HAVE_BCRYPT_H",
+                includes = ["#include <windows.h>"],
+            ),
+            checks.AC_TRY_COMPILE(
+                name = "gl_cv_lib_assume_bcrypt",
+                code = utils.AC_LANG_PROGRAM(
+                    ["#include <windows.h>"],
+                    """#if !(_WIN32_WINNT >= _WIN32_WINNT_WIN7)
+cannot assume it
+#endif""",
+                ),
+            ),
+            checks.AC_DEFINE(
+                "HAVE_LIB_BCRYPT",
+                requires = ["gl_cv_lib_assume_bcrypt==1"],
+            ),
+            checks.AC_SUBST(
+                "GETRANDOM_LIB",
+                condition = "gl_cv_lib_assume_bcrypt",
+                if_false = "-ladvapi32",
+                if_true = "-lbcrypt",
+            ),
+            checks.AC_SUBST(
+                "LIB_GETRANDOM",
+                condition = "gl_cv_lib_assume_bcrypt",
+                if_false = "-ladvapi32",
+                if_true = "-lbcrypt",
+            ),
+        ],
+        "//conditions:default": [
+            checks.AC_SUBST("GETRANDOM_LIB", ""),
+            checks.AC_SUBST("LIB_GETRANDOM", ""),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_SYS_RANDOM_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
