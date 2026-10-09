@@ -317,6 +317,19 @@ std::vector<std::string> CheckRunner::get_compiler_and_flags(
         filter_error_flags(cpp ? config_.cpp_flags : config_.c_flags);
     auto processed = replace_marker(filtered, kCoptsMarker, extra_copts);
     cmd.insert(cmd.end(), processed.begin(), processed.end());
+    if (is_msvc_like(config_.compiler_type)) {
+        // Probes must see the real library symbol, not a compiler builtin.
+        // Autoconf's AC_CHECK_FUNC body declares `int f(void)` and calls
+        // `f()`; cl.exe treats memcmp/memcpy/fabs/labs/strlen/... as
+        // intrinsics whenever /Oi is active -- which /O2 (Bazel's opt mode,
+        // and therefore every exec-configuration tool build) switches on
+        // -- and rejects that call with C2168 "too few actual parameters
+        // for intrinsic function". The probe then reports "no" for a
+        // function every CRT has. /Oi- goes last so it wins over any /O2
+        // or /Oi earlier in the toolchain or per-check copts; it only
+        // affects the throwaway conftest, never the user's build.
+        cmd.push_back("/Oi-");
+    }
     return cmd;
 }
 

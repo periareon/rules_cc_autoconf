@@ -43,12 +43,17 @@ autoconf_hdr(
     deps = [":autoconf"],
 )
 
+# The Windows golden encodes cl.exe's library set: no libm, no libpthread,
+# kernel32 linked by default.  MinGW has libm, winpthreads and a kernel32
+# import library, so it matches neither golden; it stays incompatible until a
+# MinGW toolchain has produced a verified golden of its own.
 diff_test(
     name = "diff_test_unix",
     file1 = "golden_config_unix.h.in",
     file2 = ":config.h",
     target_compatible_with = select({
-        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//autoconf/tests:msvc_like": ["@platforms//:incompatible"],
+        "@rules_cc//cc/compiler:mingw-gcc": ["@platforms//:incompatible"],
         "//conditions:default": [],
     }),
 )
@@ -58,7 +63,7 @@ diff_test(
     file1 = "golden_config_windows.h.in",
     file2 = ":config.h",
     target_compatible_with = select({
-        "@platforms//os:windows": [],
+        "//autoconf/tests:msvc_like": [],
         "//conditions:default": ["@platforms//:incompatible"],
     }),
 )
@@ -70,13 +75,17 @@ cc_test(
         ":config.h",
     ],
     linkopts = select({
-        "@platforms//os:windows": [
+        "//autoconf/tests:msvc_like": [
             "-lkernel32",
         ],
         "//conditions:default": [
             "-lm",
             "-lpthread",
         ],
+    }),
+    target_compatible_with = select({
+        "@rules_cc//cc/compiler:mingw-gcc": ["@platforms//:incompatible"],
+        "//conditions:default": [],
     }),
 )
 

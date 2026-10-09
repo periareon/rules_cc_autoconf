@@ -1,8 +1,22 @@
+load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@rules_venv//python:py_binary.bzl", "py_binary")
 
 exports_files([
     "diff_tester.py",
 ])
+
+# Tests whose expectations come from cl.exe semantics (no <unistd.h>, no
+# <stdatomic.h> in C, `/`-style flags, `#pragma comment(lib)`) key on the
+# compiler, not on the OS: a MinGW toolchain is also a Windows toolchain and
+# behaves like gcc in every one of those respects.
+selects.config_setting_group(
+    name = "msvc_like",
+    match_any = [
+        "@rules_cc//cc/compiler:clang-cl",
+        "@rules_cc//cc/compiler:msvc-cl",
+    ],
+    visibility = ["//autoconf/tests:__subpackages__"],
+)
 
 py_binary(
     name = "diff_tester",
