@@ -179,9 +179,9 @@ and the rule reference <a href="./autoconf_linkopts.html">autoconf_linkopts</a>.
 <pre><code class="language-python">load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
 load("@rules_cc_autoconf//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
 load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
-load("@rules_cc_autoconf//autoconf:package_info.bzl", "package_info")
+load("@rules_cc_autoconf//autoconf:autoconf_package_info.bzl", "autoconf_package_info")
 
-package_info(
+autoconf_package_info(
     name = "package",
     package_name = "my_package",
     package_version = "1.0.0",
@@ -242,7 +242,7 @@ opt-out.</p>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="package_info.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="checks.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
@@ -256,7 +256,7 @@ opt-out.</p>
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="package_info.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="checks.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 

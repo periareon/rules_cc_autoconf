@@ -228,7 +228,7 @@ by Bazel’s C/C++ toolchain configuration.</p>
 <li><a href="./autoconf_srcs.html#autoconf_srcs">autoconf_srcs</a></li>
 <li><a href="./autoconf_linkopts.html#autoconf_linkopts">autoconf_linkopts</a></li>
 <li><a href="./autoconf_toolchain.html#autoconf_toolchain">autoconf_toolchain</a></li>
-<li><a href="./package_info.html#package_info">package_info</a></li>
+<li><a href="./autoconf_package_info.html#autoconf_package_info">autoconf_package_info</a></li>
 <li><a href="./checks.html#checks">checks</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
@@ -270,7 +270,7 @@ headers or wrapped source files.</p>
 <tr><td style="text-align: left"><a id="autoconf-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left">none</td></tr>
 <tr><td style="text-align: left"><a id="autoconf-build_settings"></a>build_settings</td><td style="text-align: left">List of <code>checks.AC_BUILD_SETTING(...)</code> entries associating Bazel build setting targets (any rule providing <code>BuildSettingInfo</code>) with autoconf-style defines and substitutions.</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="autoconf-checks"></a>checks</td><td style="text-align: left">List of JSON-encoded checks from <code>checks</code> (e.g., <code>checks.AC_CHECK_HEADER('stdio.h')</code>).</td><td style="text-align: left"><code>None</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf-deps"></a>deps</td><td style="text-align: left">Additional <code>autoconf</code>, <code>autoconf_cache</code>, or <code>package_info</code> dependencies.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf-deps"></a>deps</td><td style="text-align: left">Additional <code>autoconf</code>, <code>autoconf_cache</code>, or <code>autoconf_package_info</code> dependencies.</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="autoconf-kwargs"></a>kwargs</td><td style="text-align: left">Standard Bazel attributes (e.g. <code>visibility</code>, <code>tags</code>).</td><td style="text-align: left">none</td></tr>
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
@@ -596,8 +596,59 @@ has a result in transitive <code>deps</code>, the action is skipped.</p>
 <tr><td style="text-align: left"><a id="autoconf_cache-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left">none</td></tr>
 <tr><td style="text-align: left"><a id="autoconf_cache-build_settings"></a>build_settings</td><td style="text-align: left">List of <code>checks.AC_BUILD_SETTING(...)</code> entries associating Bazel build setting targets (any rule providing <code>BuildSettingInfo</code>) with autoconf-style defines and substitutions.</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="autoconf_cache-checks"></a>checks</td><td style="text-align: left">List of JSON-encoded checks from <code>checks</code> (e.g., <code>checks.AC_CHECK_HEADER('stdio.h')</code>).</td><td style="text-align: left"><code>None</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_cache-deps"></a>deps</td><td style="text-align: left">Additional <code>autoconf</code>, <code>autoconf_cache</code>, or <code>package_info</code> dependencies.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_cache-deps"></a>deps</td><td style="text-align: left">Additional <code>autoconf</code>, <code>autoconf_cache</code>, or <code>autoconf_package_info</code> dependencies.</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="autoconf_cache-kwargs"></a>kwargs</td><td style="text-align: left">Standard Bazel attributes (e.g. <code>visibility</code>, <code>tags</code>).</td><td style="text-align: left">none</td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
+<h1 id="autoconf_package_info"><a class="header" href="#autoconf_package_info">autoconf_package_info</a></h1>
+<h2 id="rules-5"><a class="header" href="#rules-5">Rules</a></h2>
+<ul>
+<li><a href="autoconf_package_info.html#autoconf_package_info">autoconf_package_info</a></li>
+</ul>
+<p><a id="autoconf_package_info"></a></p>
+<h2 id="autoconf_package_info-1"><a class="header" href="#autoconf_package_info-1">autoconf_package_info</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:autoconf_package_info.bzl", "autoconf_package_info")
+
+autoconf_package_info(<a href="autoconf_package_info.html#autoconf_package_info-name">name</a>, <a href="autoconf_package_info.html#autoconf_package_info-aliases">aliases</a>, <a href="autoconf_package_info.html#autoconf_package_info-module_bazel">module_bazel</a>, <a href="autoconf_package_info.html#autoconf_package_info-package_bugreport">package_bugreport</a>, <a href="autoconf_package_info.html#autoconf_package_info-package_name">package_name</a>, <a href="autoconf_package_info.html#autoconf_package_info-package_tarname">package_tarname</a>,
+                      <a href="autoconf_package_info.html#autoconf_package_info-package_url">package_url</a>, <a href="autoconf_package_info.html#autoconf_package_info-package_version">package_version</a>, <a href="autoconf_package_info.html#autoconf_package_info-strip_bcr_version">strip_bcr_version</a>)
+</pre>
+<p>A rule providing package metadata, equivalent to GNU autoconf's <code>AC_INIT</code>.</p>
+<p>It emits the <code>PACKAGE_NAME</code>, <code>PACKAGE_VERSION</code>, <code>PACKAGE_STRING</code>, <code>PACKAGE_TARNAME</code>,
+<code>PACKAGE_BUGREPORT</code>, and <code>PACKAGE_URL</code> defines, either from explicit attributes or
+by parsing a <code>MODULE.bazel</code> file.</p>
+<p>This rule is most useful when paired with the <code>autoconf</code> rule.</p>
+<p>Example:</p>
+<pre><code class="language-python">load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
+load("@rules_cc_autoconf//autoconf:autoconf_package_info.bzl", "autoconf_package_info")
+
+autoconf_package_info(
+    name = "package",
+    module_bazel = "//:MODULE.bazel",
+)
+
+autoconf(
+    name = "config_h",
+    out = "config.h",
+    checks = [
+        # ...
+    ],
+    deps = [
+        ":package",
+    ],
+)
+</code></pre>
+<p><strong>ATTRIBUTES</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Type</th><th style="text-align: left">Mandatory</th><th style="text-align: left">Default</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="autoconf_package_info-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_package_info-aliases"></a>aliases</td><td style="text-align: left">Additional variables to define that are mirrored by the provided value variable.</td><td style="text-align: left"><a href="https://bazel.build/rules/lib/dict">Dictionary: String -&gt; String</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>{}</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_package_info-module_bazel"></a>module_bazel</td><td style="text-align: left">A <code>MODULE.bazel</code> file to parse module information from. Mutually exclusive with <code>package_name</code> and <code>package_version</code>.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_package_info-package_bugreport"></a>package_bugreport</td><td style="text-align: left">The package bug report email/URL. Used to populate <code>PACKAGE_BUGREPORT</code> define.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_package_info-package_name"></a>package_name</td><td style="text-align: left">The package name. Must be provided together with <code>package_version</code> if <code>module_bazel</code> is not provided.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_package_info-package_tarname"></a>package_tarname</td><td style="text-align: left">Exactly tarname, possibly generated from package.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_package_info-package_url"></a>package_url</td><td style="text-align: left">The package home page URL. Used to populate <code>PACKAGE_URL</code> define.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_package_info-package_version"></a>package_version</td><td style="text-align: left">The package version. Must be provided together with <code>package_name</code> if <code>module_bazel</code> is not provided.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_package_info-strip_bcr_version"></a>strip_bcr_version</td><td style="text-align: left">Whether or not to strip <code>.bcr.*</code> suffixes from <code>module_bazel</code> parsed versions.</td><td style="text-align: left">Boolean</td><td style="text-align: left">optional</td><td style="text-align: left"><code>False</code></td></tr>
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
 <h1 id="checks"><a class="header" href="#checks">checks</a></h1>
@@ -1874,55 +1925,7 @@ define = "HAVE_LANGINFO_CODESET",
 </div>
 <p><strong>RETURNS</strong></p>
 <p>A string suitable for the <code>code</code> parameter of AC_TRY_COMPILE or AC_TRY_LINK.</p>
-<div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
-<h1 id="package_info"><a class="header" href="#package_info">package_info</a></h1>
-<h2 id="rules-5"><a class="header" href="#rules-5">Rules</a></h2>
-<ul>
-<li><a href="package_info.html#package_info">package_info</a></li>
-</ul>
-<p><a id="package_info"></a></p>
-<h2 id="package_info-1"><a class="header" href="#package_info-1">package_info</a></h2>
-<pre>
-load("@rules_cc_autoconf//autoconf:package_info.bzl", "package_info")
-
-package_info(<a href="package_info.html#package_info-name">name</a>, <a href="package_info.html#package_info-aliases">aliases</a>, <a href="package_info.html#package_info-module_bazel">module_bazel</a>, <a href="package_info.html#package_info-package_bugreport">package_bugreport</a>, <a href="package_info.html#package_info-package_name">package_name</a>, <a href="package_info.html#package_info-package_tarname">package_tarname</a>,
-             <a href="package_info.html#package_info-package_url">package_url</a>, <a href="package_info.html#package_info-package_version">package_version</a>, <a href="package_info.html#package_info-strip_bcr_version">strip_bcr_version</a>)
-</pre>
-<p>A rule for parsing module info from <code>MODULE.bazel</code> files.</p>
-<p>This rule is most useful when paired with the <code>autoconf</code> rule.</p>
-<p>Example:</p>
-<pre><code class="language-python">load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
-load("@rules_cc_autoconf//autoconf:package_info.bzl", "package_info")
-
-package_info(
-    name = "package_info",
-    module_bazel = "//:MODULE.bazel",
-)
-
-autoconf(
-    name = "config_h",
-    out = "config.h",
-    checks = [
-        # ...
-    ],
-    deps = [
-        ":package_info",
-    ],
-)
-</code></pre>
-<p><strong>ATTRIBUTES</strong></p>
-<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Type</th><th style="text-align: left">Mandatory</th><th style="text-align: left">Default</th></tr></thead><tbody>
-<tr><td style="text-align: left"><a id="package_info-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
-<tr><td style="text-align: left"><a id="package_info-aliases"></a>aliases</td><td style="text-align: left">Additional variables to define that are mirrored by the provided value variable.</td><td style="text-align: left"><a href="https://bazel.build/rules/lib/dict">Dictionary: String -&gt; String</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>{}</code></td></tr>
-<tr><td style="text-align: left"><a id="package_info-module_bazel"></a>module_bazel</td><td style="text-align: left">A <code>MODULE.bazel</code> file to parse module information from. Mutually exclusive with <code>package_name</code> and <code>package_version</code>.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>None</code></td></tr>
-<tr><td style="text-align: left"><a id="package_info-package_bugreport"></a>package_bugreport</td><td style="text-align: left">The package bug report email/URL. Used to populate <code>PACKAGE_BUGREPORT</code> define.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
-<tr><td style="text-align: left"><a id="package_info-package_name"></a>package_name</td><td style="text-align: left">The package name. Must be provided together with <code>package_version</code> if <code>module_bazel</code> is not provided.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
-<tr><td style="text-align: left"><a id="package_info-package_tarname"></a>package_tarname</td><td style="text-align: left">Exactly tarname, possibly generated from package.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
-<tr><td style="text-align: left"><a id="package_info-package_url"></a>package_url</td><td style="text-align: left">The package home page URL. Used to populate <code>PACKAGE_URL</code> define.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
-<tr><td style="text-align: left"><a id="package_info-package_version"></a>package_version</td><td style="text-align: left">The package version. Must be provided together with <code>package_name</code> if <code>module_bazel</code> is not provided.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>""</code></td></tr>
-<tr><td style="text-align: left"><a id="package_info-strip_bcr_version"></a>strip_bcr_version</td><td style="text-align: left">Whether or not to strip <code>.bcr.*</code> suffixes from <code>module_bazel</code> parsed versions.</td><td style="text-align: left">Boolean</td><td style="text-align: left">optional</td><td style="text-align: left"><code>False</code></td></tr>
-</tbody></table>
-</div><div style="break-before: page; page-break-before: always;"></div><h1 id="gnulib"><a class="header" href="#gnulib">Gnulib</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="gnulib"><a class="header" href="#gnulib">Gnulib</a></h1>
 <p>The <code>@rules_cc_autoconf//gnulib</code> module provides a collection of pre-built autoconf checks
 based on <a href="https://www.gnu.org/software/gnulib/">GNU Gnulib</a>, a portability library for
 Unix-like systems. Instead of manually writing checks for common functions, headers, and
@@ -1946,9 +1949,9 @@ and the rule reference <a href="./autoconf_linkopts.html">autoconf_linkopts</a>.
 <pre><code class="language-python">load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
 load("@rules_cc_autoconf//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
 load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
-load("@rules_cc_autoconf//autoconf:package_info.bzl", "package_info")
+load("@rules_cc_autoconf//autoconf:autoconf_package_info.bzl", "autoconf_package_info")
 
-package_info(
+autoconf_package_info(
     name = "package",
     package_name = "my_package",
     package_version = "1.0.0",
@@ -2045,9 +2048,9 @@ AC_OUTPUT
 <pre><code class="language-python">load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
 load("@rules_cc_autoconf//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
 load("@rules_cc_autoconf//autoconf:checks.bzl", "checks", "macros")
-load("@rules_cc_autoconf//autoconf:package_info.bzl", "package_info")
+load("@rules_cc_autoconf//autoconf:autoconf_package_info.bzl", "autoconf_package_info")
 
-package_info(
+autoconf_package_info(
     name = "package",
     module_bazel = "MODULE.bazel"
 )
@@ -2078,14 +2081,14 @@ autoconf_hdr(
 <li><code>mode = "defines"</code> — For <code>config.h</code> files (processes <code>#undef</code> directives)</li>
 <li><code>mode = "subst"</code> — For substitution files (processes <code>@VAR@</code> placeholders)</li>
 </ul>
-<h3 id="3-package_info-rule"><a class="header" href="#3-package_info-rule">3. <code>package_info</code> Rule</a></h3>
+<h3 id="3-autoconf_package_info-rule"><a class="header" href="#3-autoconf_package_info-rule">3. <code>autoconf_package_info</code> Rule</a></h3>
 <p>Provides package metadata (<code>PACKAGE_NAME</code>, <code>PACKAGE_VERSION</code>, etc.) equivalent to <code>AC_INIT</code>.</p>
 <h3 id="4-autoconf_linkopts-rule-optional"><a class="header" href="#4-autoconf_linkopts-rule-optional">4. <code>autoconf_linkopts</code> Rule (optional)</a></h3>
 <p>Turns <strong>subst</strong> values that hold linker flags (often from <code>AC_SEARCH_LIBS</code>) into <strong><code>CcInfo</code></strong> for <code>cc_library</code> / <code>cc_binary</code> / <code>cc_test</code> dependencies. See <a href="migration.html#pattern-7b-ac_search_libs-and-autoconf_linkopts">Pattern 7b</a>.</p>
 <h3 id="data-flow"><a class="header" href="#data-flow">Data Flow</a></h3>
 <pre><code>configure.ac         →    BUILD.bazel
      ↓                         ↓
-AC_INIT           →    package_info
+AC_INIT           →    autoconf_package_info
 AC_CHECK_*        →    autoconf (checks = [...])
 AC_CONFIG_HEADERS →    autoconf_hdr
 </code></pre>

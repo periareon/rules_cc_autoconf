@@ -196,9 +196,9 @@ AC_OUTPUT
 <pre><code class="language-python">load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
 load("@rules_cc_autoconf//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
 load("@rules_cc_autoconf//autoconf:checks.bzl", "checks", "macros")
-load("@rules_cc_autoconf//autoconf:package_info.bzl", "package_info")
+load("@rules_cc_autoconf//autoconf:autoconf_package_info.bzl", "autoconf_package_info")
 
-package_info(
+autoconf_package_info(
     name = "package",
     module_bazel = "MODULE.bazel"
 )
@@ -229,14 +229,14 @@ autoconf_hdr(
 <li><code>mode = "defines"</code> — For <code>config.h</code> files (processes <code>#undef</code> directives)</li>
 <li><code>mode = "subst"</code> — For substitution files (processes <code>@VAR@</code> placeholders)</li>
 </ul>
-<h3 id="3-package_info-rule"><a class="header" href="#3-package_info-rule">3. <code>package_info</code> Rule</a></h3>
+<h3 id="3-autoconf_package_info-rule"><a class="header" href="#3-autoconf_package_info-rule">3. <code>autoconf_package_info</code> Rule</a></h3>
 <p>Provides package metadata (<code>PACKAGE_NAME</code>, <code>PACKAGE_VERSION</code>, etc.) equivalent to <code>AC_INIT</code>.</p>
 <h3 id="4-autoconf_linkopts-rule-optional"><a class="header" href="#4-autoconf_linkopts-rule-optional">4. <code>autoconf_linkopts</code> Rule (optional)</a></h3>
 <p>Turns <strong>subst</strong> values that hold linker flags (often from <code>AC_SEARCH_LIBS</code>) into <strong><code>CcInfo</code></strong> for <code>cc_library</code> / <code>cc_binary</code> / <code>cc_test</code> dependencies. See <a href="#pattern-7b-ac_search_libs-and-autoconf_linkopts">Pattern 7b</a>.</p>
 <h3 id="data-flow"><a class="header" href="#data-flow">Data Flow</a></h3>
 <pre><code>configure.ac         →    BUILD.bazel
      ↓                         ↓
-AC_INIT           →    package_info
+AC_INIT           →    autoconf_package_info
 AC_CHECK_*        →    autoconf (checks = [...])
 AC_CONFIG_HEADERS →    autoconf_hdr
 </code></pre>
