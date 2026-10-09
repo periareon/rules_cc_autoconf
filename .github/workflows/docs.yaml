@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+env:
+  BAZEL_STARTUP_FLAGS: --bazelrc=${{ github.workspace }}/.github/github.bazelrc
+
 jobs:
   docs:
     name: Docs
@@ -13,8 +16,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
+      - uses: ./.github/actions/buildbuddy
+        with:
+          api_key: ${{ secrets.BUILDBUDDY_API_KEY }}
       - name: Run tests
-        run: bazel run --compilation_mode=opt --stamp //docs:publish_book
+        run: bazel ${BAZEL_STARTUP_FLAGS[@]} run --compilation_mode=opt --stamp //docs:publish_book
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@4.1.7
         with:

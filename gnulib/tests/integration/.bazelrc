@@ -36,28 +36,11 @@ build --incompatible_disallow_empty_glob=true
 # https://github.com/bazelbuild/bazel/issues/12821
 build --nolegacy_external_runfiles
 
-# https://github.com/bazelbuild/bazel/issues/23043.
+# https://github.com/bazelbuild/bazel/issues/23043
 build --incompatible_autoload_externally=
 
-###############################################################################
-## Compiler warnings
-###############################################################################
-
-# Enable all warnings and treat them as errors
-# For Clang/GCC (Linux and macOS)
-build:linux --copt=-Wall
-build:linux --copt=-Wextra
-build:linux --copt=-Werror
-build:linux --per_file_copt=external/.*@-w
-build:macos --copt=-Wall
-build:macos --copt=-Wextra
-build:macos --copt=-Werror
-build:macos --per_file_copt=external/.*@-w
-
-# For MSVC (Windows)
-build:windows --copt=/Wall
-build:windows --copt=/W3
-build:windows --per_file_copt=external/.*@/W0
+# https://github.com/bazelbuild/bazel/issues/12933
+build --incompatible_config_setting_private_default_visibility
 
 ###############################################################################
 ## Remote Cache
