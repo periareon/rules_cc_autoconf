@@ -209,6 +209,34 @@ autoconf_hdr(
     deps = [":autoconf"],
 )
 </code></pre>
+<h2 id="how-the-gnulib-ports-are-tested"><a class="header" href="#how-the-gnulib-ports-are-tested">How the gnulib ports are tested</a></h2>
+<p>Every <code>//gnulib/m4/&lt;module&gt;</code> port has a suite under <code>//gnulib/tests/compat/&lt;module&gt;</code>
+created by <code>gnu_gnulib_diff_test_suite</code>. The oracle is <strong>GNU autoconf itself</strong>: the
+<code>&lt;module&gt;_test_gnu_conformance</code> test runs the pinned <code>aclocal</code>, <code>autoconf</code> and
+<code>configure</code> on the module's <code>configure.ac</code> using the m4 files from the pinned gnulib
+commit, with the <strong>same compiler, flags and environment</strong> the <code>autoconf</code> rule uses
+(both read them from the same Starlark helper), and requires the rendered <code>config.h</code>
+and <code>subst.h</code> to match the Bazel-generated headers byte for byte. There are no
+checked-in expected outputs for Linux and macOS; GNU autoconf produces them on the
+machine running the test.</p>
+<p>The autotools are hermetic dev dependencies: autoconf and automake tarballs are
+fetched and installed by <code>//autoconf/tests/gnu:deps.bzl</code>, perl comes from
+<code>rules_perl</code>, m4 from the Bazel Central Registry <code>m4</code> module, and the shell from
+<code>rules_shell</code>. Only the POSIX shell and userland come from the host. Run the bundled
+tools directly with, for example, <code>bazel run //autoconf/tests/gnu:autoconf -- --version</code>.</p>
+<p>Every comparison leaves its inputs where a reviewer can read them. A conformance
+test's undeclared outputs directory (<code>bazel-testlogs/.../test.outputs/</code>) contains
+<code>gnu/</code> (the configure work tree with <code>config.h</code>, <code>subst.h</code>, <code>config.log</code>, tool logs
+and the exact environment configure ran with), <code>bazel/</code> (the Bazel headers), a
+<code>config.h.diff</code> / <code>subst.h.diff</code> when they differ, <code>versions.json</code> and
+<code>fingerprint.json</code>. A <code>diff_test</code> leaves <code>expected/</code>, <code>actual/</code> and <code>diff.patch</code>.</p>
+<p>On Windows the same conformance test runs under the MSYS2 bash from <code>rules_shell</code>,
+with Strawberry Perl from <code>rules_perl</code> and MSVC driven through gnulib's <code>compile</code>
+wrapper. There are no checked-in expected outputs on any platform.</p>
+<p>When a port intentionally differs from upstream m4, list the variable in the suite's
+<code>known_divergences</code> with a reason; it is masked from the comparison and always
+printed in the test log. Every gnulib module has a conformance test; there is no
+opt-out.</p>
 
                     </main>
 

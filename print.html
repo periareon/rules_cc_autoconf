@@ -1976,6 +1976,34 @@ autoconf_hdr(
     deps = [":autoconf"],
 )
 </code></pre>
+<h2 id="how-the-gnulib-ports-are-tested"><a class="header" href="#how-the-gnulib-ports-are-tested">How the gnulib ports are tested</a></h2>
+<p>Every <code>//gnulib/m4/&lt;module&gt;</code> port has a suite under <code>//gnulib/tests/compat/&lt;module&gt;</code>
+created by <code>gnu_gnulib_diff_test_suite</code>. The oracle is <strong>GNU autoconf itself</strong>: the
+<code>&lt;module&gt;_test_gnu_conformance</code> test runs the pinned <code>aclocal</code>, <code>autoconf</code> and
+<code>configure</code> on the module's <code>configure.ac</code> using the m4 files from the pinned gnulib
+commit, with the <strong>same compiler, flags and environment</strong> the <code>autoconf</code> rule uses
+(both read them from the same Starlark helper), and requires the rendered <code>config.h</code>
+and <code>subst.h</code> to match the Bazel-generated headers byte for byte. There are no
+checked-in expected outputs for Linux and macOS; GNU autoconf produces them on the
+machine running the test.</p>
+<p>The autotools are hermetic dev dependencies: autoconf and automake tarballs are
+fetched and installed by <code>//autoconf/tests/gnu:deps.bzl</code>, perl comes from
+<code>rules_perl</code>, m4 from the Bazel Central Registry <code>m4</code> module, and the shell from
+<code>rules_shell</code>. Only the POSIX shell and userland come from the host. Run the bundled
+tools directly with, for example, <code>bazel run //autoconf/tests/gnu:autoconf -- --version</code>.</p>
+<p>Every comparison leaves its inputs where a reviewer can read them. A conformance
+test's undeclared outputs directory (<code>bazel-testlogs/.../test.outputs/</code>) contains
+<code>gnu/</code> (the configure work tree with <code>config.h</code>, <code>subst.h</code>, <code>config.log</code>, tool logs
+and the exact environment configure ran with), <code>bazel/</code> (the Bazel headers), a
+<code>config.h.diff</code> / <code>subst.h.diff</code> when they differ, <code>versions.json</code> and
+<code>fingerprint.json</code>. A <code>diff_test</code> leaves <code>expected/</code>, <code>actual/</code> and <code>diff.patch</code>.</p>
+<p>On Windows the same conformance test runs under the MSYS2 bash from <code>rules_shell</code>,
+with Strawberry Perl from <code>rules_perl</code> and MSVC driven through gnulib's <code>compile</code>
+wrapper. There are no checked-in expected outputs on any platform.</p>
+<p>When a port intentionally differs from upstream m4, list the variable in the suite's
+<code>known_divergences</code> with a reason; it is masked from the comparison and always
+printed in the test log. Every gnulib module has a conformance test; there is no
+opt-out.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="m4-to-bazel-migration-guide"><a class="header" href="#m4-to-bazel-migration-guide">M4 to Bazel Migration Guide</a></h1>
 <p>This guide teaches how to convert GNU Autoconf M4 macros (from <code>configure.ac</code> files) to the equivalent Bazel rules in this repository.</p>
 <p><strong>Important Constraint:</strong> When porting gnulib modules or fixing failing tests, you may <strong>only</strong> modify <code>BUILD.bazel</code> files. The following are <strong>not</strong> allowed:</p>
@@ -2910,7 +2938,12 @@ bazel build //gnulib/m4/c32rtomb:c32rtomb
 # Run compatibility tests
 bazel test //gnulib/tests/compatibility/c32rtomb:all
 </code></pre>
-<p>Compare test output against golden files and fix any discrepancies.</p>
+<p>The <code>&lt;module&gt;_test_gnu_conformance</code> test is the oracle: it runs the pinned GNU
+<code>aclocal</code>/<code>autoconf</code>/<code>configure</code> with the Bazel C++ toolchain's compiler and flags and
+requires the Bazel-generated headers to match byte for byte. Fix the port until it
+passes; list only intentional differences from upstream m4 in <code>known_divergences</code>.
+No platform needs a checked-in expected output; the oracle produces it. See
+<a href="./gnulib.html#how-the-gnulib-ports-are-tested">How the gnulib ports are tested</a>.</p>
 <h3 id="step-8-test-on-linux-if-needed"><a class="header" href="#step-8-test-on-linux-if-needed">Step 8: Test on Linux (if needed)</a></h3>
 <p>When porting modules that have platform-specific behavior, you may need to test on Linux to verify correctness. The repository ships scripts at the workspace root for running Bazel inside Linux Docker containers:</p>
 <h4 id="available-scripts"><a class="header" href="#available-scripts">Available scripts</a></h4>
@@ -2982,45 +3015,16 @@ autoconf(
 )
 </code></pre>
 <h3 id="5-test-your-migration"><a class="header" href="#5-test-your-migration">5. Test Your Migration</a></h3>
-<p>Run diff tests against golden files to verify your migration produces correct output:</p>
+<p>For gnulib ports, <code>gnu_gnulib_diff_test_suite</code> runs GNU autoconf itself against the
+Bazel output (see <a href="./gnulib.html#how-the-gnulib-ports-are-tested">How the gnulib ports are tested</a>).
+For your own checks, run diff tests against golden files to verify your migration
+produces correct output:</p>
 <pre><code class="language-python">diff_test(
     name = "config_diff_test",
     file1 = "golden_config.h.in",
     file2 = ":config.h",
 )
 </code></pre>
-<h3 id="6-only-split-golden-files-when-necessary"><a class="header" href="#6-only-split-golden-files-when-necessary">6. Only Split Golden Files When Necessary</a></h3>
-<p>Golden files should only be split into platform-specific versions (<code>golden_config_linux.h.in</code>, <code>golden_config_macos.h.in</code>) when there are <strong>genuine differences</strong> in the expected output between platforms.</p>
-<p><strong>Use a single golden file when:</strong></p>
-<ul>
-<li>The output is identical across all platforms</li>
-<li>Any platform differences are handled in the Bazel targets (not the expected output)</li>
-</ul>
-<pre><code class="language-python"># GOOD: Single golden file when content is the same
-gnu_gnulib_diff_test_suite(
-    name = "sig_atomic_t_test",
-    golden_config_h = "golden_config.h.in",
-    golden_subst_h = "golden_subst.h.in",
-    ...
-)
-</code></pre>
-<p><strong>Split golden files only when:</strong></p>
-<ul>
-<li>The <code>gnu_autoconf</code> test produces genuinely different outputs on different platforms</li>
-<li>Platform-specific defines have different values (e.g., <code>REPLACE_FSTAT</code> is <code>1</code> on macOS, <code>0</code> on Linux)</li>
-</ul>
-<pre><code class="language-python"># ONLY when content genuinely differs between platforms
-gnu_gnulib_diff_test_suite(
-    name = "fstat_test",
-    golden_config_h = {
-        "linux": "golden_config_linux.h.in",
-        "macos": "golden_config_macos.h.in",
-    },
-    ...
-)
-</code></pre>
-<p><strong>Anti-pattern:</strong> Don't split golden files just because you're unsure — first verify the content differs by running <code>gnu_autoconf</code> tests on both platforms.</p>
-<hr />
 <h2 id="cross-compilation-considerations"><a class="header" href="#cross-compilation-considerations">Cross-Compilation Considerations</a></h2>
 <h3 id="design-philosophy-avoiding-runtime-checks"><a class="header" href="#design-philosophy-avoiding-runtime-checks">Design Philosophy: Avoiding Runtime Checks</a></h3>
 <p>Bazel intentionally avoids runtime checks to ensure:</p>
