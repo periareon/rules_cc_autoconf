@@ -26,6 +26,14 @@
     "shell32 linked without linkopts; the positive probe is not discriminating"
 #endif
 
+#if !defined(HAVE_RULE_LINKOPTS) || HAVE_RULE_LINKOPTS != 1
+#error "rule linkopts did not reach a direct check"
+#endif
+
+#if !defined(HAVE_TRANSITIVE_LINKOPTS) || HAVE_TRANSITIVE_LINKOPTS != 1
+#error "rule linkopts did not reach a transitive check"
+#endif
+
 #if !defined(HAVE_LIBSHELL32_COMMANDLINETOARGVW) || \
     HAVE_LIBSHELL32_COMMANDLINETOARGVW != 1
 #error "AC_CHECK_LIB regressed: bare positional .lib no longer reaches linker"

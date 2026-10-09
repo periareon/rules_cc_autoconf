@@ -18,6 +18,24 @@
 /* Define to 1 if copts are actually passed to the compiler. */
 #define HAVE_COPTS_VERIFIED 1
 
+/* Define to 1 if rule copts are passed to direct checks. */
+#define HAVE_RULE_COPTS 1
+
+/* Define to 1 if rule cxxopts are passed to direct checks. */
+#define HAVE_RULE_CXXOPTS 1
+
+/* Define to 1 if rule linkopts are passed to direct checks. */
+#define HAVE_RULE_LINKOPTS 1
+
+/* Define to 1 if rule copts are passed to transitive checks. */
+#define HAVE_TRANSITIVE_COPTS 1
+
+/* Define to 1 if rule cxxopts are passed to transitive checks. */
+#define HAVE_TRANSITIVE_CXXOPTS 1
+
+/* Define to 1 if rule linkopts are passed to transitive checks. */
+#define HAVE_TRANSITIVE_LINKOPTS 1
+
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT ""
 

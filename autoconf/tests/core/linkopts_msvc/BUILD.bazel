@@ -56,11 +56,38 @@ autoconf(
     deps = [":package"],
 )
 
+autoconf(
+    name = "rule_linkopts_transitive",
+    checks = [
+        checks.AC_TRY_LINK(
+            code = _PROBE_CODE + " GetLastError();",
+            define = "HAVE_TRANSITIVE_LINKOPTS",
+            includes = _PROBE_INCLUDES,
+        ),
+    ],
+)
+
+autoconf(
+    name = "rule_linkopts",
+    checks = [
+        checks.AC_TRY_LINK(
+            code = _PROBE_CODE + " SetLastError(0);",
+            define = "HAVE_RULE_LINKOPTS",
+            includes = _PROBE_INCLUDES,
+        ),
+    ],
+    linkopts = ["/DEFAULTLIB:shell32.lib"],
+    deps = [":rule_linkopts_transitive"],
+)
+
 autoconf_hdr(
     name = "config",
     out = "config.h",
     template = "config.h.in",
-    deps = [":autoconf"],
+    deps = [
+        ":autoconf",
+        ":rule_linkopts",
+    ],
 )
 
 diff_test(
