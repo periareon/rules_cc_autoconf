@@ -23,6 +23,7 @@ load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
 _CONTENT_KEY_FIELDS = (
     "type",
     "code",
+    "code_must_fail",
     "language",
     "define_value",
     "define_value_fail",

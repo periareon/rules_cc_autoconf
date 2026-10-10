@@ -85,6 +85,10 @@ class Check {
 
     /**
      * @brief Get the optional custom code for this check.
+     *
+     * When the JSON `code` field is a list, this is its first program; the
+     * rest are alternative_codes().
+     *
      * @return Optional string containing custom test code, or std::nullopt if
      * not provided.
      */
@@ -106,6 +110,36 @@ class Check {
      */
     const std::optional<std::string>& code_must_fail() const {
         return code_must_fail_;
+    }
+
+    /**
+     * @brief Get the alternative programs for this check, in order.
+     *
+     * The JSON `code` field may be a list of programs. code() is the
+     * first; these are the rest. CheckRunner::run_check tries them one
+     * at a time, as the same kind of check with every other field
+     * unchanged, until one answers "yes". A program that applies to some
+     * compilers only excludes itself with the preprocessor (`#error`).
+     *
+     * @return Programs after the first; empty when `code` was a string.
+     */
+    const std::vector<std::string>& alternative_codes() const {
+        return alternative_codes_;
+    }
+
+    /**
+     * @brief Copy of this check with a single program as `code`.
+     *
+     * Used by CheckRunner::run_check to re-run a failed check with one of
+     * its alternative programs. The copy keeps every other field (type,
+     * language, copts, linkopts, compile_defines, define, subst, ...) so
+     * the next probe is the same check asking with a different program.
+     */
+    Check with_code(const std::string& code) const {
+        Check copy = *this;
+        copy.code_ = code;
+        copy.alternative_codes_.clear();
+        return copy;
     }
 
     /**
@@ -208,6 +242,9 @@ class Check {
         code_must_fail_{};  /// Optional second probe whose compile must FAIL
                             /// (used by AC_CHECK_TYPE to distinguish a type
                             /// from a variable)
+    std::vector<std::string>
+        alternative_codes_{};  /// Further programs from a `code` list, tried
+                               /// in order after code_ answers "no"
     std::optional<std::string> define_value_{};  /// Value if check succeeds
     std::optional<std::string> define_value_fail_{};  /// Value if check fails
     std::optional<std::string> library_{};  /// Library name for lib checks

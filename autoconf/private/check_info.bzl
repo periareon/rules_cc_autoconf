@@ -6,7 +6,7 @@ validation (used only by the validation aspect).
 """
 
 KNOWN_CHECK_FIELDS = {
-    "code": "str: C/C++ source code to compile or link for this check.",
+    "code": "(str | list[str]): C/C++ program to compile or link for this check, or a list of programs tried in order until one succeeds.",
     "code_must_fail": "str: Optional second probe whose compile must FAIL for the check to succeed. Used by AC_CHECK_TYPE to distinguish a type from a variable.",
     "compile_defines": "list[str]: Preprocessor define names from previous checks to add before includes.",
     "condition": "str: Boolean expression that selects between if_true/if_false values.",
@@ -112,6 +112,7 @@ def _autoconf_check_init(
     if type in TYPES_REQUIRING_CODE and code == None:
         fail("Check '{}' (type '{}') requires a 'code' field.".format(name, type))
 
+    _validate_code_field(name, code)
     _validate_list_field("compile_defines", compile_defines)
     _validate_list_field("copts", copts)
     _validate_list_field("input_deps", input_deps)
@@ -142,6 +143,21 @@ def _autoconf_check_init(
         "type": type,
         "unquote": unquote,
     }
+
+def _validate_code_field(name, code):
+    """Fail unless `code` is None, a string, or a non-empty list of strings.
+
+    Lives outside `_autoconf_check_init`, whose `type` parameter shadows the
+    builtin.
+    """
+    if type(code) == "list":
+        if not code:
+            fail("Check '{}' has an empty 'code' list; give at least one program.".format(name))
+        for program in code:
+            if type(program) != "string":
+                fail("Check '{}': every entry of a 'code' list must be a string, got {}.".format(name, type(program)))
+    elif code != None and type(code) != "string":
+        fail("Check '{}': 'code' must be a string or a list of strings, got {}.".format(name, type(code)))
 
 def _validate_list_field(field_name, value):
     """Fail if value is not None and not a list."""

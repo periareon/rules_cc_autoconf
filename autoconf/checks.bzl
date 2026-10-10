@@ -154,6 +154,17 @@ def _header_code_from_includes(includes_list):
         return ""
     return "\n".join([h.strip() for h in includes_list])
 
+def _wrap_bodies_with_includes(includes, code):
+    """Wrap main() body/bodies in AC_LANG_PROGRAM with the given includes.
+
+    `code` is one body, a list of bodies (one program per entry, tried in
+    order by the checker), or None for an empty body.
+    """
+    header_code = _header_code_from_includes(includes)
+    if type(code) == "list":
+        return [_AC_LANG_PROGRAM_TEMPLATE.format(header_code, body) for body in code]
+    return _AC_LANG_PROGRAM_TEMPLATE.format(header_code, code if code else "")
+
 # AC_CHECK_FUNC default code template.
 #
 # Source of truth (compare against this when upstream changes):
@@ -186,6 +197,8 @@ def _header_code_from_includes(includes_list):
 # GNU autoconf does on MSVC.  gnulib relies on that outcome (probe no,
 # AC_CHECK_DECL yes) to name its replacements rpl_* instead of clashing
 # with the inline definitions; see gl_REPLACE_SNPRINTF in snprintf.m4.
+# Everyone else wants to know whether the function is callable, which
+# is what _AC_CHECK_FUNC_MSVC_INLINE_TEMPLATE below answers.
 _AC_CHECK_FUNC_DEFAULT_TEMPLATE = """\
 #define {function} innocuous_{function}
 #include <limits.h>
@@ -204,6 +217,46 @@ choke me
 int main(void) {{ return {function}(); }}
 """
 
+# Second program of AC_CHECK_FUNC's default `code` list.  The checker
+# tries a `code` list in order until one program succeeds, so this runs
+# only after the template above failed to link, which on MSVC it does for
+# the UCRT's header-inline printf and scanf families (see "MSVC deviation"
+# above).  That "no" is GNU's literal answer and the one gnulib's
+# replacement logic is built on, but it is the wrong answer for a consumer
+# that gates a plain call on HAVE_<FUNCTION>.  References:
+#   https://learn.microsoft.com/en-us/cpp/porting/visual-cpp-change-history-2003-2015#stdioh-and-conioh
+#   https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/doc/posix-functions/snprintf.texi#L15-L16
+#   https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/snprintf.m4#L45-L62
+#
+# This probe includes the default headers (AC_INCLUDES_DEFAULT) and
+# takes the function's address.  Taking the address forces an
+# out-of-line copy of an inline function into the conftest object, so the
+# link succeeds with no extra library.  The address is stored through a
+# volatile pointer so the optimiser cannot fold the comparison away and
+# drop the symbol reference.  It never turns a "yes" into a "no", and it
+# only turns a "no" into a "yes" when the function is genuinely callable:
+# a function-like macro has no address (compile error), and a function
+# that is declared but defined in no default library still fails to link.
+#
+# The `_MSC_VER` guard (cl.exe and clang-cl define it; MinGW does not)
+# keeps it a Microsoft-CRT probe: elsewhere it fails at preprocessing, so
+# every non-MSVC result is exactly GNU's.  On GNU compilers that costs one
+# fast-failing extra compile per function the bare-symbol probe rejected.
+# A check that wants GNU's literal answer on MSVC passes GNU's program
+# alone, `code = utils.AC_LANG_FUNC_LINK_TRY(function)`, as the gnulib
+# ports do.
+_AC_CHECK_FUNC_MSVC_INLINE_TEMPLATE = """\
+#if !defined _MSC_VER
+#error "header-inline function probe: Microsoft CRT only"
+#endif
+{includes}
+static void (*volatile rules_cc_autoconf_func_addr)(void);
+int main(void) {{
+    rules_cc_autoconf_func_addr = (void (*)(void)) &{function};
+    return 0;
+}}
+"""
+
 # Upstream AC_LANG_CALL(C++) uses this shape for every function
 # (https://github.com/autotools-mirror/autoconf/blob/v2.73/lib/autoconf/c.m4#L251-L266)
 # — no main-branch, unlike AC_LANG_CALL(C).
@@ -213,6 +266,21 @@ extern "C" int {function}();
 }}
 int main(void) {{ return conftest::{function}(); }}
 """
+
+def _ac_lang_func_link_try(function):
+    """Return GNU autoconf's `AC_LANG_FUNC_LINK_TRY(C)` program for `function`.
+
+    The first program of `AC_CHECK_FUNC`'s default `code` list. Pass it alone
+    as `code` to get GNU's literal answer on every compiler; see
+    `AC_CHECK_FUNC` for when that matters.
+
+    Args:
+        function: Name of the function (e.g., `"snprintf"`)
+
+    Returns:
+        C source for the link probe.
+    """
+    return _AC_CHECK_FUNC_DEFAULT_TEMPLATE.format(function = function)
 
 def _library_function_link_test_code(function, language):
     """Return source for AC_CHECK_LIB/AC_SEARCH_LIBS function-link probes."""
@@ -483,6 +551,26 @@ def _ac_check_func(
     AC_CHECK_FUNC([mmap], [AC_DEFINE([HAVE_MMAP_FEATURE], [1])])
     ```
 
+    The default `code` is a list of two programs, tried in order. The first
+    is GNU autoconf's (`utils.AC_LANG_FUNC_LINK_TRY`): declare the function
+    with a dummy prototype, call it, and link against the default
+    libraries. The second runs only if that fails and only under
+    `_MSC_VER`: it includes `AC_INCLUDES_DEFAULT` and takes the function's
+    address, because the UCRT implements the printf and scanf families as
+    header-inline functions with no linker symbol. GNU autoconf itself
+    reports those absent on MSVC; this check reports them present, which
+    is what a `HAVE_<FUNCTION>` consumer needs. Results on every other
+    compiler are exactly GNU's. Passing `code` replaces the list: a check
+    that wants GNU's literal answer on MSVC passes
+    `code = utils.AC_LANG_FUNC_LINK_TRY(function)` alone. gnulib ports
+    verified against GNU autoconf do so for the printf family, because
+    gnulib documents that answer as MSVC 14's state and builds its
+    replacement logic on it:
+
+    - https://learn.microsoft.com/en-us/cpp/porting/visual-cpp-change-history-2003-2015#stdioh-and-conioh
+    - https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/doc/posix-functions/snprintf.texi#L15-L16
+    - https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/snprintf.m4#L45-L62
+
     Example:
     ```python
     # Cache variable only (no define, no subst)
@@ -512,7 +600,9 @@ def _ac_check_func(
             - `None` (default): No define is created, only cache variable
             - `True`: Create define using the cache variable name (`name`)
             - `"HAVE_FOO"`: Create define with explicit name `HAVE_FOO` (implies `define=True`)
-        code: Custom code to compile (optional).
+        code: Custom program to compile and link, or a list of programs tried
+            in order until one links (optional). Replaces the default list
+            described above.
         language: Language to use for check (`"c"` or `"cpp"`)
         compile_defines: Optional list of preprocessor define names from previous checks
             to add before includes (e.g., `["_GNU_SOURCE", "_DARWIN_C_SOURCE"]`).
@@ -540,16 +630,23 @@ def _ac_check_func(
     if not name:
         name = _get_cache_name_for_func(function)
 
-    if not code:
-        code = _AC_CHECK_FUNC_DEFAULT_TEMPLATE.format(function = function)
-
     check = {
         "language": language,
         "name": name,  # Cache variable name
         "type": "function",
     }
 
-    check["code"] = code
+    if code:
+        # Caller-supplied program(s) replace the default list.
+        check["code"] = code
+    else:
+        check["code"] = [
+            _ac_lang_func_link_try(function),
+            _AC_CHECK_FUNC_MSVC_INLINE_TEMPLATE.format(
+                includes = _AC_INCLUDES_DEFAULT,
+                function = function,
+            ),
+        ]
     if compile_defines:
         check["compile_defines"] = compile_defines
     if copts:
@@ -740,6 +837,8 @@ def _ac_try_compile(
         code: Code to compile. If `includes` is also provided, this is treated as
             the body of main(). Otherwise, it should be complete C code. For
             AC_LANG_PROGRAM-style tests, use code = utils.AC_LANG_PROGRAM(prologue, body).
+            May be a list of programs (or bodies, with `includes`): they are
+            tried in order and the check succeeds when one compiles.
         name: Cache variable name.
         define: Define name to set if compilation succeeds
         includes: Optional list of headers to include. When provided, `code` is
@@ -784,9 +883,7 @@ def _ac_try_compile(
 
     if includes:
         # When includes is provided, code is the body of main()
-        header_code = _header_code_from_includes(includes)
-        body_code = code if code else ""
-        check["code"] = _AC_LANG_PROGRAM_TEMPLATE.format(header_code, body_code)
+        check["code"] = _wrap_bodies_with_includes(includes, code)
     elif code:
         check["code"] = code
 
@@ -872,6 +969,8 @@ def _ac_try_link(
         code: Code to compile and link. If `includes` is also provided, this is
             treated as the body of main(). Otherwise, it should be complete C code.
             For AC_LANG_PROGRAM-style tests use code = utils.AC_LANG_PROGRAM(prologue, body).
+            May be a list of programs (or bodies, with `includes`): they are
+            tried in order and the check succeeds when one links.
         name: Cache variable name.
         define: Define name to set if compilation and linking succeeds
         includes: Optional list of headers to include (backward compatibility).
@@ -917,9 +1016,7 @@ def _ac_try_link(
 
     if includes:
         # Backward compatibility: includes + code pattern
-        header_code = _header_code_from_includes(includes)
-        body_code = code if code else ""
-        check["code"] = _AC_LANG_PROGRAM_TEMPLATE.format(header_code, body_code)
+        check["code"] = _wrap_bodies_with_includes(includes, code)
     elif code:
         check["code"] = code
 
@@ -2682,7 +2779,8 @@ def _ac_check_funcs(
 
     Args:
         functions: List of function names to check.
-        code: Custom code to compile (applies to all checks).
+        code: Custom program, or list of programs tried in order, to compile
+            and link (applies to all checks); see `AC_CHECK_FUNC`.
         language: Language to use for checks (`"c"` or `"cpp"`).
         compile_defines: Optional list of preprocessor define names (applies to all checks).
         requires: Requirements that must be met (applies to all checks).
@@ -3003,5 +3101,6 @@ macros = struct(
 
 utils = struct(
     AC_LANG_PROGRAM = _ac_lang_program,
+    AC_LANG_FUNC_LINK_TRY = _ac_lang_func_link_try,
     AC_INCLUDES_DEFAULT = _AC_INCLUDES_DEFAULT,
 )

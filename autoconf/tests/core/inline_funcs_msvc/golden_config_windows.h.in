@@ -1,0 +1,52 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Define to 1 if you have the `snprintf' function. */
+#define HAVE_SNPRINTF 1
+
+/* Define to 1 if you have the `vfprintf' function. */
+#define HAVE_VFPRINTF 1
+
+/* Define to 1 if you have the `vprintf' function. */
+#define HAVE_VPRINTF 1
+
+/* Define to 1 if you have the `vsnprintf' function. */
+#define HAVE_VSNPRINTF 1
+
+/* Define to 1 if vfprintf probes as present when compiled with /O2. */
+#define HAVE_VFPRINTF_O2 1
+
+/* Define to 1 if GNU autoconf's own program finds vfprintf. */
+/* #undef HAVE_VFPRINTF_GNU */
+
+/* Define to 1 if GNU autoconf's own program finds puts. */
+#define HAVE_PUTS_GNU 1
+
+/* Define to 1 if vfprintf probes as present from C++. */
+#define HAVE_VFPRINTF_CXX 1
+
+/* Define to 1 if _cprintf (declared only in <conio.h>) probes as present. */
+/* #undef HAVE__CPRINTF */
+
+/* Define to 1 if a caller-supplied `code` list finds _cprintf via <conio.h>. */
+#define HAVE__CPRINTF_CONIO 1
+
+/* Define to 1 if a function that does not exist probes as present. */
+/* #undef HAVE_RULES_CC_AUTOCONF_NO_SUCH_FUNCTION */
+
+/* Define to the address where bug reports for this package should be sent. */
+#define PACKAGE_BUGREPORT ""
+
+/* Define to the full name of this package. */
+#define PACKAGE_NAME "test_inline_funcs_msvc"
+
+/* Define to the full name and version of this package. */
+#define PACKAGE_STRING "test_inline_funcs_msvc 1.0.0"
+
+/* Define to the one symbol short name of this package. */
+#define PACKAGE_TARNAME "test_inline_funcs_msvc"
+
+/* Define to the home page for this package. */
+#define PACKAGE_URL ""
+
+/* Define to the version of this package. */
+#define PACKAGE_VERSION "1.0.0"

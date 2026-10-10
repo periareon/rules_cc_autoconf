@@ -29,6 +29,10 @@ class CheckRunner {
 
     /**
      * @brief Run a single check.
+     *
+     * Dispatches on the check type; a `code` list is tried in order
+     * (see Check::alternative_codes()).
+     *
      * @param check Check object describing the check to perform.
      * @return CheckResult containing the result of the check.
      */
@@ -84,6 +88,13 @@ class CheckRunner {
     ///< Directory where conftest source files are written (next to the check
     ///< JSON file), provided by Bazel via the check path
     std::filesystem::path source_dir_;
+
+    /**
+     * @brief Run one probe of a check with its first program only.
+     * @param check Check object describing the check to perform.
+     * @return CheckResult of this single probe.
+     */
+    CheckResult dispatch_check(const Check& check);
 
     /** @brief Check if a function exists and can be linked. */
     CheckResult check_function(const Check& check);

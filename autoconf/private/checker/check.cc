@@ -117,9 +117,24 @@ std::optional<Check> Check::from_json(const void* json_data) {
         check.subst_ = json["subst"].get<std::string>();
     }
 
-    // Parse optional fields
-    if (json.contains("code") && json["code"].is_string()) {
-        check.code_ = json["code"].get<std::string>();
+    // Parse optional fields. `code` is a program or a list of programs
+    // (see Check::alternative_codes()).
+    if (json.contains("code")) {
+        if (json["code"].is_string()) {
+            check.code_ = json["code"].get<std::string>();
+        } else if (json["code"].is_array()) {
+            for (const nlohmann::json& program : json["code"]) {
+                if (!program.is_string()) {
+                    continue;
+                }
+                if (!check.code_.has_value()) {
+                    check.code_ = program.get<std::string>();
+                } else {
+                    check.alternative_codes_.push_back(
+                        program.get<std::string>());
+                }
+            }
+        }
     }
 
     // Optional second probe whose compile must FAIL for the check to
