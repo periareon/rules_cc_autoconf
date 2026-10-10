@@ -82,6 +82,9 @@ common:remote_cache --remote_cache=grpcs://periareon.buildbuddy.io
 common:remote_cache --remote_download_toplevel
 common:remote_cache --remote_timeout=10m
 
+common --remote_cache_compression
+common --noslim_profile
+
 ###############################################################################
 ## Custom user flags
 ##
