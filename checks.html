@@ -263,6 +263,7 @@ joined with newlines to form the prologue of the test program.</p>
 <li><a href="#macros.AC_CHECK_HEADERS">macros.AC_CHECK_HEADERS</a></li>
 <li><a href="#macros.AC_CHECK_MEMBERS">macros.AC_CHECK_MEMBERS</a></li>
 <li><a href="#macros.AC_CHECK_TYPES">macros.AC_CHECK_TYPES</a></li>
+<li><a href="#utils.AC_LANG_FUNC_LINK_TRY">utils.AC_LANG_FUNC_LINK_TRY</a></li>
 <li><a href="#utils.AC_LANG_PROGRAM">utils.AC_LANG_PROGRAM</a></li>
 </ul>
 <p><a id="checks.AC_BUILD_SETTING"></a></p>
@@ -457,6 +458,26 @@ checks.AC_CHECK_FUNC(<a href="#checks.AC_CHECK_FUNC-function">function</a>, <a h
 <pre><code class="language-m4">AC_CHECK_FUNC([malloc])
 AC_CHECK_FUNC([mmap], [AC_DEFINE([HAVE_MMAP_FEATURE], [1])])
 </code></pre>
+<p>The default <code>code</code> is a list of two programs, tried in order. The first
+is GNU autoconf's (<code>utils.AC_LANG_FUNC_LINK_TRY</code>): declare the function
+with a dummy prototype, call it, and link against the default
+libraries. The second runs only if that fails and only under
+<code>_MSC_VER</code>: it includes <code>AC_INCLUDES_DEFAULT</code> and takes the function's
+address, because the UCRT implements the printf and scanf families as
+header-inline functions with no linker symbol. GNU autoconf itself
+reports those absent on MSVC; this check reports them present, which
+is what a <code>HAVE_&lt;FUNCTION&gt;</code> consumer needs. Results on every other
+compiler are exactly GNU's. Passing <code>code</code> replaces the list: a check
+that wants GNU's literal answer on MSVC passes
+<code>code = utils.AC_LANG_FUNC_LINK_TRY(function)</code> alone. gnulib ports
+verified against GNU autoconf do so for the printf family, because
+gnulib documents that answer as MSVC 14's state and builds its
+replacement logic on it:</p>
+<ul>
+<li>https://learn.microsoft.com/en-us/cpp/porting/visual-cpp-change-history-2003-2015#stdioh-and-conioh</li>
+<li>https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/doc/posix-functions/snprintf.texi#L15-L16</li>
+<li>https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/snprintf.m4#L45-L62</li>
+</ul>
 <p>Example:</p>
 <pre><code class="language-python"># Cache variable only (no define, no subst)
 macros.AC_CHECK_FUNC("malloc")
@@ -482,7 +503,7 @@ macros.AC_CHECK_FUNC("_Exit", subst = True)
 <tr><td style="text-align: left"><a id="checks.AC_CHECK_FUNC-function"></a>function</td><td style="text-align: left">Name of the function (e.g., <code>"printf"</code>)</td><td style="text-align: left">none</td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_CHECK_FUNC-name"></a>name</td><td style="text-align: left">Cache variable name (defaults to <code>ac_cv_func_&lt;FUNCTION&gt;</code> following autoconf convention)</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_CHECK_FUNC-define"></a>define</td><td style="text-align: left">Define behavior: - <code>None</code> (default): No define is created, only cache variable - <code>True</code>: Create define using the cache variable name (<code>name</code>) - <code>"HAVE_FOO"</code>: Create define with explicit name <code>HAVE_FOO</code> (implies <code>define=True</code>)</td><td style="text-align: left"><code>None</code></td></tr>
-<tr><td style="text-align: left"><a id="checks.AC_CHECK_FUNC-code"></a>code</td><td style="text-align: left">Custom code to compile (optional).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_CHECK_FUNC-code"></a>code</td><td style="text-align: left">Custom program to compile and link, or a list of programs tried in order until one links (optional). Replaces the default list described above.</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_CHECK_FUNC-language"></a>language</td><td style="text-align: left">Language to use for check (<code>"c"</code> or <code>"cpp"</code>)</td><td style="text-align: left"><code>"c"</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_CHECK_FUNC-compile_defines"></a>compile_defines</td><td style="text-align: left">Optional list of preprocessor define names from previous checks to add before includes (e.g., <code>["_GNU_SOURCE", "_DARWIN_C_SOURCE"]</code>). Each string must match the define name of a previous check. The values from those checks will be used automatically.</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_CHECK_FUNC-copts"></a>copts</td><td style="text-align: left">Optional list of extra compiler flags for this check (e.g., <code>["-std=c11"]</code>). Appended after the autoconf toolchain's own copts so they take precedence on last-wins conflicts.</td><td style="text-align: left"><code>None</code></td></tr>
@@ -1095,7 +1116,7 @@ pass the result as `code`.
 </code></pre>
 <p><strong>PARAMETERS</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
-<tr><td style="text-align: left"><a id="checks.AC_TRY_COMPILE-code"></a>code</td><td style="text-align: left">Code to compile. If <code>includes</code> is also provided, this is treated as the body of main(). Otherwise, it should be complete C code. For AC_LANG_PROGRAM-style tests, use code = utils.AC_LANG_PROGRAM(prologue, body).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_TRY_COMPILE-code"></a>code</td><td style="text-align: left">Code to compile. If <code>includes</code> is also provided, this is treated as the body of main(). Otherwise, it should be complete C code. For AC_LANG_PROGRAM-style tests, use code = utils.AC_LANG_PROGRAM(prologue, body). May be a list of programs (or bodies, with <code>includes</code>): they are tried in order and the check succeeds when one compiles.</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_TRY_COMPILE-name"></a>name</td><td style="text-align: left">Cache variable name.</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_TRY_COMPILE-define"></a>define</td><td style="text-align: left">Define name to set if compilation succeeds</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_TRY_COMPILE-includes"></a>includes</td><td style="text-align: left">Optional list of headers to include. When provided, <code>code</code> is treated as the body of main() function.</td><td style="text-align: left"><code>None</code></td></tr>
@@ -1159,7 +1180,7 @@ This is similar to AC_TRY_COMPILE but also links the code, which is necessary
 to verify that functions are available at link time (not just declared).</p>
 <p><strong>PARAMETERS</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
-<tr><td style="text-align: left"><a id="checks.AC_TRY_LINK-code"></a>code</td><td style="text-align: left">Code to compile and link. If <code>includes</code> is also provided, this is treated as the body of main(). Otherwise, it should be complete C code. For AC_LANG_PROGRAM-style tests use code = utils.AC_LANG_PROGRAM(prologue, body).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_TRY_LINK-code"></a>code</td><td style="text-align: left">Code to compile and link. If <code>includes</code> is also provided, this is treated as the body of main(). Otherwise, it should be complete C code. For AC_LANG_PROGRAM-style tests use code = utils.AC_LANG_PROGRAM(prologue, body). May be a list of programs (or bodies, with <code>includes</code>): they are tried in order and the check succeeds when one links.</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_TRY_LINK-name"></a>name</td><td style="text-align: left">Cache variable name.</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_TRY_LINK-define"></a>define</td><td style="text-align: left">Define name to set if compilation and linking succeeds</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_TRY_LINK-includes"></a>includes</td><td style="text-align: left">Optional list of headers to include (backward compatibility). When provided, <code>code</code> is treated as the body of main() function.</td><td style="text-align: left"><code>None</code></td></tr>
@@ -1278,7 +1299,7 @@ macros.AC_CHECK_FUNCS(["malloc", "free", "printf"])</p>
 <p><strong>PARAMETERS</strong></p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNCS-functions"></a>functions</td><td style="text-align: left">List of function names to check.</td><td style="text-align: left">none</td></tr>
-<tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNCS-code"></a>code</td><td style="text-align: left">Custom code to compile (applies to all checks).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNCS-code"></a>code</td><td style="text-align: left">Custom program, or list of programs tried in order, to compile and link (applies to all checks); see <code>AC_CHECK_FUNC</code>.</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNCS-language"></a>language</td><td style="text-align: left">Language to use for checks (<code>"c"</code> or <code>"cpp"</code>).</td><td style="text-align: left"><code>"c"</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNCS-compile_defines"></a>compile_defines</td><td style="text-align: left">Optional list of preprocessor define names (applies to all checks).</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="macros.AC_CHECK_FUNCS-requires"></a>requires</td><td style="text-align: left">Requirements that must be met (applies to all checks).</td><td style="text-align: left"><code>None</code></td></tr>
@@ -1395,6 +1416,24 @@ macros.AC_CHECK_TYPES(["size_t", "pthread_t", "pid_t"], includes = ["#include &l
 </div>
 <p><strong>RETURNS</strong></p>
 <p>List of JSON-encoded check strings.</p>
+<p><a id="utils.AC_LANG_FUNC_LINK_TRY"></a></p>
+<h2 id="utilsac_lang_func_link_try"><a class="header" href="#utilsac_lang_func_link_try">utils.AC_LANG_FUNC_LINK_TRY</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "utils")
+
+utils.AC_LANG_FUNC_LINK_TRY(<a href="#utils.AC_LANG_FUNC_LINK_TRY-function">function</a>)
+</pre>
+<p>Return GNU autoconf's <code>AC_LANG_FUNC_LINK_TRY(C)</code> program for <code>function</code>.</p>
+<p>The first program of <code>AC_CHECK_FUNC</code>'s default <code>code</code> list. Pass it alone
+as <code>code</code> to get GNU's literal answer on every compiler; see
+<code>AC_CHECK_FUNC</code> for when that matters.</p>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="utils.AC_LANG_FUNC_LINK_TRY-function"></a>function</td><td style="text-align: left">Name of the function (e.g., <code>"snprintf"</code>)</td><td style="text-align: left">none</td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>C source for the link probe.</p>
 <p><a id="utils.AC_LANG_PROGRAM"></a></p>
 <h2 id="utilsac_lang_program"><a class="header" href="#utilsac_lang_program">utils.AC_LANG_PROGRAM</a></h2>
 <pre>
