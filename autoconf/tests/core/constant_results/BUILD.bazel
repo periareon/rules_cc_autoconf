@@ -1,0 +1,5 @@
+load(":constant_results_test_suite.bzl", "constant_results_test_suite")
+
+constant_results_test_suite(
+    name = "constant_results_test_suite",
+)

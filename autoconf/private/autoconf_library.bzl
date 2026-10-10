@@ -8,6 +8,7 @@ load(
     "AUTOCONF_EXEC_GROUP",
     "collect_deps",
     "collect_transitive_results",
+    "constant_check_result",
     "create_config_dict",
     "encode_result",
     "get_autoconf_toolchain_cache",
@@ -203,6 +204,7 @@ def autoconf_impl_common(ctx, resolve_toolchain):
     unquoted_defines = []
 
     actions = {}
+    check_specs = []
 
     # Process all checks
     for check_json in ctx.attr.checks:
@@ -241,18 +243,35 @@ def autoconf_impl_common(ctx, resolve_toolchain):
         else:
             output = ctx.actions.declare_file("{}/{}.result.cache.json".format(ctx.label.name, name))
 
+            # The spec is written for every check resolved here so the
+            # `autoconf_checks` output group lists the same files whether or
+            # not the checker runs.  For constants nothing consumes it: it is a
+            # default output of this target, so a direct build pays one
+            # FileWrite, but reaching the target through `deps` never does.
             check_spec = ctx.actions.declare_file("{}/{}.check.json".format(ctx.label.name, name))
             write(
                 actions = ctx.actions,
                 output = check_spec,
                 content = json.encode_indent(check, indent = " " * 4) + "\n",
             )
+            check_specs.append(check_spec)
 
-            actions[name] = struct(
-                output = output,
-                check = check,
-                input = check_spec,
-            )
+            # Literal defines/substs with no runtime inputs are written
+            # directly: the checker would only echo the value back, so the
+            # process spawn buys nothing.  Everything else gets a checker action.
+            constant_content = constant_check_result(check)
+            if constant_content != None:
+                write(
+                    actions = ctx.actions,
+                    output = output,
+                    content = constant_content,
+                )
+            else:
+                actions[name] = struct(
+                    output = output,
+                    check = check,
+                    input = check_spec,
+                )
 
         # Define/subst conflict detection: different cache variable claiming same symbol = error
         if define:
@@ -481,7 +500,7 @@ def autoconf_impl_common(ctx, resolve_toolchain):
             unquoted_defines = unquoted_defines,
         ),
         OutputGroupInfo(
-            autoconf_checks = depset([action.input for action in actions.values()]),
+            autoconf_checks = depset(check_specs),
             autoconf_results = depset(cache_results.values() + define_results.values() + subst_results.values()),
         ),
     ]
