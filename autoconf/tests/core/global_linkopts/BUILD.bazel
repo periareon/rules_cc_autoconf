@@ -1,0 +1,52 @@
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:checks.bzl", "checks")
+load("//autoconf:package_info.bzl", "package_info")
+load("//autoconf/tests:diff_test.bzl", "diff_test")
+load(":linkopt_transition.bzl", "autoconf_with_flags")
+
+package_info(
+    name = "package",
+    package_name = "test_global_linkopts",
+    package_version = "1.0.0",
+)
+
+autoconf(
+    name = "autoconf_impl",
+    checks = [
+        checks.AC_TRY_LINK(
+            code = "int main(void) { return 0; }",
+            define = "HAVE_SANITIZED_LINK",
+        ),
+        checks.AC_CHECK_FUNC(
+            "malloc",
+            define = "HAVE_MALLOC",
+        ),
+    ],
+    deps = [":package"],
+)
+
+# Enable -fsanitize=address via a transition.
+autoconf_with_flags(
+    name = "autoconf",
+    actual = ":autoconf_impl",
+    extra_copts = ["-fsanitize=address"],
+    extra_linkopts = ["-fsanitize=address"],
+)
+
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    template = "config.h.in",
+    deps = [":autoconf"],
+)
+
+diff_test(
+    name = "diff_test",
+    file1 = "golden_config.h.in",
+    file2 = ":config.h",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)

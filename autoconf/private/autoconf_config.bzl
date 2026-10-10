@@ -404,7 +404,7 @@ def get_cc_toolchain_info(ctx):
         cc_toolchain = cc_toolchain,
         is_linking_dynamic_library = False,
         is_static_linking_mode = True,
-        user_link_flags = [_LINKOPTS_MARKER],
+        user_link_flags = ctx.fragments.cpp.linkopts + [_LINKOPTS_MARKER],
     )
 
     c_link_flags = cc_common.get_memory_inefficient_command_line(
