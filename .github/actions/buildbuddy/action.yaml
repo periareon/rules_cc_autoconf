@@ -5,6 +5,14 @@ description: |
   via `--config=remote_cache` in `.github/github.bazelrc`; this action only
   provides (or, when no key is available, neutralizes) that config.
 
+  Two keys are accepted. `api_key` is the read-write key held in a secret.
+  Secrets are not passed to workflows triggered by pull requests from forks
+  (or by Dependabot), so `readonly_api_key` may hold a BuildBuddy key created
+  with "Read-only key (disable remote cache uploads)" checked. A read-only key
+  is not sensitive enough to need a secret and can live in a plain repository
+  variable. When only it is available the job still gets cache hits and a
+  BuildBuddy invocation page, but never writes to the cache.
+
   Optionally also labels every invocation with the job name, shown as the
   "user" in BuildBuddy, so results from different jobs are easy to tell
   apart.
@@ -12,8 +20,17 @@ description: |
 inputs:
   api_key:
     description: |
-      BuildBuddy API key. Empty when secrets are unavailable, e.g. pull
-      requests from forks, in which case the remote cache is disabled.
+      Read-write BuildBuddy API key, normally `secrets.BUILDBUDDY_API_KEY`.
+      Empty when secrets are unavailable, e.g. pull requests from forks, in
+      which case `readonly_api_key` is tried next.
+    required: false
+    default: ""
+  readonly_api_key:
+    description: |
+      Read-only BuildBuddy API key used when `api_key` is empty. Enables the
+      remote cache for downloads only (`--noremote_upload_local_results`) and
+      keeps build event uploads so the invocation is visible in BuildBuddy.
+      When both keys are empty the remote cache is disabled entirely.
     required: false
     default: ""
   user:
@@ -31,6 +48,7 @@ runs:
       shell: bash
       env:
         BUILDBUDDY_API_KEY: ${{ inputs.api_key }}
+        BUILDBUDDY_READONLY_API_KEY: ${{ inputs.readonly_api_key }}
         BUILDBUDDY_USER: ${{ inputs.user }}
       run: |
         set -euo pipefail
@@ -57,6 +75,19 @@ runs:
             echo "common:remote_cache --remote_header=x-buildbuddy-api-key=${BUILDBUDDY_API_KEY}"
           } >> "${rc}"
           echo "BuildBuddy API key written to ${rc}; remote cache enabled."
+        elif [[ -n "${BUILDBUDDY_READONLY_API_KEY}" ]]; then
+          # BuildBuddy rejects cache writes made with a read-only key, so tell
+          # Bazel not to attempt them. Build event uploads stay on: files
+          # referenced from the BEP that cannot be uploaded only produce a
+          # Bazel warning ("Uploading BEP referenced local file ... failed"),
+          # and the invocation page is still useful without them.
+          {
+            echo "# Written by .github/actions/buildbuddy"
+            echo "# Read-only BuildBuddy key (e.g. a pull request from a fork)."
+            echo "common:remote_cache --remote_header=x-buildbuddy-api-key=${BUILDBUDDY_READONLY_API_KEY}"
+            echo "common:remote_cache --noremote_upload_local_results"
+          } >> "${rc}"
+          echo "::notice::BUILDBUDDY_API_KEY is not set; using the read-only key. Remote cache enabled for downloads only."
         else
           # The workspace .bazelrc defines the remote_cache config with
           # `common:` lines; these override them because the home rc is read
@@ -64,12 +95,13 @@ runs:
           # `common:` config lines before any `build:` lines.
           {
             echo "# Written by .github/actions/buildbuddy"
-            echo "# No BuildBuddy API key is available (e.g. a pull request from a fork)."
-            echo "# Neutralize the remote_cache config enabled by github.bazelrc so Bazel"
-            echo "# does not fail with PERMISSION_DENIED against BuildBuddy. These lines"
-            echo "# also keep the config defined in workspaces that have no .bazelrc."
+            echo "# No BuildBuddy API key is available (e.g. a pull request from a fork"
+            echo "# with no read-only key configured). Neutralize the remote_cache config"
+            echo "# enabled by github.bazelrc so Bazel does not fail with PERMISSION_DENIED"
+            echo "# against BuildBuddy. These lines also keep the config defined in"
+            echo "# workspaces that have no .bazelrc."
             echo "common:remote_cache --remote_cache="
             echo "common:remote_cache --bes_backend="
           } >> "${rc}"
-          echo "::notice::BUILDBUDDY_API_KEY is not set; remote cache disabled for this job."
+          echo "::notice::Neither BUILDBUDDY_API_KEY nor BUILDBUDDY_READONLY_API_KEY is set; remote cache disabled for this job."
         fi

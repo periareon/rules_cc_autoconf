@@ -12,6 +12,11 @@ on:
 
 env:
   BAZEL_STARTUP_FLAGS: --bazelrc=${{ github.workspace }}/.github/github.bazelrc
+  # Read-only BuildBuddy key for runs that cannot see secrets (pull requests
+  # from forks, Dependabot). Set the BUILDBUDDY_READONLY_API_KEY repository
+  # variable to a key created with "Read-only key" checked, or replace the
+  # expression with the key itself. See .github/actions/buildbuddy.
+  BUILDBUDDY_READONLY_API_KEY: ${{ vars.BUILDBUDDY_READONLY_API_KEY }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -42,6 +47,7 @@ jobs:
       - uses: ./.github/actions/buildbuddy
         with:
           api_key: ${{ secrets.BUILDBUDDY_API_KEY }}
+          readonly_api_key: ${{ env.BUILDBUDDY_READONLY_API_KEY }}
           user: "${{ github.job }} (${{ matrix.os }})"
 
       - name: Setup Bazelrc (Windows)
@@ -108,6 +114,7 @@ jobs:
       - uses: ./.github/actions/buildbuddy
         with:
           api_key: ${{ secrets.BUILDBUDDY_API_KEY }}
+          readonly_api_key: ${{ env.BUILDBUDDY_READONLY_API_KEY }}
           user: "${{ github.job }} (${{ matrix.os }})"
 
       - name: Setup Bazelrc (Windows)
@@ -171,6 +178,7 @@ jobs:
       - uses: ./.github/actions/buildbuddy
         with:
           api_key: ${{ secrets.BUILDBUDDY_API_KEY }}
+          readonly_api_key: ${{ env.BUILDBUDDY_READONLY_API_KEY }}
           user: "example-simple"
 
       - name: Setup Bazelrc
@@ -221,6 +229,7 @@ jobs:
       - uses: ./.github/actions/buildbuddy
         with:
           api_key: ${{ secrets.BUILDBUDDY_API_KEY }}
+          readonly_api_key: ${{ env.BUILDBUDDY_READONLY_API_KEY }}
           user: "integration-${{ matrix.toolchain }} (${{ matrix.os }})"
 
       - name: Setup Bazelrc (Windows)

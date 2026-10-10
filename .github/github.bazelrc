@@ -18,7 +18,8 @@ common --keep_going
 
 # Use the BuildBuddy remote cache. The config is defined in each workspace's
 # `.bazelrc`; credentials come from the home `.bazelrc` written by
-# `.github/actions/buildbuddy`, which also disables the cache when no API key
-# is available (e.g. pull requests from forks).
+# `.github/actions/buildbuddy`. Runs that cannot see secrets (e.g. pull
+# requests from forks) fall back to a read-only key, or to no cache at all when
+# none is configured.
 common --config=remote_cache
 common --build_metadata=ROLE=CI
