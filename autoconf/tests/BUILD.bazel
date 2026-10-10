@@ -1,9 +1,22 @@
+load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@rules_venv//python:py_binary.bzl", "py_binary")
 
 exports_files([
-    "gnu_autoconf_configure_tester.py",
     "diff_tester.py",
 ])
+
+# Tests whose expectations come from cl.exe semantics (no <unistd.h>, no
+# <stdatomic.h> in C, `/`-style flags, `#pragma comment(lib)`) key on the
+# compiler, not on the OS: a MinGW toolchain is also a Windows toolchain and
+# behaves like gcc in every one of those respects.
+selects.config_setting_group(
+    name = "msvc_like",
+    match_any = [
+        "@rules_cc//cc/compiler:clang-cl",
+        "@rules_cc//cc/compiler:msvc-cl",
+    ],
+    visibility = ["//autoconf/tests:__subpackages__"],
+)
 
 py_binary(
     name = "diff_tester",
@@ -14,23 +27,4 @@ py_binary(
         "//gnulib/tests:__subpackages__",
     ],
     deps = ["@rules_venv//python/runfiles"],
-)
-
-py_binary(
-    name = "gnu_autoconf_configure_tester",
-    srcs = ["gnu_autoconf_configure_tester.py"],
-    main = "gnu_autoconf_configure_tester.py",
-    # Autoconf is not readily available on Windows.
-    target_compatible_with = select({
-        "@platforms//os:windows": ["@platforms//:incompatible"],
-        "//conditions:default": [],
-    }),
-    visibility = [
-        "//autoconf/tests:__subpackages__",
-        "//gnulib/tests:__subpackages__",
-    ],
-    deps = [
-        ":diff_tester",
-        "@rules_venv//python/runfiles",
-    ],
 )

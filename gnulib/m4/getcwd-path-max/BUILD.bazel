@@ -1,25 +1,20 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/getcwd-path-max.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
-load("//autoconf:checks.bzl", "checks")
 
 # gl_FUNC_GETCWD_PATH_MAX from getcwd-path-max.m4
 # is not portable to Bazel; only header/decl checks are implemented.
 autoconf(
     name = "gl_FUNC_GETCWD_PATH_MAX",
-    checks = [
-        # The test expects HAVE_DECL_GETCWD to be AC_SUBSTed
-        # We use AC_SUBST here since HAVE_DECL_GETCWD define comes from getcwd:HAVE_DECL_GETCWD
-        checks.AC_SUBST("HAVE_DECL_GETCWD", "1"),
-    ],
     visibility = ["//visibility:public"],
     deps = [
+        # AC_CHECK_DECLS_ONCE([getcwd, alarm]) and AC_CHECK_HEADERS_ONCE([unistd.h])
+        # only produce config.h defines; HAVE_UNISTD_H comes from
+        # AC_CHECK_INCLUDES_DEFAULT and neither gl_UNISTD_H nor
+        # gl_UNISTD_H_DEFAULTS is required here.
         "//autoconf/macros/AC_CHECK_DECLS_ONCE_ALARM",
-        # HAVE_DECL_GETCWD define comes from here
         "//gnulib/m4/getcwd:HAVE_DECL_GETCWD",
         "//gnulib/m4/extensions",
-        # AC_CHECK_HEADERS_ONCE([unistd.h])
-        "//gnulib/m4/unistd_h",
         "//gnulib/m4/pathmax:gl_PATHMAX_SNIPPET_PREREQ",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],

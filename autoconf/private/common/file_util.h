@@ -33,7 +33,7 @@ inline std::wstring to_extended_length_path(const std::string& path) {
  */
 inline std::ifstream open_ifstream(const std::string& path) {
 #ifdef _WIN32
-    return std::ifstream(to_extended_length_path(path));
+    return std::ifstream(to_extended_length_path(path).c_str());
 #else
     return std::ifstream(path);
 #endif
@@ -48,7 +48,7 @@ inline std::ifstream open_ifstream(const std::string& path) {
  */
 inline std::ofstream open_ofstream(const std::string& path) {
 #ifdef _WIN32
-    return std::ofstream(to_extended_length_path(path));
+    return std::ofstream(to_extended_length_path(path).c_str());
 #else
     return std::ofstream(path);
 #endif

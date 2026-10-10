@@ -6,12 +6,12 @@
 #include "gnulib/tests/core/check_func_android/subst.h"
 
 int main(void) {
-// CHECK_FUNC_ANDROID for printf - should be defined in config.h (function
+// CHECK_FUNC_ANDROID for puts - should be defined in config.h (function
 // exists)
-#ifdef HAVE_PRINTF
-    assert(HAVE_PRINTF == 1);
+#ifdef HAVE_PUTS
+    assert(HAVE_PUTS == 1);
 #else
-    assert(0 && "HAVE_PRINTF should be defined in config.h");
+    assert(0 && "HAVE_PUTS should be defined in config.h");
 #endif
 
 // CHECK_FUNC_ANDROID for dup3 - should NOT be defined in config.h on macOS

@@ -5,22 +5,30 @@ load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "gl_STACK_TRACE_EARLY",
-    checks = [
-        # Note: gl_STDLIB_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
+    # Note: gl_STDLIB_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
 
-        # Set CAN_PRINT_STACK_TRACE
-        # if libbacktrace is found, set to "1"
-        # else, on certain platforms (darwin*, freebsd*, etc.), execinfo is available, so also set to "1"
-        checks.AC_SUBST("CAN_PRINT_STACK_TRACE", 1),
-    ] + select({
+    # Set CAN_PRINT_STACK_TRACE
+    # if libbacktrace is found, set to "1"
+    # else, on certain platforms (darwin*, freebsd*, etc.), execinfo is available, so also set to "1"
+    checks = select({
         # On Linux, libbacktrace is expected to be available
         # The golden expects HAVE_LIBBACKTRACE=1, so we hardcode it
         # (the AC_CHECK_LIB may fail in minimal containers without the library)
         "@platforms//os:linux": [
             checks.AC_DEFINE("HAVE_LIBBACKTRACE", 1),
+            checks.AC_SUBST("CAN_PRINT_STACK_TRACE", 1),
+        ],
+        # No libbacktrace, and mingw*/windows* is not in the list of hosts
+        # that can print a stack trace: CAN_PRINT_STACK_TRACE keeps its
+        # gl_STDLIB_H_DEFAULTS value of 0.
+        "@platforms//os:windows": [
+            checks.AC_SUBST("CAN_PRINT_STACK_TRACE", 0),
         ],
         # On macOS, libbacktrace is not typically available (uses execinfo instead)
-        "//conditions:default": [],
+        # *-gnu* | gnu* | darwin* | freebsd* | ... ) CAN_PRINT_STACK_TRACE=1
+        "//conditions:default": [
+            checks.AC_SUBST("CAN_PRINT_STACK_TRACE", 1),
+        ],
     }),
     visibility = ["//visibility:public"],
     deps = [

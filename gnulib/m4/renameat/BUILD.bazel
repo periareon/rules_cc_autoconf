@@ -19,11 +19,12 @@ autoconf(
         ),
 
         # Set REPLACE_RENAMEAT substitution variable
-        # If REPLACE_RENAME=1, then REPLACE_RENAMEAT=1
+        # If renameat exists and REPLACE_RENAME=1, then REPLACE_RENAMEAT=1
+        # (without renameat the M4 sets HAVE_RENAMEAT=0 instead).
         # Otherwise, REPLACE_RENAMEAT=0
         checks.AC_SUBST(
             "REPLACE_RENAMEAT",
-            condition = "REPLACE_RENAME==1",
+            condition = "ac_cv_func_renameat && REPLACE_RENAME==1",
             if_false = 0,
             if_true = 1,
         ),

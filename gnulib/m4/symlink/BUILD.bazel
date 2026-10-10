@@ -3,15 +3,17 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
-# Core symlink checks without REPLACE_SYMLINK subst
-# Use this for modules that only need the symlink function check
+# AC_CHECK_FUNCS_ONCE([symlink]) - the bare probe plus its config.h define.
+#
+# Modules that only run this probe (fcntl-o, linkat, ...) must not touch the
+# HAVE_SYMLINK subst: its gl_UNISTD_H_DEFAULTS value (1) is lowered by
+# gl_FUNC_SYMLINK alone.
 autoconf(
-    name = "gl_FUNC_SYMLINK_CORE",
+    name = "AC_CHECK_FUNCS_ONCE_symlink",
     checks = [
         checks.AC_CHECK_FUNC(
             "symlink",
             define = "HAVE_SYMLINK",
-            subst = True,
         ),
     ],
     visibility = ["//gnulib:__subpackages__"],
@@ -22,11 +24,17 @@ autoconf(
 )
 
 autoconf(
-    name = "symlink",
-    # M4 m4/symlink.m4 runs AC_RUN_IFELSE for the trailing-slash bug;
-    # cross-compile guess for darwin falls to gl_cross_guess_normal.
-    # On macOS the SDK probe decides.
-    checks = select({
+    name = "gl_FUNC_SYMLINK",
+    checks = [
+        # if test $ac_cv_func_symlink = no; then HAVE_SYMLINK=0
+        checks.AC_SUBST(
+            "HAVE_SYMLINK",
+            condition = "ac_cv_func_symlink",
+        ),
+    ] + select({
+        # M4 m4/symlink.m4 runs AC_RUN_IFELSE for the trailing-slash bug;
+        # cross-compile guess for darwin falls to gl_cross_guess_normal.
+        # On macOS the SDK probe decides.
         "@platforms//os:macos": [
             checks.AC_SUBST(
                 "REPLACE_SYMLINK",
@@ -35,16 +43,23 @@ autoconf(
                 if_true = "0",
             ),
         ],
-        "@platforms//os:windows": [
-            checks.AC_SUBST("REPLACE_SYMLINK", "1"),
-        ],
+        # Linux: cross-compile guess "yes". Windows: symlink is absent, so the
+        # M4 takes the HAVE_SYMLINK=0 branch and never sets REPLACE_SYMLINK.
         "//conditions:default": [
             checks.AC_SUBST("REPLACE_SYMLINK", "0"),
         ],
     }),
     visibility = ["//visibility:public"],
     deps = [
-        ":gl_FUNC_SYMLINK_CORE",
+        ":AC_CHECK_FUNCS_ONCE_symlink",  # AC_CHECK_FUNCS_ONCE([symlink]) + AC_REQUIRE([AC_CANONICAL_HOST])
         "//gnulib/m4/gnulib-common:gl_HOST_MACOS_SDK_MODERN",
+    ],
+)
+
+autoconf(
+    name = "symlink",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_SYMLINK",
     ],
 )

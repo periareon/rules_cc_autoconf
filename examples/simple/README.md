@@ -6,7 +6,7 @@ file and consume it in a `cc_test`.
 ## Overview
 
 The example:
-1. Defines a `package_info` with package metadata
+1. Defines an `autoconf_package_info` with package metadata
 2. Creates an `autoconf` rule that checks for common standard library functions and headers
 3. Generates a `config.h` from a template using `autoconf_hdr`
 4. Uses the generated header in a `cc_test` that verifies the checks worked

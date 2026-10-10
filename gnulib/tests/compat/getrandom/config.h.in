@@ -1,4 +1,6 @@
 /* config.h.in */
 #undef GETRANDOM_LIB
+#undef HAVE_BCRYPT_H
 #undef HAVE_GETRANDOM
+#undef HAVE_LIB_BCRYPT
 #undef REPLACE_GETRANDOM

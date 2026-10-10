@@ -3,53 +3,173 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
-autoconf(
-    name = "sockpfaf",
-    checks = [
-        # gl_SOCKET_FAMILY_UNIX: Check for UNIX domain sockets
-        checks.AC_CHECK_HEADER(
-            "sys/un.h",
-            name = "ac_cv_header_sys_un_h",
-        ),
+# The probes use `#if HAVE_X` rather than the m4's `#ifdef HAVE_X`: with
+# autoconf HAVE_X is either 1 or undefined, so both forms agree, but the
+# Bazel checker also injects `#define HAVE_X 0` for failed dependency probes.
 
-        # Define HAVE_SYS_UN_H in config.h if header exists
-        checks.AC_DEFINE(
-            "HAVE_SYS_UN_H",
-            requires = ["ac_cv_header_sys_un_h"],
-        ),
-
-        # On macOS, UNIX domain sockets are available
-        checks.AC_TRY_COMPILE(
-            name = "gl_cv_socket_unix",
-            code = """\
+# Includes shared by the AF_INET / AF_INET6 probes.  The HAVE_* guards are
+# resolved through compile_defines from the header checks in the deps
+# (sys/socket.h and ws2tcpip.h from gl_CHECK_SOCKET_HEADERS, netinet/in.h from
+# gl_HEADER_NETINET_IN, winsock2.h from gl_PREREQ_SYS_H_WINSOCK2).
+_INET_INCLUDES = """\
 #include <sys/types.h>
+#if HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
-#include <sys/un.h>
+#endif
+#if HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#if HAVE_WINSOCK2_H
+#include <winsock2.h>
+#endif
+"""
 
+# gl_SOCKET_FAMILIES - lines 9-46
+# Test for the IPv4 and IPv6 address families (HAVE_IPV4, HAVE_IPV6).
+autoconf(
+    name = "gl_SOCKET_FAMILIES",
+    checks = [
+        # AC_CACHE_CHECK([for IPv4 sockets], [gl_cv_socket_ipv4], ...)
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_socket_ipv4",
+            code = _INET_INCLUDES + """
 int main(void) {
-    int x = AF_UNIX;
-    struct sockaddr_un y;
-    if (&x && &y) return 0;
-    return 1;
+    int x = AF_INET; struct in_addr y; struct sockaddr_in z;
+    if (&x && &y && &z) return 0;
+    return 0;
 }
 """,
+            compile_defines = [
+                "HAVE_SYS_SOCKET_H",
+                "HAVE_NETINET_IN_H",
+                "HAVE_WINSOCK2_H",
+            ],
             language = "c",
         ),
-
-        # fi
+        # if test $gl_cv_socket_ipv4 = yes; then AC_DEFINE([HAVE_IPV4], [1])
         checks.AC_DEFINE(
-            "HAVE_UNIXSOCKET",
-            condition = "gl_cv_socket_unix",
+            "HAVE_IPV4",
+            condition = "gl_cv_socket_ipv4",
+            if_false = None,
+            if_true = 1,
+        ),
+        # AC_CACHE_CHECK([for IPv6 sockets], [gl_cv_socket_ipv6], ...)
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_socket_ipv6",
+            code = _INET_INCLUDES + """\
+#if HAVE_WS2TCPIP_H
+#include <ws2tcpip.h>
+#endif
+
+int main(void) {
+    int x = AF_INET6; struct in6_addr y; struct sockaddr_in6 z;
+    if (&x && &y && &z) return 0;
+    return 0;
+}
+""",
+            compile_defines = [
+                "HAVE_SYS_SOCKET_H",
+                "HAVE_NETINET_IN_H",
+                "HAVE_WINSOCK2_H",
+                "HAVE_WS2TCPIP_H",
+            ],
+            language = "c",
+        ),
+        # if test $gl_cv_socket_ipv6 = yes; then AC_DEFINE([HAVE_IPV6], [1])
+        checks.AC_DEFINE(
+            "HAVE_IPV6",
+            condition = "gl_cv_socket_ipv6",
+            if_false = None,
             if_true = 1,
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        # AC_REQUIRE([gl_SYS_SOCKET_H])
         "//gnulib/m4/sys_socket_h:gl_SYS_SOCKET_H",
-        "//gnulib/m4/netinet_in_h:gl_HEADER_NETINET_IN",  # Header check without HAVE_NETINET_IN_H subst
-        "//gnulib/m4/inet_ntop",
-        # Note: AC_CHECK_HEADERS_ONCE([sys/un.h]) - line 55 - we check for it here to break cycle with sys_un_h
-        # For test compatibility - need basic header defines
+        # AC_CHECK_HEADERS_ONCE([netinet/in.h]) - header check without the
+        # HAVE_NETINET_IN_H subst
+        "//gnulib/m4/netinet_in_h:gl_HEADER_NETINET_IN",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_SOCKET_FAMILY_UNIX - lines 48-78
+# Test for the UNIX domain socket address family (HAVE_UNIXSOCKET).
+autoconf(
+    name = "gl_SOCKET_FAMILY_UNIX",
+    checks = [
+        # AC_CHECK_HEADERS_ONCE([sys/un.h])
+        checks.AC_CHECK_HEADER(
+            "sys/un.h",
+            name = "ac_cv_header_sys_un_h",
+            define = "HAVE_SYS_UN_H",
+        ),
+        # Windows versions released after 2017 may have support for AF_UNIX.
+        # if test "$ac_cv_header_winsock2_h" = yes; then
+        #   AC_CHECK_HEADERS([afunix.h], [], [], [#include <winsock2.h>])
+        # fi
+        checks.AC_CHECK_HEADER(
+            "afunix.h",
+            name = "ac_cv_header_afunix_h",
+            define = "HAVE_AFUNIX_H",
+            includes = ["#include <winsock2.h>"],
+            requires = ["ac_cv_header_winsock2_h"],
+        ),
+        # AC_CACHE_CHECK([for UNIX domain sockets], [gl_cv_socket_unix], ...)
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_socket_unix",
+            code = """\
+#include <sys/types.h>
+#if HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#if HAVE_SYS_UN_H
+#include <sys/un.h>
+#endif
+#if HAVE_WINSOCK2_H
+#include <winsock2.h>
+#endif
+#if HAVE_AFUNIX_H
+#include <afunix.h>
+#endif
+
+int main(void) {
+    int x = AF_UNIX; struct sockaddr_un y;
+    if (&x && &y) return 0;
+    return 0;
+}
+""",
+            compile_defines = [
+                "HAVE_SYS_SOCKET_H",
+                "HAVE_SYS_UN_H",
+                "HAVE_WINSOCK2_H",
+                "HAVE_AFUNIX_H",
+            ],
+            language = "c",
+        ),
+        # if test $gl_cv_socket_unix = yes; then AC_DEFINE([HAVE_UNIXSOCKET], [1])
+        checks.AC_DEFINE(
+            "HAVE_UNIXSOCKET",
+            condition = "gl_cv_socket_unix",
+            if_false = None,
+            if_true = 1,
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        # AC_REQUIRE([gl_SYS_SOCKET_H])
+        "//gnulib/m4/sys_socket_h:gl_SYS_SOCKET_H",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Package-level aggregator (matches package name).
+autoconf(
+    name = "sockpfaf",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_SOCKET_FAMILIES",
+        ":gl_SOCKET_FAMILY_UNIX",
     ],
 )

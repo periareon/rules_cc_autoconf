@@ -1,4 +1,5 @@
 /* config.h.in */
+#undef FUNC_MKDIR_DOT_BUG
 #undef HAVE_FCHMODAT
 #undef HAVE_FSTATAT
 #undef HAVE_FUTIMENS

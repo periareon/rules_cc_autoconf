@@ -5,14 +5,11 @@ gnu_gnulib_diff_test_suite(
     bazel_autoconf_target = "//gnulib/m4/gnu-make",
     config_h_in = "config.h.in",
     configure_ac = "configure.ac",
-    golden_config_h = select({
-        "@platforms//os:macos": "golden_config_macos.h.in",
-        "//conditions:default": "golden_config.h.in",
-    }),
-    golden_subst_h = select({
-        "@platforms//os:macos": "golden_subst_macos.h.in",
-        "//conditions:default": "golden_subst.h.in",
-    }),
+    known_divergences = {
+        # gl_GNU_MAKE runs `make --version` from the host PATH.
+        "GNU_MAKE_FALSE": "gl_GNU_MAKE probes the host PATH for an installed program; the Bazel port does not search the host",
+        "GNU_MAKE_TRUE": "gl_GNU_MAKE probes the host PATH for an installed program; the Bazel port does not search the host",
+    },
     m4_files = ["@gnulib//:all_m4"],
     subst_h_in = "subst.h.in",
     test_c = "test_gnu-make.c",

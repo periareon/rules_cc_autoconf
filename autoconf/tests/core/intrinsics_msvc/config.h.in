@@ -1,0 +1,37 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Define to 1 if fabs probes as present when compiled with /O2. */
+#undef HAVE_FABS_O2
+
+/* Define to 1 if labs probes as present when compiled with /O2. */
+#undef HAVE_LABS_O2
+
+/* Define to 1 if memcmp probes as present when compiled with /O2. */
+#undef HAVE_MEMCMP_O2
+
+/* Define to 1 if memcpy probes as present when compiled with /O2. */
+#undef HAVE_MEMCPY_O2
+
+/* Define to 1 if you have the `memcmp' function. */
+#undef HAVE_MEMCMP
+
+/* Define to 1 if a function that does not exist probes as present. */
+#undef HAVE_RULES_CC_AUTOCONF_NO_SUCH_FUNCTION
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION

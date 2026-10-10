@@ -1,29 +1,40 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/tcgetattr.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
-load("//autoconf:checks.bzl", "checks")
+load("//autoconf:checks.bzl", "checks", "utils")
 
 autoconf(
-    name = "tcgetattr",
+    name = "gl_HAVE_TCGETATTR",
     checks = [
-        # gl_HAVE_TCGETATTR checks for tcgetattr function
-        # We can't use AC_CHECK_FUNC here, because tcgetattr() is defined as a
-        # static inline function when compiling for Android 4.4 or older.
         checks.AC_TRY_LINK(
-            code = """\
-#include <termios.h>
-struct termios x;
-int main(void) {
-    return tcgetattr(0, &x);
-}
-""",
-            define = "HAVE_TCGETATTR",
+            name = "gl_cv_func_tcgetattr",
+            code = utils.AC_LANG_PROGRAM(
+                [
+                    "#include <termios.h>",
+                    "struct termios x;",
+                ],
+                "return tcgetattr(0,&x);",
+            ),
             language = "c",
+        ),
+        # AC_DEFINE_UNQUOTED([HAVE_TCGETATTR], [$HAVE_TCGETATTR]): always 1 or 0.
+        checks.AC_DEFINE(
+            "HAVE_TCGETATTR",
+            condition = "gl_cv_func_tcgetattr",
+            if_false = 0,
+            if_true = 1,
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # For test compatibility - need basic header defines
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "tcgetattr",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_HAVE_TCGETATTR",
     ],
 )

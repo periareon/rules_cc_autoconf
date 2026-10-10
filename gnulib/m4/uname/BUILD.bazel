@@ -1,11 +1,35 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/uname.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
-load("//autoconf:checks.bzl", "macros")
+load("//autoconf:checks.bzl", "checks", "macros")
+
+# AC_CHECK_FUNCS([uname]): probe and config.h define, shared with gethostname.
+autoconf(
+    name = "AC_CHECK_FUNCS_uname",
+    checks = macros.AC_CHECK_FUNCS(["uname"]),
+    visibility = ["//visibility:public"],
+)
 
 autoconf(
     name = "gl_FUNC_UNAME",
-    checks = macros.AC_CHECK_FUNCS(["uname"]),
+    checks = [
+        # if test $ac_cv_func_uname = no; then HAVE_UNAME=0; fi
+        # Overrides the gl_SYS_UTSNAME_H_DEFAULTS value of 1 (e.g. on MSVC).
+        checks.AC_SUBST(
+            "HAVE_UNAME",
+            condition = "ac_cv_func_uname",
+            if_false = "0",
+            if_true = "1",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [":AC_CHECK_FUNCS_uname"],
+)
+
+# Prerequisites of lib/uname.c (gl_PREREQ_UNAME is empty in the m4).
+autoconf(
+    name = "gl_PREREQ_UNAME",
+    checks = [],
     visibility = ["//visibility:public"],
 )
 
@@ -14,5 +38,6 @@ autoconf(
     visibility = ["//visibility:public"],
     deps = [
         ":gl_FUNC_UNAME",
+        ":gl_PREREQ_UNAME",
     ],
 )

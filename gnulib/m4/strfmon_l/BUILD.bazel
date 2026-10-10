@@ -4,12 +4,20 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "strfmon_l",
+    name = "gl_FUNC_STRFMON_L",
     checks = [
         # gl_FUNC_STRFMON_L checks for strfmon_l function
         checks.AC_CHECK_FUNC(
             "strfmon_l",
             define = "HAVE_STRFMON_L",
+        ),
+        # if test $ac_cv_func_strfmon_l = no; then HAVE_STRFMON_L=0; fi
+        # Overrides the toolchain default of 1 (e.g. MSVC has no strfmon_l).
+        checks.AC_SUBST(
+            "HAVE_STRFMON_L",
+            condition = "ac_cv_func_strfmon_l",
+            if_false = "0",
+            if_true = "1",
         ),
         # LC_*_IMPLEMENTED and LOCALE_FR_UTF8 come from locale-fr dependency
     ],
@@ -17,10 +25,26 @@ autoconf(
     deps = [
         "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
         "//gnulib/m4/codeset",
-        "//gnulib/m4/locale_h:HAVE_XLOCALE_H",
+        "//gnulib/m4/locale_h:HAVE_XLOCALE_H",  # AC_CHECK_HEADERS_ONCE([xlocale.h])
         "//gnulib/m4/wchar_h:gl_WCHAR_H_CORE",
-        "//gnulib/m4/locale-fr",
+        "//gnulib/m4/locale-fr",  # AC_REQUIRE([gt_LOCALE_FR_UTF8])
         # For test compatibility - need basic header defines
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_PREREQ_STRFMON_L - lines 96-98 (empty)
+autoconf(
+    name = "gl_PREREQ_STRFMON_L",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "strfmon_l",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_STRFMON_L",
+        ":gl_PREREQ_STRFMON_L",
     ],
 )

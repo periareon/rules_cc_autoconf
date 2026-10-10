@@ -4,7 +4,7 @@ load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("//tools/cxxopts:cxxopts.bzl", "cxxopts")
 load(":restrict.bzl", "ac_c_restrict")
 
-# Resolver tool that combines the three keyword compile-check results
+# Resolver tool that combines the four keyword compile-check results
 # into a single "restrict" define following the autoconf fallback chain.
 cc_binary(
     name = "restrict_resolver",
@@ -17,11 +17,14 @@ cc_binary(
 
 # Detect the C restrict keyword variant supported by the compiler.
 #
-# The original autoconf AC_C_RESTRICT macro tries keywords in order:
-#   1. restrict      (C99)        — no #define needed
-#   2. __restrict__  (GCC/Clang)  — #define restrict __restrict__
-#   3. __restrict    (MSVC)       — #define restrict __restrict
-#   4. (none)                     — #define restrict /**/
+# The autoconf 2.72 AC_C_RESTRICT macro tries keywords in order, each on a
+# pointer parameter, an array parameter and a local pointer:
+#   1. __restrict__  — #define restrict __restrict__ (what GCC/Clang get)
+#   2. __restrict    — #define restrict __restrict
+#   3. _Restrict     — #define restrict _Restrict
+#   4. restrict      — no #define needed
+#   5. (none)        — #define restrict /**/ (cl.exe rejects the array form
+#                      for every keyword)
 #
 # This uses a custom rule because the fallback chain produces a single
 # define from multiple compile checks, which the core autoconf rule

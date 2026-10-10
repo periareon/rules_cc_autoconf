@@ -103,6 +103,7 @@ def _autoconf_linkopts_impl(ctx):
     args.add("--pragma-output", pragma_file)
 
     ctx.actions.run(
+        toolchain = None,
         executable = ctx.executable._linkopts_gen,
         arguments = [args],
         inputs = inputs,

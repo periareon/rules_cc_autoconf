@@ -4,18 +4,45 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "wcsftime",
+    name = "gl_FUNC_WCSFTIME",
     checks = [
+        # AC_CHECK_FUNCS_ONCE([wcsftime])
         checks.AC_CHECK_FUNC(
             "wcsftime",
             define = "HAVE_WCSFTIME",
         ),
-    ],
+        # if test $ac_cv_func_wcsftime = no; then HAVE_WCSFTIME=0
+        checks.AC_SUBST(
+            "HAVE_WCSFTIME",
+            condition = "ac_cv_func_wcsftime",
+            if_false = 0,
+            if_true = 1,
+        ),
+    ] + select({
+        # else case "$host_os" in mingw* | windows*) REPLACE_WCSFTIME=1 ;; esac
+        "@platforms//os:windows": [
+            checks.AC_SUBST(
+                "REPLACE_WCSFTIME",
+                condition = "ac_cv_func_wcsftime",
+                if_false = 0,
+                if_true = 1,
+            ),
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         # Note: wchar_h provides HAVE_DECL_WCSDUP, but golden file expects it undefined
         # "//gnulib/m4/wchar_h",  # AC_REQUIRE([gl_WCHAR_H_DEFAULTS]) - but pulls in HAVE_DECL_WCSDUP
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "wcsftime",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_WCSFTIME",
     ],
 )

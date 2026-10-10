@@ -21,9 +21,39 @@ autoconf(
         # Upstream uses AC_RUN_IFELSE tests that check whether fesetexceptflag
         # is guaranteed non-trapping and obeys its arguments. The runtime tests
         # fail (or cross-compile guesses say "no") on all platforms this project
-        # targets (glibc, musl, darwin, mingw), so REPLACE is always 1.
+        # targets (glibc, musl, darwin, mingw), so REPLACE is always 1.  On MSVC
+        # the "mingw* | windows*" case below sets it to 1 as well.
         checks.AC_SUBST("REPLACE_FESETEXCEPTFLAG", "1"),
-    ],
+    ] + select({
+        "@platforms//os:windows": [
+            # case "$host_os" in
+            #   mingw* | windows*)
+            #     AC_EGREP_CPP([Problem], [#ifndef __MINGW32__ Problem #endif],
+            #       [REPLACE_FEGETEXCEPTFLAG=1; REPLACE_FESETEXCEPTFLAG=1], [])
+            # On MSVC the bits in the saved state must be identified by the
+            # FE_* macros, which requires conversions in both fegetexceptflag
+            # and fesetexceptflag.
+            checks.AC_TRY_COMPILE(
+                name = "gl_cv_func_fegetexceptflag_fe_macros",
+                code = """\
+#ifndef __MINGW32__
+ #error "MSVC: fexcept_t bits are not identified by the FE_* macros"
+#endif
+int main(void) { return 0; }
+""",
+                language = "c",
+            ),
+            checks.AC_SUBST(
+                "REPLACE_FEGETEXCEPTFLAG",
+                condition = "gl_cv_func_fegetexceptflag_fe_macros",
+                if_false = "1",
+                if_true = "0",
+            ),
+        ],
+        # Elsewhere only the s390 glibc case touches REPLACE_FEGETEXCEPTFLAG;
+        # the gl_FENV_H_DEFAULTS value of 0 stands.
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CANONICAL_HOST",

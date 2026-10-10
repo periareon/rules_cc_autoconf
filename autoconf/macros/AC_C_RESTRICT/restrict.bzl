@@ -1,10 +1,16 @@
 """Custom rule for AC_C_RESTRICT keyword detection.
 
-Implements the GNU autoconf AC_C_RESTRICT fallback chain:
-  1. restrict      — C99 keyword (no #define needed if it works)
-  2. __restrict__  — GCC/Clang extension
-  3. __restrict    — MSVC extension
-  4. (none)        — #define restrict to empty
+Implements the GNU autoconf AC_C_RESTRICT fallback chain (autoconf 2.72,
+lib/autoconf/c.m4), keywords tried in this order:
+  1. __restrict__  — first, "to avoid problems with glibc and non-GCC"
+  2. __restrict
+  3. _Restrict
+  4. restrict      — last, "because C++ lacks it"; no #define when it wins
+  5. (none)        — #define restrict to empty
+Every keyword is tried on a pointer parameter, an array parameter
+(`int bar (int [kw]);`, "Catch GCC bug 14050") and a local pointer, exactly
+as autoconf's test program does; cl.exe rejects the array form for all four,
+which is why GNU configure defines `restrict` to nothing on MSVC.
 
 This cannot be expressed with the core `autoconf` rule because the fallback
 chain requires multiple compile checks that resolve to a single define, and
@@ -19,6 +25,7 @@ load("@rules_cc//cc:find_cc_toolchain.bzl", "use_cc_toolchain")
 load("//autoconf:cc_autoconf_info.bzl", "CcAutoconfInfo")
 load(
     "//autoconf/private:autoconf_config.bzl",
+    "AUTOCONF_EXEC_GROUP",
     "create_config_dict",
     "get_cc_toolchain_info",
     "get_environment_variables",
@@ -26,28 +33,30 @@ load(
 )
 load("//autoconf/private:ctx_actions_write.bzl", "write")
 
-# Test code templates for each keyword variant.
-# Each is a minimal C program that uses the keyword in a function signature.
-_RESTRICT_CODE = """\
-int test(int *restrict p) { return *p; }
-int main(void) { return 0; }
+# autoconf's AC_C_RESTRICT test program (AC_LANG_PROGRAM body), with the
+# keyword substituted for `{kw}`.
+_RESTRICT_PROGRAM = """\
+typedef int *int_ptr;
+int foo (int_ptr {kw} ip) {{ return ip[0]; }}
+int bar (int [{kw}]); /* Catch GCC bug 14050.  */
+int bar (int ip[{kw}]) {{ return ip[0]; }}
+
+int
+main (void)
+{{
+  int s[1];
+  int *{kw} t = s;
+  t[0] = 0;
+  return foo (t) + bar (t);
+}}
 """
 
-_RESTRICT_DUNDER_CODE = """\
-int test(int *__restrict__ p) { return *p; }
-int main(void) { return 0; }
-"""
-
-_UNDERSCORE_RESTRICT_CODE = """\
-int test(int *__restrict p) { return *p; }
-int main(void) { return 0; }
-"""
-
-# Check definitions: (cache_var_name, code, cli_flag_for_resolver)
+# Check definitions in autoconf's order: (cache_var_name, keyword, resolver flag)
 _KEYWORD_CHECKS = [
-    ("_ac_cv_c_restrict", _RESTRICT_CODE, "--restrict"),
-    ("_ac_cv_c___restrict__", _RESTRICT_DUNDER_CODE, "--restrict__"),
-    ("_ac_cv_c___restrict", _UNDERSCORE_RESTRICT_CODE, "--_restrict"),
+    ("_ac_cv_c___restrict__", "__restrict__", "--restrict__"),
+    ("_ac_cv_c___restrict", "__restrict", "--_restrict"),
+    ("_ac_cv_c__Restrict", "_Restrict", "--_Restrict"),
+    ("_ac_cv_c_restrict", "restrict", "--restrict"),
 ]
 
 def _ac_c_restrict_impl(ctx):
@@ -64,10 +73,10 @@ def _ac_c_restrict_impl(ctx):
     check_result_files = []
     resolver_args = ctx.actions.args()
 
-    for cache_name, code, resolver_flag in _KEYWORD_CHECKS:
+    for cache_name, keyword, resolver_flag in _KEYWORD_CHECKS:
         # Write the check specification JSON.
         check_spec = {
-            "code": code,
+            "code": _RESTRICT_PROGRAM.format(kw = keyword),
             "language": "c",
             "name": cache_name,
             "type": "compile",
@@ -96,6 +105,7 @@ def _ac_c_restrict_impl(ctx):
         args.add("--results", result_file)
 
         ctx.actions.run(
+            exec_group = AUTOCONF_EXEC_GROUP,
             executable = ctx.executable._checker,
             arguments = [args],
             inputs = depset([config_json, check_json]),
@@ -118,6 +128,7 @@ def _ac_c_restrict_impl(ctx):
     resolver_args.add("--output", restrict_result)
 
     ctx.actions.run(
+        toolchain = None,
         executable = ctx.executable._resolver,
         arguments = [resolver_args],
         inputs = depset(check_result_files),
@@ -149,16 +160,17 @@ ac_c_restrict = rule(
     doc = """\
 Detect the C restrict keyword variant supported by the compiler.
 
-Implements the GNU autoconf AC_C_RESTRICT fallback chain. Tries the bare
-`restrict` keyword first (C99), then `__restrict__` (GCC/Clang), then
-`__restrict` (MSVC). If none compile, defines `restrict` to empty.
+Implements the GNU autoconf AC_C_RESTRICT fallback chain with autoconf's own
+test program: `__restrict__`, then `__restrict`, then `_Restrict`, then
+`restrict` (no define when the bare keyword is what works). If none compile,
+defines `restrict` to empty, as happens with cl.exe.
 
 Returns a CcAutoconfInfo provider with the `restrict` define result,
 compatible with the standard `autoconf` rule for use as a dependency.
 """,
     attrs = {
         "_checker": attr.label(
-            cfg = "exec",
+            cfg = config.exec(AUTOCONF_EXEC_GROUP),
             executable = True,
             default = Label("//autoconf/private/checker:checker_bin"),
         ),
@@ -169,6 +181,6 @@ compatible with the standard `autoconf` rule for use as a dependency.
         ),
     },
     fragments = ["cpp"],
-    toolchains = use_cc_toolchain(),
+    exec_groups = {AUTOCONF_EXEC_GROUP: exec_group(toolchains = use_cc_toolchain())},
     provides = [CcAutoconfInfo],
 )

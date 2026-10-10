@@ -8,7 +8,11 @@ load("//autoconf:checks.bzl", "checks")
 autoconf(
     name = "HAVE_NEWLOCALE",
     checks = [
-        # gl_CHECK_FUNCS_ANDROID([newlocale], [[#include <locale.h>]])
+        # if test $HAVE_LOCALE_T = 1; then
+        #   gl_CHECK_FUNCS_ANDROID([newlocale], [[#include <locale.h>]])
+        # else  (e.g. MSVC: no locale_t)
+        #   gl_cv_onwards_func_newlocale='future OS version'; gl_func_newlocale=no
+        # fi
         checks.AC_TRY_LINK(
             name = "_gl_cv_func_newlocale",
             code = """#include <locale.h>
@@ -17,6 +21,7 @@ int main(void) {
     return loc != NULL ? 0 : 1;
 }""",
             language = "c",
+            requires = ["HAVE_LOCALE_T==1"],
         ),
         # Set HAVE_NEWLOCALE as define if function exists
         checks.AC_DEFINE(
@@ -34,28 +39,67 @@ int main(void) {
 
 # and REPLACE_NEWLOCALE
 autoconf(
-    name = "newlocale",
+    name = "gl_FUNC_NEWLOCALE",
     checks = [
+        # else HAVE_NEWLOCALE=0 (line 60): override the gl_LOCALE_H_DEFAULTS
+        # value of 1 when newlocale is absent (or there is no locale_t).
+        checks.AC_SUBST(
+            "HAVE_NEWLOCALE",
+            condition = "_gl_cv_func_newlocale",
+            if_false = "0",
+            if_true = "1",
+        ),
     ] + select({
         # On macOS: newlocale with NULL base doesn't work correctly (line 39)
+        # -> REPLACE_NEWLOCALE=1.  Without locale_t the "future OS version"
+        # branch (line 61-62) also sets REPLACE_NEWLOCALE=1.
         "@platforms//os:macos": [
-            checks.AC_SUBST("REPLACE_NEWLOCALE", "1"),
+            checks.AC_SUBST(
+                "REPLACE_NEWLOCALE",
+                condition = "_gl_cv_func_newlocale || HAVE_LOCALE_T==0",
+                if_false = "0",
+                if_true = "1",
+            ),
         ],
-        # On Linux: newlocale works correctly
+        # On Linux: newlocale works correctly -> 0.  On MSVC HAVE_LOCALE_T=0,
+        # so gl_cv_onwards_func_newlocale='future OS version' and
+        # case ... future*) REPLACE_NEWLOCALE=1 applies.
         "//conditions:default": [
-            checks.AC_SUBST("REPLACE_NEWLOCALE", "0"),
+            checks.AC_SUBST(
+                "REPLACE_NEWLOCALE",
+                condition = "HAVE_LOCALE_T==0",
+                if_false = "0",
+                if_true = "1",
+            ),
         ],
     }) + [
-        # HAVE_NL_LANGINFO_L comes from nl_langinfo_l dependency
+        # HAVE_NL_LANGINFO_L (config.h define only) comes from the
+        # nl_langinfo_l dependency; the m4 never AC_SUBSTs it.
     ],
     visibility = ["//visibility:public"],
     deps = [
-        ":HAVE_NEWLOCALE",
-        "//gnulib/m4/nl_langinfo:nl_langinfo_l",
+        ":HAVE_NEWLOCALE",  # gl_CHECK_FUNCS_ANDROID([newlocale])
+        "//gnulib/m4/nl_langinfo:nl_langinfo_l",  # gl_CHECK_FUNCS_ANDROID([nl_langinfo_l])
         # AC_REQUIRE([gl_LOCALE_H_DEFAULTS]) - line 14 (ignore, it's a _DEFAULTS function)
-        "//gnulib/m4/locale_h",
-        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//gnulib/m4/locale_h",  # AC_REQUIRE([gl_LOCALE_T])
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_PREREQ_NEWLOCALE: prerequisites of lib/newlocale.c (none).
+autoconf(
+    name = "gl_PREREQ_NEWLOCALE",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "newlocale",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_NEWLOCALE",
+        ":gl_PREREQ_NEWLOCALE",
     ],
 )

@@ -4,29 +4,44 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "strptime",
+    name = "gl_FUNC_STRPTIME",
     checks = [
+        # AC_CHECK_FUNCS_ONCE([strptime]): HAVE_STRPTIME is only #defined when found.
         checks.AC_CHECK_FUNC(
             "strptime",
-            name = "ac_cv_func_strptime",
+            define = "HAVE_STRPTIME",
         ),
-
-        # Define HAVE_STRPTIME in config.h if function exists
-        checks.AC_DEFINE(
+        # if test $ac_cv_func_strptime != yes; then HAVE_STRPTIME=0; fi
+        # Overrides the gl_TIME_H_DEFAULTS value of 1 (e.g. on MSVC).
+        checks.AC_SUBST(
             "HAVE_STRPTIME",
             condition = "ac_cv_func_strptime",
+            if_false = 0,
             if_true = 1,
         ),
-
-        #   HAVE_STRPTIME=0
-        # fi
-        # Set HAVE_STRPTIME as substitution variable
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
-        "//autoconf/macros/AC_C_RESTRICT",
-        "//gnulib/m4/time_h",
-        "//gnulib/m4/tm_gmtoff",
+        "//autoconf/macros/AC_C_RESTRICT",  # AC_REQUIRE([AC_C_RESTRICT])
+        "//gnulib/m4/time_h",  # AC_REQUIRE([gl_TIME_H_DEFAULTS])
+    ],
+)
+
+autoconf(
+    name = "gl_PREREQ_STRPTIME",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/tm_gmtoff:gl_TM_GMTOFF",  # AC_REQUIRE([gl_TM_GMTOFF])
+    ],
+)
+
+autoconf(
+    name = "strptime",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_STRPTIME",
+        ":gl_PREREQ_STRPTIME",
     ],
 )

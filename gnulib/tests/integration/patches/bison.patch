@@ -1,0 +1,142 @@
+# Windows (MSVC) fixes for the bison 3.8.2.bcr.10 overlay against GNU-faithful
+# rules_cc_autoconf results.  gnulib compiles a replacement source when
+# HAVE_X = 0 || REPLACE_X = 1, but the overlay only checked REPLACE_X; the
+# probes' cache variables are used where the HAVE_* name is published both as
+# define and as subst (fcntl, readlink, strchrnul, vasprintf, strerror_r,
+# fstatat, getdelim, mbsinit, fdopendir, openat, the dirent functions,
+# isnand/isnanl).  REPLACE_CLOSE/DUP/DUP2/GETCWD/UNLINK/OPEN/RMDIR/RAISE/
+# MBRTOWC are 1 on MSVC, which also pulls in the getcwd -> fdopendir/openat ->
+# fchdir -> dirent cluster that GNU bison's gnulib-comp.m4 enables when
+# REPLACE_GETCWD = 1 (hence the generated lib/dirent.h, the dup indicator and
+# the fd-hook/filenamecat-lgpl/openat-die/openat-proc/save-cwd helpers).
+# iswdigit/iswxdigit are skipped when <wctype.h> already redefines the isw*
+# functions, as gnulib-comp.m4 does.  The ports now publish
+# HAVE_STPCPY/HAVE_STPNCPY themselves, so the overlay's local overrides are
+# duplicates.  GNU's AC_C_RESTRICT yields `#define restrict /**/` on MSVC,
+# which the rules' AC_C_RESTRICT port reproduces, so no local define is needed.
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -18,6 +18,7 @@
+ 
+ GENERATED_SRCS = {
+     "lib/alloca.h": "lib/alloca.in.h",
++    "lib/dirent.h": "lib/dirent.in.h",
+     "lib/fcntl.h": "lib/fcntl.in.h",
+     "lib/getopt-cdefs.h": "lib/getopt-cdefs.in.h",
+     "lib/getopt.h": "lib/getopt.in.h",
+@@ -263,6 +264,7 @@
+         # leaving GNULIB_ACCESS=0 avoids an rpl_access redirect conflict.
+         checks.AC_SUBST("GNULIB_CHDIR", 1),
+         checks.AC_SUBST("GNULIB_CLOSE", 1),
++        checks.AC_SUBST("GNULIB_DUP", 1),
+         checks.AC_SUBST("GNULIB_DUP2", 1),
+         checks.AC_SUBST("GNULIB_ENVIRON", 1),
+         checks.AC_SUBST("GNULIB_FCHDIR", 1),
+@@ -646,8 +648,6 @@
+             # Override string_h toolchain defaults for POSIX functions missing
+             # on Windows.  Without these the generated string.h skips their
+             # declarations, causing implicit-int errors on MSVC.
+-            checks.AC_SUBST("HAVE_STPCPY", 0),
+-            checks.AC_SUBST("HAVE_STPNCPY", 0),
+             # MSVC's _access() doesn't support X_OK (mode=1) and returns
+             # EINVAL. Enable gnulib access replacement (lib/access.c) which
+             # converts X_OK to R_OK before calling _access().
+@@ -737,31 +737,65 @@
+     name = "gnulib_conditional_srcs",
+     srcs = {
+         # --- REPLACE_* gated (upstream gnulib decides) ---
+-        "lib/asprintf.c": "REPLACE_VASPRINTF",
++        "lib/asprintf.c": "!ac_cv_func_vasprintf || REPLACE_VASPRINTF",
+         # --- COMPILE_* gated (function absent → replacement compiled) ---
+         "lib/canonicalize-lgpl.c": "COMPILE_CANONICALIZE_LGPL",
++        "lib/close.c": "REPLACE_CLOSE",
++        "lib/closedir.c": "!_gl_have_closedir || REPLACE_CLOSEDIR",
++        "lib/dirfd.c": "(!ac_cv_func_dirfd && !gl_cv_func_dirfd_macro) || REPLACE_DIRFD",
++        "lib/dup.c": "REPLACE_DUP",
++        "lib/dup2.c": "REPLACE_DUP2",
+         "lib/error.c": "COMPILE_ERROR",
+-        "lib/fcntl.c": "REPLACE_FCNTL",
++        "lib/fchdir.c": "ac_cv_define_REPLACE_FCHDIR",
++        "lib/fcntl.c": "!ac_cv_func_fcntl || REPLACE_FCNTL",
++        "lib/fd-hook.c": "REPLACE_CLOSE",
++        "lib/fdopendir.c": "!ac_cv_func_fdopendir || REPLACE_FDOPENDIR",
++        "lib/filenamecat-lgpl.c": "ac_cv_define_REPLACE_FCHDIR",
+         "lib/fopen.c": "REPLACE_FOPEN",
+         "lib/fpending.c": "COMPILE_FPENDING",
+         "lib/fprintf.c": "REPLACE_FPRINTF",
+         "lib/free.c": "REPLACE_FREE",
+         "lib/fseterr.c": "COMPILE_FSETERR",
+         "lib/fstat.c": "REPLACE_FSTAT",
++        "lib/fstatat.c": "!_gl_cv_func_fstatat || REPLACE_FSTATAT",
++        "lib/getcwd.c": "REPLACE_GETCWD",
++        "lib/getcwd-lgpl.c": "REPLACE_GETCWD",
++        "lib/getdelim.c": "!_gl_cv_func_getdelim || REPLACE_GETDELIM",
++        "lib/getline.c": "REPLACE_GETLINE",
+         "lib/getopt.c": "COMPILE_GETOPT",
+         "lib/getopt1.c": "COMPILE_GETOPT",
+         "lib/iconv_open.c": "REPLACE_ICONV_OPEN",
++        "lib/isnand.c": "!gl_cv_func_isnand_no_libm",
++        # isnanf-nolibm is only pulled in by signbit's replacement.
++        "lib/isnanf.c": "REPLACE_SIGNBIT && (!gl_cv_func_isnanf_no_libm || !gl_cv_func_isnanf_works)",
++        "lib/isnanl.c": "!gl_cv_func_isnanl_no_libm || !gl_cv_func_isnanl_works",
++        # gnulib-comp.m4 skips these when <wctype.h> already redefines the
++        # isw* functions (HAVE_ISWCNTRL = 0 || REPLACE_ISWCNTRL = 1).
++        "lib/iswdigit.c": "ac_cv_func_iswcntrl && !REPLACE_ISWCNTRL && REPLACE_ISWDIGIT",
++        "lib/iswxdigit.c": "ac_cv_func_iswcntrl && !REPLACE_ISWCNTRL && REPLACE_ISWXDIGIT",
+         "lib/lstat.c": "REPLACE_LSTAT",
+-        "lib/mbrtowc.c": "COMPILE_MBRTOWC",
++        "lib/mbrtowc.c": "COMPILE_MBRTOWC || REPLACE_MBRTOWC",
++        "lib/mbsinit.c": "!_gl_cv_func_mbsinit || REPLACE_MBSINIT",
+         "lib/mempcpy.c": "COMPILE_MEMPCPY",
+         "lib/obstack_printf.c": "COMPILE_OBSTACK_PRINTF",
+-        "lib/open.c": "COMPILE_OPEN",
++        "lib/open.c": "COMPILE_OPEN || REPLACE_OPEN",
++        "lib/openat.c": "!ac_cv_func_openat || REPLACE_OPENAT",
++        # at-internal, openat-die and save-cwd: pulled in by openat and
++        # fdopendir when the system lacks the function.
++        "lib/openat-die.c": "!ac_cv_func_openat || !ac_cv_func_fdopendir",
++        "lib/openat-proc.c": "!ac_cv_func_openat || !ac_cv_func_fdopendir",
++        "lib/opendir.c": "!_gl_cv_func_opendir || REPLACE_OPENDIR",
+         "lib/perror.c": "REPLACE_PERROR",
+         "lib/printf.c": "REPLACE_PRINTF",
++        "lib/raise.c": "REPLACE_RAISE",
+         "lib/rawmemchr.c": "COMPILE_RAWMEMCHR",
+-        "lib/readlink.c": "REPLACE_READLINK",
++        "lib/readdir.c": "!ac_cv_func_readdir || REPLACE_READDIR",
++        "lib/readlink.c": "!ac_cv_func_readlink || REPLACE_READLINK",
+         "lib/reallocarray.c": "COMPILE_REALLOCARRAY",
+         "lib/rename.c": "REPLACE_RENAME",
++        "lib/rewinddir.c": "!ac_cv_func_rewinddir || REPLACE_REWINDDIR",
++        "lib/rmdir.c": "REPLACE_RMDIR",
++        "lib/save-cwd.c": "!ac_cv_func_openat || !ac_cv_func_fdopendir",
+         "lib/snprintf.c": "REPLACE_SNPRINTF",
+         # --- Spawn replacement (all-or-nothing when REPLACE_POSIX_SPAWN=1) ---
+         "lib/spawn.c": "ac_cv_define_REPLACE_POSIX_SPAWN",
+@@ -780,13 +814,13 @@
+         "lib/spawnp.c": "ac_cv_define_REPLACE_POSIX_SPAWN",
+         "lib/sprintf.c": "REPLACE_SPRINTF",
+         "lib/stat.c": "REPLACE_STAT",
+-        "lib/strchrnul.c": "REPLACE_STRCHRNUL",
++        "lib/strchrnul.c": "!ac_cv_func_strchrnul || REPLACE_STRCHRNUL",
+         "lib/strerror-override.c": "COMPILE_STRERROR_OVERRIDE",
+         "lib/strerror.c": "REPLACE_STRERROR",
+-        "lib/strerror_r.c": "REPLACE_STRERROR_R",
++        "lib/strerror_r.c": "!ac_cv_have_decl_strerror_r || REPLACE_STRERROR_R",
+         "lib/strverscmp.c": "COMPILE_STRVERSCMP",
+-        "lib/unlink.c": "COMPILE_UNLINK",
+-        "lib/vasprintf.c": "REPLACE_VASPRINTF",
++        "lib/unlink.c": "COMPILE_UNLINK || REPLACE_UNLINK",
++        "lib/vasprintf.c": "!ac_cv_func_vasprintf || REPLACE_VASPRINTF",
+         "lib/vfprintf.c": "REPLACE_VFPRINTF",
+         "lib/vsnprintf.c": "REPLACE_VSNPRINTF",
+         "lib/vsprintf.c": "REPLACE_VSPRINTF",
+@@ -826,6 +860,9 @@
+         ],
+     ) + [
+         ":configmake_h_src",
++        # #included by lib/fstatat.c and lib/isnan{d,f,l}.c
++        "lib/at-func.c",
++        "lib/isnan.c",
+         "lib/printf-frexp.c",
+         "lib/timevar.def",
+     ],

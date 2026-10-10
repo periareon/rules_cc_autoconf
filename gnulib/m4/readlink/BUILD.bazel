@@ -3,13 +3,32 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
+# AC_CHECK_FUNCS_ONCE([readlink]) - the bare probe plus its config.h define.
+#
+# Modules that only run this probe (link-follow, gl_FUNC_READLINK_SEPARATE)
+# must not touch the HAVE_READLINK subst: its gl_UNISTD_H_DEFAULTS value (1)
+# is lowered by gl_FUNC_READLINK alone.
 autoconf(
-    name = "readlink",
+    name = "AC_CHECK_FUNCS_ONCE_readlink",
     checks = [
-        # We need it in subst.h too
+        checks.AC_CHECK_FUNC(
+            "readlink",
+            define = "HAVE_READLINK",
+        ),
+    ],
+    visibility = ["//gnulib:__subpackages__"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "gl_FUNC_READLINK",
+    checks = [
+        # if test $ac_cv_func_readlink = no; then HAVE_READLINK=0
         checks.AC_SUBST(
             "HAVE_READLINK",
-            condition = "ac_cv_func_readlink",  # From AC_FUNC_READLINK dependency
+            condition = "ac_cv_func_readlink",
             if_false = "0",
             if_true = "1",
         ),
@@ -31,15 +50,54 @@ autoconf(
         # M4 m4/readlink.m4 runs AC_RUN_IFELSE for the trailing-slash bug;
         # cross-compile guess for darwin falls to gl_cross_guess_normal.
         # On macOS the SDK probe decides; Linux passes the runtime probe.
+        # With readlink present on Windows (mingw) the M4 always sets
+        # REPLACE_READLINK=1; without it (MSVC) it sets HAVE_READLINK=0 and
+        # leaves REPLACE_READLINK alone (0). Consumers compile lib/readlink.c
+        # when HAVE_READLINK==0 || REPLACE_READLINK==1 (gnulib
+        # GL_COND_OBJ_READLINK).
         "@platforms//os:windows": [
-            checks.AC_SUBST("REPLACE_READLINK", 1),
+            checks.AC_SUBST(
+                "REPLACE_READLINK",
+                condition = "ac_cv_func_readlink",
+                if_false = "0",
+                if_true = "1",
+            ),
         ],
         "//conditions:default": [],
     }),
     visibility = ["//visibility:public"],
     deps = [
+        ":AC_CHECK_FUNCS_ONCE_readlink",
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
         "//gnulib/m4/gnulib-common:gl_HOST_MACOS_SDK_MODERN",
-        "//gnulib/macros/AC_FUNC_READLINK",
+    ],
+)
+
+# Like gl_FUNC_READLINK, except prepare for separate compilation
+# (no REPLACE_READLINK, no AC_LIBOBJ).
+autoconf(
+    name = "gl_FUNC_READLINK_SEPARATE",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":AC_CHECK_FUNCS_ONCE_readlink",  # AC_CHECK_FUNCS_ONCE([readlink])
+        ":gl_PREREQ_READLINK",
+    ],
+)
+
+# Prerequisites of lib/readlink.c: AC_DEFUN([gl_PREREQ_READLINK], [:]) - nothing to do.
+autoconf(
+    name = "gl_PREREQ_READLINK",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "readlink",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_READLINK",
+        ":gl_FUNC_READLINK_SEPARATE",
+        ":gl_PREREQ_READLINK",
     ],
 )

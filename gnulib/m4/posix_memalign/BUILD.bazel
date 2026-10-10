@@ -4,36 +4,65 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 load("//gnulib:macros.bzl", gl_macros = "macros")
 
+# gl_CHECK_FUNCS_ANDROID([posix_memalign], [[#include <stdlib.h>]]): probe and
+# config.h define, shared with gl_ALIGNALLOC and gl_PREREQ_PAGEALIGN_ALLOC, which
+# call it without gl_FUNC_POSIX_MEMALIGN and so never substitute HAVE_POSIX_MEMALIGN.
 autoconf(
-    name = "posix_memalign",
+    name = "gl_CHECK_FUNCS_ANDROID_posix_memalign",
     checks = gl_macros.GL_CHECK_FUNCS_ANDROID(
         ["posix_memalign"],
         includes = ["#include <stdlib.h>"],
-    ) + select({
-        # On Linux: posix_memalign needs replacement due to alignment issues
-        "@platforms//os:linux": [
-            checks.AC_SUBST("REPLACE_POSIX_MEMALIGN", 1),
-        ],
-        # On macOS: posix_memalign needs replacement
-        "@platforms//os:macos": [
-            checks.AC_SUBST("REPLACE_POSIX_MEMALIGN", 1),
-        ],
-        # On OpenBSD: posix_memalign works correctly
+    ),
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_FUNC_POSIX_MEMALIGN",
+    checks = [
+        # if test $ac_cv_func_posix_memalign = yes; then
+        #   ... gl_cv_func_posix_memalign_works (AC_RUN_IFELSE) ...
+        # else
+        #   HAVE_POSIX_MEMALIGN=0
+        # fi
+        # Overrides the gl_STDLIB_H_DEFAULTS value of 1 (e.g. MSVC has no posix_memalign).
+        checks.AC_SUBST(
+            "HAVE_POSIX_MEMALIGN",
+            condition = "ac_cv_func_posix_memalign",
+            if_false = 0,
+            if_true = 1,
+        ),
+    ] + select({
+        # On OpenBSD >= 6.2 the runtime test passes.
         "@platforms//os:openbsd": [
             checks.AC_SUBST("REPLACE_POSIX_MEMALIGN", 0),
         ],
+        # glibc and macOS fail the runtime test (posix_memalign with alignment 0
+        # does not return 0), so an existing posix_memalign is replaced. Where
+        # the function is absent (MSVC) the m4 leaves REPLACE_POSIX_MEMALIGN at
+        # its default of 0 (the Android "future" case is not modeled).
         "//conditions:default": [
             checks.AC_SUBST(
                 "REPLACE_POSIX_MEMALIGN",
-                condition = "!ac_cv_func_posix_memalign",
+                condition = "ac_cv_func_posix_memalign",
+                if_false = 0,
+                if_true = 1,
             ),
         ],
     }),
     visibility = ["//visibility:public"],
     deps = [
+        ":gl_CHECK_FUNCS_ANDROID_posix_memalign",
         # Note: gl_STDLIB_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
         "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
+    ],
+)
+
+autoconf(
+    name = "posix_memalign",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_POSIX_MEMALIGN",
         # For test compatibility - need basic header defines
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],

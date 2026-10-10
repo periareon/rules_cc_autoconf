@@ -1,3 +1,0 @@
-/* subst.h.in */
-#define SUBST_HAVE_LIB "yes"
-#define SUBST_LIB ""

@@ -3,17 +3,25 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
-# gl_FUNC_TSEARCH macro from tsearch.m4
-# COMPLEX CASE: Uses AC_RUN_IFELSE to test if tdelete() works correctly
-# on OpenBSD (where it has a bug). The runtime test is NOT cross-compile friendly.
+# gl_CHECK_FUNCS_ANDROID([tsearch], [[#include <search.h>]]): probe and config.h
+# define, shared with gl_PREREQ_SETENV (which never substitutes HAVE_TSEARCH).
 autoconf(
-    name = "tsearch",
+    name = "gl_CHECK_FUNCS_ANDROID_tsearch",
     checks = [
-        # gl_CHECK_FUNCS_ANDROID([tsearch], [[#include <search.h>]])
         checks.AC_CHECK_FUNC(
             "tsearch",
             define = "HAVE_TSEARCH",
         ),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# gl_FUNC_TSEARCH macro from tsearch.m4
+# COMPLEX CASE: Uses AC_RUN_IFELSE to test if tdelete() works correctly
+# on OpenBSD (where it has a bug). The runtime test is NOT cross-compile friendly.
+autoconf(
+    name = "gl_FUNC_TSEARCH",
+    checks = [
         # gl_CHECK_FUNCS_ANDROID([twalk], [[#include <search.h>]])
         checks.AC_CHECK_FUNC(
             "twalk",
@@ -28,9 +36,49 @@ autoconf(
             "tdelete",
             define = "HAVE_TDELETE",
         ),
+
+        # if test $ac_cv_func_tsearch = yes; then
+        #   ... gl_cv_func_tdelete_works (AC_RUN_IFELSE; only OpenBSD fails) ...
+        # else
+        #   HAVE_TSEARCH=0
+        # fi
+        # if test $ac_cv_func_twalk != yes; then
+        #   HAVE_TWALK=0
+        # fi
+        # These override the gl_SEARCH_H_DEFAULTS values of 1 (MSVC has
+        # <search.h> but neither tsearch nor twalk).
+        checks.AC_SUBST(
+            "HAVE_TSEARCH",
+            condition = "ac_cv_func_tsearch",
+            if_false = 0,
+            if_true = 1,
+        ),
+        checks.AC_SUBST(
+            "HAVE_TWALK",
+            condition = "ac_cv_func_twalk",
+            if_false = 0,
+            if_true = 1,
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/search_h:gl_SEARCH_H_CORE",  # Use core to avoid HAVE_SEARCH_H subst
+        ":gl_CHECK_FUNCS_ANDROID_tsearch",  # gl_CHECK_FUNCS_ANDROID([tsearch], ...)
+        "//gnulib/m4/search_h:gl_SEARCH_H_CORE",  # AC_REQUIRE([gl_SEARCH_H_DEFAULTS]); core to avoid HAVE_SEARCH_H subst
+    ],
+)
+
+# gl_PREREQ_TSEARCH - lines 72-74 (empty)
+autoconf(
+    name = "gl_PREREQ_TSEARCH",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "tsearch",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_TSEARCH",
+        ":gl_PREREQ_TSEARCH",
     ],
 )

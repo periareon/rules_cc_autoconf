@@ -5,24 +5,39 @@ load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "gl_FUNC_UTIME",
-    checks = [
-        # Equivalent to gl_FUNC_UTIME macro from utime.m4
-        # Note: Full implementation includes runtime tests for trailing slash handling
-        checks.AC_CHECK_FUNC(
-            "utime",
-            define = "HAVE_UTIME",
-        ),
-    ] + select({
+    # Equivalent to gl_FUNC_UTIME macro from utime.m4
+    # Note: Full implementation includes runtime tests for trailing slash handling
+    checks = select({
+        # mingw* | windows*) REPLACE_UTIME=1 - utime itself is not probed.
         "@platforms//os:windows": [
             checks.AC_SUBST("REPLACE_UTIME", 1),
         ],
-        "//conditions:default": [],
+        "//conditions:default": [
+            checks.AC_CHECK_FUNC(
+                "utime",
+                define = "HAVE_UTIME",
+            ),
+            # if test $ac_cv_func_utime = no; then HAVE_UTIME=0
+            checks.AC_SUBST(
+                "HAVE_UTIME",
+                condition = "ac_cv_func_utime",
+            ),
+        ],
     }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/lstat",  # AC_CHECK_FUNCS_ONCE([lstat])
+        # AC_CHECK_FUNCS_ONCE([lstat]) - probe + config.h define only; the
+        # HAVE_LSTAT subst keeps its gl_SYS_STAT_H_DEFAULTS value.
+        "//gnulib/m4/lstat:AC_CHECK_FUNCS_ONCE_lstat",
         "//gnulib/m4/utime_h",  # AC_REQUIRE([gl_UTIME_H_DEFAULTS])
     ],
+)
+
+# Prerequisites of lib/utime.c: AC_DEFUN([gl_PREREQ_UTIME], [:]) does nothing.
+autoconf(
+    name = "gl_PREREQ_UTIME",
+    checks = [],
+    visibility = ["//visibility:public"],
 )
 
 autoconf(
@@ -30,5 +45,6 @@ autoconf(
     visibility = ["//visibility:public"],
     deps = [
         ":gl_FUNC_UTIME",
+        ":gl_PREREQ_UTIME",
     ],
 )

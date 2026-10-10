@@ -9,32 +9,72 @@ Defines:
 """
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
-load("//autoconf:checks.bzl", "checks")
+load("//autoconf:checks.bzl", "checks", "utils")
 
 autoconf(
     name = "AC_FUNC_ALLOCA",
     checks = [
-        # Check for alloca.h header
-        # Set HAVE_ALLOCA_H as both define (for config.h) and subst (for subst.h)
-        checks.AC_CHECK_HEADER(
-            "alloca.h",
-            define = "HAVE_ALLOCA_H",
+        # AC_CACHE_CHECK([for working alloca.h], ac_cv_working_alloca_h,
+        #   [AC_LINK_IFELSE([AC_LANG_PROGRAM([[@%:@include <alloca.h>]],
+        #     [[char *p = (char *) alloca (2 * sizeof (int)); if (p) return 0;]])], ...)])
+        checks.AC_TRY_LINK(
+            name = "ac_cv_working_alloca_h",
+            code = utils.AC_LANG_PROGRAM(
+                ["#include <alloca.h>"],
+                "char *p = (char *) alloca (2 * sizeof (int));\n    if (p) return 0;",
+            ),
         ),
-        # Check if alloca works (typically via compiler builtin)
-        checks.AC_TRY_COMPILE(
-            name = "ac_cv_func_alloca",
-            code = """#include <alloca.h>
-int main(void) {
-    void *p = alloca(1);
-    (void)p;
-    return 0;
-}""",
+        # if test $ac_cv_working_alloca_h = yes; then AC_DEFINE(HAVE_ALLOCA_H, 1); fi
+        checks.AC_DEFINE(
+            "HAVE_ALLOCA_H",
+            condition = "ac_cv_working_alloca_h",
+            if_false = None,
+            if_true = 1,
         ),
-        # Define HAVE_ALLOCA in config.h if alloca works
+        # AC_CACHE_CHECK([for alloca], ac_cv_func_alloca_works, ...)
+        # Upstream short-circuits to "yes" when <alloca.h> works and otherwise
+        # links the program below, which maps alloca to the compiler built-in
+        # (GCC/clang), to _alloca from <malloc.h> (MSVC) or to a library
+        # function. That program also links wherever <alloca.h> works, so one
+        # probe gives the same answer as the two-step upstream logic.
+        checks.AC_TRY_LINK(
+            name = "ac_cv_func_alloca_works",
+            code = utils.AC_LANG_PROGRAM(
+                [
+                    "#include <stdlib.h>",
+                    "#include <stddef.h>",
+                    "#ifndef alloca",
+                    "# ifdef __GNUC__",
+                    "#  define alloca __builtin_alloca",
+                    "# elif defined _MSC_VER",
+                    "#  include <malloc.h>",
+                    "#  define alloca _alloca",
+                    "# else",
+                    "#  ifdef  __cplusplus",
+                    "extern \"C\"",
+                    "#  endif",
+                    "void *alloca (size_t);",
+                    "# endif",
+                    "#endif",
+                ],
+                "char *p = (char *) alloca (1);\n    if (p) return 0;",
+            ),
+        ),
+        # if test $ac_cv_func_alloca_works = yes; then AC_DEFINE(HAVE_ALLOCA, 1)
+        # else ... ALLOCA=alloca.o, C_ALLOCA, CRAY_STACKSEG_END, STACK_DIRECTION
+        # (the alloca.c fallback is not modeled: every supported compiler
+        # provides alloca).
         checks.AC_DEFINE(
             "HAVE_ALLOCA",
-            condition = "ac_cv_func_alloca",
+            condition = "ac_cv_func_alloca_works",
+            if_false = None,
+            if_true = 1,
         ),
+        # AC_SUBST([ALLOCA]) sits in _AC_LIBOBJ_ALLOCA, which m4 expands inside
+        # the "alloca does not work" shell branch; the output variable is
+        # therefore registered on every system and is empty whenever the
+        # fallback is not taken.
+        checks.AC_SUBST("ALLOCA", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [

@@ -1,0 +1,81 @@
+###############################################################################
+## Bazel Configuration Flags
+##
+## `.bazelrc` is a Bazel configuration file.
+## https://bazel.build/docs/best-practices#bazelrc-file
+###############################################################################
+
+# Skip building runfiles links for faster builds.
+build --nobuild_runfile_links
+
+# https://bazel.build/reference/command-line-reference#flag--enable_platform_specific_config
+common --enable_platform_specific_config
+
+# Enable the only currently supported report type
+# https://bazel.build/reference/command-line-reference#flag--combined_report
+coverage --combined_report=lcov
+
+# Avoid fully cached builds reporting no coverage and failing CI
+# https://bazel.build/reference/command-line-reference#flag--experimental_fetch_all_coverage_outputs
+coverage --experimental_fetch_all_coverage_outputs
+
+# Required for some of the tests
+# https://bazel.build/reference/command-line-reference#flag--experimental_cc_shared_library
+common --experimental_cc_shared_library
+
+# Disable network access in sandboxes by default.
+build --sandbox_default_allow_network=false
+
+###############################################################################
+## Incompatibility flags
+###############################################################################
+
+# https://github.com/bazelbuild/bazel/issues/8195
+build --incompatible_disallow_empty_glob=true
+
+# https://github.com/bazelbuild/bazel/issues/12821
+build --nolegacy_external_runfiles
+
+# https://github.com/bazelbuild/bazel/issues/23043
+build --incompatible_autoload_externally=
+
+# https://github.com/bazelbuild/bazel/issues/12933
+build --incompatible_config_setting_private_default_visibility
+
+###############################################################################
+## Alternate toolchains
+##
+## The integration tests run with the default (auto-configured host) C/C++
+## toolchain and with each config below. The toolchain modules are declared in
+## `MODULE.bazel` but register nothing; a config activates one via
+## `--extra_toolchains`, which takes precedence over the default toolchain.
+## CI runs every config here (see `.github/workflows/ci.yaml`).
+###############################################################################
+
+# hermeticbuild/hermetic-llvm (`llvm` module)
+common:hermetic_llvm --extra_toolchains=@llvm//toolchain:all
+common:hermetic_llvm --//:toolchain=hermetic_llvm
+
+# bazel-contrib/toolchains_llvm
+common:toolchains_llvm --extra_toolchains=@llvm_toolchain//:all
+common:toolchains_llvm --//:toolchain=toolchains_llvm
+
+###############################################################################
+## Remote Cache
+###############################################################################
+
+common:remote_cache --bes_results_url=https://periareon.buildbuddy.io/invocation/
+common:remote_cache --bes_backend=grpcs://periareon.buildbuddy.io
+common:remote_cache --remote_cache=grpcs://periareon.buildbuddy.io
+common:remote_cache --remote_download_toplevel
+common:remote_cache --remote_timeout=10m
+
+###############################################################################
+## Custom user flags
+##
+## This should always be the last thing in the `.bazelrc` file to ensure
+## consistent behavior when setting flags in that file as `.bazelrc` files are
+## evaluated top to bottom.
+###############################################################################
+
+try-import %workspace%/user.bazelrc

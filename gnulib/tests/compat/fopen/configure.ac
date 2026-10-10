@@ -7,9 +7,5 @@ gl_FUNC_FOPEN
 gl_FUNC_FOPEN_GNU
 gl_PREREQ_FOPEN
 
-# Account for global Bazel defaults
-HAVE_SYS_SOCKET_H=1
-AC_SUBST([HAVE_SYS_SOCKET_H])
-
 AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

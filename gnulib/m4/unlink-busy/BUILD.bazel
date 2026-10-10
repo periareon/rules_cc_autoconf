@@ -3,14 +3,21 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 
 autoconf(
-    name = "unlink-busy",
-    checks = [
-        # gl_UNLINK_BUSY requires gl_UNISTD_H_DEFAULTS
-    ],
+    name = "gl_FUNC_UNLINK_BUSY_TEXT",
+    checks = [],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
-        # For test compatibility - need basic header defines
+        # gl_FUNC_UNLINK_BUSY_TEXT only runs a program built from
+        # AC_INCLUDES_DEFAULT; it requires neither gl_UNISTD_H nor
+        # gl_UNISTD_H_DEFAULTS, so HAVE_UNISTD_H is a config.h define only.
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "unlink-busy",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_UNLINK_BUSY_TEXT",
     ],
 )

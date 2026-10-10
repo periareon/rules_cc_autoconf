@@ -16,7 +16,6 @@ autoconf(
         "//gnulib/m4/obstack-printf",
         # Additional dependencies for golden file:
         "//gnulib/m4/exponentd",
-        "//gnulib/m4/alloca",
         "//gnulib/m4/intmax_t",
         "//gnulib/m4/inttypes_h",
         # Note: nl_langinfo removed to avoid duplicate HAVE_LANGINFO_CODESET (already provided by codeset via vasnprintf -> mbrtowc)

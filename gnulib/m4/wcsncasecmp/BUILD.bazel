@@ -4,11 +4,20 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "wcsncasecmp",
+    name = "gl_FUNC_WCSNCASECMP",
     checks = [
         checks.AC_CHECK_FUNC(
             "wcsncasecmp",
             define = "HAVE_WCSNCASECMP",
+        ),
+        # M4: if test $ac_cv_func_wcsncasecmp = no; then HAVE_WCSNCASECMP=0; fi
+        # Override the gl_WCHAR_H_DEFAULTS value of 1 when the function is
+        # absent (e.g. MSVC).
+        checks.AC_SUBST(
+            "HAVE_WCSNCASECMP",
+            condition = "ac_cv_func_wcsncasecmp",
+            if_false = "0",
+            if_true = "1",
         ),
     ],
     visibility = ["//visibility:public"],
@@ -16,5 +25,13 @@ autoconf(
         # Note: wchar_h provides HAVE_DECL_WCSDUP, but golden file expects it undefined
         # "//gnulib/m4/wchar_h",  # AC_REQUIRE([gl_WCHAR_H_DEFAULTS]) - but pulls in HAVE_DECL_WCSDUP
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "wcsncasecmp",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_WCSNCASECMP",
     ],
 )

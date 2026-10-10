@@ -1,13 +1,26 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/iswdigit.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "gl_FUNC_ISWDIGIT",
     checks = [
         # Equivalent to gl_FUNC_ISWDIGIT macro from iswdigit.m4
-        # Note: Full implementation includes runtime locale-based checks
-        # that are not easily replicable in Bazel
+        # if test $HAVE_ISWCNTRL = 0 || test $REPLACE_ISWCNTRL = 1; then
+        #   REPLACE_ISWDIGIT="$REPLACE_ISWCNTRL"
+        # else
+        #   AC_RUN_IFELSE locale-based check (passes on Linux/macOS, so
+        #   REPLACE_ISWDIGIT keeps the gl_WCTYPE_H_DEFAULTS value of 0)
+        # fi
+        # On native Windows wint_t is too small, so REPLACE_ISWCNTRL=1 and the
+        # first branch applies.
+        checks.AC_SUBST(
+            "REPLACE_ISWDIGIT",
+            condition = "REPLACE_ISWCNTRL==1",
+            if_false = 0,
+            if_true = 1,
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [

@@ -3,20 +3,36 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
+# gl_PREREQ_STAT_W32 - Prerequisites of lib/stat-w32.c.
+#   case "$host_os" in mingw* | windows*) AC_CHECK_HEADERS([sdkddkver.h]) ;; esac
+# Shared by gl_PREREQ_STAT (stat) and gl_PREREQ_FSTAT (fstat).
+autoconf(
+    name = "gl_PREREQ_STAT_W32",
+    checks = select({
+        "@platforms//os:windows": [
+            checks.AC_CHECK_HEADER(
+                "sdkddkver.h",
+                define = "HAVE_SDKDDKVER_H",
+            ),
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+    ],
+)
+
 # Windows: REPLACE_STAT=1 unconditionally (stat returns time-zone-affected
-# st_atime/st_mtime/st_ctime values).
+# st_atime/st_mtime/st_ctime values); nothing else is probed there.
 # REPLACE_FUNC_STAT_FILE: M4 runs AC_RUN_IFELSE for the stat("file/", &st)
 # trailing-slash bug; cross-compile guess for darwin falls to
 # gl_cross_guess_normal. Modern macOS no longer has the bug (verified via
 # real ./configure), so the macOS branch matches Linux.
+# REPLACE_FSTAT=1 on darwin*/solaris* (same probe-free branch as the M4).
 autoconf(
-    name = "stat",
-    checks = [
-        checks.AC_CHECK_HEADER(
-            "sdkddkver.h",
-            define = "HAVE_SDKDDKVER_H",
-        ),
-    ] + select({
+    name = "gl_FUNC_STAT",
+    checks = select({
         "@platforms//os:macos": [
             checks.AC_DEFINE(
                 "REPLACE_FUNC_STAT_FILE",
@@ -31,7 +47,6 @@ autoconf(
             ),
         ],
         "@platforms//os:windows": [
-            checks.AC_DEFINE("REPLACE_FUNC_STAT_FILE", "1"),
             checks.AC_SUBST("REPLACE_STAT", "1"),
         ],
         "//conditions:default": [
@@ -40,14 +55,41 @@ autoconf(
     }),
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
-        # REPLACE_FSTAT (macOS golden expects 1); fstat is single canonical owner
-        "//gnulib/m4/fstat",
         "//gnulib/m4/gnulib-common:gl_HOST_MACOS_SDK_MODERN",
-        # AC_CHECK_FUNCS_ONCE([lstat]) - only need to check if lstat exists,
-        # NOT the full gl_FUNC_LSTAT which sets REPLACE_LSTAT
-        "//gnulib/m4/lstat:HAVE_LSTAT",
-        # NEXT_* for sys/stat.h; golden expects "<sys/stat.h>"
+        # AC_CHECK_FUNCS_ONCE([lstat]) - probe + config.h define only; the
+        # HAVE_LSTAT subst keeps its gl_SYS_STAT_H_DEFAULTS value.
+        "//gnulib/m4/lstat:AC_CHECK_FUNCS_ONCE_lstat",
+    ] + select({
+        # darwin* | solaris*) REPLACE_FSTAT=1 - the single canonical
+        # REPLACE_FSTAT result lives in fstat; the M4 does not touch it on
+        # mingw*/windows* (nor on Linux), so it keeps its default there.
+        "@platforms//os:macos": [
+            "//gnulib/m4/fstat:gl_FUNC_FSTAT",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
+# gl_PREREQ_STAT - Prerequisites of lib/stat.c and lib/stat-w32.c.
+autoconf(
+    name = "gl_PREREQ_STAT",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_PREREQ_STAT_W32",  # AC_REQUIRE([gl_PREREQ_STAT_W32])
+        # AC_REQUIRE([gl_SYS_STAT_H]): NEXT_* for sys/stat.h; golden expects "<sys/stat.h>"
         "//gnulib/m4/sys_stat_h",
+    ],
+)
+
+autoconf(
+    name = "stat",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_STAT",
+        ":gl_PREREQ_STAT",
+        ":gl_PREREQ_STAT_W32",
     ],
 )

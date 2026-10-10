@@ -3,18 +3,42 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
+# AC_CHECK_FUNCS_ONCE([pipe]): probe and config.h define, shared with
+# gl_UNISTD_SAFER (which never substitutes HAVE_PIPE).
 autoconf(
-    name = "pipe",
+    name = "AC_CHECK_FUNCS_ONCE_pipe",
     checks = [
-        # Equivalent to gl_FUNC_PIPE macro from pipe.m4
         checks.AC_CHECK_FUNC(
             "pipe",
             define = "HAVE_PIPE",
-            subst = True,
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_FUNC_PIPE",
+    checks = [
+        # if test $ac_cv_func_pipe != yes; then HAVE_PIPE=0; fi
+        # Overrides the gl_UNISTD_H_DEFAULTS value of 1 (e.g. on MSVC).
+        checks.AC_SUBST(
+            "HAVE_PIPE",
+            condition = "ac_cv_func_pipe",
+            if_false = 0,
+            if_true = 1,
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        ":AC_CHECK_FUNCS_ONCE_pipe",
         # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
+    ],
+)
+
+autoconf(
+    name = "pipe",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_PIPE",
     ],
 )

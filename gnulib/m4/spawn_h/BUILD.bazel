@@ -48,7 +48,8 @@ autoconf(
     }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/include_next",
+        ":gl_HAVE_POSIX_SPAWN",  # AC_REQUIRE([gl_HAVE_POSIX_SPAWN])
+        "//gnulib/m4/include_next",  # gl_CHECK_NEXT_HEADERS([spawn.h])
         "//autoconf/macros/AC_TYPE_PID_T",  # AC_REQUIRE([AC_TYPE_PID_T])
         "//autoconf/macros/AC_TYPE_MODE_T",  # AC_REQUIRE([AC_TYPE_MODE_T])
         # For test compatibility
@@ -90,14 +91,23 @@ autoconf(
     ],
 )
 
+# gl_SPAWN_MODULE_INDICATOR([modulename]): gl_SPAWN_H_REQUIRE_DEFAULTS (the
+# defaults are supplied through the toolchain's :defaults target) and
+# GNULIB_<module>=1 for the named module; no checks of its own.
+autoconf(
+    name = "gl_SPAWN_MODULE_INDICATOR",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
 # Top-level spawn_h target - aggregates all AC_DEFUN functions
 autoconf(
     name = "spawn_h",
-    checks = [],  # Empty - just aggregates dependencies
     visibility = ["//visibility:public"],
     deps = [
         ":gl_HAVE_POSIX_SPAWN",
         ":gl_SPAWN_H",
+        ":gl_SPAWN_MODULE_INDICATOR",
     ],
 )
 
@@ -105,23 +115,14 @@ autoconf(
 
 autoconf(
     name = "gl_SPAWN_H_DEFAULTS",
-    checks = select({
-        "@platforms//os:windows": [
-            # Windows has no POSIX spawn API.
-            checks.AC_SUBST("HAVE_POSIX_SPAWN", 0),
-            checks.AC_SUBST("HAVE_POSIX_SPAWNATTR_T", 0),
-            checks.AC_SUBST("HAVE_POSIX_SPAWN_FILE_ACTIONS_T", 0),
-            checks.AC_SUBST("HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR", 0),
-            checks.AC_SUBST("HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR", 0),
-        ],
-        "//conditions:default": [
-            checks.AC_SUBST("HAVE_POSIX_SPAWN", 1),
-            checks.AC_SUBST("HAVE_POSIX_SPAWNATTR_T", 1),
-            checks.AC_SUBST("HAVE_POSIX_SPAWN_FILE_ACTIONS_T", 1),
-            checks.AC_SUBST("HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR", 1),
-            checks.AC_SUBST("HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR", 1),
-        ],
-    }) + [
+    # The defaults are the same on every host; the modules that probe
+    # (gl_SPAWN_H, gl_HAVE_POSIX_SPAWN, ...) lower them to 0 where needed.
+    checks = [
+        checks.AC_SUBST("HAVE_POSIX_SPAWN", 1),
+        checks.AC_SUBST("HAVE_POSIX_SPAWNATTR_T", 1),
+        checks.AC_SUBST("HAVE_POSIX_SPAWN_FILE_ACTIONS_T", 1),
+        checks.AC_SUBST("HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR", 1),
+        checks.AC_SUBST("HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR", 1),
         checks.AC_SUBST("REPLACE_POSIX_SPAWN", 0),
         checks.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR", 0),
         checks.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDCLOSE", 0),

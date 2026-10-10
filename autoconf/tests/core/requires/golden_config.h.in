@@ -10,7 +10,7 @@
 #define HAVE_STDLIB_H 1
 
 /* Define to 1 if you have the printf function. */
-#define HAVE_PRINTF 1
+#define HAVE_PUTS 1
 
 /* Define to 1 if you have the malloc function. */
 #define HAVE_MALLOC 1

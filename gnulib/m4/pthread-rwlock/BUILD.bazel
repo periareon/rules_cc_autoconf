@@ -5,36 +5,110 @@ load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "gl_PTHREAD_RWLOCK",
-    checks = [
-        # AC_CHECK_DECL([pthread_rwlock_timedrdlock], , [...], [[#include <pthread.h>]])
-        # Declared on Linux (glibc); NOT declared on macOS or Windows.
-        checks.AC_CHECK_DECL(
-            "pthread_rwlock_timedrdlock",
-            includes = ["#include <pthread.h>"],
-        ),
-        # When not declared: PTHREAD_RWLOCK_LACKS_TIMEOUT=1 (m4 line ~83)
-        # Uses negated truthy (not ==0) because a failed decl check produces
-        # nullopt, not "0", when no define_name/if_false is set.
-        checks.AC_DEFINE(
-            "PTHREAD_RWLOCK_LACKS_TIMEOUT",
-            requires = ["!ac_cv_have_decl_pthread_rwlock_timedrdlock"],
-        ),
-        # HAVE_PTHREAD_RWLOCK_TIMED{RD,WR}LOCK: "1" when declared, "0" otherwise
-        # Defaults from gl_PTHREAD_H_REQUIRE_DEFAULTS are "1"; override to "0"
-        # when the decl check fails. (m4 lines ~80-81)
-        checks.AC_SUBST(
-            "HAVE_PTHREAD_RWLOCK_TIMEDRDLOCK",
-            condition = "ac_cv_have_decl_pthread_rwlock_timedrdlock",
-            if_false = "0",
-            if_true = "1",
-        ),
-        checks.AC_SUBST(
-            "HAVE_PTHREAD_RWLOCK_TIMEDWRLOCK",
-            condition = "ac_cv_have_decl_pthread_rwlock_timedrdlock",
-            if_false = "0",
-            if_true = "1",
-        ),
-    ] + select({
+    checks = select({
+        # case "$host_os" in mingw* | windows*) && test $gl_threads_api = windows
+        # (the Bazel default on @platforms//os:windows, see threadlib): gnulib
+        # replaces the functions, the HAVE_* defaults (1) are left alone.
+        "@platforms//os:windows": [
+            checks.AC_SUBST("REPLACE_PTHREAD_RWLOCK_INIT", "1"),
+            checks.AC_SUBST("REPLACE_PTHREAD_RWLOCKATTR_INIT", "1"),
+            checks.AC_SUBST("REPLACE_PTHREAD_RWLOCKATTR_DESTROY", "1"),
+            checks.AC_SUBST("REPLACE_PTHREAD_RWLOCK_RDLOCK", "1"),
+            checks.AC_SUBST("REPLACE_PTHREAD_RWLOCK_WRLOCK", "1"),
+            checks.AC_SUBST("REPLACE_PTHREAD_RWLOCK_TRYRDLOCK", "1"),
+            checks.AC_SUBST("REPLACE_PTHREAD_RWLOCK_TRYWRLOCK", "1"),
+            checks.AC_SUBST("REPLACE_PTHREAD_RWLOCK_TIMEDRDLOCK", "1"),
+            checks.AC_SUBST("REPLACE_PTHREAD_RWLOCK_TIMEDWRLOCK", "1"),
+            checks.AC_SUBST("REPLACE_PTHREAD_RWLOCK_UNLOCK", "1"),
+            checks.AC_SUBST("REPLACE_PTHREAD_RWLOCK_DESTROY", "1"),
+        ],
+        # Elsewhere: if test $HAVE_PTHREAD_H = 0 then HAVE_*=0. HAVE_PTHREAD_H
+        # is ac_cv_header_pthread_h from gl_PTHREAD_H_PART1.
+        "//conditions:default": [
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_RWLOCK_INIT",
+                condition = "ac_cv_header_pthread_h",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_RWLOCKATTR_INIT",
+                condition = "ac_cv_header_pthread_h",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_RWLOCKATTR_DESTROY",
+                condition = "ac_cv_header_pthread_h",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_RWLOCK_RDLOCK",
+                condition = "ac_cv_header_pthread_h",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_RWLOCK_WRLOCK",
+                condition = "ac_cv_header_pthread_h",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_RWLOCK_TRYRDLOCK",
+                condition = "ac_cv_header_pthread_h",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_RWLOCK_TRYWRLOCK",
+                condition = "ac_cv_header_pthread_h",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_RWLOCK_UNLOCK",
+                condition = "ac_cv_header_pthread_h",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_RWLOCK_DESTROY",
+                condition = "ac_cv_header_pthread_h",
+                if_false = "0",
+                if_true = "1",
+            ),
+
+            # AC_CHECK_DECL([pthread_rwlock_timedrdlock], , [...], [[#include <pthread.h>]])
+            # Declared on Linux (glibc); NOT declared on macOS.
+            checks.AC_CHECK_DECL(
+                "pthread_rwlock_timedrdlock",
+                includes = ["#include <pthread.h>"],
+                requires = ["ac_cv_header_pthread_h"],
+            ),
+            # When not declared: PTHREAD_RWLOCK_LACKS_TIMEOUT=1 and
+            # HAVE_PTHREAD_RWLOCK_TIMED{RD,WR}LOCK=0 (m4 line ~83)
+            checks.AC_DEFINE(
+                "PTHREAD_RWLOCK_LACKS_TIMEOUT",
+                condition = "ac_cv_header_pthread_h && !ac_cv_have_decl_pthread_rwlock_timedrdlock",
+                if_false = None,
+                if_true = 1,
+            ),
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_RWLOCK_TIMEDRDLOCK",
+                condition = "ac_cv_header_pthread_h && ac_cv_have_decl_pthread_rwlock_timedrdlock",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_RWLOCK_TIMEDWRLOCK",
+                condition = "ac_cv_header_pthread_h && ac_cv_have_decl_pthread_rwlock_timedrdlock",
+                if_false = "0",
+                if_true = "1",
+            ),
+        ],
+    }) + select({
         # The upstream m4 runs AC_RUN_IFELSE for pthread_rwlock wait queue
         # behavior on linux*-gnu* (m4 lines ~89-112). The cross-compile
         # default is "guessing no" (bad waitqueue). On non-Linux the default

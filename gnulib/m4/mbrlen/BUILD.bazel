@@ -4,7 +4,7 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "mbrlen",
+    name = "gl_FUNC_MBRLEN",
     checks = [
         # Use internal define to avoid conflict with substitution variable
         checks.AC_CHECK_FUNC(
@@ -12,11 +12,19 @@ autoconf(
             name = "_gl_cv_func_mbrlen",
         ),
 
-        # Set HAVE_MBRLEN as define if function exists, or as substitution variable if not
+        # HAVE_MBRLEN in config.h only when the function exists
         checks.AC_DEFINE(
             "HAVE_MBRLEN",
             "1",
             requires = ["_gl_cv_func_mbrlen==1"],
+        ),
+        # if test $ac_cv_func_mbrlen = no; then HAVE_MBRLEN=0; fi
+        # (lowers the gl_WCHAR_H_DEFAULTS substitution)
+        checks.AC_SUBST(
+            "HAVE_MBRLEN",
+            condition = "_gl_cv_func_mbrlen",
+            if_false = 0,
+            if_true = 1,
         ),
         # Check for mbrlen declaration (for Minix 3.1.8 which declares but doesn't have it)
         # Lines 22-28
@@ -24,26 +32,96 @@ autoconf(
             "mbrlen",
             define = "HAVE_DECL_MBRLEN",
             includes = ["#include <wchar.h>"],
+            requires = ["!_gl_cv_func_mbrlen"],
         ),
 
-        # Set REPLACE_MBRLEN based on conditions
-        # The m4 logic sets REPLACE_MBRLEN=1 if:
-    ] + select({
-        # On Linux: REPLACE_MBRTOWC=1, so REPLACE_MBRLEN=1 as well
-        "@platforms//os:linux": [
-            checks.AC_SUBST("REPLACE_MBRLEN", 1),
-        ],
-        # On macOS: REPLACE_MBRLEN=0
-        "//conditions:default": [
-            checks.AC_SUBST("REPLACE_MBRLEN", 0),
-        ],
-    }),
+        # if test $ac_cv_func_mbrlen = no; then
+        #   if test $ac_cv_have_decl_mbrlen = yes; then REPLACE_MBRLEN=1; fi
+        # else
+        #   if test $REPLACE_MBRTOWC = 1; then REPLACE_MBRLEN=1; fi
+        # fi
+        # (Linux and MSVC: REPLACE_MBRTOWC=1 -> 1; macOS: 0)
+        checks.AC_SUBST(
+            "REPLACE_MBRLEN",
+            condition = "(!_gl_cv_func_mbrlen && ac_cv_have_decl_mbrlen) || (_gl_cv_func_mbrlen && REPLACE_MBRTOWC==1)",
+            if_false = "0",
+            if_true = "1",
+        ),
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # AC_REQUIRE([gl_WCHAR_H_DEFAULTS]) - line 15 (ignore, it's a _DEFAULTS function)
-        "//autoconf/macros/AC_TYPE_MBSTATE_T",
-        "//gnulib/m4/mbrtowc",
+        "//autoconf/macros/AC_TYPE_MBSTATE_T",  # AC_REQUIRE([AC_TYPE_MBSTATE_T])
+        "//gnulib/m4/mbrtowc:gl_FUNC_MBRTOWC",  # AC_REQUIRE([gl_FUNC_MBRTOWC])
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# The gl_MBRLEN_* probes below are AC_RUN_IFELSE locale tests that
+# gl_FUNC_MBRLEN never invokes (it reuses the mbrtowc results instead);
+# they are modelled as deps-only targets.
+
+# gl_MBRLEN_INCOMPLETE_STATE: gl_cv_func_mbrlen_incomplete_state
+autoconf(
+    name = "gl_MBRLEN_INCOMPLETE_STATE",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//gnulib/m4/locale-ja:gt_LOCALE_JA",  # AC_REQUIRE([gt_LOCALE_JA])
+    ],
+)
+
+# gl_MBRLEN_RETVAL: gl_cv_func_mbrlen_retval
+autoconf(
+    name = "gl_MBRLEN_RETVAL",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//gnulib/m4/locale-en:gt_LOCALE_EN_UTF8",  # AC_REQUIRE([gt_LOCALE_EN_UTF8])
+        "//gnulib/m4/locale-ja:gt_LOCALE_JA",  # AC_REQUIRE([gt_LOCALE_JA])
+    ],
+)
+
+# gl_MBRLEN_NUL_RETVAL: gl_cv_func_mbrlen_nul_retval
+autoconf(
+    name = "gl_MBRLEN_NUL_RETVAL",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//gnulib/m4/locale-zh:gt_LOCALE_ZH_CN",  # AC_REQUIRE([gt_LOCALE_ZH_CN])
+    ],
+)
+
+# gl_MBRLEN_EMPTY_INPUT: gl_cv_func_mbrlen_empty_input
+autoconf(
+    name = "gl_MBRLEN_EMPTY_INPUT",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+    ],
+)
+
+# gl_PREREQ_MBRLEN: prerequisites of lib/mbrlen.c (none).
+autoconf(
+    name = "gl_PREREQ_MBRLEN",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "mbrlen",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_MBRLEN",
+        ":gl_MBRLEN_EMPTY_INPUT",
+        ":gl_MBRLEN_INCOMPLETE_STATE",
+        ":gl_MBRLEN_NUL_RETVAL",
+        ":gl_MBRLEN_RETVAL",
+        ":gl_PREREQ_MBRLEN",
     ],
 )

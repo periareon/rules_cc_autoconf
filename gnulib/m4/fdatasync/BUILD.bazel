@@ -5,7 +5,7 @@ load("//autoconf:checks.bzl", "checks")
 load("//gnulib:macros.bzl", gl_macros = "macros")
 
 autoconf(
-    name = "fdatasync",
+    name = "gl_FUNC_FDATASYNC",
     checks = [
         # Standard header defines are provided by AC_CHECK_INCLUDES_DEFAULT dependency
         checks.AC_CHECK_DECL(
@@ -23,6 +23,11 @@ autoconf(
         ["fdatasync"],
         includes = ["#include <unistd.h>"],
     ) + [
+        # if test $ac_cv_func_fdatasync = no; then HAVE_FDATASYNC=0
+        checks.AC_SUBST(
+            "HAVE_FDATASYNC",
+            condition = "ac_cv_func_fdatasync",
+        ),
         # FDATASYNC_LIB and LIB_FDATASYNC are set to empty strings (fdatasync is in libc)
         checks.AC_SUBST("FDATASYNC_LIB", ""),
         checks.AC_SUBST("LIB_FDATASYNC", ""),
@@ -30,8 +35,16 @@ autoconf(
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
-        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
         # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "fdatasync",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_FDATASYNC",
     ],
 )

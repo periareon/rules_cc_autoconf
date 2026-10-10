@@ -3,15 +3,23 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 
 autoconf(
-    name = "unistd-safer",
-    checks = [
-        # gl_UNISTD_SAFER checks for pipe function
-    ],
+    name = "gl_UNISTD_SAFER",
+    checks = [],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/unistd_h",  # AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
-        "//gnulib/m4/pipe",
+        # gl_UNISTD_SAFER only calls AC_CHECK_FUNCS_ONCE([pipe]): HAVE_PIPE is a
+        # config.h define here; neither gl_FUNC_PIPE nor gl_UNISTD_H_DEFAULTS
+        # is required.
+        "//gnulib/m4/pipe:AC_CHECK_FUNCS_ONCE_pipe",
         # For test compatibility - need basic header defines
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "unistd-safer",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_UNISTD_SAFER",
     ],
 )

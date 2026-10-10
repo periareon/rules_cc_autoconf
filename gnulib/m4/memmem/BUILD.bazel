@@ -15,43 +15,67 @@ autoconf(
         ),
 
         # if test $ac_cv_func_memmem = yes; then
+        #   HAVE_MEMMEM=1
         # else
+        #   HAVE_MEMMEM=0
         # fi
-        # On macOS, memmem is available
-        checks.AC_DEFINE("HAVE_MEMMEM", "1"),
+        # AC_CHECK_FUNCS([memmem]) defines HAVE_MEMMEM in config.h only when the
+        # function is found (e.g. MSVC has no memmem).
+        checks.AC_DEFINE(
+            "HAVE_MEMMEM",
+            condition = "ac_cv_func_memmem",
+            if_false = None,
+            if_true = 1,
+        ),
 
-        # Note: string_h:defaults may already provide HAVE_DECL_MEMMEM
-        # Use internal define to avoid conflict
+        # AC_CHECK_DECLS_ONCE([memmem]) defines HAVE_DECL_MEMMEM to 1 or 0.
         checks.AC_CHECK_DECL(
             "memmem",
             name = "ac_cv_have_decl_memmem",
             includes = ["#include <string.h>"],
         ),
-
-        # On macOS, memmem is declared in string.h
-        checks.AC_DEFINE("HAVE_DECL_MEMMEM", "1"),
+        checks.AC_DEFINE(
+            "HAVE_DECL_MEMMEM",
+            condition = "ac_cv_have_decl_memmem",
+            if_false = 0,
+            if_true = 1,
+        ),
 
         # if test $ac_cv_have_decl_memmem = no; then
+        #   HAVE_DECL_MEMMEM=0
         # else
-        #   ... runtime checks ...
+        #   ... gl_cv_func_memmem_works_always (AC_RUN_IFELSE) ...
         # fi
-        # The m4 file performs runtime checks (gl_cv_func_memmem_works_always)
-        # that use AC_RUN_IFELSE, which is not portable to Bazel's cross-compilation environment.
+        # Overrides the gl_STRING_H_DEFAULTS value of 1 when memmem is not declared.
+        checks.AC_SUBST(
+            "HAVE_DECL_MEMMEM",
+            condition = "ac_cv_have_decl_memmem",
+            if_false = 0,
+            if_true = 1,
+        ),
     ] + select({
-        # On Linux: memmem works correctly, no replacement needed
+        # glibc: the gl_cv_func_memmem_works_always runtime test passes.
         "@platforms//os:linux": [
             checks.AC_SUBST("REPLACE_MEMMEM", 0),
         ],
-        # On macOS: memmem has bugs, needs replacement
+        # Elsewhere the runtime test either fails (macOS) or cannot run (cross
+        # guess "guessing no"), so a declared memmem is replaced. When memmem
+        # is not declared at all (MSVC) the m4 never reaches that branch and
+        # REPLACE_MEMMEM keeps its default of 0.
         "//conditions:default": [
-            checks.AC_SUBST("REPLACE_MEMMEM", 1),
+            checks.AC_SUBST(
+                "REPLACE_MEMMEM",
+                condition = "ac_cv_have_decl_memmem",
+                if_false = 0,
+                if_true = 1,
+            ),
         ],
-    }) + [
-    ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/extensions",
-        "//gnulib/m4/string_h",
+        ":gl_PREREQ_MEMMEM",  # gl_PREREQ_MEMMEM
+        "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
+        "//gnulib/m4/string_h",  # AC_REQUIRE([gl_STRING_H_DEFAULTS])
         # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
@@ -72,10 +96,17 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        ":gl_FUNC_MEMMEM_SIMPLE",
+        ":gl_FUNC_MEMMEM_SIMPLE",  # AC_REQUIRE([gl_FUNC_MEMMEM_SIMPLE])
         # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
+)
+
+# gl_PREREQ_MEMMEM: prerequisites of lib/memmem.c (none).
+autoconf(
+    name = "gl_PREREQ_MEMMEM",
+    checks = [],
+    visibility = ["//visibility:public"],
 )
 
 autoconf(
@@ -85,6 +116,7 @@ autoconf(
     deps = [
         ":gl_FUNC_MEMMEM_SIMPLE",
         ":gl_FUNC_MEMMEM",
+        ":gl_PREREQ_MEMMEM",
         # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],

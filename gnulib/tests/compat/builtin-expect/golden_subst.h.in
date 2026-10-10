@@ -1,2 +1,0 @@
-/* subst.h.in */
-#define SUBST_HAVE___BUILTIN_EXPECT "@HAVE___BUILTIN_EXPECT@"

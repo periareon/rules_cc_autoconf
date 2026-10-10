@@ -4,14 +4,24 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "ioctl",
+    name = "gl_FUNC_IOCTL",
     checks = [
         # Equivalent to gl_FUNC_IOCTL macro from ioctl.m4
+        # HAVE_IOCTL=1
+        # if test "$ac_cv_header_winsock2_h" = yes; then
+        #   HAVE_IOCTL=0   (native Windows: sockets need the replacement)
+        # else
+        #   AC_CHECK_FUNCS([ioctl])
+        #   gl_cv_func_ioctl_posix_signature ...
+        #   if test $gl_cv_func_ioctl_posix_signature != yes; then REPLACE_IOCTL=1
+        # fi
         checks.AC_CHECK_FUNC(
             "ioctl",
             define = "HAVE_IOCTL",
+            requires = ["!ac_cv_header_winsock2_h"],
         ),
         checks.AC_TRY_COMPILE(
+            name = "gl_cv_func_ioctl_posix_signature",
             code = """#include <sys/ioctl.h>
 #include <unistd.h>
 
@@ -24,17 +34,32 @@ int ioctl (int, int, ...);
 int main(void) {
     return 0;
 }""",
-            define = "HAVE_IOCTL_POSIX_SIGNATURE",
             language = "c",
+            requires = ["!ac_cv_header_winsock2_h"],
         ),
-        # REPLACE_IOCTL: on macOS, ioctl signature uses 'unsigned long' for request
-        # instead of POSIX 'int', so we need REPLACE_IOCTL=1
-        checks.AC_SUBST("REPLACE_IOCTL", "1"),
+        # REPLACE_IOCTL: on glibc and macOS the request parameter is
+        # 'unsigned long', not POSIX 'int', so the signature check fails and
+        # REPLACE_IOCTL=1.  On native Windows the winsock2 branch leaves the
+        # gl_SYS_IOCTL_H_DEFAULTS value of 0.
+        checks.AC_SUBST(
+            "REPLACE_IOCTL",
+            condition = "!ac_cv_header_winsock2_h && !gl_cv_func_ioctl_posix_signature",
+            if_false = "0",
+            if_true = "1",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/sys_ioctl_h",
         "//gnulib/m4/sys_socket_h:gl_SYS_SOCKET_H",
+    ],
+)
+
+autoconf(
+    name = "ioctl",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_IOCTL",
     ],
 )

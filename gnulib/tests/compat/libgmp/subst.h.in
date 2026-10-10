@@ -1,4 +1,5 @@
 /* subst.h.in */
+#define SUBST_HAVE_GMP_H "@HAVE_GMP_H@"
 #define SUBST_HAVE_INTTYPES_H "@HAVE_INTTYPES_H@"
 #define SUBST_HAVE_LIBGMP "@HAVE_LIBGMP@"
 #define SUBST_HAVE_STDINT_H "@HAVE_STDINT_H@"

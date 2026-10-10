@@ -313,6 +313,16 @@ class CheckRunner {
      *         or empty string if no compile_defines specified.
      */
     std::string resolve_compile_defines(const Check& check) const;
+
+    /**
+     * @brief Decode a JSON-encoded CheckResult value into the text a probe
+     * should see after `#define NAME`.
+     *
+     * Strings yield their content, numbers their literal, booleans
+     * `true`/`false`; values that are not JSON (legacy files) are returned
+     * unchanged.
+     */
+    static std::string decode_result_value(const std::string& value);
 };
 
 }  // namespace rules_cc_autoconf

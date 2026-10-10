@@ -4,7 +4,7 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "socketlib",
+    name = "gl_SOCKETLIB",
     checks = [
         # gl_SOCKETLIB macro from socketlib.m4 determines library for socket functions
         # Uses AC_LINK_IFELSE to check for libraries, which is complex to replicate
@@ -12,14 +12,52 @@ autoconf(
             "setsockopt",
             define = "HAVE_SETSOCKOPT",
         ),
-        # Note: subst=False because select expects @HAVE_SYS_SOCKET_H@ to remain unreplaced
+
+        # gl_PREREQ_SYS_H_WINSOCK2 dnl for HAVE_WINSOCK2_H
+        # if test $HAVE_WINSOCK2_H = 1; then
+        #   AC_CACHE_CHECK([for WSAStartup], [gl_cv_func_wsastartup], link with -lws2_32)
+        #   if yes: AC_DEFINE([WINDOWS_SOCKETS], [1]); LIBSOCKET='-lws2_32'
+        # fi
+        checks.AC_CHECK_LIB(
+            "ws2_32",
+            "WSAStartup",
+            name = "gl_cv_func_wsastartup",
+            code = """#ifdef HAVE_WINSOCK2_H
+# include <winsock2.h>
+#endif
+int main(void) {
+    WORD wVersionRequested = MAKEWORD(1, 1);
+    WSADATA wsaData;
+    int err = WSAStartup(wVersionRequested, &wsaData);
+    WSACleanup ();
+    return err;
+}
+""",
+            copts = ["-DHAVE_WINSOCK2_H=1"],
+            define = "WINDOWS_SOCKETS",
+            requires = ["HAVE_WINSOCK2_H==1"],
+        ),
+        checks.AC_SUBST(
+            "LIBSOCKET",
+            condition = "gl_cv_func_wsastartup",
+            if_false = "",
+            if_true = "-lws2_32",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        # Note: sys_socket_h has subst=True, but socketlib doesn't need the subst
-        # The cache variable is shared, so the check result is the same
-        "//gnulib/m4/sys_socket_h:gl_SYS_SOCKET_H",
+        # gl_PREREQ_SYS_H_WINSOCK2 (HAVE_WINSOCK2_H); gl_SOCKETLIB does not
+        # invoke gl_SYS_SOCKET_H / gl_PREREQ_SYS_H_SOCKET.
+        "//gnulib/m4/sys_socket_h:gl_PREREQ_SYS_H_WINSOCK2",
         # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "socketlib",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_SOCKETLIB",
     ],
 )

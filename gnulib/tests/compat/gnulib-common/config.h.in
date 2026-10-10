@@ -1,1 +1,18 @@
 /* config.h.in */
+#undef AR
+#undef ARFLAGS
+#undef GL_CFLAG_ALLOW_WARNINGS
+#undef GL_CFLAG_GNULIB_WARNINGS
+#undef GL_CXXFLAG_ALLOW_WARNINGS
+#undef HAVE_FEATURES_H
+#undef HAVE_INTTYPES_H
+#undef HAVE_STDINT_H
+#undef HAVE_STDIO_H
+#undef HAVE_STDLIB_H
+#undef HAVE_STRINGS_H
+#undef HAVE_STRING_H
+#undef HAVE_SYS_STAT_H
+#undef HAVE_SYS_TYPES_H
+#undef HAVE_UNISTD_H
+#undef RANLIB
+#undef STDC_HEADERS

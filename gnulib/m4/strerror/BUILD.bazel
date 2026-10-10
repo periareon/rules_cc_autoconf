@@ -3,16 +3,6 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks", "utils")
 
-# Shared HAVE_STRERROR_R subst target - canonical source for this substitution
-# Used by both strerror and error modules
-autoconf(
-    name = "HAVE_STRERROR_R_SUBST",
-    checks = [
-        checks.AC_SUBST("HAVE_STRERROR_R", "1"),
-    ],
-    visibility = ["//gnulib:__subpackages__"],
-)
-
 autoconf(
     name = "gl_FUNC_STRERROR_0",
     checks = [
@@ -47,27 +37,18 @@ autoconf(
             ),
             language = "c",
         ),
-        # case "$gl_cv_func_strerror_0_works" in *yes) ;; *) REPLACE_STRERROR_0=1 ;; esac
-        # Only define REPLACE_STRERROR_0 when strerror(0) doesn't work (compile check fails)
-        # On Linux, the check passes so config.h should be undef
-        # Note: The test configure.ac hardcodes REPLACE_STRERROR_0=1 for subst.h
-        # So we match that for the subst value even though config.h remains undef
-    ] + select({
-        "@platforms//os:macos": [
-            # macOS strerror(0) doesn't work, so define and subst as 1
-            checks.AC_DEFINE("REPLACE_STRERROR_0", "1"),
-            checks.AC_SUBST("REPLACE_STRERROR_0", "1"),
-        ],
-        "//conditions:default": [
-            # M4: case "$gl_cv_func_strerror_0_works" in *yes) ;; *) REPLACE_STRERROR_0=1
-            # On Linux the compile check passes (_gl_cv_func_strerror_0_works=1) → 0.
-            # On platforms where strerror(0) is broken the check fails → 1.
-            checks.AC_SUBST(
-                "REPLACE_STRERROR_0",
-                condition = "!_gl_cv_func_strerror_0_works",
-            ),
-        ],
-    }),
+        # case "$gl_cv_func_strerror_0_works" in *yes) ;; *)
+        #   REPLACE_STRERROR_0=1; AC_DEFINE([REPLACE_STRERROR_0], [1], ...) ;;
+        # esac
+        # REPLACE_STRERROR_0 is a shell variable plus this AC_DEFINE; the m4
+        # never AC_SUBSTs it. The probe above fails exactly on the platforms
+        # the m4's runtime test reports as broken.
+        checks.AC_DEFINE(
+            "REPLACE_STRERROR_0",
+            "1",
+            requires = ["!_gl_cv_func_strerror_0_works"],
+        ),
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CANONICAL_HOST",
@@ -86,19 +67,27 @@ autoconf(
             checks.AC_SUBST("REPLACE_STRERROR", "1"),
         ],
         "//conditions:default": [
+            # if test "$GL_GENERATE_ERRNO_H:$REPLACE_STRERROR_0" = false:0; then
+            #   ... gl_cv_func_working_strerror (AC_RUN_IFELSE; passes on glibc) ...
+            # else
+            #   REPLACE_STRERROR=1
+            # fi
+            # GL_GENERATE_ERRNO_H is true when errno.h is incomplete
+            # (gl_cv_header_errno_h_complete=no, e.g. MSVC lacks ENOTSUP etc.).
             checks.AC_SUBST(
                 "REPLACE_STRERROR",
-                condition = "!_gl_cv_func_strerror_0_works",
+                condition = "!gl_cv_header_errno_h_complete || !_gl_cv_func_strerror_0_works",
             ),
         ],
     }),
     visibility = ["//visibility:public"],
     deps = [
-        ":gl_FUNC_STRERROR_0",
-        "//autoconf/macros/AC_CANONICAL_HOST",
+        ":gl_FUNC_STRERROR_0",  # AC_REQUIRE([gl_FUNC_STRERROR_0])
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
-        "//gnulib/m4/errno_h",
+        "//gnulib/m4/errno_h",  # AC_REQUIRE([gl_HEADER_ERRNO_H])
         "//gnulib/m4/extensions",
+        "//gnulib/m4/string_h",  # AC_REQUIRE([gl_STRING_H_DEFAULTS])
         # Note: strerror.m4 doesn't directly require strerror_r, but may be used together
         # Don't include strerror_r here to match golden which expects HAVE_DECL_STRERROR_R undefined
     ],
@@ -139,21 +128,18 @@ int main(void) {
 # strerror - top-level module for standalone test
 # This target includes test-specific substitutions that may conflict with other modules.
 # For modules that need strerror functionality in combined builds, use gl_FUNC_STRERROR instead.
+# Note: Many test-specific substs were removed to avoid conflicts in combined builds.
+# The strerror test may fail as a result. For combined builds, the values come from:
+# - HAVE_DECL_STRERROR_R: AC_FUNC_STRERROR_R
+# - REPLACE_STRERROR_R: strerror_r
+# - HAVE_STRERRORNAME_NP: strerrorname_np
+# - HAVE_STRERROR_L: strerror_l
 autoconf(
     name = "strerror",
-    checks = [
-        # Note: Many test-specific substs were removed to avoid conflicts in combined builds.
-        # The strerror test may fail as a result. For combined builds, the values come from:
-        # - HAVE_STRERROR_R: shared target (HAVE_STRERROR_R_SUBST)
-        # - HAVE_DECL_STRERROR_R: AC_FUNC_STRERROR_R
-        # - REPLACE_STRERROR_R: strerror_r
-        # - HAVE_STRERRORNAME_NP: strerrorname_np
-        # - HAVE_STRERROR_L: strerror_l
-    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_FUNC_STRERROR",
-        ":HAVE_STRERROR_R_SUBST",
+        ":gl_FUNC_STRERROR_0",
         ":gl_HAVE___XPG_STRERROR_R",
         # HAVE_STRERROR_R define in config.h (not HAVE_DECL_STRERROR_R)
         "//autoconf/macros/AC_FUNC_STRERROR_R:HAVE_STRERROR_R",

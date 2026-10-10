@@ -1,2 +1,0 @@
-/* config.h.in */
-#define FLEXIBLE_ARRAY_MEMBER /**/

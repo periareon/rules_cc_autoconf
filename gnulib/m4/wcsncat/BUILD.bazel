@@ -1,33 +1,26 @@
-"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/wcsncat.m4
-
-gl_FUNC_WCSNCAT runs `wcsncat(y, NULL, 0) == y` at configure time. NULL is
-undefined behaviour by spec, so libc implementations are free to disagree.
-Empirically:
-  - x86_64 glibc (>= 2.39): fails the test  -> REPLACE_WCSNCAT=1
-  - aarch64 glibc:           passes the test -> REPLACE_WCSNCAT=0
-
-Upstream m4/wcsncat.m4 cross-compile fallback:
-  darwin* | netbsd* | openbsd* | solaris* | cygwin*  -> "guessing no" -> REPLACE=1
-  *                                                  -> "guessing yes" -> REPLACE=0
-"""
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/wcsncat.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "wcsncat",
+    name = "gl_FUNC_WCSNCAT",
     checks = [
         checks.AC_CHECK_FUNC(
             "wcsncat",
             define = "HAVE_WCSNCAT",
         ),
     ] + select({
-        # aarch64 glibc: passes the wcsncat(y, NULL, 0) == y runtime check.
-        "//gnulib/m4/gnulib-common:linux_aarch64": [
+        # glibc passes the wcsncat(y, NULL, 0) == y runtime check.
+        "@platforms//os:linux": [
             checks.AC_SUBST("REPLACE_WCSNCAT", "0"),
         ],
-        # x86_64 glibc (modern, e.g. Ubuntu 24.04): fails the runtime check.
-        # macOS / BSDs / Windows: conservative (M4 default).
+        # Native Windows (MSVC/mingw) passes it too (real ./configure with
+        # MSVC: gl_cv_func_wcsncat_works=yes).
+        "@platforms//os:windows": [
+            checks.AC_SUBST("REPLACE_WCSNCAT", "0"),
+        ],
+        # macOS fails it; BSDs: conservative (M4 default).
         "//conditions:default": [
             checks.AC_SUBST("REPLACE_WCSNCAT", "1"),
         ],
@@ -37,5 +30,13 @@ autoconf(
         # Note: wchar_h provides HAVE_DECL_WCSDUP, but golden file expects it undefined
         # "//gnulib/m4/wchar_h",  # AC_REQUIRE([gl_WCHAR_H_DEFAULTS]) - but pulls in HAVE_DECL_WCSDUP
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "wcsncat",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_WCSNCAT",
     ],
 )

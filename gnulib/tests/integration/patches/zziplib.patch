@@ -1,0 +1,20 @@
+# zziplib 0.13.72: on MinGW `ssize_t` is 64-bit while the CRT's read/write
+# take and return int, so plugin.c's function-pointer table has mismatched
+# types. GCC (and MinGW builds of zziplib) only warn about that; clang >= 16
+# makes -Wincompatible-function-pointer-types an error. Keep it a warning
+# (silenced by -w) for clang, matching what every other compiler does here.
+#
+# Remove once the overlay on the Bazel Central Registry is updated.
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -36,6 +36,10 @@
+ 
+ _COPTS = select({
+     "@rules_cc//cc/compiler:msvc-cl": ["/w"],
++    "@rules_cc//cc/compiler:clang": [
++        "-w",
++        "-Wno-error=incompatible-function-pointer-types",
++    ],
+     "//conditions:default": ["-w"],
+ })
+ 

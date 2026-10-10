@@ -4,7 +4,7 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "dprintf-gnu",
+    name = "gl_FUNC_DPRINTF_GNU",
     checks = select({
         "@platforms//os:linux": [],
         "//conditions:default": [
@@ -18,8 +18,7 @@ autoconf(
         "//gnulib/m4/vasnprintf:gl_REPLACE_VASNPRINTF",
         # Additional dependencies for the golden file:
         "//gnulib/m4/exponentd",
-        "//gnulib/m4/alloca",
-        "//gnulib/m4/dprintf",
+        "//gnulib/m4/dprintf:ac_cv_func_dprintf",  # gl_CHECK_FUNCS_ANDROID([dprintf]) in gl_FUNC_DPRINTF_IS_POSIX
         # Note: HAVE_DECL__SNPRINTF is now checked directly in this module
         "//gnulib/m4/intmax_t",
         "//gnulib/m4/inttypes_h",
@@ -30,5 +29,13 @@ autoconf(
         "//gnulib/m4/printf:gl_SNPRINTF_RETVAL_C99",
         "//gnulib/m4/printf:gl_SNPRINTF_TRUNCATION_C99",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "dprintf-gnu",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_DPRINTF_GNU",
     ],
 )

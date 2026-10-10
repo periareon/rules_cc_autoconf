@@ -1,13 +1,49 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/pthread-tss.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "pthread-tss",
-    checks = [
-        # gl_PTHREAD_TSS requires gl_PTHREAD_H
-        # These are provided by dependencies
-    ],
+    name = "gl_PTHREAD_TSS",
+    checks = select({
+        # case "$host_os" in mingw* | windows*) && test $gl_threads_api = windows
+        # (the Bazel default on @platforms//os:windows, see threadlib): gnulib
+        # replaces the functions, the HAVE_* defaults (1) are left alone.
+        "@platforms//os:windows": [
+            checks.AC_SUBST("REPLACE_PTHREAD_KEY_CREATE", "1"),
+            checks.AC_SUBST("REPLACE_PTHREAD_SETSPECIFIC", "1"),
+            checks.AC_SUBST("REPLACE_PTHREAD_GETSPECIFIC", "1"),
+            checks.AC_SUBST("REPLACE_PTHREAD_KEY_DELETE", "1"),
+        ],
+        # Elsewhere: if test $HAVE_PTHREAD_H = 0 then HAVE_*=0. HAVE_PTHREAD_H
+        # is ac_cv_header_pthread_h from gl_PTHREAD_H_PART1.
+        "//conditions:default": [
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_KEY_CREATE",
+                condition = "ac_cv_header_pthread_h",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_SETSPECIFIC",
+                condition = "ac_cv_header_pthread_h",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_GETSPECIFIC",
+                condition = "ac_cv_header_pthread_h",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_KEY_DELETE",
+                condition = "ac_cv_header_pthread_h",
+                if_false = "0",
+                if_true = "1",
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/pthread_h",
@@ -17,5 +53,13 @@ autoconf(
         "//gnulib/m4/wchar_h:gl_WCHAR_H_CORE",
         # For test compatibility - need basic header defines
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "pthread-tss",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_PTHREAD_TSS",
     ],
 )

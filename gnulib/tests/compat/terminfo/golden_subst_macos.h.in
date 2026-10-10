@@ -1,4 +1,0 @@
-/* subst.h.in */
-#define SUBST_HAVE_TERMINFO "@HAVE_TERMINFO@"
-#define SUBST_INCTERMINFO ""
-#define SUBST_LIBTERMINFO "-lncurses"

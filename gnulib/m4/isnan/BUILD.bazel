@@ -1,12 +1,31 @@
-"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/isnan.m4"""
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/isnan.m4
+
+gl_ISNAN:
+- AC_REQUIRE([gl_MATH_H_DEFAULTS])
+- AC_REQUIRE([gl_FUNC_ISNANF]) / AC_REQUIRE([gl_FUNC_ISNAND]) / AC_REQUIRE([gl_FUNC_ISNANL])
+- REPLACE_ISNAN=1 unless gl_func_isnanf, gl_func_isnand and gl_func_isnanl are all yes
+- AC_SUBST([ISNAN_LIBM])
+"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
+# m4 line 19: "whether isnan macro works" is yes only when all three underlying
+# isnan* functions were found working (see isnanf.m4, isnand.m4, isnanl.m4).
+_ISNAN_MACRO_WORKS = "gl_cv_func_isnanf_works && (gl_cv_func_isnand_no_libm || gl_cv_func_isnand_in_libm) && gl_cv_func_isnanl_works"
+
 autoconf(
-    name = "isnan",
+    name = "gl_ISNAN",
     checks = [
-        # AC_SUBST([ISNAN_LIBM]) - on macOS, no extra library needed
+        # m4 line 40: REPLACE_ISNAN=1 when the isnan macro does not work
+        checks.AC_SUBST(
+            "REPLACE_ISNAN",
+            condition = _ISNAN_MACRO_WORKS,
+            if_false = 1,
+            if_true = 0,
+        ),
+        # m4 line 23-37: ISNAN_LIBM is the union of ISNANF_LIBM, ISNAND_LIBM and
+        # ISNANL_LIBM (all empty here) when the macro works, empty otherwise.
         checks.AC_SUBST("ISNAN_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
@@ -14,5 +33,13 @@ autoconf(
         "//gnulib/m4/isnand",
         "//gnulib/m4/isnanf",
         "//gnulib/m4/isnanl",
+    ],
+)
+
+autoconf(
+    name = "isnan",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_ISNAN",
     ],
 )

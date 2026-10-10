@@ -4,7 +4,7 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "wcsnrtombs",
+    name = "gl_FUNC_WCSNRTOMBS",
     checks = [
         # gl_FUNC_WCSNRTOMBS checks for wcsnrtombs function
         # On macOS, wcsnrtombs is available
@@ -12,16 +12,56 @@ autoconf(
             "wcsnrtombs",
             define = "HAVE_WCSNRTOMBS",
         ),
+        # M4: if test $ac_cv_func_wcsnrtombs = no; then HAVE_WCSNRTOMBS=0; fi
+        # Override the gl_WCHAR_H_DEFAULTS value of 1 when the function is
+        # absent (e.g. MSVC).
+        checks.AC_SUBST(
+            "HAVE_WCSNRTOMBS",
+            condition = "ac_cv_func_wcsnrtombs",
+            if_false = "0",
+            if_true = "1",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
         # Note: wchar_h provides HAVE_DECL_WCSDUP, but golden file expects it undefined
         # "//gnulib/m4/wchar_h",  # AC_REQUIRE([gl_WCHAR_H_DEFAULTS]) - but pulls in HAVE_DECL_WCSDUP
-        "//gnulib/m4/locale-fr",
+        ":gl_WCSNRTOMBS_WORKS_IN_TRADITIONAL_LOCALE",  # invoked when wcsnrtombs exists and REPLACE_MBSTATE_T = 0
         # Use mbrtowc_base: golden expects REPLACE_MBRTOWC=0 on Linux
         "//gnulib/m4/mbrtowc:mbrtowc_base",
         "//gnulib/m4/codeset",
         # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Prerequisites of lib/wcsnrtombs.c: AC_DEFUN([gl_PREREQ_WCSNRTOMBS], [:]) does nothing.
+autoconf(
+    name = "gl_PREREQ_WCSNRTOMBS",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+# gl_WCSNRTOMBS_WORKS_IN_TRADITIONAL_LOCALE: AC_RUN_IFELSE in $LOCALE_FR
+# (gl_cv_func_wcsnrtombs_works_in_traditional_locale, "guessing no" only on
+# Solaris); the cache variable is consumed by gl_FUNC_WCSNRTOMBS above and
+# yields no define or subst of its own.
+autoconf(
+    name = "gl_WCSNRTOMBS_WORKS_IN_TRADITIONAL_LOCALE",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//gnulib/m4/locale-fr",  # AC_REQUIRE([gt_LOCALE_FR])
+    ],
+)
+
+autoconf(
+    name = "wcsnrtombs",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_WCSNRTOMBS",
+        ":gl_PREREQ_WCSNRTOMBS",
+        ":gl_WCSNRTOMBS_WORKS_IN_TRADITIONAL_LOCALE",
     ],
 )

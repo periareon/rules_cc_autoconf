@@ -4,7 +4,7 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "aligned_alloc",
+    name = "gl_FUNC_ALIGNED_ALLOC",
     checks = [
 
         # On macOS, aligned_alloc exists but has bugs, so it needs replacement
@@ -27,21 +27,37 @@ autoconf(
         # The runtime test checks if aligned_alloc works correctly for small alignments and sizes.
         # On macOS, AIX, and Solaris, aligned_alloc has bugs, so REPLACE_ALIGNED_ALLOC=1.
     ] + select({
-        # On Linux, aligned_alloc works correctly
-        "@platforms//os:linux": [
-            checks.AC_SUBST("REPLACE_ALIGNED_ALLOC", 0),
+        # gl_cv_func_aligned_alloc_works is "guessing no" on macOS (and AIX,
+        # Solaris): an existing aligned_alloc is replaced there.
+        "@platforms//os:macos": [
+            checks.AC_SUBST(
+                "REPLACE_ALIGNED_ALLOC",
+                condition = "ac_cv_func_aligned_alloc",
+                if_false = 0,
+                if_true = 1,
+            ),
         ],
-        # On macOS and other platforms, needs replacement
+        # glibc passes the runtime test; where the function is absent (MSVC)
+        # the m4 never sets REPLACE_ALIGNED_ALLOC (the Android "future" case
+        # is not modeled).
         "//conditions:default": [
-            checks.AC_SUBST("REPLACE_ALIGNED_ALLOC", 1),
+            checks.AC_SUBST("REPLACE_ALIGNED_ALLOC", 0),
         ],
     }),
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_STDLIB_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
-        "//gnulib/m4/extensions",
-        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "aligned_alloc",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_ALIGNED_ALLOC",
     ],
 )

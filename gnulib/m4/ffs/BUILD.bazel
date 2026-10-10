@@ -1,19 +1,52 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/ffs.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
+load("//autoconf:checks.bzl", "checks")
 
 # gl_FUNC_FFS macro from ffs.m4
-#
-# The M4 checks if ffs can be linked (might be static inline on Android).
-# If not found, it sets HAVE_FFS=0.
-#
-# just needs to depend on strings_h for the HAVE_FFS define.
+autoconf(
+    name = "gl_FUNC_FFS",
+    checks = [
+        # AC_CACHE_CHECK([for ffs], [gl_cv_func_ffs], [AC_LINK_IFELSE(...)])
+        # Upstream uses a link test instead of AC_CHECK_FUNC because ffs() may
+        # be a static inline function (Android) and must be declared so that
+        # the GCC built-in is not picked up silently. Fails on MSVC, which has
+        # no <strings.h>.
+        checks.AC_TRY_LINK(
+            name = "gl_cv_func_ffs",
+            code = """\
+#include <strings.h>
+int x;
+
+int main(void) {
+    int (*func) (int) = ffs;
+    return func (x);
+}
+""",
+            language = "c",
+        ),
+
+        # if test $gl_cv_func_ffs = no; then
+        #   HAVE_FFS=0
+        # fi
+        # Overrides the gl_STRINGS_H_DEFAULTS value of 1.
+        checks.AC_SUBST(
+            "HAVE_FFS",
+            condition = "gl_cv_func_ffs",
+            if_false = 0,
+            if_true = 1,
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/strings_h",  # AC_REQUIRE([gl_STRINGS_H_DEFAULTS])
+    ],
+)
 
 autoconf(
     name = "ffs",
-    checks = [],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/strings_h",
+        ":gl_FUNC_FFS",
     ],
 )

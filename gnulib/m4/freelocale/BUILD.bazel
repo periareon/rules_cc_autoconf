@@ -2,20 +2,43 @@
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
-
-# Explicit HAVE_FREELOCALE=1 for platforms where the link check is unreliable.
-_freelocale_set_one = [
-    checks.AC_DEFINE("HAVE_FREELOCALE", "1"),
-    checks.AC_SUBST("HAVE_FREELOCALE", "1"),
-]
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
 autoconf(
     name = "gl_FUNC_FREELOCALE",
-    checks = select({
-        "@platforms//os:macos": _freelocale_set_one,
-        "//conditions:default": _freelocale_set_one,
-    }) + [
-        checks.AC_SUBST("REPLACE_FREELOCALE", "0"),
+    # if test $HAVE_LOCALE_T = 1; then
+    #   gl_CHECK_FUNCS_ANDROID([freelocale], [[#include <locale.h>]])
+    # else  (e.g. MSVC: no locale_t)
+    #   gl_cv_onwards_func_freelocale='future OS version'; gl_func_freelocale=no
+    # fi
+    # The probe calls freelocale through <locale.h> (like the newlocale port)
+    # so that platforms with availability-guarded prototypes link reliably.
+    checks = gl_macros.GL_CHECK_FUNCS_ANDROID(
+        ["freelocale"],
+        code = """#include <locale.h>
+int main(void) {
+    freelocale((locale_t)0);
+    return 0;
+}
+""",
+        requires = ["HAVE_LOCALE_T==1"],
+    ) + [
+        # if test $gl_func_freelocale != yes; then HAVE_FREELOCALE=0
+        # (overrides the gl_LOCALE_H_DEFAULTS value of 1)
+        checks.AC_SUBST(
+            "HAVE_FREELOCALE",
+            condition = "ac_cv_func_freelocale",
+            if_false = "0",
+            if_true = "1",
+        ),
+        #   case "$gl_cv_onwards_func_freelocale" in future*) REPLACE_FREELOCALE=1
+        # The "future OS version" value only arises here when locale_t is missing.
+        checks.AC_SUBST(
+            "REPLACE_FREELOCALE",
+            condition = "HAVE_LOCALE_T==0",
+            if_false = "0",
+            if_true = "1",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [

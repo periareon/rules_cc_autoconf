@@ -6,9 +6,9 @@ Test suite for verifying autoconf_hdr defaults functionality.
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:autoconf_package_info.bzl", "autoconf_package_info")
 load("//autoconf:autoconf_toolchain.bzl", "autoconf_cache", "autoconf_toolchain")
 load("//autoconf:checks.bzl", "checks")
-load("//autoconf:package_info.bzl", "package_info")
 load("//autoconf/tests:diff_test.bzl", "diff_test")
 
 def _toolchain_transition_impl(_settings, attr):
@@ -62,7 +62,7 @@ def defaults_test_suite(*, name, **kwargs):
     tests = []
 
     # Package info for test autoconf targets
-    package_info(
+    autoconf_package_info(
         name = "package_info",
         package_name = "test_defaults",
         package_version = "1.0.0",

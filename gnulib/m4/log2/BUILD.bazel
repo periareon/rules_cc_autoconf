@@ -4,7 +4,7 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "log2",
+    name = "gl_FUNC_LOG2",
     checks = [
         # gl_MATHFUNC sets LOG2_LIBM; golden expects ""
         checks.AC_SUBST("LOG2_LIBM", ""),
@@ -17,12 +17,33 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/extensions",
-        "//gnulib/m4/frexp",
-        "//gnulib/m4/isnand",
-        "//gnulib/m4/asinl",  # Provides ISNAND_LIBM for golden
-        "//gnulib/m4/log",
+        ":gl_FUNC_LOG2_WORKS",  # gl_FUNC_LOG2_WORKS
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+        "//gnulib/m4/frexp",  # AC_REQUIRE([gl_FUNC_FREXP])
+        "//gnulib/m4/isnand:gl_FUNC_ISNAND",  # AC_REQUIRE([gl_FUNC_ISNAND])
+        "//gnulib/m4/log",  # AC_REQUIRE([gl_FUNC_LOG])
+        # AC_REQUIRE([gl_MATH_H_DEFAULTS]) is a _DEFAULTS macro (toolchain defaults).
         # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_FUNC_LOG2_WORKS: AC_RUN_IFELSE "whether log2 works" (gl_cv_func_log2_works);
+# the Cygwin-only bug is not modelled, so REPLACE_LOG2 keeps its default.
+autoconf(
+    name = "gl_FUNC_LOG2_WORKS",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+    ],
+)
+
+autoconf(
+    name = "log2",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_LOG2",
+        ":gl_FUNC_LOG2_WORKS",
     ],
 )

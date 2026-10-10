@@ -5,9 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_INET_PTON
 gl_PREREQ_INET_PTON
 
-# Account for global Bazel defaults
-HAVE_NETDB_H=1
-AC_SUBST([HAVE_NETDB_H])
-
 AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

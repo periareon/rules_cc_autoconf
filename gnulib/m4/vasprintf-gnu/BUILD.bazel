@@ -4,7 +4,7 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "vasprintf-gnu",
+    name = "gl_FUNC_VASPRINTF_GNU",
     checks = select({
         "@platforms//os:linux": [],
         "//conditions:default": [
@@ -16,10 +16,8 @@ autoconf(
         "//gnulib/m4/vasprintf-posix",  # AC_REQUIRE([gl_FUNC_VASPRINTF_IS_POSIX])
         "//gnulib/m4/printf:gl_PRINTF_DIRECTIVE_UPPERCASE_B",  # AC_REQUIRE([gl_PRINTF_DIRECTIVE_UPPERCASE_B])
         "//gnulib/m4/vasnprintf:gl_REPLACE_VASNPRINTF",
-        "//gnulib/m4/vasprintf:gl_REPLACE_VASPRINTF",
         # Additional dependencies for the golden file:
         "//gnulib/m4/exponentd",
-        "//gnulib/m4/alloca",
         # Note: HAVE_DECL__SNPRINTF is now checked directly in this module
         "//gnulib/m4/intmax_t",
         "//gnulib/m4/inttypes_h",
@@ -30,5 +28,19 @@ autoconf(
         "//gnulib/m4/printf:gl_SNPRINTF_RETVAL_C99",
         "//gnulib/m4/printf:gl_SNPRINTF_TRUNCATION_C99",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ] + select({
+        # glibc's vasprintf already supports the GNU directives.
+        "@platforms//os:linux": [],
+        # gl_REPLACE_VASPRINTF: replaces an existing vasprintf (macOS), leaves
+        # REPLACE_VASPRINTF=0 where the function is absent (MSVC).
+        "//conditions:default": ["//gnulib/m4/vasprintf:gl_REPLACE_VASPRINTF"],
+    }),
+)
+
+autoconf(
+    name = "vasprintf-gnu",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_VASPRINTF_GNU",
     ],
 )

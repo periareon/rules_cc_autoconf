@@ -1,2 +1,0 @@
-/* config.h.in */
-#define HAVE_PROC_UPTIME 1

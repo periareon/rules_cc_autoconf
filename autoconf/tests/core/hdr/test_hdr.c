@@ -20,7 +20,7 @@ int main(void) {
 
     // Verify functions (cross-platform friendly)
     assert(HAVE_MALLOC == 1);
-    assert(HAVE_PRINTF == 1);
+    assert(HAVE_PUTS == 1);
 
     // Verify we can actually use them (this tests linkage)
     void* ptr = malloc(10);

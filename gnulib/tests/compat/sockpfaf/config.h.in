@@ -1,5 +1,6 @@
 /* config.h.in */
 #undef HAVE_ACCEPT4
+#undef HAVE_AFUNIX_H
 #undef HAVE_CHOWN
 #undef HAVE_COPY_FILE_RANGE
 #undef HAVE_DECL_ENVIRON

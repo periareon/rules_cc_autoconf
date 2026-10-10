@@ -28,7 +28,9 @@ When AC_DEFINE or AC_SUBST use a `condition` parameter that references a cache v
   - The value is falsy (empty string or "0")
 
 If the condition includes a comparison operator (e.g., `condition="ac_cv_header_foo_h==1"`),
-it performs value comparison instead of truthy check.
+it performs value comparison instead of truthy check. A define that produced no
+value (`/* #undef X */` in config.h) compares as `0`, as it would in `#if X == 0`;
+a substitution whose value is the empty string does not.
 
 Example:
 ```python
@@ -90,6 +92,13 @@ _AC_INCLUDE_FORMAT_WITH_NEWLINE = "#include <{}>\n"
 # Default includes for AC_CHECK_DECL, AC_CHECK_TYPE, etc. (AC_INCLUDES_DEFAULT).
 # Exposed as utils.AC_INCLUDES_DEFAULT. All includes use the form #include <foo>.
 # See: https://www.gnu.org/savannah-checkouts/gnu/autoconf/manual/autoconf-2.72/autoconf.html#Default-Includes
+# Upstream guards the optional headers with the HAVE_*_H results of
+# AC_CHECK_INCLUDES_DEFAULT (`#ifdef HAVE_UNISTD_H` and so on).  Those results
+# are not visible to a probe here, so `__has_include` -- cl 19.11+, gcc 5+,
+# clang -- stands in for them.  Keying on the OS instead would be wrong on
+# both sides of Windows: MinGW ships all three headers, MSVC ships
+# <sys/types.h> and <sys/stat.h>.  Compilers without `__has_include` get the
+# POSIX set unconditionally, as every such compiler is a Unix one.
 _AC_INCLUDES_DEFAULT = """\
 #include <stdio.h>
 #include <stdlib.h>
@@ -97,12 +106,24 @@ _AC_INCLUDES_DEFAULT = """\
 #include <string.h>
 #include <inttypes.h>
 #include <stdint.h>
-#ifdef _WIN32
-/* Windows doesn't have POSIX headers */
+#if defined __has_include
+# if __has_include(<strings.h>)
+#  include <strings.h>
+# endif
+# if __has_include(<sys/types.h>)
+#  include <sys/types.h>
+# endif
+# if __has_include(<sys/stat.h>)
+#  include <sys/stat.h>
+# endif
+# if __has_include(<unistd.h>)
+#  include <unistd.h>
+# endif
 #else
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
+# include <strings.h>
+# include <sys/types.h>
+# include <sys/stat.h>
+# include <unistd.h>
 #endif
 """
 
@@ -159,10 +180,12 @@ def _header_code_from_includes(includes_list):
 #     consumers would call the stub at runtime.
 #
 # MSVC deviation: upstream autoconf has no MSVC story. The `_MSC_VER`
-# branch returns `int` (no GCC builtins to confuse) and links
-# legacy_stdio_definitions.lib so probes for the stdio family resolve
-# against UCRT, which inlines those functions in headers rather than
-# exporting linker symbols.
+# branch returns `int` (no GCC builtins to confuse).  Nothing else is
+# added: UCRT defines printf, snprintf, vsnprintf, swprintf and friends
+# inline in its headers, so this probe reports them absent exactly as
+# GNU autoconf does on MSVC.  gnulib relies on that outcome (probe no,
+# AC_CHECK_DECL yes) to name its replacements rpl_* instead of clashing
+# with the inline definitions; see gl_REPLACE_SNPRINTF in snprintf.m4.
 _AC_CHECK_FUNC_DEFAULT_TEMPLATE = """\
 #define {function} innocuous_{function}
 #include <limits.h>
@@ -171,7 +194,6 @@ _AC_CHECK_FUNC_DEFAULT_TEMPLATE = """\
 extern "C"
 #endif
 #if defined _MSC_VER
-#pragma comment(lib, "legacy_stdio_definitions.lib")
 int {function} (void);
 #else
 char {function} (void);

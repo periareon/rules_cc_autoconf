@@ -16,13 +16,6 @@ autoconf(
             name = "ac_cv_have_decl__putenv",
             includes = ["#include <stdlib.h>"],
         ),
-        # setenv golden expects #define HAVE_DECL__PUTENV 0 when not found
-        checks.AC_SUBST(
-            "HAVE_DECL__PUTENV",
-            condition = "ac_cv_have_decl__putenv",
-            if_false = 0,
-            if_true = 1,
-        ),
         checks.AC_DEFINE(
             "HAVE_DECL__PUTENV",
             condition = "ac_cv_have_decl__putenv",

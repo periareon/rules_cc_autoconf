@@ -1,2 +1,3 @@
 /* subst.h.in */
 #define SUBST_HAVE_C_VARARRAYS "@HAVE_C_VARARRAYS@"
+#define SUBST___STDC_NO_VLA__ "@__STDC_NO_VLA__@"

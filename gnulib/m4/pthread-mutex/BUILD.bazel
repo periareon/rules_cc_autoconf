@@ -3,7 +3,9 @@
 gl_PTHREAD_MUTEX:
 - AC_REQUIRE([gl_PTHREAD_H])
 - AC_REQUIRE([AC_CANONICAL_HOST])
-- AC_CACHE_CHECK for pthread_mutexattr_getrobust
+- mingw/windows with gl_threads_api = windows: REPLACE_PTHREAD_MUTEX*=1
+- else if HAVE_PTHREAD_H = 0: HAVE_PTHREAD_MUTEX*=0
+- else AC_CACHE_CHECK for pthread_mutexattr_getrobust (link test)
   - If exists: HAVE_PTHREAD_MUTEXATTR_GETROBUST=1, HAVE_PTHREAD_MUTEXATTR_SETROBUST=1
   - If not: HAVE_*=0, AC_DEFINE PTHREAD_MUTEXATTR_ROBUST_UNIMPLEMENTED
 """
@@ -12,18 +14,119 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "pthread-mutex",
+    name = "gl_PTHREAD_MUTEX",
     checks = select({
-        # On Linux: pthread_mutexattr_getrobust exists in glibc
-        "@platforms//os:linux": [
-            checks.AC_SUBST("HAVE_PTHREAD_MUTEXATTR_GETROBUST", "1"),
-            checks.AC_SUBST("HAVE_PTHREAD_MUTEXATTR_SETROBUST", "1"),
+        # case "$host_os" in mingw* | windows*) && test $gl_threads_api = windows
+        # (the Bazel default on @platforms//os:windows, see threadlib): gnulib
+        # replaces the functions, the HAVE_* defaults (1) are left alone.
+        "@platforms//os:windows": [
+            checks.AC_SUBST("REPLACE_PTHREAD_MUTEX_INIT", "1"),
+            checks.AC_SUBST("REPLACE_PTHREAD_MUTEXATTR_INIT", "1"),
+            checks.AC_SUBST("REPLACE_PTHREAD_MUTEXATTR_GETTYPE", "1"),
+            checks.AC_SUBST("REPLACE_PTHREAD_MUTEXATTR_SETTYPE", "1"),
+            checks.AC_SUBST("REPLACE_PTHREAD_MUTEXATTR_GETROBUST", "1"),
+            checks.AC_SUBST("REPLACE_PTHREAD_MUTEXATTR_SETROBUST", "1"),
+            checks.AC_SUBST("REPLACE_PTHREAD_MUTEXATTR_DESTROY", "1"),
+            checks.AC_SUBST("REPLACE_PTHREAD_MUTEX_LOCK", "1"),
+            checks.AC_SUBST("REPLACE_PTHREAD_MUTEX_TRYLOCK", "1"),
+            checks.AC_SUBST("REPLACE_PTHREAD_MUTEX_TIMEDLOCK", "1"),
+            checks.AC_SUBST("REPLACE_PTHREAD_MUTEX_UNLOCK", "1"),
+            checks.AC_SUBST("REPLACE_PTHREAD_MUTEX_DESTROY", "1"),
         ],
-        # On macOS: pthread_mutexattr_getrobust does NOT exist
+        # Elsewhere: if test $HAVE_PTHREAD_H = 0 then HAVE_*=0. HAVE_PTHREAD_H
+        # is ac_cv_header_pthread_h from gl_PTHREAD_H_PART1.
         "//conditions:default": [
-            checks.AC_SUBST("HAVE_PTHREAD_MUTEXATTR_GETROBUST", "0"),
-            checks.AC_SUBST("HAVE_PTHREAD_MUTEXATTR_SETROBUST", "0"),
-            checks.AC_DEFINE("PTHREAD_MUTEXATTR_ROBUST_UNIMPLEMENTED", "1"),
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_MUTEX_INIT",
+                condition = "ac_cv_header_pthread_h",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_MUTEXATTR_INIT",
+                condition = "ac_cv_header_pthread_h",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_MUTEXATTR_GETTYPE",
+                condition = "ac_cv_header_pthread_h",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_MUTEXATTR_SETTYPE",
+                condition = "ac_cv_header_pthread_h",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_MUTEXATTR_DESTROY",
+                condition = "ac_cv_header_pthread_h",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_MUTEX_LOCK",
+                condition = "ac_cv_header_pthread_h",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_MUTEX_TRYLOCK",
+                condition = "ac_cv_header_pthread_h",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_MUTEX_UNLOCK",
+                condition = "ac_cv_header_pthread_h",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_MUTEX_DESTROY",
+                condition = "ac_cv_header_pthread_h",
+                if_false = "0",
+                if_true = "1",
+            ),
+
+            # AC_CACHE_CHECK([for pthread_mutexattr_getrobust]): AC_LINK_IFELSE
+            # with LIBPMULTITHREAD. glibc has it, macOS does not.
+            checks.AC_TRY_LINK(
+                name = "gl_cv_func_pthread_mutexattr_getrobust",
+                code = """\
+extern
+#ifdef __cplusplus
+"C"
+#endif
+int pthread_mutexattr_getrobust (void);
+int main ()
+{
+  return pthread_mutexattr_getrobust ();
+}
+""",
+                language = "c",
+                requires = ["ac_cv_header_pthread_h"],
+            ),
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_MUTEXATTR_GETROBUST",
+                condition = "ac_cv_header_pthread_h && gl_cv_func_pthread_mutexattr_getrobust",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "HAVE_PTHREAD_MUTEXATTR_SETROBUST",
+                condition = "ac_cv_header_pthread_h && gl_cv_func_pthread_mutexattr_getrobust",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_DEFINE(
+                "PTHREAD_MUTEXATTR_ROBUST_UNIMPLEMENTED",
+                condition = "ac_cv_header_pthread_h && !gl_cv_func_pthread_mutexattr_getrobust",
+                if_false = None,
+                if_true = 1,
+            ),
         ],
     }),
     visibility = ["//visibility:public"],
@@ -32,5 +135,13 @@ autoconf(
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",  # For test compatibility
         "//gnulib/m4/pthread_h",  # AC_REQUIRE([gl_PTHREAD_H])
         "//gnulib/m4/threadlib",
+    ],
+)
+
+autoconf(
+    name = "pthread-mutex",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_PTHREAD_MUTEX",
     ],
 )

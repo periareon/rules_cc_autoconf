@@ -24,7 +24,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-latest
+          # Pinned: SDK changes invalidate the macOS reference snapshots.
+          - os: macos-26
           - os: ubuntu-24.04
           - os: ubuntu-24.04-arm
           - os: windows-2022
@@ -38,6 +39,11 @@ jobs:
           disk-cache: ${{ github.workflow }}
           repository-cache: true
 
+      - uses: ./.github/actions/buildbuddy
+        with:
+          api_key: ${{ secrets.BUILDBUDDY_API_KEY }}
+          user: "${{ github.job }} (${{ matrix.os }})"
+
       - name: Setup Bazelrc (Windows)
         run: |
           echo "TEMP=$env:RUNNER_TEMP" >> "$env:GITHUB_ENV"
@@ -48,15 +54,6 @@ jobs:
         run: |
           echo "common --keep_going" >> ./user.bazelrc
 
-      - name: Install Autoconf (Unix)
-        run: |
-          ./tools/test_deps/install_test_deps.sh
-        if: startswith(runner.os, 'Windows') != true
-      - name: Install Autoconf (Windows)
-        run: |
-          echo NOOP
-        if: startswith(runner.os, 'Windows')
-
       # Build and Test the code
       - name: Test (Unix)
         run: bazel ${BAZEL_STARTUP_FLAGS[@]} test //...
@@ -65,13 +62,37 @@ jobs:
         run: bazel $env:BAZEL_STARTUP_FLAGS test //...
         if: startswith(runner.os, 'Windows')
 
+      # Every comparison test leaves both sides, the diff, config.log and the
+      # configure environment in its undeclared outputs; keep them for review.
+      - name: Collect test outputs
+        if: failure()
+        shell: bash
+        run: |
+          testlogs="$(bazel ${BAZEL_STARTUP_FLAGS[@]} info bazel-testlogs)"
+          mkdir -p failed-test-outputs
+          find "$testlogs" -name test.xml | while read -r xml; do
+            if grep -q "<failure\|<error" "$xml"; then
+              dir="$(dirname "$xml")"
+              rel="${dir#"$testlogs"/}"
+              mkdir -p "failed-test-outputs/$rel"
+              cp -R "$dir"/. "failed-test-outputs/$rel/"
+            fi
+          done
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: failed-test-outputs-${{ github.job }}-${{ matrix.os }}
+          path: failed-test-outputs
+          if-no-files-found: ignore
+
   ci-path-mapping:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: macos-latest
+          # Pinned: SDK changes invalidate the macOS reference snapshots.
+          - os: macos-26
           - os: ubuntu-24.04
           - os: ubuntu-24.04-arm
     steps:
@@ -84,6 +105,11 @@ jobs:
           disk-cache: ${{ github.workflow }}
           repository-cache: true
 
+      - uses: ./.github/actions/buildbuddy
+        with:
+          api_key: ${{ secrets.BUILDBUDDY_API_KEY }}
+          user: "${{ github.job }} (${{ matrix.os }})"
+
       - name: Setup Bazelrc (Windows)
         run: |
           echo "TEMP=$env:RUNNER_TEMP" >> "$env:GITHUB_ENV"
@@ -96,15 +122,6 @@ jobs:
           echo "common --keep_going" >> ./user.bazelrc
           echo "common --experimental_output_paths=strip" >> ./user.bazelrc
 
-      - name: Install Autoconf (Unix)
-        run: |
-          ./tools/test_deps/install_test_deps.sh
-        if: startswith(runner.os, 'Windows') != true
-      - name: Install Autoconf (Windows)
-        run: |
-          echo NOOP
-        if: startswith(runner.os, 'Windows')
-
       # Build and Test the code
       - name: Test (Unix)
         run: bazel ${BAZEL_STARTUP_FLAGS[@]} test //...
@@ -113,27 +130,34 @@ jobs:
         run: bazel $env:BAZEL_STARTUP_FLAGS test //...
         if: startswith(runner.os, 'Windows')
 
-  ci-integration-tests:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - macos-latest
-          - ubuntu-24.04
-          - ubuntu-24.04-arm
-          - windows-2022
-        test:
-          - name: simple
-            path: examples/simple
-            expect_pass: true
-          - name: negative_compute_int
-            path: autoconf/tests/integration/negative_compute_int
-            expect_pass: false
-          - name: gnulib_integrations
-            path: gnulib/tests/integration
-            expect_pass: true
-    name: "integration-${{ matrix.test.name }} (${{ matrix.os }})"
+      # Every comparison test leaves both sides, the diff, config.log and the
+      # configure environment in its undeclared outputs; keep them for review.
+      - name: Collect test outputs
+        if: failure()
+        shell: bash
+        run: |
+          testlogs="$(bazel ${BAZEL_STARTUP_FLAGS[@]} info bazel-testlogs)"
+          mkdir -p failed-test-outputs
+          find "$testlogs" -name test.xml | while read -r xml; do
+            if grep -q "<failure\|<error" "$xml"; then
+              dir="$(dirname "$xml")"
+              rel="${dir#"$testlogs"/}"
+              mkdir -p "failed-test-outputs/$rel"
+              cp -R "$dir"/. "failed-test-outputs/$rel/"
+            fi
+          done
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: failed-test-outputs-${{ github.job }}-${{ matrix.os }}
+          path: failed-test-outputs
+          if-no-files-found: ignore
+
+  # The example workspace. BCR's presubmit already runs it on every platform
+  # and Bazel version, so one job is enough here.
+  ci-example:
+    runs-on: ubuntu-24.04
+    name: "example-simple"
     steps:
       # Checkout the code
       - uses: actions/checkout@v4
@@ -144,38 +168,86 @@ jobs:
           disk-cache: ${{ github.workflow }}
           repository-cache: true
 
+      - uses: ./.github/actions/buildbuddy
+        with:
+          api_key: ${{ secrets.BUILDBUDDY_API_KEY }}
+          user: "example-simple"
+
+      - name: Setup Bazelrc
+        working-directory: "${{ github.workspace }}/examples/simple"
+        run: |
+          echo "common --keep_going" >> ./user.bazelrc
+
+      # Build and Test the code
+      - name: Test
+        working-directory: "${{ github.workspace }}/examples/simple"
+        run: bazel ${BAZEL_STARTUP_FLAGS[@]} test //...
+
+  # The gnulib integration tests: every BCR module that depends on
+  # rules_cc_autoconf, built with the default (auto-configured host) C/C++
+  # toolchain and with each alternate toolchain `--config` defined in
+  # `gnulib/tests/integration/.bazelrc`. Alternate toolchains that do not
+  # support a given host are excluded below. On Windows, hermetic_llvm uses
+  # its default GNU/MinGW target ABI rather than MSVC.
+  ci-integration-tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-26
+          - ubuntu-24.04
+          - ubuntu-24.04-arm
+          - windows-2022
+        toolchain:
+          - default
+          - hermetic_llvm
+          - toolchains_llvm
+        exclude:
+          # toolchains_llvm generates no toolchains for a Windows host.
+          - os: windows-2022
+            toolchain: toolchains_llvm
+    name: "integration-${{ matrix.toolchain }} (${{ matrix.os }})"
+    steps:
+      # Checkout the code
+      - uses: actions/checkout@v4
+
+      - uses: bazel-contrib/setup-bazel@0.14.0
+        with:
+          bazelisk-cache: true
+          disk-cache: ${{ github.workflow }}
+          repository-cache: true
+
+      - uses: ./.github/actions/buildbuddy
+        with:
+          api_key: ${{ secrets.BUILDBUDDY_API_KEY }}
+          user: "integration-${{ matrix.toolchain }} (${{ matrix.os }})"
+
       - name: Setup Bazelrc (Windows)
-        working-directory: "${{ github.workspace }}/${{ matrix.test.path }}"
+        working-directory: "${{ github.workspace }}/gnulib/tests/integration"
         run: |
           echo "TEMP=$env:RUNNER_TEMP" >> "$env:GITHUB_ENV"
           echo "TMP=$env:RUNNER_TEMP" >> "$env:GITHUB_ENV"
           echo "startup --output_user_root=D:/bzl" > ./user.bazelrc
         if: startswith(runner.os, 'Windows')
       - name: Setup Bazelrc
-        working-directory: "${{ github.workspace }}/${{ matrix.test.path }}"
+        working-directory: "${{ github.workspace }}/gnulib/tests/integration"
         run: |
           echo "common --keep_going" >> ./user.bazelrc
+      - name: Select toolchain
+        working-directory: "${{ github.workspace }}/gnulib/tests/integration"
+        run: |
+          echo "common --config=${{ matrix.toolchain }}" >> ./user.bazelrc
+        if: matrix.toolchain != 'default'
 
       # Build and Test the code
       - name: Test (Unix)
-        working-directory: "${{ github.workspace }}/${{ matrix.test.path }}"
-        run: |
-          bazel ${BAZEL_STARTUP_FLAGS[@]} test //... && result=0 || result=$?
-          if [ "${{ matrix.test.expect_pass }}" = "true" ]; then
-            exit $result
-          else
-            [ $result -ne 0 ]
-          fi
+        working-directory: "${{ github.workspace }}/gnulib/tests/integration"
+        run: bazel ${BAZEL_STARTUP_FLAGS[@]} test //...
         if: startswith(runner.os, 'Windows') != true
       - name: Test (Windows)
-        working-directory: "${{ github.workspace }}/${{ matrix.test.path }}"
-        run: |
-          bazel $env:BAZEL_STARTUP_FLAGS test //...
-          if ("${{ matrix.test.expect_pass }}" -eq "true") {
-            exit $LASTEXITCODE
-          } else {
-            if ($LASTEXITCODE -eq 0) { exit 1 } else { exit 0 }
-          }
+        working-directory: "${{ github.workspace }}/gnulib/tests/integration"
+        run: bazel $env:BAZEL_STARTUP_FLAGS test //...
         if: startswith(runner.os, 'Windows')
 
   ci-format:
@@ -202,3 +274,25 @@ jobs:
           source: '.'
           extensions: 'h,c,cc'
           clangFormatVersion: 14
+
+  # Single job that every other job feeds into. It succeeds only when all of
+  # them succeeded, so it is the one status check to mark as required in the
+  # branch protection rules; new jobs only need to be added to `needs` here.
+  ci-complete:
+    name: CI complete
+    runs-on: ubuntu-24.04
+    if: always()
+    needs:
+      - ci
+      - ci-path-mapping
+      - ci-example
+      - ci-integration-tests
+      - ci-format
+    steps:
+      - name: Report job results
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: echo "${RESULTS}"
+      - name: Fail if any job did not succeed
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped')
+        run: exit 1

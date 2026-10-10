@@ -1,0 +1,228 @@
+# grep 3.12: the BCR overlay was written against an earlier rules_cc_autoconf
+# whose gnulib ports published some results differently. The ports now follow
+# gnulib itself, which changes how the source conditions have to be spelled:
+#
+#   - A HAVE_X operand (bare or as `ac_cv_subst_HAVE_X`) may resolve to the
+#     *_H_DEFAULTS substitution, which is always 1, instead of the value the
+#     function's module lowers. Where the port's probe (`ac_cv_func_x`,
+#     `ac_cv_have_decl_x`, ...) is visible it is used instead: it is unique
+#     and always carries a value, mirroring gnulib's own
+#     `test $ac_cv_func_x = no` tests.
+#   - gl_FUNC_FCHDIR and gl_FUNC_CLOSE: the fchdir port now emits the
+#     REPLACE_FCHDIR (and, on Windows, REPLACE_OPEN_DIRECTORY) defines and the
+#     close port the REPLACE_CLOSE substitution; the local copies were
+#     duplicate-result errors.
+#   - gl_LANGINFO_H no longer probes T_FMT_AMPM (dropped upstream together
+#     with HAVE_LANGINFO_T_FMT_AMPM); nl_langinfo.m4 lines 27-31 test CODESET,
+#     ALTMON, ABALTMON and ERA only.
+#   - REPLACE_STRERROR_0 is a shell variable (plus an AC_DEFINE when strerror(0)
+#     is broken) in m4/strerror.m4; it was never AC_SUBSTed. The port keeps the
+#     probe result as `_gl_cv_func_strerror_0_works`, so
+#       test -n "$ERRNO_H" || test $REPLACE_STRERROR_0 = 1
+#     becomes `GL_GENERATE_ERRNO_H==true || !_gl_cv_func_strerror_0_works`.
+#
+# Remove once the overlay on the Bazel Central Registry is updated against a
+# rules_cc_autoconf release that contains these ports.
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -181,7 +181,6 @@
+     "ac_cv_func_nl_langinfo",
+     "!(" + " && ".join([
+         "ac_cv_subst_HAVE_LANGINFO_CODESET==1",
+-        "ac_cv_subst_HAVE_LANGINFO_T_FMT_AMPM==1",
+         "ac_cv_subst_HAVE_LANGINFO_ALTMON==1",
+         "ac_cv_subst_HAVE_LANGINFO_ABALTMON==1",
+         "ac_cv_subst_HAVE_LANGINFO_ERA==1",
+@@ -527,40 +526,13 @@
+     ],
+ )
+ 
+-# gl_FUNC_FCHDIR (m4/fchdir.m4 lines 29-64).  `@rules_cc_autoconf//gnulib/m4/
+-# fchdir` probes the function and lets the dup/dup2/close/fcntl/opendir/
+-# closedir modules flip their REPLACE_* variables when it is missing, but it
+-# never emits the config.h *define* REPLACE_FCHDIR that the same block
+-# produces (line 30) -- distinct from the Makefile variable of that name,
+-# which stays 0.  lib/fdopendir.c, lib/opendir.c, lib/close.c, lib/dup2.c
+-# and friends key their directory-fd bookkeeping on the define, and on
+-# Windows fdopendir.c refuses to build without it ("GNULIB_defined_DIR but
+-# fchdir not replaced").  The fchdir module is reached through ten others, so
+-# the define is added beside it rather than by replacing it.
+-#
+-# TODO: drop once `@rules_cc_autoconf//gnulib/m4/fchdir` defines
+-# REPLACE_FCHDIR (and REPLACE_OPEN_DIRECTORY) itself.
++# gl_FUNC_FCHDIR (m4/fchdir.m4 lines 29-64) is fully covered by
++# `@rules_cc_autoconf//gnulib/m4/fchdir`, including the config.h defines
++# REPLACE_FCHDIR and (on Windows) REPLACE_OPEN_DIRECTORY. Kept as an empty
++# aggregate because other targets list it.
+ autoconf(
+     name = "m4_fchdir",
+-    checks = [
+-        # Lines 29-31.  Lines 21-27 (fchdir present but DIR has no fd
+-        # member) do not arise on any supported libc.
+-        checks.AC_DEFINE(
+-            "REPLACE_FCHDIR",
+-            requires = ["!ac_cv_func_fchdir"],
+-        ),
+-    ] + select({
+-        # Lines 35-63: an AC_RUN_IFELSE that cannot run here; upstream's own
+-        # guess for native Windows is "no" (line 52).  Elsewhere the block is
+-        # skipped because fchdir exists.
+-        "@platforms//os:windows": [
+-            checks.AC_DEFINE(
+-                "REPLACE_OPEN_DIRECTORY",
+-                requires = ["!ac_cv_func_fchdir"],
+-            ),
+-        ],
+-        "//conditions:default": [],
+-    }),
++    checks = [],
+     deps = ["@rules_cc_autoconf//gnulib/m4/fchdir"],
+ )
+ 
+@@ -598,12 +570,10 @@
+ 
+ autoconf(
+     name = "m4_close",
+-    checks = [
+-        checks.AC_SUBST(
+-            "REPLACE_CLOSE",
+-            condition = "ac_cv_subst_HAVE_MSVC_INVALID_PARAMETER_HANDLER==1 || ac_cv_header_winsock2_h || !ac_cv_func_fchdir",
+-        ),
+-    ],
++    # gl_FUNC_CLOSE is now covered by `@rules_cc_autoconf//gnulib/m4/close`,
++    # which substitutes REPLACE_CLOSE under the same condition; a second
++    # REPLACE_CLOSE here is a duplicate-subst error.
++    checks = [],
+     deps = [
+         "@rules_cc_autoconf//gnulib/m4/fchdir",
+         "@rules_cc_autoconf//gnulib/m4/msvc-inval",
+@@ -1439,13 +1409,13 @@
+ # string is m4/gnulib-comp.m4's gl_CONDITIONAL test rewritten against the
+ # substitutions rules_cc_autoconf exports.
+ SRC_CONDITIONS = {
+-    "GL_COND_OBJ_BTOWC": "ac_cv_subst_HAVE_BTOWC==0 || REPLACE_BTOWC",
++    "GL_COND_OBJ_BTOWC": "!ac_cv_func_btowc || REPLACE_BTOWC",
+     "GL_COND_OBJ_C32RTOMB": "HAVE_C32RTOMB==0 || REPLACE_C32RTOMB",
+     "GL_COND_OBJ_CALLOC": "REPLACE_CALLOC_FOR_CALLOC_GNU || REPLACE_CALLOC_FOR_CALLOC_POSIX",
+     "GL_COND_OBJ_CHDIR_LONG": "gl_cv_have_unlimited_file_name_length==no",
+     "GL_COND_OBJ_CLOSE": "REPLACE_CLOSE",
+-    "GL_COND_OBJ_CLOSEDIR": "ac_cv_subst_HAVE_CLOSEDIR==0 || REPLACE_CLOSEDIR",
+-    "GL_COND_OBJ_DIRFD": "HAVE_DIRFD==0 || REPLACE_DIRFD",
++    "GL_COND_OBJ_CLOSEDIR": "!_gl_have_closedir || REPLACE_CLOSEDIR",
++    "GL_COND_OBJ_DIRFD": "!ac_cv_func_dirfd || REPLACE_DIRFD",
+     "GL_COND_OBJ_DUP": "REPLACE_DUP",
+     "GL_COND_OBJ_DUP2": "REPLACE_DUP2",
+     "GL_COND_OBJ_ERROR": "COMPILE_ERROR_C==1",
+@@ -1457,25 +1427,25 @@
+     # `ac_cv_subst_` here because `:m4_fchdir` also emits a *define* named
+     # REPLACE_FCHDIR, and a bare name matching both would be ambiguous.
+     "GL_COND_OBJ_FCHDIR": "!ac_cv_func_fchdir || ac_cv_subst_REPLACE_FCHDIR",
+-    "GL_COND_OBJ_FCNTL": "ac_cv_subst_HAVE_FCNTL==0 || REPLACE_FCNTL",
+-    "GL_COND_OBJ_FDOPENDIR": "ac_cv_subst_HAVE_FDOPENDIR==0 || REPLACE_FDOPENDIR",
+-    "GL_COND_OBJ_FNMATCH": "ac_cv_subst_HAVE_FNMATCH==0 || REPLACE_FNMATCH",
++    "GL_COND_OBJ_FCNTL": "!ac_cv_func_fcntl || REPLACE_FCNTL",
++    "GL_COND_OBJ_FDOPENDIR": "!ac_cv_func_fdopendir || REPLACE_FDOPENDIR",
++    "GL_COND_OBJ_FNMATCH": "!ac_cv_func_fnmatch || REPLACE_FNMATCH",
+     "GL_COND_OBJ_FOPEN": "REPLACE_FOPEN || REPLACE_FOPEN_FOR_FOPEN_GNU",
+     # An AC_TRY_LINK result records 1/0, not yes/no; `==no` was never true,
+     # which left macOS (no __fpending in libc) without lib/fpending.c.
+     "GL_COND_OBJ_FPENDING": "gl_cv_func___fpending==0",
+     "GL_COND_OBJ_FREE": "REPLACE_FREE",
+     "GL_COND_OBJ_FSTAT": "REPLACE_FSTAT",
+-    "GL_COND_OBJ_FSTATAT": "ac_cv_subst_HAVE_FSTATAT==0 || REPLACE_FSTATAT",
++    "GL_COND_OBJ_FSTATAT": "!_gl_cv_func_fstatat || REPLACE_FSTATAT",
+     "GL_COND_OBJ_GETCWD_LGPL": "REPLACE_GETCWD",
+-    "GL_COND_OBJ_GETDTABLESIZE": "ac_cv_subst_HAVE_GETDTABLESIZE==0 || REPLACE_GETDTABLESIZE",
++    "GL_COND_OBJ_GETDTABLESIZE": "!ac_cv_func_getdtablesize || REPLACE_GETDTABLESIZE",
+     "GL_COND_OBJ_GETOPT": "REPLACE_GETOPT",
+-    "GL_COND_OBJ_GETPAGESIZE": "HAVE_GETPAGESIZE==0 || REPLACE_GETPAGESIZE",
+-    "GL_COND_OBJ_GETPROGNAME": "ac_cv_subst_HAVE_GETPROGNAME==0 || REPLACE_GETPROGNAME",
++    "GL_COND_OBJ_GETPAGESIZE": "!gl_cv_func_getpagesize || REPLACE_GETPAGESIZE",
++    "GL_COND_OBJ_GETPROGNAME": "!ac_cv_func_getprogname || REPLACE_GETPROGNAME",
+     "GL_COND_OBJ_ISATTY": "REPLACE_ISATTY",
+-    "GL_COND_OBJ_ISBLANK": "ac_cv_subst_HAVE_ISBLANK==0",
+-    "GL_COND_OBJ_ISWBLANK": "!(HAVE_ISWCNTRL==0 || REPLACE_ISWCNTRL) && (ac_cv_subst_HAVE_ISWBLANK==0 || REPLACE_ISWBLANK)",
+-    "GL_COND_OBJ_ISWCTYPE": "HAVE_WCTYPE_T==0 || GNULIBHEADERS_OVERRIDE_WINT_T || REPLACE_WCTYPE",
++    "GL_COND_OBJ_ISBLANK": "!ac_cv_func_isblank",
++    "GL_COND_OBJ_ISWBLANK": "!(!HAVE_ISWCNTRL || REPLACE_ISWCNTRL) && (!ac_cv_func_iswblank || REPLACE_ISWBLANK)",
++    "GL_COND_OBJ_ISWCTYPE": "!_gl_have_wctype_t || GNULIBHEADERS_OVERRIDE_WINT_T || REPLACE_WCTYPE",
+     "GL_COND_OBJ_ISWDIGIT": "!(HAVE_ISWCNTRL==0 || REPLACE_ISWCNTRL) && REPLACE_ISWDIGIT",
+     "GL_COND_OBJ_ISWPUNCT": "!(HAVE_ISWCNTRL==0 || REPLACE_ISWCNTRL) && REPLACE_ISWPUNCT",
+     "GL_COND_OBJ_ISWXDIGIT": "!(HAVE_ISWCNTRL==0 || REPLACE_ISWCNTRL) && REPLACE_ISWXDIGIT",
+@@ -1485,35 +1455,35 @@
+     "GL_COND_OBJ_LSTAT": "REPLACE_LSTAT",
+     "GL_COND_OBJ_MALLOC": "REPLACE_MALLOC_FOR_MALLOC_GNU || REPLACE_MALLOC_FOR_MALLOC_POSIX",
+     "GL_COND_OBJ_MBRLEN": "ac_cv_subst_HAVE_MBRLEN==0 || REPLACE_MBRLEN",
+-    "GL_COND_OBJ_MBRTOC32": "HAVE_MBRTOC32==0 || REPLACE_MBRTOC32",
++    "GL_COND_OBJ_MBRTOC32": "!gl_cv_func_mbrtoc32 || REPLACE_MBRTOC32",
+     "GL_COND_OBJ_MBRTOWC": "ac_cv_subst_HAVE_MBRTOWC==0 || REPLACE_MBRTOWC",
+-    "GL_COND_OBJ_MBSINIT": "ac_cv_subst_HAVE_MBSINIT==0 || REPLACE_MBSINIT",
++    "GL_COND_OBJ_MBSINIT": "!ac_cv_func_mbsinit || REPLACE_MBSINIT",
+     "GL_COND_OBJ_MBSRTOWCS": "ac_cv_subst_HAVE_MBSRTOWCS==0 || REPLACE_MBSRTOWCS",
+-    "GL_COND_OBJ_MBTOWC": "ac_cv_subst_HAVE_MBTOWC==0 || REPLACE_MBTOWC",
++    "GL_COND_OBJ_MBTOWC": "!ac_cv_func_mbtowc || REPLACE_MBTOWC",
+     "GL_COND_OBJ_MBTOWC_LOCK": "REPLACE_MBSTATE_T",
+     "GL_COND_OBJ_MEMCHR": "REPLACE_MEMCHR",
+-    "GL_COND_OBJ_MEMPCPY": "ac_cv_subst_HAVE_MEMPCPY==0 || REPLACE_MEMPCPY",
++    "GL_COND_OBJ_MEMPCPY": "!ac_cv_func_mempcpy || REPLACE_MEMPCPY",
+     # Bare name on purpose: `@rules_cc_autoconf//gnulib/m4/memrchr` hard-codes
+     # the define on Linux but probes everywhere else, so neither
+     # `ac_cv_define_HAVE_MEMRCHR` nor `ac_cv_func_memrchr` exists on every
+     # platform. `HAVE_MEMRCHR` does, and a failed probe records 0.
+     "GL_COND_OBJ_MEMRCHR": "HAVE_MEMRCHR==0",
+-    "GL_COND_OBJ_MSVC_INVAL": "ac_cv_subst_HAVE_MSVC_INVALID_PARAMETER_HANDLER==1",
+-    "GL_COND_OBJ_MSVC_NOTHROW": "ac_cv_subst_HAVE_MSVC_INVALID_PARAMETER_HANDLER==1",
++    "GL_COND_OBJ_MSVC_INVAL": "ac_cv_func__set_invalid_parameter_handler",
++    "GL_COND_OBJ_MSVC_NOTHROW": "ac_cv_func__set_invalid_parameter_handler",
+     "GL_COND_OBJ_NL_LANGINFO": "ac_cv_subst_HAVE_NL_LANGINFO==0 || ac_cv_subst_REPLACE_NL_LANGINFO",
+     "GL_COND_OBJ_NL_LANGINFO_LOCK": "ac_cv_subst_REPLACE_NL_LANGINFO==1 && NL_LANGINFO_MTSAFE==0",
+     "GL_COND_OBJ_OBSTACK": "HAVE_OBSTACK==0 || REPLACE_OBSTACK",
+     "GL_COND_OBJ_OPEN": "REPLACE_OPEN",
+     # See GL_COND_OBJ_FCHDIR.
+     "GL_COND_OBJ_OPENAT": "!ac_cv_func_openat || REPLACE_OPENAT",
+-    "GL_COND_OBJ_OPENDIR": "ac_cv_subst_HAVE_OPENDIR==0 || REPLACE_OPENDIR",
+-    "GL_COND_OBJ_PIPE": "ac_cv_subst_HAVE_PIPE==0",
+-    "GL_COND_OBJ_PTHREAD_ONCE": "HAVE_PTHREAD_ONCE==0 || REPLACE_PTHREAD_ONCE",
+-    "GL_COND_OBJ_RAISE": "ac_cv_subst_HAVE_RAISE==0 || REPLACE_RAISE",
+-    "GL_COND_OBJ_RAWMEMCHR": "ac_cv_subst_HAVE_RAWMEMCHR==0",
++    "GL_COND_OBJ_OPENDIR": "!_gl_cv_func_opendir || REPLACE_OPENDIR",
++    "GL_COND_OBJ_PIPE": "!ac_cv_func_pipe",
++    "GL_COND_OBJ_PTHREAD_ONCE": "!ac_cv_header_pthread_h || REPLACE_PTHREAD_ONCE",
++    "GL_COND_OBJ_RAISE": "!ac_cv_func_raise || REPLACE_RAISE",
++    "GL_COND_OBJ_RAWMEMCHR": "!ac_cv_func_rawmemchr",
+     "GL_COND_OBJ_READ": "REPLACE_READ",
+-    "GL_COND_OBJ_READDIR": "ac_cv_subst_HAVE_READDIR==0 || REPLACE_READDIR",
+-    "GL_COND_OBJ_REALLOCARRAY": "ac_cv_subst_HAVE_REALLOCARRAY==0 || REPLACE_REALLOCARRAY",
++    "GL_COND_OBJ_READDIR": "!ac_cv_func_readdir || REPLACE_READDIR",
++    "GL_COND_OBJ_REALLOCARRAY": "!ac_cv_func_reallocarray || REPLACE_REALLOCARRAY",
+     "GL_COND_OBJ_REALLOC_POSIX": "REPLACE_REALLOC_FOR_REALLOC_POSIX",
+     "GL_COND_OBJ_REGEX": "ac_use_included_regex==yes",
+     "GL_COND_OBJ_SETLOCALE_LOCK": "SETLOCALE_NULL_ALL_MTSAFE==0 || SETLOCALE_NULL_ONE_MTSAFE==0",
+@@ -1521,20 +1491,20 @@
+     "GL_COND_OBJ_STAT": "REPLACE_STAT",
+     "GL_COND_OBJ_STDIO_READ": "REPLACE_STDIO_READ_FUNCS",
+     "GL_COND_OBJ_STDIO_WRITE": "REPLACE_STDIO_WRITE_FUNCS",
+-    "GL_COND_OBJ_STPCPY": "ac_cv_subst_HAVE_STPCPY==0 || REPLACE_STPCPY",
++    "GL_COND_OBJ_STPCPY": "!ac_cv_func_stpcpy || REPLACE_STPCPY",
+     "GL_COND_OBJ_STRDUP": "REPLACE_STRDUP",
+     "GL_COND_OBJ_STRERROR": "REPLACE_STRERROR",
+-    "GL_COND_OBJ_STRERROR_OVERRIDE": "GL_GENERATE_ERRNO_H || ac_cv_subst_REPLACE_STRERROR_0==1",
++    "GL_COND_OBJ_STRERROR_OVERRIDE": "GL_GENERATE_ERRNO_H==true || !_gl_cv_func_strerror_0_works",
+     "GL_COND_OBJ_STRNLEN": "ac_cv_subst_HAVE_DECL_STRNLEN==0 || REPLACE_STRNLEN",
+     "GL_COND_OBJ_STRSTR": "REPLACE_STRSTR",
+     "GL_COND_OBJ_STRTOIMAX": "ac_cv_subst_HAVE_DECL_STRTOIMAX==0 || REPLACE_STRTOIMAX",
+-    "GL_COND_OBJ_STRTOLL": "ac_cv_subst_HAVE_STRTOLL==0 || REPLACE_STRTOLL",
++    "GL_COND_OBJ_STRTOLL": "!ac_cv_func_strtoll || REPLACE_STRTOLL",
+     "GL_COND_OBJ_WCRTOMB": "ac_cv_subst_HAVE_WCRTOMB==0 || REPLACE_WCRTOMB",
+-    "GL_COND_OBJ_WCTOB": "ac_cv_subst_HAVE_WCTOB==0 || REPLACE_WCTOB",
++    "GL_COND_OBJ_WCTOB": "!ac_cv_func_wctob || REPLACE_WCTOB",
+     "GL_COND_OBJ_WCTOMB": "REPLACE_WCTOMB",
+-    "GL_COND_OBJ_WCTYPE": "HAVE_WCTYPE==0 || REPLACE_WCTYPE",
+-    "GL_COND_OBJ_WMEMCHR": "HAVE_WMEMCHR==0",
+-    "GL_COND_OBJ_WMEMPCPY": "ac_cv_subst_HAVE_WMEMPCPY==0 || REPLACE_WMEMPCPY",
++    "GL_COND_OBJ_WCTYPE": "!ac_cv_func_wctype || REPLACE_WCTYPE",
++    "GL_COND_OBJ_WMEMCHR": "!gl_cv_func_wmemchr",
++    "GL_COND_OBJ_WMEMPCPY": "!ac_cv_func_wmempcpy || REPLACE_WMEMPCPY",
+     # lib/gnulib.mk gives each bundled libunistring source its own automake
+     # conditional (LIBUNISTRING_COMPILE_UNICASE_TOLOWER, ...); every one of
+     # them tests this and nothing else.

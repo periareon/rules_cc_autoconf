@@ -10,15 +10,15 @@ AC_CONFIG_HEADERS([config.h])
 # but we need to manually set up AC_SUBST based on the cache variable result.
 
 # Should exist on all platforms
-gl_CHECK_FUNCS_ANDROID([printf], [[#include <stdio.h>]])
+gl_CHECK_FUNCS_ANDROID([puts], [[#include <stdio.h>]])
 # Extract result from cache variable and set up AC_SUBST
 # gl_CHECK_FUNCS_ANDROID uses ac_cv_func_<function> cache variable (standard Autoconf naming)
-if test "$ac_cv_func_printf" = yes; then
-    HAVE_PRINTF=1
+if test "$ac_cv_func_puts" = yes; then
+    HAVE_PUTS=1
 else
-    HAVE_PRINTF=0
+    HAVE_PUTS=0
 fi
-AC_SUBST([HAVE_PRINTF])
+AC_SUBST([HAVE_PUTS])
 
 # Doesn't exist anywhere
 gl_CHECK_FUNCS_ANDROID([doesntexist], [[#include <unistd.h>]])

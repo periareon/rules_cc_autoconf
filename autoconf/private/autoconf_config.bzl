@@ -4,12 +4,14 @@ Common utilities for autoconf rules.
 """
 
 load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
-load("@rules_cc//cc:find_cc_toolchain.bzl", "find_cpp_toolchain")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 load("//autoconf/private:ctx_actions_write.bzl", "write")
 load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
 
 _TOOLCHAIN_TYPE = "//autoconf:toolchain_type"
+
+# Compiler probes use the checker and C++ tools on one execution platform.
+AUTOCONF_EXEC_GROUP = "autoconf"
 
 _COPTS_MARKER = "{rules_cc_autoconf:copts}"
 _LINKOPTS_MARKER = "{rules_cc_autoconf:linkopts}"
@@ -349,7 +351,8 @@ def get_cc_toolchain_info(ctx):
             - cpp_link_flags: List of C++ linker flags
             - compiler_type: The compiler type
     """
-    cc_toolchain = find_cpp_toolchain(ctx)
+    toolchain = ctx.exec_groups[AUTOCONF_EXEC_GROUP].toolchains[Label("@bazel_tools//tools/cpp:toolchain_type")]
+    cc_toolchain = toolchain.cc if hasattr(toolchain, "cc_provider_in_toolchain") and hasattr(toolchain, "cc") else toolchain
     feature_configuration = cc_common.configure_features(
         ctx = ctx,
         cc_toolchain = cc_toolchain,

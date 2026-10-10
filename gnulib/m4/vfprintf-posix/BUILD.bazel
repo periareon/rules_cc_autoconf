@@ -80,7 +80,6 @@ autoconf(
         "//gnulib/m4/vasnprintf:gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS",
         "//gnulib/m4/vasnprintf:gl_REPLACE_VASNPRINTF",
         ":gl_REPLACE_VFPRINTF",
-        "//gnulib/m4/alloca:gl_FUNC_ALLOCA",
         "//gnulib/m4/multiarch",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],

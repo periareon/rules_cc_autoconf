@@ -1,16 +1,42 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/iswpunct.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "iswpunct",
+    name = "gl_FUNC_ISWPUNCT",
     checks = [
-        # Note: iswpunct.m4 may not exist in gnulib, or this module may not have checks
+        # Equivalent to gl_FUNC_ISWPUNCT macro from iswpunct.m4
+        # if test $HAVE_ISWCNTRL = 0 || test $REPLACE_ISWCNTRL = 1; then
+        #   REPLACE_ISWPUNCT="$REPLACE_ISWCNTRL"
+        # else
+        #   AC_RUN_IFELSE locale-based check (passes on Linux/macOS, so
+        #   REPLACE_ISWPUNCT keeps the gl_WCTYPE_H_DEFAULTS value of 0)
+        # fi
+        # On native Windows wint_t is too small, so REPLACE_ISWCNTRL=1 and the
+        # first branch applies.
+        checks.AC_SUBST(
+            "REPLACE_ISWPUNCT",
+            condition = "REPLACE_ISWCNTRL==1",
+            if_false = 0,
+            if_true = 1,
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/wctype_h",
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//gnulib/m4/wctype_h:gl_WCTYPE_H",  # AC_REQUIRE([gl_WCTYPE_H])
+        "//gnulib/m4/wctype_h",  # AC_REQUIRE([gl_WCTYPE_H_DEFAULTS])
         # For test compatibility - need basic header defines
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Umbrella target kept for existing dependants.
+autoconf(
+    name = "iswpunct",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_ISWPUNCT",
     ],
 )

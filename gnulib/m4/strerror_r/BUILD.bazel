@@ -42,22 +42,38 @@ autoconf(
 # Set REPLACE_STRERROR_R when strerror_r is missing or broken.
 autoconf(
     name = "gl_FUNC_STRERROR_R",
-    checks = select({
-        # On Linux: strerror_r needs replacement (runtime checks find issues)
-        "@platforms//os:linux": [
-            checks.AC_SUBST("REPLACE_STRERROR_R", "1"),
-        ],
-        # On macOS: strerror_r needs replacement (broken POSIX compliance)
-        "@platforms//os:macos": [
-            checks.AC_SUBST("REPLACE_STRERROR_R", "1"),
-        ],
-        "//conditions:default": [
-            checks.AC_SUBST(
-                "REPLACE_STRERROR_R",
-                condition = "!ac_cv_func_strerror_r",
-            ),
-        ],
-    }),
+    checks = [
+        # AC_CHECK_DECLS_ONCE([strerror_r])
+        # if test $ac_cv_have_decl_strerror_r = no; then HAVE_DECL_STRERROR_R=0; fi
+        # Overrides the gl_STRING_H_DEFAULTS value of 1 (e.g. MSVC has no strerror_r).
+        checks.AC_SUBST(
+            "HAVE_DECL_STRERROR_R",
+            condition = "ac_cv_have_decl_strerror_r",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # if test $ac_cv_func_strerror_r = yes; then
+        #   if test "$GL_GENERATE_ERRNO_H:$REPLACE_STRERROR_0" = false:0; then
+        #     if test $gl_cv_func_strerror_r_posix_signature = yes; then
+        #       case "$gl_cv_func_strerror_r_works" in *no) REPLACE_STRERROR_R=1 ;; esac
+        #     else
+        #       REPLACE_STRERROR_R=1
+        #     fi
+        #   else
+        #     REPLACE_STRERROR_R=1
+        #   fi
+        # fi
+        # Every branch inside "strerror_r exists" ends in REPLACE_STRERROR_R=1 on
+        # the supported platforms: glibc has the GNU (non-POSIX) signature,
+        # macOS has REPLACE_STRERROR_0=1. Where strerror_r does not exist at all
+        # (MSVC) the m4 leaves REPLACE_STRERROR_R at its default of 0.
+        checks.AC_SUBST(
+            "REPLACE_STRERROR_R",
+            condition = "ac_cv_func_strerror_r",
+            if_false = 0,
+            if_true = 1,
+        ),
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_PREREQ_STRERROR_R",
@@ -68,15 +84,10 @@ autoconf(
 # strerror_r - top-level module
 autoconf(
     name = "strerror_r",
-    checks = [
-        # HAVE_STRERROR_R subst comes from strerror:HAVE_STRERROR_R_SUBST
-    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_FUNC_STRERROR_R",
         ":gl_FUNC_STRERROR_R_WORKS",
         ":gl_PREREQ_STRERROR_R",
-        # Get HAVE_STRERROR_R subst from shared target
-        "//gnulib/m4/strerror:HAVE_STRERROR_R_SUBST",
     ],
 )

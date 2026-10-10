@@ -1,0 +1,97 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:autoconf_package_info.bzl", "autoconf_package_info")
+load("//autoconf:checks.bzl", "checks")
+load("//autoconf/tests:diff_test.bzl", "diff_test")
+
+# Regression test: AC_CHECK_FUNC must not be fooled by MSVC intrinsics.
+# See CheckRunner::get_compiler_and_flags for why it previously was.
+#
+# cl.exe turns memcmp/memcpy/fabs/labs into intrinsics under /Oi, which /O2
+# implies. Bazel's opt mode -- and therefore every exec-configuration tool
+# build -- compiles with /O2, and the classic autoconf probe body
+# (`int memcmp(void); return memcmp();`) then fails with C2168 instead of
+# linking. Each check below forces /O2 through per-check copts so the test
+# is meaningful in fastbuild too; the checker must still answer "yes".
+
+autoconf_package_info(
+    name = "package",
+    package_name = "test_intrinsics_msvc",
+    package_version = "1.0.0",
+)
+
+_INTRINSICS = [
+    "fabs",
+    "labs",
+    "memcmp",
+    "memcpy",
+]
+
+autoconf(
+    name = "autoconf",
+    checks = [
+        # Positive: the intrinsic under /O2 must still probe as present.
+        checks.AC_CHECK_FUNC(
+            fn,
+            # Distinct cache name: the plain memcmp control below would
+            # otherwise collide on ac_cv_func_memcmp.
+            name = "ac_cv_func_" + fn + "_o2",
+            copts = ["/O2"],
+            define = "HAVE_" + fn.upper() + "_O2",
+        )
+        for fn in _INTRINSICS
+    ] + [
+        # Control: the same probe with no optimisation flag, as a plain
+        # AC_CHECK_FUNCS caller would issue it.
+        checks.AC_CHECK_FUNC(
+            "memcmp",
+            define = "HAVE_MEMCMP",
+        ),
+        # Negative control: a function no CRT has. Keeps the test honest if
+        # the probe ever started succeeding for the wrong reason.
+        checks.AC_CHECK_FUNC(
+            "rules_cc_autoconf_no_such_function",
+            define = "HAVE_RULES_CC_AUTOCONF_NO_SUCH_FUNCTION",
+        ),
+    ],
+    # The per-check `/O2` is a cl flag; gcc and clang would read it as a file.
+    target_compatible_with = select({
+        "//autoconf/tests:msvc_like": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+    deps = [":package"],
+)
+
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    target_compatible_with = select({
+        "//autoconf/tests:msvc_like": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+    template = "config.h.in",
+    deps = [":autoconf"],
+)
+
+diff_test(
+    name = "diff_test",
+    file1 = "golden_config_windows.h.in",
+    file2 = ":config.h",
+    target_compatible_with = select({
+        "//autoconf/tests:msvc_like": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
+
+cc_test(
+    name = "test_intrinsics_msvc",
+    srcs = [
+        "test_intrinsics_msvc.c",
+        ":config.h",
+    ],
+    target_compatible_with = select({
+        "//autoconf/tests:msvc_like": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)

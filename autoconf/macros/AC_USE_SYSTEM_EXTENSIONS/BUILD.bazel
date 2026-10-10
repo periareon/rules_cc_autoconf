@@ -17,6 +17,8 @@ autoconf(
     checks = [
         # Feature test macros for system extensions
         checks.AC_DEFINE("_ALL_SOURCE", 1),  # Integer, not string - renders as unquoted 1
+        # Added in autoconf 2.72 (Cosmopolitan Libc); unconditional like the others.
+        checks.AC_DEFINE("_COSMO_SOURCE", 1),
         checks.AC_DEFINE("_DARWIN_C_SOURCE", 1),  # Integer, not string - renders as unquoted 1
         checks.AC_DEFINE("_GNU_SOURCE", 1),  # Integer, not string - renders as unquoted 1
         checks.AC_DEFINE("_HPUX_ALT_XOPEN_SOCKET_API", 1),  # Integer, not string - renders as unquoted 1

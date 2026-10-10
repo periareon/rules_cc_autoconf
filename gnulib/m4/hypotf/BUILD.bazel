@@ -1,26 +1,116 @@
-"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/hypotf.m4"""
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/hypotf.m4
+
+gl_FUNC_HYPOTF:
+- AC_REQUIRE([gl_MATH_H_DEFAULTS])
+- AC_REQUIRE([gl_FUNC_HYPOT])
+- AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+- AC_CHECK_FUNCS([hypotf]) with LIBS="$LIBS $HYPOT_LIBM"
+- if found: gl_FUNC_HYPOTF_WORKS -> REPLACE_HYPOTF=1 when it fails
+- else: HAVE_HYPOTF=0; AC_CHECK_DECLS([hypotf], [REPLACE_HYPOTF=1], , [[#include <math.h>]])
+- AC_SUBST([HYPOTF_LIBM])
+
+gl_FUNC_HYPOTF_WORKS is exposed as its own target.
+"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
+# m4 line 116: gl_FUNC_HYPOTF_WORKS test program (AC_RUN_IFELSE).
+_HYPOTF_WORKS_CODE = """\
+#include <float.h>
+#include <math.h>
+volatile float x;
+volatile float y;
+volatile float z;
+int main ()
+{
+  int result = 0;
+  /* This test fails on NetBSD 5.1.  */
+  {
+    x = FLT_MIN * 2.0f;
+    y = FLT_MIN * 3.0f;
+    z = hypotf (x, y);
+    if (!(z >= FLT_MIN * 2.0f && z <= FLT_MIN * 4.0f))
+      result |= 1;
+  }
+  /* This test fails on OpenBSD 4.9.  */
+  {
+    x = FLT_MAX;
+    y = FLT_MAX * 0.5f;
+    z = hypotf (x, y);
+    if (!(z > 0 && z == z + z))
+      result |= 2;
+  }
+  return result;
+}
+"""
+
 autoconf(
-    name = "hypotf",
+    name = "gl_FUNC_HYPOTF_WORKS",
     checks = [
+        # m4 line 110: whether hypotf works (AC_RUN_IFELSE, modelled as a link
+        # test; the program compiles and links wherever GNU's run reports yes).
+        checks.AC_TRY_LINK(
+            name = "gl_cv_func_hypotf_works",
+            code = _HYPOTF_WORKS_CODE,
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+    ],
+)
+
+autoconf(
+    name = "gl_FUNC_HYPOTF",
+    checks = [
+        # m4 line 21: AC_CHECK_FUNCS([hypotf])
+        # On MSVC hypotf is an inline in <math.h>, so the plain link probe fails
+        # (as in GNU's config.log) even though the function is declared.
         checks.AC_CHECK_FUNC(
             "hypotf",
             define = "HAVE_HYPOTF",
         ),
+        # m4 line 73: HAVE_HYPOTF=0 when the function was not found
+        checks.AC_SUBST(
+            "HAVE_HYPOTF",
+            condition = "ac_cv_func_hypotf",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # m4 line 74: AC_CHECK_DECLS([hypotf], [REPLACE_HYPOTF=1], , [[#include <math.h>]])
+        # only runs in the "not found" branch; AC_CHECK_DECLS defines HAVE_DECL_HYPOTF to 1/0.
         checks.AC_CHECK_DECL(
             "hypotf",
             define = "HAVE_DECL_HYPOTF",
             includes = ["#include <math.h>"],
+            requires = ["!ac_cv_func_hypotf"],
         ),
+        # m4 line 30/74: REPLACE_HYPOTF=1 when hypotf exists but does not work,
+        # or when it is only declared.
+        checks.AC_SUBST(
+            "REPLACE_HYPOTF",
+            condition = "(ac_cv_func_hypotf && !gl_cv_func_hypotf_works) || (!ac_cv_func_hypotf && ac_cv_have_decl_hypotf)",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # m4 line 76: HYPOTF_LIBM="$HYPOT_LIBM" (empty here)
         checks.AC_SUBST("HYPOTF_LIBM", ""),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        ":gl_FUNC_HYPOTF_WORKS",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/extensions",
         "//gnulib/m4/hypot",
+    ],
+)
+
+autoconf(
+    name = "hypotf",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_HYPOTF",
+        ":gl_FUNC_HYPOTF_WORKS",
     ],
 )

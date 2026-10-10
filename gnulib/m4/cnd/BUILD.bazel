@@ -1,37 +1,30 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/cnd.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
-load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
 
+# gl_CHECK_FUNCS_ANDROID([cnd_init], [[#include <threads.h>]]) is an
+# unconditional link test (no <threads.h> needed): glibc >= 2.28 and MSVC's
+# UCRT link it, macOS does not. The "future*" branch (REPLACE_CND_*=1) is
+# Android-only.
 autoconf(
-    name = "cnd",
-    checks = select({
-        # On Linux with glibc 2.28+: C11 threads are available
-        "@platforms//os:linux": [
-            checks.AC_DEFINE("HAVE_CND_INIT", "1"),
-        ],
-        # On other platforms: Use AC_TRY_COMPILE to check
-        "//conditions:default": [
-            checks.AC_TRY_COMPILE(
-                code = """#include <threads.h>
-
-#ifdef __cplusplus
-extern "C"
-#endif
-char cnd_init ();
-
-int main(void) {
-    return cnd_init();
-}""",
-                define = "HAVE_CND_INIT",
-                language = "c",
-            ),
-        ],
-    }),
+    name = "gl_FUNC_CND_INIT",
+    checks = gl_macros.GL_CHECK_FUNCS_ANDROID(
+        ["cnd_init"],
+        includes = ["#include <threads.h>"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/include_next",  # Required for INCLUDE_NEXT variables
-        "//gnulib/m4/threads_h",
+        "//gnulib/m4/threads_h",  # AC_REQUIRE([gl_THREADS_H])
+    ],
+)
+
+autoconf(
+    name = "cnd",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_CND_INIT",
     ],
 )

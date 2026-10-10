@@ -12,13 +12,12 @@ autoconf(
 autoconf(
     name = "HAVE_SYS_PARAM_H",
     checks = [
+        # AC_CHECK_HEADERS_ONCE([sys/param.h]) only defines the config.h macro.
+        # The HAVE_SYS_PARAM_H subst is gl_UNISTD_H_DEFAULTS' (0), raised by
+        # gl_FUNC_GETPAGESIZE alone.
         checks.AC_DEFINE(
             "HAVE_SYS_PARAM_H",
             requires = ["ac_cv_header_sys_param_h"],
-        ),
-        checks.AC_SUBST(
-            "HAVE_SYS_PARAM_H",
-            condition = "ac_cv_header_sys_param_h",
         ),
     ],
     visibility = ["//visibility:public"],

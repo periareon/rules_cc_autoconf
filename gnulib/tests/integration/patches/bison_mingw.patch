@@ -1,0 +1,26 @@
+# bison 3.8.2.bcr.10 (applied after bison.patch): bison bundles gnulib from
+# 2021, whose lib/readdir.c and lib/rewinddir.c are the native-Windows
+# implementations compiled only when the libc has no readdir/rewinddir
+# (modules/readdir: `test $HAVE_READDIR = 0`). REPLACE_READDIR and
+# REPLACE_REWINDDIR postdate that gnulib; the current ports set them on
+# every Windows libc, so on MinGW (which has readdir) the 2021 files were
+# compiled against MinGW's own DIR ("no member named 'status' in 'DIR'").
+# Gate them on the probe alone, as that gnulib did.
+#
+# Remove once the overlay on the Bazel Central Registry is updated.
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -789,11 +789,11 @@
+         "lib/printf.c": "REPLACE_PRINTF",
+         "lib/raise.c": "REPLACE_RAISE",
+         "lib/rawmemchr.c": "COMPILE_RAWMEMCHR",
+-        "lib/readdir.c": "!ac_cv_func_readdir || REPLACE_READDIR",
++        "lib/readdir.c": "!ac_cv_func_readdir",
+         "lib/readlink.c": "!ac_cv_func_readlink || REPLACE_READLINK",
+         "lib/reallocarray.c": "COMPILE_REALLOCARRAY",
+         "lib/rename.c": "REPLACE_RENAME",
+-        "lib/rewinddir.c": "!ac_cv_func_rewinddir || REPLACE_REWINDDIR",
++        "lib/rewinddir.c": "!ac_cv_func_rewinddir",
+         "lib/rmdir.c": "REPLACE_RMDIR",
+         "lib/save-cwd.c": "!ac_cv_func_openat || !ac_cv_func_fdopendir",
+         "lib/snprintf.c": "REPLACE_SNPRINTF",

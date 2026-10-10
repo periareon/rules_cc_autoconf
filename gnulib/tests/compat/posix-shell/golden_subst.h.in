@@ -1,3 +1,0 @@
-/* subst.h.in */
-#define SUBST_POSIX_SHELL "/bin/bash"
-#define SUBST_PREFERABLY_POSIX_SHELL "/bin/bash"

@@ -3,14 +3,22 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 
 autoconf(
-    name = "supersede",
+    name = "gl_SUPERSEDE",
     checks = [
         # gl_SUPERSEDE checks for chown function
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/chown",
+        "//gnulib/m4/chown:AC_CHECK_FUNCS_ONCE_chown",  # AC_CHECK_FUNCS([chown])
         # For test compatibility - need basic header defines
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "supersede",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_SUPERSEDE",
     ],
 )

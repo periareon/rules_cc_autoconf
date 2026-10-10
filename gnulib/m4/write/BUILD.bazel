@@ -1,23 +1,57 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/write.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
+load("//autoconf:checks.bzl", "checks")
 
 # gl_FUNC_WRITE macro from write.m4
 # COMPLEX CASE: This M4 file uses m4_ifdef conditionals to check for
 # MSVC invalid parameter handling, SIGPIPE, and non-blocking I/O.
-# These checks involve shell variable logic and conditional module inclusion
-# that cannot be directly translated to Bazel.
-# The dependencies provide the necessary prerequisite checks.
+# REPLACE_WRITE=1 when the MSVC invalid parameter handler exists, when
+# <signal.h> lacks SIGPIPE or when non-blocking I/O is unavailable; all
+# three hold on native Windows and none on Linux/macOS.
+# Consumers that map write to rpl_write through GNULIB_WRITE must compile
+# lib/write.c when REPLACE_WRITE is 1 (gnulib GL_COND_OBJ_WRITE).
 autoconf(
-    name = "write",
+    name = "gl_FUNC_WRITE",
     checks = [
         # No direct compile checks - uses m4_ifdef conditionals
         # for gl_MSVC_INVAL, gl_SIGNAL_SIGPIPE, and gl_NONBLOCKING_IO
-    ],
+    ] + select({
+        # Native Windows: handler present, no SIGPIPE, no non-blocking I/O.
+        "@platforms//os:windows": [
+            checks.AC_SUBST("REPLACE_WRITE", 1),
+        ],
+        # Linux/macOS: SIGPIPE and non-blocking I/O exist, so only the
+        # handler probe (always "no" there) could set it.
+        "//conditions:default": [
+            checks.AC_SUBST(
+                "REPLACE_WRITE",
+                condition = "ac_cv_func__set_invalid_parameter_handler",
+                if_false = 0,
+                if_true = 1,
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/msvc-inval",
         # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# Prerequisites of lib/write.c: AC_DEFUN([gl_PREREQ_WRITE], [:]) does nothing.
+autoconf(
+    name = "gl_PREREQ_WRITE",
+    checks = [],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "write",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_WRITE",
+        ":gl_PREREQ_WRITE",
     ],
 )

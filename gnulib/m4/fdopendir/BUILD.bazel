@@ -3,24 +3,41 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
+# AC_CHECK_FUNCS_ONCE([fdopendir]): probe and config.h define, shared with
+# gl_DIRENT_SAFER (which never substitutes HAVE_FDOPENDIR).
+autoconf(
+    name = "AC_CHECK_FUNCS_ONCE_fdopendir",
+    checks = [
+        checks.AC_CHECK_FUNC(
+            "fdopendir",
+            define = "HAVE_FDOPENDIR",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)
+
 autoconf(
     name = "gl_FUNC_FDOPENDIR",
     checks = [
         # Equivalent to gl_FUNC_FDOPENDIR macro from fdopendir.m4
         # Note: Full implementation includes runtime checks that are not easily
         # replicable in Bazel
-        checks.AC_CHECK_FUNC(
-            "fdopendir",
-            define = "HAVE_FDOPENDIR",
+        # if test $ac_cv_func_fdopendir = no; then HAVE_FDOPENDIR=0
+        checks.AC_SUBST(
+            "HAVE_FDOPENDIR",
+            condition = "ac_cv_func_fdopendir",
         ),
+        # AC_CHECK_DECLS([fdopendir], [], [HAVE_DECL_FDOPENDIR=0], ...)
         checks.AC_CHECK_DECL(
             "fdopendir",
             define = "HAVE_DECL_FDOPENDIR",
             includes = ["#include <dirent.h>"],
+            subst = True,
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        ":AC_CHECK_FUNCS_ONCE_fdopendir",
         "//gnulib/m4/extensions",
         "//gnulib/m4/dirent_h",  # AC_REQUIRE([gl_DIRENT_H_DEFAULTS])
         # Note: AC_REQUIRE([AC_CANONICAL_HOST]) and AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])

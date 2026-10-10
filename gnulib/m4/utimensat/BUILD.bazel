@@ -3,14 +3,26 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
+# gl_CHECK_FUNCS_ANDROID([utimensat], [[#include <sys/stat.h>]]): probe and
+# config.h define, shared with gl_UTIMENS (which never substitutes HAVE_UTIMENSAT).
 autoconf(
-    name = "gl_FUNC_UTIMENSAT",
+    name = "gl_CHECK_FUNCS_ANDROID_utimensat",
     checks = [
-        # gl_FUNC_UTIMENSAT checks for utimensat function
-        # On macOS, utimensat is available
         checks.AC_CHECK_FUNC(
             "utimensat",
             define = "HAVE_UTIMENSAT",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "gl_FUNC_UTIMENSAT",
+    checks = [
+        # if test $ac_cv_func_utimensat = no; then HAVE_UTIMENSAT=0
+        checks.AC_SUBST(
+            "HAVE_UTIMENSAT",
+            condition = "ac_cv_func_utimensat",
         ),
     ] + select({
         "@platforms//os:macos": [
@@ -20,6 +32,7 @@ autoconf(
     }),
     visibility = ["//visibility:public"],
     deps = [
+        ":gl_CHECK_FUNCS_ANDROID_utimensat",
         "//gnulib/m4/extensions",
         "//gnulib/m4/openat",  # AC_REQUIRE([gl_FUNC_OPENAT])
         "//gnulib/m4/sys_stat_h",  # AC_REQUIRE([gl_SYS_STAT_H_DEFAULTS])

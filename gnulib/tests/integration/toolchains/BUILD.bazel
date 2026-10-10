@@ -1,0 +1,45 @@
+# The rule sets only expose their toolchain_info rules from `internal`
+# packages (the public API is the repository rule that fetches sources).
+# buildifier: disable=bzl-visibility
+load("@rules_bison//bison/internal:toolchain_info.bzl", "bison_toolchain_info")
+
+# buildifier: disable=bzl-visibility
+load("@rules_m4//m4/internal:toolchain_info.bzl", "m4_toolchain_info")
+
+m4_toolchain_info(
+    name = "m4_toolchain_info",
+    m4_tool = "@m4//:m4",
+)
+
+toolchain(
+    name = "m4",
+    toolchain = ":m4_toolchain_info",
+    toolchain_type = "@rules_m4//m4:toolchain_type",
+)
+
+# rules_bison points bison at its skeletons and at m4 through
+# `<bison>.runfiles/...` directory paths. Those are right on Linux and macOS,
+# where the sandbox materialises the runfiles tree (and only the tree: the
+# skeletons are not at their exec paths there). On Windows runfiles are
+# manifest-only, so that directory does not exist; there the skeletons are
+# plain inputs at their exec path (no sandbox), and m4 is resolved through the
+# manifest via the rlocationpath the BCR bison binary understands. Our entries
+# win because rules_bison applies `bison_env` last. `bison+` and `m4+` are the
+# canonical repository names of the BCR modules.
+bison_toolchain_info(
+    name = "bison_toolchain_info",
+    bison_env = select({
+        "@platforms//os:windows": {
+            "BISON_PKGDATADIR": "external/bison+/data",
+            "M4_RLOCATIONPATH": "m4+/m4.exe",
+        },
+        "//conditions:default": {},
+    }),
+    bison_tool = "@bison//:bison",
+)
+
+toolchain(
+    name = "bison",
+    toolchain = ":bison_toolchain_info",
+    toolchain_type = "@rules_bison//bison:toolchain_type",
+)

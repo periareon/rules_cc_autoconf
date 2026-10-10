@@ -1,2 +1,0 @@
-/* subst.h.in */
-#define SUBST_GWINSZ_IN_SYS_IOCTL "@GWINSZ_IN_SYS_IOCTL@"

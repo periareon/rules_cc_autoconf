@@ -16,6 +16,18 @@ filegroup(
     srcs = glob(["build-aux/config.*"]),
     visibility = ["//visibility:public"],
 )
+
+# Everything a bare `configure` may need from build-aux: config.guess and
+# config.sub for AC_CANONICAL_HOST, install-sh for AC_PROG_INSTALL, and the
+# `compile` wrapper that lets configure drive MSVC's cl.exe.
+filegroup(
+    name = "build-aux",
+    srcs = glob(["build-aux/config.*"]) + [
+        "build-aux/compile",
+        "build-aux/install-sh",
+    ],
+    visibility = ["//visibility:public"],
+)
 """
 
 def _gnulib_impl(module_ctx):

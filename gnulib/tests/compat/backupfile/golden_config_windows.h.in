@@ -1,4 +1,0 @@
-/* config.h.in */
-/* #undef D_INO_IN_DIRENT */
-#define HAVE_LONG_FILE_NAMES 1
-/* #undef HAVE_PATHCONF */

@@ -37,19 +37,27 @@ namespace {
  * fails.
  */
 std::string get_short_path(const std::string& long_path) {
+    // cmd.exe accepts forward slashes in an absolute program path such as
+    // `C:/.../cl.exe`, but parses a relative one such as
+    // `external/<repo>/bin/clang.exe` (hermetic toolchains) as the command
+    // `external` followed by switches: "'external' is not recognized as an
+    // internal or external command". Use backslashes throughout.
+    std::string path = long_path;
+    std::replace(path.begin(), path.end(), '/', '\\');
+
     // Get the required buffer size
-    DWORD length = GetShortPathNameA(long_path.c_str(), nullptr, 0);
+    DWORD length = GetShortPathNameA(path.c_str(), nullptr, 0);
     if (length == 0) {
         // If conversion fails, return original path quoted
-        return "\"" + long_path + "\"";
+        return "\"" + path + "\"";
     }
 
     // Get the short path
     std::vector<char> buffer(length);
-    DWORD result = GetShortPathNameA(long_path.c_str(), buffer.data(), length);
+    DWORD result = GetShortPathNameA(path.c_str(), buffer.data(), length);
     if (result == 0 || result >= length) {
         // If conversion fails, return original path quoted
-        return "\"" + long_path + "\"";
+        return "\"" + path + "\"";
     }
 
     return std::string(buffer.data());
@@ -317,6 +325,19 @@ std::vector<std::string> CheckRunner::get_compiler_and_flags(
         filter_error_flags(cpp ? config_.cpp_flags : config_.c_flags);
     auto processed = replace_marker(filtered, kCoptsMarker, extra_copts);
     cmd.insert(cmd.end(), processed.begin(), processed.end());
+    if (is_msvc_like(config_.compiler_type)) {
+        // Probes must see the real library symbol, not a compiler builtin.
+        // Autoconf's AC_CHECK_FUNC body declares `int f(void)` and calls
+        // `f()`; cl.exe treats memcmp/memcpy/fabs/labs/strlen/... as
+        // intrinsics whenever /Oi is active -- which /O2 (Bazel's opt mode,
+        // and therefore every exec-configuration tool build) switches on
+        // -- and rejects that call with C2168 "too few actual parameters
+        // for intrinsic function". The probe then reports "no" for a
+        // function every CRT has. /Oi- goes last so it wins over any /O2
+        // or /Oi earlier in the toolchain or per-check copts; it only
+        // affects the throwaway conftest, never the user's build.
+        cmd.push_back("/Oi-");
+    }
     return cmd;
 }
 
@@ -427,8 +448,8 @@ bool CheckRunner::try_compile_and_link(
     if (msvc) {
         // On MSVC, compile and link in one cl.exe invocation. Using cl.exe
         // directly (instead of separate cl.exe /c + link.exe) ensures that
-        // default libraries are linked, including legacy_stdio_definitions.lib
-        // which provides linker symbols for UCRT inline functions like printf.
+        // the CRT default libraries are linked, as they are for configure's
+        // own `cl conftest.c` probes.
         // Link flags are held back for the trailing /link block rather than
         // mixed in with the compile flags -- see append_msvc_link_block.
         std::vector<std::string> cmd =

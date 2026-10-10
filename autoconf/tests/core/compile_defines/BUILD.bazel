@@ -1,11 +1,11 @@
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:autoconf_package_info.bzl", "autoconf_package_info")
 load("//autoconf:checks.bzl", "checks")
-load("//autoconf:package_info.bzl", "package_info")
 load("//autoconf/tests:diff_test.bzl", "diff_test")
 
-package_info(
+autoconf_package_info(
     name = "package",
     package_name = "test_compile_defines",
     package_version = "1.0.0",
@@ -16,6 +16,10 @@ autoconf(
     name = "features",
     checks = [
         checks.AC_DEFINE("_ENABLE_FEATURE_A", 1),
+        # A string-valued define (the common form in the gnulib ports, e.g.
+        # LDBL_EXPBIT0_BIT): the probe must see `#define _FEATURE_C_LEVEL 20`,
+        # not the JSON-encoded `"20"`.
+        checks.AC_DEFINE("_FEATURE_C_LEVEL", "20"),
         # Define a failed check
         checks.AC_CHECK_FUNC(
             "doesnotexist",
@@ -54,6 +58,19 @@ int feature_b_enabled = 1;
 """,
             compile_defines = ["_ENABLE_FEATURE_B"],
             define = "HAVE_FEATURE_B",
+        ),
+        # _FEATURE_C_LEVEL is an integer in the preprocessor, as it is in
+        # autoconf's confdefs.h.
+        checks.AC_TRY_COMPILE(
+            code = """
+#if _FEATURE_C_LEVEL > 10
+int feature_c_enabled = 1;
+#else
+#error "_FEATURE_C_LEVEL is not an integer constant"
+#endif
+""",
+            compile_defines = ["_FEATURE_C_LEVEL"],
+            define = "HAVE_FEATURE_C",
         ),
     ],
     deps = [

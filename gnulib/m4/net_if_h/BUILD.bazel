@@ -19,29 +19,27 @@ autoconf(
         ),
 
         # AC_CHECK_HEADERS([net/if.h], ...) - only when not self-contained
-        checks.AC_TRY_COMPILE(
+        # else (not self-contained):
+        #   AC_CHECK_HEADERS([net/if.h], [], [], [[#include <sys/socket.h>]])
+        checks.AC_CHECK_HEADER(
+            "net/if.h",
             name = "_gl_cv_header_net_if_h",
-            code = """#include <sys/socket.h>
-#include <net/if.h>
-int main(void) { return 0; }""",
-            language = "c",
+            define = "HAVE_NET_IF_H",
+            includes = ["#include <sys/socket.h>"],
             requires = ["!_gl_cv_header_net_if_h_selfcontained"],
-        ),
-        checks.AC_DEFINE(
-            "HAVE_NET_IF_H",
-            "1",
-            requires = [
-                "!_gl_cv_header_net_if_h_selfcontained",
-                "_gl_cv_header_net_if_h==1",
-            ],
         ),
 
         # AC_SUBST([HAVE_NET_IF_H]) - only set when not self-contained
+        #   if test $ac_cv_header_net_if_h = yes; then HAVE_NET_IF_H=1 else 0
+        #   AC_SUBST([HAVE_NET_IF_H])
+        # When the header is self-contained the AC_SUBST is registered but the
+        # variable is never assigned, i.e. "" (the skipped check renders "").
         checks.AC_SUBST(
             "HAVE_NET_IF_H",
-            condition = "_gl_cv_header_net_if_h_selfcontained",
-            if_false = "1",
-            if_true = "",
+            condition = "_gl_cv_header_net_if_h",
+            if_false = "0",
+            if_true = "1",
+            requires = ["!_gl_cv_header_net_if_h_selfcontained"],
         ),
 
         # gl_NEXT_HEADERS([net/if.h]) - only called when not self-contained

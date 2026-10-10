@@ -1,3 +1,0 @@
-/* config.h.in */
-#define HAVE_FLOCKFILE 1
-#define HAVE_FUNLOCKFILE 1

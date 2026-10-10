@@ -3,17 +3,39 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 
 autoconf(
-    name = "pagealign_alloc",
+    name = "gl_PAGEALIGN_ALLOC",
+    checks = [],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_PREREQ_PAGEALIGN_ALLOC",  # gl_PREREQ_PAGEALIGN_ALLOC
+        "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
+    ],
+)
+
+# gl_PREREQ_PAGEALIGN_ALLOC: prerequisites of lib/pagealign_alloc.c.
+autoconf(
+    name = "gl_PREREQ_PAGEALIGN_ALLOC",
     checks = [
         # gl_PREREQ_PAGEALIGN_ALLOC checks for posix_memalign function
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/mmap-anon",
-        "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
-        "//gnulib/m4/wchar_h:gl_WCHAR_H_CORE",
-        "//gnulib/m4/posix_memalign",
+        "//gnulib/m4/mmap-anon",  # AC_REQUIRE([gl_FUNC_MMAP_ANON])
+        # gl_CHECK_FUNCS_ANDROID([posix_memalign]): config.h define only; the
+        # HAVE_POSIX_MEMALIGN subst belongs to gl_FUNC_POSIX_MEMALIGN.
+        "//gnulib/m4/posix_memalign:gl_CHECK_FUNCS_ANDROID_posix_memalign",
         # For test compatibility - need basic header defines
+        # (AC_CHECK_HEADERS_ONCE([unistd.h]))
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "pagealign_alloc",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_PAGEALIGN_ALLOC",
+        ":gl_PREREQ_PAGEALIGN_ALLOC",
+        "//gnulib/m4/wchar_h:gl_WCHAR_H_CORE",  # kept from the previous shape for existing dependants
     ],
 )

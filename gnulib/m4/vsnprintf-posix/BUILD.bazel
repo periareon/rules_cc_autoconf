@@ -19,7 +19,6 @@ autoconf(
         "//gnulib/m4/vasnprintf",  # gl_PREREQ_VASNPRINTF_WITH_POSIX_EXTRAS, gl_REPLACE_VASNPRINTF
         # Additional dependencies for golden file:
         "//gnulib/m4/exponentd",
-        "//gnulib/m4/alloca",
         "//gnulib/m4/intmax_t",
         "//gnulib/m4/inttypes_h",
         # Note: nl_langinfo removed to avoid duplicate HAVE_LANGINFO_CODESET (already provided by codeset via mbrtowc)

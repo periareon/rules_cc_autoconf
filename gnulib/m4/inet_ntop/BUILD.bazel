@@ -3,33 +3,111 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
+# Prologue of the AC_CHECK_DECLS([inet_ntop]) probes.  The m4 uses
+# <ws2tcpip.h> on native Windows and <arpa/inet.h> (+ <netdb.h>) elsewhere;
+# the HAVE_* guards come from compile_defines.
+_DECL_INCLUDES = [
+    "#if HAVE_WINSOCK2_H",
+    "# include <ws2tcpip.h>",
+    "#else",
+    "# include <arpa/inet.h>",
+    "# if HAVE_NETDB_H",
+    "#  include <netdb.h>",
+    "# endif",
+    "#endif",
+]
+
+# gl_FUNC_INET_NTOP
 autoconf(
-    name = "inet_ntop",
+    name = "gl_FUNC_INET_NTOP",
     checks = [
-        # gl_FUNC_INET_NTOP checks for inet_ntop function
+        # HAVE_INET_NTOP=1
+        # INET_NTOP_LIB=
+        # gl_PREREQ_SYS_H_WINSOCK2
+        # if test $HAVE_WINSOCK2_H = 1; then
+        #   dnl Native Windows provides it in -lws2_32 with stdcall calling
+        #   dnl convention: REPLACE_INET_NTOP=1, and if <ws2tcpip.h> declares it
+        #   dnl INET_NTOP_LIB="-lws2_32" else HAVE_DECL_INET_NTOP=0.
+        # else
+        #   AC_SEARCH_LIBS([inet_ntop], [nsl resolv network socket], [],
+        #     [AC_CHECK_FUNCS([inet_ntop]); if no: HAVE_INET_NTOP=0])
+        #   AC_CHECK_HEADERS_ONCE([netdb.h])
+        #   AC_CHECK_DECLS([inet_ntop]) with <arpa/inet.h> and <netdb.h>
+        #   if no: HAVE_DECL_INET_NTOP=0
+        # fi
+        # (On glibc/macOS inet_ntop is in libc, so INET_NTOP_LIB stays empty.)
         checks.AC_CHECK_FUNC(
             "inet_ntop",
             name = "_gl_cv_func_inet_ntop",
+            requires = ["HAVE_WINSOCK2_H==0"],
         ),
-        # gl_FUNC_INET_NTOP checks for inet_ntop declaration
+        checks.AC_SUBST(
+            "HAVE_INET_NTOP",
+            condition = "HAVE_WINSOCK2_H==1 || _gl_cv_func_inet_ntop",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # (The probe is not gated on the Unix branch: on native Windows the
+        # header is absent, so the result is the same #undef, and the ungated
+        # probe shares its result with gl_NETDB_H.)
+        checks.AC_CHECK_HEADER(
+            "netdb.h",
+            define = "HAVE_NETDB_H",
+        ),
         checks.AC_CHECK_DECL(
             "inet_ntop",
-            define = "HAVE_DECL_INET_NTOP",
-            includes = [
-                "#include <arpa/inet.h>",
-                "#include <netdb.h>",
+            compile_defines = [
+                "HAVE_WINSOCK2_H",
+                "HAVE_NETDB_H",
             ],
+            define = "HAVE_DECL_INET_NTOP",
+            includes = _DECL_INCLUDES,
         ),
-        # AC_SUBST([INET_NTOP_LIB]) - library needed for inet_ntop
-        # On macOS/Linux, inet_ntop is in libc, so INET_NTOP_LIB is empty
-        checks.AC_SUBST("INET_NTOP_LIB", ""),
+        checks.AC_SUBST(
+            "HAVE_DECL_INET_NTOP",
+            condition = "ac_cv_have_decl_inet_ntop",
+            if_false = "0",
+            if_true = "1",
+        ),
+        checks.AC_SUBST(
+            "INET_NTOP_LIB",
+            condition = "HAVE_WINSOCK2_H==1 && ac_cv_have_decl_inet_ntop",
+            if_false = "",
+            if_true = "-lws2_32",
+        ),
+        checks.AC_SUBST(
+            "REPLACE_INET_NTOP",
+            condition = "HAVE_WINSOCK2_H==1",
+            if_false = "0",
+            if_true = "1",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        # AC_REQUIRE([gl_ARPA_INET_H_DEFAULTS]) is satisfied by the toolchain.
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/extensions",
-        "//gnulib/m4/netdb_h",
-        "//gnulib/m4/netinet_in_h:gl_HEADER_NETINET_IN",
-        "//gnulib/m4/sys_socket_h:gl_SYS_SOCKET_H",
+        "//autoconf/macros/AC_C_RESTRICT",
+        # gl_PREREQ_SYS_H_WINSOCK2 (HAVE_WINSOCK2_H)
+        "//gnulib/m4/sys_socket_h:gl_PREREQ_SYS_H_WINSOCK2",
+    ],
+)
+
+# gl_PREREQ_INET_NTOP - AC_REQUIRE([gl_SOCKET_FAMILIES])
+autoconf(
+    name = "gl_PREREQ_INET_NTOP",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//gnulib/m4/sockpfaf:gl_SOCKET_FAMILIES",
+    ],
+)
+
+# Package-level aggregator (matches package name).
+autoconf(
+    name = "inet_ntop",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_INET_NTOP",
+        ":gl_PREREQ_INET_NTOP",
     ],
 )

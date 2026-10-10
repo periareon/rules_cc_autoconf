@@ -4,15 +4,57 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
 autoconf(
-    name = "fenv-exceptions-tracking",
+    name = "gl_FENV_EXCEPTIONS_TRACKING",
     checks = [
-        # Golden expects these concrete substitutions.
+        # gl_MATHFUNC([feraiseexcept], ...) links without -lm on the platforms
+        # we target, so both substitutions are empty.
         checks.AC_SUBST("FENV_EXCEPTIONS_TRACKING_LIBM", ""),
         checks.AC_SUBST("FERAISEEXCEPT_LIBM", ""),
-    ],
+    ] + select({
+        "@platforms//os:windows": [
+            # case "$host" in
+            #   *86*-*-mingw* | *86*-*-windows*)
+            #     AC_CACHE_CHECK([whether fetestexcept works],
+            #       [gl_cv_func_fetestexcept_works],
+            #       [AC_EGREP_CPP([Problem], [#ifndef __MINGW32__ Problem #endif],
+            #          ["guessing no"], ["guessing yes"])])
+            #     case ... *yes) ;; *) REPLACE_FERAISEEXCEPT=1 ;;
+            # On MSVC/x86 fetestexcept may not consider the exception flags
+            # in the SSE unit, so feraiseexcept (same compilation unit) is
+            # overridden.  Other Windows CPUs do not match the case at all.
+            checks.AC_TRY_COMPILE(
+                name = "gl_cv_func_fetestexcept_works",
+                code = """\
+#if (defined __i386__ || defined __x86_64__ || defined _M_IX86 || defined _M_X64) && !defined __MINGW32__
+ #error "guessing no: fetestexcept is unreliable on MSVC/x86"
+#endif
+int main(void) { return 0; }
+""",
+                language = "c",
+            ),
+            checks.AC_SUBST(
+                "REPLACE_FERAISEEXCEPT",
+                condition = "gl_cv_func_fetestexcept_works",
+                if_false = "1",
+                if_true = "0",
+            ),
+        ],
+        # Linux/macOS: none of the host cases apply; the gl_FENV_H_DEFAULTS
+        # values of 0 stand.
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
-        "//gnulib/m4/fenv-exceptions",
+        "//gnulib/m4/fenv-exceptions",  # AC_REQUIRE([gl_FENV_H_DEFAULTS]) via fenv-exceptions
+    ],
+)
+
+autoconf(
+    name = "fenv-exceptions-tracking",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FENV_EXCEPTIONS_TRACKING",
     ],
 )

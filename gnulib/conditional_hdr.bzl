@@ -39,6 +39,7 @@ def _gnulib_conditional_hdr_impl(ctx):
     args.add("--next-header", ctx.attr.next_header)
 
     ctx.actions.run(
+        toolchain = None,
         executable = ctx.executable._runner,
         arguments = [args],
         inputs = [src_file, condition_file, include_next_file, next_header_file],

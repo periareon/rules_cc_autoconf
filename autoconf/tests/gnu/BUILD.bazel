@@ -1,0 +1,96 @@
+"""GNU autotools oracle: pinned autoconf/automake and the conformance test.
+
+The tools are hermetic; only the POSIX shell and userland come from the host
+(the MSYS2 bash Bazel already requires on Windows, via rules_shell).
+"""
+
+load("@rules_venv//python:py_binary.bzl", "py_binary")
+load("@rules_venv//python:py_library.bzl", "py_library")
+load(":deps.bzl", "AUTOCONF_VERSION", "AUTOMAKE_API_VERSION", "AUTOMAKE_VERSION")
+load(":toolchain.bzl", "autotools_binary", "autotools_test", "autotools_toolchain")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files([
+    "autotools.py",
+    "m4_fseeko.patch",
+    "conformance_tester.py",
+    "run_tool.py",
+    "smoke_test.py",
+])
+
+toolchain_type(
+    name = "toolchain_type",
+)
+
+autotools_toolchain(
+    name = "autotools_impl",
+    aclocal = "@automake//:bin/aclocal",
+    autoconf = "@autoconf//:bin/autoconf",
+    autoconf_files = "@autoconf//:files",
+    autoconf_version = AUTOCONF_VERSION,
+    automake_api_version = AUTOMAKE_API_VERSION,
+    automake_files = "@automake//:files",
+    automake_version = AUTOMAKE_VERSION,
+    m4 = "@m4//:m4",
+)
+
+toolchain(
+    name = "autotools_toolchain",
+    toolchain = ":autotools_impl",
+    toolchain_type = ":toolchain_type",
+)
+
+py_library(
+    name = "autotools",
+    srcs = ["autotools.py"],
+    imports = ["../../.."],
+    deps = ["@rules_venv//python/runfiles"],
+)
+
+py_binary(
+    name = "run_tool",
+    srcs = ["run_tool.py"],
+    main = "run_tool.py",
+    deps = [":autotools"],
+)
+
+[
+    autotools_binary(
+        name = tool,
+        runner = ":run_tool",
+        tool = tool,
+    )
+    for tool in [
+        "aclocal",
+        "autoconf",
+        "autoheader",
+        "autom4te",
+        "autoreconf",
+        "m4",
+        "perl",
+    ]
+]
+
+py_binary(
+    name = "smoke_test_bin",
+    srcs = ["smoke_test.py"],
+    main = "smoke_test.py",
+    deps = [":autotools"],
+)
+
+autotools_test(
+    name = "smoke_test",
+    size = "small",
+    runner = ":smoke_test_bin",
+)
+
+py_binary(
+    name = "conformance_tester",
+    srcs = ["conformance_tester.py"],
+    main = "conformance_tester.py",
+    deps = [
+        ":autotools",
+        "//autoconf/tests:diff_tester",
+    ],
+)

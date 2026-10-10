@@ -3,6 +3,7 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 load("//gnulib:macros.bzl", gl_macros = "macros")
+load(":inttypes.bzl", "long_long_condition")
 
 # gl_INTTYPES_H (AC_DEFUN_ONCE)
 # Top-level inttypes.h support: requires gl_INTTYPES_INCOMPLETE then gl_INTTYPES_PRI_SCN.
@@ -17,69 +18,92 @@ autoconf(
 )
 
 # gl_INTTYPES_INCOMPLETE
-# AC_CHECK_HEADERS_ONCE(inttypes.h), gl_INTTYPES_H_DEFAULTS,
-# gl_CHECK_NEXT_HEADERS(inttypes.h), gl_MULTIARCH, gl_WARN_ON_USE_PREPARE.
-# Not depending on imaxabs/imaxdiv/strtoimax/strtoumax here to avoid duplicate
-# REPLACE_* substs; those modules provide REPLACE_* when used.
+# AC_REQUIRE([gl_STDINT_H]) (stdint.m4, which pulls limits-h, wint_t, longlong,
+# wchar_h and multiarch), AC_CHECK_HEADERS_ONCE(inttypes.h),
+# gl_CHECK_NEXT_HEADERS(inttypes.h), AC_C_RESTRICT. The AC_REQUIRE of
+# gl_INTTYPES_H_DEFAULTS is not modelled as a dep: the function-related
+# defaults (HAVE_DECL_IMAXABS, REPLACE_STRTOIMAX, ...) come from the gnulib
+# toolchain defaults, and the imaxabs/imaxdiv/strtoimax/strtoumax modules
+# provide real values that would otherwise conflict; the PRI/SCN values are
+# computed by gl_INTTYPES_PRI_SCN.
 autoconf(
     name = "gl_INTTYPES_INCOMPLETE",
     checks = gl_macros.GL_CHECK_NEXT_HEADERS(["inttypes.h"]),
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//autoconf/macros/AC_C_RESTRICT",
         "//gnulib/m4/include_next",
         "//gnulib/m4/multiarch",
-        "//gnulib/m4/stdint_h",
+        "//gnulib/m4/stdint:gl_STDINT_H",
     ],
 )
 
 # gl_INTTYPES_PRI_SCN
-# Ensures PRI* and SCN* format macros are defined. PRIPTR_PREFIX comes from
-# gl_INTTYPES_H_DEFAULTS; condition vars from gl_INTTYPES_CHECK_LONG_LONG_INT_CONDITION.
-# Depends on stdint for types. No local checks to avoid duplicate subst.
+# PRIPTR_PREFIX: with a usable system <stdint.h> (GL_GENERATE_STDINT_H false,
+# true on every platform this repo targets) upstream tries '', 'l', 'll', 'I64'
+# in turn and keeps the first prefix whose type matches intptr_t. LP64 systems
+# give "l", LLP64 (Win64) gives "ll"; the ILP32 '' case is not modelled.
+# The value carries its own double quotes, as upstream's does.
 autoconf(
     name = "gl_INTTYPES_PRI_SCN",
-    checks = [],
+    checks = [
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_priptr_prefix_l",
+            code = """\
+#include <stdint.h>
+extern intptr_t foo;
+extern long int foo;
+int main (void) { return 0; }
+""",
+            language = "c",
+        ),
+        checks.AC_SUBST(
+            "PRIPTR_PREFIX",
+            condition = "gl_cv_priptr_prefix_l",
+            if_false = "\"ll\"",
+            if_true = "\"l\"",
+        ),
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_INTTYPES_CHECK_LONG_LONG_INT_CONDITION",
-        "//gnulib/m4/stdint_h",
+        "//gnulib/m4/stdint:gl_STDINT_H",
     ],
 )
 
-# gl_INTTYPES_CHECK_LONG_LONG_INT_CONDITION
-# Helper: sets INT32/64 and UINT32/64 condition variables (1/0 or string).
-# In m4 this uses AC_COMPILE_IFELSE; here we use default values.
+# gl_INTTYPES_CHECK_LONG_LONG_INT_CONDITION, as invoked by gl_INTTYPES_PRI_SCN.
+# (APPLE_UNIVERSAL_BUILD=0 is assumed; a universal build sets the *64* ones to -1.)
 autoconf(
     name = "gl_INTTYPES_CHECK_LONG_LONG_INT_CONDITION",
-    checks = [
-        checks.AC_SUBST("INT32_MAX_LT_INTMAX_MAX", 1),
-        checks.AC_SUBST("INT64_MAX_EQ_LONG_MAX", "defined _LP64"),
-        checks.AC_SUBST("UINT32_MAX_LT_UINTMAX_MAX", 1),
-        checks.AC_SUBST("UINT64_MAX_EQ_ULONG_MAX", "defined _LP64"),
-    ],
+    checks = long_long_condition(
+        "INT32_MAX_LT_INTMAX_MAX",
+        "defined INT32_MAX && defined INTMAX_MAX",
+        "INT32_MAX < INTMAX_MAX",
+        "sizeof (int) < sizeof (long long int)",
+    ) + long_long_condition(
+        "INT64_MAX_EQ_LONG_MAX",
+        "defined INT64_MAX",
+        "INT64_MAX == LONG_MAX",
+        "sizeof (long long int) == sizeof (long int)",
+    ) + long_long_condition(
+        "UINT32_MAX_LT_UINTMAX_MAX",
+        "defined UINT32_MAX && defined UINTMAX_MAX",
+        "UINT32_MAX < UINTMAX_MAX",
+        "sizeof (unsigned int) < sizeof (unsigned long long int)",
+    ) + long_long_condition(
+        "UINT64_MAX_EQ_ULONG_MAX",
+        "defined UINT64_MAX",
+        "UINT64_MAX == ULONG_MAX",
+        "sizeof (unsigned long long int) == sizeof (unsigned long int)",
+    ),
     visibility = ["//visibility:public"],
-)
-
-# gl_INTTYPES_H_REQUIRE_DEFAULTS
-# Ensures default settings are expanded once; sets GNULIB_* module indicator
-# defaults to 0. Invoked by gl_INTTYPES_MODULE_INDICATOR.
-# Pulls in DEFAULTS + CHECK_LONG_LONG_INT_CONDITION so "defaults" gets all substs.
-autoconf(
-    name = "gl_INTTYPES_H_REQUIRE_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("GNULIB_IMAXABS", 0),
-        checks.AC_SUBST("GNULIB_IMAXDIV", 0),
-        checks.AC_SUBST("GNULIB_STRTOIMAX", 0),
-        checks.AC_SUBST("GNULIB_STRTOUMAX", 0),
-    ],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":gl_INTTYPES_H_DEFAULTS",
-    ],
 )
 
 # gl_INTTYPES_H_DEFAULTS
-# PRI/SCN condition vars (INT32_*, etc.) are in gl_INTTYPES_CHECK_LONG_LONG_INT_CONDITION.
+# Seeds every inttypes variable with upstream's defaults. Modules that only
+# AC_REQUIRE the defaults (imaxabs, strtoimax, ...) get these values; the
+# inttypes module itself computes the PRI/SCN ones in gl_INTTYPES_PRI_SCN.
 # Must not be AC_REQUIREd; only invoked outside or in non-AC_REQUIREd macros.
 autoconf(
     name = "gl_INTTYPES_H_DEFAULTS",
@@ -102,6 +126,24 @@ autoconf(
         checks.AC_SUBST("UINT64_MAX_EQ_ULONG_MAX", "defined _LP64"),
     ],
     visibility = ["//visibility:public"],
+)
+
+# gl_INTTYPES_H_REQUIRE_DEFAULTS
+# Ensures default settings are expanded once; sets GNULIB_* module indicator
+# defaults to 0. Invoked by gl_INTTYPES_MODULE_INDICATOR.
+# Pulls in DEFAULTS + CHECK_LONG_LONG_INT_CONDITION so "defaults" gets all substs.
+autoconf(
+    name = "gl_INTTYPES_H_REQUIRE_DEFAULTS",
+    checks = [
+        checks.AC_SUBST("GNULIB_IMAXABS", 0),
+        checks.AC_SUBST("GNULIB_IMAXDIV", 0),
+        checks.AC_SUBST("GNULIB_STRTOIMAX", 0),
+        checks.AC_SUBST("GNULIB_STRTOUMAX", 0),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_INTTYPES_H_DEFAULTS",
+    ],
 )
 
 # inttypes - main module (public target)

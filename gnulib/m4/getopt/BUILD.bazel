@@ -37,9 +37,12 @@ autoconf(
             "getopt.h",
             name = "_gl_cv_header_getopt_h",
         ),
+        # gl_CHECK_NEXT_HEADERS([getopt.h]) -> AC_CHECK_HEADERS_ONCE: the
+        # config.h macro is only defined when the header exists.
         checks.AC_DEFINE(
             "HAVE_GETOPT_H",
             condition = "_gl_cv_header_getopt_h",
+            if_false = None,
         ),
         checks.AC_SUBST(
             "HAVE_GETOPT_H",

@@ -8,7 +8,7 @@ int main(void) {
     // These functions should exist and be linkable
     assert(HAVE_MALLOC == 1);
     assert(HAVE_FREE == 1);
-    assert(HAVE_PRINTF == 1);
+    assert(HAVE_PUTS == 1);
     assert(HAVE_STRLEN == 1);
 
     // Verify we can actually use them (this tests linkage)

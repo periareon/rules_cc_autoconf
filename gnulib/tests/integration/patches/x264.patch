@@ -1,0 +1,18 @@
+# x264 2023.10.1.bcr.6: upstream configure compiles with
+# `-std=gnu99 -D_GNU_SOURCE` for every GNU-style compiler (configure line 916);
+# the overlay dropped both. common/cpu.c calls sched_getaffinity, which glibc
+# declares only under _GNU_SOURCE: gcc merely warned about the implicit
+# declaration, clang >= 16 rejects it (seen with the hermetic_llvm config).
+#
+# Remove once the overlay on the Bazel Central Registry is updated.
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -480,6 +480,8 @@
+     ],
+     "//conditions:default": [
+         "-w",
++        "-std=gnu99",
++        "-D_GNU_SOURCE",
+         "-O3",
+         "-ffast-math",
+         "-fomit-frame-pointer",

@@ -48,11 +48,13 @@ autoconf(
             name = "_gl_cv_header_OS_h",
             requires = ["!gl_cv_func_getpagesize"],
         ),
+        # HAVE_OS_H=1 only when getpagesize is missing and OS.h exists (the
+        # header check is skipped otherwise, which evaluates as false here).
         checks.AC_SUBST(
             "HAVE_OS_H",
-            condition = "gl_cv_func_getpagesize",
-            if_false = "_gl_cv_header_OS_h",  # Use header check result if getpagesize not found
-            if_true = 0,  # If getpagesize found, HAVE_OS_H=0
+            condition = "_gl_cv_header_OS_h",
+            if_false = 0,
+            if_true = 1,
         ),
 
         # Note: getpagesize only needs sys/param.h if getpagesize function is not found,

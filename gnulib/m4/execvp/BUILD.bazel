@@ -3,16 +3,28 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
+# gl_FUNC_EXECVP: the only decision is made on $host_os.
+#   case "$host_os" in
+#     mingw* | windows*) REPLACE_EXECVP=1 ;;
+#   esac
+autoconf(
+    name = "gl_FUNC_EXECVP",
+    checks = select({
+        "@platforms//os:windows": [
+            checks.AC_SUBST("REPLACE_EXECVP", 1),
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST]),
+    ],
+)
+
 autoconf(
     name = "execvp",
-    checks = [
-        # Equivalent to gl_FUNC_EXECVP macro from execvp.m4
-        # Note: REPLACE_EXECVP=1 is set on Windows in the m4, but that's
-        # platform-specific logic that would need select() in Bazel
-        checks.AC_CHECK_FUNC(
-            "execvp",
-            define = "HAVE_EXECVP",
-        ),
-    ],
     visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_EXECVP",
+    ],
 )

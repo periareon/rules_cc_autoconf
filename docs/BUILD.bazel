@@ -57,12 +57,12 @@ stardoc(
 )
 
 stardoc(
-    name = "package_info",
-    out = "src/package_info.md",
-    input = "//autoconf:package_info.bzl",
+    name = "autoconf_package_info",
+    out = "src/autoconf_package_info.md",
+    input = "//autoconf:autoconf_package_info.bzl",
     table_of_contents_template = "@stardoc//stardoc:templates/markdown_tables/table_of_contents.vm",
     tags = ["manual"],
-    deps = ["//autoconf:package_info_bzl"],
+    deps = ["//autoconf:autoconf_package_info_bzl"],
 )
 
 mdbook(
@@ -71,10 +71,10 @@ mdbook(
         ":autoconf",
         ":autoconf_hdr",
         ":autoconf_linkopts",
+        ":autoconf_package_info",
         ":autoconf_srcs",
         ":autoconf_toolchain",
         ":checks",
-        ":package_info",
     ],
     book = "book.toml",
     # Windows builds are typically super slow in CI so they're avoided.

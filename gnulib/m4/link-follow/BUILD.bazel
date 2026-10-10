@@ -1,17 +1,53 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/link-follow.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
+load("//autoconf:checks.bzl", "checks")
+
+# gl_FUNC_LINK_FOLLOWS_SYMLINK
+#
+# AC_CHECK_FUNCS_ONCE([readlink]); gl_link_follows_symlinks=0 (GNU behavior)
+# unless readlink exists, in which case M4 runs a __xpg4 link probe and an
+# AC_RUN_IFELSE probe (glibc/musl Linux: cross-guess "no" -> 0; otherwise
+# the runtime result: macOS follows symlinks -> 1).
+autoconf(
+    name = "gl_FUNC_LINK_FOLLOWS_SYMLINK",
+    checks = select({
+        # Linux: link() does NOT follow symlinks.
+        "@platforms//os:linux": [
+            checks.AC_DEFINE("LINK_FOLLOWS_SYMLINKS", "0"),
+        ],
+        # macOS: runtime probe says link() follows symlinks (BSD heritage).
+        "@platforms//os:macos": [
+            checks.AC_DEFINE("LINK_FOLLOWS_SYMLINKS", "1"),
+        ],
+        # Windows: readlink is absent, so gl_link_follows_symlinks stays 0;
+        # should readlink exist, keep the conservative non-Linux value.
+        "@platforms//os:windows": [
+            checks.AC_DEFINE_UNQUOTED(
+                "LINK_FOLLOWS_SYMLINKS",
+                condition = "ac_cv_func_readlink",
+                if_false = "0",
+                if_true = "1",
+            ),
+        ],
+        "//conditions:default": [
+            checks.AC_DEFINE("LINK_FOLLOWS_SYMLINKS", "1"),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        # AC_CHECK_FUNCS_ONCE([readlink]) - probe + config.h define only; the
+        # HAVE_READLINK subst keeps its gl_UNISTD_H_DEFAULTS value.
+        "//gnulib/m4/readlink:AC_CHECK_FUNCS_ONCE_readlink",
+    ],
+)
 
 autoconf(
     name = "link-follow",
-    checks = [
-        # Note: link-follow.m4 may not exist in gnulib, or this module may not have checks
-    ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/readlink",
-        "//gnulib/m4/linkat",
-        # For test compatibility - need basic header defines
-        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        ":gl_FUNC_LINK_FOLLOWS_SYMLINK",
     ],
 )
