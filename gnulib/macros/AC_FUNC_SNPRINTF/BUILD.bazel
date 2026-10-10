@@ -9,17 +9,20 @@ Defines:
 """
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
-load("//autoconf:checks.bzl", "checks")
+load("//autoconf:checks.bzl", "checks", "utils")
 
 autoconf(
     name = "AC_FUNC_SNPRINTF",
     checks = [
-        # Check for snprintf function
-        # Use AC_CHECK_FUNC without code parameter - it will use default extern declaration trick
-        # which works for functions declared in headers
+        # GNU's program alone: gnulib documents snprintf as "missing on MSVC 14"
+        # and gl_REPLACE_SNPRINTF is built on that answer; the default
+        # AC_CHECK_FUNC code list would say yes on MSVC.
+        # https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/doc/posix-functions/snprintf.texi#L15-L16
+        # https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/snprintf.m4#L45-L62
         checks.AC_CHECK_FUNC(
             "snprintf",
             name = "ac_cv_func_snprintf",
+            code = utils.AC_LANG_FUNC_LINK_TRY("snprintf"),
         ),
         # AC_CHECK_FUNCS semantics: HAVE_SNPRINTF is defined to 1 when the
         # probe links and left undefined otherwise (MSVC: UCRT inlines

@@ -1,0 +1,138 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:autoconf_package_info.bzl", "autoconf_package_info")
+load("//autoconf:checks.bzl", "checks", "macros", "utils")
+load("//autoconf/tests:diff_test.bzl", "diff_test")
+
+# Regression test: AC_CHECK_FUNC must find UCRT header-inline functions,
+# which GNU autoconf's bare-symbol probe reports absent on MSVC. See
+# _AC_CHECK_FUNC_MSVC_INLINE_TEMPLATE in //autoconf:checks.bzl for why and
+# how. This pins the default (callable) answer, the GNU-literal answer a
+# caller gets by passing GNU's program alone as `code`, and the user-facing
+# half of the mechanism: a caller-supplied `code` list.
+
+autoconf_package_info(
+    name = "package",
+    package_name = "test_inline_funcs_msvc",
+    package_version = "1.0.0",
+)
+
+_INLINE = [
+    "snprintf",
+    "vfprintf",
+    "vprintf",
+    "vsnprintf",
+]
+
+# A caller's own alternative program: _cprintf through the header that
+# declares it, which is not part of AC_INCLUDES_DEFAULT.
+_CPRINTF_VIA_CONIO = """\
+#include <conio.h>
+static void (*volatile p)(void);
+int main(void) {
+    p = (void (*)(void)) &_cprintf;
+    return 0;
+}
+"""
+
+autoconf(
+    name = "autoconf",
+    checks = macros.AC_CHECK_FUNCS(_INLINE) + [
+        # Under /O2 as well: fastbuild probes at /Od, and the answer must not
+        # depend on the optimiser keeping the address.
+        checks.AC_CHECK_FUNC(
+            "vfprintf",
+            name = "ac_cv_func_vfprintf_o2",
+            copts = ["/O2"],
+            define = "HAVE_VFPRINTF_O2",
+        ),
+        # GNU's program alone: GNU's literal answer, which gnulib's
+        # gl_REPLACE_* macros are built on. Must stay "no".
+        checks.AC_CHECK_FUNC(
+            "vfprintf",
+            name = "ac_cv_func_vfprintf_gnu",
+            code = utils.AC_LANG_FUNC_LINK_TRY("vfprintf"),
+            define = "HAVE_VFPRINTF_GNU",
+        ),
+        # Exported symbol with GNU's program alone: the bare-symbol probe
+        # itself is untouched.
+        checks.AC_CHECK_FUNC(
+            "puts",
+            name = "ac_cv_func_puts_gnu",
+            code = utils.AC_LANG_FUNC_LINK_TRY("puts"),
+            define = "HAVE_PUTS_GNU",
+        ),
+        # C++: the headers are included in C++ mode.
+        checks.AC_CHECK_FUNC(
+            "vfprintf",
+            name = "ac_cv_func_vfprintf_cxx",
+            define = "HAVE_VFPRINTF_CXX",
+            language = "cpp",
+        ),
+        # Scope control: _cprintf is header-inline in <conio.h>, which is not
+        # part of AC_INCLUDES_DEFAULT, and ucrt.lib exports no symbol for it.
+        # The default probes only see the default headers, so GNU's "no"
+        # stands.
+        checks.AC_CHECK_FUNC(
+            "_cprintf",
+            define = "HAVE__CPRINTF",
+        ),
+        # A caller-supplied `code` list: GNU's program, then the caller's own
+        # program through <conio.h>. Tried in order; the latter succeeds.
+        checks.AC_CHECK_FUNC(
+            "_cprintf",
+            name = "ac_cv_func__cprintf_conio",
+            code = [
+                utils.AC_LANG_FUNC_LINK_TRY("_cprintf"),
+                _CPRINTF_VIA_CONIO,
+            ],
+            define = "HAVE__CPRINTF_CONIO",
+        ),
+        # Negative control: a function no CRT has. Keeps the test honest if
+        # a probe ever started succeeding for the wrong reason.
+        checks.AC_CHECK_FUNC(
+            "rules_cc_autoconf_no_such_function",
+            define = "HAVE_RULES_CC_AUTOCONF_NO_SUCH_FUNCTION",
+        ),
+    ],
+    # The per-check `/O2` is a cl flag; gcc and clang would read it as a file.
+    target_compatible_with = select({
+        "//autoconf/tests:msvc_like": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+    deps = [":package"],
+)
+
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    target_compatible_with = select({
+        "//autoconf/tests:msvc_like": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+    template = "config.h.in",
+    deps = [":autoconf"],
+)
+
+diff_test(
+    name = "diff_test",
+    file1 = "golden_config_windows.h.in",
+    file2 = ":config.h",
+    target_compatible_with = select({
+        "//autoconf/tests:msvc_like": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
+
+cc_test(
+    name = "test_inline_funcs_msvc",
+    srcs = [
+        "test_inline_funcs_msvc.c",
+        ":config.h",
+    ],
+    target_compatible_with = select({
+        "//autoconf/tests:msvc_like": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)

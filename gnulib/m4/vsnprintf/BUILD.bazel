@@ -1,7 +1,7 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/vsnprintf.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
-load("//autoconf:checks.bzl", "checks")
+load("//autoconf:checks.bzl", "checks", "utils")
 
 # Prerequisites of lib/vsnprintf.c (empty)
 autoconf(
@@ -27,7 +27,11 @@ autoconf(
         # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
         checks.AC_CHECK_FUNC(
             "vsnprintf",
-            # Use default code (extern declaration trick) - don't include headers
+            # GNU's program alone: gl_REPLACE_VSNPRINTF is built on GNU's "no" for
+            # the UCRT's header-inline vsnprintf; the default AC_CHECK_FUNC code
+            # list would say yes on MSVC.
+            # https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/vsnprintf.m4#L45-L62
+            code = utils.AC_LANG_FUNC_LINK_TRY("vsnprintf"),
         ),
 
         # if test $ac_cv_func_vsnprintf = yes; then

@@ -1,0 +1,52 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Define to 1 if you have the `snprintf' function. */
+#undef HAVE_SNPRINTF
+
+/* Define to 1 if you have the `vfprintf' function. */
+#undef HAVE_VFPRINTF
+
+/* Define to 1 if you have the `vprintf' function. */
+#undef HAVE_VPRINTF
+
+/* Define to 1 if you have the `vsnprintf' function. */
+#undef HAVE_VSNPRINTF
+
+/* Define to 1 if vfprintf probes as present when compiled with /O2. */
+#undef HAVE_VFPRINTF_O2
+
+/* Define to 1 if GNU autoconf's own program finds vfprintf. */
+#undef HAVE_VFPRINTF_GNU
+
+/* Define to 1 if GNU autoconf's own program finds puts. */
+#undef HAVE_PUTS_GNU
+
+/* Define to 1 if vfprintf probes as present from C++. */
+#undef HAVE_VFPRINTF_CXX
+
+/* Define to 1 if _cprintf (declared only in <conio.h>) probes as present. */
+#undef HAVE__CPRINTF
+
+/* Define to 1 if a caller-supplied `code` list finds _cprintf via <conio.h>. */
+#undef HAVE__CPRINTF_CONIO
+
+/* Define to 1 if a function that does not exist probes as present. */
+#undef HAVE_RULES_CC_AUTOCONF_NO_SUCH_FUNCTION
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION

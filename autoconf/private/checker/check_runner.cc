@@ -174,6 +174,19 @@ std::string CheckRunner::decode_result_value(const std::string& value) {
 
 CheckResult CheckRunner::run_check(const Check& check) {
     DebugLogger::debug("Running check for " + check_id(check));
+    CheckResult result = dispatch_check(check);
+
+    // See Check::alternative_codes().
+    const std::vector<std::string>& alternatives = check.alternative_codes();
+    for (size_t i = 0; i < alternatives.size() && !result.success; ++i) {
+        DebugLogger::debug(check_id(check) + ": program " +
+                           std::to_string(i + 1) + " failed; trying next");
+        result = dispatch_check(check.with_code(alternatives[i]));
+    }
+    return result;
+}
+
+CheckResult CheckRunner::dispatch_check(const Check& check) {
     switch (check.type()) {
         case CheckType::kFunction:
             return check_function(check);
