@@ -11,17 +11,17 @@ local_path_override(
 )
 
 bazel_dep(name = "bazel_skylib", version = "1.9.2")
-bazel_dep(name = "bison", version = "3.8.2.bcr.10")
-bazel_dep(name = "flex", version = "2.6.4.bcr.7")
+bazel_dep(name = "bison", version = "3.8.2.bcr.11")
+bazel_dep(name = "flex", version = "2.6.4.bcr.8")
 bazel_dep(name = "gmp", version = "6.3.0.bcr.2")
 bazel_dep(name = "libgd", version = "2.3.3")
 bazel_dep(name = "libmicrohttpd", version = "1.0.2.bcr.1")
 bazel_dep(name = "libpcap", version = "1.10.5.bcr.3")
 bazel_dep(name = "libssh2", version = "1.11.1.bcr.1")
 bazel_dep(name = "libwebsockets", version = "4.5.2")
-bazel_dep(name = "m4", version = "1.4.21.bcr.5")
+bazel_dep(name = "m4", version = "1.4.21.bcr.6")
 bazel_dep(name = "mosquitto", version = "2.1.2.bcr.2")
-bazel_dep(name = "patch", version = "2.8.bcr.2")
+bazel_dep(name = "patch", version = "2.8.bcr.3")
 bazel_dep(name = "platforms", version = "1.1.0")
 bazel_dep(name = "postgres", version = "18.4")
 bazel_dep(name = "readline", version = "8.3.bcr.1")
@@ -47,15 +47,15 @@ bazel_dep(name = "mpc", version = "1.4.1.bcr.2")
 bazel_dep(name = "mpfr", version = "4.2.2.bcr.1")
 bazel_dep(name = "nasm", version = "3.02")
 bazel_dep(name = "nvc", version = "1.21.0.bcr.1")
-bazel_dep(name = "pkgconf", version = "3.0.7")
+bazel_dep(name = "pkgconf", version = "3.0.7.bcr.1")
 bazel_dep(name = "ppp", version = "2.5.2.bcr.1")
 bazel_dep(name = "rules_kconfig", version = "0.4.0")
-bazel_dep(name = "sed", version = "4.10.bcr.1")
+bazel_dep(name = "sed", version = "4.10.bcr.2")
 bazel_dep(name = "teckit", version = "2.5.12")
 bazel_dep(name = "texlive", version = "2026.1.bcr.1")  # archive_override below
 bazel_dep(name = "tre", version = "0.9.0")
-bazel_dep(name = "wget", version = "1.25.0")
-bazel_dep(name = "wget2", version = "2.3.0")
+bazel_dep(name = "wget", version = "1.25.0.bcr.1")
+bazel_dep(name = "wget2", version = "2.3.0.bcr.1")
 bazel_dep(name = "x265", version = "4.1.bcr.1")
 bazel_dep(name = "xkbcommon", version = "1.9.2.bcr.beta.1")
 bazel_dep(name = "xpdf", version = "4.06")
@@ -111,34 +111,6 @@ register_toolchains("//toolchains:all")
 # documents what it changes and why. Drop them as the overlays are updated.
 
 single_version_override(
-    module_name = "bison",
-    patch_strip = 1,
-    patches = [
-        "//patches:bison.patch",
-        "//patches:bison_mingw.patch",
-    ],
-)
-
-single_version_override(
-    module_name = "m4",
-    patch_strip = 1,
-    patches = [
-        "//patches:m4.patch",
-        "//patches:m4_debug.patch",
-        "//patches:m4_mingw.patch",
-    ],
-)
-
-single_version_override(
-    module_name = "patch",
-    patch_strip = 1,
-    patches = [
-        "//patches:patch.patch",
-        "//patches:patch_mingw.patch",
-    ],
-)
-
-single_version_override(
     module_name = "cpio",
     patch_strip = 1,
     patches = ["//patches:cpio.patch"],
@@ -169,18 +141,6 @@ single_version_override(
 )
 
 single_version_override(
-    module_name = "flex",
-    patch_strip = 1,
-    patches = ["//patches:flex.patch"],
-)
-
-single_version_override(
-    module_name = "pkgconf",
-    patch_strip = 1,
-    patches = ["//patches:pkgconf.patch"],
-)
-
-single_version_override(
     module_name = "postgres",
     patch_strip = 1,
     patches = ["//patches:postgres.patch"],
@@ -190,24 +150,6 @@ single_version_override(
     module_name = "ppp",
     patch_strip = 1,
     patches = ["//patches:ppp.patch"],
-)
-
-single_version_override(
-    module_name = "sed",
-    patch_strip = 1,
-    patches = ["//patches:sed.patch"],
-)
-
-single_version_override(
-    module_name = "wget",
-    patch_strip = 1,
-    patches = ["//patches:wget.patch"],
-)
-
-single_version_override(
-    module_name = "wget2",
-    patch_strip = 1,
-    patches = ["//patches:wget2.patch"],
 )
 
 # openssl (reached through libssh2, postgres and others) only recognises

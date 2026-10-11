@@ -13,7 +13,6 @@ package(default_visibility = ["//visibility:public"])
 
 exports_files([
     "autotools.py",
-    "m4_fseeko.patch",
     "conformance_tester.py",
     "run_tool.py",
     "smoke_test.py",
