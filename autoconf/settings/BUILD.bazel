@@ -1,0 +1,41 @@
+load("@bazel_skylib//lib:selects.bzl", "selects")
+load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
+
+package(default_visibility = ["//visibility:public"])
+
+# Whether `std_copts()` (`//autoconf:standards.bzl`) emits anything.  Converted
+# projects spell the language standard their configure.ac demands with it,
+# on their checks and on their cc targets.  `--@rules_cc_autoconf//autoconf/settings:std_copts=false`
+# silences every use at once, leaving the standard to `--copt` / `--cxxopt`
+# alone; a transition can do the same for one subtree.
+bool_flag(
+    name = "std_copts",
+    build_setting_default = True,
+)
+
+config_setting(
+    name = "std_copts_enabled",
+    flag_values = {":std_copts": "true"},
+)
+
+config_setting(
+    name = "std_copts_disabled",
+    flag_values = {":std_copts": "false"},
+)
+
+# The compilers whose standard switch is not `-std=`, when std_copts is on.
+selects.config_setting_group(
+    name = "std_copts_msvc_cl",
+    match_all = [
+        ":std_copts_enabled",
+        "@rules_cc//cc/compiler:msvc-cl",
+    ],
+)
+
+selects.config_setting_group(
+    name = "std_copts_clang_cl",
+    match_all = [
+        ":std_copts_enabled",
+        "@rules_cc//cc/compiler:clang-cl",
+    ],
+)

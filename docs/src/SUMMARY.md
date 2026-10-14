@@ -13,6 +13,7 @@
   - [autoconf_toolchain](./autoconf_toolchain.md)
   - [autoconf_package_info](./autoconf_package_info.md)
   - [checks](./checks.md)
+  - [standards](./standards.md)
 
 - [Gnulib](./gnulib.md)
 

@@ -1,0 +1,72 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:autoconf_package_info.bzl", "autoconf_package_info")
+load("//autoconf:checks.bzl", "checks")
+load("//autoconf:standards.bzl", "std_copts")
+
+# `conlyopts = std_copts(c = "c99")`: the standard one configure.ac demands
+# of its own checks, spelled for the compiler in use.  The probes compile
+# only under C99.  The flags are the target's, not its dependencies': `dep`
+# is built under the command line alone, like a gnulib port would be.
+C99_PROBE = """\
+#if !defined __STDC_VERSION__ || __STDC_VERSION__ != 199901L
+#error not C99
+#endif
+int main(void) {
+    return 0;
+}
+"""
+
+autoconf_package_info(
+    name = "package",
+    package_name = "test_standards",
+    package_version = "1.0.0",
+)
+
+autoconf(
+    name = "dep",
+    checks = [
+        checks.AC_TRY_COMPILE(
+            name = "test_cv_dep_c99",
+            code = C99_PROBE,
+            define = "DEP_SEES_C99",
+        ),
+    ],
+)
+
+autoconf(
+    name = "autoconf",
+    checks = [
+        checks.AC_TRY_COMPILE(
+            name = "test_cv_c99",
+            code = C99_PROBE,
+            define = "HAVE_C99_STD",
+        ),
+    ],
+    conlyopts = std_copts(c = "c99"),
+    deps = [
+        ":dep",
+        ":package",
+    ],
+)
+
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    template = "config.h.in",
+    deps = [":autoconf"],
+)
+
+cc_test(
+    name = "test_standards",
+    srcs = [
+        "test_standards.c",
+        ":config.h",
+    ],
+    # MSVC has no C99 switch.
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)

@@ -8,6 +8,9 @@ autoconf(
     checks = [
         # Equivalent to gl_FUNC_FSETERR macro from fseterr.m4
         checks.AC_TRY_COMPILE(
+            # AC_CHECK_FUNCS_ONCE([__fseterr]): gnulib.mk's GL_COND_OBJ_FSETERR
+            # reads this cache variable.
+            name = "ac_cv_func___fseterr",
             code = """#include <stdio.h>
 #include <stdio_ext.h>
 

@@ -1604,7 +1604,9 @@ def _ac_check_member(
     if not name:
         name = "ac_cv_member_{}_{}".format(agg_clean, mem_clean)
 
-    header_code = _header_code_from_includes(includes) if includes else ""
+    # Autoconf's AC_CHECK_MEMBER falls back to AC_INCLUDES_DEFAULT, under which
+    # `struct stat` and `struct tm` are visible without an explicit include.
+    header_code = _header_code_from_includes(includes) if includes else _AC_INCLUDES_DEFAULT
 
     code = _AC_CHECK_MEMBER_TEMPLATE.format(header_code, aggregate, aggregate, member)
 

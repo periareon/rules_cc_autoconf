@@ -65,6 +65,15 @@ stardoc(
     deps = ["//autoconf:autoconf_package_info_bzl"],
 )
 
+stardoc(
+    name = "standards",
+    out = "src/standards.md",
+    input = "//autoconf:standards.bzl",
+    table_of_contents_template = "@stardoc//stardoc:templates/markdown_tables/table_of_contents.vm",
+    tags = ["manual"],
+    deps = ["//autoconf:standards_bzl"],
+)
+
 mdbook(
     name = "book",
     srcs = glob(["src/**/*.md"]) + [
@@ -75,6 +84,7 @@ mdbook(
         ":autoconf_srcs",
         ":autoconf_toolchain",
         ":checks",
+        ":standards",
     ],
     book = "book.toml",
     # Windows builds are typically super slow in CI so they're avoided.

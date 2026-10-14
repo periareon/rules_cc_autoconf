@@ -7,3 +7,4 @@
 - [autoconf_toolchain](./autoconf_toolchain.md#autoconf_toolchain)
 - [autoconf_package_info](./autoconf_package_info.md#autoconf_package_info)
 - [checks](./checks.md#checks)
+- [standards](./standards.md#std_copts)

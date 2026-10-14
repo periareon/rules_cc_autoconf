@@ -33,6 +33,15 @@ bzl_library(
 )
 
 bzl_library(
+    name = "standards_bzl",
+    srcs = ["standards.bzl"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/private:bzl_lib",
+    ],
+)
+
+bzl_library(
     name = "autoconf_srcs_bzl",
     srcs = ["autoconf_srcs.bzl"],
     visibility = ["//visibility:public"],
@@ -108,5 +117,6 @@ exports_files([
     "checks.bzl",
     "defs.bzl",
     "package_info.bzl",
+    "standards.bzl",
     "utils.bzl",
 ])

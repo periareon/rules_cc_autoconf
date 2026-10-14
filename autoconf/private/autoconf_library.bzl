@@ -40,17 +40,24 @@ _CONTENT_KEY_FIELDS = (
     "members",
 )
 
-def _check_content_key(check):
+def _check_content_key(check, target_flags = None):
     """Compute a deterministic content key from a check's implementation fields.
 
     Consumer metadata (name, define, subst, unquote) is excluded so that
     identical checks with different consumer names share the same key.
+    `target_flags` (the target's copts / conlyopts / cxxopts) are part of it
+    when set, since they change the result.
     """
     pairs = sorted([
         (k, check[k])
         for k in _CONTENT_KEY_FIELDS
         if k in check
     ])
+    if target_flags:
+        # The target's own copts change what every check of it sees: a result
+        # computed under other flags (a dependency's, the toolchain cache's)
+        # is not this target's.  Flagless targets keep the plain key.
+        pairs.append(("target_flags", target_flags))
     return json.encode(pairs)
 
 def _same_content_key(file_a, file_b, path_to_content_key):
@@ -181,6 +188,8 @@ def autoconf_impl_common(ctx, resolve_toolchain):
 
     # Get cc_toolchain info
     toolchain_info = get_cc_toolchain_info(ctx)
+    target_flags = [getattr(ctx.attr, name, []) for name in ("copts", "conlyopts", "cxxopts")]
+    target_flags = target_flags if any(target_flags) else None
 
     # Get transitive dependencies to compute compile_defines paths
     deps = collect_deps(ctx.attr.deps)
@@ -230,7 +239,7 @@ def autoconf_impl_common(ctx, resolve_toolchain):
         subst_name = _coerce_name(name, _coerce_name(define_key, subst))
 
         # Compute content key from implementation fields only
-        content_key = _check_content_key(check)
+        content_key = _check_content_key(check, target_flags)
 
         # Same check implementation already processed in this target — idempotent skip
         if content_key in content_cache and name in cache_results:
@@ -553,6 +562,19 @@ COMMON_ATTRS = {
     "checks": attr.string_list(
         doc = "List of JSON-encoded checks from checks (e.g., `checks.AC_CHECK_HEADER('stdio.h')`).",
         default = [],
+    ),
+    "conlyopts": attr.string_list(
+        doc = "Flags for the C compiles of this target's checks only, after `copts` (as on a cc_library): " +
+              "a C standard the script sets for its checks, `std_copts(c = \"gnu99\")`.  Not transitive: a " +
+              "standard for every check of a build, the gnulib ports included, is `--copt=-std=gnu99`.",
+    ),
+    "copts": attr.string_list(
+        doc = "Flags for every compile of this target's checks, after `--copt` / `--cxxopt` and before a " +
+              "check's own `copts` (as on a cc_library).  Not transitive.",
+    ),
+    "cxxopts": attr.string_list(
+        doc = "Flags for the C++ compiles of this target's checks only, after `copts` (as on a cc_library): " +
+              "`std_copts(cxx = \"c++17\")` for an `AX_CXX_COMPILE_STDCXX`.  Not transitive.",
     ),
     "deps": attr.label_list(
         doc = "Additional `autoconf`, `autoconf_library`, or `autoconf_package_info` dependencies.",

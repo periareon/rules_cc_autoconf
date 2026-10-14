@@ -1115,6 +1115,24 @@ autoconf_srcs(
 
 Each source is compiled only when its expression is true; the grammar is the one in [Expression syntax](#expression-syntax). The gnulib rule is `HAVE_X = 0 || REPLACE_X = 1`; checking only `REPLACE_X` misses every libc that lacks the function (MSVC, often MinGW).
 
+### A standard for every check
+
+Checks compile with Bazel's `--copt` / `--cxxopt` (the CFLAGS of a configure
+run), then the `autoconf` target's own `copts`, `conlyopts` and `cxxopts`
+(as on a `cc_library`), then a check's own `copts`. When one project's
+configure.ac demands a language standard, give its checks the standard the
+way its compiles get it: `conlyopts = std_copts(c = "gnu99")` or `cxxopts =
+std_copts(cxx = "c++17")`, with `std_copts` from
+`@rules_cc_autoconf//autoconf:standards.bzl`. The macro spells the standard
+for the compiler in use (`-std=gnu99` for GCC and clang, `/std:c11` for MSVC,
+which has no C99 switch), and the same call works on the project's `cc_*`
+targets. A target's flags are its own: they do not reach the ports of this
+repository or any other dependency, and results computed under them are not
+shared with targets that lack them. A standard for every check of a build is
+`--copt=-std=gnu99` on the command line, which keeps a single configuration
+and the toolchain's cached results. `--@rules_cc_autoconf//autoconf/settings:std_copts=false`
+turns every `std_copts()` off, so that the command line is the only source.
+
 ### Toolchain defaults yield to your values
 
 The `*_H_DEFAULTS` values (`HAVE_FOO=1`, `REPLACE_FOO=0`, `GNULIB_FOO=0`) are supplied by the autoconf toolchain, not by `deps`. In `autoconf_hdr` and `autoconf_srcs` a value coming from `deps` overrides a default, so a downstream target may set any value a default would otherwise supply without a duplicate error. The duplicate check applies only between explicit checks. Two consequences:

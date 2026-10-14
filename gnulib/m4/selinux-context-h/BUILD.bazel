@@ -1,10 +1,25 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/selinux-context-h.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "selinux-context-h",
     checks = [
+        # GL_GENERATE_SELINUX_CONTEXT_H (gl_CONDITIONAL_HEADER): the replacement header is generated
+        # unless <selinux/context.h> exists (and --with-selinux is not "no", which the
+        # port assumes: the option is the project's).  The probe carries no
+        # define: the port leaves HAVE_* for the headers to the project.
+        checks.AC_CHECK_HEADER(
+            "selinux/context.h",
+            name = "ac_cv_header_selinux_context_h",
+        ),
+        checks.M4_VARIABLE(
+            "GL_GENERATE_SELINUX_CONTEXT_H",
+            condition = "ac_cv_header_selinux_context_h",
+            if_false = "true",
+            if_true = "false",
+        ),
         # gl_HEADERS_SELINUX_CONTEXT_H checks for selinux/context.h header
         # On macOS, SELinux is not available, so the header check would fail
         # But the golden file only shows basic header defines

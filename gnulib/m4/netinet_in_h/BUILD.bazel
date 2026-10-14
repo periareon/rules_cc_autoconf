@@ -55,6 +55,15 @@ autoconf(
 
         # HAVE_IPV4 / HAVE_IPV6 are defined by gl_SOCKET_FAMILIES (sockpfaf.m4),
         # not by gl_HEADER_NETINET_IN.
+        # GL_GENERATE_NETINET_IN_H (gl_CONDITIONAL_HEADER): the wrapper is
+        # generated when <netinet/in.h> is not self-contained.  An
+        # M4_VARIABLE, like GL_GENERATE_ALLOCA_H: an automake conditional.
+        checks.M4_VARIABLE(
+            "GL_GENERATE_NETINET_IN_H",
+            condition = "gl_cv_header_netinet_in_h_selfcontained",
+            if_false = "true",
+            if_true = "false",
+        ),
         # gl_CHECK_NEXT_HEADERS([netinet/in.h]) - only called when not self-contained
     ] + gl_macros.GL_NEXT_HEADERS(
         ["netinet/in.h"],

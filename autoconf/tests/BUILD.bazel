@@ -25,6 +25,7 @@ py_binary(
     visibility = [
         "//autoconf/tests:__subpackages__",
         "//gnulib/tests:__subpackages__",
+        "//tools/convert:__subpackages__",
     ],
     deps = ["@rules_venv//python/runfiles"],
 )

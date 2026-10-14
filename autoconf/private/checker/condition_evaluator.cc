@@ -197,9 +197,49 @@ const CheckResult* find_result(
     return nullptr;
 }
 
+// A string result is stored JSON-encoded (`"present"`, quotes included) so
+// that the header generator can tell `1` from `"1"`; a condition such as
+// `bash_cv_signal_vintage==posix` compares the string itself.
+std::string decode_json_string(const std::string& value) {
+    if (value.size() < 2 || value.front() != '"' || value.back() != '"') {
+        return value;
+    }
+    std::string out;
+    out.reserve(value.size() - 2);
+    for (size_t i = 1; i + 1 < value.size(); ++i) {
+        char c = value[i];
+        if (c == '\\' && i + 2 < value.size()) {
+            char next = value[++i];
+            switch (next) {
+                case 'n':
+                    out += '\n';
+                    break;
+                case 't':
+                    out += '\t';
+                    break;
+                case 'r':
+                    out += '\r';
+                    break;
+                case 'b':
+                    out += '\b';
+                    break;
+                case 'f':
+                    out += '\f';
+                    break;
+                default:
+                    out += next;
+                    break;  // \" \\ \/ (and \uXXXX stays as written)
+            }
+            continue;
+        }
+        out += c;
+    }
+    return out;
+}
+
 std::string result_value(const CheckResult* r) {
     if (!r) return "";
-    return r->value.value_or("");
+    return decode_json_string(r->value.value_or(""));
 }
 
 // The text a comparison sees. A define with no value is `/* #undef X */` in
