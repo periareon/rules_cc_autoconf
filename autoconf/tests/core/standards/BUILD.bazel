@@ -1,0 +1,100 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:autoconf_package_info.bzl", "autoconf_package_info")
+load("//autoconf:checks.bzl", "checks")
+
+# `conlyopts`: flags for the C compiles of a target's own checks, as on a
+# cc_library, after the toolchain's and the command line's.  The probes
+# compile only under C99.  The flags are the target's, not its dependencies':
+# `dep` is built under the command line alone, like a gnulib port would be,
+# and must not be handed the result of the identical probe run with them.
+# MSVC has no C99 switch and ignores `-std=`, so the whole package stays off
+# Windows: `bazel test //...` builds `:autoconf` too, and its exact-C99
+# check would stop the build there.
+NOT_WINDOWS = select({
+    "@platforms//os:windows": ["@platforms//:incompatible"],
+    "//conditions:default": [],
+})
+
+C99_PROBE = """\
+#if !defined __STDC_VERSION__ || __STDC_VERSION__ != 199901L
+#error not C99
+#endif
+int main(void) {
+    return 0;
+}
+"""
+
+autoconf_package_info(
+    name = "package",
+    package_name = "test_standards",
+    package_version = "1.0.0",
+)
+
+autoconf(
+    name = "dep",
+    checks = [
+        checks.AC_TRY_COMPILE(
+            name = "test_cv_dep_c99",
+            code = C99_PROBE,
+            define = "DEP_SEES_C99",
+        ),
+    ],
+    target_compatible_with = NOT_WINDOWS,
+)
+
+autoconf(
+    name = "autoconf",
+    checks = [
+        checks.AC_TRY_COMPILE(
+            name = "test_cv_c99",
+            code = C99_PROBE,
+            define = "HAVE_C99_STD",
+        ),
+        # The same probe as a reusable check: the standard the compiler runs
+        # in, compared with the one asked for; `error` stops the build when
+        # the comparison fails (AC_PROG_CC_C99 when it cannot be satisfied).
+        # Here the target's own flags satisfy it.
+        checks.AC_LANG_STANDARD(
+            "c99",
+            compare = "==",
+            define = "STD_IS_EXACTLY_C99",
+            error = True,
+        ),
+        checks.AC_LANG_STANDARD(
+            "c89",
+            define = "STD_AT_LEAST_C89",
+        ),
+        checks.AC_LANG_STANDARD(
+            "c23",
+            define = "STD_AT_LEAST_C23",
+        ),
+        # AX_CXX_COMPILE_STDCXX([11], [noext], [mandatory]): every supported
+        # toolchain's C++ default is C++14 or later.
+        checks.AX_CXX_COMPILE_STDCXX("11", "noext"),
+    ],
+    conlyopts = ["-std=c99"],
+    target_compatible_with = NOT_WINDOWS,
+    deps = [
+        ":dep",
+        ":package",
+    ],
+)
+
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    target_compatible_with = NOT_WINDOWS,
+    template = "config.h.in",
+    deps = [":autoconf"],
+)
+
+cc_test(
+    name = "test_standards",
+    srcs = [
+        "test_standards.c",
+        ":config.h",
+    ],
+    target_compatible_with = NOT_WINDOWS,
+)

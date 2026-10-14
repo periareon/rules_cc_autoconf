@@ -57,6 +57,15 @@ autoconf(
             if_true = "1",
             requires = ["ac_cv_header_stdbit_h"],
         ),
+        # GL_GENERATE_STDBIT_H (gl_CONDITIONAL_HEADER): gnulib ships its own
+        # stdbit.h unless the system's declares the C2y functions.  Like
+        # GL_GENERATE_ALLOCA_H, an M4_VARIABLE: an automake conditional.
+        checks.M4_VARIABLE(
+            "GL_GENERATE_STDBIT_H",
+            condition = "ac_cv_header_stdbit_h && ac_cv_have_decl_stdc_rotate_left_uc",
+            if_false = "true",
+            if_true = "false",
+        ),
     ] + gl_macros.GL_CHECK_NEXT_HEADERS(["stdbit.h"]),
     visibility = ["//visibility:public"],
     deps = [

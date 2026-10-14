@@ -1,0 +1,6 @@
+#undef HAVE_C99_STD
+#undef DEP_SEES_C99
+#undef STD_IS_EXACTLY_C99
+#undef STD_AT_LEAST_C89
+#undef STD_AT_LEAST_C23
+#undef HAVE_CXX11

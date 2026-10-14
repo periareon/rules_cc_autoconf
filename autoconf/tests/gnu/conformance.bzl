@@ -12,27 +12,11 @@ load(
     "//autoconf/private:autoconf_config.bzl",
     "AUTOCONF_EXEC_GROUP",
     "collect_transitive_results",
-    "create_config_dict",
     "get_cc_toolchain_info",
-    "get_environment_variables",
 )
 load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
+load(":cc_env.bzl", "cc_env_dict")
 load(":toolchain.bzl", "SH_TOOLCHAIN_TYPE", "TOOLCHAIN_TYPE", "autotools_runtime", "rlocationpath", "shell_path")
-
-def _tool_rlocationpath(path, workspace_name):
-    """Convert an execroot-relative tool path into an rlocationpath.
-
-    Absolute paths (host toolchains such as `/usr/bin/gcc`) are returned as is.
-    """
-    if path.startswith("/") or (len(path) > 2 and path[1] == ":"):
-        return path
-    if path.startswith("bazel-out/"):
-        # bazel-out/<config>/bin/<rest>
-        parts = path.split("/", 3)
-        path = parts[3] if len(parts) == 4 else path
-    if path.startswith("external/"):
-        return path[len("external/"):]
-    return "{}/{}".format(workspace_name, path)
 
 def _optional_file(ctx, attr_name):
     files = getattr(ctx.files, attr_name)
@@ -50,19 +34,7 @@ def _gnu_autoconf_conformance_test_impl(ctx):
 
     # --- Compiler parity: the exact helper the `autoconf` rule uses. ---
     toolchain_info = get_cc_toolchain_info(ctx)
-    config = create_config_dict(toolchain_info)
-    cc_env = get_environment_variables(ctx, toolchain_info)
-    cc_json = {
-        "c_compiler": _tool_rlocationpath(config["c_compiler"], ws),
-        "c_flags": config["c_flags"],
-        "c_link_flags": config["c_link_flags"],
-        "compiler_type": config["compiler_type"],
-        "cpp_compiler": _tool_rlocationpath(config["cpp_compiler"], ws),
-        "cpp_flags": config["cpp_flags"],
-        "cpp_link_flags": config["cpp_link_flags"],
-        "env": cc_env,
-        "linker": _tool_rlocationpath(config["linker"], ws),
-    }
+    cc_json = cc_env_dict(ctx, toolchain_info)
     cc_env_file = ctx.actions.declare_file("{}.cc_env.json".format(ctx.label.name))
     ctx.actions.write(cc_env_file, json.encode_indent(cc_json, indent = "  ") + "\n")
 

@@ -796,7 +796,8 @@ def _ac_try_compile(
         requires = None,
         if_true = None,
         if_false = None,
-        subst = None):
+        subst = None,
+        error = None):
     """Try to compile custom code.
 
     Original m4 example:
@@ -857,6 +858,8 @@ def _ac_try_compile(
         if_false: Value to use when check fails (currently not used for this check type).
         subst: If True, automatically create a substitution variable with the same name
             that will be set to "1" if the check succeeds, "0" if it fails.
+        error: Stop the build with this message when the check fails: `AC_MSG_ERROR` in the
+            branch configure runs when the test does not pass, e.g. a mandatory language standard.
 
     Returns:
         A JSON-encoded check string for use with the autoconf rule.
@@ -896,9 +899,204 @@ def _ac_try_compile(
 
     if subst != None:
         check["subst"] = subst
+    if error != None:
+        check["error"] = error
 
     _add_conditionals(check, if_true, if_false)
     return make_check(check)
+
+# The value of __STDC_VERSION__ (C) or __cplusplus / _MSVC_LANG (C++) a
+# compiler reports for each standard.  C89 has no __STDC_VERSION__ at all;
+# the GNU dialects report the same value as the ISO standard they extend.
+# buildifier: disable=unsorted-dict-items
+_C_STANDARD_VERSIONS = {
+    "c89": 0,
+    "c90": 0,
+    "c94": 199409,
+    "c99": 199901,
+    "c11": 201112,
+    "c17": 201710,
+    "c18": 201710,
+    "c23": 202311,
+}
+
+# buildifier: disable=unsorted-dict-items
+_CXX_STANDARD_VERSIONS = {
+    "c++98": 199711,
+    "c++03": 199711,
+    "c++11": 201103,
+    "c++14": 201402,
+    "c++17": 201703,
+    "c++20": 202002,
+    "c++23": 202302,
+    # Not final: what GCC and clang report for -std=c++26 today.
+    "c++26": 202400,
+}
+
+# The MSVC switch that reaches each standard (its C default is C89, its C++
+# default C++14); the GNU spelling is always -std=<standard>.
+_MSVC_C_SWITCHES = {"c11": "/std:c11", "c17": "/std:c17", "c18": "/std:c17", "c23": "/std:clatest", "c99": "/std:c11"}
+_MSVC_CXX_SWITCHES = {"c++17": "/std:c++17", "c++20": "/std:c++20", "c++23": "/std:c++latest", "c++26": "/std:c++latest"}
+
+# Per comparison: the cache-name suffix and how the requirement reads, with
+# {std} the standard and {lang} "C" or "C++".
+_STANDARD_COMPARISONS = {
+    "<": ("_older", "a {lang} compiler in a mode earlier than {std}"),
+    "<=": ("_at_most", "a {lang} compiler in {std} mode or earlier"),
+    "==": ("_exact", "a {lang} compiler in exactly {std} mode"),
+    ">": ("_newer", "a {lang} compiler in a mode later than {std}"),
+    ">=": ("", "a {std} or later {lang} compiler"),
+}
+
+def _ac_lang_standard(
+        standard,
+        *,
+        name = None,
+        compare = ">=",
+        define = None,
+        error = None,
+        copts = None,
+        requires = None):
+    """Check the language standard the compiler is running in.
+
+    The probe compares `__STDC_VERSION__` (C) or `__cplusplus` -- `_MSVC_LANG`
+    on MSVC, whose `__cplusplus` stays at 199711L -- with the value of
+    `standard`, under the flags every check sees: the toolchain's, `--copt` /
+    `--cxxopt`, and the target's own `copts` / `conlyopts` / `cxxopts`.  It is
+    the test behind `AC_PROG_CC_C99`, `AC_PROG_CC_STDC` and
+    `AX_CXX_COMPILE_STDCXX`'s mandatory mode, as one check: configure
+    switches the compiler into the mode it needs and stops when it cannot;
+    a Bazel build takes its standard from the root module, so the check
+    reports, or stops the build, instead.
+
+    Original m4 example:
+    ```m4
+    AC_PROG_CC_C99
+    AX_CXX_COMPILE_STDCXX([17], [noext], [mandatory])
+    ```
+
+    Example:
+    ```python
+    # Stop the build unless the C compiler is in C11 mode or later.
+    checks.AC_LANG_STANDARD("c11", error = True)
+    # Record whether the C++ compiler is in C++17 mode or later.
+    checks.AC_LANG_STANDARD("c++17", define = "HAVE_CXX17")
+    # Exactly C99 (the GNU dialect reports the same value).
+    checks.AC_LANG_STANDARD("c99", compare = "==", error = "C99 required")
+    ```
+
+    Note:
+        This is a rules_cc_autoconf extension.  Dialects compare equal to
+        the standard they extend (`gnu11` is `c11`), and the standard is the
+        build's: a `-std` of the target's own `conlyopts` / `cxxopts` is seen,
+        a dependency's is not.
+
+    Args:
+        standard: `c89` .. `c23` or `c++98` .. `c++26`, with or without a `gnu` prefix.
+        name: Cache variable name. Defaults to `ac_cv_std_<standard>` plus a suffix
+            for comparisons other than `>=` (`ac_cv_std_c99_exact`).
+        compare: How the compiler's standard must relate to `standard`: `>=` (default),
+            `==`, `<=`, `>` or `<`.
+        define: Define name to set when the comparison holds.
+        error: Stop the build when the comparison does not hold: `True` for a message
+            naming the flags to add (GNU and MSVC spellings), or a message of your own.
+        copts: Optional list of extra compiler flags for this check.
+        requires: Requirements that must be met for this check to run.
+
+    Returns:
+        A JSON-encoded check string for use with the autoconf rule.
+    """
+    lowered = standard.lower()
+    base = lowered.replace("gnu++", "c++") if lowered.startswith("gnu++") else (
+        "c" + lowered[3:] if lowered.startswith("gnu") else lowered
+    )
+    cxx = "++" in base
+    versions = _CXX_STANDARD_VERSIONS if cxx else _C_STANDARD_VERSIONS
+    if base not in versions:
+        fail("AC_LANG_STANDARD: unknown standard {}; one of {}".format(
+            standard,
+            sorted(_C_STANDARD_VERSIONS.keys()) + sorted(_CXX_STANDARD_VERSIONS.keys()),
+        ))
+    if compare not in _STANDARD_COMPARISONS:
+        fail("AC_LANG_STANDARD: compare must be one of {}".format(sorted(_STANDARD_COMPARISONS.keys())))
+    suffix, wording = _STANDARD_COMPARISONS[compare]
+
+    if cxx:
+        prologue = "#if defined _MSVC_LANG\n# define RCCA_STD_VERSION _MSVC_LANG\n#else\n# define RCCA_STD_VERSION __cplusplus\n#endif\n"
+    else:
+        prologue = "#if defined __STDC_VERSION__\n# define RCCA_STD_VERSION __STDC_VERSION__\n#else\n# define RCCA_STD_VERSION 0\n#endif\n"
+    code = prologue + "#if !(RCCA_STD_VERSION {} {}L)\n#error \"not {}\"\n#endif\nint main(void) {{ return 0; }}\n".format(
+        compare,
+        versions[base],
+        wording.format(std = base.upper(), lang = "C++" if cxx else "C"),
+    )
+
+    if error == True:
+        error = wording.format(std = base.upper(), lang = "C++" if cxx else "C") + " is required"
+
+        # The flag to add is only knowable for "at least" and "exactly"; and
+        # MSVC's switch only names the standard exactly where it has one for
+        # it (C99 is reached through /std:c11, C++23 through /std:c++latest).
+        if compare in (">=", "=="):
+            flag = "--cxxopt=" if cxx else "--copt="
+            spellings = flag + "-std=" + lowered + " (GCC, clang)"
+            msvc = (_MSVC_CXX_SWITCHES if cxx else _MSVC_C_SWITCHES).get(base)
+            exact = msvc != None and not msvc.endswith("latest") and base != "c99"
+            if msvc and (compare == ">=" or exact):
+                spellings += " or " + flag + msvc + " (MSVC)"
+            error += "; build with " + spellings
+
+    if name == None:
+        name = "ac_cv_std_" + base.replace("++", "xx") + suffix
+
+    return _ac_try_compile(
+        code = code,
+        name = name,
+        define = define,
+        language = "cpp" if cxx else "c",
+        copts = copts,
+        requires = requires,
+        error = error if error else None,
+    )
+
+def _ax_cxx_compile_stdcxx(version, ext = "ext", mandatory = True):
+    """AX_CXX_COMPILE_STDCXX from the autoconf archive: is the C++ compiler in C++<version> mode?
+
+    Defines `HAVE_CXX<version>` when it is (or a later one), and in mandatory
+    mode stops the build when it is not.  The macro itself would add
+    `-std=c++<version>` or `-std=gnu++<version>` to CXX; a Bazel build's
+    standard comes from the root module (`--cxxopt`) or the toolchain, so
+    only the test remains.
+
+    Original m4 example:
+    ```m4
+    AX_CXX_COMPILE_STDCXX([17], [noext], [mandatory])
+    ```
+
+    Example:
+    ```python
+    checks.AX_CXX_COMPILE_STDCXX("17", "noext", mandatory = True)
+    ```
+
+    Args:
+        version: `11`, `14`, `17`, `20`, `23` or `26`.
+        ext: `ext` or `noext`, as in the macro.  Accepted for fidelity; both dialects
+            report the same `__cplusplus`, so it does not change the test.
+        mandatory: Stop the build when the compiler is not in that mode (the macro's
+            `mandatory`); `False` is its `optional`.
+
+    Returns:
+        A JSON-encoded check string for use with the autoconf rule.
+    """
+    if ext not in ("ext", "noext"):
+        fail("AX_CXX_COMPILE_STDCXX: ext must be `ext` or `noext`, got {}".format(ext))
+    version = str(version)
+    return _ac_lang_standard(
+        "c++" + version,
+        name = "ax_cv_cxx_compile_cxx" + version,
+        define = "HAVE_CXX" + version,
+        error = True if mandatory else None,
+    )
 
 def _ac_try_link(
         *,
@@ -913,7 +1111,8 @@ def _ac_try_link(
         requires = None,
         if_true = 1,
         if_false = 0,
-        subst = None):
+        subst = None,
+        error = None):
     """Try to compile and link custom code.
 
     This function mirrors GNU Autoconf's `AC_LINK_IFELSE` macro, which uses
@@ -990,6 +1189,8 @@ def _ac_try_link(
         if_true: Value to use when check succeeds (currently not used for this check type).
         if_false: Value to use when check fails (currently not used for this check type).
         subst: If True, mark as a substitution variable (for @VAR@ replacement in subst.h).
+        error: Stop the build with this message when the check fails: `AC_MSG_ERROR` in the
+            branch configure runs when the test does not pass, e.g. a mandatory language standard.
 
     Returns:
         A JSON-encoded check string for use with the autoconf rule.
@@ -1031,6 +1232,8 @@ def _ac_try_link(
 
     if subst != None:
         check["subst"] = subst
+    if error != None:
+        check["error"] = error
 
     _add_conditionals(check, if_true, if_false)
     return make_check(check)
@@ -1604,7 +1807,9 @@ def _ac_check_member(
     if not name:
         name = "ac_cv_member_{}_{}".format(agg_clean, mem_clean)
 
-    header_code = _header_code_from_includes(includes) if includes else ""
+    # Autoconf's AC_CHECK_MEMBER falls back to AC_INCLUDES_DEFAULT, under which
+    # `struct stat` and `struct tm` are visible without an explicit include.
+    header_code = _header_code_from_includes(includes) if includes else _AC_INCLUDES_DEFAULT
 
     code = _AC_CHECK_MEMBER_TEMPLATE.format(header_code, aggregate, aggregate, member)
 
@@ -3081,6 +3286,7 @@ checks = struct(
     AC_DEFINE = _ac_define,
     AC_DEFINE_UNQUOTED = _ac_define_unquoted,
     AC_FAIL = _ac_fail,
+    AC_LANG_STANDARD = _ac_lang_standard,
     AC_PROG_CC = _ac_prog_cc,
     AC_PROG_CC_C_O = _ac_prog_cc_c_o,
     AC_PROG_CXX = _ac_prog_cxx,
@@ -3088,6 +3294,7 @@ checks = struct(
     AC_SUBST = _ac_subst,
     AC_TRY_COMPILE = _ac_try_compile,
     AC_TRY_LINK = _ac_try_link,
+    AX_CXX_COMPILE_STDCXX = _ax_cxx_compile_stdcxx,
     M4_VARIABLE = _m4_variable,
 )
 

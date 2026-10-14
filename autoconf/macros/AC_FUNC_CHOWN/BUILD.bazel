@@ -12,7 +12,13 @@ load("//autoconf:checks.bzl", "checks")
 autoconf(
     name = "AC_FUNC_CHOWN",
     checks = [
-        checks.AC_CHECK_FUNC("chown"),
+        # GNU autoconf defines HAVE_CHOWN when chown exists and its run-time
+        # test (chown of a file to the same owner succeeds) passes; the
+        # run-time part is assumed to pass.
+        checks.AC_CHECK_FUNC(
+            "chown",
+            define = "HAVE_CHOWN",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [

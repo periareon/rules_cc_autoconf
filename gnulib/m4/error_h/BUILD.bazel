@@ -55,6 +55,16 @@ int main(void) {
         # REPLACE_ERROR and REPLACE_ERROR_AT_LINE are set to 0 on macOS
         checks.AC_SUBST("REPLACE_ERROR", 0),
         checks.AC_SUBST("REPLACE_ERROR_AT_LINE", 0),
+        # COMPILE_ERROR_C (gl_FUNC_ERROR): gnulib's lib/error.c is compiled
+        # unless the system has both entry points and neither is replaced.  A
+        # plain shell variable in the m4 (gl_CONDITIONAL reads it), hence an
+        # M4_VARIABLE rather than a subst.
+        checks.M4_VARIABLE(
+            "COMPILE_ERROR_C",
+            condition = "HAVE_ERROR==1 && HAVE_ERROR_AT_LINE==1 && REPLACE_ERROR==0 && REPLACE_ERROR_AT_LINE==0",
+            if_false = "1",
+            if_true = "0",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [

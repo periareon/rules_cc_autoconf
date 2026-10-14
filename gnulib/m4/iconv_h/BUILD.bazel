@@ -32,6 +32,9 @@ autoconf(
         checks.AC_SUBST("REPLACE_ICONV", 0),
         checks.AC_SUBST("REPLACE_ICONV_OPEN", 0),
         checks.AC_SUBST("REPLACE_ICONV_UTF", 0),
+        # GL_GENERATE_ICONV_H: false unless gl_POSIXCHECK or a C++ compiler
+        # (gl_ANSI_CXX with CXX != no) asks for the wrapper; the ports build C.
+        checks.M4_VARIABLE("GL_GENERATE_ICONV_H", "false"),
     ],
     visibility = ["//visibility:private"],
 )
