@@ -340,6 +340,14 @@ int Checker::run_check_from_file(const std::filesystem::path& check_path,
             }
         }
 
+        // AC_MSG_ERROR: a failed check that the script treats as fatal stops
+        // the build here, with its message, instead of recording a "no".
+        if (!result.success && check.error().has_value()) {
+            std::cerr << "configure: error: " << *check.error() << " ("
+                      << check.name() << ")" << std::endl;
+            return 1;
+        }
+
         // Flat result format: {success, value, type} only.
         // Consumer metadata is tracked in Starlark providers and written
         // to a manifest at rendering time.

@@ -100,7 +100,12 @@ class Autotools:
         self.automake_version = os.environ["AUTOTOOLS_AUTOMAKE_VERSION"]
         self.automake_api_version = os.environ["AUTOTOOLS_AUTOMAKE_API_VERSION"]
 
-        self.tooldir = tooldir.resolve()
+        tooldir.mkdir(parents=True, exist_ok=True)
+        # aclocal and autoconf run the wrappers through a shell as unquoted
+        # `$AUTOM4TE`-style words, so the directory holding them must have a
+        # spelling without spaces (a `bazel run` temp dir under a user profile
+        # such as `C:/Users/First Last` does not, by default).
+        self.tooldir = Path(space_free(tooldir.resolve()))
         self.bindir = self.tooldir / "bin"
         self.home = self.tooldir / "home"
         self.tmpdir = self.tooldir / "tmp"
@@ -271,16 +276,22 @@ class Autotools:
             return [str(self.shell), posix(self.wrappers[tool])]
         return [str(self.wrappers[tool])]
 
-    def run(
+    def invocation(
         self,
         tool: str,
         args: list[str],
-        *,
-        cwd: Path,
         env: dict[str, str] | None = None,
-        check: bool = False,
-    ) -> subprocess.CompletedProcess[str]:
-        """Run a tool, capturing combined output."""
+    ) -> tuple[list[str], dict[str, str]]:
+        """The full argv and environment for running a tool.
+
+        Args:
+            tool: tool name (`aclocal`, `autoconf`, `autom4te`, `m4`, ...).
+            args: the tool's own arguments.
+            env: extra environment entries layered over `environment()`.
+
+        Returns:
+            `(argv, env)` ready for `subprocess`.
+        """
         full_env = self.environment()
         if env:
             full_env.update(env)
@@ -294,6 +305,19 @@ class Autotools:
                 # wrapper. The shell wrapper has no such limit.
                 full_env["AUTOM4TE"] = posix(self.wrappers["autom4te"])
         argv += list(args)
+        return argv, full_env
+
+    def run(
+        self,
+        tool: str,
+        args: list[str],
+        *,
+        cwd: Path,
+        env: dict[str, str] | None = None,
+        check: bool = False,
+    ) -> subprocess.CompletedProcess[str]:
+        """Run a tool, capturing combined output."""
+        argv, full_env = self.invocation(tool, args, env)
         result = subprocess.run(
             argv,
             cwd=cwd,

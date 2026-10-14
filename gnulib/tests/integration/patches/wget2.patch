@@ -1,0 +1,18 @@
+# wget2 2.3.0: `@rules_cc_autoconf//gnulib/m4/fseterr` now records its probe
+# under gnulib's own cache name, ac_cv_func___fseterr (m4/fseterr.m4 uses
+# AC_CHECK_FUNCS_ONCE), instead of the ac_cv_try_compile_HAVE___FSETERR the
+# overlay was written against.
+#
+# Remove once the overlay on the Bazel Central Registry is updated against a
+# rules_cc_autoconf release that contains this port.
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -1425,7 +1425,7 @@
+     "GL_COND_OBJ_FREOPEN": "ac_cv_subst_REPLACE_FREOPEN==1",
+     "GL_COND_OBJ_FSEEK": "ac_cv_subst_REPLACE_FSEEK==1",
+     "GL_COND_OBJ_FSEEKO": "!gl_cv_func_fseeko || ac_cv_subst_REPLACE_FSEEKO==1",
+-    "GL_COND_OBJ_FSETERR": "ac_cv_try_compile_HAVE___FSETERR==0",
++    "GL_COND_OBJ_FSETERR": "!ac_cv_func___fseterr",
+     "GL_COND_OBJ_FSTAT": "ac_cv_subst_REPLACE_FSTAT==1",
+     "GL_COND_OBJ_FSTATAT": "!ac_cv_define_HAVE_FSTATAT || ac_cv_subst_REPLACE_FSTATAT==1",
+     "GL_COND_OBJ_FSYNC": "!ac_cv_func_fsync",

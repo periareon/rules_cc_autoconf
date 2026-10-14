@@ -161,6 +161,13 @@ class Check {
     }
 
     /**
+     * @brief Get the message that stops the build when the check fails.
+     * @return Optional message (AC_MSG_ERROR); std::nullopt when a failure is
+     * an ordinary "no".
+     */
+    const std::optional<std::string>& error() const { return error_; }
+
+    /**
      * @brief Get the optional library name for library checks.
      * @return Optional string containing the library name (without -l prefix),
      * or std::nullopt if not provided.
@@ -247,6 +254,8 @@ class Check {
                                /// in order after code_ answers "no"
     std::optional<std::string> define_value_{};  /// Value if check succeeds
     std::optional<std::string> define_value_fail_{};  /// Value if check fails
+    std::optional<std::string>
+        error_{};  /// Message that stops the build if the check fails
     std::optional<std::string> library_{};  /// Library name for lib checks
     std::optional<std::vector<std::string>>
         libraries_{};  /// Library names for search_libs checks

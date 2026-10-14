@@ -1,0 +1,95 @@
+# sed 4.10: the overlay pinned -std=gnu11 (/std:c11) on sed's sources while
+# the gnulib ports' probes ran under the build's standard; on macOS the two
+# disagreed about c32rtomb's declaration and the overlay hard-coded
+# HAVE_C32RTOMB per platform to paper over it.  The standard of a build is
+# the root module's (the toolchain's default, --copt): the pin is dropped,
+# the c32rtomb port's own probe is used, and the C11 requirement upstream's
+# AC_PROG_CC enforces becomes a check that stops the build with the flag to
+# add when it is not met.
+#
+# Remove once the overlay on the Bazel Central Registry is updated.
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -45,17 +45,13 @@
+     flag_values = {":enable_i18n": "True"},
+ )
+ 
++# No -std: sed needs C11 (`static_assert` via <assert.h> in localeinfo.c and
++# other gnulib sources), which `:autoconf` checks for; the standard itself is
++# the build's, so that the gnulib probes and these sources see the same
++# headers.
+ COPTS = select({
+-    # Sed requires C11+ for `static_assert` via <assert.h> in several gnulib
+-    # sources (localeinfo.c etc.).
+-    "@rules_cc//cc/compiler:msvc-cl": [
+-        "/w",
+-        "/std:c11",
+-    ],
+-    "//conditions:default": [
+-        "-w",
+-        "-std=gnu11",
+-    ],
++    "@rules_cc//cc/compiler:msvc-cl": ["/w"],
++    "//conditions:default": ["-w"],
+ })
+ 
+ LOCAL_DEFINES = [
+@@ -95,24 +91,16 @@
+     }),
+ )
+ 
+-# Upstream's gl_CHECK_FUNC_C32RTOMB probes c32rtomb at the autoconf toolchain's
+-# own compile flags rather than the consumer's; on macOS, libSystem's <uchar.h>
+-# hides the c32rtomb prototype unless a feature-test macro is set that
+-# -std=gnu11 doesn't activate, so the probe says "available" but sed's TU
+-# can't see the decl.  We sidestep the probe and pin HAVE_C32RTOMB from
+-# platform knowledge: Linux glibc has it; macOS at gnu11 doesn't expose the
+-# decl; MSVC has no <uchar.h> at all.  Other substs/cache vars come from the
+-# toolchain defaults + mbrtoc32's transitive :gl_C32RTOMB_SANITYCHECK dep.
++# gl_FUNC_C32RTOMB (m4/c32rtomb.m4).  The port's probes run under the same
++# flags as sed's own sources -- the toolchain's and the command line's,
++# since neither pins a C standard -- so what they see in <uchar.h> is what
++# the sources will see.  (An earlier overlay compiled the sources under
++# -std=gnu11 while the probes ran without it, and had to pin HAVE_C32RTOMB
++# from platform knowledge to keep the two from disagreeing on macOS.)
+ autoconf(
+     name = "m4_c32rtomb",
+-    checks = select({
+-        "@platforms//os:linux": [
+-            checks.AC_SUBST("HAVE_C32RTOMB", 1),
+-        ],
+-        "//conditions:default": [
+-            checks.AC_SUBST("HAVE_C32RTOMB", 0),
+-        ],
+-    }),
++    checks = [],
++    deps = ["@rules_cc_autoconf//gnulib/m4/c32rtomb"],
+ )
+ 
+ # Gnulib m4 module deps (from gnulib-comp.m4)
+@@ -554,7 +542,9 @@
+     "GL_COND_OBJ_ACL_ENTRIES": "NEED_ACL_ENTRIES",
+     "GL_COND_OBJ_BIND": "ac_cv_header_winsock2_h",
+     "GL_COND_OBJ_BTOWC": "ac_cv_func_btowc==0 || REPLACE_BTOWC",
+-    "GL_COND_OBJ_C32RTOMB": "HAVE_C32RTOMB==0 || REPLACE_C32RTOMB",
++    # The probe's own result: a bare HAVE_C32RTOMB would also match the
++    # uchar_h defaults substitution, which is always 1.
++    "GL_COND_OBJ_C32RTOMB": "!gl_cv_func_c32rtomb || REPLACE_C32RTOMB",
+     "GL_COND_OBJ_CALLOC": "REPLACE_CALLOC_FOR_CALLOC_GNU || REPLACE_CALLOC_FOR_CALLOC_POSIX",
+     "GL_COND_OBJ_CANONICALIZE_LGPL": "ac_cv_subst_HAVE_CANONICALIZE_FILE_NAME==0 || REPLACE_CANONICALIZE_FILE_NAME",
+     "GL_COND_OBJ_CLOSE": "REPLACE_CLOSE",
+@@ -697,6 +687,14 @@
+ autoconf(
+     name = "autoconf",
+     checks = [
++                 # sed's gnulib sources need C11 (static_assert, char32_t).  Upstream's
++                 # AC_PROG_CC switches the compiler into C11 mode, or configure stops.
++                 # The standard of a Bazel build is the root module's (the toolchain's
++                 # default, --copt / --cxxopt): a -std pinned here would override it for
++                 # these targets alone while the gnulib ports' probes ran under the
++                 # build's, so the requirement is checked instead, and the build stops
++                 # with the flag to add when it is not met.
++                 checks.AC_LANG_STANDARD("c11", name = "sed_cv_c11", error = True),
+                  checks.AC_SUBST(
+                      "GUARD_PREFIX",
+                      value = "GL",

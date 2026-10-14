@@ -66,6 +66,59 @@ int main(void) { return 0; }
             if_false = 0,
             if_true = 1,
         ),
+        # Whether <endian.h> brings the stdint types and the byte-order macros
+        # and conversion functions (both fail where the header is missing).
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_header_endian_h_stdint_types",
+            code = """\
+#include <endian.h>
+int main(void) {
+    uint16_t t1 = 0;
+    uint32_t t2 = 0;
+    uint64_t t3 = 0;
+    return !(t1 + t2 + t3);
+}
+""",
+        ),
+        checks.AC_TRY_LINK(
+            name = "gl_cv_header_working_endian_h",
+            code = """\
+#include <endian.h>
+int main(void) {
+#if LITTLE_ENDIAN == BIG_ENDIAN
+# error "Endian macros not unique."
+#endif
+#if BYTE_ORDER != LITTLE_ENDIAN && BYTE_ORDER != BIG_ENDIAN
+# error "Byte order not defined."
+#endif
+    int value16_1 = be16toh (0.0);
+    int value32_1 = be32toh (0.0);
+    int value64_1 = be64toh (0.0);
+    int value16_2 = htobe16 (0.0);
+    int value32_2 = htobe32 (0.0);
+    int value64_2 = htobe64 (0.0);
+    int value16_3 = le16toh (0.0);
+    int value32_3 = le32toh (0.0);
+    int value64_3 = le64toh (0.0);
+    int value16_4 = htole16 (0.0);
+    int value32_4 = htole32 (0.0);
+    int value64_4 = htole64 (0.0);
+    return !(value16_1 + value32_1 + value64_1
+             + value16_2 + value32_2 + value64_2
+             + value16_3 + value32_3 + value64_3
+             + value16_4 + value32_4 + value64_4);
+}
+""",
+        ),
+        # GL_GENERATE_ENDIAN_H (gl_CONDITIONAL_HEADER): gnulib ships its own
+        # endian.h unless the system's has both.  M4_VARIABLE, like
+        # GL_GENERATE_ALLOCA_H: an automake conditional, not a subst.
+        checks.M4_VARIABLE(
+            "GL_GENERATE_ENDIAN_H",
+            condition = "gl_cv_header_endian_h_stdint_types && gl_cv_header_working_endian_h",
+            if_false = "true",
+            if_true = "false",
+        ),
         # ENDIAN_H_JUST_MISSING_STDINT: When endian.h exists but doesn't include stdint types.
         # Linux's endian.h includes stdint.h, so if HAVE_ENDIAN_H=1, this is 1.
         # If no endian.h, this is 0.

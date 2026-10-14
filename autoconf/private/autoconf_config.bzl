@@ -436,10 +436,15 @@ def get_cc_toolchain_info(ctx):
         action_name = ACTION_NAMES.cpp_link_executable,
     )
 
+    # The target's own copts / conlyopts / cxxopts, as on a cc_library: for
+    # its checks only, after --copt / --cxxopt and before a check's own copts.
+    copts = getattr(ctx.attr, "copts", [])
+    conlyopts = getattr(ctx.attr, "conlyopts", [])
+    cxxopts = getattr(ctx.attr, "cxxopts", [])
     c_compile_variables = cc_common.create_compile_variables(
         feature_configuration = feature_configuration,
         cc_toolchain = cc_toolchain,
-        user_compile_flags = ctx.fragments.cpp.copts + [_COPTS_MARKER],
+        user_compile_flags = ctx.fragments.cpp.copts + copts + conlyopts + [_COPTS_MARKER],
     )
 
     c_flags = cc_common.get_memory_inefficient_command_line(
@@ -451,7 +456,7 @@ def get_cc_toolchain_info(ctx):
     cpp_compile_variables = cc_common.create_compile_variables(
         feature_configuration = feature_configuration,
         cc_toolchain = cc_toolchain,
-        user_compile_flags = ctx.fragments.cpp.copts + ctx.fragments.cpp.cxxopts + [_COPTS_MARKER],
+        user_compile_flags = ctx.fragments.cpp.copts + ctx.fragments.cpp.cxxopts + copts + cxxopts + [_COPTS_MARKER],
     )
 
     cpp_flags = cc_common.get_memory_inefficient_command_line(

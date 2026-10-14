@@ -67,65 +67,39 @@ autoconf(
     name = "gl_CHECK_FUNC_C32RTOMB",
     checks = [
         # M4: AC_CHECK_DECL([c32rtomb], ..., [#include <uchar.h>]).
-        # On Linux/Haiku the header-based probe works directly; on macOS
-        # the decl in <uchar.h> is gated by _DARWIN_C_SOURCE / __DARWIN_C_LEVEL
-        # macros that aren't reliably surfaceable from a Bazel probe
-        # (see the link probe note below for the rationale).
+        #
+        # On macOS this is the probe to trust, not the deployment target: an
+        # earlier revision answered "yes" from __MAC_OS_X_VERSION_MIN_REQUIRED
+        # whenever the target was 11.0 or later, and consumers then failed to
+        # compile (sed and grep calling c32rtomb with HAVE_C32RTOMB=1 and no
+        # declaration in sight) under a hermetic LLVM toolchain whose SDK
+        # headers do not declare it.  A declaration the probe cannot see is
+        # one the sources cannot see either, since both compile with the same
+        # flags; "no" then makes gnulib declare and supply c32rtomb itself,
+        # which is what configure does on such a system.
         checks.AC_CHECK_DECL(
             "c32rtomb",
             name = "ac_cv_have_decl_c32rtomb",
             includes = ["#ifdef __HAIKU__\n#include <stdint.h>\n#endif\n#include <uchar.h>"],
         ),
-    ] + select({
-        # macOS: header-based probes for the c32rtomb decl consistently
-        # fail under Bazel's macOS toolchain even on macOS 13+ where the
-        # symbol is in libSystem. Cause: <uchar.h> hides the decl behind
-        # _DARWIN_C_SOURCE / __DARWIN_C_LEVEL, and the framework's
-        # `compile_defines` only prepends `#define` text — which behaves
-        # the same as inline `#define`s and isn't sufficient because
-        # `<sys/cdefs.h>` may already have computed __DARWIN_C_LEVEL by
-        # the time we get to <uchar.h>.
-        #
-        # Substitute the SDK-version compile probe (already used elsewhere
-        # for runtime-bug detection) — it sets `gl_cv_func_c32rtomb` based
-        # on whether the deployment target is recent enough to guarantee
-        # libSystem has c32rtomb. Downstream consumers (gl_FUNC_C32RTOMB's
-        # REPLACE/HAVE substs, gl_C32RTOMB_SANITYCHECK's HAVE_WORKING
-        # gate) keep reading `gl_cv_func_c32rtomb` unchanged.
-        "@platforms//os:macos": [
-            checks.AC_TRY_COMPILE(
-                name = "gl_cv_func_c32rtomb",
-                code = """\
-#include <Availability.h>
-#if !defined(__MAC_OS_X_VERSION_MIN_REQUIRED) \\
-    || __MAC_OS_X_VERSION_MIN_REQUIRED < 110000
-#error "macOS deployment target is older than 11.0 (Big Sur)"
-#endif
-int main(void) { return 0; }
-""",
-            ),
-        ],
-        "//conditions:default": [
-            # M4: if test $ac_cv_have_decl_c32rtomb = yes; then
-            #       AC_LINK_IFELSE(...) else gl_cv_func_c32rtomb=no.
-            checks.AC_TRY_LINK(
-                name = "gl_cv_func_c32rtomb",
-                code = """\
+        # M4: if test $ac_cv_have_decl_c32rtomb = yes; then
+        #       AC_LINK_IFELSE(...) else gl_cv_func_c32rtomb=no.
+        checks.AC_TRY_LINK(
+            name = "gl_cv_func_c32rtomb",
+            code = """\
 #include <stdlib.h>
 #ifdef __HAIKU__
 #include <stdint.h>
 #endif
 #include <uchar.h>
-
 int main(void) {
     char buf[8];
     return c32rtomb(buf, 0, NULL) == 0;
 }
 """,
-                requires = ["ac_cv_have_decl_c32rtomb==1"],
-            ),
-        ],
-    }),
+            requires = ["ac_cv_have_decl_c32rtomb==1"],
+        ),
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",

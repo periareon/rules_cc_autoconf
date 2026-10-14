@@ -190,6 +190,10 @@ std::optional<Check> Check::from_json(const void* json_data) {
         }
     }
 
+    if (json.contains("error") && json["error"].is_string()) {
+        check.error_ = json["error"].get<std::string>();
+    }
+
     if (json.contains("library") && json["library"].is_string()) {
         check.library_ = json["library"].get<std::string>();
     }

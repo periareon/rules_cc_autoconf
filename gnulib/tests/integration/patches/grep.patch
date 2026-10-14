@@ -12,6 +12,8 @@
 #     REPLACE_FCHDIR (and, on Windows, REPLACE_OPEN_DIRECTORY) defines and the
 #     close port the REPLACE_CLOSE substitution; the local copies were
 #     duplicate-result errors.
+#   - gl_FUNC_ERROR: the error_h port now derives COMPILE_ERROR_C itself;
+#     the local AC_SUBST copy was a duplicate-result error.
 #   - gl_LANGINFO_H no longer probes T_FMT_AMPM (dropped upstream together
 #     with HAVE_LANGINFO_T_FMT_AMPM); nl_langinfo.m4 lines 27-31 test CODESET,
 #     ALTMON, ABALTMON and ERA only.
@@ -21,11 +23,59 @@
 #       test -n "$ERRNO_H" || test $REPLACE_STRERROR_0 = 1
 #     becomes `GL_GENERATE_ERRNO_H==true || !_gl_cv_func_strerror_0_works`.
 #
+#
+# Separately, the overlay pinned -std=gnu11 (/std:c11) on grep's sources and
+# on its static_assert probes, while the gnulib ports' probes ran under the
+# build's standard; on macOS the two disagreed about c32rtomb's declaration
+# and the overlay hard-coded HAVE_C32RTOMB per platform to paper over it.
+# The standard of a build is the root module's (the toolchain's default,
+# --copt): the pins are dropped, the c32rtomb port's own probe is used, and
+# the C11 requirement upstream's AC_PROG_CC enforces becomes a check that
+# stops the build with the flag to add when it is not met.
+#
 # Remove once the overlay on the Bazel Central Registry is updated against a
 # rules_cc_autoconf release that contains these ports.
 --- a/BUILD.bazel
 +++ b/BUILD.bazel
-@@ -181,7 +181,6 @@
+@@ -86,29 +86,16 @@
+     }),
+ )
+ 
+-# Upstream's gl_CHECK_FUNC_C32RTOMB probes c32rtomb with the autoconf
+-# toolchain's own flags rather than the consumer's; on macOS libSystem's
+-# <uchar.h> hides the prototype unless a feature-test macro that -std=gnu11
+-# doesn't set is active, so the probe says "available" but grep's TU can't
+-# see the declaration.  Pin the answer from platform knowledge instead.
+-#
+-# The pin must agree with HAVE_WORKING_C32RTOMB, which the c32rtomb module
+-# still probes: gnulib never produces HAVE_C32RTOMB=0 together with
+-# HAVE_WORKING_C32RTOMB=1, and in that combination lib/c32rtomb.c is
+-# compiled without the rpl_ rename and its "call the system function"
+-# branch (lib/c32rtomb.c line 47) calls itself -- `grep -i` overflowed the
+-# stack on Windows that way.  UCRT declares c32rtomb in <uchar.h> exactly as
+-# the probe reports, so Windows gets the probe's answer, like Linux.
++# gl_FUNC_C32RTOMB (m4/c32rtomb.m4).  The port's probes run under the same
++# flags as grep's own sources -- the toolchain's and the command line's,
++# since neither pins a C standard -- so what they see in <uchar.h> is what
++# the sources will see.  (An earlier overlay compiled the sources under
++# -std=gnu11 while the probes ran without it, and had to pin HAVE_C32RTOMB
++# from platform knowledge to keep the two from disagreeing on macOS.)
+ autoconf(
+     name = "m4_c32rtomb",
+-    checks = selects.with_or({
+-        ("@platforms//os:linux", "@platforms//os:windows"): [
+-            checks.AC_SUBST("HAVE_C32RTOMB", 1),
+-        ],
+-        "//conditions:default": [
+-            checks.AC_SUBST("HAVE_C32RTOMB", 0),
+-        ],
+-    }),
++    checks = [],
++    deps = ["@rules_cc_autoconf//gnulib/m4/c32rtomb"],
+ )
+ 
+ # gl_FUNC_PCRE (m4/pcre.m4).  The pkg-config probe is replaced by a hard
+@@ -181,7 +168,6 @@
      "ac_cv_func_nl_langinfo",
      "!(" + " && ".join([
          "ac_cv_subst_HAVE_LANGINFO_CODESET==1",
@@ -33,7 +83,62 @@
          "ac_cv_subst_HAVE_LANGINFO_ALTMON==1",
          "ac_cv_subst_HAVE_LANGINFO_ABALTMON==1",
          "ac_cv_subst_HAVE_LANGINFO_ERA==1",
-@@ -527,40 +526,13 @@
+@@ -305,18 +291,12 @@
+ # config.h block (config.hin lines 3582-3609) that hands every translation
+ # unit a working `static_assert` where it is not a keyword.
+ #
+-# The probes carry grep's own C standard (C_STD_COPTS, which COPTS below is
+-# built from): upstream runs them under $CFLAGS, and "is it a keyword" is
+-# only meaningful for the mode the sources are compiled in.
++# The probes run under the build's C standard, as the sources do: upstream
++# runs them under $CFLAGS, and "is it a keyword" is only meaningful for the
++# mode the sources are compiled in.
+ #
+ # TODO: drop this once `@rules_cc_autoconf//gnulib/m4/assert_h` keeps the
+ # keyword probe apart from the <assert.h> probe.
+-C_STD_COPTS = {
+-    "@rules_cc//cc/compiler:clang-cl": ["/std:c11"],
+-    "@rules_cc//cc/compiler:msvc-cl": ["/std:c11"],
+-    "//conditions:default": ["-std=gnu11"],
+-}
+-
+ STATIC_ASSERT_PROBE = """\
+ #if defined __clang__ && __STDC_VERSION__ < 202311
+ #pragma clang diagnostic error "-Wc2x-extensions"
+@@ -338,22 +318,16 @@
+     name = "m4_assert_h",
+     # Upstream keeps one cache variable, gl_cv_static_assert, holding "yes, a
+     # keyword", "yes, an <assert.h> macro" or "no"; here that is two probes.
+-    checks = select({
+-        compiler: [
+-            checks.AC_TRY_COMPILE(
+-                name = "gl_cv_static_assert_keyword",
+-                code = STATIC_ASSERT_PROBE.format(include = ""),
+-                copts = copts,
+-            ),
+-            checks.AC_TRY_COMPILE(
+-                name = "gl_cv_static_assert_macro",
+-                code = STATIC_ASSERT_PROBE.format(include = "#include <assert.h>"),
+-                copts = copts,
+-                requires = ["!gl_cv_static_assert_keyword"],
+-            ),
+-        ]
+-        for compiler, copts in C_STD_COPTS.items()
+-    }) + [
++    checks = [
++        checks.AC_TRY_COMPILE(
++            name = "gl_cv_static_assert_keyword",
++            code = STATIC_ASSERT_PROBE.format(include = ""),
++        ),
++        checks.AC_TRY_COMPILE(
++            name = "gl_cv_static_assert_macro",
++            code = STATIC_ASSERT_PROBE.format(include = "#include <assert.h>"),
++            requires = ["!gl_cv_static_assert_keyword"],
++        ),
+         checks.AC_DEFINE(
+             "HAVE_C_STATIC_ASSERT",
+             requires = ["gl_cv_static_assert_keyword"],
+@@ -527,40 +501,13 @@
      ],
  )
  
@@ -79,7 +184,7 @@
      deps = ["@rules_cc_autoconf//gnulib/m4/fchdir"],
  )
  
-@@ -598,12 +570,10 @@
+@@ -598,12 +545,10 @@
  
  autoconf(
      name = "m4_close",
@@ -96,13 +201,52 @@
      deps = [
          "@rules_cc_autoconf//gnulib/m4/fchdir",
          "@rules_cc_autoconf//gnulib/m4/msvc-inval",
-@@ -1439,13 +1409,13 @@
+@@ -1101,6 +1046,14 @@
+ autoconf(
+     name = "autoconf",
+     checks = [
++        # grep's gnulib sources need C11 (static_assert, char32_t).  Upstream's
++        # AC_PROG_CC switches the compiler into C11 mode, or configure stops.
++        # The standard of a Bazel build is the root module's (the toolchain's
++        # default, --copt / --cxxopt): a -std pinned here would override it for
++        # these targets alone while the gnulib ports' probes ran under the
++        # build's, so the requirement is checked instead, and the build stops
++        # with the flag to add when it is not met.
++        checks.AC_LANG_STANDARD("c11", name = "grep_cv_c11", error = True),
+         checks.AC_SUBST(
+             "GUARD_PREFIX",
+             value = "GL",
+@@ -1122,17 +1075,9 @@
+             "USE_UNLOCKED_IO",
+             value = "GNULIB_STDIO_SINGLE_THREAD",
+         ),
+-        # gl_FUNC_ERROR derives COMPILE_ERROR_C, which
+-        # rules_cc_autoconf's error module does not surface (TODO: it
+-        # should, and then this check can go).  glibc
+-        # supplies both entry points unreplaced; everywhere else
+-        # gnulib's lib/error.c has to be compiled in.
+-        checks.AC_SUBST(
+-            "COMPILE_ERROR_C",
+-            condition = "HAVE_ERROR==1 && HAVE_ERROR_AT_LINE==1 && REPLACE_ERROR==0 && REPLACE_ERROR_AT_LINE==0",
+-            if_false = "1",
+-            if_true = "0",
+-        ),
++        # COMPILE_ERROR_C (gl_FUNC_ERROR) now comes from
++        # `@rules_cc_autoconf//gnulib/m4/error_h`; a local copy was a
++        # duplicate-result error.
+         # configure.ac line 82
+         checks.AC_SUBST("USES_MSVCRT", "0"),
+     ] + macros.AC_CHECK_FUNCS([
+@@ -1439,13 +1384,15 @@
  # string is m4/gnulib-comp.m4's gl_CONDITIONAL test rewritten against the
  # substitutions rules_cc_autoconf exports.
  SRC_CONDITIONS = {
 -    "GL_COND_OBJ_BTOWC": "ac_cv_subst_HAVE_BTOWC==0 || REPLACE_BTOWC",
+-    "GL_COND_OBJ_C32RTOMB": "HAVE_C32RTOMB==0 || REPLACE_C32RTOMB",
 +    "GL_COND_OBJ_BTOWC": "!ac_cv_func_btowc || REPLACE_BTOWC",
-     "GL_COND_OBJ_C32RTOMB": "HAVE_C32RTOMB==0 || REPLACE_C32RTOMB",
++    # The probe's own result: a bare HAVE_C32RTOMB would also match the
++    # uchar_h defaults substitution, which is always 1.
++    "GL_COND_OBJ_C32RTOMB": "!gl_cv_func_c32rtomb || REPLACE_C32RTOMB",
      "GL_COND_OBJ_CALLOC": "REPLACE_CALLOC_FOR_CALLOC_GNU || REPLACE_CALLOC_FOR_CALLOC_POSIX",
      "GL_COND_OBJ_CHDIR_LONG": "gl_cv_have_unlimited_file_name_length==no",
      "GL_COND_OBJ_CLOSE": "REPLACE_CLOSE",
@@ -113,7 +257,7 @@
      "GL_COND_OBJ_DUP": "REPLACE_DUP",
      "GL_COND_OBJ_DUP2": "REPLACE_DUP2",
      "GL_COND_OBJ_ERROR": "COMPILE_ERROR_C==1",
-@@ -1457,25 +1427,25 @@
+@@ -1457,25 +1404,25 @@
      # `ac_cv_subst_` here because `:m4_fchdir` also emits a *define* named
      # REPLACE_FCHDIR, and a bare name matching both would be ambiguous.
      "GL_COND_OBJ_FCHDIR": "!ac_cv_func_fchdir || ac_cv_subst_REPLACE_FCHDIR",
@@ -149,7 +293,7 @@
      "GL_COND_OBJ_ISWDIGIT": "!(HAVE_ISWCNTRL==0 || REPLACE_ISWCNTRL) && REPLACE_ISWDIGIT",
      "GL_COND_OBJ_ISWPUNCT": "!(HAVE_ISWCNTRL==0 || REPLACE_ISWCNTRL) && REPLACE_ISWPUNCT",
      "GL_COND_OBJ_ISWXDIGIT": "!(HAVE_ISWCNTRL==0 || REPLACE_ISWCNTRL) && REPLACE_ISWXDIGIT",
-@@ -1485,35 +1455,35 @@
+@@ -1485,35 +1432,35 @@
      "GL_COND_OBJ_LSTAT": "REPLACE_LSTAT",
      "GL_COND_OBJ_MALLOC": "REPLACE_MALLOC_FOR_MALLOC_GNU || REPLACE_MALLOC_FOR_MALLOC_POSIX",
      "GL_COND_OBJ_MBRLEN": "ac_cv_subst_HAVE_MBRLEN==0 || REPLACE_MBRLEN",
@@ -198,7 +342,7 @@
      "GL_COND_OBJ_REALLOC_POSIX": "REPLACE_REALLOC_FOR_REALLOC_POSIX",
      "GL_COND_OBJ_REGEX": "ac_use_included_regex==yes",
      "GL_COND_OBJ_SETLOCALE_LOCK": "SETLOCALE_NULL_ALL_MTSAFE==0 || SETLOCALE_NULL_ONE_MTSAFE==0",
-@@ -1521,20 +1491,20 @@
+@@ -1521,20 +1468,20 @@
      "GL_COND_OBJ_STAT": "REPLACE_STAT",
      "GL_COND_OBJ_STDIO_READ": "REPLACE_STDIO_READ_FUNCS",
      "GL_COND_OBJ_STDIO_WRITE": "REPLACE_STDIO_WRITE_FUNCS",
@@ -226,3 +370,24 @@
      # lib/gnulib.mk gives each bundled libunistring source its own automake
      # conditional (LIBUNISTRING_COMPILE_UNICASE_TOLOWER, ...); every one of
      # them tests this and nothing else.
+@@ -1774,12 +1721,14 @@
+     "lib/xstrtoul.c",
+ ]
+ 
+-# grep's gnulib copy needs C11 for `static_assert`, `_Noreturn` and
+-# `char32_t` (C_STD_COPTS, above); `/w` and `-w` silence every warning the
+-# port would otherwise inherit from upstream's -Wall-heavy default CFLAGS.
+-COPTS = select({
+-    compiler: ["/w" if std[0].startswith("/") else "-w"] + std
+-    for compiler, std in C_STD_COPTS.items()
++# `/w` and `-w` silence every warning the port would otherwise inherit from
++# upstream's -Wall-heavy default CFLAGS.  No -std: grep's gnulib copy needs
++# C11 (`static_assert`, `_Noreturn`, `char32_t`), which `:autoconf` checks
++# for; the standard itself is the build's, so that the gnulib probes and
++# these sources see the same headers.
++COPTS = selects.with_or({
++    ("@rules_cc//cc/compiler:clang-cl", "@rules_cc//cc/compiler:msvc-cl"): ["/w"],
++    "//conditions:default": ["-w"],
+ })
+ 
+ LOCAL_DEFINES = [

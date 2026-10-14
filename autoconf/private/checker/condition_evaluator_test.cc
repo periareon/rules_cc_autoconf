@@ -18,6 +18,22 @@ CheckResult make_result(const std::string& name, const std::string& value,
 }
 
 // ---------------------------------------------------------------------------
+// String-valued results
+// ---------------------------------------------------------------------------
+
+// A subst/m4_variable result arrives JSON-encoded (`"present"`); the
+// comparison is against the string, not its encoding.
+void test_compare_json_encoded_string() {
+    std::map<std::string, CheckResult> results;
+    results.emplace("vintage", make_result("vintage", "\"posix\"", true));
+    results.emplace("count", make_result("count", "3", true));
+    assert(ConditionEvaluator("vintage==posix").compute(results));
+    assert(!ConditionEvaluator("vintage==bsd").compute(results));
+    assert(ConditionEvaluator("vintage!=bsd").compute(results));
+    assert(ConditionEvaluator("count==3").compute(results));
+}
+
+// ---------------------------------------------------------------------------
 // Parse tests
 // ---------------------------------------------------------------------------
 
@@ -458,6 +474,7 @@ void test_evaluator_lookup_by_define_field() {
     } while (0)
 
 int main() {
+    test_compare_json_encoded_string();
     std::cout << "Parse tests:\n";
     RUN(test_parse_simple_var);
     RUN(test_parse_negation);

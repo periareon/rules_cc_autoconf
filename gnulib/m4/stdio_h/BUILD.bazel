@@ -253,6 +253,7 @@ autoconf(
         checks.AC_SUBST("GNULIB_STDIO_H_SIGPIPE", 0),
         checks.AC_SUBST("GNULIB_SZPRINTF", 0),
         checks.AC_SUBST("GNULIB_TMPFILE", 0),
+        checks.AC_SUBST("GNULIB_VAPRINTF", 0),  # vaprintf module (newer gnulib; stdio.in.h reads it)
         checks.AC_SUBST("GNULIB_VASPRINTF", 0),
         checks.AC_SUBST("GNULIB_VASZPRINTF", 0),
         checks.AC_SUBST("GNULIB_VFSCANF", 0),
