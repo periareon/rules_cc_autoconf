@@ -986,6 +986,40 @@ autoconf_srcs(
 )
 </code></pre>
 <p>Each source is compiled only when its expression is true; the grammar is the one in <a href="#expression-syntax">Expression syntax</a>. The gnulib rule is <code>HAVE_X = 0 || REPLACE_X = 1</code>; checking only <code>REPLACE_X</code> misses every libc that lacks the function (MSVC, often MinGW).</p>
+<h3 id="a-standard-for-every-check"><a class="header" href="#a-standard-for-every-check">A standard for every check</a></h3>
+<p>Checks compile with Bazel's <code>--copt</code> / <code>--cxxopt</code> (the CFLAGS of a configure
+run), then the <code>autoconf</code> target's own <code>copts</code>, <code>conlyopts</code> and <code>cxxopts</code>
+(as on a <code>cc_library</code>), then a check's own <code>copts</code>. A target's flags are
+its own: they do not reach the ports of this repository or any other
+dependency, and results computed under them are not shared with targets
+that lack them.</p>
+<p>A language standard is not something a port or a project sets for itself.
+The standard of a build belongs to the root module, as it does for every
+other C and C++ dependency: <code>--cxxopt=-std=c++17</code> (and <code>--host_cxxopt</code>) in
+<code>.bazelrc</code>, or a feature of your toolchain enabled with <code>--features</code>, which
+the checks honour like <code>cc_library</code> does. Either way every check, port and
+compile sees one standard, in one configuration, with the toolchain's cached
+results intact. A module that put <code>-std=</code> in its own <code>copts</code> would override
+that choice: flags come in the order toolchain, <code>--copt</code> / <code>--cxxopt</code>,
+target <code>copts</code> / <code>conlyopts</code> / <code>cxxopts</code>, then <code>--per_file_copt</code> (or a
+check's <code>copts</code>), and every compiler takes the last standard it sees. When
+configure.ac makes a standard mandatory (<code>AX_CXX_COMPILE_STDCXX(17, noext, mandatory)</code>, <code>AC_PROG_CC_C99</code>), translate it the way configure behaves when
+the compiler cannot provide it: a check that probes <code>__cplusplus</code> or
+<code>__STDC_VERSION__</code> and stops the build with a message naming the flag to
+add. That is <code>checks.AC_LANG_STANDARD</code>, which compares the standard the
+compiler runs in (<code>__STDC_VERSION__</code>, or <code>__cplusplus</code> / <code>_MSVC_LANG</code>) with
+the one asked for, at least that version unless <code>compare</code> says otherwise,
+and with <code>error = True</code> stops the build with a message that spells the flag
+for GCC, clang and MSVC. <code>checks.AX_CXX_COMPILE_STDCXX("17", "noext")</code> is
+the autoconf-archive macro on top of it, defining <code>HAVE_CXX17</code>:</p>
+<pre><code class="language-python">checks.AC_LANG_STANDARD("c11", error = True)
+checks.AC_LANG_STANDARD("c++17", define = "HAVE_CXX17")
+</code></pre>
+<p><code>error</code> is also available on <code>AC_TRY_COMPILE</code> and <code>AC_TRY_LINK</code>, as the
+<code>AC_MSG_ERROR</code> of the branch configure takes when a test does not pass.
+Such a check needs no <code>define</code>: it is a validation action, run whenever the
+target is built, directly or through a dependency, even though nothing in
+config.h reads its result.</p>
 <h3 id="toolchain-defaults-yield-to-your-values"><a class="header" href="#toolchain-defaults-yield-to-your-values">Toolchain defaults yield to your values</a></h3>
 <p>The <code>*_H_DEFAULTS</code> values (<code>HAVE_FOO=1</code>, <code>REPLACE_FOO=0</code>, <code>GNULIB_FOO=0</code>) are supplied by the autoconf toolchain, not by <code>deps</code>. In <code>autoconf_hdr</code> and <code>autoconf_srcs</code> a value coming from <code>deps</code> overrides a default, so a downstream target may set any value a default would otherwise supply without a duplicate error. The duplicate check applies only between explicit checks. Two consequences:</p>
 <ul>

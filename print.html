@@ -745,6 +745,7 @@ joined with newlines to form the prologue of the test program.</p>
 <li><a href="checks.html#checks.AC_DEFINE">checks.AC_DEFINE</a></li>
 <li><a href="checks.html#checks.AC_DEFINE_UNQUOTED">checks.AC_DEFINE_UNQUOTED</a></li>
 <li><a href="checks.html#checks.AC_FAIL">checks.AC_FAIL</a></li>
+<li><a href="checks.html#checks.AC_LANG_STANDARD">checks.AC_LANG_STANDARD</a></li>
 <li><a href="checks.html#checks.AC_PROG_CC">checks.AC_PROG_CC</a></li>
 <li><a href="checks.html#checks.AC_PROG_CC_C_O">checks.AC_PROG_CC_C_O</a></li>
 <li><a href="checks.html#checks.AC_PROG_CXX">checks.AC_PROG_CXX</a></li>
@@ -752,6 +753,7 @@ joined with newlines to form the prologue of the test program.</p>
 <li><a href="checks.html#checks.AC_SUBST">checks.AC_SUBST</a></li>
 <li><a href="checks.html#checks.AC_TRY_COMPILE">checks.AC_TRY_COMPILE</a></li>
 <li><a href="checks.html#checks.AC_TRY_LINK">checks.AC_TRY_LINK</a></li>
+<li><a href="checks.html#checks.AX_CXX_COMPILE_STDCXX">checks.AX_CXX_COMPILE_STDCXX</a></li>
 <li><a href="checks.html#checks.M4_VARIABLE">checks.M4_VARIABLE</a></li>
 <li><a href="checks.html#macros.AC_CHECK_DECLS">macros.AC_CHECK_DECLS</a></li>
 <li><a href="checks.html#macros.AC_CHECK_FUNCS">macros.AC_CHECK_FUNCS</a></li>
@@ -1400,6 +1402,53 @@ checks.AC_FAIL("WORDS_BIGENDIAN")
 </div>
 <p><strong>RETURNS</strong></p>
 <p>A JSON-encoded check string for use with the autoconf rule.</p>
+<p><a id="checks.AC_LANG_STANDARD"></a></p>
+<h2 id="checksac_lang_standard"><a class="header" href="#checksac_lang_standard">checks.AC_LANG_STANDARD</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+checks.AC_LANG_STANDARD(<a href="checks.html#checks.AC_LANG_STANDARD-standard">standard</a>, *, <a href="checks.html#checks.AC_LANG_STANDARD-name">name</a>, <a href="checks.html#checks.AC_LANG_STANDARD-compare">compare</a>, <a href="checks.html#checks.AC_LANG_STANDARD-define">define</a>, <a href="checks.html#checks.AC_LANG_STANDARD-error">error</a>, <a href="checks.html#checks.AC_LANG_STANDARD-copts">copts</a>, <a href="checks.html#checks.AC_LANG_STANDARD-requires">requires</a>)
+</pre>
+<p>Check the language standard the compiler is running in.</p>
+<p>The probe compares <code>__STDC_VERSION__</code> (C) or <code>__cplusplus</code> -- <code>_MSVC_LANG</code>
+on MSVC, whose <code>__cplusplus</code> stays at 199711L -- with the value of
+<code>standard</code>, under the flags every check sees: the toolchain's, <code>--copt</code> /
+<code>--cxxopt</code>, and the target's own <code>copts</code> / <code>conlyopts</code> / <code>cxxopts</code>.  It is
+the test behind <code>AC_PROG_CC_C99</code>, <code>AC_PROG_CC_STDC</code> and
+<code>AX_CXX_COMPILE_STDCXX</code>'s mandatory mode, as one check: configure
+switches the compiler into the mode it needs and stops when it cannot;
+a Bazel build takes its standard from the root module, so the check
+reports, or stops the build, instead.</p>
+<p>Original m4 example:</p>
+<pre><code class="language-m4">AC_PROG_CC_C99
+AX_CXX_COMPILE_STDCXX([17], [noext], [mandatory])
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-python"># Stop the build unless the C compiler is in C11 mode or later.
+checks.AC_LANG_STANDARD("c11", error = True)
+# Record whether the C++ compiler is in C++17 mode or later.
+checks.AC_LANG_STANDARD("c++17", define = "HAVE_CXX17")
+# Exactly C99 (the GNU dialect reports the same value).
+checks.AC_LANG_STANDARD("c99", compare = "==", error = "C99 required")
+</code></pre>
+<p>Note:
+This is a rules_cc_autoconf extension.  Dialects compare equal to
+the standard they extend (<code>gnu11</code> is <code>c11</code>), and the standard is the
+build's: a <code>-std</code> of the target's own <code>conlyopts</code> / <code>cxxopts</code> is seen,
+a dependency's is not.</p>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="checks.AC_LANG_STANDARD-standard"></a>standard</td><td style="text-align: left"><code>c89</code> .. <code>c23</code> or <code>c++98</code> .. <code>c++26</code>, with or without a <code>gnu</code> prefix.</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_LANG_STANDARD-name"></a>name</td><td style="text-align: left">Cache variable name. Defaults to <code>ac_cv_std_&lt;standard&gt;</code> plus a suffix for comparisons other than <code>&gt;=</code> (<code>ac_cv_std_c99_exact</code>).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_LANG_STANDARD-compare"></a>compare</td><td style="text-align: left">How the compiler's standard must relate to <code>standard</code>: <code>&gt;=</code> (default), <code>==</code>, <code>&lt;=</code>, <code>&gt;</code> or <code>&lt;</code>.</td><td style="text-align: left"><code>"&gt;="</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_LANG_STANDARD-define"></a>define</td><td style="text-align: left">Define name to set when the comparison holds.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_LANG_STANDARD-error"></a>error</td><td style="text-align: left">Stop the build when the comparison does not hold: <code>True</code> for a message naming the flags to add (GNU and MSVC spellings), or a message of your own.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_LANG_STANDARD-copts"></a>copts</td><td style="text-align: left">Optional list of extra compiler flags for this check.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_LANG_STANDARD-requires"></a>requires</td><td style="text-align: left">Requirements that must be met for this check to run.</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
 <p><a id="checks.AC_PROG_CC"></a></p>
 <h2 id="checksac_prog_cc"><a class="header" href="#checksac_prog_cc">checks.AC_PROG_CC</a></h2>
 <pre>
@@ -1577,7 +1626,7 @@ without `condition`, it always sets the variable. When used with
 load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
 
 checks.AC_TRY_COMPILE(*, <a href="checks.html#checks.AC_TRY_COMPILE-code">code</a>, <a href="checks.html#checks.AC_TRY_COMPILE-name">name</a>, <a href="checks.html#checks.AC_TRY_COMPILE-define">define</a>, <a href="checks.html#checks.AC_TRY_COMPILE-includes">includes</a>, <a href="checks.html#checks.AC_TRY_COMPILE-language">language</a>, <a href="checks.html#checks.AC_TRY_COMPILE-compile_defines">compile_defines</a>, <a href="checks.html#checks.AC_TRY_COMPILE-copts">copts</a>, <a href="checks.html#checks.AC_TRY_COMPILE-requires">requires</a>,
-                      <a href="checks.html#checks.AC_TRY_COMPILE-if_true">if_true</a>, <a href="checks.html#checks.AC_TRY_COMPILE-if_false">if_false</a>, <a href="checks.html#checks.AC_TRY_COMPILE-subst">subst</a>)
+                      <a href="checks.html#checks.AC_TRY_COMPILE-if_true">if_true</a>, <a href="checks.html#checks.AC_TRY_COMPILE-if_false">if_false</a>, <a href="checks.html#checks.AC_TRY_COMPILE-subst">subst</a>, <a href="checks.html#checks.AC_TRY_COMPILE-error">error</a>)
 </pre>
 <p>Try to compile custom code.</p>
 <p>Original m4 example:</p>
@@ -1622,6 +1671,7 @@ pass the result as `code`.
 <tr><td style="text-align: left"><a id="checks.AC_TRY_COMPILE-if_true"></a>if_true</td><td style="text-align: left">Value to use when check succeeds (currently not used for this check type).</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_TRY_COMPILE-if_false"></a>if_false</td><td style="text-align: left">Value to use when check fails (currently not used for this check type).</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_TRY_COMPILE-subst"></a>subst</td><td style="text-align: left">If True, automatically create a substitution variable with the same name that will be set to "1" if the check succeeds, "0" if it fails.</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_TRY_COMPILE-error"></a>error</td><td style="text-align: left">Stop the build with this message when the check fails: <code>AC_MSG_ERROR</code> in the branch configure runs when the test does not pass, e.g. a mandatory language standard.</td><td style="text-align: left"><code>None</code></td></tr>
 </tbody></table>
 </div>
 <p><strong>RETURNS</strong></p>
@@ -1632,7 +1682,7 @@ pass the result as `code`.
 load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
 
 checks.AC_TRY_LINK(*, <a href="checks.html#checks.AC_TRY_LINK-code">code</a>, <a href="checks.html#checks.AC_TRY_LINK-name">name</a>, <a href="checks.html#checks.AC_TRY_LINK-define">define</a>, <a href="checks.html#checks.AC_TRY_LINK-includes">includes</a>, <a href="checks.html#checks.AC_TRY_LINK-language">language</a>, <a href="checks.html#checks.AC_TRY_LINK-compile_defines">compile_defines</a>, <a href="checks.html#checks.AC_TRY_LINK-copts">copts</a>, <a href="checks.html#checks.AC_TRY_LINK-linkopts">linkopts</a>,
-                   <a href="checks.html#checks.AC_TRY_LINK-requires">requires</a>, <a href="checks.html#checks.AC_TRY_LINK-if_true">if_true</a>, <a href="checks.html#checks.AC_TRY_LINK-if_false">if_false</a>, <a href="checks.html#checks.AC_TRY_LINK-subst">subst</a>)
+                   <a href="checks.html#checks.AC_TRY_LINK-requires">requires</a>, <a href="checks.html#checks.AC_TRY_LINK-if_true">if_true</a>, <a href="checks.html#checks.AC_TRY_LINK-if_false">if_false</a>, <a href="checks.html#checks.AC_TRY_LINK-subst">subst</a>, <a href="checks.html#checks.AC_TRY_LINK-error">error</a>)
 </pre>
 <p>Try to compile and link custom code.</p>
 <p>This function mirrors GNU Autoconf's <code>AC_LINK_IFELSE</code> macro, which uses
@@ -1687,6 +1737,35 @@ to verify that functions are available at link time (not just declared).</p>
 <tr><td style="text-align: left"><a id="checks.AC_TRY_LINK-if_true"></a>if_true</td><td style="text-align: left">Value to use when check succeeds (currently not used for this check type).</td><td style="text-align: left"><code>1</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_TRY_LINK-if_false"></a>if_false</td><td style="text-align: left">Value to use when check fails (currently not used for this check type).</td><td style="text-align: left"><code>0</code></td></tr>
 <tr><td style="text-align: left"><a id="checks.AC_TRY_LINK-subst"></a>subst</td><td style="text-align: left">If True, mark as a substitution variable (for @VAR@ replacement in subst.h).</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AC_TRY_LINK-error"></a>error</td><td style="text-align: left">Stop the build with this message when the check fails: <code>AC_MSG_ERROR</code> in the branch configure runs when the test does not pass, e.g. a mandatory language standard.</td><td style="text-align: left"><code>None</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>RETURNS</strong></p>
+<p>A JSON-encoded check string for use with the autoconf rule.</p>
+<p><a id="checks.AX_CXX_COMPILE_STDCXX"></a></p>
+<h2 id="checksax_cxx_compile_stdcxx"><a class="header" href="#checksax_cxx_compile_stdcxx">checks.AX_CXX_COMPILE_STDCXX</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+checks.AX_CXX_COMPILE_STDCXX(<a href="checks.html#checks.AX_CXX_COMPILE_STDCXX-version">version</a>, <a href="checks.html#checks.AX_CXX_COMPILE_STDCXX-ext">ext</a>, <a href="checks.html#checks.AX_CXX_COMPILE_STDCXX-mandatory">mandatory</a>)
+</pre>
+<p>AX_CXX_COMPILE_STDCXX from the autoconf archive: is the C++ compiler in C++<version> mode?</p>
+<p>Defines <code>HAVE_CXX&lt;version&gt;</code> when it is (or a later one), and in mandatory
+mode stops the build when it is not.  The macro itself would add
+<code>-std=c++&lt;version&gt;</code> or <code>-std=gnu++&lt;version&gt;</code> to CXX; a Bazel build's
+standard comes from the root module (<code>--cxxopt</code>) or the toolchain, so
+only the test remains.</p>
+<p>Original m4 example:</p>
+<pre><code class="language-m4">AX_CXX_COMPILE_STDCXX([17], [noext], [mandatory])
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-python">checks.AX_CXX_COMPILE_STDCXX("17", "noext", mandatory = True)
+</code></pre>
+<p><strong>PARAMETERS</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Default Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="checks.AX_CXX_COMPILE_STDCXX-version"></a>version</td><td style="text-align: left"><code>11</code>, <code>14</code>, <code>17</code>, <code>20</code>, <code>23</code> or <code>26</code>.</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="checks.AX_CXX_COMPILE_STDCXX-ext"></a>ext</td><td style="text-align: left"><code>ext</code> or <code>noext</code>, as in the macro.  Accepted for fidelity; both dialects report the same <code>__cplusplus</code>, so it does not change the test.</td><td style="text-align: left"><code>"ext"</code></td></tr>
+<tr><td style="text-align: left"><a id="checks.AX_CXX_COMPILE_STDCXX-mandatory"></a>mandatory</td><td style="text-align: left">Stop the build when the compiler is not in that mode (the macro's <code>mandatory</code>); <code>False</code> is its <code>optional</code>.</td><td style="text-align: left"><code>True</code></td></tr>
 </tbody></table>
 </div>
 <p><strong>RETURNS</strong></p>
@@ -2879,6 +2958,40 @@ autoconf_srcs(
 )
 </code></pre>
 <p>Each source is compiled only when its expression is true; the grammar is the one in <a href="migration.html#expression-syntax">Expression syntax</a>. The gnulib rule is <code>HAVE_X = 0 || REPLACE_X = 1</code>; checking only <code>REPLACE_X</code> misses every libc that lacks the function (MSVC, often MinGW).</p>
+<h3 id="a-standard-for-every-check"><a class="header" href="#a-standard-for-every-check">A standard for every check</a></h3>
+<p>Checks compile with Bazel's <code>--copt</code> / <code>--cxxopt</code> (the CFLAGS of a configure
+run), then the <code>autoconf</code> target's own <code>copts</code>, <code>conlyopts</code> and <code>cxxopts</code>
+(as on a <code>cc_library</code>), then a check's own <code>copts</code>. A target's flags are
+its own: they do not reach the ports of this repository or any other
+dependency, and results computed under them are not shared with targets
+that lack them.</p>
+<p>A language standard is not something a port or a project sets for itself.
+The standard of a build belongs to the root module, as it does for every
+other C and C++ dependency: <code>--cxxopt=-std=c++17</code> (and <code>--host_cxxopt</code>) in
+<code>.bazelrc</code>, or a feature of your toolchain enabled with <code>--features</code>, which
+the checks honour like <code>cc_library</code> does. Either way every check, port and
+compile sees one standard, in one configuration, with the toolchain's cached
+results intact. A module that put <code>-std=</code> in its own <code>copts</code> would override
+that choice: flags come in the order toolchain, <code>--copt</code> / <code>--cxxopt</code>,
+target <code>copts</code> / <code>conlyopts</code> / <code>cxxopts</code>, then <code>--per_file_copt</code> (or a
+check's <code>copts</code>), and every compiler takes the last standard it sees. When
+configure.ac makes a standard mandatory (<code>AX_CXX_COMPILE_STDCXX(17, noext, mandatory)</code>, <code>AC_PROG_CC_C99</code>), translate it the way configure behaves when
+the compiler cannot provide it: a check that probes <code>__cplusplus</code> or
+<code>__STDC_VERSION__</code> and stops the build with a message naming the flag to
+add. That is <code>checks.AC_LANG_STANDARD</code>, which compares the standard the
+compiler runs in (<code>__STDC_VERSION__</code>, or <code>__cplusplus</code> / <code>_MSVC_LANG</code>) with
+the one asked for, at least that version unless <code>compare</code> says otherwise,
+and with <code>error = True</code> stops the build with a message that spells the flag
+for GCC, clang and MSVC. <code>checks.AX_CXX_COMPILE_STDCXX("17", "noext")</code> is
+the autoconf-archive macro on top of it, defining <code>HAVE_CXX17</code>:</p>
+<pre><code class="language-python">checks.AC_LANG_STANDARD("c11", error = True)
+checks.AC_LANG_STANDARD("c++17", define = "HAVE_CXX17")
+</code></pre>
+<p><code>error</code> is also available on <code>AC_TRY_COMPILE</code> and <code>AC_TRY_LINK</code>, as the
+<code>AC_MSG_ERROR</code> of the branch configure takes when a test does not pass.
+Such a check needs no <code>define</code>: it is a validation action, run whenever the
+target is built, directly or through a dependency, even though nothing in
+config.h reads its result.</p>
 <h3 id="toolchain-defaults-yield-to-your-values"><a class="header" href="#toolchain-defaults-yield-to-your-values">Toolchain defaults yield to your values</a></h3>
 <p>The <code>*_H_DEFAULTS</code> values (<code>HAVE_FOO=1</code>, <code>REPLACE_FOO=0</code>, <code>GNULIB_FOO=0</code>) are supplied by the autoconf toolchain, not by <code>deps</code>. In <code>autoconf_hdr</code> and <code>autoconf_srcs</code> a value coming from <code>deps</code> overrides a default, so a downstream target may set any value a default would otherwise supply without a duplicate error. The duplicate check applies only between explicit checks. Two consequences:</p>
 <ul>
