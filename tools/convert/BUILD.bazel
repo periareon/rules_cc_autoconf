@@ -1,0 +1,178 @@
+"""Converter from autoconf projects to rules_cc_autoconf targets.
+
+A development tool: it runs from a clone of this repository (`bazel run
+//tools/convert -- ...`) and uses the pinned GNU autotools from
+`//autoconf/tests/gnu`, which are dev dependencies.  Nothing here is reachable
+from a `bazel_dep` on the rules.
+"""
+
+load("@rules_venv//python:py_binary.bzl", "py_binary")
+load("@rules_venv//python/pytest:defs.bzl", "py_pytest_test")
+load("//autoconf/tests/gnu:cc_env.bzl", "autotools_cc_binary")
+load("//autoconf/tests/gnu:toolchain.bzl", "autotools_test")
+load(":golden_test.bzl", "convert_golden_test", "convert_project_golden_test")
+
+exports_files([
+    "instrument.m4",
+    "pkg_stub.m4",
+])
+
+# The converter: one py_binary that the tests and the other tools depend on
+# (rules_venv binaries serve as libraries).
+py_binary(
+    name = "convert_bin",
+    srcs = [
+        "bcr.py",
+        "check.py",
+        "cli.py",
+        "dataflow.py",
+        "decisions.py",
+        "emit.py",
+        "expand.py",
+        "gnulibmk.py",
+        "index.py",
+        "ir.py",
+        "libraries.py",
+        "lower.py",
+        "m4args.py",
+        "m4loc.py",
+        "markers.py",
+        "project.py",
+        "shparse.py",
+        "source.py",
+        "tomlout.py",
+        "translate.py",
+        "vendor.py",
+    ],
+    data = [
+        "index.toml",
+        "instrument.m4",
+        "libraries.toml",
+        "pkg_stub.m4",
+        "//:version.bzl",
+    ],
+    imports = ["../.."],
+    main = "cli.py",
+    deps = [
+        "//autoconf/tests:diff_tester",
+        "//autoconf/tests/gnu:autotools",
+        "@pip_convert//tree_sitter",
+        "@pip_convert//tree_sitter_bash",
+        "@rules_venv//python/runfiles",
+    ],
+)
+
+autotools_cc_binary(
+    name = "convert",
+    runner = ":convert_bin",
+)
+
+py_binary(
+    name = "update_index",
+    srcs = ["update_index.py"],
+    main = "update_index.py",
+    deps = [":convert_bin"],
+)
+
+py_binary(
+    name = "update_libraries",
+    srcs = ["update_libraries.py"],
+    main = "update_libraries.py",
+    deps = [":convert_bin"],
+)
+
+py_pytest_test(
+    name = "markers_test",
+    size = "small",
+    srcs = ["tests/markers_test.py"],
+    deps = [":convert_bin"],
+)
+
+py_binary(
+    name = "instrument_test_bin",
+    testonly = True,
+    srcs = ["tests/instrument_test.py"],
+    main = "tests/instrument_test.py",
+    deps = [":convert_bin"],
+)
+
+autotools_test(
+    name = "instrument_test",
+    size = "small",
+    runner = ":instrument_test_bin",
+)
+
+[
+    py_pytest_test(
+        name = test,
+        size = "small",
+        srcs = ["tests/{}.py".format(test)],
+        deps = [":convert_bin"],
+    )
+    for test in [
+        "dataflow_test",
+        "decisions_test",
+        "libraries_test",
+        "emit_test",
+        "expand_test",
+        "gnulibmk_test",
+        "index_test",
+        "m4args_test",
+        "source_test",
+        "translate_test",
+        "vendor_test",
+    ]
+]
+
+py_binary(
+    name = "golden_runner",
+    testonly = True,
+    srcs = ["tests/golden_runner.py"],
+    main = "tests/golden_runner.py",
+    deps = [
+        ":convert_bin",
+    ],
+)
+
+# The converter's output for gnulib modules against the hand ports' inputs.
+[
+    convert_golden_test(
+        name = "{}_golden_test".format(module),
+        size = "small",
+        annotate = annotate,
+        configure_ac = "tests/golden/{}.configure.ac".format(module),
+        decisions = "tests/golden/{}.decisions.bzl".format(module),
+        expected = "tests/golden/{}.BUILD.bazel".format(module),
+        expected_decisions = "tests/golden/{}.decisions.needed.bzl".format(module) if asks else None,
+        m4_files = ["@gnulib//:all_m4"],
+        only = ["{}.m4".format(module)],
+    )
+    # errno_h shows the default output; the others keep the m4 provenance
+    # comments so a golden can be read against the hand port.  `asks`: the
+    # conversion needs decisions, and the file the converter writes to ask for
+    # them is a golden too.
+    for module, annotate, asks in [
+        ("errno_h", False, False),
+        ("fstat", True, False),
+        ("posix_memalign", True, True),
+        ("strerror", True, False),
+    ]
+]
+
+py_pytest_test(
+    name = "treesitter_smoke_test",
+    size = "small",
+    srcs = ["tests/treesitter_smoke_test.py"],
+    deps = [":convert_bin"],
+)
+
+# Project mode on a release tarball: the whole BUILD file and MODULE.bazel.
+convert_project_golden_test(
+    name = "gzip_project_golden_test",
+    size = "medium",
+    decisions = "tests/golden/gzip.decisions.bzl",
+    expected = "tests/golden/gzip.BUILD.bazel",
+    expected_decisions = "tests/golden/gzip.decisions.needed.bzl",
+    expected_module = "tests/golden/gzip.MODULE.bazel",
+    sources = "@gzip_src//:all_files",
+)

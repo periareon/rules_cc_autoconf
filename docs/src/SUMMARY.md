@@ -18,3 +18,5 @@
 - [Gnulib](./gnulib.md)
 
 - [Migrating M4 macros](./migration.md)
+
+- [Converting a project](./convert.md)
