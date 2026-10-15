@@ -15,4 +15,24 @@
 #error "Falsy header must not be present in the rule's TreeArtifact"
 #endif
 
+// `COND_FALSE==false` compares the string: the value is "false", so the
+// condition holds and the header is present.
+#include "gl_conditional_eq_false.h"
+
+#ifndef GL_CONDITIONAL_HDRS_EQ_FALSE_SENTINEL
+#error "A header gated on VAR==false must be present when VAR is \"false\""
+#endif
+
+// strip_include_prefix: `src/_gnulib_cond/sub/x.h` is included as <sub/x.h>,
+// and the falsy sibling is absent.
+#include <sub/gl_conditional_nested.h>
+
+#ifndef GL_CONDITIONAL_HDRS_NESTED_SENTINEL
+#error "A header under strip_include_prefix is missing its sentinel"
+#endif
+
+#if __has_include(<sub/gl_conditional_nested_absent.h>)
+#error "The falsy nested header must not be present"
+#endif
+
 int main(void) { return 0; }

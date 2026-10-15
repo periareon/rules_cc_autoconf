@@ -140,16 +140,10 @@ ResultEntry load_result(const std::string& path) {
     return entry;
 }
 
-// gnulib's `GL_GENERATE_*_H` uses the literal strings "true" / "false";
-// ConditionEvaluator treats any non-empty, non-"0" value as truthy and
-// would otherwise mis-classify "false" as truthy.  Normalize before
-// handing off.
+// The evaluator knows gnulib's "true" / "false" strings (a bare "false" is
+// falsy, `==false` compares the string), the same as autoconf_srcs sees.
 CheckResult to_check_result(const std::string& name, const ResultEntry& entry) {
-    std::string value = entry.value;
-    if (value == "false") {
-        value.clear();
-    }
-    return CheckResult(name, value, entry.success);
+    return CheckResult(name, entry.value, entry.success);
 }
 
 bool evaluate(const std::string& condition,

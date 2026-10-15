@@ -37,12 +37,15 @@ def _check_funcs_android(
         includes = None,
         code = None,
         requires = None):
-    """Check multiple functions with Android/macOS compatibility (gl_CHECK_FUNCS_ANDROID).
+    """gl_CHECK_FUNCS_ANDROID / gl_CHECK_FUNCS_MACOS / gl_CHECK_FUNCS_ANDROID_MACOS.
 
-    Gnulib's gl_CHECK_FUNCS_ANDROID checks whether each function is available (via
-    AC_CHECK_FUNC), then AC_DEFINEs HAVE_<FUNCTION> in config.h only when the function
-    exists, and AC_SUBSTs HAVE_<FUNCTION> in subst.h always (0 or 1). This matches the
-    pattern used by many gnulib modules.
+    For each function: AC_CHECK_FUNC, AC_DEFINE(HAVE_<FUNCTION>) when it links, and
+    AC_SUBST(HAVE_<FUNCTION>, 1 or 0) always.  That is what the upstream macros do on
+    every system but two: on Android they also check the declaration with `includes`
+    (a function may be in libc but undeclared for the target API level), and on macOS
+    they consult the deployment target ("future").  Neither applies to the platforms
+    the rules target, so the three macros are one here: `includes` is accepted for
+    parity with the m4 and not used, and the MACOS variants are this function.
 
     Upstream:
     <https://github.com/coreutils/gnulib/blob/a8482ceecf8f51571e773475a0efa9af7bb616e2/m4/gnulib-common.m4#L1630-L1665>
@@ -106,81 +109,6 @@ def _check_funcs_android(
         ))
 
     return result
-
-def _check_funcs_macos(
-        functions,
-        *,
-        includes = None,
-        code = None,
-        requires = None):
-    """Check functions with macOS portability (gl_CHECK_FUNCS_MACOS).
-
-    Gnulib's gl_CHECK_FUNCS_MACOS checks function availability with macOS version
-    handling (yes/no/future). In Bazel we use the same link-check pattern as
-    GL_CHECK_FUNCS_ANDROID; platform overrides can be done via select() in BUILD files.
-
-    Upstream:
-    https://github.com/coreutils/gnulib/blob/a8482ceecf8f51571e773475a0efa9af7bb616e2/m4/gnulib-common.m4#L1680-L1718
-
-    Original m4 example:
-    ```
-    gl_CHECK_FUNCS_MACOS([faccessat], [[#include <unistd.h>]])
-    ```
-
-    Example:
-    ```python
-    load("@rules_cc_autoconf//gnulib:macros.bzl", gl_macros = "macros")
-    checks = gl_macros.GL_CHECK_FUNCS_MACOS(
-        ["faccessat"],
-        includes = ["#include <unistd.h>"],
-    )
-    ```
-
-    Same signature and return as GL_CHECK_FUNCS_ANDROID.
-    """
-    return _check_funcs_android(
-        functions = functions,
-        includes = includes,
-        code = code,
-        requires = requires,
-    )
-
-def _check_funcs_android_macos(
-        functions,
-        *,
-        includes = None,
-        code = None,
-        requires = None):
-    """Check functions with Android and macOS portability (gl_CHECK_FUNCS_ANDROID_MACOS).
-
-    Gnulib's gl_CHECK_FUNCS_ANDROID_MACOS combines Android and macOS availability
-    handling. In Bazel we use the same link-check pattern as GL_CHECK_FUNCS_ANDROID;
-    platform overrides can be done via select() in BUILD files.
-
-    Upstream:
-    https://github.com/coreutils/gnulib/blob/a8482ceecf8f51571e773475a0efa9af7bb616e2/m4/gnulib-common.m4#L1734-L1738
-
-    Original m4 example:
-    ```m4
-    gl_CHECK_FUNCS_ANDROID_MACOS([faccessat], [[#include <unistd.h>]])
-    ```
-
-    Example:
-    load("@rules_cc_autoconf//gnulib:macros.bzl", gl_macros = "macros")
-    checks = gl_macros.GL_CHECK_FUNCS_ANDROID_MACOS(
-        ["faccessat"],
-        includes = ["#include <unistd.h>"],
-    )
-    ```
-
-    Same signature and return as GL_CHECK_FUNCS_ANDROID.
-    """
-    return _check_funcs_android(
-        functions = functions,
-        includes = includes,
-        code = code,
-        requires = requires,
-    )
 
 def _gl_next_header(header, name = None, requires = None):
     """Resolve NEXT_*_H for a header, inlining system header content when #include_next is unavailable.
@@ -406,8 +334,8 @@ checks = struct(
 
 macros = struct(
     GL_CHECK_FUNCS_ANDROID = _check_funcs_android,
-    GL_CHECK_FUNCS_MACOS = _check_funcs_macos,
-    GL_CHECK_FUNCS_ANDROID_MACOS = _check_funcs_android_macos,
+    GL_CHECK_FUNCS_MACOS = _check_funcs_android,
+    GL_CHECK_FUNCS_ANDROID_MACOS = _check_funcs_android,
     GL_CHECK_NEXT_HEADERS = _check_next_headers,
     GL_NEXT_HEADERS = _next_headers,
     AC_LIB_HAVE_LINKFLAGS = _ac_lib_have_linkflags,
