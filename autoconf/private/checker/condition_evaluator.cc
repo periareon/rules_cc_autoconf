@@ -280,11 +280,15 @@ bool compare_values(const std::string& actual, CmpOp op,
     return false;
 }
 
+// A bare variable as a condition.  Empty and "0" are false as in the shell
+// and the preprocessor; so is the literal "false", which is what gnulib's
+// GL_GENERATE_*_H variables (and the shell's `true`/`false` idiom) carry.
+// The value is the decoded string: a subst arrives JSON-encoded.
 bool is_truthy(const CheckResult* r) {
     if (!r) return false;
     if (!r->success) return false;
-    const std::string& v = r->value.value_or("");
-    return !v.empty() && v != "0";
+    const std::string v = result_value(r);
+    return !v.empty() && v != "0" && v != "false";
 }
 
 }  // namespace

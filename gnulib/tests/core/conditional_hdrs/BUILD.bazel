@@ -18,9 +18,22 @@ autoconf(
 cc_gnulib_conditional_hdrs(
     name = "gen",
     hdrs = {
+        "src/gl_conditional_eq_false.h": "COND_FALSE==false",
         "src/gl_conditional_falsy.h": "COND_FALSE",
         "src/gl_conditional_truthy.h": "COND_TRUE",
     },
+    deps = [":conditions"],
+)
+
+# Headers in a subdirectory: `strip_include_prefix` gives them their include
+# path, as cc_library does (gnulib's selinux/context.h).
+cc_gnulib_conditional_hdrs(
+    name = "gen_nested",
+    hdrs = {
+        "src/_gnulib_cond/sub/gl_conditional_nested.h": "COND_TRUE",
+        "src/_gnulib_cond/sub/gl_conditional_nested_absent.h": "COND_FALSE",
+    },
+    strip_include_prefix = "src/_gnulib_cond",
     deps = [":conditions"],
 )
 
@@ -32,13 +45,15 @@ cc_gnulib_conditional_hdrs(
 cc_test(
     name = "include_test",
     srcs = ["include_test.cc"],
-    deps = [":gen"],
+    deps = [
+        ":gen",
+        ":gen_nested",
+    ],
 )
 
 # `defaults = True`: conditions over the toolchain defaults (GL_GENERATE_*_H
 # of header packages the project never configures itself), with a
-# dependency's own result taking precedence.  gnulib's "false" is falsy to
-# the runner, so a false GL_GENERATE variable is tested as `!VAR`.
+# dependency's own result taking precedence.
 cc_gnulib_conditional_hdrs(
     name = "gen_defaults",
     hdrs = {

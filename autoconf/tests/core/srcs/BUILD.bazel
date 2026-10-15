@@ -8,6 +8,8 @@ autoconf(
     name = "have_good_src",
     checks = [
         checks.AC_DEFINE("HAVE_GOOD_SRC", 1),
+        # gnulib's GL_GENERATE_*_H idiom: the string "false" is false.
+        checks.M4_VARIABLE("GL_GENERATE_FALSE_SRC", "false"),
     ],
 )
 
@@ -38,6 +40,7 @@ autoconf_srcs(
     name = "generated_srcs",
     srcs = {
         "bad/bad.c": "HAVE_BAD_SRC",
+        "bad/false_src.c": "GL_GENERATE_FALSE_SRC",
         "good/good.c": "HAVE_GOOD_SRC",
     },
     deps = [":autoconf"],

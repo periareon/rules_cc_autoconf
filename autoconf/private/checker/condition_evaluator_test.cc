@@ -33,6 +33,23 @@ void test_compare_json_encoded_string() {
     assert(ConditionEvaluator("count==3").compute(results));
 }
 
+// gnulib's GL_GENERATE_*_H variables carry the strings "true" / "false":
+// "false" is falsy as a bare condition, and `==false` compares the string.
+void test_gnulib_true_false_strings() {
+    std::map<std::string, CheckResult> results;
+    results.emplace("GL_GENERATE_A_H",
+                    make_result("GL_GENERATE_A_H", "\"true\"", true));
+    results.emplace("GL_GENERATE_B_H",
+                    make_result("GL_GENERATE_B_H", "\"false\"", true));
+    results.emplace("EMPTY", make_result("EMPTY", "\"\"", true));
+    assert(ConditionEvaluator("GL_GENERATE_A_H").compute(results));
+    assert(!ConditionEvaluator("GL_GENERATE_B_H").compute(results));
+    assert(ConditionEvaluator("!GL_GENERATE_B_H").compute(results));
+    assert(ConditionEvaluator("GL_GENERATE_B_H==false").compute(results));
+    assert(!ConditionEvaluator("GL_GENERATE_B_H==true").compute(results));
+    assert(!ConditionEvaluator("EMPTY").compute(results));
+}
+
 // ---------------------------------------------------------------------------
 // Parse tests
 // ---------------------------------------------------------------------------
@@ -474,6 +491,7 @@ void test_evaluator_lookup_by_define_field() {
     } while (0)
 
 int main() {
+    RUN(test_gnulib_true_false_strings);
     test_compare_json_encoded_string();
     std::cout << "Parse tests:\n";
     RUN(test_parse_simple_var);
