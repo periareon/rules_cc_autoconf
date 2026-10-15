@@ -16,6 +16,9 @@ autoconf(
         checks.AC_DEFINE("HAVE_FREXP_IN_LIBC", "1"),
         # Canonical owner of FREXP_LIBM (empty on macOS); asinl/acosl get it from here to avoid duplicate in //... build
         checks.AC_SUBST("FREXP_LIBM", ""),
+        # The shell variable gl_CONDITIONAL([GL_COND_OBJ_FREXP], [test $gl_func_frexp_no_libm = no])
+        # reads: frexp works without -lm wherever HAVE_FREXP_IN_LIBC holds.
+        checks.M4_VARIABLE("gl_func_frexp_no_libm", "yes"),
     ],
     visibility = ["//visibility:public"],
     deps = [

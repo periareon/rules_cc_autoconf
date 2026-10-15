@@ -32,6 +32,7 @@ autoconf(
     deps = [
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//autoconf/macros/AC_HEADER_MAJOR",  # ptsname_r.m4: AC_REQUIRE([AC_HEADER_MAJOR])
         "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
         "//gnulib/m4/sys_types_h",
         "//gnulib/m4/wchar_h:gl_WCHAR_H_CORE",

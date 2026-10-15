@@ -11,27 +11,10 @@ autoconf(
 
         # AC_HEADER_MAJOR checks where major/minor/makedev are defined
         # On modern Linux (glibc), they're in sys/sysmacros.h
-        checks.AC_TRY_COMPILE(
-            name = "gl_cv_major_in_sysmacros",
-            code = """\
-#include <sys/sysmacros.h>
-int main(void) {
-    int d = makedev(1, 2);
-    int M = major(d);
-    int m = minor(d);
-    return M + m;
-}
-""",
-        ),
-
-        # Use requires pattern to ensure undef (not 0) when not found
-        checks.AC_DEFINE(
-            "MAJOR_IN_SYSMACROS",
-            "1",
-            requires = ["gl_cv_major_in_sysmacros==1"],
-        ),
-
-        # AC_CHECK_TYPE checks for blksize_t and blkcnt_t types
+        # major/minor/makedev are AC_HEADER_MAJOR's business: upstream gl_SYS_TYPES_H
+        # never requires it (sys_types_h.m4 only redefines the macro for autoconf before
+        # 2.70.1).  Probing here made MAJOR_IN_SYSMACROS a second producer for any project
+        # that calls AC_HEADER_MAJOR itself (coreutils).
         checks.AC_CHECK_TYPE(
             "blksize_t",
             name = "ac_cv_type_blksize_t",

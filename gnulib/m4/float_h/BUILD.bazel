@@ -15,7 +15,43 @@ autoconf(
         # (mainline Linux/macOS x86_64) the system float.h is complete, but
         # gnulib still ships a wrapper from gl_CHECK_NEXT_HEADERS — so the
         # variable is left "true" here to mirror that behavior.
-        checks.M4_VARIABLE("GL_GENERATE_FLOAT_H", "true"),
+        # Upstream: GL_GENERATE_FLOAT_H=false, true on AIX/BeOS/OpenBSD/MirBSD, on i386
+        # FreeBSD/DragonFly and PowerPC Linux after long double probes (REPLACE_FLOAT_LDBL=1
+        # there too), where float.h does not conform to ISO C23 (REPLACE_FLOAT_SNAN=1), or
+        # where itold is broken (REPLACE_ITOLD=1).  None of the platform cases apply to the
+        # systems this port targets, and REPLACE_ITOLD is 0 above, so the C23 probe decides.
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_header_float_h_isoc23",
+            code = """\
+#include <float.h>
+int x[] = { FLT_DECIMAL_DIG, DBL_DECIMAL_DIG, LDBL_DECIMAL_DIG };
+int y[] = { FLT_IS_IEC_60559, DBL_IS_IEC_60559, LDBL_IS_IEC_60559 };
+float maxf = FLT_NORM_MAX;
+double maxd = DBL_NORM_MAX;
+long double maxl = LDBL_NORM_MAX;
+int main(void) {
+  float sf = FLT_SNAN;
+  double sd = DBL_SNAN;
+  long double sl = LDBL_SNAN;
+  return (sf != 0) + (sd != 0) + (sl != 0);
+}
+""",
+        ),
+        checks.M4_VARIABLE(
+            "GL_GENERATE_FLOAT_H",
+            condition = "gl_cv_header_float_h_isoc23",
+            if_false = "true",
+            if_true = "false",
+        ),
+        # Shell variables gl_CONDITIONAL([GL_COND_OBJ_FLOAT], [test $REPLACE_FLOAT_LDBL = 1 ||
+        # test $REPLACE_FLOAT_SNAN = 1]) reads: whether lib/float.c is compiled.
+        checks.M4_VARIABLE("REPLACE_FLOAT_LDBL", "0"),
+        checks.M4_VARIABLE(
+            "REPLACE_FLOAT_SNAN",
+            condition = "gl_cv_header_float_h_isoc23",
+            if_false = "1",
+            if_true = "0",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [

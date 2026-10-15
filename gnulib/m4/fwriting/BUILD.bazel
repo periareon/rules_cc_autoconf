@@ -7,6 +7,8 @@ autoconf(
     name = "fwriting",
     checks = [
         checks.AC_TRY_LINK(
+            # gnulib.mk: gl_CONDITIONAL([GL_COND_OBJ_FWRITING], [test $ac_cv_func___fwriting = no])
+            name = "ac_cv_func___fwriting",
             code = utils.AC_LANG_PROGRAM(
                 "#include <stdio.h>\n#include <stdio_ext.h>\n",
                 "FILE *f = 0;\n__fwriting(f);\n",

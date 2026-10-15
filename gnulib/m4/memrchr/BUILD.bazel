@@ -5,27 +5,23 @@ load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "memrchr",
-    checks = select({
-        # On Linux, memrchr is available in glibc with _GNU_SOURCE
-        "@platforms//os:linux": [
-            checks.AC_DEFINE("HAVE_DECL_MEMRCHR", 1),
-            checks.AC_SUBST("HAVE_DECL_MEMRCHR", "1"),
-            checks.AC_DEFINE("HAVE_MEMRCHR", 1),
-        ],
-        # On other platforms, check for it
-        "//conditions:default": [
-            checks.AC_CHECK_DECL(
-                "memrchr",
-                define = "HAVE_DECL_MEMRCHR",
-                includes = ["#include <string.h>"],
-                subst = True,
-            ),
-            checks.AC_CHECK_FUNC(
-                "memrchr",
-                define = "HAVE_MEMRCHR",
-            ),
-        ],
-    }),
+    checks = [
+        # The declaration needs _GNU_SOURCE on glibc (configure enables the
+        # extensions before gnulib's checks run).  Probed everywhere rather
+        # than answered per platform: gnulib.mk's GL_COND_OBJ_MEMRCHR reads
+        # ac_cv_func_memrchr, which only a probe produces.
+        checks.AC_CHECK_DECL(
+            "memrchr",
+            compile_defines = ["_GNU_SOURCE"],
+            define = "HAVE_DECL_MEMRCHR",
+            includes = ["#include <string.h>"],
+            subst = True,
+        ),
+        checks.AC_CHECK_FUNC(
+            "memrchr",
+            define = "HAVE_MEMRCHR",
+        ),
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Provides system extension defines (_ALL_SOURCE, _DARWIN_C_SOURCE, etc.)

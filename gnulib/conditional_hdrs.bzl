@@ -9,6 +9,7 @@ load(
     "//autoconf/private:autoconf_config.bzl",
     "collect_deps",
     "collect_transitive_results",
+    "get_autoconf_toolchain_defaults",
 )
 
 # buildifier: disable=bzl-visibility
@@ -32,9 +33,14 @@ def _cc_gnulib_conditional_hdrs_impl(ctx):
     deps = collect_deps(ctx.attr.deps)
     dep_results = collect_transitive_results(deps.to_list())
 
-    all_cache = dep_results["cache"]
-    all_define = dep_results["define"]
-    all_subst = dep_results["subst"]
+    # Toolchain defaults first, so a dependency's result overrides them
+    # (as autoconf_srcs and autoconf_hdr do).
+    defaults = struct(cache = {}, define = {}, subst = {})
+    if ctx.attr.defaults:
+        defaults = get_autoconf_toolchain_defaults(ctx)
+    all_cache = defaults.cache | dep_results["cache"]
+    all_define = defaults.define | dep_results["define"]
+    all_subst = defaults.subst | dep_results["subst"]
 
     tree_name = ctx.attr.out
     if not tree_name:
@@ -185,6 +191,13 @@ Limitations:
     coincide).
 """,
     attrs = {
+        "defaults": attr.bool(
+            doc = """\
+Whether the conditions may also read the autoconf toolchain's defaults
+(the ``GL_GENERATE_*_H`` of header packages a project never configures
+itself).  Results from ``deps`` take precedence.""",
+            default = False,
+        ),
         "deps": attr.label_list(
             doc = """\
 Autoconf targets providing check results.  The condition expressions in
@@ -225,4 +238,7 @@ basename.""",
         ),
     },
     provides = [CcInfo],
+    toolchains = [
+        config_common.toolchain_type("@rules_cc_autoconf//autoconf:toolchain_type", mandatory = False),
+    ],
 )

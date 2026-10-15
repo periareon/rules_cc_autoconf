@@ -16,9 +16,23 @@
 #
 # Remove once the overlay on the Bazel Central Registry is updated against a
 # rules_cc_autoconf release that contains these ports.
+#
+# The overlay also expected MAJOR_IN_SYSMACROS from the sys_types_h port, on the
+# belief that gl_SYS_TYPES_H AC_REQUIREs AC_HEADER_MAJOR; upstream it does not
+# (sys_types_h.m4 only redefines the macro for autoconf before 2.70.1), and the
+# port no longer invents the probe.  configure.ac:40 calls AC_HEADER_MAJOR
+# itself, so the overlay depends on its port directly.
 --- a/BUILD.bazel
 +++ b/BUILD.bazel
-@@ -556,57 +556,57 @@
+@@ -185,6 +185,7 @@
+ # content-key hits against these modules and cost no extra actions, so spelling
+ # them out explicitly is free.
+ GL_INIT_DEPS = [
++    "@rules_cc_autoconf//autoconf/macros/AC_HEADER_MAJOR",  # configure.ac:40; gl_SYS_TYPES_H does not require it
+     "@rules_cc_autoconf//gnulib/m4/00gnulib",
+     "@rules_cc_autoconf//gnulib/m4/__inline",
+     "@rules_cc_autoconf//gnulib/m4/absolute-header",
+@@ -556,57 +557,57 @@
  # `AC_DEFINE` with `requires` -- valueless, each only on the platform that trips
  # it.  `test $X = 1` is likewise `X==1` and not a bare mention of X.
  SRC_CONDITIONS = {
@@ -99,7 +113,7 @@
      # A bare name, because memrchr is an `AC_DEFINE` of a constant on Linux and
      # an `AC_CHECK_FUNC` elsewhere: no one cache variable exists on both.
      "GL_COND_OBJ_MEMRCHR": "HAVE_MEMRCHR==0",
-@@ -614,58 +614,58 @@
+@@ -614,58 +615,58 @@
      # asks for with WANT_MKTIME_INTERNAL -- set on the same branch that defines
      # NEED_MKTIME_INTERNAL, the one of the two that reaches a cache variable.
      "GL_COND_OBJ_MKTIME": "ac_cv_subst_REPLACE_MKTIME==1 || ac_cv_define_NEED_MKTIME_INTERNAL==1",

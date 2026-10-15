@@ -47,12 +47,16 @@ autoconf(
         # mktime works correctly, but gnulib needs its internal version
         "@platforms//os:linux": [
             checks.AC_DEFINE("NEED_MKTIME_INTERNAL", "1"),
+            # The shell variable gl_CONDITIONAL([GL_COND_OBJ_MKTIME], [... test
+            # $WANT_MKTIME_INTERNAL = 1]) reads.
+            checks.M4_VARIABLE("WANT_MKTIME_INTERNAL", "1"),
         ],
         "@platforms//os:macos": [
             # macOS mktime has timezone bugs that require gnulib replacement
             checks.AC_SUBST("REPLACE_MKTIME", "1"),
             checks.AC_DEFINE("NEED_MKTIME_INTERNAL", "1"),
             checks.AC_DEFINE("NEED_MKTIME_WORKING", "1"),
+            checks.M4_VARIABLE("WANT_MKTIME_INTERNAL", "1"),
         ],
         "@platforms//os:windows": [
             checks.AC_CHECK_FUNC(
@@ -72,10 +76,13 @@ autoconf(
                 "__mktime_internal",
                 requires = ["HAVE_MKTIME_INTERNAL==1"],
             ),
-            checks.AC_DEFINE(
+            # Upstream sets the shell variable WANT_MKTIME_INTERNAL=1 here and defines only
+            # NEED_MKTIME_INTERNAL; the variable is the M4_VARIABLE below, not a define.
+            checks.M4_VARIABLE(
                 "WANT_MKTIME_INTERNAL",
-                "1",
-                requires = ["!HAVE_MKTIME_INTERNAL"],
+                condition = "!HAVE_MKTIME_INTERNAL",
+                if_false = "0",
+                if_true = "1",
             ),
             checks.AC_DEFINE(
                 "NEED_MKTIME_INTERNAL",
@@ -95,10 +102,13 @@ autoconf(
                 "__mktime_internal",
                 requires = ["HAVE_MKTIME_INTERNAL==1"],
             ),
-            checks.AC_DEFINE(
+            # Upstream sets the shell variable WANT_MKTIME_INTERNAL=1 here and defines only
+            # NEED_MKTIME_INTERNAL; the variable is the M4_VARIABLE below, not a define.
+            checks.M4_VARIABLE(
                 "WANT_MKTIME_INTERNAL",
-                "1",
-                requires = ["!HAVE_MKTIME_INTERNAL"],
+                condition = "!HAVE_MKTIME_INTERNAL",
+                if_false = "0",
+                if_true = "1",
             ),
             checks.AC_DEFINE(
                 "NEED_MKTIME_INTERNAL",
