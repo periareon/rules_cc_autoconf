@@ -75,6 +75,29 @@ def _same_content_key(file_a, file_b, path_to_content_key):
         return False
     return key_a == key_b
 
+def _duplicate_message(kind, symbol, local_check, local_file, dep_file):
+    """The error for a define or subst both this target and a dependency produce.
+
+    Result files are shared by content: a literal `AC_SUBST("X", 0)` reuses
+    the file of any earlier check with the same value, so the local file is
+    named after whichever check first produced that content.  Name the local
+    check itself, so the message points at the producer to remove.
+    """
+    local_name = local_check.get("name") if type(local_check) == "dict" else None
+    return (
+        "{kind} '{symbol}' is produced both by this target and by a dependency, from different checks:\n" +
+        "  Local:    check `{local}` (result file {local_file}, shared by content with other checks of the same value)\n" +
+        "  Dep:      {dep_file}\n" +
+        "Two producers of one {lower} are rejected. Remove the local check, or drop the dependency that provides it."
+    ).format(
+        kind = kind,
+        symbol = symbol,
+        local = local_name or "?",
+        local_file = local_file.path,
+        dep_file = dep_file.path,
+        lower = kind.lower(),
+    )
+
 def _coerce_name(name, value):
     if type(value) == "string":
         return value
@@ -358,22 +381,14 @@ def autoconf_impl_common(ctx, resolve_toolchain):
             existing_file = define_results[define_name]
             if existing_file.path != define_file.path:
                 if not _same_content_key(existing_file, define_file, path_to_content_key):
-                    fail("Define '{}' is defined both locally and in dependencies with different result files:\n  Local:    {}\n  Dep:      {}\nThis indicates duplicate defines. Consider removing the local define or using a different name.".format(
-                        define_name,
-                        existing_file.path,
-                        define_file.path,
-                    ))
+                    fail(_duplicate_message("Define", define_name, define_checks[strip_macro_args(define_name)], existing_file, define_file))
 
     for subst_name, subst_file in dep_results["subst"].items():
         if subst_name in subst_results:
             existing_file = subst_results[subst_name]
             if existing_file.path != subst_file.path:
                 if not _same_content_key(existing_file, subst_file, path_to_content_key):
-                    fail("Subst '{}' is defined both locally and in dependencies with different result files:\n  Local:    {}\n  Dep:      {}\nThis indicates duplicate subst. Consider removing the local subst or using a different name.".format(
-                        subst_name,
-                        existing_file.path,
-                        subst_file.path,
-                    ))
+                    fail(_duplicate_message("Subst", subst_name, subst_checks[subst_name], existing_file, subst_file))
 
     all_results = {
         "cache": cache_results | dep_results["cache"],
