@@ -24,7 +24,6 @@ autoconf(
 #include <stdckdint.h>
 """,
             language = "cpp",
-            requires = ["ac_cv_header_stdckdint_h"],
         ),
         checks.AC_SUBST(
             "HAVE_CXX_STDCKDINT_H",
@@ -47,7 +46,6 @@ main (void)
 }
 """,
             language = "cpp",
-            requires = ["gl_cv_header_cxx_stdckdint_h"],
         ),
         checks.AC_SUBST(
             "HAVE_WORKING_CXX_STDCKDINT_H",
@@ -64,7 +62,6 @@ int main(void) {
     return 0;
 }
 """,
-            requires = ["ac_cv_header_stdckdint_h"],
         ),
         checks.AC_SUBST(
             "HAVE_C_STDCKDINT_H",
@@ -85,7 +82,6 @@ int main(void) {
               || ckd_mul(&r, a, b));
 }
 """,
-            requires = ["gl_cv_header_c_stdckdint_h"],
         ),
         checks.AC_SUBST(
             "HAVE_WORKING_C_STDCKDINT_H",
@@ -95,10 +91,11 @@ int main(void) {
         ),
         # GL_GENERATE_STDCKDINT_H: upstream sets this true whenever the system
         # header doesn't exist, can't be included in C, or fails the C23
-        # ckd_add/sub/mul probe.  gl_cv_header_c_stdckdint_h_works gates on
-        # gl_cv_header_c_stdckdint_h via requires, which in turn gates on the
-        # AC_CHECK_HEADER, so the final "works" cache var captures all three
-        # failure modes — checking its negation is sufficient.
+        # ckd_add/sub/mul probe.  Every probe includes the header itself (a
+        # missing header is a failed probe, not a skipped one, so the variable
+        # is always produced: a `requires` chain left it absent where the
+        # header is missing), and the "works" probe covers all three failure
+        # modes — checking its negation is sufficient.
         checks.M4_VARIABLE(
             "GL_GENERATE_STDCKDINT_H",
             condition = "gl_cv_header_c_stdckdint_h_works",

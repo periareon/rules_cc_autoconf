@@ -34,3 +34,42 @@ cc_test(
     srcs = ["include_test.cc"],
     deps = [":gen"],
 )
+
+# `defaults = True`: conditions over the toolchain defaults (GL_GENERATE_*_H
+# of header packages the project never configures itself), with a
+# dependency's own result taking precedence.  gnulib's "false" is falsy to
+# the runner, so a false GL_GENERATE variable is tested as `!VAR`.
+cc_gnulib_conditional_hdrs(
+    name = "gen_defaults",
+    hdrs = {
+        "src/gl_conditional_default.h": "!GL_GENERATE_ICONV_H",
+    },
+    defaults = True,
+    deps = [":conditions"],
+)
+
+autoconf(
+    name = "conditions_override",
+    checks = [
+        checks.M4_VARIABLE("GL_GENERATE_ICONV_H", "true"),
+    ],
+)
+
+cc_gnulib_conditional_hdrs(
+    name = "gen_defaults_overridden",
+    hdrs = {
+        "src/gl_conditional_override.h": "GL_GENERATE_ICONV_H==true",
+        "src/gl_conditional_override_absent.h": "!GL_GENERATE_ICONV_H",
+    },
+    defaults = True,
+    deps = [":conditions_override"],
+)
+
+cc_test(
+    name = "defaults_test",
+    srcs = ["defaults_test.cc"],
+    deps = [
+        ":gen_defaults",
+        ":gen_defaults_overridden",
+    ],
+)

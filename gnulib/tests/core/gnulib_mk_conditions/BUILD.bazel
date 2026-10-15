@@ -1,0 +1,101 @@
+"""The variables gnulib.mk conditions read.
+
+gnulib's gl_CONDITIONAL tests (`test $ac_cv_func_memrchr = no`, `test
+$WANT_MKTIME_INTERNAL = 1`) name cache and shell variables of the m4, not
+config.h defines.  A port that answers a platform with a bare AC_DEFINE, or
+never models the shell variable, leaves such a condition with nothing to
+read, and `autoconf_srcs` fails with "requires X which is not provided".
+Each target here conditions a source on one such variable (a tautology, so
+only the variable's existence is tested) against the port that must produce
+it; the build test fails at analysis when the port stops producing it.
+"""
+
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
+load("//autoconf:autoconf_srcs.bzl", "autoconf_srcs")
+
+# GL_COND_OBJ_MEMRCHR: test $ac_cv_func_memrchr = no
+autoconf_srcs(
+    name = "memrchr",
+    srcs = {"memrchr.c": "ac_cv_func_memrchr || !ac_cv_func_memrchr"},
+    defaults = True,
+    deps = ["//gnulib/m4/memrchr"],
+)
+
+# if GL_GENERATE_STDCKDINT_H (the header is missing on gcc < 14)
+autoconf_srcs(
+    name = "stdckdint",
+    srcs = {"stdckdint.c": "GL_GENERATE_STDCKDINT_H || !GL_GENERATE_STDCKDINT_H"},
+    defaults = True,
+    deps = ["//gnulib/m4/stdckdint_h"],
+)
+
+# GL_COND_OBJ_FWRITING: test $ac_cv_func___fwriting = no
+autoconf_srcs(
+    name = "fwriting",
+    srcs = {"fwriting.c": "ac_cv_func___fwriting || !ac_cv_func___fwriting"},
+    defaults = True,
+    deps = ["//gnulib/m4/fwriting"],
+)
+
+# GL_COND_OBJ_PRINTF: test $gl_cv_func_vfprintf_posix = no
+autoconf_srcs(
+    name = "vfprintf_posix",
+    srcs = {"vfprintf_posix.c": "gl_cv_func_vfprintf_posix || !gl_cv_func_vfprintf_posix"},
+    defaults = True,
+    deps = ["//gnulib/m4/vfprintf-posix"],
+)
+
+# GL_COND_OBJ_FLOAT: test $REPLACE_FLOAT_LDBL = 1
+autoconf_srcs(
+    name = "float_ldbl",
+    srcs = {"float_ldbl.c": "REPLACE_FLOAT_LDBL || !REPLACE_FLOAT_LDBL"},
+    defaults = True,
+    deps = ["//gnulib/m4/float_h"],
+)
+
+# GL_COND_OBJ_FLOAT: ... || test $REPLACE_FLOAT_SNAN = 1
+autoconf_srcs(
+    name = "float_snan",
+    srcs = {"float_snan.c": "REPLACE_FLOAT_SNAN || !REPLACE_FLOAT_SNAN"},
+    defaults = True,
+    deps = ["//gnulib/m4/float_h"],
+)
+
+# GL_COND_OBJ_FREXP: test $gl_func_frexp_no_libm = no
+autoconf_srcs(
+    name = "frexp",
+    srcs = {"frexp.c": "gl_func_frexp_no_libm || !gl_func_frexp_no_libm"},
+    defaults = True,
+    deps = ["//gnulib/m4/frexp"],
+)
+
+# GL_COND_OBJ_MKTIME: ... || test $WANT_MKTIME_INTERNAL = 1
+autoconf_srcs(
+    name = "mktime",
+    srcs = {"mktime.c": "WANT_MKTIME_INTERNAL || !WANT_MKTIME_INTERNAL"},
+    defaults = True,
+    deps = ["//gnulib/m4/mktime"],
+)
+
+# GL_COND_OBJ_ACL_ENTRIES: test $NEED_ACL_ENTRIES = 1
+autoconf_srcs(
+    name = "acl_entries",
+    srcs = {"acl_entries.c": "NEED_ACL_ENTRIES || !NEED_ACL_ENTRIES"},
+    defaults = True,
+    deps = ["//gnulib/m4/acl"],
+)
+
+build_test(
+    name = "gnulib_mk_conditions_test",
+    targets = [
+        ":memrchr",
+        ":stdckdint",
+        ":fwriting",
+        ":vfprintf_posix",
+        ":float_ldbl",
+        ":float_snan",
+        ":frexp",
+        ":mktime",
+        ":acl_entries",
+    ],
+)

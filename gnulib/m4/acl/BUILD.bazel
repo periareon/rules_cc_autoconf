@@ -115,6 +115,20 @@ autoconf(
             condition = "ac_cv_func_acl_get_file",
             subst = True,
         ),
+        # With ACL support, gnulib's acl_entries replaces a missing libacl one:
+        # gl_CONDITIONAL([GL_COND_OBJ_ACL_ENTRIES], [test $NEED_ACL_ENTRIES = 1]).
+        # Probed unconditionally (gnulib probes it only with ACL support) so
+        # the result exists wherever a condition reads it.
+        checks.AC_CHECK_FUNC(
+            "acl_entries",
+            define = "HAVE_ACL_ENTRIES",
+        ),
+        checks.M4_VARIABLE(
+            "NEED_ACL_ENTRIES",
+            condition = "ac_cv_func_acl_get_file && !ac_cv_func_acl_entries",
+            if_false = "0",
+            if_true = "1",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [

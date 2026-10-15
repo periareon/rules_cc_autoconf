@@ -38,7 +38,9 @@ autoconf(
     checks = [
         # The m4 file checks many printf features and sets gl_cv_func_vfprintf_posix=yes only if all pass.
         # Since we can't replicate all these checks, we assume vfprintf is not POSIX compliant.
-        # This will cause gl_FUNC_VFPRINTF_POSIX to call gl_REPLACE_VFPRINTF.
+        # This will cause gl_FUNC_VFPRINTF_POSIX to call gl_REPLACE_VFPRINTF.  The cache variable
+        # itself is what gnulib.mk reads (GL_COND_OBJ_PRINTF: test $gl_cv_func_vfprintf_posix = no).
+        checks.M4_VARIABLE("gl_cv_func_vfprintf_posix", "no"),
     ],
     visibility = ["//visibility:public"],
     deps = [

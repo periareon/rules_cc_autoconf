@@ -7,6 +7,11 @@
 # AC_PROG_CC enforces becomes a check that stops the build with the flag to
 # add when it is not met.
 #
+#
+# The gl_FUNC_ACL port probes acl_entries itself and provides the
+# NEED_ACL_ENTRIES variable gnulib.mk reads, so the overlay's own probe and
+# subst would be second producers and are dropped.
+#
 # Remove once the overlay on the Bazel Central Registry is updated.
 --- a/BUILD.bazel
 +++ b/BUILD.bazel
@@ -93,3 +98,22 @@
                   checks.AC_SUBST(
                       "GUARD_PREFIX",
                       value = "GL",
+@@ -752,17 +750,7 @@
+                  checks.AC_SUBST("GNULIB_ISNAN_NO_CXX", "0"),
+                  # GNULIB_VAPRINTF default recovered from gl_STDIO_H_REQUIRE_DEFAULTS.
+                  checks.AC_SUBST("GNULIB_VAPRINTF", "0"),
+-                 # NEED_ACL_ENTRIES derived from vendored M4 macro gl_FUNC_ACL.
+-                 checks.AC_CHECK_FUNC(
+-                     "acl_entries",
+-                     define = "HAVE_ACL_ENTRIES",
+-                 ),
+-                 checks.AC_SUBST(
+-                     "NEED_ACL_ENTRIES",
+-                     condition = "ac_cv_func_acl_get_file && !ac_cv_func_acl_entries",
+-                     if_false = "0",
+-                     if_true = "1",
+-                 ),
++                 # acl_entries and NEED_ACL_ENTRIES come with the gl_FUNC_ACL port.
+                  # LIB_ACL from gl_FUNC_ACL is not provided by rules_cc_autoconf's gnulib port.
+                  checks.AC_SEARCH_LIBS(
+                      "acl_get_file",
