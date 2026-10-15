@@ -30,6 +30,9 @@ autoconf(
             if_true = 1,
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/signal_h:defaults",  # AC_REQUIRE: gl_SIGNAL_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_SIGNALBLOCKING sets HAVE_POSIX_SIGNALBLOCKING itself, so we can't

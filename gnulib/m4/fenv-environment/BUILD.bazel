@@ -82,6 +82,9 @@ autoconf(
         # are "yes"), so the gl_FENV_H_DEFAULTS values of 0 stand.
         "//conditions:default": [],
     }),
+    default_deps = [
+        "//gnulib/m4/fenv_h:defaults",  # AC_REQUIRE: gl_FENV_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])

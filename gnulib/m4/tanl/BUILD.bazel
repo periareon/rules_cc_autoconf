@@ -15,13 +15,15 @@ autoconf(
         ),
         checks.AC_SUBST("TANL_LIBM", ""),
     ],
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/extensions",
         "//gnulib/m4/floorl",
         "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
-        "//gnulib/m4/mktime",  # Provides HAVE_DECL_ALARM (needed for test compatibility)
         "//gnulib/m4/sinl",
         "//gnulib/m4/tan",
     ],

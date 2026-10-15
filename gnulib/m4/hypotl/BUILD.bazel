@@ -100,6 +100,9 @@ autoconf(
         # m4 line 76-100: HYPOTL_LIBM is HYPOT_LIBM / FABSL+FREXPL+LDEXPL+SQRTL libs (all empty here)
         checks.AC_SUBST("HYPOTL_LIBM", ""),
     ],
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_FUNC_HYPOTL_WORKS",

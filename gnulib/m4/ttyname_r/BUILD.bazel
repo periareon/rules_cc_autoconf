@@ -70,6 +70,9 @@ int test() {
         # AC_SUBSTs it), so there is no subst; the config.h define comes from
         # GL_CHECK_FUNCS_ANDROID above.
     ],
+    default_deps = [
+        "//gnulib/m4/unistd_h:defaults",  # AC_REQUIRE: gl_UNISTD_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])

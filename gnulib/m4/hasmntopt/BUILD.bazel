@@ -84,6 +84,9 @@ autoconf(
         # REPLACE_HASMNTOPT is 0 on all platforms (no known bugs requiring replacement)
         checks.AC_SUBST("REPLACE_HASMNTOPT", "0"),
     ],
+    default_deps = [
+        "//gnulib/m4/mntent_h:defaults",  # AC_REQUIRE: gl_MNTENT_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":HAVE_HASMNTOPT",

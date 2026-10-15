@@ -9,6 +9,9 @@ load("//autoconf:checks.bzl", "checks")
 autoconf(
     name = "gl_FUNC_REALLOC_SANITIZED",
     checks = [],
+    default_deps = [
+        "//gnulib/m4/stdlib_h:defaults",  # through a macro it invokes: gl_STDLIB_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
 )
 
@@ -38,6 +41,9 @@ autoconf(
             checks.AC_SUBST("REPLACE_REALLOC_FOR_REALLOC_POSIX", "2"),
         ],
     }),
+    default_deps = [
+        "//gnulib/m4/stdlib_h:defaults",  # AC_REQUIRE: gl_STDLIB_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_FUNC_REALLOC_SANITIZED",  # AC_REQUIRE([gl_FUNC_REALLOC_SANITIZED])
@@ -67,6 +73,9 @@ autoconf(
             # HAVE_REALLOC_0_NONNULL stays undefined.
         ],
     }),
+    default_deps = [
+        "//gnulib/m4/stdlib_h:defaults",  # AC_REQUIRE: gl_STDLIB_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CANONICAL_HOST",

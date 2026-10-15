@@ -33,6 +33,10 @@ autoconf(
             condition = "_gl_cv_func_opendir && (DIR_HAS_FD_MEMBER==0 || !ac_cv_func_fchdir)",
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/dirent_h:defaults",  # AC_REQUIRE: gl_DIRENT_H_DEFAULTS
+        "//gnulib/m4/unistd_h:defaults",  # through gl_TEST_FCHDIR (fchdir.m4): AC_REQUIRE: gl_UNISTD_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_DIRENT_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction

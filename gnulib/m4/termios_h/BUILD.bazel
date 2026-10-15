@@ -1,5 +1,6 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/termios_h.m4"""
 
+load("//autoconf:autoconf_defaults.bzl", "autoconf_defaults")
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 load("//gnulib:macros.bzl", gl_macros = "macros")
@@ -87,6 +88,9 @@ int main(void) {
             if_true = 1,
         ),
     ],
+    default_deps = [
+        ":defaults",  # AC_REQUIRE: gl_TERMIOS_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":HAVE_TERMIOS_H",
@@ -97,27 +101,27 @@ int main(void) {
     ],
 )
 
-autoconf(
+autoconf_defaults(
     name = "gl_TERMIOS_H_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("HAVE_DECL_TCGETSID", 1),
-        checks.AC_SUBST("HAVE_TERMIOS_H", 1),
-    ],
+    substs = {
+        "HAVE_DECL_TCGETSID": "1",
+        "HAVE_TERMIOS_H": "1",
+    },
     visibility = ["//visibility:private"],
 )
 
-autoconf(
+autoconf_defaults(
     name = "gl_TERMIOS_H_REQUIRE_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("GNULIB_TCGETSID", 0),
-    ],
+    substs = {
+        "GNULIB_TCGETSID": "0",
+    },
     visibility = ["//visibility:private"],
     deps = [
         ":gl_TERMIOS_H_DEFAULTS",
     ],
 )
 
-autoconf(
+autoconf_defaults(
     name = "defaults",
     visibility = ["//visibility:public"],
     deps = [
@@ -131,11 +135,17 @@ autoconf(
 autoconf(
     name = "gl_TERMIOS_MODULE_INDICATOR",
     checks = [],
+    default_deps = [
+        ":defaults",  # through a macro it invokes: gl_TERMIOS_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
 )
 
 autoconf(
     name = "termios_h",
+    default_deps = [
+        ":defaults",  # the header's own defaults, as its m4 requires
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_TERMIOS_H",

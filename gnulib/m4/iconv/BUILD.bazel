@@ -48,6 +48,9 @@ iconv_close(cd);
         # - HP-UX 11.11 bugs
         # These runtime checks are handled via platform-specific assumptions below.
     ],
+    default_deps = [
+        "//gnulib/m4/iconv_h:defaults",  # through a macro it invokes: gl_ICONV_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CANONICAL_HOST",
@@ -97,6 +100,9 @@ autoconf(
             if_true = "const",  # Const iconv signature (some systems like Solaris, HP-UX)
             subst = True,  # Also create substitution variable for gnulib generated <iconv.h>
         ),
+    ],
+    default_deps = [
+        "//gnulib/m4/iconv_h:defaults",  # AC_REQUIRE: gl_ICONV_H_DEFAULTS
     ],
     visibility = ["//visibility:public"],
     deps = [

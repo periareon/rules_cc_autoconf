@@ -1,5 +1,6 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/pty_h.m4"""
 
+load("//autoconf:autoconf_defaults.bzl", "autoconf_defaults")
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks", "macros")
 load("//gnulib:macros.bzl", gl_macros = "macros")
@@ -26,6 +27,9 @@ autoconf(
     ] + gl_macros.GL_CHECK_NEXT_HEADERS(
         ["pty.h"],
     ),
+    default_deps = [
+        ":defaults",  # AC_REQUIRE: gl_PTY_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_PTY_CHECK_UTIL_H",  # m4 line 20: gl_PTY_CHECK_UTIL_H when pty.h is absent
@@ -61,38 +65,41 @@ autoconf(
             condition = "ac_cv_header_util_h",
         ),
     ],
+    default_deps = [
+        ":defaults",  # AC_REQUIRE: gl_PTY_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":AC_CHECK_HEADERS_ONCE_util_h",
     ],
 )
 
-autoconf(
+autoconf_defaults(
     name = "gl_PTY_H_REQUIRE_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("GNULIB_FORKPTY", 0),
-        checks.AC_SUBST("GNULIB_OPENPTY", 0),
-    ],
+    substs = {
+        "GNULIB_FORKPTY": "0",
+        "GNULIB_OPENPTY": "0",
+    },
     visibility = ["//visibility:public"],
     deps = [
         ":gl_PTY_H_DEFAULTS",
     ],
 )
 
-autoconf(
+autoconf_defaults(
     name = "gl_PTY_H_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("HAVE_UTIL_H", 0),
-        checks.AC_SUBST("HAVE_LIBUTIL_H", 0),
-        checks.AC_SUBST("HAVE_FORKPTY", 1),
-        checks.AC_SUBST("HAVE_OPENPTY", 1),
-        checks.AC_SUBST("REPLACE_FORKPTY", 0),
-        checks.AC_SUBST("REPLACE_OPENPTY", 0),
-    ],
+    substs = {
+        "HAVE_FORKPTY": "1",
+        "HAVE_LIBUTIL_H": "0",
+        "HAVE_OPENPTY": "1",
+        "HAVE_UTIL_H": "0",
+        "REPLACE_FORKPTY": "0",
+        "REPLACE_OPENPTY": "0",
+    },
     visibility = ["//visibility:public"],
 )
 
-autoconf(
+autoconf_defaults(
     name = "defaults",
     visibility = ["//visibility:public"],
     deps = [
@@ -107,11 +114,17 @@ autoconf(
 autoconf(
     name = "gl_PTY_MODULE_INDICATOR",
     checks = [],
+    default_deps = [
+        ":defaults",  # through a macro it invokes: gl_PTY_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
 )
 
 autoconf(
     name = "pty_h",
+    default_deps = [
+        ":defaults",  # the header's own defaults, as its m4 requires
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_PTY_CHECK_UTIL_H",

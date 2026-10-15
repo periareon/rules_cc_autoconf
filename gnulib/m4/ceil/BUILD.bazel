@@ -16,6 +16,9 @@ autoconf(
         # On macOS/Linux, ceil is in libc, so CEIL_LIBM is empty
         checks.AC_SUBST("CEIL_LIBM", ""),
     ],
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])

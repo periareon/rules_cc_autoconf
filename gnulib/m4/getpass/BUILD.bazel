@@ -18,6 +18,9 @@ autoconf(
             if_true = 1,
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/unistd_h:defaults",  # AC_REQUIRE: gl_UNISTD_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/extensions",
@@ -58,6 +61,9 @@ int main(void) { return 0; }
             if_false = 0,
             if_true = 1,
         ),
+    ],
+    default_deps = [
+        "//gnulib/m4/unistd_h:defaults",  # AC_REQUIRE: gl_UNISTD_H_DEFAULTS
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -130,10 +136,10 @@ autoconf(
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/extensions",
-        "//gnulib/m4/fpurge",
         "//gnulib/m4/tcgetattr",  # gl_HAVE_TCGETATTR
         "//gnulib/m4/termios_h:HAVE_TERMIOS_H",  # AC_CHECK_HEADERS_ONCE([stdio_ext.h termios.h])
         "//gnulib/m4/unlocked-io",
+        "//gnulib/macros/HAVE_STDIO_EXT_H",  # narrowed: HAVE_STDIO_EXT_H
     ],
 )
 

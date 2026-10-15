@@ -17,6 +17,9 @@ autoconf(
         # EXPM1L_LIBM is set based on EXPM1_LIBM (empty on macOS)
         checks.AC_SUBST("EXPM1L_LIBM", ""),
     ],
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
@@ -26,7 +29,6 @@ autoconf(
         "//gnulib/m4/isnanl",
         "//gnulib/m4/ldexpl",
         "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
-        "//gnulib/m4/mktime",  # Provides HAVE_DECL_ALARM (needed for test compatibility)
         "//gnulib/m4/roundl",
     ],
 )

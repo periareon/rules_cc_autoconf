@@ -42,6 +42,9 @@ autoconf(
         # Default to 0, set to 1 only if function doesn't exist but declaration exists
         checks.AC_SUBST("REPLACE_WCSRTOMBS", 0),
     ],
+    default_deps = [
+        "//gnulib/m4/wchar_h:defaults",  # AC_REQUIRE: gl_WCHAR_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_WCHAR_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction

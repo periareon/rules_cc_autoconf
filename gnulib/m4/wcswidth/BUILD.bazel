@@ -21,6 +21,9 @@ autoconf(
             if_true = "1",
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/wchar_h:defaults",  # AC_REQUIRE: gl_WCHAR_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/wcwidth:gl_FUNC_WCWIDTH",  # AC_REQUIRE([gl_FUNC_WCWIDTH])

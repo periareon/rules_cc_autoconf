@@ -1,5 +1,6 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/unimetadata_h.m4"""
 
+load("//autoconf:autoconf_defaults.bzl", "autoconf_defaults")
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 
 autoconf(
@@ -7,29 +8,28 @@ autoconf(
     checks = [
         # TODO: Add checks based on .m4 file
     ],
+    default_deps = [
+        ":defaults",  # the header's own defaults, as its m4 requires
+    ],
     visibility = ["//visibility:public"],
 )
 
 # Note: unimetadata_h has _DEFAULTS but no variables in it
-autoconf(
+autoconf_defaults(
     name = "gl_UNIMETADATA_H_DEFAULTS",
-    checks = [
-    ],
     visibility = ["//visibility:private"],
 )
 
 # Note: unimetadata_h has _REQUIRE_DEFAULTS but no GNULIB_* variables
-autoconf(
+autoconf_defaults(
     name = "gl_UNIMETADATA_H_REQUIRE_DEFAULTS",
-    checks = [
-    ],
     visibility = ["//visibility:private"],
     deps = [
         ":gl_UNIMETADATA_H_DEFAULTS",
     ],
 )
 
-autoconf(
+autoconf_defaults(
     name = "defaults",
     visibility = ["//visibility:public"],
     deps = [

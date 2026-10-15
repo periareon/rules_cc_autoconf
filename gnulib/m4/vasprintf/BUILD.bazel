@@ -48,6 +48,9 @@ autoconf(
             if_true = 1,
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/stdio_h:defaults",  # AC_REQUIRE: gl_STDIO_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":AC_CHECK_FUNCS_ONCE_vasprintf",
@@ -89,6 +92,9 @@ autoconf(
 autoconf(
     name = "gl_FUNC_VASPRINTF",
     checks = [],
+    default_deps = [
+        "//gnulib/m4/stdio_h:defaults",  # through a macro it invokes: gl_STDIO_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":AC_CHECK_FUNCS_ONCE_vasprintf",

@@ -7,7 +7,6 @@ load(
     "//autoconf/private:autoconf_config.bzl",
     "collect_deps",
     "collect_transitive_content_cache",
-    "collect_transitive_results",
 )
 load("//autoconf/private:autoconf_library.bzl", "to_build_settings_dict", _autoconf_cache_rule = "autoconf_cache")
 load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
@@ -22,62 +21,29 @@ def _autoconf_toolchain_impl(ctx):
     cache_deps = collect_deps(ctx.attr.cache_deps)
     cache_content_cache = collect_transitive_content_cache(cache_deps.to_list())
 
-    # Collect defaults results (for autoconf_hdr rendering)
-    defaults_deps = collect_deps(ctx.attr.defaults)
-    defaults_dep_infos = defaults_deps.to_list()
-    defaults_results = collect_transitive_results(defaults_dep_infos)
-
-    # Build defaults_by_label for filtering (only defaults, not cache_deps)
-    defaults_by_label = {}
-    for direct_dep in ctx.attr.defaults:
-        direct_info = direct_dep[CcAutoconfInfo]
-        direct_deps = collect_deps([direct_dep])
-        direct_dep_infos = direct_deps.to_list()
-        direct_results = collect_transitive_results(direct_dep_infos)
-        defaults_by_label[direct_info.owner] = struct(
-            cache = direct_results["cache"],
-            define = direct_results["define"],
-            subst = direct_results["subst"],
-            unquoted_defines = direct_results["unquoted_defines"],
-        )
-
-    # Unified content cache: cache_deps + defaults (for content-based action dedup)
-    unified_content_cache = cache_content_cache | defaults_results["content_cache"]
+    unified_content_cache = cache_content_cache
 
     return [
         platform_common.ToolchainInfo(
             label = ctx.label,
             autoconf_cache = unified_content_cache,
-            autoconf_defaults = struct(
-                cache = defaults_results["cache"],
-                define = defaults_results["define"],
-                subst = defaults_results["subst"],
-                unquoted_defines = defaults_results["unquoted_defines"],
-                defaults_by_label = defaults_by_label,
-            ),
         ),
     ]
 
 autoconf_toolchain = rule(
     doc = """\
-Define an autoconf toolchain providing cached check results and rendering defaults.
+Define an autoconf toolchain that shares check results across targets.
 
-The toolchain has two separate concepts:
+The toolchain carries one thing: the **content cache** of its `cache_deps`.
+When an `autoconf` target lists a check whose implementation already has a
+result there, the checker action is skipped and the existing result file is
+reused.  Nothing else crosses the toolchain boundary: not the results as
+defines or substs, and not defaults.  Defaults are `autoconf_defaults`
+targets that a target reads through its own `default_deps` (see
+`autoconf_defaults`); the toolchain neither carries nor injects any.
 
-- **cache_deps**: Check results available for action deduplication. When an
-  `autoconf` target lists a check whose cache variable name already has a result
-  in `cache_deps`, the checker action is skipped and the existing result file is
-  reused.
-- **defaults**: Baseline values for `autoconf_hdr` rendering. When
-  `autoconf_hdr` has `defaults = True`, these values are merged into the
-  generated header.
-
-Both `cache_deps` and `defaults` contribute to the unified cache used by the
-`autoconf` rule for action deduplication. Only `defaults` contributes to the
-`defaults_by_label` map used by `autoconf_hdr` for include/exclude filtering.
-
-Targets listed in `cache_deps` and `defaults` must use `autoconf_library`
-(not `autoconf`) to avoid a dependency cycle.
+Targets listed in `cache_deps` must use `autoconf_cache` (not `autoconf`)
+to avoid a dependency cycle.
 
 Example:
 
@@ -86,21 +52,21 @@ load("@rules_cc_autoconf//autoconf:defs.bzl", "autoconf_cache", "autoconf_toolch
 load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
 
 autoconf_cache(
-    name = "gnulib_defaults",
+    name = "common_checks",
     checks = [
-        checks.AC_SUBST("GNULIB_VFPRINTF_POSIX", "0"),
-        checks.AC_SUBST("REPLACE_POSIX_SPAWN", "0"),
+        checks.AC_CHECK_HEADER("stdio.h"),
+        checks.AC_CHECK_FUNC("strerror"),
     ],
 )
 
 autoconf_toolchain(
-    name = "gnulib_toolchain_impl",
-    defaults = [":gnulib_defaults"],
+    name = "my_toolchain_impl",
+    cache_deps = [":common_checks"],
 )
 
 toolchain(
-    name = "gnulib_toolchain",
-    toolchain = ":gnulib_toolchain_impl",
+    name = "my_toolchain",
+    toolchain = ":my_toolchain_impl",
     toolchain_type = "@rules_cc_autoconf//autoconf:toolchain_type",
 )
 ```
@@ -120,7 +86,7 @@ checker action and result file.
 When a new check is processed, its content key is looked up in order:
 
 1. Transitive deps' `content_cache`
-2. Toolchain unified cache (`cache_deps` + `defaults`)
+2. Toolchain content cache (`cache_deps`)
 3. Current target's local `content_cache`
 
 If a hit is found at any level the existing result file is reused and
@@ -145,8 +111,7 @@ Three layers, from strictest to most relaxed:
 define/subst conflict detection: it contributes only to the content
 cache and is meant to absorb broad sweeps of cache providers (e.g.,
 every gnulib m4 module) that legitimately publish overlapping symbols
-from different files. `defaults` and per-target `deps` still enforce
-conflicts.
+from different files. Per-target `deps` still enforce conflicts.
 
 ### Resolving conflicts
 
@@ -167,10 +132,6 @@ dependencies with different result files"*:
                   "every gnulib m4 module) can be passed safely.",
             providers = [CcAutoconfInfo],
         ),
-        "defaults": attr.label_list(
-            doc = "Targets whose results provide baseline values for `autoconf_hdr` rendering.",
-            providers = [CcAutoconfInfo],
-        ),
     },
 )
 
@@ -185,8 +146,8 @@ def autoconf_cache(
 
     Identical to `autoconf` except that it does **not** resolve the
     `autoconf_toolchain`. Use this rule for targets that are listed as
-    `cache_deps` or `defaults` of an `autoconf_toolchain` -- using the
-    regular `autoconf` rule in that position would create a dependency cycle.
+    `cache_deps` of an `autoconf_toolchain` -- using the regular `autoconf`
+    rule in that position would create a dependency cycle.
 
     Dep-level caching still applies: if a check's cache variable name already
     has a result in transitive `deps`, the action is skipped.

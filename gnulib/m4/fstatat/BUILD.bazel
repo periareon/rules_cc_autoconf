@@ -66,6 +66,9 @@ autoconf(
             checks.AC_DEFINE("HAVE_WORKING_FSTATAT_ZERO_FLAG", "1"),
         ],
     }),
+    default_deps = [
+        "//gnulib/m4/sys_stat_h:defaults",  # AC_REQUIRE: gl_SYS_STAT_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_SYS_STAT_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction

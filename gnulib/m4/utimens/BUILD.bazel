@@ -33,7 +33,7 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/time_h",  # AC_REQUIRE([gl_CHECK_TYPE_STRUCT_TIMESPEC])
+        "//gnulib/m4/time_h:gl_CHECK_TYPE_STRUCT_TIMESPEC",  # AC_REQUIRE([gl_CHECK_TYPE_STRUCT_TIMESPEC])
         "//gnulib/m4/utimes",  # AC_REQUIRE([gl_FUNC_UTIMES])
         # gl_CHECK_FUNCS_ANDROID([futimens]) / ([utimensat]): config.h defines
         # only; the HAVE_FUTIMENS / HAVE_UTIMENSAT substs belong to

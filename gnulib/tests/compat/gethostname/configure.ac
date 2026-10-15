@@ -6,9 +6,5 @@ gl_FUNC_GETHOSTNAME
 gl_PREREQ_HOST_NAME_MAX
 gl_PREREQ_GETHOSTNAME
 
-# Account for global Bazel defaults
-HAVE_UNAME=1
-AC_SUBST([HAVE_UNAME])
-
 AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

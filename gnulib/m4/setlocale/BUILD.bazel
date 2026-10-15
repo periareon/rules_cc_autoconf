@@ -42,9 +42,11 @@ autoconf(
             checks.AC_DEFINE("NEED_SETLOCALE_IMPROVED", 0),
         ],
     }),
+    default_deps = [
+        "//gnulib/m4/locale_h:defaults",  # AC_REQUIRE: gl_LOCALE_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/locale_h",  # AC_REQUIRE([gl_LOCALE_H_DEFAULTS])
         "//gnulib/m4/setlocale_null",  # AC_REQUIRE([gl_FUNC_SETLOCALE_NULL])
         "//gnulib/m4/threadlib",  # AC_REQUIRE([gl_PTHREADLIB])
         # For test compatibility

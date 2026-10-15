@@ -13,6 +13,9 @@ autoconf(
             subst = True,
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/dirent_h:defaults",  # AC_REQUIRE: gl_DIRENT_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_DIRENT_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction

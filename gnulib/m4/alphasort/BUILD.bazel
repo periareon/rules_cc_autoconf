@@ -12,9 +12,11 @@ autoconf(
             subst = True,
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/dirent_h:defaults",  # AC_REQUIRE: gl_DIRENT_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/dirent_h",  # AC_REQUIRE([gl_DIRENT_H_DEFAULTS])
         "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         # (golden files include standard header checks even though not AC_REQUIREd)

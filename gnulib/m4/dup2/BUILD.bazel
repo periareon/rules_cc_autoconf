@@ -29,6 +29,9 @@ autoconf(
             condition = "!ac_cv_func_fchdir",  # If fchdir not available, replace dup2 (from fchdir module)
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/unistd_h:defaults",  # AC_REQUIRE: gl_UNISTD_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction

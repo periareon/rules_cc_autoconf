@@ -69,6 +69,9 @@ autoconf(
         checks.AC_SUBST("DUPLOCALE_LIB", ""),
         checks.AC_SUBST("LIB_DUPLOCALE", ""),
     ],
+    default_deps = [
+        "//gnulib/m4/locale_h:defaults",  # AC_REQUIRE: gl_LOCALE_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_CHECK_FUNC_DUPLOCALE",  # gl_CHECK_FUNCS_ANDROID([duplocale])

@@ -37,6 +37,9 @@ autoconf(
             checks.AC_SUBST("REPLACE_OBSTACK_PRINTF", "0"),
         ],
     }),
+    default_deps = [
+        "//gnulib/m4/stdio_h:defaults",  # through a macro it invokes: gl_STDIO_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/obstack:gl_FUNC_OBSTACK",  # AC_REQUIRE([gl_FUNC_OBSTACK])
@@ -54,6 +57,9 @@ autoconf(
     name = "gl_REPLACE_OBSTACK_PRINTF",
     checks = [
     ],
+    default_deps = [
+        "//gnulib/m4/stdio_h:defaults",  # AC_REQUIRE: gl_STDIO_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
 )
 
@@ -66,6 +72,9 @@ autoconf(
 
 autoconf(
     name = "obstack-printf",
+    default_deps = [
+        "//gnulib/m4/stdio_h:defaults",  # AC_REQUIRE: gl_STDIO_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_DECL_OBSTACK_PRINTF",

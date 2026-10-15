@@ -22,6 +22,9 @@ autoconf(
             checks.AC_SUBST("REPLACE_MBSNRTOWCS", "0"),
         ],
     }),
+    default_deps = [
+        "//gnulib/m4/wchar_h:defaults",  # AC_REQUIRE: gl_WCHAR_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/macros/AC_FUNC_MBRTOWC",

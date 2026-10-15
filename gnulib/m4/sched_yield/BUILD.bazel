@@ -31,6 +31,9 @@ autoconf(
         ),
         checks.AC_SUBST("REPLACE_SCHED_YIELD", 0),
     ],
+    default_deps = [
+        "//gnulib/m4/sched_h:defaults",  # AC_REQUIRE: gl_SCHED_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_SCHED_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction

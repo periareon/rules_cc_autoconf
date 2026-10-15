@@ -9,15 +9,11 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/vasprintf",
-    ] + select({
-        # On Linux: include strerrorname_np for HAVE_STRERRORNAME_NP and HAVE_WORKING_STRERRORNAME_NP
-        "@platforms//os:linux": [
-            "//gnulib/m4/strerrorname_np",
-        ],
-        # On macOS: don't include strerrorname_np (test expects HAVE_STRERRORNAME_NP="1" from defaults)
-        "//conditions:default": [],
-    }) + [
+        # gl_OPTIONAL_STRERRORNAME_NP on every platform: gl_CHECK_STRERRORNAME_NP
+        # (AC_USE_SYSTEM_EXTENSIONS, the probe) and HAVE_WORKING_STRERRORNAME_NP
+        # where the function exists.  Only gl_FUNC_STRERRORNAME_NP touches the
+        # HAVE_STRERRORNAME_NP substitution, and this module never reaches it.
+        "//gnulib/m4/strerrorname_np:gl_OPTIONAL_STRERRORNAME_NP",
         # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],

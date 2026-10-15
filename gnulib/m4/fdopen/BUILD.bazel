@@ -29,6 +29,9 @@ autoconf(
             ),
         ],
     }),
+    default_deps = [
+        "//gnulib/m4/stdio_h:defaults",  # AC_REQUIRE: gl_STDIO_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/msvc-inval",  # AC_REQUIRE([gl_MSVC_INVAL])

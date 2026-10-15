@@ -40,6 +40,9 @@ autoconf(
             if_true = 1,
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/stdio_h:defaults",  # AC_REQUIRE: gl_STDIO_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":ac_cv_func_dprintf",
@@ -59,6 +62,9 @@ autoconf(
             if_false = "0",
             if_true = "1",
         ),
+    ],
+    default_deps = [
+        "//gnulib/m4/stdio_h:defaults",  # AC_REQUIRE: gl_STDIO_H_DEFAULTS
     ],
     visibility = ["//visibility:public"],
     deps = [

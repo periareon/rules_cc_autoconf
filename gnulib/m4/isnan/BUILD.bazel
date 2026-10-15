@@ -28,6 +28,9 @@ autoconf(
         # ISNANL_LIBM (all empty here) when the macro works, empty otherwise.
         checks.AC_SUBST("ISNAN_LIBM", ""),
     ],
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/isnand",

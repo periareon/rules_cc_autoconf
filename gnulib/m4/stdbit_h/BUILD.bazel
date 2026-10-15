@@ -1,5 +1,6 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/stdbit_h.m4"""
 
+load("//autoconf:autoconf_defaults.bzl", "autoconf_defaults")
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 load("//gnulib:macros.bzl", gl_macros = "macros")
@@ -83,42 +84,43 @@ autoconf(
 # gl_MODULE_INDICATOR_FOR_TESTS([$1])
 autoconf(
     name = "gl_STDBIT_MODULE_INDICATOR",
-    visibility = ["//visibility:public"],
-    deps = [
+    default_deps = [
+        ":defaults",  # through a macro it invokes: gl_STDBIT_H_DEFAULTS
         ":gl_STDBIT_H_REQUIRE_DEFAULTS",
     ],
+    visibility = ["//visibility:public"],
 )
 
 # AC_DEFUN([gl_STDBIT_H_REQUIRE_DEFAULTS])
 #
 # gl_MODULE_INDICATOR_INIT_VARIABLE for each GNULIB_STDC_* (defaults to 0)
 # AC_REQUIRE([gl_STDBIT_H_DEFAULTS])
-autoconf(
+autoconf_defaults(
     name = "gl_STDBIT_H_REQUIRE_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("GNULIB_STDC_LEADING_ZEROS", 0),
-        checks.AC_SUBST("GNULIB_STDC_LEADING_ONES", 0),
-        checks.AC_SUBST("GNULIB_STDC_TRAILING_ZEROS", 0),
-        checks.AC_SUBST("GNULIB_STDC_TRAILING_ONES", 0),
-        checks.AC_SUBST("GNULIB_STDC_FIRST_LEADING_ZERO", 0),
-        checks.AC_SUBST("GNULIB_STDC_FIRST_LEADING_ONE", 0),
-        checks.AC_SUBST("GNULIB_STDC_FIRST_TRAILING_ZERO", 0),
-        checks.AC_SUBST("GNULIB_STDC_FIRST_TRAILING_ONE", 0),
-        checks.AC_SUBST("GNULIB_STDC_COUNT_ZEROS", 0),
-        checks.AC_SUBST("GNULIB_STDC_COUNT_ONES", 0),
-        checks.AC_SUBST("GNULIB_STDC_HAS_SINGLE_BIT", 0),
-        checks.AC_SUBST("GNULIB_STDC_BIT_WIDTH", 0),
-        checks.AC_SUBST("GNULIB_STDC_BIT_FLOOR", 0),
-        checks.AC_SUBST("GNULIB_STDC_BIT_CEIL", 0),
-        checks.AC_SUBST("GNULIB_STDC_ROTATE_LEFT", 0),
-        checks.AC_SUBST("GNULIB_STDC_ROTATE_RIGHT", 0),
-        checks.AC_SUBST("GNULIB_STDC_MEMREVERSE8", 0),
-        checks.AC_SUBST("GNULIB_STDC_MEMREVERSE8U", 0),
-        checks.AC_SUBST("GNULIB_STDC_LOAD8_ALIGNED", 0),
-        checks.AC_SUBST("GNULIB_STDC_LOAD8", 0),
-        checks.AC_SUBST("GNULIB_STDC_STORE8_ALIGNED", 0),
-        checks.AC_SUBST("GNULIB_STDC_STORE8", 0),
-    ],
+    substs = {
+        "GNULIB_STDC_BIT_CEIL": "0",
+        "GNULIB_STDC_BIT_FLOOR": "0",
+        "GNULIB_STDC_BIT_WIDTH": "0",
+        "GNULIB_STDC_COUNT_ONES": "0",
+        "GNULIB_STDC_COUNT_ZEROS": "0",
+        "GNULIB_STDC_FIRST_LEADING_ONE": "0",
+        "GNULIB_STDC_FIRST_LEADING_ZERO": "0",
+        "GNULIB_STDC_FIRST_TRAILING_ONE": "0",
+        "GNULIB_STDC_FIRST_TRAILING_ZERO": "0",
+        "GNULIB_STDC_HAS_SINGLE_BIT": "0",
+        "GNULIB_STDC_LEADING_ONES": "0",
+        "GNULIB_STDC_LEADING_ZEROS": "0",
+        "GNULIB_STDC_LOAD8": "0",
+        "GNULIB_STDC_LOAD8_ALIGNED": "0",
+        "GNULIB_STDC_MEMREVERSE8": "0",
+        "GNULIB_STDC_MEMREVERSE8U": "0",
+        "GNULIB_STDC_ROTATE_LEFT": "0",
+        "GNULIB_STDC_ROTATE_RIGHT": "0",
+        "GNULIB_STDC_STORE8": "0",
+        "GNULIB_STDC_STORE8_ALIGNED": "0",
+        "GNULIB_STDC_TRAILING_ONES": "0",
+        "GNULIB_STDC_TRAILING_ZEROS": "0",
+    },
     visibility = ["//visibility:public"],
     deps = [
         ":gl_STDBIT_H_DEFAULTS",
@@ -127,12 +129,12 @@ autoconf(
 
 # AC_DEFUN([gl_STDBIT_H_DEFAULTS])
 # Empty in upstream.
-autoconf(
+autoconf_defaults(
     name = "gl_STDBIT_H_DEFAULTS",
     visibility = ["//visibility:public"],
 )
 
-autoconf(
+autoconf_defaults(
     name = "defaults",
     visibility = ["//visibility:public"],
     deps = [
@@ -143,6 +145,9 @@ autoconf(
 
 autoconf(
     name = "stdbit_h",
+    default_deps = [
+        ":defaults",
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_STDBIT_H",

@@ -9,6 +9,9 @@ load("//autoconf:checks.bzl", "checks")
 autoconf(
     name = "gl_FUNC_PRINTF_POSIX",
     checks = [],
+    default_deps = [
+        "//gnulib/m4/stdio_h:defaults",  # through a macro it invokes: gl_STDIO_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_FUNC_PRINTF_IS_POSIX",
@@ -44,6 +47,9 @@ autoconf(
             checks.AC_DEFINE("REPLACE_PRINTF_POSIX", "1"),
         ],
     }),
+    default_deps = [
+        "//gnulib/m4/stdio_h:defaults",  # AC_REQUIRE: gl_STDIO_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/asm-underscore",

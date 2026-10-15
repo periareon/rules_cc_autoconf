@@ -55,7 +55,6 @@ autoconf(
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/errno_h",
         "//gnulib/m4/extensions",
-        "//gnulib/m4/string_h",
     ],
 )
 
@@ -80,6 +79,9 @@ autoconf(
             ),
         ],
     }),
+    default_deps = [
+        "//gnulib/m4/string_h:defaults",  # AC_REQUIRE: gl_STRING_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_FUNC_STRERROR_0",  # AC_REQUIRE([gl_FUNC_STRERROR_0])
@@ -87,7 +89,6 @@ autoconf(
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/errno_h",  # AC_REQUIRE([gl_HEADER_ERRNO_H])
         "//gnulib/m4/extensions",
-        "//gnulib/m4/string_h",  # AC_REQUIRE([gl_STRING_H_DEFAULTS])
         # Note: strerror.m4 doesn't directly require strerror_r, but may be used together
         # Don't include strerror_r here to match golden which expects HAVE_DECL_STRERROR_R undefined
     ],

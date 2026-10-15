@@ -7,9 +7,6 @@ gnu_gnulib_diff_test_suite(
     configure_ac = "configure.ac",
     # The m4 graph never AC_REQUIREs these gl_*_H_DEFAULTS, so GNU leaves their
     # substitution variables as @VAR@ placeholders.
-    defaults_exclude = [
-        "//gnulib/m4/search_h:defaults",
-    ],
     m4_files = ["@gnulib//:all_m4"],
     subst_h_in = "subst.h.in",
     test_c = "test_setenv.c",

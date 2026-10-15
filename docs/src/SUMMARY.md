@@ -7,6 +7,7 @@
 - [Rules](./rules.md)
 
   - [autoconf](./autoconf.md)
+  - [autoconf_defaults](./autoconf_defaults.md)
   - [autoconf_hdr](./autoconf_hdr.md)
   - [autoconf_srcs](./autoconf_srcs.md)
   - [autoconf_linkopts](./autoconf_linkopts.md)

@@ -3,14 +3,14 @@
 load("@bazel_features//:features.bzl", "bazel_features")
 load(
     "//autoconf/private:autoconf_config.bzl",
+    "collect_defaults",
     "collect_deps",
     "collect_transitive_results",
-    "filter_defaults",
-    "get_autoconf_toolchain_defaults",
-    "get_autoconf_toolchain_defaults_by_label",
+    "merge_defaults",
+    "merge_results",
 )
 load("//autoconf/private:ctx_actions_write.bzl", "write")
-load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
+load("//autoconf/private:providers.bzl", "CcAutoconfDefaultsInfo", "CcAutoconfInfo")
 
 def _arg_map_manifest(value):
     """Build the manifest: maps define/subst names to result file paths + metadata"""
@@ -50,38 +50,14 @@ def _arg_map_inline(value):
 def _autoconf_hdr_impl(ctx):
     """Implementation of the autoconf_hdr rule."""
 
-    # Validate that defaults_include and defaults_exclude are mutually exclusive
-    if ctx.attr.defaults_include and ctx.attr.defaults_exclude:
-        fail("defaults_include and defaults_exclude are mutually exclusive")
-
-    # Get toolchain defaults based on the defaults attribute
-    defaults = struct(cache = {}, define = {}, subst = {})
-    if ctx.attr.defaults:
-        # Only use label-based filtering if include/exclude is specified
-        if ctx.attr.defaults_include or ctx.attr.defaults_exclude:
-            # Filtering needed - rebuild filtered list from labels
-            defaults_by_label = get_autoconf_toolchain_defaults_by_label(ctx)
-            if defaults_by_label:
-                include_labels = [dep.label for dep in ctx.attr.defaults_include] if ctx.attr.defaults_include else []
-                exclude_labels = [dep.label for dep in ctx.attr.defaults_exclude] if ctx.attr.defaults_exclude else []
-                defaults = filter_defaults(defaults_by_label, include_labels, exclude_labels)
-        else:
-            # No filtering - use already-flattened collection directly from toolchain
-            defaults = get_autoconf_toolchain_defaults(ctx)
-
     deps = collect_deps(ctx.attr.deps)
     dep_infos = deps.to_list()
     dep_results = collect_transitive_results(dep_infos)
 
-    all_define_checks = defaults.define | dep_results["define"]
-    all_subst_checks = defaults.subst | dep_results["subst"]
-
-    # Merge unquoted_defines from defaults and transitive deps
-    all_unquoted = {}
-    for uq in getattr(defaults, "unquoted_defines", []):
-        all_unquoted[uq] = True
-    for uq in dep_results.get("unquoted_defines", []):
-        all_unquoted[uq] = True
+    merged = merge_results(dep_results, merge_defaults(collect_defaults(ctx.attr.default_deps, dep_infos).to_list()))
+    all_define_checks = merged.define
+    all_subst_checks = merged.subst
+    all_unquoted = {uq: True for uq in merged.unquoted_defines}
 
     manifest = ctx.actions.declare_file("{}.manifest.json".format(ctx.label.name))
     manifest_args = ctx.actions.args()
@@ -183,30 +159,19 @@ Valid `mode` values:
 This allows you to run checks once and generate multiple header files from the same results.
 """,
     attrs = {
+        "default_deps": attr.label_list(
+            doc = """\
+`autoconf_defaults` targets whose values stand where no result of the name comes through `deps`
+(a result overrides a default silently; two defaults of one name must agree).  The defaults the
+`deps` carry are read as well.
+""",
+            providers = [CcAutoconfDefaultsInfo],
+        ),
         "defaults": attr.bool(
-            doc = """Whether to include toolchain defaults.
-
-            When False (the default), no toolchain defaults are included and only
-            the explicit deps provide check results. When True, defaults from the
-            autoconf toolchain are included, subject to filtering by defaults_include
-            or defaults_exclude.""",
+            doc = """\
+Deprecated and ignored: defaults come through `deps` and `default_deps`; the autoconf toolchain
+no longer carries any.  Accepted so existing BUILD files keep loading.""",
             default = False,
-        ),
-        "defaults_exclude": attr.label_list(
-            doc = """Labels to exclude from toolchain defaults.
-
-            Only effective when defaults=True. If specified, defaults from these
-            labels are excluded. Labels not found in the toolchain are silently
-            ignored. Mutually exclusive with defaults_include.""",
-            providers = [CcAutoconfInfo],
-        ),
-        "defaults_include": attr.label_list(
-            doc = """Labels to include from toolchain defaults.
-
-            Only effective when defaults=True. If specified, only defaults from
-            these labels are included. An error is raised if a specified label
-            is not found in the toolchain. Mutually exclusive with defaults_exclude.""",
-            providers = [CcAutoconfInfo],
         ),
         "deps": attr.label_list(
             doc = "List of `autoconf` targets which provide check results. Results from all deps will be merged together, and duplicate define names will produce an error. If not provided, an empty results file will be created.",

@@ -15,6 +15,9 @@ autoconf(
             define = "HAVE_LOG2",
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_FUNC_LOG2_WORKS",  # gl_FUNC_LOG2_WORKS

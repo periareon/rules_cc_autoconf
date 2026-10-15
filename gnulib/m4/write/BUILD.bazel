@@ -32,6 +32,9 @@ autoconf(
             ),
         ],
     }),
+    default_deps = [
+        "//gnulib/m4/unistd_h:defaults",  # AC_REQUIRE: gl_UNISTD_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/msvc-inval",

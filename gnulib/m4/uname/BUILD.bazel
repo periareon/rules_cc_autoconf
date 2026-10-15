@@ -22,6 +22,9 @@ autoconf(
             if_true = "1",
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/sys_utsname_h:defaults",  # AC_REQUIRE: gl_SYS_UTSNAME_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [":AC_CHECK_FUNCS_uname"],
 )

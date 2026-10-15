@@ -9,6 +9,9 @@ autoconf(
         # AC_SUBST([EXP2_LIBM]) - on macOS, no extra library needed
         checks.AC_SUBST("EXP2_LIBM", ""),
     ],
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/extensions",

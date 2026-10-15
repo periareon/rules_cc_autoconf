@@ -47,6 +47,7 @@ autoconf(
     visibility = ["//gnulib:__subpackages__"],
     deps = [
         ":gl_SIGNBIT_DEFINES",
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
         "//gnulib/m4/wchar_h:gl_WCHAR_H_CORE",
     ],
 )
@@ -70,12 +71,16 @@ autoconf(
             checks.AC_SUBST("HAVE_TOTALORDERMAGL", "0"),
         ],
     }),
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
-    deps = select({
+    deps = [
+        "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+    ] + select({
         # On Linux: don't need signbit defines (functions available), but need math_h for HAVE_SAME_LONG_DOUBLE_AS_DOUBLE
         "@platforms//os:linux": [
             "//gnulib/m4/math_h",
-            "//gnulib/m4/wchar_h:gl_WCHAR_H_CORE",
         ],
         # On macOS: need signbit defines for replacement implementation
         "//conditions:default": [

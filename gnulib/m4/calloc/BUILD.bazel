@@ -22,6 +22,9 @@ autoconf(
         # These runtime checks cannot be easily replicated in Bazel.
         # Based on golden files, calloc works correctly on macOS.
     ],
+    default_deps = [
+        "//gnulib/m4/stdlib_h:defaults",  # through a macro it invokes: gl_STDLIB_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) - line 62, 41

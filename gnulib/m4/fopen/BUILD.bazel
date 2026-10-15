@@ -35,6 +35,9 @@ autoconf(
         ],
         "//conditions:default": [],
     }),
+    default_deps = [
+        "//gnulib/m4/stdio_h:defaults",  # AC_REQUIRE: gl_STDIO_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
@@ -59,6 +62,9 @@ autoconf(
         ],
         "//conditions:default": [],
     }),
+    default_deps = [
+        "//gnulib/m4/stdio_h:defaults",  # through a macro it invokes: gl_STDIO_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_FUNC_FOPEN_ITSELF",  # AC_REQUIRE([gl_FUNC_FOPEN_ITSELF])
@@ -83,6 +89,9 @@ autoconf(
         ],
         "//conditions:default": [],
     }),
+    default_deps = [
+        "//gnulib/m4/stdio_h:defaults",  # through a macro it invokes: gl_STDIO_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_FUNC_FOPEN",  # AC_REQUIRE([gl_FUNC_FOPEN])

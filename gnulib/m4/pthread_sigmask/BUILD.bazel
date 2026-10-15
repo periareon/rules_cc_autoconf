@@ -47,6 +47,9 @@ int headers_define_pthread_sigmask;
         checks.AC_SUBST("LIB_PTHREAD_SIGMASK", ""),
         checks.AC_SUBST("PTHREAD_SIGMASK_LIB", ""),
     ],
+    default_deps = [
+        "//gnulib/m4/signal_h:defaults",  # AC_REQUIRE: gl_SIGNAL_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Note: signal_h provides HAVE_SIGSET_T, but golden file expects it undefined

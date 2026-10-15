@@ -26,6 +26,9 @@ autoconf(
             if_true = 1,
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/signal_h:defaults",  # AC_REQUIRE: gl_SIGNAL_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/msvc-inval",  # m4_ifdef([gl_MSVC_INVAL], [AC_REQUIRE([gl_MSVC_INVAL])])

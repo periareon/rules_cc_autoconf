@@ -62,6 +62,10 @@ autoconf(
             define = "HAVE_GETSYSINFO",
         ),
         checks.AC_CHECK_FUNC(
+            "sysinfo",
+            define = "HAVE_SYSINFO",
+        ),
+        checks.AC_CHECK_FUNC(
             "table",
             define = "HAVE_TABLE",
         ),
@@ -77,7 +81,6 @@ autoconf(
         "//gnulib/m4/nproc:gl_PREREQ_NPROC",
         "//gnulib/macros/HAVE_SYS_PARAM_H",
         "//gnulib/m4/readutmp",
-        "//gnulib/m4/getdomainname",
         # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],

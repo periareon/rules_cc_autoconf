@@ -30,5 +30,8 @@ int main(void) {
         # Based on golden file, REPLACE__EXIT=0 on macOS (function exists)
         checks.AC_SUBST("REPLACE__EXIT", 0),
     ],
+    default_deps = [
+        "//gnulib/m4/stdlib_h:defaults",  # AC_REQUIRE: gl_STDLIB_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
 )

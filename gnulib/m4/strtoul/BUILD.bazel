@@ -14,5 +14,8 @@ autoconf(
         # strtoul module provides replacement; golden expects REPLACE_STRTOUL=1
         checks.AC_SUBST("REPLACE_STRTOUL", "1"),
     ],
+    default_deps = [
+        "//gnulib/m4/stdlib_h:defaults",  # AC_REQUIRE: gl_STDLIB_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
 )

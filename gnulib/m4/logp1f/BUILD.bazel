@@ -22,6 +22,9 @@ autoconf(
         checks.AC_SUBST("HAVE_LOGP1F", 0),
         checks.AC_SUBST("LOGP1F_LIBM", ""),
     ],
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_MATH_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction

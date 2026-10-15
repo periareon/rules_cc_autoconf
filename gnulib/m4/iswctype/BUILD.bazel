@@ -7,6 +7,9 @@ autoconf(
     checks = [
         # Note: iswctype.m4 may not exist in gnulib, or this module may not have checks
     ],
+    default_deps = [
+        "//gnulib/m4/wctype_h:defaults",  # AC_REQUIRE: gl_WCTYPE_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/wctype",

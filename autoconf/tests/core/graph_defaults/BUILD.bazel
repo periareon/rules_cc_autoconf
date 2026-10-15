@@ -1,0 +1,83 @@
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_defaults.bzl", "autoconf_defaults")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:checks.bzl", "checks")
+load("//autoconf/tests:diff_test.bzl", "diff_test")
+
+# gnulib's *_H_DEFAULTS pattern: an `autoconf_defaults` target read through
+# `default_deps` supplies values (HAVE_X=1, REPLACE_X=0) that an ordinary
+# result of the same name overrides without a duplicate error, and that stand
+# where nothing overrides them.
+autoconf_defaults(
+    name = "defaults",
+    defines = {
+        "DEFAULT_ONLY": "1",
+    },
+    substs = {
+        "HAVE_FOO": "1",
+        "REPLACE_BAR": "0",
+        "REPLACE_FOO": "0",
+    },
+)
+
+# Defaults pass through an intermediate target as defaults.
+autoconf(
+    name = "defaults_via",
+    default_deps = [":defaults"],
+)
+
+# The probe's result (REPLACE_FOO=1) wins over the default, through `deps`
+# and also when the consumer lists the defaults target itself.
+autoconf(
+    name = "probe",
+    checks = [
+        checks.AC_SUBST("REPLACE_FOO", 1),
+    ],
+    deps = [":defaults_via"],
+)
+
+autoconf_hdr(
+    name = "subst_overridden",
+    out = "subst_overridden.h",
+    mode = "subst",
+    template = "subst.h.in",
+    deps = [":probe"],
+)
+
+autoconf_hdr(
+    name = "subst_defaults_only",
+    out = "subst_defaults_only.h",
+    mode = "subst",
+    template = "subst.h.in",
+    deps = [":defaults_via"],
+)
+
+autoconf_hdr(
+    name = "subst_both_listed",
+    out = "subst_both_listed.h",
+    default_deps = [":defaults"],
+    mode = "subst",
+    template = "subst.h.in",
+    deps = [":probe"],
+)
+
+autoconf_hdr(
+    name = "config_defaults",
+    out = "config_defaults.h",
+    template = "config.h.in",
+    deps = [":probe"],
+)
+
+[
+    diff_test(
+        name = "{}_test".format(name),
+        file1 = "golden_{}.h".format(name),
+        file2 = ":{}.h".format(name),
+    )
+    for name in [
+        "subst_overridden",
+        "subst_defaults_only",
+        "subst_both_listed",
+        "config_defaults",
+    ]
+]

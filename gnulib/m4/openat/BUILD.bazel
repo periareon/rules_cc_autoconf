@@ -35,6 +35,9 @@ autoconf(
             checks.AC_SUBST("REPLACE_OPENAT", 0),
         ],
     }),
+    default_deps = [
+        "//gnulib/m4/fcntl_h:defaults",  # AC_REQUIRE: gl_FCNTL_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])

@@ -21,6 +21,9 @@ autoconf(
             condition = "ac_cv_func_mempcpy",
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/string_h:defaults",  # AC_REQUIRE: gl_STRING_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":HAVE_MEMPCPY",

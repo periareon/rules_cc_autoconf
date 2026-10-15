@@ -79,6 +79,9 @@ int main(void) {
             checks.AC_SUBST("LIB_GETRANDOM", ""),
         ],
     }),
+    default_deps = [
+        "//gnulib/m4/sys_random_h:defaults",  # AC_REQUIRE: gl_SYS_RANDOM_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_SYS_RANDOM_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency

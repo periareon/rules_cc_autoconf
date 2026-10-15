@@ -46,6 +46,9 @@ int main(void) {
         # The golden file shows it's undefined in config.h but set to 0 in subst.h on macOS
         # If the function exists, HAVE_PTHREAD_MUTEX_TIMEDLOCK is not set (undefined), matching the golden file
     ],
+    default_deps = [
+        "//gnulib/m4/pthread_h:defaults",  # AC_REQUIRE: gl_PTHREAD_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_PTHREAD_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction

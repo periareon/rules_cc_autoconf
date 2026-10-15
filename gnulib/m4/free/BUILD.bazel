@@ -35,6 +35,9 @@ int main(void) { return 0; }""",
             condition = "!gl_cv_func_free_preserves_errno",
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/stdlib_h:defaults",  # AC_REQUIRE: gl_STDLIB_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_STDLIB_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency

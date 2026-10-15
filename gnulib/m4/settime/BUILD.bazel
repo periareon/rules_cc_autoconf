@@ -18,7 +18,6 @@ autoconf(
         "//gnulib/m4/clock_time",
         "//gnulib/m4/timespec",  # AC_REQUIRE([gl_TIMESPEC])
         "//gnulib/m4/extensions",  # Need extension defines
-        "//gnulib/m4/wchar_h:gl_WCHAR_H_CORE",
         # For test compatibility - need basic header defines
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],

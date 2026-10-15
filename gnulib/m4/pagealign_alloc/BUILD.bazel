@@ -36,6 +36,5 @@ autoconf(
     deps = [
         ":gl_PAGEALIGN_ALLOC",
         ":gl_PREREQ_PAGEALIGN_ALLOC",
-        "//gnulib/m4/wchar_h:gl_WCHAR_H_CORE",  # kept from the previous shape for existing dependants
     ],
 )

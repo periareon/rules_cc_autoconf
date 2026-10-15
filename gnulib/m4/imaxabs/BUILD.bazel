@@ -19,6 +19,9 @@ autoconf(
         ],
         subst = True,
     ),
+    default_deps = [
+        "//gnulib/m4/inttypes:defaults",  # AC_REQUIRE: gl_INTTYPES_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # For test compatibility

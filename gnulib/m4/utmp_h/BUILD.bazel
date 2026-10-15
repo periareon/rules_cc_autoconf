@@ -1,5 +1,6 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/utmp_h.m4"""
 
+load("//autoconf:autoconf_defaults.bzl", "autoconf_defaults")
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 load("//gnulib:macros.bzl", gl_macros = "macros")
@@ -26,6 +27,11 @@ autoconf(
             condition = "ac_cv_header_utmp_h",
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/pty_h:defaults",  # through a macro it invokes: gl_PTY_H_DEFAULTS
+        "//gnulib/m4/termios_h:defaults",  # through a macro it invokes: gl_TERMIOS_H_DEFAULTS
+        ":defaults",  # AC_REQUIRE: gl_UTMP_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":HAVE_UTMP_H",
@@ -37,27 +43,27 @@ autoconf(
     ],
 )
 
-autoconf(
+autoconf_defaults(
     name = "gl_UTMP_H_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("HAVE_LOGIN_TTY", 1),
-        checks.AC_SUBST("REPLACE_LOGIN_TTY", 0),
-    ],
+    substs = {
+        "HAVE_LOGIN_TTY": "1",
+        "REPLACE_LOGIN_TTY": "0",
+    },
     visibility = ["//visibility:private"],
 )
 
-autoconf(
+autoconf_defaults(
     name = "gl_UTMP_H_REQUIRE_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("GNULIB_LOGIN_TTY", 0),
-    ],
+    substs = {
+        "GNULIB_LOGIN_TTY": "0",
+    },
     visibility = ["//visibility:private"],
     deps = [
         ":gl_UTMP_H_DEFAULTS",
     ],
 )
 
-autoconf(
+autoconf_defaults(
     name = "defaults",
     visibility = ["//visibility:public"],
     deps = [
@@ -67,6 +73,11 @@ autoconf(
 
 autoconf(
     name = "utmp_h",
+    default_deps = [
+        "//gnulib/m4/pty_h:defaults",  # through a macro it invokes: gl_PTY_H_DEFAULTS
+        "//gnulib/m4/termios_h:defaults",  # through a macro it invokes: gl_TERMIOS_H_DEFAULTS
+        ":defaults",  # the header's own defaults, as its m4 requires
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_UTMP_H",

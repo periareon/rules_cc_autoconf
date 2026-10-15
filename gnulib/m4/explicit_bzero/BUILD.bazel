@@ -40,6 +40,9 @@ int main(void) {
             condition = "_gl_cv_func_explicit_bzero",
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/string_h:defaults",  # AC_REQUIRE: gl_STRING_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/extensions",

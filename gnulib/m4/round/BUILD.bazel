@@ -11,6 +11,9 @@ autoconf(
         # Autoconf detects REPLACE_ROUND=0 on Linux (round works correctly)
         checks.AC_SUBST("REPLACE_ROUND", 0),
     ],
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/extensions",

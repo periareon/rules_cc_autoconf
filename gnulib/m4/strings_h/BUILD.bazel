@@ -1,5 +1,6 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/strings_h.m4"""
 
+load("//autoconf:autoconf_defaults.bzl", "autoconf_defaults")
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 load("//gnulib:macros.bzl", gl_macros = "macros")
@@ -20,6 +21,9 @@ autoconf(
             if_true = "1",
         ),
     ],
+    default_deps = [
+        ":defaults",  # AC_REQUIRE: gl_STRINGS_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Provides ac_cv_header_strings_h (and AC_REQUIRE([gl_STRINGS_H_DEFAULTS])
@@ -31,36 +35,36 @@ autoconf(
 
 # gl_STRINGS_H_DEFAULTS - lines 62-75
 # Default AC_SUBST values; supplied to the toolchain so all consumers see them.
-autoconf(
+autoconf_defaults(
     name = "gl_STRINGS_H_DEFAULTS",
-    checks = [
+    substs = {
+        "HAVE_DECL_STRNCASECMP": "1",
         # Assume proper GNU behavior unless another module says otherwise.
-        checks.AC_SUBST("HAVE_FFS", 1),
-        checks.AC_SUBST("HAVE_STRCASECMP", 1),
-        checks.AC_SUBST("HAVE_STRCASECMP_L", 1),
-        checks.AC_SUBST("HAVE_STRNCASECMP", 1),
-        checks.AC_SUBST("HAVE_STRNCASECMP_L", 1),
-        checks.AC_SUBST("HAVE_DECL_STRNCASECMP", 1),
-        checks.AC_SUBST("REPLACE_STRCASECMP", 0),
-        checks.AC_SUBST("REPLACE_STRCASECMP_L", 0),
-        checks.AC_SUBST("REPLACE_STRNCASECMP", 0),
-        checks.AC_SUBST("REPLACE_STRNCASECMP_L", 0),
-    ],
+        "HAVE_FFS": "1",
+        "HAVE_STRCASECMP": "1",
+        "HAVE_STRCASECMP_L": "1",
+        "HAVE_STRNCASECMP": "1",
+        "HAVE_STRNCASECMP_L": "1",
+        "REPLACE_STRCASECMP": "0",
+        "REPLACE_STRCASECMP_L": "0",
+        "REPLACE_STRNCASECMP": "0",
+        "REPLACE_STRNCASECMP_L": "0",
+    },
     visibility = ["//visibility:private"],
 )
 
 # gl_STRINGS_H_REQUIRE_DEFAULTS - lines 47-60
 # Initializes the GNULIB_* module-indicator default values, then AC_REQUIREs
 # gl_STRINGS_H_DEFAULTS.
-autoconf(
+autoconf_defaults(
     name = "gl_STRINGS_H_REQUIRE_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("GNULIB_FFS", 0),
-        checks.AC_SUBST("GNULIB_STRCASECMP", 0),
-        checks.AC_SUBST("GNULIB_STRCASECMP_L", 0),
-        checks.AC_SUBST("GNULIB_STRNCASECMP", 0),
-        checks.AC_SUBST("GNULIB_STRNCASECMP_L", 0),
-    ],
+    substs = {
+        "GNULIB_FFS": "0",
+        "GNULIB_STRCASECMP": "0",
+        "GNULIB_STRCASECMP_L": "0",
+        "GNULIB_STRNCASECMP": "0",
+        "GNULIB_STRNCASECMP_L": "0",
+    },
     visibility = ["//visibility:private"],
     deps = [
         ":gl_STRINGS_H_DEFAULTS",
@@ -68,7 +72,7 @@ autoconf(
 )
 
 # Public defaults target consumed by //gnulib/toolchain.
-autoconf(
+autoconf_defaults(
     name = "defaults",
     visibility = ["//visibility:public"],
     deps = [
@@ -80,6 +84,9 @@ autoconf(
 # on the AC_DEFUN targets, excluding *_DEFAULTS (provided by the toolchain).
 autoconf(
     name = "strings_h",
+    default_deps = [
+        ":defaults",  # the header's own defaults, as its m4 requires
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_STRINGS_H",

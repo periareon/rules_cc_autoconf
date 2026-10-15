@@ -468,10 +468,8 @@ def caching_test_suite(*, name, **kwargs):
     tests.append(":test_tc_cache_hit")
 
     # ============================================================================
-    # Test 6: toolchain defaults also cached
-    #
-    # A check provided via the toolchain's defaults attribute should also be
-    # available as a cache hit for autoconf targets.
+    # Test 6: a provider listed only in cache_deps (as the gnulib ports' defaults
+    # targets are) is a cache hit for autoconf targets that run the same check.
     # ============================================================================
 
     autoconf_cache(
@@ -484,7 +482,7 @@ def caching_test_suite(*, name, **kwargs):
 
     autoconf_toolchain(
         name = "tc_defaults_cache_toolchain_impl",
-        defaults = [":tc_defaults_provider"],
+        cache_deps = [":tc_defaults_provider"],
         visibility = ["//visibility:public"],
         tags = ["manual"],
     )

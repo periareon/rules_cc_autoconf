@@ -1,6 +1,6 @@
-// `defaults = True`: the conditions also see the autoconf toolchain's
-// defaults.  GL_GENERATE_ICONV_H is "false" there (iconv_h's defaults
-// target), a variable the deps of this test never set.
+// `default_deps`: the conditions also see a header port's defaults.
+// GL_GENERATE_ICONV_H is "false" in iconv_h's defaults target, a variable
+// the deps of this test never set.
 #include "gl_conditional_default.h"
 
 #ifndef GL_CONDITIONAL_HDRS_DEFAULT_SENTINEL

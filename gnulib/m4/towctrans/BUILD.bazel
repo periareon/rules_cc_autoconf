@@ -6,6 +6,9 @@ load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 autoconf(
     name = "towctrans",
     checks = [],
+    default_deps = [
+        "//gnulib/m4/wctype_h:defaults",  # AC_REQUIRE: gl_WCTYPE_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/wctrans",

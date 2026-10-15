@@ -17,6 +17,9 @@ autoconf(
         # ROUND_LIBM comes from round (do not duplicate - causes cache conflict when roundl+round are both deps)
         checks.AC_SUBST("ROUNDL_LIBM", ""),
     ],
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])

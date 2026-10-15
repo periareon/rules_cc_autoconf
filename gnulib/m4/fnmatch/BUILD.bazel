@@ -11,7 +11,8 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/mbsrtowcs",
+        "//gnulib/m4/mbsrtowcs:AC_CHECK_FUNCS_ONCE_mbsrtowcs",  # AC_CHECK_FUNCS_ONCE([mbsrtowcs])
+        "//autoconf/macros/AC_TYPE_MBSTATE_T",  # narrowed: HAVE_MBSTATE_T
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],

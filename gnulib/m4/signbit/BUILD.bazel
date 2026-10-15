@@ -28,5 +28,8 @@ autoconf(
             checks.AC_SUBST("REPLACE_SIGNBIT_USING_BUILTINS", "1"),
         ],
     }),
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
 )

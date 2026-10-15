@@ -26,6 +26,15 @@ single_version_override(
     version = "33.4",
 )
 
+# The m4 overlay in the registry still substitutes HAVE_RANDOM_H itself; the
+# stdlib_h port now provides it, so the local copy is a duplicate producer.
+single_version_override(
+    module_name = "m4",
+    patch_strip = 1,
+    patches = ["//tools/patches:m4-have-random-h.patch"],
+    version = "1.4.21.bcr.6",
+)
+
 register_toolchains(
     "//gnulib/toolchain",
 )

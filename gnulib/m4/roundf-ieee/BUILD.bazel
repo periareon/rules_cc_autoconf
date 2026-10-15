@@ -23,6 +23,9 @@ autoconf(
         checks.AC_SUBST("ROUNDF_LIBM", ""),
         checks.AC_SUBST("REPLACE_ROUNDF", 0),
     ],
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # through gl_FUNC_ROUNDF (roundf.m4): AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",

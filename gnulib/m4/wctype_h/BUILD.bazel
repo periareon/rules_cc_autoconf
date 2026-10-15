@@ -1,5 +1,6 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/wctype_h.m4"""
 
+load("//autoconf:autoconf_defaults.bzl", "autoconf_defaults")
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 load("//gnulib:macros.bzl", gl_macros = "macros")
@@ -130,6 +131,9 @@ int main(void) {
             condition = "REPLACE_ISWCNTRL==1 || (!ac_cv_func_towlower && ac_cv_have_decl_towlower)",
         ),
     ],
+    default_deps = [
+        ":defaults",  # AC_REQUIRE: gl_WCTYPE_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/wint_t:AC_SUBST_HAVE_WINT_T",
@@ -143,34 +147,34 @@ int main(void) {
     ],
 )
 
-autoconf(
+autoconf_defaults(
     name = "gl_WCTYPE_H_DEFAULTS",
-    checks = [
+    substs = {
         # HAVE_* defaults
-        checks.AC_SUBST("HAVE_ISWBLANK", 1),
+        "HAVE_ISWBLANK": "1",
         # REPLACE_* defaults
-        checks.AC_SUBST("REPLACE_ISWBLANK", 0),
-        checks.AC_SUBST("REPLACE_ISWDIGIT", 0),
-        checks.AC_SUBST("REPLACE_ISWPUNCT", 0),
-        checks.AC_SUBST("REPLACE_ISWXDIGIT", 0),
-        checks.AC_SUBST("REPLACE_WCTRANS", 0),
-        checks.AC_SUBST("REPLACE_WCTYPE", 0),
-    ],
+        "REPLACE_ISWBLANK": "0",
+        "REPLACE_ISWDIGIT": "0",
+        "REPLACE_ISWPUNCT": "0",
+        "REPLACE_ISWXDIGIT": "0",
+        "REPLACE_WCTRANS": "0",
+        "REPLACE_WCTYPE": "0",
+    },
     visibility = ["//visibility:private"],
 )
 
-autoconf(
+autoconf_defaults(
     name = "gl_WCTYPE_H_REQUIRE_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("GNULIB_ISWBLANK", 0),
-        checks.AC_SUBST("GNULIB_ISWDIGIT", 0),
-        checks.AC_SUBST("GNULIB_ISWPUNCT", 0),
-        checks.AC_SUBST("GNULIB_ISWXDIGIT", 0),
-        checks.AC_SUBST("GNULIB_WCTYPE", 0),
-        checks.AC_SUBST("GNULIB_ISWCTYPE", 0),
-        checks.AC_SUBST("GNULIB_WCTRANS", 0),
-        checks.AC_SUBST("GNULIB_TOWCTRANS", 0),
-    ],
+    substs = {
+        "GNULIB_ISWBLANK": "0",
+        "GNULIB_ISWCTYPE": "0",
+        "GNULIB_ISWDIGIT": "0",
+        "GNULIB_ISWPUNCT": "0",
+        "GNULIB_ISWXDIGIT": "0",
+        "GNULIB_TOWCTRANS": "0",
+        "GNULIB_WCTRANS": "0",
+        "GNULIB_WCTYPE": "0",
+    },
     visibility = ["//visibility:private"],
     deps = [
         ":gl_WCTYPE_H_DEFAULTS",
@@ -184,13 +188,14 @@ autoconf(
 autoconf(
     name = "gl_WCTYPE_MODULE_INDICATOR",
     checks = [],
-    visibility = ["//visibility:public"],
-    deps = [
+    default_deps = [
+        ":defaults",  # through a macro it invokes: gl_WCTYPE_H_DEFAULTS
         ":gl_WCTYPE_H_REQUIRE_DEFAULTS",
     ],
+    visibility = ["//visibility:public"],
 )
 
-autoconf(
+autoconf_defaults(
     name = "defaults",
     visibility = ["//visibility:public"],
     deps = [
@@ -200,6 +205,9 @@ autoconf(
 
 autoconf(
     name = "wctype_h",
+    default_deps = [
+        ":defaults",  # the header's own defaults, as its m4 requires
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_WCTYPE_H",

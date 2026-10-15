@@ -1,6 +1,7 @@
 # Rules
 
 - [autoconf](./autoconf.md#autoconf)
+- [autoconf_defaults](./autoconf_defaults.md#autoconf_defaults)
 - [autoconf_hdr](./autoconf_hdr.md#autoconf_hdr)
 - [autoconf_srcs](./autoconf_srcs.md#autoconf_srcs)
 - [autoconf_linkopts](./autoconf_linkopts.md#autoconf_linkopts)

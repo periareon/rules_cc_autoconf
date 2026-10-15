@@ -12,5 +12,8 @@ autoconf(
             subst = True,
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/string_h:defaults",  # AC_REQUIRE: gl_STRING_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
 )

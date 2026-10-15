@@ -1,5 +1,6 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/sys_file_h.m4"""
 
+load("//autoconf:autoconf_defaults.bzl", "autoconf_defaults")
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 load("//gnulib:macros.bzl", gl_macros = "macros")
@@ -15,6 +16,9 @@ autoconf(
         ),
     ] + gl_macros.GL_CHECK_NEXT_HEADERS(["sys/file.h"]) + [
     ],
+    default_deps = [
+        ":defaults",  # the header's own defaults, as its m4 requires
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/include_next",  # gl_CHECK_NEXT_HEADERS([sys/file.h])
@@ -23,26 +27,26 @@ autoconf(
     ],
 )
 
-autoconf(
+autoconf_defaults(
     name = "gl_SYS_FILE_H_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("HAVE_FLOCK", 1),
-    ],
+    substs = {
+        "HAVE_FLOCK": "1",
+    },
     visibility = ["//visibility:private"],
 )
 
-autoconf(
+autoconf_defaults(
     name = "gl_SYS_FILE_H_REQUIRE_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("GNULIB_FLOCK", 0),
-    ],
+    substs = {
+        "GNULIB_FLOCK": "0",
+    },
     visibility = ["//visibility:private"],
     deps = [
         ":gl_SYS_FILE_H_DEFAULTS",
     ],
 )
 
-autoconf(
+autoconf_defaults(
     name = "defaults",
     visibility = ["//visibility:public"],
     deps = [

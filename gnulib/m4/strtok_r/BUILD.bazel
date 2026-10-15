@@ -54,12 +54,14 @@ autoconf(
         checks.AC_SUBST("UNDEFINE_STRTOK_R", 0),
         checks.AC_SUBST("REPLACE_STRTOK_R", 0),
     ],
+    default_deps = [
+        "//gnulib/m4/string_h:defaults",  # AC_REQUIRE: gl_STRING_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//autoconf/macros/AC_C_RESTRICT",  # AC_REQUIRE([AC_C_RESTRICT])
-        "//gnulib/m4/string_h",  # AC_REQUIRE([gl_STRING_H_DEFAULTS])
     ],
 )
 

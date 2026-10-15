@@ -11,6 +11,9 @@ autoconf(
         # AC_SUBST([COPYSIGNL_LIBM]) - on macOS, no extra library needed
         checks.AC_SUBST("COPYSIGNL_LIBM", ""),
     ],
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS,

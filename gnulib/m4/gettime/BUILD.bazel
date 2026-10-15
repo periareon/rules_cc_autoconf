@@ -63,7 +63,7 @@ autoconf(
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
-        "//gnulib/m4/timespec_getres:gl_FUNC_TIMESPEC_GETRES",
+        "//gnulib/m4/timespec_getres:HAVE_TIMESPEC_GETRES",  # AC_CHECK_FUNCS_ONCE([timespec_getres])
     ],
 )
 

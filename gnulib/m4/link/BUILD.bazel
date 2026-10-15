@@ -13,6 +13,9 @@ autoconf(
             subst = True,  # Set HAVE_LINK as subst variable
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/unistd_h:defaults",  # AC_REQUIRE: gl_UNISTD_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_FUNC_LINK requires gl_UNISTD_H_DEFAULTS, but we can't depend on

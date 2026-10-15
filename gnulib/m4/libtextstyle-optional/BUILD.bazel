@@ -18,6 +18,5 @@ autoconf(
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/libtextstyle",
-        "//gnulib/m4/termios_h",
     ],
 )

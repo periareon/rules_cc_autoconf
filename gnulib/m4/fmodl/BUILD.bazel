@@ -59,6 +59,9 @@ autoconf(
         # m4 line 35-66: FMODL_LIBM is FMOD_LIBM / FABSL+FREXPL+TRUNCL+LDEXPL+ISNANL libs (all empty here)
         checks.AC_SUBST("FMODL_LIBM", ""),
     ],
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",

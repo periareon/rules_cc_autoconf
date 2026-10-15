@@ -58,6 +58,9 @@ autoconf(
             ),
         ],
     }),
+    default_deps = [
+        "//gnulib/m4/stdio_h:defaults",  # AC_REQUIRE: gl_STDIO_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/macros/HAVE_STDIO_EXT_H",

@@ -17,6 +17,9 @@ autoconf(
             if_true = "1",
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/stdio_h:defaults",  # AC_REQUIRE: gl_STDIO_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/ftello:gl_FUNC_FTELLO_FOR_FTELL",

@@ -32,6 +32,9 @@ int main(void) {
             language = "c",
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/stdlib_h:defaults",  # through a macro it invokes: gl_STDLIB_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # For test compatibility
@@ -54,6 +57,9 @@ autoconf(
             condition = "!gl_cv_malloc_ptrdiff",
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/stdlib_h:defaults",  # AC_REQUIRE: gl_STDLIB_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_STDLIB_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
@@ -72,6 +78,9 @@ autoconf(
         # Based on m4 file lines 33-38, most Unix platforms guess "yes"
         # On macOS/Linux, malloc(0) returns nonnull
         checks.AC_DEFINE("HAVE_MALLOC_0_NONNULL", "1"),
+    ],
+    default_deps = [
+        "//gnulib/m4/stdlib_h:defaults",  # through a macro it invokes: gl_STDLIB_H_DEFAULTS
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -114,6 +123,9 @@ autoconf(
         checks.AC_DEFINE("HAVE_MALLOC_POSIX", "1"),
         # Note: REPLACE_MALLOC_FOR_MALLOC_POSIX is already provided by gl_FUNC_MALLOC_PTRDIFF dependency
     ],
+    default_deps = [
+        "//gnulib/m4/stdlib_h:defaults",  # AC_REQUIRE: gl_STDLIB_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_STDLIB_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
@@ -139,6 +151,9 @@ autoconf(
             condition = "!gl_cv_malloc_ptrdiff",
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/stdlib_h:defaults",  # AC_REQUIRE: gl_STDLIB_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_STDLIB_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
@@ -152,6 +167,9 @@ autoconf(
 autoconf(
     name = "malloc",
     checks = [],
+    default_deps = [
+        "//gnulib/m4/stdlib_h:defaults",  # through a macro it invokes: gl_STDLIB_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_CHECK_MALLOC_PTRDIFF",

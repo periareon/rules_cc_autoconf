@@ -34,6 +34,9 @@ autoconf(
             condition = "ac_cv_func_fchdir",
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/unistd_h:defaults",  # AC_REQUIRE: gl_UNISTD_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":AC_CHECK_FUNCS_ONCE_fchdir",  # AC_CHECK_FUNCS_ONCE([fchdir])
@@ -92,6 +95,10 @@ autoconf(
         ],
         "//conditions:default": [],
     }),
+    default_deps = [
+        "//gnulib/m4/dirent_h:defaults",  # AC_REQUIRE: gl_DIRENT_H_DEFAULTS
+        "//gnulib/m4/unistd_h:defaults",  # AC_REQUIRE: gl_UNISTD_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_TEST_FCHDIR",  # AC_REQUIRE([gl_TEST_FCHDIR])

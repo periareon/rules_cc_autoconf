@@ -12,6 +12,15 @@ stardoc(
 )
 
 stardoc(
+    name = "autoconf_defaults",
+    out = "src/autoconf_defaults.md",
+    input = "//autoconf:autoconf_defaults.bzl",
+    table_of_contents_template = "@stardoc//stardoc:templates/markdown_tables/table_of_contents.vm",
+    tags = ["manual"],
+    deps = ["//autoconf:autoconf_defaults_bzl"],
+)
+
+stardoc(
     name = "autoconf_hdr",
     out = "src/autoconf_hdr.md",
     input = "//autoconf:autoconf_hdr.bzl",
@@ -69,6 +78,7 @@ mdbook(
     name = "book",
     srcs = glob(["src/**/*.md"]) + [
         ":autoconf",
+        ":autoconf_defaults",
         ":autoconf_hdr",
         ":autoconf_linkopts",
         ":autoconf_package_info",

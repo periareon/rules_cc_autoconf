@@ -41,6 +41,9 @@ autoconf(
             checks.AC_SUBST("REPLACE_MBRTOWC", 0),
         ],
     }),
+    default_deps = [
+        "//gnulib/m4/wchar_h:defaults",  # AC_REQUIRE: gl_WCHAR_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Shared base checks (HAVE_MBSINIT, MBRTOWC_LIB, etc.)
@@ -69,6 +72,9 @@ autoconf(
         # dependants (gl_FUNC_MBSINIT, gl_FUNC_WCSNRTOMBS, ...) can condition
         # on REPLACE_MBSTATE_T.
         checks.AC_SUBST("REPLACE_MBSTATE_T", 0),
+    ],
+    default_deps = [
+        "//gnulib/m4/wchar_h:defaults",  # AC_REQUIRE: gl_WCHAR_H_DEFAULTS
     ],
     visibility = ["//gnulib:__subpackages__"],
     deps = [

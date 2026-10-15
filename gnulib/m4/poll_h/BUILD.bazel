@@ -1,5 +1,6 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/poll_h.m4"""
 
+load("//autoconf:autoconf_defaults.bzl", "autoconf_defaults")
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 load("//gnulib:macros.bzl", gl_macros = "macros")
@@ -37,6 +38,9 @@ autoconf(
             if_true = "1",
         ),
     ] + gl_macros.GL_NEXT_HEADERS(["poll.h"]),
+    default_deps = [
+        ":defaults",  # AC_REQUIRE: gl_POLL_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_POLL_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
@@ -57,31 +61,37 @@ autoconf(
 autoconf(
     name = "gl_POLL_MODULE_INDICATOR",
     checks = [],
+    default_deps = [
+        ":defaults",  # through a macro it invokes: gl_POLL_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
 )
 
-autoconf(
+autoconf_defaults(
     name = "gl_POLL_H_REQUIRE_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("GNULIB_POLL", 0),
-    ],
+    substs = {
+        "GNULIB_POLL": "0",
+    },
     visibility = ["//visibility:private"],
     deps = [
         ":gl_POLL_H_DEFAULTS",
     ],
 )
 
-autoconf(
+autoconf_defaults(
     name = "gl_POLL_H_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("HAVE_POLL", 1),
-        checks.AC_SUBST("REPLACE_POLL", 0),
-    ],
+    substs = {
+        "HAVE_POLL": "1",
+        "REPLACE_POLL": "0",
+    },
     visibility = ["//visibility:private"],
 )
 
 autoconf(
     name = "poll_h",
+    default_deps = [
+        ":defaults",  # the header's own defaults, as its m4 requires
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_POLL_H",
@@ -89,7 +99,7 @@ autoconf(
     ],
 )
 
-autoconf(
+autoconf_defaults(
     name = "defaults",
     visibility = ["//visibility:public"],
     deps = [

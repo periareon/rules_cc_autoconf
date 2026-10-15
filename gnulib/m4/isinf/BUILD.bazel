@@ -192,6 +192,9 @@ autoconf(
             if_true = "-lm",
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_ISINFL_WORKS",

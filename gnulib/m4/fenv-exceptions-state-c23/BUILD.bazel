@@ -16,6 +16,9 @@ autoconf(
         # On macOS, fetestexceptflag doesn't need libm, so FETESTEXCEPTFLAG_LIBM should be empty string
         checks.AC_SUBST("FETESTEXCEPTFLAG_LIBM", ""),
     ],
+    default_deps = [
+        "//gnulib/m4/fenv_h:defaults",  # AC_REQUIRE: gl_FENV_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/fenv_h",

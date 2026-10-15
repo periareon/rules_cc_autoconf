@@ -17,6 +17,9 @@ autoconf(
 autoconf(
     name = "gl_FUNC_ICONV_OPEN_UTF_SUPPORT",
     checks = [],
+    default_deps = [
+        "//gnulib/m4/iconv_h:defaults",  # AC_REQUIRE: gl_ICONV_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
     ],

@@ -19,6 +19,9 @@ autoconf(
         # On macOS/Linux, coshf is in libc, so COSHF_LIBM is empty
         checks.AC_SUBST("COSHF_LIBM", ""),
     ],
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",

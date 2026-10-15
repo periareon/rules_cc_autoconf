@@ -50,6 +50,9 @@ autoconf(
             condition = "ac_cv_func_faccessat && !gl_cv_func_lstat_dereferences_slashed_symlink",
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/unistd_h:defaults",  # AC_REQUIRE: gl_UNISTD_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # HAVE_FACCESSAT check

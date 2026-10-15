@@ -62,6 +62,9 @@ autoconf(
             if_true = 0,
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/stdio_h:defaults",  # AC_REQUIRE: gl_STDIO_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction

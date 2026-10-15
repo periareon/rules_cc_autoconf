@@ -21,6 +21,9 @@ autoconf(
         # and the SEEK_DATA incompatibility preprocessor probe never fires.
         "//conditions:default": [],
     }),
+    default_deps = [
+        "//gnulib/m4/unistd_h:defaults",  # AC_REQUIRE: gl_UNISTD_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
