@@ -358,6 +358,14 @@ std::vector<std::string> CheckRunner::get_link_only_flags(
     return flags;
 }
 
+void CheckRunner::append_link_libraries(std::vector<std::string>& cmd) {
+    // The cc_deps archives, after whatever they must satisfy: the probe's
+    // object and the -l<library> under test.  Both dialects take an archive
+    // path as a positional input.
+    cmd.insert(cmd.end(), config_.link_libraries.begin(),
+               config_.link_libraries.end());
+}
+
 void CheckRunner::append_msvc_link_block(
     std::vector<std::string>& cmd, const std::string& language,
     const std::vector<std::string>& extra_linkopts) {
@@ -413,6 +421,7 @@ bool CheckRunner::try_link(const std::filesystem::path& object_file,
         cmd.insert(cmd.end(), link_flags.begin(), link_flags.end());
         cmd.push_back("/OUT:" + executable.string());
         cmd.push_back(object_file.string());
+        append_link_libraries(cmd);
     } else {
         std::string link_tool =
             config_.linker.empty()
@@ -427,6 +436,7 @@ bool CheckRunner::try_link(const std::filesystem::path& object_file,
         auto link_flags = get_link_only_flags(language, extra_linkopts);
         cmd.insert(cmd.end(), link_flags.begin(), link_flags.end());
         cmd.push_back(object_file.string());
+        append_link_libraries(cmd);
         cmd.push_back("-o");
         cmd.push_back(executable.string());
     }
@@ -465,6 +475,7 @@ bool CheckRunner::try_compile_and_link(
         // from an absent feature, so the check silently reports "no".
         cmd.push_back("/Fo" + tmp.object_path(true).string());
         cmd.push_back(source_file->string());
+        append_link_libraries(cmd);
         append_msvc_link_block(cmd, language, extra_linkopts);
         return run_command("compile and link", cmd) == 0;
     }
@@ -513,6 +524,7 @@ bool CheckRunner::try_compile_and_link_with_lib(
         // A bare .lib is a positional input that cl already forwards to the
         // linker, so it stays before /link rather than inside the block.
         cmd.push_back(library + ".lib");
+        append_link_libraries(cmd);
         append_msvc_link_block(cmd, language, extra_linkopts);
         return run_command("compile and link", cmd) == 0;
     }
@@ -525,6 +537,7 @@ bool CheckRunner::try_compile_and_link_with_lib(
     cmd.push_back("-o");
     cmd.push_back((tmp.dir / tmp.safe_id).string());
     cmd.push_back("-l" + library);
+    append_link_libraries(cmd);
 
     return run_command("compile and link", cmd) == 0;
 }

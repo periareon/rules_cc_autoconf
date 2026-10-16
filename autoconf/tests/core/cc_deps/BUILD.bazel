@@ -1,0 +1,100 @@
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:checks.bzl", "checks")
+load("//autoconf/tests:diff_test.bzl", "diff_test")
+
+# `cc_deps`: what configure's CPPFLAGS and LIBS carry.  The checks of a target
+# compile against the dependencies' headers and defines and link their
+# archives, so a probe for a library the project depends on answers as it
+# would in a configure run with that library installed.
+# A generated header: its directory is under the output tree, whose spelling
+# path mapping (--experimental_output_paths=strip) rewrites at execution time.
+write_file(
+    name = "greeter_version_h",
+    out = "gen/greeter_version.h",
+    content = [
+        "#define GREETER_VERSION 7",
+        "",
+    ],
+)
+
+cc_library(
+    name = "greeter",
+    srcs = ["greeter.c"],
+    hdrs = [
+        "greeter.h",
+        ":greeter_version_h",
+    ],
+    defines = ["GREETER_API_LEVEL=2"],
+    includes = [
+        ".",
+        "gen",
+    ],
+)
+
+CHECKS = [
+    checks.AC_CHECK_HEADER(
+        "greeter.h",
+        define = "HAVE_GREETER_H",
+    ),
+    checks.AC_CHECK_FUNC(
+        "greet",
+        define = "HAVE_GREET",
+    ),
+    checks.AC_CHECK_HEADER(
+        "greeter_version.h",
+        define = "HAVE_GREETER_VERSION_H",
+    ),
+    checks.AC_TRY_COMPILE(
+        name = "_cv_greeter_api",
+        code = """
+#if GREETER_API_LEVEL != 2
+#error "the library's define is not visible"
+#endif
+int main(void) { return 0; }
+""",
+        define = "GREETER_API_OK",
+        language = "c",
+    ),
+]
+
+autoconf(
+    name = "with_deps",
+    cc_deps = [":greeter"],
+    checks = CHECKS,
+)
+
+# The same checks without the dependency: nothing is found.  The two targets
+# share no results, although the checks are identical: the dependency's flags
+# are part of a check's identity.
+autoconf(
+    name = "without_deps",
+    checks = CHECKS,
+)
+
+[
+    autoconf_hdr(
+        name = name + "_config",
+        out = name + ".h",
+        template = "config.h.in",
+        deps = [":" + name],
+    )
+    for name in [
+        "with_deps",
+        "without_deps",
+    ]
+]
+
+[
+    diff_test(
+        name = name + "_test",
+        file1 = "golden_" + name + ".h",
+        file2 = name + ".h",
+    )
+    for name in [
+        "with_deps",
+        "without_deps",
+    ]
+]

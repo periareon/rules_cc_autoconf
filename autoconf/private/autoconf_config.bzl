@@ -5,6 +5,7 @@ Common utilities for autoconf rules.
 
 load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
+load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 load("//autoconf/private:ctx_actions_write.bzl", "write")
 load("//autoconf/private:providers.bzl", "CcAutoconfDefaultsInfo", "CcAutoconfInfo")
 
@@ -441,6 +442,115 @@ def get_cc_toolchain_info(ctx):
         cpp_link_flags = cpp_link_flags,
         compiler_type = cc_toolchain.compiler,
     )
+
+# Compilers that take the cl.exe flag dialect (`/I`, `/D`); matches
+# is_msvc_like() in the checker.
+_MSVC_LIKE_COMPILERS = ("msvc-cl", "clang-cl")
+
+def collect_cc_deps(cc_deps, compiler_type, bin_dir):
+    """What the checks see of the target's `cc_deps`: configure's CPPFLAGS and LIBS.
+
+    Nothing here goes into the config file: the paths are action inputs that
+    path mapping (`--experimental_output_paths=strip`) rewrites on the command
+    line, so they reach the checker as `Args` (see `cc_deps_args`).
+
+    Args:
+        cc_deps (list[Target]): The `cc_deps` attribute (targets with `CcInfo`).
+        compiler_type (str): The toolchain's compiler, for the flag dialect.
+        bin_dir (str): `ctx.bin_dir.path`, under which generated headers live.
+
+    Returns:
+        struct: `flags` (defines and source-tree include directories, plain
+            strings), `mapped_includes` (include directories under the output
+            tree, each with a header in it that stands witness to the mapped
+            prefix), `libraries` (File: the deps' archives), `link_flags`
+            (their user link flags), `inputs` (depset[File]: headers and
+            archives), and `key` (every flag, for the checks' content key).
+    """
+    if not cc_deps:
+        return struct(flags = [], mapped_includes = [], libraries = [], link_flags = [], inputs = depset(), key = [])
+    merged = cc_common.merge_cc_infos(cc_infos = [dep[CcInfo] for dep in cc_deps])
+    compilation = merged.compilation_context
+    msvc = compiler_type in _MSVC_LIKE_COMPILERS
+    headers = compilation.headers.to_list()
+    flags = []
+    mapped = []
+    dirs = [("/I" if msvc else "-iquote", d) for d in compilation.quote_includes.to_list()]
+    dirs += [("/I" if msvc else "-I", d) for d in compilation.includes.to_list()]
+    dirs += [("/I" if msvc else "-isystem", d) for d in compilation.system_includes.to_list()]
+    if hasattr(compilation, "external_includes"):
+        dirs += [("/I" if msvc else "-isystem", d) for d in compilation.external_includes.to_list()]
+    for prefix, directory in dirs:
+        if directory == bin_dir or directory.startswith(bin_dir + "/"):
+            # A generated-header directory: its mapped spelling is only known
+            # at execution time, from a file inside it.
+            rel = directory[len(bin_dir) + 1:]
+            witness = None
+            for header in headers:
+                if header.path == directory or header.path.startswith(directory + "/"):
+                    witness = header
+                    break
+            if witness != None:
+                mapped.append(struct(
+                    prefix = prefix,
+                    rel = rel,
+                    witness = witness,
+                    tail = witness.path[len(bin_dir) + 1:],
+                ))
+            continue
+        flags.append(prefix + directory)
+    for define in compilation.defines.to_list() + compilation.local_defines.to_list():
+        flags.append(("/D" if msvc else "-D") + define)
+    libraries = []
+    link_flags = []
+    for linker_input in merged.linking_context.linker_inputs.to_list():
+        for library in linker_input.libraries:
+            archive = library.pic_static_library or library.static_library or library.interface_library or library.dynamic_library
+            if archive != None and archive not in libraries:
+                libraries.append(archive)
+        for flag in linker_input.user_link_flags:
+            if flag not in link_flags:
+                link_flags.append(flag)
+    return struct(
+        flags = flags,
+        mapped_includes = mapped,
+        libraries = libraries,
+        link_flags = link_flags,
+        inputs = depset(libraries, transitive = [compilation.headers]),
+        key = flags + [m.prefix + bin_dir + "/" + m.rel for m in mapped] + [a.path for a in libraries] + link_flags,
+    )
+
+def _mapped_include_flag(item):
+    """An include flag for an output-tree directory, spelled as path mapping rewrote it.
+
+    The witness header's `path` is read at execution time, when `map_each`
+    runs, so it carries the bin directory's mapped prefix; the directory is
+    rebuilt from it.
+
+    Args:
+        item (struct): `prefix`, `rel`, `witness`, `tail` from `collect_cc_deps`.
+
+    Returns:
+        str: `<prefix><mapped bin dir>/<rel>`.
+    """
+    path = item.witness.path
+    mapped_bin = path[:len(path) - len(item.tail) - 1]
+    return item.prefix + mapped_bin + ("/" + item.rel if item.rel else "")
+
+def cc_deps_args(args, cc_deps):
+    """Add the cc_deps flags to a checker command line.
+
+    `--cc-flag` carries the compile flags, `--link-library` the archives (as
+    Files, so path mapping rewrites them) and then the link flags.
+
+    Args:
+        args (Args): The checker action's arguments.
+        cc_deps (struct): From `collect_cc_deps`.
+    """
+    args.add_all(cc_deps.flags, before_each = "--cc-flag")
+    args.add_all(cc_deps.mapped_includes, before_each = "--cc-flag", map_each = _mapped_include_flag)
+    args.add_all(cc_deps.libraries, before_each = "--link-library")
+    args.add_all(cc_deps.link_flags, before_each = "--link-library")
 
 def create_config_dict(toolchain_info):
     """Create a config dictionary for the autoconf runner.

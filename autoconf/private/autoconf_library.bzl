@@ -3,9 +3,12 @@
 load("@bazel_features//:features.bzl", "bazel_features")
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@rules_cc//cc:find_cc_toolchain.bzl", "use_cc_toolchain")
+load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 load(
     "//autoconf/private:autoconf_config.bzl",
     "AUTOCONF_EXEC_GROUP",
+    "cc_deps_args",
+    "collect_cc_deps",
     "collect_defaults",
     "collect_deps",
     "collect_transitive_results",
@@ -214,7 +217,13 @@ def autoconf_impl_common(ctx, resolve_toolchain):
 
     # Get cc_toolchain info
     toolchain_info = get_cc_toolchain_info(ctx)
+
+    # `cc_deps`: configure's CPPFLAGS and LIBS.  Their flags are part of every
+    # check's identity (content key): a check compiled against gmp's headers
+    # shares no result with the same check compiled without them.
+    cc_deps = collect_cc_deps(getattr(ctx.attr, "cc_deps", []), toolchain_info.compiler_type, ctx.bin_dir.path)
     target_flags = [getattr(ctx.attr, name, []) for name in ("copts", "conlyopts", "cxxopts")]
+    target_flags.append(cc_deps.key)
     target_flags = target_flags if any(target_flags) else None
 
     # Get transitive dependencies to compute compile_defines paths
@@ -435,6 +444,7 @@ def autoconf_impl_common(ctx, resolve_toolchain):
         args.add("--config", config_json)
         args.add("--check", check_json)
         args.add("--results", check_result_file)
+        cc_deps_args(args, cc_deps)
 
         # Collect dependencies for all required defines
         # Build a dictionary mapping lookup_name -> file_path
@@ -522,7 +532,7 @@ def autoconf_impl_common(ctx, resolve_toolchain):
             exec_group = AUTOCONF_EXEC_GROUP,
             executable = ctx.executable._checker,
             arguments = [args],
-            inputs = depset(inputs + [check_json] + check_deps),
+            inputs = depset(inputs + [check_json] + check_deps, transitive = [cc_deps.inputs]),
             outputs = [check_result_file],
             mnemonic = "CcAutoconfCheck",
             progress_message = "CcAutoconfCheck %{label} - " + check_name,
@@ -597,6 +607,14 @@ COMMON_ATTRS = {
               "to JSON metadata produced by `checks.AC_BUILD_SETTING`.",
         providers = [BuildSettingInfo],
         default = {},
+    ),
+    "cc_deps": attr.label_list(
+        doc = "Libraries the checks compile against and link, as configure's CPPFLAGS and LIBS carry a " +
+              "project's dependencies: every check sees their include directories and defines, and every " +
+              "link probe links their archives after its own object.  Their flags are part of each check's " +
+              "identity, so a check never shares a result between targets with different `cc_deps`.  Prefer " +
+              "`cc_deps = [\"@gmp//:gmp\"]` with a real `AC_CHECK_LIB` over a static `AC_DEFINE`.",
+        providers = [CcInfo],
     ),
     "checks": attr.string_list(
         doc = "List of JSON-encoded checks from checks (e.g., `checks.AC_CHECK_HEADER('stdio.h')`).",

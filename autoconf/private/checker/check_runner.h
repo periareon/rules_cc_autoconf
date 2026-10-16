@@ -254,6 +254,12 @@ class CheckRunner {
         const std::vector<std::string>& extra_linkopts = {});
 
     /**
+     * @brief Append the cc_deps archives (Config::link_libraries) to a link
+     * command, after the probe's object and the -l<library> under test.
+     */
+    void append_link_libraries(std::vector<std::string>& cmd);
+
+    /**
      * @brief Append the trailing `/link` block to a cl.exe command line.
      *
      * cl hands everything after `/link` to link.exe, so this must be called

@@ -33,6 +33,14 @@ struct CheckerArgs {
     /** Optional: name->file mappings for dependent check results */
     std::vector<DepMapping> dep_mappings{};
 
+    /** Optional: compile flags for the target's cc_deps (include dirs, defines)
+     */
+    std::vector<std::string> cc_flags{};
+
+    /** Optional: archives and link flags of the target's cc_deps, linked after
+     * each probe */
+    std::vector<std::string> link_libraries{};
+
     /** Whether to show help */
     bool show_help = false;
 };
@@ -44,6 +52,12 @@ void print_usage(const char* program_name) {
                  "if --check is not provided)\n";
     std::cout << "  --check <file>         Path to JSON file containing a "
                  "single check to run (required if --config is not provided)\n";
+    std::cout
+        << "  --cc-flag <flag>       Compile flag for the target's cc_deps "
+           "(repeatable)\n";
+    std::cout
+        << "  --link-library <path>  Archive or link flag of the target's "
+           "cc_deps, linked after each probe (repeatable)\n";
     std::cout << "  --results <file>       Path to JSON results file to write "
                  "(required)\n";
     std::cout << "  --dep <name>=<file>    Mapping of lookup name to result "
@@ -128,6 +142,14 @@ std::optional<CheckerArgs> parse_args(int argc, char* argv[]) {
                 return std::nullopt;
             }
             args.dep_mappings.push_back(mapping);
+        } else if (arg == "--cc-flag" || arg == "--link-library") {
+            if (i + 1 >= expanded_argc) {
+                std::cerr << "Error: " << arg << " requires a value"
+                          << std::endl;
+                return std::nullopt;
+            }
+            (arg == "--cc-flag" ? args.cc_flags : args.link_libraries)
+                .push_back(std::string(expanded_argv_ptr[++i]));
         } else {
             std::cerr << "Error: Unknown argument: " << arg << std::endl;
             return std::nullopt;
@@ -175,9 +197,9 @@ int main(int argc, char* argv[]) {
 
     // If --check is provided, run a single check from file
     if (!args.check_path.empty()) {
-        return Checker::run_check_from_file(args.check_path, args.config_path,
-                                            args.results_path,
-                                            args.dep_mappings);
+        return Checker::run_check_from_file(
+            args.check_path, args.config_path, args.results_path,
+            args.dep_mappings, args.cc_flags, args.link_libraries);
     }
 
     // --check is required

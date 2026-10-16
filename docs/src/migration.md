@@ -1159,6 +1159,32 @@ Such a check needs no `define`: it is a validation action, run whenever the
 target is built, directly or through a dependency, even though nothing in
 config.h reads its result.
 
+### Libraries the checks need: `cc_deps`
+
+A configure script probes with the project's dependencies on the include and
+link paths: `CPPFLAGS` and `LIBS` carry them, so `AC_CHECK_LIB([gmp], ...)`
+links against gmp and a probe may `#include <gmp.h>`. In Bazel those
+dependencies are `cc_library` targets, and the checks of an `autoconf` target
+see them through `cc_deps`:
+
+```python
+autoconf(
+    name = "autoconf",
+    cc_deps = ["@gmp//:gmp"],
+    checks = [
+        checks.AC_CHECK_LIB("gmp", "__gmpz_init"),
+        checks.AC_CHECK_HEADER("gmp.h"),
+    ],
+)
+```
+
+Every check of the target compiles with the dependencies' include directories
+and defines and links their archives after its own object, so the probe
+answers as it would with the library installed. The dependencies' flags are
+part of each check's identity: the same check with and without them never
+shares a result. Prefer this over a static `AC_DEFINE([HAVE_LIBGMP])`, which
+asserts what the probe can establish.
+
 ### Defaults yield to your values
 
 The `*_H_DEFAULTS` values (`HAVE_FOO=1`, `REPLACE_FOO=0`, `GNULIB_FOO=0`) are not check results. Each header port keeps them in an `autoconf_defaults` target named `:defaults` (`//gnulib/m4/stdlib_h:defaults`), and targets read them through `default_deps`, never `deps`: the header port lists its own `:defaults` there, and so does every port whose m4 `AC_REQUIRE`s that header's `gl_*_H_DEFAULTS`. An `autoconf` target passes the defaults it reads on to its dependents, still as defaults. A default has the lowest precedence: an ordinary result of the same name, from any check in the graph or from your own target, overrides it without a duplicate error, and two defaults of one name must agree. Two consequences:
