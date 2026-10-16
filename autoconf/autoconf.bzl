@@ -50,7 +50,10 @@ def autoconf(
             (e.g., `checks.AC_CHECK_HEADER('stdio.h')`).
         deps: Additional `autoconf`, `autoconf_cache`, or `autoconf_package_info`
             dependencies.
-        **kwargs: Standard Bazel attributes (e.g. `visibility`, `tags`).
+        **kwargs: Standard Bazel attributes (e.g. `visibility`, `tags`) and the
+            rule's other attributes: `cc_deps` (libraries the checks compile
+            against and link, as configure's CPPFLAGS and LIBS carry them),
+            `default_deps`, `copts`, `conlyopts`, `cxxopts`.
     """
 
     # This is a macro rather than a direct rule re-export because the

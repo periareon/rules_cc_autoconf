@@ -41,10 +41,13 @@ class Checker {
      * results.
      * @return 0 on success, 1 on error.
      */
-    static int run_check_from_file(const std::filesystem::path& check_path,
-                                   const std::filesystem::path& config_path,
-                                   const std::filesystem::path& results_path,
-                                   const std::vector<DepMapping>& dep_mappings);
+    static int run_check_from_file(
+        const std::filesystem::path& check_path,
+        const std::filesystem::path& config_path,
+        const std::filesystem::path& results_path,
+        const std::vector<DepMapping>& dep_mappings,
+        const std::vector<std::string>& cc_flags = {},
+        const std::vector<std::string>& link_libraries = {});
 };
 
 }  // namespace rules_cc_autoconf

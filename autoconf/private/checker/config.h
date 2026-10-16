@@ -37,6 +37,14 @@ struct Config {
     /** Path to linker tool */
     std::string linker{};
 
+    /**
+     * Libraries every link probe links, after the probe's object and its own
+     * -l<library>: the archives of the target's `cc_deps` (and their link
+     * flags), as configure's LIBS would carry them.  Paths relative to the
+     * execroot.
+     */
+    std::vector<std::string> link_libraries{};
+
     /** Compiler type (e.g., "msvc", "gcc", "clang") */
     std::string compiler_type{};
 

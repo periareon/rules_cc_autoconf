@@ -155,13 +155,27 @@ class ResultLookup {
 
 }  // namespace
 
-int Checker::run_check_from_file(const std::filesystem::path& check_path,
-                                 const std::filesystem::path& config_path,
-                                 const std::filesystem::path& results_path,
-                                 const std::vector<DepMapping>& dep_mappings) {
+int Checker::run_check_from_file(
+    const std::filesystem::path& check_path,
+    const std::filesystem::path& config_path,
+    const std::filesystem::path& results_path,
+    const std::vector<DepMapping>& dep_mappings,
+    const std::vector<std::string>& cc_flags,
+    const std::vector<std::string>& link_libraries) {
     try {
         // Load config for compiler info only
         std::unique_ptr<Config> config = Config::from_file(config_path);
+        // The target's cc_deps arrive on the command line, not in the config:
+        // their paths are action inputs that Bazel's path mapping rewrites
+        // (--experimental_output_paths=strip), which a file written at
+        // analysis time would not see.
+        for (const std::string& flag : cc_flags) {
+            config->c_flags.push_back(flag);
+            config->cpp_flags.push_back(flag);
+        }
+        config->link_libraries.insert(config->link_libraries.end(),
+                                      link_libraries.begin(),
+                                      link_libraries.end());
 
         // Load the check from JSON file
         std::ifstream check_file = open_ifstream(check_path);

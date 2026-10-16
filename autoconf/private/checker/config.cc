@@ -96,6 +96,20 @@ std::unique_ptr<Config> Config::from_file(
     config->linker = doc["linker"].get<std::string>();
 
     // Parse compiler type (required, must be string)
+    // Optional: the cc_deps libraries (absent from configs written before
+    // them).
+    if (doc.contains("link_libraries")) {
+        if (!doc["link_libraries"].is_array()) {
+            throw std::runtime_error(
+                "Invalid 'link_libraries' field: must be an array");
+        }
+        for (const nlohmann::json& item : doc["link_libraries"]) {
+            if (item.is_string()) {
+                config->link_libraries.push_back(item.get<std::string>());
+            }
+        }
+    }
+
     if (!doc["compiler_type"].is_string()) {
         throw std::runtime_error(
             "Invalid 'compiler_type' field: must be a string");
