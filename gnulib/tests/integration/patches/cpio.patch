@@ -22,6 +22,10 @@
 # (sys_types_h.m4 only redefines the macro for autoconf before 2.70.1), and the
 # port no longer invents the probe.  configure.ac:40 calls AC_HEADER_MAJOR
 # itself, so the overlay depends on its port directly.
+# Defaults as the converter generates them: `defaults = True` is gone (the
+# autoconf toolchain carries no defaults any more) and the main autoconf
+# target reads the headers' `:defaults` the configure script AC_REQUIREs
+# through `default_deps = GNULIB_M4_DEFAULT_DEPS`.
 --- a/BUILD.bazel
 +++ b/BUILD.bazel
 @@ -185,6 +185,7 @@
@@ -200,3 +204,83 @@
      "GL_COND_OBJ_WRITE": "ac_cv_subst_REPLACE_WRITE==1",
      "LIBUNISTRING_COMPILE_UNICASE_TOLOWER": "ac_cv_subst_HAVE_LIBUNISTRING!=yes",
      "LIBUNISTRING_COMPILE_UNICTYPE_CTYPE_ALNUM": "ac_cv_subst_HAVE_LIBUNISTRING!=yes",
+@@ -691,8 +692,39 @@
+     # cannot be built with anyway.
+ }
+ 
++
++# The gl_<HEADER>_H_DEFAULTS the configure script AC_REQUIREs: the headers' `:defaults`,
++# read beneath the results (a probe of the same name overrides a default).
++GNULIB_M4_DEFAULT_DEPS = [
++    "@rules_cc_autoconf//gnulib/m4/ctype_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/dirent_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/fcntl_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/fnmatch_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/inttypes:defaults",
++    "@rules_cc_autoconf//gnulib/m4/locale_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/signal_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/stddef_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/stdio_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/stdlib_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/string_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/strings_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sys_stat_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sys_time_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sys_types_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/time_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/uchar_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/unicase_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/unictype_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/uninorm_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/unistd_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/utime_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/wchar_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/wctype_h:defaults",
++]
++
+ autoconf(
+     name = "autoconf",
++    default_deps = GNULIB_M4_DEFAULT_DEPS,
+     # The check list below follows `configure.ac` top to bottom.  Everything
+     # cpio itself asks for -- its own `am/*.m4` and `m4/*.m4` macros, and the
+     # Autoconf builtins it names -- is written out here rather than depended on,
+@@ -967,7 +999,6 @@
+ autoconf_hdr(
+     name = "config",
+     out = "config.h",
+-    defaults = True,
+     template = "config.h.in",
+     deps = [":autoconf"],
+ )
+@@ -1015,7 +1046,6 @@
+     autoconf_hdr(
+         name = "gnu_{}_h".format(stem.replace("/", "_")),
+         out = "gnu/{}.h".format(stem),
+-        defaults = True,
+         inlines = GL_INLINES,
+         mode = "subst",
+         template = "gnu/{}.in.h".format(stem.replace("/", "_")),
+@@ -1054,7 +1084,6 @@
+     autoconf_hdr(
+         name = "gnu_{}_h_processed".format(stem.replace("-", "_")),
+         out = "_gnulib_cond/{}.h".format(stem),
+-        defaults = True,
+         inlines = GL_INLINES,
+         mode = "subst",
+         template = "gnu/{}.in.h".format(stem),
+@@ -1308,7 +1337,6 @@
+         "gnu/wmempcpy.c": "GL_COND_OBJ_WMEMPCPY",
+         "gnu/write.c": "GL_COND_OBJ_WRITE",
+     }.items()},
+-    defaults = True,
+     naming = "per_target",
+     deps = [":autoconf"],
+ )
+@@ -1320,7 +1348,6 @@
+ autoconf_srcs(
+     name = "gnulib_windows_conditional_srcs",
+     srcs = {"gnu/stat-w32.c": SRC_CONDITIONS["GL_COND_OBJ_STAT_W32"]},
+-    defaults = True,
+     naming = "per_target",
+     deps = [":autoconf"],
+ )

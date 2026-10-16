@@ -35,6 +35,10 @@
 #
 # Remove once the overlay on the Bazel Central Registry is updated against a
 # rules_cc_autoconf release that contains these ports.
+# Defaults as the converter generates them: `defaults = True` is gone (the
+# autoconf toolchain carries no defaults any more) and the main autoconf
+# target reads the headers' `:defaults` the configure script AC_REQUIREs
+# through `default_deps = GNULIB_M4_DEFAULT_DEPS`.
 --- a/BUILD.bazel
 +++ b/BUILD.bazel
 @@ -86,29 +86,16 @@
@@ -201,9 +205,54 @@
      deps = [
          "@rules_cc_autoconf//gnulib/m4/fchdir",
          "@rules_cc_autoconf//gnulib/m4/msvc-inval",
-@@ -1101,6 +1046,14 @@
+@@ -877,6 +822,42 @@
+     "@rules_cc_autoconf//gnulib/m4/zzgnulib",
+ ]
+ 
++# The gl_<HEADER>_H_DEFAULTS the configure script AC_REQUIREs: the headers' `:defaults`,
++# read beneath the results (a probe of the same name overrides a default).
++GNULIB_M4_DEFAULT_DEPS = [
++    "@rules_cc_autoconf//gnulib/m4/arpa_inet_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/ctype_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/dirent_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/fcntl_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/fnmatch_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/inttypes:defaults",
++    "@rules_cc_autoconf//gnulib/m4/langinfo_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/locale_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/math_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/pthread_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sched_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/signal_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/stddef_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/stdio_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/stdlib_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/string_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sys_ioctl_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sys_select_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sys_socket_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sys_stat_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sys_time_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sys_types_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sys_uio_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/time_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/uchar_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/unicase_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/unictype_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/uninorm_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/unistd_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/wchar_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/wctype_h:defaults",
++]
++
+ # GNULIB_* module indicators.  Upstream routes these through Makefile
+ # variables named GL_GNULIB_*, but the .in.h templates spell them @GNULIB_*@
+ # and rules_cc_autoconf defaults them all to 0, so the overrides use the
+@@ -1100,7 +1081,16 @@
+ 
  autoconf(
      name = "autoconf",
++    default_deps = GNULIB_M4_DEFAULT_DEPS,
      checks = [
 +        # grep's gnulib sources need C11 (static_assert, char32_t).  Upstream's
 +        # AC_PROG_CC switches the compiler into C11 mode, or configure stops.
@@ -216,7 +265,7 @@
          checks.AC_SUBST(
              "GUARD_PREFIX",
              value = "GL",
-@@ -1122,17 +1075,9 @@
+@@ -1122,17 +1112,9 @@
              "USE_UNLOCKED_IO",
              value = "GNULIB_STDIO_SINGLE_THREAD",
          ),
@@ -237,7 +286,23 @@
          # configure.ac line 82
          checks.AC_SUBST("USES_MSVCRT", "0"),
      ] + macros.AC_CHECK_FUNCS([
-@@ -1439,13 +1384,15 @@
+@@ -1257,7 +1239,6 @@
+     autoconf_hdr(
+         name = hdr.replace("/", "_").replace(".", "_"),
+         out = hdr,
+-        defaults = True,
+         inlines = GL_INLINES,
+         mode = "subst",
+         template = template,
+@@ -1335,7 +1316,6 @@
+     autoconf_hdr(
+         name = "lib_{}_h_processed".format(stem.replace("-", "_")),
+         out = "_gnulib_cond/{}.h".format(stem),
+-        defaults = True,
+         inlines = dict(GL_INLINES.items() + GNULIB_COND_HDR_INLINES.get(stem, {}).items()),
+         mode = "subst",
+         substitutions = GNULIB_COND_HDR_SUBSTITUTIONS.get(stem, {}),
+@@ -1439,13 +1419,15 @@
  # string is m4/gnulib-comp.m4's gl_CONDITIONAL test rewritten against the
  # substitutions rules_cc_autoconf exports.
  SRC_CONDITIONS = {
@@ -257,7 +322,7 @@
      "GL_COND_OBJ_DUP": "REPLACE_DUP",
      "GL_COND_OBJ_DUP2": "REPLACE_DUP2",
      "GL_COND_OBJ_ERROR": "COMPILE_ERROR_C==1",
-@@ -1457,25 +1404,25 @@
+@@ -1457,25 +1439,25 @@
      # `ac_cv_subst_` here because `:m4_fchdir` also emits a *define* named
      # REPLACE_FCHDIR, and a bare name matching both would be ambiguous.
      "GL_COND_OBJ_FCHDIR": "!ac_cv_func_fchdir || ac_cv_subst_REPLACE_FCHDIR",
@@ -293,7 +358,7 @@
      "GL_COND_OBJ_ISWDIGIT": "!(HAVE_ISWCNTRL==0 || REPLACE_ISWCNTRL) && REPLACE_ISWDIGIT",
      "GL_COND_OBJ_ISWPUNCT": "!(HAVE_ISWCNTRL==0 || REPLACE_ISWCNTRL) && REPLACE_ISWPUNCT",
      "GL_COND_OBJ_ISWXDIGIT": "!(HAVE_ISWCNTRL==0 || REPLACE_ISWCNTRL) && REPLACE_ISWXDIGIT",
-@@ -1485,35 +1432,35 @@
+@@ -1485,35 +1467,35 @@
      "GL_COND_OBJ_LSTAT": "REPLACE_LSTAT",
      "GL_COND_OBJ_MALLOC": "REPLACE_MALLOC_FOR_MALLOC_GNU || REPLACE_MALLOC_FOR_MALLOC_POSIX",
      "GL_COND_OBJ_MBRLEN": "ac_cv_subst_HAVE_MBRLEN==0 || REPLACE_MBRLEN",
@@ -342,7 +407,7 @@
      "GL_COND_OBJ_REALLOC_POSIX": "REPLACE_REALLOC_FOR_REALLOC_POSIX",
      "GL_COND_OBJ_REGEX": "ac_use_included_regex==yes",
      "GL_COND_OBJ_SETLOCALE_LOCK": "SETLOCALE_NULL_ALL_MTSAFE==0 || SETLOCALE_NULL_ONE_MTSAFE==0",
-@@ -1521,20 +1468,20 @@
+@@ -1521,20 +1503,20 @@
      "GL_COND_OBJ_STAT": "REPLACE_STAT",
      "GL_COND_OBJ_STDIO_READ": "REPLACE_STDIO_READ_FUNCS",
      "GL_COND_OBJ_STDIO_WRITE": "REPLACE_STDIO_WRITE_FUNCS",
@@ -370,7 +435,15 @@
      # lib/gnulib.mk gives each bundled libunistring source its own automake
      # conditional (LIBUNISTRING_COMPILE_UNICASE_TOLOWER, ...); every one of
      # them tests this and nothing else.
-@@ -1774,12 +1721,14 @@
+@@ -1660,7 +1642,6 @@
+         src,
+         SRC_CONDITIONS["LIBUNISTRING_COMPILE"],
+     ) for src in LIBUNISTRING_SRCS]),
+-    defaults = True,
+     naming = "per_target",
+     deps = [":autoconf"],
+ )
+@@ -1774,12 +1755,14 @@
      "lib/xstrtoul.c",
  ]
  

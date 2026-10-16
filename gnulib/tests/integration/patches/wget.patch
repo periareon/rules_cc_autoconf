@@ -1,0 +1,92 @@
+# Defaults as the converter generates them: `defaults = True` is gone (the
+# autoconf toolchain carries no defaults any more) and the main autoconf
+# target reads the headers' `:defaults` the configure script AC_REQUIREs
+# through `default_deps = GNULIB_M4_DEFAULT_DEPS`.
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -794,8 +794,53 @@
+     "HAVE_NETINET_IN_H",
+ ]
+ 
++
++# The gl_<HEADER>_H_DEFAULTS the configure script AC_REQUIREs: the headers' `:defaults`,
++# read beneath the results (a probe of the same name overrides a default).
++GNULIB_M4_DEFAULT_DEPS = [
++    "@rules_cc_autoconf//gnulib/m4/arpa_inet_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/ctype_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/dirent_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/fcntl_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/fnmatch_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/iconv_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/inttypes:defaults",
++    "@rules_cc_autoconf//gnulib/m4/langinfo_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/locale_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/netdb_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/pthread_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sched_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/signal_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/spawn_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/stddef_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/stdio_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/stdlib_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/string_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/strings_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sys_file_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sys_ioctl_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sys_random_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sys_select_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sys_socket_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sys_stat_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sys_time_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sys_types_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sys_uio_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sys_wait_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/time_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/uchar_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/unicase_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/unictype_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/uninorm_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/unistd_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/utime_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/wchar_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/wctype_h:defaults",
++]
++
+ autoconf(
+     name = "autoconf",
++    default_deps = GNULIB_M4_DEFAULT_DEPS,
+     # The check list below follows `configure.ac` top to bottom.  Everything
+     # wget itself asks for is written out here rather than depended on, so
+     # each entry can be read against the line of `configure.ac` it came from.
+@@ -1124,7 +1169,6 @@
+ autoconf_hdr(
+     name = "config",
+     out = "config/config.h",
+-    defaults = True,
+     # The rules_cc_autoconf `nl_langinfo` port answers NL_LANGINFO_MTSAFE=0
+     # on every platform but Linux; gnulib's m4/nl_langinfo.m4:46 answers 0
+     # only on Solaris, and lib/nl_langinfo.c:157 takes a 0 to mean Solaris'
+@@ -1203,7 +1247,6 @@
+     autoconf_hdr(
+         name = "lib_{}_h".format(stem.replace("/", "_")),
+         out = "lib/{}.h".format(stem),
+-        defaults = True,
+         inlines = GL_INLINES,
+         mode = "subst",
+         template = "lib/{}.in.h".format(stem.replace("/", "_")),
+@@ -1243,7 +1286,6 @@
+     autoconf_hdr(
+         name = "lib_{}_h_processed".format(stem.replace("-", "_")),
+         out = "_gnulib_cond/{}.h".format(stem),
+-        defaults = True,
+         inlines = GL_INLINES,
+         mode = "subst",
+         template = "lib/{}.in.h".format(stem),
+@@ -1818,7 +1860,6 @@
+         "lib/wmempcpy.c": "GL_COND_OBJ_WMEMPCPY",
+         "lib/write.c": "GL_COND_OBJ_WRITE",
+     }.items()},
+-    defaults = True,
+     naming = "per_target",
+     deps = [":autoconf"],
+ )

@@ -80,8 +80,6 @@
     "https://bcr.bazel.build/modules/bazel_skylib/1.9.2/source.json": "41cbde7546542dee2f26e3f10bf1c4ac57909943194b7ac48cc5238a01893aa8",
     "https://bcr.bazel.build/modules/bison/3.8.2.bcr.11/MODULE.bazel": "61e8b3e134bed382daea73b0af1ef9a312f586095f17764afa191c7341978b24",
     "https://bcr.bazel.build/modules/bison/3.8.2.bcr.11/source.json": "1937493769d505940d23652461377c5e6972e3663af22f40e8f4ee2b6e02b23f",
-    "https://bcr.bazel.build/modules/bison/3.8.2.bcr.4/MODULE.bazel": "5b1f2c26d4008975ad1fbb231d0d59c19afe2e3959cde0f4d5278099aedb1a38",
-    "https://bcr.bazel.build/modules/bison/3.8.2.bcr.5/MODULE.bazel": "96e976881e5670bdb2461157027ed6f3e25084b727aab6b7047210da9af7f678",
     "https://bcr.bazel.build/modules/boringssl/0.20241024.0/MODULE.bazel": "b540cff73d948cb79cb0bc108d7cef391d2098a25adabfda5043e4ef548dbc87",
     "https://bcr.bazel.build/modules/boringssl/0.20250514.0/MODULE.bazel": "b69867e7340e06cbfc6fedfbba3124d4d047b1a1af207504be18d0abff4a9580",
     "https://bcr.bazel.build/modules/boringssl/0.20250514.0/source.json": "c102398dcb364d7d38e592eb525c7e1e7eac7119e7b4a5a2db9c2ac740a4e653",
