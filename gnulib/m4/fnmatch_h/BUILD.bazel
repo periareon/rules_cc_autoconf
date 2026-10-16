@@ -1,5 +1,6 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/fnmatch_h.m4"""
 
+load("//autoconf:autoconf_defaults.bzl", "autoconf_defaults")
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 load("//gnulib:macros.bzl", gl_macros = "macros")
@@ -47,6 +48,9 @@ autoconf(
             includes = ["#include <fnmatch.h>"],
         ),
     ],
+    default_deps = [
+        ":defaults",  # AC_REQUIRE: gl_FNMATCH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/include_next",  # gl_CHECK_NEXT_HEADERS([fnmatch.h])
@@ -62,6 +66,9 @@ autoconf(
 autoconf(
     name = "gl_REPLACE_FNMATCH_H",
     checks = [],
+    default_deps = [
+        ":defaults",  # through a macro it invokes: gl_FNMATCH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_FNMATCH_H",
@@ -74,30 +81,33 @@ autoconf(
 autoconf(
     name = "gl_FNMATCH_MODULE_INDICATOR",
     checks = [],
+    default_deps = [
+        ":defaults",  # through a macro it invokes: gl_FNMATCH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
 )
 
-autoconf(
+autoconf_defaults(
     name = "gl_FNMATCH_H_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("HAVE_FNMATCH", 1),
-        checks.AC_SUBST("REPLACE_FNMATCH", 0),
-    ],
+    substs = {
+        "HAVE_FNMATCH": "1",
+        "REPLACE_FNMATCH": "0",
+    },
     visibility = ["//visibility:private"],
 )
 
-autoconf(
+autoconf_defaults(
     name = "gl_FNMATCH_H_REQUIRE_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("GNULIB_FNMATCH", 0),
-    ],
+    substs = {
+        "GNULIB_FNMATCH": "0",
+    },
     visibility = ["//visibility:private"],
     deps = [
         ":gl_FNMATCH_H_DEFAULTS",
     ],
 )
 
-autoconf(
+autoconf_defaults(
     name = "defaults",
     visibility = ["//visibility:public"],
     deps = [
@@ -107,6 +117,9 @@ autoconf(
 
 autoconf(
     name = "fnmatch_h",
+    default_deps = [
+        ":defaults",  # the header's own defaults, as its m4 requires
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_FNMATCH_H",

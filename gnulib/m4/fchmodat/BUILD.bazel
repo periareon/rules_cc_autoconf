@@ -37,6 +37,9 @@ autoconf(
         # REPLACE_FCHMODAT is set to 0 if fchmodat works correctly, 1 otherwise
         checks.AC_SUBST("REPLACE_FCHMODAT", 0),
     ],
+    default_deps = [
+        "//gnulib/m4/sys_stat_h:defaults",  # AC_REQUIRE: gl_SYS_STAT_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_SYS_STAT_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction

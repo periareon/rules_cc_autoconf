@@ -44,6 +44,9 @@ autoconf(
             ),
         ],
     }),
+    default_deps = [
+        "//gnulib/m4/wchar_h:defaults",  # AC_REQUIRE: gl_WCHAR_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # AC_REQUIRE([gl_WCHAR_H_DEFAULTS]) is satisfied by the toolchain.

@@ -1,5 +1,6 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/time_h.m4"""
 
+load("//autoconf:autoconf_defaults.bzl", "autoconf_defaults")
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 load("//gnulib:macros.bzl", gl_macros = "macros")
@@ -15,6 +16,9 @@ autoconf(
     ] + gl_macros.GL_NEXT_HEADERS(["time.h"]) + [
         # AC_CACHE_CHECK([for TIME_UTC in <time.h>], ...): TIME_H_DEFINES_TIME_UTC
         checks.AC_SUBST("TIME_H_DEFINES_TIME_UTC", "1"),
+    ],
+    default_deps = [
+        ":defaults",  # AC_REQUIRE: gl_TIME_H_DEFAULTS
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -51,11 +55,17 @@ autoconf(
 autoconf(
     name = "gl_TIME_MODULE_INDICATOR",
     checks = [],
+    default_deps = [
+        ":defaults",  # through a macro it invokes: gl_TIME_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
 )
 
 autoconf(
     name = "time_h",
+    default_deps = [
+        ":defaults",  # the header's own defaults, as its m4 requires
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_CHECK_TYPE_STRUCT_TIMESPEC",
@@ -64,68 +74,68 @@ autoconf(
     ],
 )
 
-autoconf(
+autoconf_defaults(
     name = "gl_TIME_H_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("HAVE_DECL_LOCALTIME_R", 1),
-        checks.AC_SUBST("HAVE_NANOSLEEP", 1),
-        checks.AC_SUBST("HAVE_STRPTIME", 1),
-        checks.AC_SUBST("HAVE_TIMEGM", 1),
-        checks.AC_SUBST("HAVE_TIMESPEC_GET", 1),
-        checks.AC_SUBST("HAVE_TIMESPEC_GETRES", 1),
-        checks.AC_SUBST("HAVE_TIMEZONE_T", 0),
-        checks.AC_SUBST("HAVE_TZALLOC", 0),
-        checks.AC_SUBST("REPLACE_CTIME", 0),
-        checks.AC_SUBST("REPLACE_GMTIME", 0),
-        checks.AC_SUBST("REPLACE_LOCALTIME", 0),
-        checks.AC_SUBST("REPLACE_LOCALTIME_R", 0),
-        checks.AC_SUBST("REPLACE_LOCALTIME_RZ", 0),
-        checks.AC_SUBST("REPLACE_MKTIME", 0),
-        checks.AC_SUBST("REPLACE_MKTIME_Z", 0),
-        checks.AC_SUBST("REPLACE_NANOSLEEP", 0),
-        checks.AC_SUBST("REPLACE_STRFTIME", 0),
-        checks.AC_SUBST("REPLACE_TIME", 0),
-        checks.AC_SUBST("REPLACE_TIMEGM", 0),
-        checks.AC_SUBST("REPLACE_TIMESPEC_GET", 0),
-        checks.AC_SUBST("REPLACE_TIMESPEC_GETRES", 0),
-        checks.AC_SUBST("REPLACE_TZSET", 0),
-    ],
+    substs = {
+        "HAVE_DECL_LOCALTIME_R": "1",
+        "HAVE_NANOSLEEP": "1",
+        "HAVE_STRPTIME": "1",
+        "HAVE_TIMEGM": "1",
+        "HAVE_TIMESPEC_GET": "1",
+        "HAVE_TIMESPEC_GETRES": "1",
+        "HAVE_TIMEZONE_T": "0",
+        "HAVE_TZALLOC": "0",
+        "REPLACE_CTIME": "0",
+        "REPLACE_GMTIME": "0",
+        "REPLACE_LOCALTIME": "0",
+        "REPLACE_LOCALTIME_R": "0",
+        "REPLACE_LOCALTIME_RZ": "0",
+        "REPLACE_MKTIME": "0",
+        "REPLACE_MKTIME_Z": "0",
+        "REPLACE_NANOSLEEP": "0",
+        "REPLACE_STRFTIME": "0",
+        "REPLACE_TIME": "0",
+        "REPLACE_TIMEGM": "0",
+        "REPLACE_TIMESPEC_GET": "0",
+        "REPLACE_TIMESPEC_GETRES": "0",
+        "REPLACE_TZSET": "0",
+    },
     visibility = ["//visibility:private"],
 )
 
-autoconf(
+autoconf_defaults(
     name = "gl_TIME_H_REQUIRE_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("GNULIB_ASCTIME", 0),
-        checks.AC_SUBST("GNULIB_ASCTIME_R", 0),
-        checks.AC_SUBST("GNULIB_CTIME", 0),
-        checks.AC_SUBST("GNULIB_CTIME_R", 0),
-        checks.AC_SUBST("GNULIB_GMTIME", 0),
-        checks.AC_SUBST("GNULIB_GMTIME_R", 0),
-        checks.AC_SUBST("GNULIB_LOCALTIME", 0),
-        checks.AC_SUBST("GNULIB_LOCALTIME_R", 0),
-        checks.AC_SUBST("GNULIB_MKTIME", 0),
-        checks.AC_SUBST("GNULIB_NANOSLEEP", 0),
-        checks.AC_SUBST("GNULIB_STRFTIME", 0),
-        checks.AC_SUBST("GNULIB_STRPTIME", 0),
-        checks.AC_SUBST("GNULIB_TIME", 0),
-        checks.AC_SUBST("GNULIB_TIMEGM", 0),
-        checks.AC_SUBST("GNULIB_TIMESPEC_GET", 0),
-        checks.AC_SUBST("GNULIB_TIMESPEC_GETRES", 0),
-        checks.AC_SUBST("GNULIB_TIME_R", 0),
-        checks.AC_SUBST("GNULIB_TIME_RZ", 0),
-        checks.AC_SUBST("GNULIB_TZNAME", 0),
-        checks.AC_SUBST("GNULIB_TZSET", 0),
+    substs = {
+        "GNULIB_ASCTIME": "0",
+        "GNULIB_ASCTIME_R": "0",
+        "GNULIB_CTIME": "0",
+        "GNULIB_CTIME_R": "0",
+        "GNULIB_GMTIME": "0",
+        "GNULIB_GMTIME_R": "0",
+        "GNULIB_LOCALTIME": "0",
+        "GNULIB_LOCALTIME_R": "0",
         # Microsoft deprecated alias function names
-        checks.AC_SUBST("GNULIB_MDA_TZSET", 1),
-    ],
+        "GNULIB_MDA_TZSET": "1",
+        "GNULIB_MKTIME": "0",
+        "GNULIB_NANOSLEEP": "0",
+        "GNULIB_STRFTIME": "0",
+        "GNULIB_STRPTIME": "0",
+        "GNULIB_TIME": "0",
+        "GNULIB_TIMEGM": "0",
+        "GNULIB_TIMESPEC_GET": "0",
+        "GNULIB_TIMESPEC_GETRES": "0",
+        "GNULIB_TIME_R": "0",
+        "GNULIB_TIME_RZ": "0",
+        "GNULIB_TZNAME": "0",
+        "GNULIB_TZSET": "0",
+    },
     visibility = ["//visibility:private"],
     deps = [
         ":gl_TIME_H_DEFAULTS",
     ],
 )
 
-autoconf(
+autoconf_defaults(
     name = "defaults",
     visibility = ["//visibility:public"],
     deps = [

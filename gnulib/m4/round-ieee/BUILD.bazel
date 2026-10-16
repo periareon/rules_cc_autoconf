@@ -23,6 +23,9 @@ autoconf(
         checks.AC_SUBST("ROUND_LIBM", ""),
         checks.AC_SUBST("REPLACE_ROUND", 0),
     ],
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # through gl_FUNC_ROUND (round.m4): AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",

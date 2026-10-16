@@ -102,10 +102,10 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//gnulib/m4/wcrtomb:AC_CHECK_FUNCS_wcrtomb",  # AC_CHECK_FUNCS([snprintf strnlen wcrtomb])
         "//gnulib/m4/intmax_t",
         "//gnulib/m4/wint_t",
         "//autoconf/macros/AC_FUNC_STRNLEN",
-        "//gnulib/m4/wcrtomb",
         # Note: This avoids pulling in HAVE_DECL_SNPRINTF which fprintf-posix doesn't want
         "//gnulib/macros/AC_FUNC_SNPRINTF",
         # gl_SNPRINTF_RETVAL_C99 and gl_SNPRINTF_TRUNCATION_C99 are runtime checks
@@ -126,7 +126,7 @@ autoconf(
     deps = [
         "//autoconf/macros/AC_FUNC_ALLOCA",
         "//gnulib/m4/exponentd",
-        "//gnulib/m4/wcslen",
+        "//gnulib/m4/wcslen:AC_CHECK_FUNCS_wcslen",  # AC_CHECK_FUNCS([wcslen])
         "//gnulib/m4/wint_t",
     ],
 )
@@ -173,8 +173,8 @@ autoconf(
         "//gnulib/m4/printf:gl_SWPRINTF_DIRECTIVE_LA",
         "//gnulib/m4/printf:gl_SWPRINTF_DIRECTIVE_LC",
         "//gnulib/m4/printf:gl_SWPRINTF_WORKS",
-        "//gnulib/m4/wcsnlen",
-        "//gnulib/macros/AC_FUNC_MBRTOWC",
+        "//gnulib/m4/wcsnlen:AC_CHECK_FUNCS_ONCE_wcsnlen",  # AC_CHECK_FUNCS_ONCE([swprintf wcsnlen mbrtowc])
+        "//gnulib/macros/AC_FUNC_MBRTOWC:AC_CHECK_FUNCS_ONCE_mbrtowc",  # AC_CHECK_FUNCS_ONCE([swprintf wcsnlen mbrtowc])
     ],
 )
 

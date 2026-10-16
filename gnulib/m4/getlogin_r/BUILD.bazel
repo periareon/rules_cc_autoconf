@@ -3,15 +3,27 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
+# AC_CHECK_FUNCS([getlogin_r]) on its own: glob only runs this probe and
+# must not inherit gl_FUNC_GETLOGIN_R's unistd.h defaults.
+autoconf(
+    name = "ac_cv_func_getlogin_r",
+    checks = [
+        checks.AC_CHECK_FUNC(
+            "getlogin_r",
+            define = "HAVE_GETLOGIN_R",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
 # gl_FUNC_GETLOGIN_R
 autoconf(
     name = "gl_FUNC_GETLOGIN_R",
     checks = [
         # gl_FUNC_GETLOGIN_R checks for getlogin_r function and declarations
-        checks.AC_CHECK_FUNC(
-            "getlogin_r",
-            define = "HAVE_GETLOGIN_R",
-        ),
         checks.AC_CHECK_DECL(
             "getlogin_r",
             define = "HAVE_DECL_GETLOGIN_R",
@@ -27,8 +39,12 @@ autoconf(
             checks.AC_SUBST("REPLACE_GETLOGIN_R", "0"),
         ],
     }),
+    default_deps = [
+        "//gnulib/m4/unistd_h:defaults",  # AC_REQUIRE: gl_UNISTD_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
+        ":ac_cv_func_getlogin_r",  # AC_CHECK_FUNCS_ONCE([getlogin_r])
         "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
         # For test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",

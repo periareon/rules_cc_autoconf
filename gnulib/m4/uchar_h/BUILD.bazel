@@ -1,5 +1,6 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/uchar_h.m4"""
 
+load("//autoconf:autoconf_defaults.bzl", "autoconf_defaults")
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 load("//gnulib:macros.bzl", gl_macros = "macros")
@@ -80,6 +81,9 @@ char32_t b;
             if_true = "1",
         ),
     ] + gl_macros.GL_CHECK_NEXT_HEADERS(["uchar.h"]),
+    default_deps = [
+        ":defaults",  # AC_REQUIRE: gl_UCHAR_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
@@ -173,6 +177,9 @@ int main(void) { return 0; }
             if_true = 0,
         ),
     ],
+    default_deps = [
+        ":defaults",  # through a macro it invokes: gl_UCHAR_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
 )
 
@@ -183,6 +190,9 @@ int main(void) { return 0; }
 # subst errors with downstream modules like c32rtomb that override them.
 autoconf(
     name = "gl_UCHAR_MODULE_INDICATOR",
+    default_deps = [
+        ":defaults",  # through a macro it invokes: gl_UCHAR_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
 )
 
@@ -193,80 +203,80 @@ autoconf(
 # The GNULIBHEADERS_OVERRIDE_CHAR*_T defaults are 0 on Linux (char types
 # exist in <uchar.h>), 1 on macOS (no <uchar.h> in C mode).
 # The uchar_h aggregator overrides these via gl_TYPE_CHAR*_T compile checks.
-autoconf(
+autoconf_defaults(
     name = "gl_UCHAR_H_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("HAVE_C32RTOMB", 1),
-        checks.AC_SUBST("HAVE_MBRTOC16", 1),
-        checks.AC_SUBST("HAVE_MBRTOC32", 1),
-        checks.AC_SUBST("REPLACE_C32RTOMB", 0),
-        checks.AC_SUBST("REPLACE_MBRTOC16", 0),
-        checks.AC_SUBST("REPLACE_MBRTOC32", 0),
-    ] + select({
-        "@platforms//os:linux": [
-            checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR8_T", 0),
-            checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR16_T", 0),
-            checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR32_T", 0),
-        ],
+    substs = {
+        "HAVE_C32RTOMB": "1",
+        "HAVE_MBRTOC16": "1",
+        "HAVE_MBRTOC32": "1",
+        "REPLACE_C32RTOMB": "0",
+        "REPLACE_MBRTOC16": "0",
+        "REPLACE_MBRTOC32": "0",
+    } | select({
+        "@platforms//os:linux": {
+            "GNULIBHEADERS_OVERRIDE_CHAR16_T": "0",
+            "GNULIBHEADERS_OVERRIDE_CHAR32_T": "0",
+            "GNULIBHEADERS_OVERRIDE_CHAR8_T": "0",
+        },
         # MSVC's <uchar.h> has working char16_t/char32_t (gl_TYPE_CHAR16_T and
         # gl_TYPE_CHAR32_T say yes) but no char8_t in C mode.
-        "@platforms//os:windows": [
-            checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR8_T", 1),
-            checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR16_T", 0),
-            checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR32_T", 0),
-        ],
-        "//conditions:default": [
-            checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR8_T", 1),
-            checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR16_T", 1),
-            checks.AC_SUBST("GNULIBHEADERS_OVERRIDE_CHAR32_T", 1),
-        ],
+        "@platforms//os:windows": {
+            "GNULIBHEADERS_OVERRIDE_CHAR16_T": "0",
+            "GNULIBHEADERS_OVERRIDE_CHAR32_T": "0",
+            "GNULIBHEADERS_OVERRIDE_CHAR8_T": "1",
+        },
+        "//conditions:default": {
+            "GNULIBHEADERS_OVERRIDE_CHAR16_T": "1",
+            "GNULIBHEADERS_OVERRIDE_CHAR32_T": "1",
+            "GNULIBHEADERS_OVERRIDE_CHAR8_T": "1",
+        },
     }),
     visibility = ["//visibility:private"],
 )
 
 # gl_UCHAR_H_REQUIRE_DEFAULTS - lines 209-244
-autoconf(
+autoconf_defaults(
     name = "gl_UCHAR_H_REQUIRE_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("GNULIB_BTOC32", 0),
-        checks.AC_SUBST("GNULIB_C32ISALNUM", 0),
-        checks.AC_SUBST("GNULIB_C32ISALPHA", 0),
-        checks.AC_SUBST("GNULIB_C32ISBLANK", 0),
-        checks.AC_SUBST("GNULIB_C32ISCNTRL", 0),
-        checks.AC_SUBST("GNULIB_C32ISDIGIT", 0),
-        checks.AC_SUBST("GNULIB_C32ISGRAPH", 0),
-        checks.AC_SUBST("GNULIB_C32ISLOWER", 0),
-        checks.AC_SUBST("GNULIB_C32ISPRINT", 0),
-        checks.AC_SUBST("GNULIB_C32ISPUNCT", 0),
-        checks.AC_SUBST("GNULIB_C32ISSPACE", 0),
-        checks.AC_SUBST("GNULIB_C32ISUPPER", 0),
-        checks.AC_SUBST("GNULIB_C32ISXDIGIT", 0),
-        checks.AC_SUBST("GNULIB_C32TOLOWER", 0),
-        checks.AC_SUBST("GNULIB_C32TOUPPER", 0),
-        checks.AC_SUBST("GNULIB_C32WIDTH", 0),
-        checks.AC_SUBST("GNULIB_C32RTOMB", 0),
-        checks.AC_SUBST("GNULIB_C32SNRTOMBS", 0),
-        checks.AC_SUBST("GNULIB_C32SRTOMBS", 0),
-        checks.AC_SUBST("GNULIB_C32STOMBS", 0),
-        checks.AC_SUBST("GNULIB_C32SWIDTH", 0),
-        checks.AC_SUBST("GNULIB_C32TOB", 0),
-        checks.AC_SUBST("GNULIB_C32_APPLY_MAPPING", 0),
-        checks.AC_SUBST("GNULIB_C32_APPLY_TYPE_TEST", 0),
-        checks.AC_SUBST("GNULIB_C32_GET_MAPPING", 0),
-        checks.AC_SUBST("GNULIB_C32_GET_TYPE_TEST", 0),
-        checks.AC_SUBST("GNULIB_MBRTOC16", 0),
-        checks.AC_SUBST("GNULIB_MBRTOC32", 0),
-        checks.AC_SUBST("GNULIB_MBSNRTOC32S", 0),
-        checks.AC_SUBST("GNULIB_MBSRTOC32S", 0),
-        checks.AC_SUBST("GNULIB_MBSTOC32S", 0),
-    ],
+    substs = {
+        "GNULIB_BTOC32": "0",
+        "GNULIB_C32ISALNUM": "0",
+        "GNULIB_C32ISALPHA": "0",
+        "GNULIB_C32ISBLANK": "0",
+        "GNULIB_C32ISCNTRL": "0",
+        "GNULIB_C32ISDIGIT": "0",
+        "GNULIB_C32ISGRAPH": "0",
+        "GNULIB_C32ISLOWER": "0",
+        "GNULIB_C32ISPRINT": "0",
+        "GNULIB_C32ISPUNCT": "0",
+        "GNULIB_C32ISSPACE": "0",
+        "GNULIB_C32ISUPPER": "0",
+        "GNULIB_C32ISXDIGIT": "0",
+        "GNULIB_C32RTOMB": "0",
+        "GNULIB_C32SNRTOMBS": "0",
+        "GNULIB_C32SRTOMBS": "0",
+        "GNULIB_C32STOMBS": "0",
+        "GNULIB_C32SWIDTH": "0",
+        "GNULIB_C32TOB": "0",
+        "GNULIB_C32TOLOWER": "0",
+        "GNULIB_C32TOUPPER": "0",
+        "GNULIB_C32WIDTH": "0",
+        "GNULIB_C32_APPLY_MAPPING": "0",
+        "GNULIB_C32_APPLY_TYPE_TEST": "0",
+        "GNULIB_C32_GET_MAPPING": "0",
+        "GNULIB_C32_GET_TYPE_TEST": "0",
+        "GNULIB_MBRTOC16": "0",
+        "GNULIB_MBRTOC32": "0",
+        "GNULIB_MBSNRTOC32S": "0",
+        "GNULIB_MBSRTOC32S": "0",
+        "GNULIB_MBSTOC32S": "0",
+    },
     visibility = ["//visibility:private"],
     deps = [
         ":gl_UCHAR_H_DEFAULTS",
     ],
 )
 
-autoconf(
+autoconf_defaults(
     name = "defaults",
     visibility = ["//visibility:public"],
     deps = [
@@ -276,6 +286,9 @@ autoconf(
 
 autoconf(
     name = "uchar_h",
+    default_deps = [
+        ":defaults",  # the header's own defaults, as its m4 requires
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_TYPE_CHAR16_T",

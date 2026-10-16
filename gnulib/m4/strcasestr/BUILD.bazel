@@ -23,6 +23,9 @@ autoconf(
             if_true = 1,
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/string_h:defaults",  # AC_REQUIRE: gl_STRING_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/memchr",  # AC_REQUIRE([gl_FUNC_MEMCHR])
@@ -42,6 +45,9 @@ autoconf(
         ],
         "//conditions:default": [],
     }),
+    default_deps = [
+        "//gnulib/m4/string_h:defaults",  # through a macro it invokes: gl_STRING_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_FUNC_STRCASESTR_SIMPLE",  # AC_REQUIRE([gl_FUNC_STRCASESTR_SIMPLE])

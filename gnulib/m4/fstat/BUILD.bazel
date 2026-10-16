@@ -20,6 +20,9 @@ autoconf(
         ],
         "//conditions:default": [],
     }),
+    default_deps = [
+        "//gnulib/m4/sys_stat_h:defaults",  # AC_REQUIRE: gl_SYS_STAT_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/fchdir:gl_FUNC_FCHDIR_FOR_CLOSE",  # gl_TEST_FCHDIR - need HAVE_FCHDIR but NOT HAVE_DECL_FCHDIR

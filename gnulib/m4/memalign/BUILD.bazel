@@ -16,6 +16,9 @@ autoconf(
             checks.AC_SUBST("HAVE_MEMALIGN", 0),
         ],
     }),
+    default_deps = [
+        "//gnulib/m4/malloc_h:defaults",  # AC_REQUIRE: gl_MALLOC_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_MALLOC_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency

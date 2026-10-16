@@ -202,6 +202,9 @@ autoconf(
             if_true = "-lm",
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_CHECK_FREXPL_NO_LIBM",
@@ -238,6 +241,9 @@ autoconf(
             if_true = 1,
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_CHECK_FREXPL_NO_LIBM",
@@ -258,6 +264,5 @@ autoconf(
         ":gl_FUNC_FREXPL",
         ":gl_FUNC_FREXPL_NO_LIBM",
         ":gl_FUNC_FREXPL_WORKS",
-        "//gnulib/m4/mktime",
     ],
 )

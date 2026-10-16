@@ -67,6 +67,9 @@ int main(void) { return 0; }
             if_true = "1",
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/dirent_h:defaults",  # AC_REQUIRE: gl_DIRENT_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # AC_REQUIRE([gl_DIRENT_H_DEFAULTS]) is satisfied by the toolchain.

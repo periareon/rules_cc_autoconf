@@ -6,6 +6,7 @@ load("@rules_cc//cc:find_cc_toolchain.bzl", "use_cc_toolchain")
 load(
     "//autoconf/private:autoconf_config.bzl",
     "AUTOCONF_EXEC_GROUP",
+    "collect_defaults",
     "collect_deps",
     "collect_transitive_results",
     "constant_check_result",
@@ -14,11 +15,12 @@ load(
     "get_autoconf_toolchain_cache",
     "get_cc_toolchain_info",
     "get_environment_variables",
+    "merge_defaults",
     "write_config_json",
 )
 load("//autoconf/private:condition_utils.bzl", "extract_condition_vars", "strip_macro_args")
 load("//autoconf/private:ctx_actions_write.bzl", "write")
-load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
+load("//autoconf/private:providers.bzl", "CcAutoconfDefaultsInfo", "CcAutoconfInfo")
 
 _CONTENT_KEY_FIELDS = (
     "type",
@@ -220,9 +222,15 @@ def autoconf_impl_common(ctx, resolve_toolchain):
     dep_infos = deps.to_list()
     dep_results = collect_transitive_results(dep_infos)
 
+    # Defaults (`default_deps`, plus those the deps carry) are read beneath
+    # everything else and passed on apart from the results, so a dependent
+    # never mistakes them for probe results.
+    default_infos = collect_defaults(ctx.attr.default_deps, dep_infos)
+    defaults = merge_defaults(default_infos.to_list())
+
     # Content-based cache: reuse results for checks with identical implementation
     # regardless of consumer naming (define/subst/name).
-    available_content_cache = dict(dep_results["content_cache"])
+    available_content_cache = dep_results["content_cache"]
     if resolve_toolchain:
         tc_content_cache = get_autoconf_toolchain_cache(ctx)
         available_content_cache = tc_content_cache | available_content_cache
@@ -390,10 +398,12 @@ def autoconf_impl_common(ctx, resolve_toolchain):
                 if not _same_content_key(existing_file, subst_file, path_to_content_key):
                     fail(_duplicate_message("Subst", subst_name, subst_checks[subst_name], existing_file, subst_file))
 
+    # What this target's checks may read: the dependencies' defaults first,
+    # so an ordinary result of the same name wins.
     all_results = {
-        "cache": cache_results | dep_results["cache"],
-        "define": define_results | dep_results["define"],
-        "subst": subst_results | dep_results["subst"],
+        "cache": defaults.cache | dep_results["cache"] | cache_results,
+        "define": defaults.define | dep_results["define"] | define_results,
+        "subst": defaults.subst | dep_results["subst"] | subst_results,
     }
 
     # Create individual CcAutoconfCheck actions for each cache variable
@@ -522,21 +532,25 @@ def autoconf_impl_common(ctx, resolve_toolchain):
             execution_requirements = {"supports-path-mapping": ""} if bazel_features.rules.write_action_has_execution_requirements else {},
         )
 
-    # Return provider with result buckets and content cache for dedup
+    # The provider: this target's own results, and the defaults it read
+    # (its dependencies' and its `default_deps`'), for dependents to read beneath theirs.
+    own_files = cache_results.values() + define_results.values() + subst_results.values()
+    info = CcAutoconfInfo(
+        owner = ctx.label,
+        deps = deps,
+        cache_results = cache_results,
+        content_cache = content_cache,
+        define_results = define_results,
+        subst_results = subst_results,
+        unquoted_defines = unquoted_defines,
+        defaults = default_infos,
+    )
     return [
-        CcAutoconfInfo(
-            owner = ctx.label,
-            deps = deps,
-            cache_results = cache_results,
-            content_cache = content_cache,
-            define_results = define_results,
-            subst_results = subst_results,
-            unquoted_defines = unquoted_defines,
-        ),
+        info,
         OutputGroupInfo(
             _validation = depset(validation_outputs),
             autoconf_checks = depset(check_specs),
-            autoconf_results = depset(cache_results.values() + define_results.values() + subst_results.values()),
+            autoconf_results = depset(own_files),
         ),
     ]
 
@@ -601,6 +615,15 @@ COMMON_ATTRS = {
         doc = "Flags for the C++ compiles of this target's checks only, after `copts` (as on a cc_library).  " +
               "Not transitive.",
     ),
+    "default_deps": attr.label_list(
+        doc = "`autoconf_defaults` targets.  Their values stand where no result of the name comes through " +
+              "`deps`; a result overrides a default silently, and two defaults of one name must agree.  " +
+              "The defaults a `deps` entry carries are read as well, and dependents of this target read all " +
+              "of them in turn.  This is gnulib's `*_H_DEFAULTS` pattern (`HAVE_X=1`, `REPLACE_X=0` before the " +
+              "probes may reassign them): list a header's `:defaults` here where the m4 `AC_REQUIRE`s " +
+              "`gl_<HEADER>_H_DEFAULTS`.",
+        providers = [CcAutoconfDefaultsInfo],
+    ),
     "deps": attr.label_list(
         doc = "Additional `autoconf`, `autoconf_library`, or `autoconf_package_info` dependencies.",
         providers = [CcAutoconfInfo],
@@ -661,8 +684,8 @@ Run autoconf-like checks without resolving the autoconf toolchain.
 
 Identical to ``autoconf`` except that it does **not** resolve the
 ``autoconf_toolchain``.  Use this rule for targets that are listed as
-``cache_deps`` or ``defaults`` of an ``autoconf_toolchain`` -- using the
-regular ``autoconf`` rule in that position would create a dependency cycle.
+``cache_deps`` of an ``autoconf_toolchain`` -- using the regular ``autoconf``
+rule in that position would create a dependency cycle.
 
 Dep-level caching still applies: if a check's cache variable name already
 has a result in transitive ``deps``, the action is skipped.

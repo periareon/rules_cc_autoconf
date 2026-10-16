@@ -16,6 +16,9 @@ autoconf(
             condition = "!gl_cv_func_rmdir_works || !gl_cv_func_unlink_honors_slashes",
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/stdio_h:defaults",  # AC_REQUIRE: gl_STDIO_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])

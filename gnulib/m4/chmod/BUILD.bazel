@@ -23,9 +23,11 @@ autoconf(
         ],
         "//conditions:default": [],
     }),
+    default_deps = [
+        "//gnulib/m4/sys_stat_h:defaults",  # AC_REQUIRE: gl_SYS_STAT_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/sys_stat_h",  # AC_REQUIRE([gl_SYS_STAT_H_DEFAULTS])
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         # (golden files include standard header checks even though not AC_REQUIREd)

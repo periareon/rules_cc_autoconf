@@ -24,6 +24,9 @@ autoconf(
             condition = "ac_cv_func_str2sig",
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/signal_h:defaults",  # AC_REQUIRE: gl_SIGNAL_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",

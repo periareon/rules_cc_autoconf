@@ -7,9 +7,6 @@ gnu_gnulib_diff_test_suite(
     configure_ac = "configure.ac",
     # The m4 graph never AC_REQUIREs these gl_*_H_DEFAULTS, so GNU leaves their
     # substitution variables as @VAR@ placeholders.
-    defaults_exclude = [
-        "//gnulib/m4/string_h:defaults",
-    ],
     known_divergences = {
         # gl_FUNC_PTSNAME_R lowers HAVE_PTSNAME_R when ptsname_r is missing but only
         # AC_REQUIREs gl_UNISTD_H_DEFAULTS; the AC_SUBST lives in

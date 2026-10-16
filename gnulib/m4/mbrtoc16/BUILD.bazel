@@ -96,6 +96,9 @@ autoconf(
             if_true = 1,  # If function exists, assume it needs replacement (Linux case)
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/uchar_h:defaults",  # AC_REQUIRE: gl_UCHAR_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_CHECK_FUNC_MBRTOC16",  # AC_REQUIRE([gl_CHECK_FUNC_MBRTOC16])

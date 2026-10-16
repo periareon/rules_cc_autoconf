@@ -14,6 +14,9 @@ autoconf(
         ),
         checks.AC_DEFINE("PREFER_NONREENTRANT_EUIDACCESS", "1"),
     ],
+    default_deps = [
+        "//gnulib/m4/unistd_h:defaults",  # through a macro it invokes: gl_UNISTD_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_FUNC_EUIDACCESS",
@@ -55,6 +58,9 @@ int main(void) {
             if_false = 0,
             if_true = 1,
         ),
+    ],
+    default_deps = [
+        "//gnulib/m4/unistd_h:defaults",  # AC_REQUIRE: gl_UNISTD_H_DEFAULTS
     ],
     visibility = ["//visibility:public"],
     deps = [

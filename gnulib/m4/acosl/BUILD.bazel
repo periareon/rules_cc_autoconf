@@ -24,6 +24,9 @@ autoconf(
         # LIBM vars for acosl golden: ACOSL_LIBM here; all others from asinl (avoid duplicate in //... build)
         checks.AC_SUBST("ACOSL_LIBM", ""),
     ],
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/extensions",

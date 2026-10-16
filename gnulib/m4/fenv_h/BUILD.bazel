@@ -1,5 +1,6 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/fenv_h.m4"""
 
+load("//autoconf:autoconf_defaults.bzl", "autoconf_defaults")
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 load("//gnulib:macros.bzl", gl_macros = "macros")
@@ -15,6 +16,9 @@ autoconf(
             subst = "HAVE_FENV_H",
         ),
     ] + gl_macros.GL_CHECK_NEXT_HEADERS(["fenv.h"]),
+    default_deps = [
+        ":defaults",  # AC_REQUIRE: gl_FENV_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
@@ -28,33 +32,34 @@ autoconf(
 autoconf(
     name = "gl_FENV_MODULE_INDICATOR",
     checks = [],
-    visibility = ["//visibility:public"],
-    deps = [
+    default_deps = [
+        ":defaults",  # through a macro it invokes: gl_FENV_H_DEFAULTS
         ":gl_FENV_H_REQUIRE_DEFAULTS",
     ],
+    visibility = ["//visibility:public"],
 )
 
 # gl_FENV_H_REQUIRE_DEFAULTS
-autoconf(
+autoconf_defaults(
     name = "gl_FENV_H_REQUIRE_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("GNULIB_FECLEAREXCEPT", 0),
-        checks.AC_SUBST("GNULIB_FEDISABLEEXCEPT", 0),
-        checks.AC_SUBST("GNULIB_FEENABLEEXCEPT", 0),
-        checks.AC_SUBST("GNULIB_FEGETENV", 0),
-        checks.AC_SUBST("GNULIB_FEGETEXCEPT", 0),
-        checks.AC_SUBST("GNULIB_FEGETEXCEPTFLAG", 0),
-        checks.AC_SUBST("GNULIB_FEGETROUND", 0),
-        checks.AC_SUBST("GNULIB_FEHOLDEXCEPT", 0),
-        checks.AC_SUBST("GNULIB_FERAISEEXCEPT", 0),
-        checks.AC_SUBST("GNULIB_FESETENV", 0),
-        checks.AC_SUBST("GNULIB_FESETEXCEPT", 0),
-        checks.AC_SUBST("GNULIB_FESETEXCEPTFLAG", 0),
-        checks.AC_SUBST("GNULIB_FESETROUND", 0),
-        checks.AC_SUBST("GNULIB_FETESTEXCEPT", 0),
-        checks.AC_SUBST("GNULIB_FETESTEXCEPTFLAG", 0),
-        checks.AC_SUBST("GNULIB_FEUPDATEENV", 0),
-    ],
+    substs = {
+        "GNULIB_FECLEAREXCEPT": "0",
+        "GNULIB_FEDISABLEEXCEPT": "0",
+        "GNULIB_FEENABLEEXCEPT": "0",
+        "GNULIB_FEGETENV": "0",
+        "GNULIB_FEGETEXCEPT": "0",
+        "GNULIB_FEGETEXCEPTFLAG": "0",
+        "GNULIB_FEGETROUND": "0",
+        "GNULIB_FEHOLDEXCEPT": "0",
+        "GNULIB_FERAISEEXCEPT": "0",
+        "GNULIB_FESETENV": "0",
+        "GNULIB_FESETEXCEPT": "0",
+        "GNULIB_FESETEXCEPTFLAG": "0",
+        "GNULIB_FESETROUND": "0",
+        "GNULIB_FETESTEXCEPT": "0",
+        "GNULIB_FETESTEXCEPTFLAG": "0",
+        "GNULIB_FEUPDATEENV": "0",
+    },
     visibility = ["//visibility:private"],
     deps = [
         ":gl_FENV_H_DEFAULTS",
@@ -63,55 +68,58 @@ autoconf(
 
 # gl_FENV_H_DEFAULTS
 # Must not be AC_REQUIREd; only invoked outside or in non-AC_REQUIREd macros.
-autoconf(
+autoconf_defaults(
     name = "gl_FENV_H_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("HAVE_FECLEAREXCEPT", 1),
-        checks.AC_SUBST("HAVE_FEDISABLEEXCEPT", 1),
-        checks.AC_SUBST("HAVE_FEENABLEEXCEPT", 1),
-        checks.AC_SUBST("HAVE_FEGETENV", 1),
-        checks.AC_SUBST("HAVE_FEGETEXCEPT", 1),
-        checks.AC_SUBST("HAVE_FEGETEXCEPTFLAG", 1),
-        checks.AC_SUBST("HAVE_FEGETROUND", 1),
-        checks.AC_SUBST("HAVE_FEHOLDEXCEPT", 1),
-        checks.AC_SUBST("HAVE_FERAISEEXCEPT", 1),
-        checks.AC_SUBST("HAVE_FESETENV", 1),
-        checks.AC_SUBST("HAVE_FESETEXCEPT", 1),
-        checks.AC_SUBST("HAVE_FESETEXCEPTFLAG", 1),
-        checks.AC_SUBST("HAVE_FESETROUND", 1),
-        checks.AC_SUBST("HAVE_FETESTEXCEPT", 1),
-        checks.AC_SUBST("HAVE_FETESTEXCEPTFLAG", 1),
-        checks.AC_SUBST("HAVE_FEUPDATEENV", 1),
-        checks.AC_SUBST("REPLACE_FECLEAREXCEPT", 0),
-        checks.AC_SUBST("REPLACE_FEDISABLEEXCEPT", 0),
-        checks.AC_SUBST("REPLACE_FEENABLEEXCEPT", 0),
-        checks.AC_SUBST("REPLACE_FEGETENV", 0),
-        checks.AC_SUBST("REPLACE_FEGETEXCEPT", 0),
-        checks.AC_SUBST("REPLACE_FEGETEXCEPTFLAG", 0),
-        checks.AC_SUBST("REPLACE_FEGETROUND", 0),
-        checks.AC_SUBST("REPLACE_FEHOLDEXCEPT", 0),
-        checks.AC_SUBST("REPLACE_FERAISEEXCEPT", 0),
-        checks.AC_SUBST("REPLACE_FESETENV", 0),
-        checks.AC_SUBST("REPLACE_FESETEXCEPT", 0),
-        checks.AC_SUBST("REPLACE_FESETEXCEPTFLAG", 0),
-        checks.AC_SUBST("REPLACE_FESETROUND", 0),
-        checks.AC_SUBST("REPLACE_FETESTEXCEPT", 0),
-        checks.AC_SUBST("REPLACE_FETESTEXCEPTFLAG", 0),
-        checks.AC_SUBST("REPLACE_FEUPDATEENV", 0),
-    ],
+    substs = {
+        "HAVE_FECLEAREXCEPT": "1",
+        "HAVE_FEDISABLEEXCEPT": "1",
+        "HAVE_FEENABLEEXCEPT": "1",
+        "HAVE_FEGETENV": "1",
+        "HAVE_FEGETEXCEPT": "1",
+        "HAVE_FEGETEXCEPTFLAG": "1",
+        "HAVE_FEGETROUND": "1",
+        "HAVE_FEHOLDEXCEPT": "1",
+        "HAVE_FERAISEEXCEPT": "1",
+        "HAVE_FESETENV": "1",
+        "HAVE_FESETEXCEPT": "1",
+        "HAVE_FESETEXCEPTFLAG": "1",
+        "HAVE_FESETROUND": "1",
+        "HAVE_FETESTEXCEPT": "1",
+        "HAVE_FETESTEXCEPTFLAG": "1",
+        "HAVE_FEUPDATEENV": "1",
+        "REPLACE_FECLEAREXCEPT": "0",
+        "REPLACE_FEDISABLEEXCEPT": "0",
+        "REPLACE_FEENABLEEXCEPT": "0",
+        "REPLACE_FEGETENV": "0",
+        "REPLACE_FEGETEXCEPT": "0",
+        "REPLACE_FEGETEXCEPTFLAG": "0",
+        "REPLACE_FEGETROUND": "0",
+        "REPLACE_FEHOLDEXCEPT": "0",
+        "REPLACE_FERAISEEXCEPT": "0",
+        "REPLACE_FESETENV": "0",
+        "REPLACE_FESETEXCEPT": "0",
+        "REPLACE_FESETEXCEPTFLAG": "0",
+        "REPLACE_FESETROUND": "0",
+        "REPLACE_FETESTEXCEPT": "0",
+        "REPLACE_FETESTEXCEPTFLAG": "0",
+        "REPLACE_FEUPDATEENV": "0",
+    },
     visibility = ["//visibility:private"],
 )
 
 # fenv_h - main module (public target)
 autoconf(
     name = "fenv_h",
+    default_deps = [
+        ":defaults",  # the header's own defaults, as its m4 requires
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_FENV_H",
     ],
 )
 
-autoconf(
+autoconf_defaults(
     name = "defaults",
     visibility = ["//visibility:public"],
     deps = [

@@ -6,7 +6,7 @@ Common utilities for autoconf rules.
 load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 load("//autoconf/private:ctx_actions_write.bzl", "write")
-load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
+load("//autoconf/private:providers.bzl", "CcAutoconfDefaultsInfo", "CcAutoconfInfo")
 
 _TOOLCHAIN_TYPE = "//autoconf:toolchain_type"
 
@@ -104,9 +104,8 @@ def constant_check_result(check):
 def get_autoconf_toolchain_cache(ctx):
     """Get the content-based cache from the autoconf toolchain.
 
-    Returns the unified content cache from both ``cache_deps`` and ``defaults``
-    on the toolchain.  Used by the ``autoconf`` rule for content-based action
-    deduplication.
+    Returns the content cache of the toolchain's ``cache_deps``.  Used by the
+    ``autoconf`` rule for content-based action deduplication.
 
     Args:
         ctx (ctx): The rule context (must declare the autoconf toolchain type).
@@ -121,137 +120,81 @@ def get_autoconf_toolchain_cache(ctx):
     cache = getattr(toolchain, "autoconf_cache", None)
     return cache if cache else {}
 
-def get_autoconf_toolchain_defaults(ctx):
-    """Get default checks from the autoconf toolchain if available.
-
-    Returns only the ``defaults`` portion of the toolchain (not ``cache_deps``).
-    Used by ``autoconf_hdr`` for rendering baseline values.
+def collect_defaults(default_deps, dep_infos):
+    """The defaults a target reads: its `default_deps` and the defaults its `deps` carry.
 
     Args:
-        ctx (ctx): The rule context.
+        default_deps (list[Target]): The `default_deps` attribute (`autoconf_defaults` targets).
+        dep_infos (list[CcAutoconfInfo]): The transitive `deps`.
 
     Returns:
-        struct: A struct with `cache`, `define`, and `subst` fields, each containing
-                a dict[str, File] mapping variable names to result files.
-                Returns struct(cache={}, define={}, subst={}) if no toolchain is configured.
+        depset[CcAutoconfDefaultsInfo]: What this target reads and, as an
+            `autoconf` target, passes on to its dependents.
     """
-
-    # Access toolchain - returns None if not registered or mandatory=False
-    toolchain = ctx.toolchains[_TOOLCHAIN_TYPE]
-    if not toolchain:
-        return struct(cache = {}, define = {}, subst = {})
-
-    autoconf_defaults = getattr(toolchain, "autoconf_defaults", None)
-    if not autoconf_defaults:
-        return struct(cache = {}, define = {}, subst = {})
-
-    return struct(
-        cache = getattr(autoconf_defaults, "cache", {}),
-        define = getattr(autoconf_defaults, "define", {}),
-        subst = getattr(autoconf_defaults, "subst", {}),
-        unquoted_defines = getattr(autoconf_defaults, "unquoted_defines", []),
+    return depset(
+        [dep[CcAutoconfDefaultsInfo] for dep in default_deps],
+        transitive = [info.defaults for info in dep_infos],
     )
 
-def get_autoconf_toolchain_defaults_by_label(ctx):
-    """Get default checks from the autoconf toolchain, organized by source label.
+def merge_defaults(default_infos):
+    """Flatten defaults into one set of results.
+
+    Two defaults of one name must agree: the gnulib pattern has exactly one
+    `_H_DEFAULTS` macro assign each variable, so a disagreement is a port bug,
+    not something to resolve by order.
 
     Args:
-        ctx (ctx): The rule context.
+        default_infos (list[CcAutoconfDefaultsInfo]): Usually `collect_defaults(...).to_list()`.
 
     Returns:
-        dict: A mapping of source labels to structs with `cache`, `define`, and `subst` fields,
-              each containing a dict[str, File]. Returns empty dict if no toolchain is configured.
+        struct: `cache`, `define`, `subst` dicts (name to result file) and the
+            `unquoted_defines` list.
     """
+    content = {}
+    owner = {}
+    for info in default_infos:
+        for path, text in info.content.items():
+            content[path] = text
+            owner[path] = info.owner
+    out = {"cache": {}, "define": {}, "subst": {}}
+    unquoted = {}
+    for info in default_infos:
+        for kind, results in (("cache", info.cache_results), ("define", info.define_results), ("subst", info.subst_results)):
+            for name, file in results.items():
+                existing = out[kind].get(name)
+                if existing != None and existing.path != file.path and content.get(existing.path) != content.get(file.path):
+                    fail("Default {} '{}' is given two values:\n  {}: {}\n  {}: {}".format(
+                        kind,
+                        name,
+                        owner.get(existing.path),
+                        json.decode(content.get(existing.path, "{}")).get("value"),
+                        owner.get(file.path),
+                        json.decode(content.get(file.path, "{}")).get("value"),
+                    ))
+                out[kind][name] = file
+        for uq in info.unquoted_defines:
+            unquoted[uq] = True
+    return struct(cache = out["cache"], define = out["define"], subst = out["subst"], unquoted_defines = unquoted.keys())
 
-    # Access toolchain - returns None if not registered or mandatory=False
-    toolchain = ctx.toolchains[_TOOLCHAIN_TYPE]
-    if not toolchain:
-        return {}
-
-    autoconf_defaults = getattr(toolchain, "autoconf_defaults", None)
-    if not autoconf_defaults:
-        return {}
-
-    return getattr(autoconf_defaults, "defaults_by_label", {})
-
-def filter_defaults(defaults_by_label, include_labels, exclude_labels):
-    """Filter toolchain defaults based on include/exclude lists.
+def merge_results(dep_results, defaults):
+    """What a consumer reads: the defaults beneath the ordinary results.
 
     Args:
-        defaults_by_label (dict): Mapping of Label -> struct(cache=..., define=..., subst=...) from toolchain.
-        include_labels (list[Label]): If non-empty, only include defaults from these labels.
-            An error is raised if a label is specified but not found in the toolchain.
-        exclude_labels (list[Label]): If non-empty, exclude defaults from these labels.
-            Labels not found in the toolchain are silently ignored.
+        dep_results (dict): `collect_transitive_results` of `deps`.
+        defaults (struct): `merge_defaults` of the defaults read.
 
     Returns:
-        struct: A struct with `cache`, `define`, and `subst` fields, each containing
-                a merged dict[str, File] after filtering.
+        struct: `cache`, `define`, `subst` dicts and the `unquoted_defines` list.
     """
-    if include_labels and exclude_labels:
-        fail("defaults_include and defaults_exclude are mutually exclusive")
-
-    result_cache = {}
-    result_define = {}
-    result_subst = {}
-    result_unquoted = {}
-
-    if include_labels:
-        # Only include specified labels
-        for label in include_labels:
-            if label not in defaults_by_label:
-                fail("defaults_include specifies label '{}' but it is not provided by the autoconf toolchain. Available labels: {}".format(
-                    label,
-                    ", ".join([str(label_key) for label_key in defaults_by_label.keys()]),
-                ))
-            label_defaults = defaults_by_label[label]
-            result_cache = result_cache | getattr(label_defaults, "cache", {})
-            result_define = result_define | getattr(label_defaults, "define", {})
-            result_subst = result_subst | getattr(label_defaults, "subst", {})
-            for uq in getattr(label_defaults, "unquoted_defines", []):
-                result_unquoted[uq] = True
-    elif exclude_labels:
-        # Include all except specified labels
-        exclude_set = {label: True for label in exclude_labels}
-        for label, label_defaults in defaults_by_label.items():
-            if label not in exclude_set:
-                result_cache = result_cache | getattr(label_defaults, "cache", {})
-                result_define = result_define | getattr(label_defaults, "define", {})
-                result_subst = result_subst | getattr(label_defaults, "subst", {})
-                for uq in getattr(label_defaults, "unquoted_defines", []):
-                    result_unquoted[uq] = True
-    else:
-        # Include all
-        for label_defaults in defaults_by_label.values():
-            result_cache = result_cache | getattr(label_defaults, "cache", {})
-            result_define = result_define | getattr(label_defaults, "define", {})
-            result_subst = result_subst | getattr(label_defaults, "subst", {})
-            for uq in getattr(label_defaults, "unquoted_defines", []):
-                result_unquoted[uq] = True
-
+    unquoted = {uq: True for uq in defaults.unquoted_defines}
+    for uq in dep_results.get("unquoted_defines", []):
+        unquoted[uq] = True
     return struct(
-        cache = result_cache,
-        define = result_define,
-        subst = result_subst,
-        unquoted_defines = sorted(result_unquoted.keys()),
+        cache = defaults.cache | dep_results["cache"],
+        define = defaults.define | dep_results["define"],
+        subst = defaults.subst | dep_results["subst"],
+        unquoted_defines = unquoted.keys(),
     )
-
-def merge_with_defaults(defaults, results):
-    """Merge check results with toolchain defaults.
-
-    Results from actual targets take precedence over defaults - any variable
-    present in both will use the result value, not the default.
-
-    Args:
-        defaults (dict): Default checks from toolchain (variable name -> File).
-        results (dict): Check results from targets (variable name -> File).
-
-    Returns:
-        dict: Merged results with targets overriding defaults.
-    """
-
-    # Defaults first, then results override
-    return defaults | results
 
 def _same_content_key(file_a, file_b, path_to_content_key):
     """Return True when two files represent the same check implementation.
@@ -276,6 +219,7 @@ def collect_transitive_results(dep_infos):
     Returns:
         dict: A mapping with keys "cache", "content_cache", "define", "subst"
               (each dict[str, File]) and "unquoted_defines" (list[str]).
+              Defaults are not results: `collect_defaults` gathers them.
     """
     cache_results = {}
     content_cache = {}

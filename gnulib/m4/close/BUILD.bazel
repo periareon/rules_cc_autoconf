@@ -19,6 +19,9 @@ autoconf(
             condition = "ac_cv_func__set_invalid_parameter_handler || UNISTD_H_HAVE_WINSOCK2_H==1 || !ac_cv_func_fchdir",
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/unistd_h:defaults",  # AC_REQUIRE: gl_UNISTD_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/msvc-inval",  # AC_REQUIRE([gl_MSVC_INVAL])

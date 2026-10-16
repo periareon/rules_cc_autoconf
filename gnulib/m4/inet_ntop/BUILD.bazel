@@ -82,6 +82,9 @@ autoconf(
             if_true = "1",
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/arpa_inet_h:defaults",  # AC_REQUIRE: gl_ARPA_INET_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # AC_REQUIRE([gl_ARPA_INET_H_DEFAULTS]) is satisfied by the toolchain.

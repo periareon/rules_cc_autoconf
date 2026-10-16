@@ -8,6 +8,9 @@ autoconf(
     checks = [
         checks.AC_SUBST("HAVE_GETUMASK", "0"),  # golden expects 0
     ],
+    default_deps = [
+        "//gnulib/m4/sys_stat_h:defaults",  # AC_REQUIRE: gl_SYS_STAT_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/extensions",

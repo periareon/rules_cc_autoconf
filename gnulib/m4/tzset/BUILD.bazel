@@ -15,6 +15,9 @@ autoconf(
         ],
         "//conditions:default": [],
     }),
+    default_deps = [
+        "//gnulib/m4/time_h:defaults",  # AC_REQUIRE: gl_TIME_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/time_h",

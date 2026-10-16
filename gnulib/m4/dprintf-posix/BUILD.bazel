@@ -31,6 +31,9 @@ autoconf(
         # gl_FUNC_DPRINTF_POSIX checks if dprintf is POSIX compliant.
         # If not (macOS), it conditionally calls gl_REPLACE_DPRINTF.
     ],
+    default_deps = [
+        "//gnulib/m4/stdio_h:defaults",  # through gl_REPLACE_DPRINTF (dprintf.m4): AC_REQUIRE: gl_STDIO_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_FUNC_DPRINTF_IS_POSIX",  # AC_REQUIRE([gl_FUNC_DPRINTF_IS_POSIX])

@@ -39,6 +39,9 @@ int main(void) { return 0; }
             condition = "!gl_cv_func_unlink_honors_slashes",
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/unistd_h:defaults",  # AC_REQUIRE: gl_UNISTD_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CANONICAL_HOST",

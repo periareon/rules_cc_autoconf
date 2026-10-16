@@ -3,24 +3,41 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
+# AC_CHECK_FUNCS_ONCE([wcsnlen]) - the bare probe plus its config.h define.
+# vasnprintf only runs this probe and must not inherit gl_FUNC_WCSNLEN's
+# wchar.h defaults.
 autoconf(
-    name = "wcsnlen",
+    name = "AC_CHECK_FUNCS_ONCE_wcsnlen",
     checks = [
         checks.AC_CHECK_FUNC(
             "wcsnlen",
-            name = "ac_cv_func_wcsnlen",
-        ),
-        # Set HAVE_WCSNLEN as substitution variable
-        # On macOS, wcsnlen exists, so HAVE_WCSNLEN=1
-        # Use AC_DEFINE with subst=True to ensure it overrides conditional values
-        checks.AC_DEFINE(
-            "HAVE_WCSNLEN",
-            1,  # Integer, not string - renders as unquoted 1
-            subst = True,  # Also create substitution variable
+            define = "HAVE_WCSNLEN",
         ),
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "wcsnlen",
+    checks = [
+        # if test $ac_cv_func_wcsnlen = no; then HAVE_WCSNLEN=0; fi
+        # (lowers the gl_WCHAR_H_DEFAULTS substitution)
+        checks.AC_SUBST(
+            "HAVE_WCSNLEN",
+            condition = "ac_cv_func_wcsnlen",
+            if_false = 0,
+            if_true = 1,
+        ),
+    ],
+    default_deps = [
+        "//gnulib/m4/wchar_h:defaults",  # AC_REQUIRE: gl_WCHAR_H_DEFAULTS
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":AC_CHECK_FUNCS_ONCE_wcsnlen",  # AC_CHECK_FUNCS_ONCE([wcsnlen])
         # Note: wchar_h provides HAVE_DECL_WCSDUP, but golden file expects it undefined
         # "//gnulib/m4/wchar_h",  # AC_REQUIRE([gl_WCHAR_H_DEFAULTS]) - but pulls in HAVE_DECL_WCSDUP
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",

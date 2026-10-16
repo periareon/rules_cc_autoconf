@@ -20,6 +20,9 @@ autoconf(
         # On macOS, asinf is in libc, so ASINF_LIBM=""
         checks.AC_SUBST("ASINF_LIBM", ""),
     ],
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/extensions",

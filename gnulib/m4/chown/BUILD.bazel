@@ -83,6 +83,27 @@ autoconf(
     ],
 )
 
+# AC_CHECK_FUNCS_ONCE([fchown]) - the bare probe plus its config.h define.
+# mkdir-p only runs this probe and must not inherit gl_FUNC_CHOWN's
+# unistd.h defaults.
+autoconf(
+    name = "AC_CHECK_FUNCS_ONCE_fchown",
+    checks = [
+        checks.AC_CHECK_FUNC(
+            "fchown",
+            name = "ac_cv_func_fchown",
+        ),
+        checks.AC_DEFINE(
+            "HAVE_FCHOWN",
+            requires = ["ac_cv_func_fchown==1"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
 autoconf(
     name = "gl_FUNC_CHOWN",
     checks = [
@@ -93,14 +114,6 @@ autoconf(
         checks.AC_SUBST(
             "HAVE_CHOWN",
             condition = "ac_cv_func_chown",
-        ),
-        checks.AC_CHECK_FUNC(
-            "fchown",
-            name = "ac_cv_func_fchown",
-        ),
-        checks.AC_DEFINE(
-            "HAVE_FCHOWN",
-            requires = ["ac_cv_func_fchown==1"],
         ),
     ] + select({
         # M4 m4/chown.m4 sets CHOWN_TRAILING_SLASH_BUG + REPLACE_CHOWN=1 when
@@ -125,9 +138,13 @@ autoconf(
             checks.AC_SUBST("REPLACE_CHOWN", "0"),
         ],
     }),
+    default_deps = [
+        "//gnulib/m4/unistd_h:defaults",  # AC_REQUIRE: gl_UNISTD_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":AC_CHECK_FUNCS_ONCE_chown",  # AC_CHECK_FUNCS_ONCE([chown fchown])
+        ":AC_CHECK_FUNCS_ONCE_fchown",  # AC_CHECK_FUNCS_ONCE([chown fchown])
         ":AC_FUNC_CHOWN",  # AC_REQUIRE([AC_FUNC_CHOWN])
         ":gl_FUNC_CHOWN_FOLLOWS_SYMLINK",  # AC_REQUIRE([gl_FUNC_CHOWN_FOLLOWS_SYMLINK])
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",

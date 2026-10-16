@@ -37,6 +37,9 @@ autoconf(
             if_true = "1",
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/strings_h:defaults",  # AC_REQUIRE: gl_STRINGS_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # AC_REQUIRE([gl_STRINGS_H_DEFAULTS]) is satisfied by the toolchain.

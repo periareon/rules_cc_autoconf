@@ -11,8 +11,11 @@ Defines:
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
+# AC_CHECK_FUNCS_ONCE([mbrtowc]) - the bare probe plus its config.h define,
+# for modules (vasnprintf) that only probe and never touch the HAVE_MBRTOWC
+# substitution of gl_WCHAR_H_DEFAULTS.
 autoconf(
-    name = "AC_FUNC_MBRTOWC",
+    name = "AC_CHECK_FUNCS_ONCE_mbrtowc",
     checks = [
         # Check for mbrtowc function
         checks.AC_CHECK_FUNC(
@@ -26,7 +29,19 @@ autoconf(
             if_false = None,
             if_true = 1,
         ),
-        # Subst HAVE_MBRTOWC so mbrtowc and btowc don't duplicate
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+autoconf(
+    name = "AC_FUNC_MBRTOWC",
+    checks = [
+        # if test $ac_cv_func_mbrtowc = no; then HAVE_MBRTOWC=0; fi
+        # (lowers the gl_WCHAR_H_DEFAULTS substitution) - shared so mbrtowc
+        # and btowc don't duplicate
         checks.AC_SUBST(
             "HAVE_MBRTOWC",
             condition = "ac_cv_func_mbrtowc",
@@ -36,6 +51,7 @@ autoconf(
     ],
     visibility = ["//visibility:public"],
     deps = [
+        ":AC_CHECK_FUNCS_ONCE_mbrtowc",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
     ],
 )

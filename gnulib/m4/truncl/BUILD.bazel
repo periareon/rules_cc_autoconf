@@ -15,6 +15,9 @@ autoconf(
         # gl_MATHFUNC sets TRUNCL_LIBM; golden expects ""
         checks.AC_SUBST("TRUNCL_LIBM", ""),
     ],
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])

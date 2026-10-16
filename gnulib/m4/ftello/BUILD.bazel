@@ -103,6 +103,9 @@ autoconf(
 autoconf(
     name = "gl_FUNC_FTELLO",
     checks = [],
+    default_deps = [
+        "//gnulib/m4/stdio_h:defaults",  # AC_REQUIRE: gl_STDIO_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # HAVE_FTELLO subst.

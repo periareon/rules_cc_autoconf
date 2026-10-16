@@ -21,13 +21,15 @@ autoconf(
         # COSL_LIBM is empty on macOS
         checks.AC_SUBST("COSL_LIBM", ""),
     ],
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//gnulib/m4/cos",
         "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
         "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
-        "//gnulib/m4/mktime",  # Provides HAVE_DECL_ALARM (needed for test compatibility)
         "//gnulib/m4/sinl",
     ],
 )

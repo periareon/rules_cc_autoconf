@@ -1,5 +1,6 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/iconv_h.m4"""
 
+load("//autoconf:autoconf_defaults.bzl", "autoconf_defaults")
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 load("//gnulib:macros.bzl", gl_macros = "macros")
@@ -14,6 +15,9 @@ autoconf(
             define = "HAVE_ICONV_H",
         ),
     ] + gl_macros.GL_CHECK_NEXT_HEADERS(["iconv.h"]),
+    default_deps = [
+        ":defaults",  # the header's own defaults, as its m4 requires
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/include_next",  # For NEXT_ICONV_H,
@@ -25,32 +29,34 @@ autoconf(
 
 # defaults - All default AC_SUBST values from gl_ICONV_H_DEFAULTS
 
-autoconf(
+autoconf_defaults(
     name = "gl_ICONV_H_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("ICONV_CONST", ""),
-        checks.AC_SUBST("REPLACE_ICONV", 0),
-        checks.AC_SUBST("REPLACE_ICONV_OPEN", 0),
-        checks.AC_SUBST("REPLACE_ICONV_UTF", 0),
+    substs = {
+        "ICONV_CONST": "",
+        "REPLACE_ICONV": "0",
+        "REPLACE_ICONV_OPEN": "0",
+        "REPLACE_ICONV_UTF": "0",
+    },
+    variables = {
         # GL_GENERATE_ICONV_H: false unless gl_POSIXCHECK or a C++ compiler
         # (gl_ANSI_CXX with CXX != no) asks for the wrapper; the ports build C.
-        checks.M4_VARIABLE("GL_GENERATE_ICONV_H", "false"),
-    ],
+        "GL_GENERATE_ICONV_H": "false",
+    },
     visibility = ["//visibility:private"],
 )
 
-autoconf(
+autoconf_defaults(
     name = "gl_ICONV_H_REQUIRE_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("GNULIB_ICONV", 0),
-    ],
+    substs = {
+        "GNULIB_ICONV": "0",
+    },
     visibility = ["//visibility:private"],
     deps = [
         ":gl_ICONV_H_DEFAULTS",
     ],
 )
 
-autoconf(
+autoconf_defaults(
     name = "defaults",
     visibility = ["//visibility:public"],
     deps = [

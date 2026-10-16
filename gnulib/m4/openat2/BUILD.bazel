@@ -31,6 +31,9 @@ int main(void) {
         ),
         # Set substitution separately - "0" in subst.h when function doesn't exist
     ],
+    default_deps = [
+        "//gnulib/m4/fcntl_h:defaults",  # AC_REQUIRE: gl_FCNTL_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/fcntl_h",

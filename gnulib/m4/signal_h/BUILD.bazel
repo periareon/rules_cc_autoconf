@@ -1,5 +1,6 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/signal_h.m4"""
 
+load("//autoconf:autoconf_defaults.bzl", "autoconf_defaults")
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 load("//gnulib:macros.bzl", gl_macros = "macros")
@@ -58,6 +59,9 @@ int main(void) { return 0; }
             if_true = 1,
         ),
     ],
+    default_deps = [
+        ":defaults",  # AC_REQUIRE: gl_SIGNAL_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_SIGNAL_H_DEFAULTS is a _DEFAULTS function, so we don't track it as a dependency
@@ -102,6 +106,9 @@ autoconf(
             if_true = 1,
         ),
     ],
+    default_deps = [
+        ":defaults",  # through a macro it invokes: gl_SIGNAL_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # gl_CHECK_TYPE_SIGSET_T doesn't need signal_h as a dependency
@@ -128,11 +135,17 @@ autoconf(
 autoconf(
     name = "gl_SIGNAL_MODULE_INDICATOR",
     checks = [],
+    default_deps = [
+        ":defaults",  # through a macro it invokes: gl_SIGNAL_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
 )
 
 autoconf(
     name = "signal_h",
+    default_deps = [
+        ":defaults",  # the header's own defaults, as its m4 requires
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_SIGNAL_H",
@@ -142,43 +155,43 @@ autoconf(
 
 # defaults - All default AC_SUBST values. Added to gnulib_toolchain.
 
-autoconf(
+autoconf_defaults(
     name = "gl_SIGNAL_H_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("HAVE_POSIX_SIGNALBLOCKING", 1),
-        checks.AC_SUBST("HAVE_PTHREAD_SIGMASK", 1),
-        checks.AC_SUBST("HAVE_RAISE", 1),
-        checks.AC_SUBST("HAVE_SIG2STR", 1),
-        checks.AC_SUBST("HAVE_SIGSET_T", 1),
-        checks.AC_SUBST("HAVE_SIGINFO_T", 1),
-        checks.AC_SUBST("HAVE_SIGACTION", 1),
-        checks.AC_SUBST("HAVE_STR2SIG", 1),
-        checks.AC_SUBST("HAVE_STRUCT_SIGACTION_SA_SIGACTION", 1),
-        checks.AC_SUBST("HAVE_TYPE_VOLATILE_SIG_ATOMIC_T", 1),
-        checks.AC_SUBST("HAVE_SIGHANDLER_T", 1),
-        checks.AC_SUBST("REPLACE_PTHREAD_SIGMASK", 0),
-        checks.AC_SUBST("REPLACE_RAISE", 0),
-    ],
+    substs = {
+        "HAVE_POSIX_SIGNALBLOCKING": "1",
+        "HAVE_PTHREAD_SIGMASK": "1",
+        "HAVE_RAISE": "1",
+        "HAVE_SIG2STR": "1",
+        "HAVE_SIGACTION": "1",
+        "HAVE_SIGHANDLER_T": "1",
+        "HAVE_SIGINFO_T": "1",
+        "HAVE_SIGSET_T": "1",
+        "HAVE_STR2SIG": "1",
+        "HAVE_STRUCT_SIGACTION_SA_SIGACTION": "1",
+        "HAVE_TYPE_VOLATILE_SIG_ATOMIC_T": "1",
+        "REPLACE_PTHREAD_SIGMASK": "0",
+        "REPLACE_RAISE": "0",
+    },
     visibility = ["//visibility:private"],
 )
 
-autoconf(
+autoconf_defaults(
     name = "gl_SIGNAL_H_REQUIRE_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("GNULIB_PTHREAD_SIGMASK", 0),
-        checks.AC_SUBST("GNULIB_RAISE", 0),
-        checks.AC_SUBST("GNULIB_SIG2STR", 0),
-        checks.AC_SUBST("GNULIB_SIGNAL_H_SIGPIPE", 0),
-        checks.AC_SUBST("GNULIB_SIGPROCMASK", 0),
-        checks.AC_SUBST("GNULIB_SIGACTION", 0),
-    ],
+    substs = {
+        "GNULIB_PTHREAD_SIGMASK": "0",
+        "GNULIB_RAISE": "0",
+        "GNULIB_SIG2STR": "0",
+        "GNULIB_SIGACTION": "0",
+        "GNULIB_SIGNAL_H_SIGPIPE": "0",
+        "GNULIB_SIGPROCMASK": "0",
+    },
     visibility = ["//visibility:private"],
     deps = [
         ":gl_SIGNAL_H_DEFAULTS",
     ],
 )
 
-autoconf(
+autoconf_defaults(
     name = "defaults",
     visibility = ["//visibility:public"],
     deps = [

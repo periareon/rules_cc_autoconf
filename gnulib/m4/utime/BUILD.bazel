@@ -24,6 +24,9 @@ autoconf(
             ),
         ],
     }),
+    default_deps = [
+        "//gnulib/m4/utime_h:defaults",  # AC_REQUIRE: gl_UTIME_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # AC_CHECK_FUNCS_ONCE([lstat]) - probe + config.h define only; the

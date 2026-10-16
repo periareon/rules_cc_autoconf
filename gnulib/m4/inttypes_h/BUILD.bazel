@@ -1,5 +1,6 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/inttypes_h.m4"""
 
+load("//autoconf:autoconf_defaults.bzl", "autoconf_defaults")
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
@@ -29,25 +30,25 @@ int main(void) {
 )
 
 # gl_INTTYPES_H_DEFAULTS from inttypes.m4 (not inttypes_h.m4)
-autoconf(
+autoconf_defaults(
     name = "gl_INTTYPES_H_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("HAVE_DECL_IMAXABS", 1),
-        checks.AC_SUBST("HAVE_DECL_IMAXDIV", 1),
-        checks.AC_SUBST("HAVE_DECL_STRTOIMAX", 1),
-        checks.AC_SUBST("HAVE_DECL_STRTOUMAX", 1),
-        checks.AC_SUBST("HAVE_IMAXDIV_T", 1),
-        checks.AC_SUBST("HAVE_IMAXABS", 1),
-        checks.AC_SUBST("HAVE_IMAXDIV", 1),
-        checks.AC_SUBST("REPLACE_IMAXABS", 0),
-        checks.AC_SUBST("REPLACE_IMAXDIV", 0),
-        checks.AC_SUBST("REPLACE_STRTOIMAX", 0),
-        checks.AC_SUBST("REPLACE_STRTOUMAX", 0),
-        checks.AC_SUBST("INT32_MAX_LT_INTMAX_MAX", 1),
-        checks.AC_SUBST("INT64_MAX_EQ_LONG_MAX", "defined _LP64"),
-        checks.AC_SUBST("PRIPTR_PREFIX", "__PRIPTR_PREFIX"),
-        checks.AC_SUBST("UINT32_MAX_LT_UINTMAX_MAX", 1),
-        checks.AC_SUBST("UINT64_MAX_EQ_ULONG_MAX", "defined _LP64"),
-    ],
+    substs = {
+        "HAVE_DECL_IMAXABS": "1",
+        "HAVE_DECL_IMAXDIV": "1",
+        "HAVE_DECL_STRTOIMAX": "1",
+        "HAVE_DECL_STRTOUMAX": "1",
+        "HAVE_IMAXABS": "1",
+        "HAVE_IMAXDIV": "1",
+        "HAVE_IMAXDIV_T": "1",
+        "INT32_MAX_LT_INTMAX_MAX": "1",
+        "INT64_MAX_EQ_LONG_MAX": "defined _LP64",
+        "PRIPTR_PREFIX": "__PRIPTR_PREFIX",
+        "REPLACE_IMAXABS": "0",
+        "REPLACE_IMAXDIV": "0",
+        "REPLACE_STRTOIMAX": "0",
+        "REPLACE_STRTOUMAX": "0",
+        "UINT32_MAX_LT_UINTMAX_MAX": "1",
+        "UINT64_MAX_EQ_ULONG_MAX": "defined _LP64",
+    },
     visibility = ["//visibility:private"],
 )

@@ -12,6 +12,9 @@ autoconf(
         # there. The REPLACE_OPEN subst itself is left to consumers (the m4
         # overlay sets it locally), as before.
     ],
+    default_deps = [
+        "//gnulib/m4/unistd_h:defaults",  # through gl_TEST_FCHDIR (fchdir.m4): AC_REQUIRE: gl_UNISTD_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])

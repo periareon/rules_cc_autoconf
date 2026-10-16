@@ -62,6 +62,9 @@ autoconf(
             subst = True,
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/unistd_h:defaults",  # AC_REQUIRE: gl_UNISTD_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_HAVE_DECL_GETLOGIN",  # AC_CHECK_DECLS_ONCE([getlogin])

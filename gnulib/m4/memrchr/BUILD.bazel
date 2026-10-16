@@ -22,6 +22,9 @@ autoconf(
             define = "HAVE_MEMRCHR",
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/string_h:defaults",  # AC_REQUIRE: gl_STRING_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Provides system extension defines (_ALL_SOURCE, _DARWIN_C_SOURCE, etc.)

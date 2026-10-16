@@ -39,6 +39,9 @@ autoconf(
         checks.AC_SUBST("REPLACE_GETLOCALENAME_L", "0"),
         checks.AC_SUBST("LOCALENAME_ENHANCE_LOCALE_FUNCS", "0"),
     ],
+    default_deps = [
+        "//gnulib/m4/locale_h:defaults",  # AC_REQUIRE: gl_LOCALE_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
@@ -49,6 +52,9 @@ autoconf(
 # gl_FUNC_GETLOCALENAME_L_SIMPLE: requires + gl_FUNC_GETLOCALENAME_L_UNSAFE
 autoconf(
     name = "gl_FUNC_GETLOCALENAME_L_SIMPLE",
+    default_deps = [
+        "//gnulib/m4/locale_h:defaults",  # AC_REQUIRE: gl_LOCALE_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_FUNC_GETLOCALENAME_L_UNSAFE",
@@ -102,6 +108,9 @@ autoconf(
             if_false = "0",
             if_true = "1",
         ),
+    ],
+    default_deps = [
+        "//gnulib/m4/locale_h:defaults",  # AC_REQUIRE: gl_LOCALE_H_DEFAULTS
     ],
     visibility = ["//visibility:public"],
     deps = [

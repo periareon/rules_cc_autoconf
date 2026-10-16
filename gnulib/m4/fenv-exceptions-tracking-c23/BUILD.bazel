@@ -20,6 +20,9 @@ autoconf(
         ],
     }) + [
     ],
+    default_deps = [
+        "//gnulib/m4/fenv_h:defaults",  # AC_REQUIRE: gl_FENV_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/fenv-exceptions-tracking",

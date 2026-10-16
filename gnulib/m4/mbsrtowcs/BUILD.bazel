@@ -3,15 +3,32 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
+# AC_CHECK_FUNCS_ONCE([mbsrtowcs]) - the bare probe plus its config.h define.
+# fnmatch only runs this probe and must not inherit gl_FUNC_MBSRTOWCS's
+# wchar.h defaults.
 autoconf(
-    name = "mbsrtowcs",
+    name = "AC_CHECK_FUNCS_ONCE_mbsrtowcs",
     checks = [
-        # Note: gl_WCHAR_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
         checks.AC_CHECK_FUNC(
             "mbsrtowcs",
             name = "ac_cv_func_mbsrtowcs",
         ),
+        # Define HAVE_MBSRTOWCS based on function check
+        checks.AC_DEFINE(
+            "HAVE_MBSRTOWCS",
+            condition = "ac_cv_func_mbsrtowcs",
+            if_true = 1,
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
 
+autoconf(
+    name = "mbsrtowcs",
+    checks = [
         # if test $ac_cv_func_mbsrtowcs = no; then
         #   if test $ac_cv_have_decl_mbsrtowcs = yes; then
         #     REPLACE_MBSRTOWCS=1 - line 28 (Minix case)
@@ -23,12 +40,6 @@ autoconf(
         #   fi
         # fi
 
-        # Define HAVE_MBSRTOWCS based on function check
-        checks.AC_DEFINE(
-            "HAVE_MBSRTOWCS",
-            condition = "ac_cv_func_mbsrtowcs",
-            if_true = 1,
-        ),
         # if test $ac_cv_func_mbsrtowcs = no; then HAVE_MBSRTOWCS=0; fi
         # (lowers the gl_WCHAR_H_DEFAULTS substitution)
         checks.AC_SUBST(
@@ -67,8 +78,12 @@ autoconf(
             checks.AC_SUBST("REPLACE_MBSRTOWCS", "0"),
         ],
     }),
+    default_deps = [
+        "//gnulib/m4/wchar_h:defaults",  # AC_REQUIRE: gl_WCHAR_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
+        ":AC_CHECK_FUNCS_ONCE_mbsrtowcs",  # AC_CHECK_FUNCS_ONCE([mbsrtowcs])
         # Note: gl_WCHAR_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
         "//autoconf/macros/AC_TYPE_MBSTATE_T",
         # Provides REPLACE_MBSTATE_T

@@ -10,6 +10,9 @@ autoconf(
         checks.AC_SUBST("LOG10_LIBM", ""),
         # Note: POW_LIBM is already provided by mathfunc dependency
     ],
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/mathfunc",  # gl_COMMON_DOUBLE_MATHFUNC([log10])

@@ -19,7 +19,6 @@ def gnu_gnulib_diff_test_suite(
         test_c,
         aux_files = [],
         known_divergences = {},
-        defaults_exclude = [],
         size = "medium",
         tags = [],
         **kwargs):
@@ -48,11 +47,6 @@ def gnu_gnulib_diff_test_suite(
         known_divergences (dict[str, str]): Variable name -> reason for intentional
             differences between the Bazel port and upstream m4. Masked in the
             GNU comparison and always reported in the test log.
-        defaults_exclude (list[Label]): Toolchain `defaults` targets (e.g.
-            `//gnulib/m4/unistd_h:defaults`) left out of the Bazel subst.h
-            rendering. Use it when the module's m4 graph never AC_REQUIREs the
-            corresponding gl_*_H_DEFAULTS, so GNU leaves those substitution
-            variables as literal `@VAR@` placeholders.
         size (str): Test size (default: "medium")
         tags (list[str]): Test tags
         **kwargs: Additional arguments
@@ -78,8 +72,7 @@ def gnu_gnulib_diff_test_suite(
         template = subst_h_in,
         out = "subst.h",
         deps = [bazel_autoconf_target],
-        defaults = True,
-        defaults_exclude = defaults_exclude,
+        defaults = False,
         mode = "subst",
     )
 

@@ -83,10 +83,13 @@ autoconf_hdr(
 
 ## Architecture Overview
 
-The migration system consists of three main components:
+The migration system consists of these components:
 
 ### 1. `autoconf` Rule
 Runs compilation checks against the configured `cc_toolchain` and produces check results. Each check creates a **cache variable** (e.g., `ac_cv_header_stdio_h`) and optionally a **define** (e.g., `HAVE_STDIO_H`) or **subst** value.
+
+### 1b. `autoconf_defaults` Rule
+Holds literal values that a check may override: gnulib's `*_H_DEFAULTS` (`HAVE_FOO=1`, `REPLACE_FOO=0`). Nothing is probed. Targets read a defaults target through `default_deps`, beneath every ordinary result; `deps` rejects it. See [Defaults yield to your values](#defaults-yield-to-your-values).
 
 ### 2. `autoconf_hdr` Rule
 Takes check results from `autoconf` targets and generates header files by processing templates. Supports two modes:
@@ -101,7 +104,7 @@ Turns **subst** values that hold linker flags (often from `AC_SEARCH_LIBS`) into
 
 ### `autoconf` vs `autoconf_cache`
 
-`autoconf_cache` (from `//autoconf:autoconf_toolchain.bzl`) is identical to `autoconf` except that it does **not** resolve the `autoconf_toolchain`. Targets that the toolchain itself depends on (its `cache_deps` and `defaults`) must use it; using `autoconf` there would create a dependency cycle. Every port under `//gnulib/m4` and `//autoconf/macros` therefore loads it under the name `autoconf`:
+`autoconf_cache` (from `//autoconf:autoconf_toolchain.bzl`) is identical to `autoconf` except that it does **not** resolve the `autoconf_toolchain`. Targets that the toolchain itself depends on (its `cache_deps`) must use it; using `autoconf` there would create a dependency cycle. Every port under `//gnulib/m4` and `//autoconf/macros` therefore loads it under the name `autoconf`:
 
 ```python
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
@@ -1156,14 +1159,14 @@ Such a check needs no `define`: it is a validation action, run whenever the
 target is built, directly or through a dependency, even though nothing in
 config.h reads its result.
 
-### Toolchain defaults yield to your values
+### Defaults yield to your values
 
-The `*_H_DEFAULTS` values (`HAVE_FOO=1`, `REPLACE_FOO=0`, `GNULIB_FOO=0`) are supplied by the autoconf toolchain, not by `deps`. In `autoconf_hdr` and `autoconf_srcs` a value coming from `deps` overrides a default, so a downstream target may set any value a default would otherwise supply without a duplicate error. The duplicate check applies only between explicit checks. Two consequences:
+The `*_H_DEFAULTS` values (`HAVE_FOO=1`, `REPLACE_FOO=0`, `GNULIB_FOO=0`) are not check results. Each header port keeps them in an `autoconf_defaults` target named `:defaults` (`//gnulib/m4/stdlib_h:defaults`), and targets read them through `default_deps`, never `deps`: the header port lists its own `:defaults` there, and so does every port whose m4 `AC_REQUIRE`s that header's `gl_*_H_DEFAULTS`. An `autoconf` target passes the defaults it reads on to its dependents, still as defaults. A default has the lowest precedence: an ordinary result of the same name, from any check in the graph or from your own target, overrides it without a duplicate error, and two defaults of one name must agree. Two consequences:
 
-- Do not design around the defaults targets; they are an implementation detail of this repository. Define what your project needs.
-- When a later release's port starts publishing a value you set locally, your copy becomes a duplicate-result error. Comment such overrides with the port they stand in for so they are easy to remove.
+- Do not design around the defaults targets. Depend on the header port your templates need and define what your project computes itself.
+- When a later release's port starts publishing a value you set locally as an ordinary result, your copy becomes a duplicate-result error. Comment such overrides with the port they stand in for so they are easy to remove.
 
-The "existing defaults must not be changed" rule in [Step 6](#step-6-understand-global-defaults-vs-check-results) is about ports inside this repository, not about consumers.
+Your own defaults follow the same rule: put values that a probe may override into an `autoconf_defaults` target and list it in `default_deps`. `defaults = True` on `autoconf_hdr`, `autoconf_srcs`, `autoconf_linkopts` and `cc_gnulib_conditional_hdrs` is deprecated and ignored: the toolchain carries no defaults any more. Existing BUILD files keep loading; new ones should leave it unset and list `default_deps` where a template reads a header's defaults no dependency brings.
 
 ### Refining platform selects
 
@@ -1208,7 +1211,7 @@ AC_DEFUN([gl_C32RTOMB_SANITYCHECK],    # Line 94 - Sanity check
 
 **Critical:** Extract all `AC_REQUIRE` statements to build the dependency graph, with one important exception:
 
-> **Ignore `_DEFAULTS` functions.** Functions like `gl_UCHAR_H_DEFAULTS`, `gl_WCHAR_H_DEFAULTS`, etc. set initial shell variable values that get overridden by the actual check functions. In Bazel, these defaults cause duplicate check errors if both the defaults and the actual check try to set the same variable.
+> **`_DEFAULTS` functions are a `default_deps` entry, not a `deps` entry.** Functions like `gl_UCHAR_H_DEFAULTS` and `gl_WCHAR_H_DEFAULTS` set the initial shell variable values (`HAVE_X=1`, `REPLACE_X=0`) that the check functions may reassign. The header port keeps them in an `autoconf_defaults` target, `:defaults`, so `AC_REQUIRE([gl_WCHAR_H_DEFAULTS])` becomes `"//gnulib/m4/wchar_h:defaults"` in `default_deps`; a check's own result overrides a default without a duplicate error. `deps` rejects defaults targets, so the two cannot be confused. Do not depend on the private `gl_*_H_DEFAULTS` or `gl_*_H_REQUIRE_DEFAULTS` targets directly.
 
 **Dependency extraction example:**
 
@@ -1380,28 +1383,44 @@ After building, you may find that transitive dependencies are incorrect. Common 
 
 ### Step 6: Understand Global Defaults vs Check Results
 
-**Important architectural difference:** Bazel uses a shared dependency graph with global defaults, while autoconf runs each `configure.ac` independently.
+**The same shape as autoconf, with precedence instead of ordering.** In autoconf, `gl_UCHAR_H_DEFAULTS` sets `HAVE_C32RTOMB=1` as a shell variable and `gl_FUNC_C32RTOMB`, if it runs later, may reassign it to `0`; the last assignment wins. Bazel has no ordering, so the same two steps are two kinds of target: the header port's `autoconf_defaults` target `:defaults`, read through `default_deps`, provides `HAVE_C32RTOMB=1` as a *default*, and `gl_FUNC_C32RTOMB`'s probe provides an *ordinary* result that overrides it wherever both are in the graph. A `configure.ac` that never reaches `gl_FUNC_C32RTOMB` sees the default, exactly as GNU does.
 
-In autoconf:
-- `gl_UCHAR_H_DEFAULTS` sets `HAVE_C32RTOMB=1` as a shell variable
-- If `gl_FUNC_C32RTOMB` is later called, it may override this to `0`
-- Different `configure.ac` files may or may not call `gl_FUNC_C32RTOMB`
+**Porting a `_H_DEFAULTS` macro.** Its assignments become the `substs` of one `autoconf_defaults` target (`M4_VARIABLE`-style shell variables such as `GL_GENERATE_FOO_H` go in `variables`, `AC_DEFINE`s in `defines`); `gl_FOO_H_REQUIRE_DEFAULTS`, which adds the `GNULIB_*` indicators on top, is a second `autoconf_defaults` target with the first in its `deps`; the public `:defaults` aggregates both. A defaults target holds literal values only: nothing is probed, no toolchain is involved, and the files are written at analysis time. A probe that upstream keeps next to the defaults (`gl_STDLIB_H`'s `AC_CHECK_HEADERS_ONCE([random.h])`) belongs in the header's `autoconf` target, where it is an ordinary result.
 
-In Bazel:
-- Global defaults (like `HAVE_C32RTOMB="1"` in `uchar_h`) are shared across all modules
-- There's only ONE value for each variable in the dependency graph
-- Changing a default to make one module's test pass may break other modules
+```python
+load("@rules_cc_autoconf//autoconf:autoconf_defaults.bzl", "autoconf_defaults")
 
-**Key principle:** Existing defaults should NOT be changed to make a new module pass. Defaults are fine as long as nothing in the dependency graph explicitly depends on those targets with conflicting values. This rule is for ports in this repository; downstream projects may override any default (see [Toolchain defaults yield to your values](#toolchain-defaults-yield-to-your-values)).
+# gl_UCHAR_H_DEFAULTS
+autoconf_defaults(
+    name = "gl_UCHAR_H_DEFAULTS",
+    substs = {
+        "HAVE_C32RTOMB": "1",
+        "REPLACE_C32RTOMB": "0",
+    },
+)
 
-**Conformance disagreements:** Because of this architectural difference, the GNU conformance test may report a subst that differs between Bazel and `configure`. This happens when:
-- Autoconf runs a specific check (e.g., `gl_FUNC_C32RTOMB` → `HAVE_C32RTOMB=0` on macOS)
-- Bazel uses the global default (e.g., `uchar_h` → `HAVE_C32RTOMB=1`)
+# gl_UCHAR_H_REQUIRE_DEFAULTS: the GNULIB_* indicators, on top of the above
+autoconf_defaults(
+    name = "gl_UCHAR_H_REQUIRE_DEFAULTS",
+    substs = {
+        "GNULIB_C32RTOMB": "0",
+    },
+    deps = [":gl_UCHAR_H_DEFAULTS"],
+)
 
-Resolve these in order of preference:
-- If the Bazel dependency graph should include those checks, add the appropriate dependency
-- If a `*_h:defaults` value leaks into a test whose `configure.ac` never `AC_REQUIRE`s that `gl_*_H_DEFAULTS` macro, list the defaults target in the suite's `defaults_exclude`
-- Only when the difference is inherent (GNU probes the host `PATH`, runs a test binary whose answer is machine-dependent, or two macros legitimately compute one variable differently) list the variable in the suite's `known_divergences` with the reason. It is masked from the comparison and always printed in the test log.
+autoconf_defaults(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [":gl_UCHAR_H_REQUIRE_DEFAULTS"],
+)
+```
+
+**Key principle:** a port lists in `default_deps` the `:defaults` of every header whose `gl_*_H_DEFAULTS` its m4 `AC_REQUIRE`s (directly or through a macro it invokes), and nothing else of the defaults. The values in a `:defaults` target mirror the m4's initial assignments; change them only when upstream does.
+
+**Conformance disagreements:** the GNU conformance test compares `subst.h` as well as `config.h`, with the defaults the Bazel target's dependencies bring and nothing else. A disagreement means one of:
+- A missing dependency: the port's m4 requires a header's defaults (or another macro) the BUILD does not list. Add it.
+- A missing override: upstream runs a check that reassigns a default and the port does not. Port the check.
+- An inherent difference (GNU probes the host `PATH`, runs a test binary whose answer is machine-dependent, or two macros legitimately compute one variable differently): list the variable in the suite's `known_divergences` with the reason. It is masked from the comparison and always printed in the test log.
 
 ### Step 7: Run Tests and Iterate
 
@@ -1696,7 +1715,7 @@ autoconf(
     visibility = ["//visibility:public"],
     deps = [
         ":gl_CHECK_FUNCS_ANDROID_posix_memalign",
-        # gl_STDLIB_H_DEFAULTS is a _DEFAULTS macro: not tracked as a dependency
+        # gl_STDLIB_H_DEFAULTS is a _DEFAULTS macro: listed in default_deps, not here
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
         "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
     ],
@@ -1889,8 +1908,9 @@ When migrating an M4 file, follow this checklist:
 | String literals in defines | Use `'"string"'` (outer single, inner double quotes) |
 | Platform conditionals | Use `select()` for `case "$host_os"` patterns |
 | Cross-compilation failures | Validate sizeof/alignof/compute probes for the real target; replace true **run**-time Autoconf checks with `select()` or explicit substs |
-| Conformance test disagrees with GNU autoconf | Add the missing dependency, or `defaults_exclude` a leaking `*_h:defaults`; use `known_divergences` only for inherent differences (see Step 6) |
+| Conformance test disagrees with GNU autoconf | Add the missing dependency (a header's `:defaults` the m4 requires, or a check the port lacks); use `known_divergences` only for inherent differences (see Step 6) |
 | Changing defaults to fix one module | Don't change existing defaults; they may break other modules |
+| A `:defaults` or `*_DEFAULTS` target in `deps` | Analysis fails: `deps` wants `CcAutoconfInfo`, defaults carry `CcAutoconfDefaultsInfo`.  Move it to `default_deps` |
 | Unnecessary `name` + separate `AC_DEFINE` | Use `define =` directly unless the cache variable is needed in `requires` or you need custom values |
 | Using `condition` with `if_false = None` | Use `requires = ["cache_var==1"]` to gate defines; `condition` is for value selection, not gating |
 | Hiding a fixable port behind `known_divergences` | Fix the port so Bazel matches GNU; a divergence entry needs a reason that explains why no port can match |

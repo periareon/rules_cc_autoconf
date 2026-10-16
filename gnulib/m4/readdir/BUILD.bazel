@@ -30,9 +30,11 @@ autoconf(
             condition = "ac_cv_func_readdir && DIR_HAS_FD_MEMBER==0",
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/dirent_h:defaults",  # AC_REQUIRE: gl_DIRENT_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
-        "//gnulib/m4/dirent_h",  # AC_REQUIRE([gl_DIRENT_H_DEFAULTS])
         "//gnulib/m4/dirent_h:gl_DIRENT_DIR",
     ],
 )

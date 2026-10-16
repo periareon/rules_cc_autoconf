@@ -72,6 +72,9 @@ int main(void) {
             checks.AC_SUBST("REPLACE_REALLOCARRAY", 0),
         ],
     }),
+    default_deps = [
+        "//gnulib/m4/stdlib_h:defaults",  # AC_REQUIRE: gl_STDLIB_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS]) - line 11

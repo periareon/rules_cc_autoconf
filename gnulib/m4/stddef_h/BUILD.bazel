@@ -1,5 +1,6 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/stddef_h.m4"""
 
+load("//autoconf:autoconf_defaults.bzl", "autoconf_defaults")
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 load("//gnulib:macros.bzl", gl_macros = "macros")
@@ -37,6 +38,9 @@ int main(void) {
             if_true = 1,
         ),
     ],
+    default_deps = [
+        ":defaults",  # the header's own defaults, as its m4 requires
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/include_next",
@@ -46,52 +50,50 @@ int main(void) {
     ],
 )
 
-autoconf(
+autoconf_defaults(
     name = "gl_STDDEF_H_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("REPLACE_NULL", 0),
+    substs = {
         # HAVE_WCHAR_T default — present on every libc we target.  Upstream's
         # gl_STDDEF_H probes it explicitly; we mirror the result as a static
         # default since no platform we support is missing wchar_t.
-        checks.AC_SUBST("HAVE_WCHAR_T", 1),
-    ] + select({
+        "HAVE_WCHAR_T": "1",
+        "REPLACE_NULL": "0",
+    } | select({
         # On Ubuntu 24.04 (glibc 2.39 / GCC 14), nullptr_t is provided
         # natively and stddef.h is NOT idempotent.
-        "@platforms//os:linux": [
-            checks.AC_SUBST("NULLPTR_T_NEEDS_STDDEF", 0),
-            checks.AC_SUBST("STDDEF_NOT_IDEMPOTENT", 1),
-        ],
-        "//conditions:default": [
-            checks.AC_SUBST("NULLPTR_T_NEEDS_STDDEF", 1),
-            checks.AC_SUBST("STDDEF_NOT_IDEMPOTENT", 0),
-        ],
-    }) + select({
-        "@rules_cc//cc/compiler:msvc-cl": [
+        "@platforms//os:linux": {
+            "NULLPTR_T_NEEDS_STDDEF": "0",
+            "STDDEF_NOT_IDEMPOTENT": "1",
+        },
+        "//conditions:default": {
+            "NULLPTR_T_NEEDS_STDDEF": "1",
+            "STDDEF_NOT_IDEMPOTENT": "0",
+        },
+    }) | select({
+        "@rules_cc//cc/compiler:msvc-cl": {
             # MSVC in C mode does not provide max_align_t in <stddef.h>;
             # gnulib's stddef.in.h supplies rpl_max_align_t when this is 0.
             # MinGW GCC provides max_align_t via _GCC_MAX_ALIGN_T so it
             # does not need this override.
-            checks.AC_SUBST("HAVE_MAX_ALIGN_T", 0),
-        ],
-        "//conditions:default": [
-            checks.AC_SUBST("HAVE_MAX_ALIGN_T", 1),
-        ],
+            "HAVE_MAX_ALIGN_T": "0",
+        },
+        "//conditions:default": {
+            "HAVE_MAX_ALIGN_T": "1",
+        },
     }),
     visibility = ["//visibility:private"],
 )
 
 # Note: stddef_h has _REQUIRE_DEFAULTS but no GNULIB_* variables
-autoconf(
+autoconf_defaults(
     name = "gl_STDDEF_H_REQUIRE_DEFAULTS",
-    checks = [
-    ],
     visibility = ["//visibility:private"],
     deps = [
         ":gl_STDDEF_H_DEFAULTS",
     ],
 )
 
-autoconf(
+autoconf_defaults(
     name = "defaults",
     visibility = ["//visibility:public"],
     deps = [

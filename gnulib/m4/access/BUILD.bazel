@@ -64,6 +64,9 @@ int main(void) { return 0; }
             checks.AC_SUBST("REPLACE_ACCESS", "0"),
         ],
     }),
+    default_deps = [
+        "//gnulib/m4/unistd_h:defaults",  # AC_REQUIRE: gl_UNISTD_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":HAVE_ACCESS",

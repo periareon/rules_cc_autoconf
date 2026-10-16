@@ -51,15 +51,15 @@ cc_test(
     ],
 )
 
-# `defaults = True`: conditions over the toolchain defaults (GL_GENERATE_*_H
-# of header packages the project never configures itself), with a
-# dependency's own result taking precedence.
+# `default_deps`: conditions over a header port's defaults (GL_GENERATE_*_H of
+# a header the project never configures itself), with a dependency's own
+# result taking precedence.
 cc_gnulib_conditional_hdrs(
     name = "gen_defaults",
     hdrs = {
         "src/gl_conditional_default.h": "!GL_GENERATE_ICONV_H",
     },
-    defaults = True,
+    default_deps = ["//gnulib/m4/iconv_h:defaults"],
     deps = [":conditions"],
 )
 
@@ -76,7 +76,7 @@ cc_gnulib_conditional_hdrs(
         "src/gl_conditional_override.h": "GL_GENERATE_ICONV_H==true",
         "src/gl_conditional_override_absent.h": "!GL_GENERATE_ICONV_H",
     },
-    defaults = True,
+    default_deps = ["//gnulib/m4/iconv_h:defaults"],
     deps = [":conditions_override"],
 )
 

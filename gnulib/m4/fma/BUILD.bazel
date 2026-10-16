@@ -16,6 +16,9 @@ autoconf(
         # FMA_LIBM is empty on macOS
         checks.AC_SUBST("FMA_LIBM", ""),
     ],
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/fegetround",

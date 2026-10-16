@@ -133,6 +133,9 @@ autoconf(
         # m4 line 48-66: ILOGBL_LIBM is ILOGB_LIBM / FREXPL+ISNANL libs (all empty here)
         checks.AC_SUBST("ILOGBL_LIBM", ""),
     ],
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_FUNC_ILOGBL_WORKS",

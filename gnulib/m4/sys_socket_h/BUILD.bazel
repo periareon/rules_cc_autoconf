@@ -1,5 +1,6 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/sys_socket_h.m4"""
 
+load("//autoconf:autoconf_defaults.bzl", "autoconf_defaults")
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks", "macros", "utils")
 load("//gnulib:macros.bzl", gl_macros = "macros")
@@ -66,6 +67,11 @@ autoconf(
             if_true = "true",
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/sys_ioctl_h:defaults",  # through a macro it invokes: gl_SYS_IOCTL_H_DEFAULTS
+        "//gnulib/m4/unistd_h:defaults",  # through a macro it invokes: gl_UNISTD_H_DEFAULTS
+        ":defaults",  # AC_REQUIRE: gl_SYS_SOCKET_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_PREREQ_SYS_H_SOCKET",
@@ -126,6 +132,10 @@ autoconf(
             if_true = 1,
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/sys_ioctl_h:defaults",  # AC_REQUIRE: gl_SYS_IOCTL_H_DEFAULTS
+        "//gnulib/m4/unistd_h:defaults",  # AC_REQUIRE: gl_UNISTD_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/socklen:gl_CHECK_SOCKET_HEADERS",
@@ -169,6 +179,9 @@ autoconf(
             if_true = 1,
         ),
     ],
+    default_deps = [
+        ":defaults",  # through a macro it invokes: gl_SYS_SOCKET_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/socklen:gl_CHECK_SOCKET_HEADERS",
@@ -182,58 +195,62 @@ autoconf(
 autoconf(
     name = "gl_SYS_SOCKET_MODULE_INDICATOR",
     checks = [],
-    visibility = ["//visibility:public"],
-    deps = [
+    default_deps = [
+        ":defaults",  # through a macro it invokes: gl_SYS_SOCKET_H_DEFAULTS
         ":gl_SYS_SOCKET_H_REQUIRE_DEFAULTS",
     ],
+    visibility = ["//visibility:public"],
 )
 
 # gl_SYS_SOCKET_H_REQUIRE_DEFAULTS
-autoconf(
+autoconf_defaults(
     name = "gl_SYS_SOCKET_H_REQUIRE_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("GNULIB_ACCEPT", 0),
-        checks.AC_SUBST("GNULIB_ACCEPT4", 0),
-        checks.AC_SUBST("GNULIB_BIND", 0),
-        checks.AC_SUBST("GNULIB_CONNECT", 0),
-        checks.AC_SUBST("GNULIB_GETPEERNAME", 0),
-        checks.AC_SUBST("GNULIB_GETSOCKNAME", 0),
-        checks.AC_SUBST("GNULIB_GETSOCKOPT", 0),
-        checks.AC_SUBST("GNULIB_LISTEN", 0),
-        checks.AC_SUBST("GNULIB_RECV", 0),
-        checks.AC_SUBST("GNULIB_RECVFROM", 0),
-        checks.AC_SUBST("GNULIB_SEND", 0),
-        checks.AC_SUBST("GNULIB_SENDTO", 0),
-        checks.AC_SUBST("GNULIB_SETSOCKOPT", 0),
-        checks.AC_SUBST("GNULIB_SHUTDOWN", 0),
-        checks.AC_SUBST("GNULIB_SOCKET", 0),
-    ],
+    substs = {
+        "GNULIB_ACCEPT": "0",
+        "GNULIB_ACCEPT4": "0",
+        "GNULIB_BIND": "0",
+        "GNULIB_CONNECT": "0",
+        "GNULIB_GETPEERNAME": "0",
+        "GNULIB_GETSOCKNAME": "0",
+        "GNULIB_GETSOCKOPT": "0",
+        "GNULIB_LISTEN": "0",
+        "GNULIB_RECV": "0",
+        "GNULIB_RECVFROM": "0",
+        "GNULIB_SEND": "0",
+        "GNULIB_SENDTO": "0",
+        "GNULIB_SETSOCKOPT": "0",
+        "GNULIB_SHUTDOWN": "0",
+        "GNULIB_SOCKET": "0",
+    },
     visibility = ["//visibility:private"],
     deps = [
         ":gl_SYS_SOCKET_H_DEFAULTS",
     ],
 )
 
-autoconf(
+autoconf_defaults(
     name = "gl_SYS_SOCKET_H_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("HAVE_STRUCT_SOCKADDR_STORAGE", 1),
-        checks.AC_SUBST("HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY", 1),
-        checks.AC_SUBST("HAVE_ACCEPT4", 1),
-    ],
+    substs = {
+        "HAVE_ACCEPT4": "1",
+        "HAVE_STRUCT_SOCKADDR_STORAGE": "1",
+        "HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY": "1",
+    },
     visibility = ["//visibility:private"],
 )
 
 # Public header target (main entry point)
 autoconf(
     name = "sys_socket_h",
+    default_deps = [
+        ":defaults",  # the header's own defaults, as its m4 requires
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_SYS_SOCKET_H",
     ],
 )
 
-autoconf(
+autoconf_defaults(
     name = "defaults",
     visibility = ["//visibility:public"],
     deps = [

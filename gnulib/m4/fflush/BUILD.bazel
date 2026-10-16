@@ -57,6 +57,9 @@ autoconf(
             condition = "!gl_cv_func_fflush_stdin",
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/stdio_h:defaults",  # AC_REQUIRE: gl_STDIO_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_FUNC_FFLUSH_STDIN",

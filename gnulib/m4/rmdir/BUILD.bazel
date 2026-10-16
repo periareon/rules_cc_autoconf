@@ -39,6 +39,9 @@ int main(void) { return 0; }
         # HAVE_DECL_EXECVPE comes from unistd_h:defaults via toolchain defaults
         # (AC_REQUIRE([gl_UNISTD_H_DEFAULTS]) in rmdir.m4 line 11)
     ],
+    default_deps = [
+        "//gnulib/m4/unistd_h:defaults",  # AC_REQUIRE: gl_UNISTD_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CANONICAL_HOST",

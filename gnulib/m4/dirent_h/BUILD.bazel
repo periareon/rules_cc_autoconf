@@ -1,5 +1,6 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/dirent_h.m4"""
 
+load("//autoconf:autoconf_defaults.bzl", "autoconf_defaults")
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks", "macros")
 load("//gnulib:macros.bzl", gl_macros = "macros")
@@ -15,6 +16,9 @@ autoconf(
             checks.AC_SUBST("DIR_HAS_FD_MEMBER", 1),
         ],
     }),
+    default_deps = [
+        ":defaults",  # through a macro it invokes: gl_DIRENT_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CANONICAL_HOST",
@@ -33,6 +37,9 @@ autoconf(
             condition = "ac_cv_header_dirent_h",
         ),
     ],
+    default_deps = [
+        ":defaults",  # AC_REQUIRE: gl_DIRENT_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/include_next",
@@ -43,47 +50,47 @@ autoconf(
     ],
 )
 
-autoconf(
+autoconf_defaults(
     name = "gl_DIRENT_H_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("HAVE_OPENDIR", 1),
-        checks.AC_SUBST("HAVE_READDIR", 1),
-        checks.AC_SUBST("HAVE_REWINDDIR", 1),
-        checks.AC_SUBST("HAVE_CLOSEDIR", 1),
-        checks.AC_SUBST("HAVE_DECL_DIRFD", 1),
-        checks.AC_SUBST("HAVE_DECL_FDOPENDIR", 1),
-        checks.AC_SUBST("HAVE_FDOPENDIR", 1),
-        checks.AC_SUBST("HAVE_SCANDIR", 1),
-        checks.AC_SUBST("HAVE_ALPHASORT", 1),
-        checks.AC_SUBST("REPLACE_OPENDIR", 0),
-        checks.AC_SUBST("REPLACE_READDIR", 0),
-        checks.AC_SUBST("REPLACE_REWINDDIR", 0),
-        checks.AC_SUBST("REPLACE_CLOSEDIR", 0),
-        checks.AC_SUBST("REPLACE_DIRFD", 0),
-        checks.AC_SUBST("REPLACE_FDOPENDIR", 0),
-    ],
+    substs = {
+        "HAVE_ALPHASORT": "1",
+        "HAVE_CLOSEDIR": "1",
+        "HAVE_DECL_DIRFD": "1",
+        "HAVE_DECL_FDOPENDIR": "1",
+        "HAVE_FDOPENDIR": "1",
+        "HAVE_OPENDIR": "1",
+        "HAVE_READDIR": "1",
+        "HAVE_REWINDDIR": "1",
+        "HAVE_SCANDIR": "1",
+        "REPLACE_CLOSEDIR": "0",
+        "REPLACE_DIRFD": "0",
+        "REPLACE_FDOPENDIR": "0",
+        "REPLACE_OPENDIR": "0",
+        "REPLACE_READDIR": "0",
+        "REPLACE_REWINDDIR": "0",
+    },
     visibility = ["//visibility:private"],
 )
 
-autoconf(
+autoconf_defaults(
     name = "gl_DIRENT_H_REQUIRE_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("GNULIB_ALPHASORT", 0),
-        checks.AC_SUBST("GNULIB_CLOSEDIR", 0),
-        checks.AC_SUBST("GNULIB_DIRFD", 0),
-        checks.AC_SUBST("GNULIB_FDOPENDIR", 0),
-        checks.AC_SUBST("GNULIB_OPENDIR", 0),
-        checks.AC_SUBST("GNULIB_READDIR", 0),
-        checks.AC_SUBST("GNULIB_REWINDDIR", 0),
-        checks.AC_SUBST("GNULIB_SCANDIR", 0),
-    ],
+    substs = {
+        "GNULIB_ALPHASORT": "0",
+        "GNULIB_CLOSEDIR": "0",
+        "GNULIB_DIRFD": "0",
+        "GNULIB_FDOPENDIR": "0",
+        "GNULIB_OPENDIR": "0",
+        "GNULIB_READDIR": "0",
+        "GNULIB_REWINDDIR": "0",
+        "GNULIB_SCANDIR": "0",
+    },
     visibility = ["//visibility:private"],
     deps = [
         ":gl_DIRENT_H_DEFAULTS",
     ],
 )
 
-autoconf(
+autoconf_defaults(
     name = "defaults",
     visibility = ["//visibility:public"],
     deps = [
@@ -93,6 +100,10 @@ autoconf(
 
 autoconf(
     name = "dirent_h",
+    default_deps = [
+        "//gnulib/m4/unistd_h:defaults",  # module: gl_DIRENT_H_REQUIRE_DEFAULTS invokes gl_UNISTD_H_REQUIRE_DEFAULTS, for REPLACE_FCHDIR
+        ":defaults",  # the header's own defaults, as its m4 requires
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_DIRENT_DIR",

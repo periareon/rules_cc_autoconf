@@ -21,6 +21,9 @@ autoconf(
 autoconf(
     name = "gl_FUNC_VDPRINTF_POSIX",
     checks = [],
+    default_deps = [
+        "//gnulib/m4/stdio_h:defaults",  # through gl_REPLACE_VDPRINTF (vdprintf.m4): AC_REQUIRE: gl_STDIO_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_FUNC_VDPRINTF_IS_POSIX",  # AC_REQUIRE([gl_FUNC_VDPRINTF_IS_POSIX])

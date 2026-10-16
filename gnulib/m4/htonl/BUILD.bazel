@@ -71,6 +71,9 @@ autoconf(
         # Note: The m4 file doesn't define these in config.h if not found
         # They remain undefined (/* #undef */)
     ],
+    default_deps = [
+        "//gnulib/m4/arpa_inet_h:defaults",  # AC_REQUIRE: gl_ARPA_INET_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Use defaults to get substitution variable defaults, but don't create defines in config.h

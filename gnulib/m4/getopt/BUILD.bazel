@@ -9,6 +9,9 @@ load("//autoconf:checks.bzl", "checks")
 autoconf(
     name = "gl_FUNC_GETOPT_POSIX",
     checks = [],
+    default_deps = [
+        "//gnulib/m4/unistd_h:defaults",  # AC_REQUIRE: gl_UNISTD_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_GETOPT_CHECK_HEADERS",
@@ -23,6 +26,9 @@ autoconf(
 autoconf(
     name = "gl_FUNC_GETOPT_GNU",
     checks = [],
+    default_deps = [
+        "//gnulib/m4/unistd_h:defaults",  # through a macro it invokes: gl_UNISTD_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_FUNC_GETOPT_POSIX",

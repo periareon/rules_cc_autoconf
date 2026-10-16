@@ -46,28 +46,25 @@ load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 load(
     "//autoconf/private:autoconf_config.bzl",
+    "collect_defaults",
     "collect_deps",
     "collect_transitive_results",
-    "get_autoconf_toolchain_defaults",
+    "merge_defaults",
+    "merge_results",
 )
-load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
+load("//autoconf/private:providers.bzl", "CcAutoconfDefaultsInfo", "CcAutoconfInfo")
 
 _MSVC_LIKE_COMPILERS = ("msvc-cl", "clang-cl")
 
 def _autoconf_linkopts_impl(ctx):
     """Implementation of the autoconf_linkopts rule."""
 
-    # Get toolchain defaults
-    defaults = struct(cache = {}, define = {}, subst = {})
-    if ctx.attr.defaults:
-        defaults = get_autoconf_toolchain_defaults(ctx)
-
     # Collect transitive results from deps
     deps = collect_deps(ctx.attr.deps)
     dep_infos = deps.to_list()
     dep_results = collect_transitive_results(dep_infos)
 
-    all_subst = defaults.subst | dep_results["subst"]
+    all_subst = merge_results(dep_results, merge_defaults(collect_defaults(ctx.attr.default_deps, dep_infos).to_list())).subst
 
     # Detect MSVC-like compilers that need #pragma comment instead of @file
     cc_toolchain = find_cpp_toolchain(ctx)
@@ -89,7 +86,7 @@ def _autoconf_linkopts_impl(ctx):
 
     # Also check cache results for variables that are stored as cache
     # (some AC_SEARCH_LIBS results use the cache variable name)
-    all_cache = defaults.cache | dep_results["cache"]
+    all_cache = merge_results(dep_results, merge_defaults(collect_defaults(ctx.attr.default_deps, dep_infos).to_list())).cache
     for var_name in ctx.attr.vars:
         if var_name not in found_vars:
             cache_name = "ac_cv_subst_" + var_name
@@ -175,8 +172,18 @@ Variables not found in the deps are silently ignored (they may
 be provided by a different module or not needed on this platform).
 """,
     attrs = {
+        "default_deps": attr.label_list(
+            doc = """\
+`autoconf_defaults` targets whose values stand where no result of the name comes through `deps`
+(a result overrides a default silently; two defaults of one name must agree).  The defaults the
+`deps` carry are read as well.
+""",
+            providers = [CcAutoconfDefaultsInfo],
+        ),
         "defaults": attr.bool(
-            doc = "Whether to include toolchain defaults.",
+            doc = """\
+Deprecated and ignored: defaults come through `deps` and `default_deps`; the autoconf toolchain
+no longer carries any.  Accepted so existing BUILD files keep loading.""",
             default = False,
         ),
         "deps": attr.label_list(

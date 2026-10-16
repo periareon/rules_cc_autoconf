@@ -42,6 +42,9 @@ autoconf(
         # Based on golden files, REPLACE_TRUNCATE=0 on macOS (function works correctly)
         checks.AC_SUBST("REPLACE_TRUNCATE", 0),
     ],
+    default_deps = [
+        "//gnulib/m4/unistd_h:defaults",  # AC_REQUIRE: gl_UNISTD_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])

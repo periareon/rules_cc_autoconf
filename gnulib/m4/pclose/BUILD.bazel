@@ -14,6 +14,9 @@ autoconf(
             subst = True,
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/stdio_h:defaults",  # AC_REQUIRE: gl_STDIO_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Note: stdio_h defaults provides HAVE_PCLOSE as subst, but we need it in config.h

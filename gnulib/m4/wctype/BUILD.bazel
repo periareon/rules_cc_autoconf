@@ -31,6 +31,9 @@ autoconf(
         # gl_WCTYPE_H_DEFAULTS value of 0.
         "//conditions:default": [],
     }),
+    default_deps = [
+        "//gnulib/m4/wctype_h:defaults",  # AC_REQUIRE: gl_WCTYPE_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/wctype_h",  # AC_REQUIRE([gl_WCTYPE_H_DEFAULTS,

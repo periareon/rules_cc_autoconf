@@ -23,6 +23,9 @@ autoconf(
             if_true = 1,
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/sys_times_h:defaults",  # AC_REQUIRE: gl_SYS_TIMES_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_SYS_TIMES_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction

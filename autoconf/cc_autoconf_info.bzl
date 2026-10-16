@@ -3,7 +3,9 @@
 Public API for external rules that produce autoconf-compatible check results.
 
 The ``CcAutoconfInfo`` provider constructor accepts defaults for every field
-except ``owner``, so callers only need to supply the fields they care about:
+except ``owner``, so callers only need to supply the fields they care about
+(``CcAutoconfDefaultsInfo``, what ``autoconf_defaults`` produces and
+``default_deps`` accepts, is exported alongside it):
 
 ```python
 load("@rules_cc_autoconf//autoconf:cc_autoconf_info.bzl",
@@ -22,8 +24,10 @@ load(
 )
 load(
     "//autoconf/private:providers.bzl",
+    _CcAutoconfDefaultsInfo = "CcAutoconfDefaultsInfo",
     _CcAutoconfInfo = "CcAutoconfInfo",
 )
 
 CcAutoconfInfo = _CcAutoconfInfo
+CcAutoconfDefaultsInfo = _CcAutoconfDefaultsInfo
 encode_result = _encode_result

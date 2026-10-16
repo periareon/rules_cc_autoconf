@@ -8,6 +8,9 @@ autoconf(
         # which already checks for HAVE_TIMESPEC_GET
         # We don't need to check again here
     ],
+    default_deps = [
+        "//gnulib/m4/time_h:defaults",  # AC_REQUIRE: gl_TIME_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS,

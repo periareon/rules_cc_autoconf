@@ -13,6 +13,9 @@ autoconf(
         # Golden expects POWF_LIBM "" (no extra lib on macOS/Linux)
         checks.AC_SUBST("POWF_LIBM", ""),
     ],
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS,

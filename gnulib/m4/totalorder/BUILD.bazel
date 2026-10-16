@@ -17,6 +17,9 @@ autoconf(
             checks.AC_SUBST("TOTALORDERF_LIBM", "$(ISNANF_LIBM)"),
         ],
     }),
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//gnulib:__subpackages__"],
     deps = [
         "//gnulib/m4/extensions",
@@ -37,6 +40,9 @@ autoconf(
             checks.AC_SUBST("TOTALORDER_LIBM", "$(ISNAND_LIBM)"),
         ],
     }),
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//gnulib:__subpackages__"],
     deps = [
         "//gnulib/m4/extensions",
@@ -58,6 +64,9 @@ autoconf(
             checks.AC_SUBST("TOTALORDERL_LIBM", "$(ISNAND_LIBM)"),
         ],
     }),
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//gnulib:__subpackages__"],
     deps = [
         "//gnulib/m4/extensions",

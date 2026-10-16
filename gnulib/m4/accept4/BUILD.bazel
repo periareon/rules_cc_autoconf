@@ -17,6 +17,9 @@ autoconf(
             checks.AC_SUBST("HAVE_ACCEPT4", 0),
         ],
     }),
+    default_deps = [
+        "//gnulib/m4/sys_socket_h:defaults",  # AC_REQUIRE: gl_SYS_SOCKET_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])

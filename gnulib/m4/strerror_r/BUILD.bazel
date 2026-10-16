@@ -16,7 +16,6 @@ autoconf(
         "//gnulib/m4/errno_h",
         "//gnulib/m4/extensions",
         "//gnulib/m4/strerror:gl_FUNC_STRERROR_0",
-        "//gnulib/m4/string_h",
     ],
 )
 
@@ -34,7 +33,6 @@ autoconf(
         "//gnulib/m4/strerror:gl_HAVE___XPG_STRERROR_R",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//autoconf/macros/AC_FUNC_STRERROR_R",
-        "//gnulib/m4/string_h",
         "//gnulib/macros/AC_FUNC_SNPRINTF",
     ],
 )
@@ -74,10 +72,12 @@ autoconf(
             if_true = 1,
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/string_h:defaults",  # AC_REQUIRE: gl_STRING_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_PREREQ_STRERROR_R",
-        "//gnulib/m4/string_h",
     ],
 )
 

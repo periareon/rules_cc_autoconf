@@ -7,16 +7,18 @@ load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 # buildifier: disable=bzl-visibility
 load(
     "//autoconf/private:autoconf_config.bzl",
+    "collect_defaults",
     "collect_deps",
     "collect_transitive_results",
-    "get_autoconf_toolchain_defaults",
+    "merge_defaults",
+    "merge_results",
 )
 
 # buildifier: disable=bzl-visibility
 load("//autoconf/private:condition_utils.bzl", "extract_condition_vars")
 
 # buildifier: disable=bzl-visibility
-load("//autoconf/private:providers.bzl", "CcAutoconfInfo")
+load("//autoconf/private:providers.bzl", "CcAutoconfDefaultsInfo", "CcAutoconfInfo")
 load("//gnulib/private:result_lookup.bzl", "find_result_file")
 
 def _package_relative(hdr_file, ctx):
@@ -58,14 +60,10 @@ def _cc_gnulib_conditional_hdrs_impl(ctx):
     deps = collect_deps(ctx.attr.deps)
     dep_results = collect_transitive_results(deps.to_list())
 
-    # Toolchain defaults first, so a dependency's result overrides them
-    # (as autoconf_srcs and autoconf_hdr do).
-    defaults = struct(cache = {}, define = {}, subst = {})
-    if ctx.attr.defaults:
-        defaults = get_autoconf_toolchain_defaults(ctx)
-    all_cache = defaults.cache | dep_results["cache"]
-    all_define = defaults.define | dep_results["define"]
-    all_subst = defaults.subst | dep_results["subst"]
+    merged = merge_results(dep_results, merge_defaults(collect_defaults(ctx.attr.default_deps, deps.to_list()).to_list()))
+    all_cache = merged.cache
+    all_define = merged.define
+    all_subst = merged.subst
 
     tree_name = ctx.attr.out
     if not tree_name:
@@ -221,11 +219,18 @@ Limitations:
     coincides with the slot.
 """,
     attrs = {
+        "default_deps": attr.label_list(
+            doc = """\
+`autoconf_defaults` targets whose values stand where no result of the name comes through `deps`
+(a result overrides a default silently; two defaults of one name must agree).  The defaults the
+`deps` carry are read as well.
+""",
+            providers = [CcAutoconfDefaultsInfo],
+        ),
         "defaults": attr.bool(
             doc = """\
-Whether the conditions may also read the autoconf toolchain's defaults
-(the ``GL_GENERATE_*_H`` of header packages a project never configures
-itself).  Results from ``deps`` take precedence.""",
+Deprecated and ignored: defaults come through `deps` and `default_deps`; the autoconf toolchain
+no longer carries any.  Accepted so existing BUILD files keep loading.""",
             default = False,
         ),
         "deps": attr.label_list(
@@ -274,7 +279,4 @@ each header is placed at its basename.""",
         ),
     },
     provides = [CcInfo],
-    toolchains = [
-        config_common.toolchain_type("@rules_cc_autoconf//autoconf:toolchain_type", mandatory = False),
-    ],
 )

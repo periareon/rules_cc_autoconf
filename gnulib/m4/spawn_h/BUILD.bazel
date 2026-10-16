@@ -1,5 +1,6 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/spawn_h.m4"""
 
+load("//autoconf:autoconf_defaults.bzl", "autoconf_defaults")
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 load("//gnulib:macros.bzl", gl_macros = "macros")
@@ -46,6 +47,9 @@ autoconf(
             ),
         ],
     }),
+    default_deps = [
+        ":defaults",  # AC_REQUIRE: gl_SPAWN_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_HAVE_POSIX_SPAWN",  # AC_REQUIRE([gl_HAVE_POSIX_SPAWN])
@@ -84,6 +88,9 @@ autoconf(
         checks.AC_SUBST("POSIX_SPAWN_LIB", ""),
         checks.AC_SUBST("LIB_POSIX_SPAWN", ""),
     ],
+    default_deps = [
+        ":defaults",  # AC_REQUIRE: gl_SPAWN_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # For test compatibility
@@ -97,12 +104,18 @@ autoconf(
 autoconf(
     name = "gl_SPAWN_MODULE_INDICATOR",
     checks = [],
+    default_deps = [
+        ":defaults",  # through a macro it invokes: gl_SPAWN_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
 )
 
 # Top-level spawn_h target - aggregates all AC_DEFUN functions
 autoconf(
     name = "spawn_h",
+    default_deps = [
+        ":defaults",  # the header's own defaults, as its m4 requires
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_HAVE_POSIX_SPAWN",
@@ -113,60 +126,60 @@ autoconf(
 
 # defaults - All default AC_SUBST values. Added to gnulib_toolchain.
 
-autoconf(
+autoconf_defaults(
     name = "gl_SPAWN_H_DEFAULTS",
     # The defaults are the same on every host; the modules that probe
     # (gl_SPAWN_H, gl_HAVE_POSIX_SPAWN, ...) lower them to 0 where needed.
-    checks = [
-        checks.AC_SUBST("HAVE_POSIX_SPAWN", 1),
-        checks.AC_SUBST("HAVE_POSIX_SPAWNATTR_T", 1),
-        checks.AC_SUBST("HAVE_POSIX_SPAWN_FILE_ACTIONS_T", 1),
-        checks.AC_SUBST("HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR", 1),
-        checks.AC_SUBST("HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR", 1),
-        checks.AC_SUBST("REPLACE_POSIX_SPAWN", 0),
-        checks.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR", 0),
-        checks.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDCLOSE", 0),
-        checks.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDDUP2", 0),
-        checks.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR", 0),
-        checks.AC_SUBST("REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDOPEN", 0),
-    ],
+    substs = {
+        "HAVE_POSIX_SPAWN": "1",
+        "HAVE_POSIX_SPAWNATTR_T": "1",
+        "HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR": "1",
+        "HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR": "1",
+        "HAVE_POSIX_SPAWN_FILE_ACTIONS_T": "1",
+        "REPLACE_POSIX_SPAWN": "0",
+        "REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR": "0",
+        "REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDCLOSE": "0",
+        "REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDDUP2": "0",
+        "REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR": "0",
+        "REPLACE_POSIX_SPAWN_FILE_ACTIONS_ADDOPEN": "0",
+    },
     visibility = ["//visibility:private"],
 )
 
-autoconf(
+autoconf_defaults(
     name = "gl_SPAWN_H_REQUIRE_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("GNULIB_POSIX_SPAWN", 0),
-        checks.AC_SUBST("GNULIB_POSIX_SPAWNP", 0),
-        checks.AC_SUBST("GNULIB_POSIX_SPAWN_FILE_ACTIONS_INIT", 0),
-        checks.AC_SUBST("GNULIB_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR", 0),
-        checks.AC_SUBST("GNULIB_POSIX_SPAWN_FILE_ACTIONS_ADDCLOSE", 0),
-        checks.AC_SUBST("GNULIB_POSIX_SPAWN_FILE_ACTIONS_ADDDUP2", 0),
-        checks.AC_SUBST("GNULIB_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR", 0),
-        checks.AC_SUBST("GNULIB_POSIX_SPAWN_FILE_ACTIONS_ADDOPEN", 0),
-        checks.AC_SUBST("GNULIB_POSIX_SPAWN_FILE_ACTIONS_DESTROY", 0),
-        checks.AC_SUBST("GNULIB_POSIX_SPAWNATTR_INIT", 0),
-        checks.AC_SUBST("GNULIB_POSIX_SPAWNATTR_GETFLAGS", 0),
-        checks.AC_SUBST("GNULIB_POSIX_SPAWNATTR_SETFLAGS", 0),
-        checks.AC_SUBST("GNULIB_POSIX_SPAWNATTR_GETPGROUP", 0),
-        checks.AC_SUBST("GNULIB_POSIX_SPAWNATTR_SETPGROUP", 0),
-        checks.AC_SUBST("GNULIB_POSIX_SPAWNATTR_GETSCHEDPARAM", 0),
-        checks.AC_SUBST("GNULIB_POSIX_SPAWNATTR_SETSCHEDPARAM", 0),
-        checks.AC_SUBST("GNULIB_POSIX_SPAWNATTR_GETSCHEDPOLICY", 0),
-        checks.AC_SUBST("GNULIB_POSIX_SPAWNATTR_SETSCHEDPOLICY", 0),
-        checks.AC_SUBST("GNULIB_POSIX_SPAWNATTR_GETSIGDEFAULT", 0),
-        checks.AC_SUBST("GNULIB_POSIX_SPAWNATTR_SETSIGDEFAULT", 0),
-        checks.AC_SUBST("GNULIB_POSIX_SPAWNATTR_GETSIGMASK", 0),
-        checks.AC_SUBST("GNULIB_POSIX_SPAWNATTR_SETSIGMASK", 0),
-        checks.AC_SUBST("GNULIB_POSIX_SPAWNATTR_DESTROY", 0),
-    ],
+    substs = {
+        "GNULIB_POSIX_SPAWN": "0",
+        "GNULIB_POSIX_SPAWNATTR_DESTROY": "0",
+        "GNULIB_POSIX_SPAWNATTR_GETFLAGS": "0",
+        "GNULIB_POSIX_SPAWNATTR_GETPGROUP": "0",
+        "GNULIB_POSIX_SPAWNATTR_GETSCHEDPARAM": "0",
+        "GNULIB_POSIX_SPAWNATTR_GETSCHEDPOLICY": "0",
+        "GNULIB_POSIX_SPAWNATTR_GETSIGDEFAULT": "0",
+        "GNULIB_POSIX_SPAWNATTR_GETSIGMASK": "0",
+        "GNULIB_POSIX_SPAWNATTR_INIT": "0",
+        "GNULIB_POSIX_SPAWNATTR_SETFLAGS": "0",
+        "GNULIB_POSIX_SPAWNATTR_SETPGROUP": "0",
+        "GNULIB_POSIX_SPAWNATTR_SETSCHEDPARAM": "0",
+        "GNULIB_POSIX_SPAWNATTR_SETSCHEDPOLICY": "0",
+        "GNULIB_POSIX_SPAWNATTR_SETSIGDEFAULT": "0",
+        "GNULIB_POSIX_SPAWNATTR_SETSIGMASK": "0",
+        "GNULIB_POSIX_SPAWNP": "0",
+        "GNULIB_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR": "0",
+        "GNULIB_POSIX_SPAWN_FILE_ACTIONS_ADDCLOSE": "0",
+        "GNULIB_POSIX_SPAWN_FILE_ACTIONS_ADDDUP2": "0",
+        "GNULIB_POSIX_SPAWN_FILE_ACTIONS_ADDFCHDIR": "0",
+        "GNULIB_POSIX_SPAWN_FILE_ACTIONS_ADDOPEN": "0",
+        "GNULIB_POSIX_SPAWN_FILE_ACTIONS_DESTROY": "0",
+        "GNULIB_POSIX_SPAWN_FILE_ACTIONS_INIT": "0",
+    },
     visibility = ["//visibility:private"],
     deps = [
         ":gl_SPAWN_H_DEFAULTS",
     ],
 )
 
-autoconf(
+autoconf_defaults(
     name = "defaults",
     visibility = ["//visibility:public"],
     deps = [

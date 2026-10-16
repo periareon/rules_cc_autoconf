@@ -4,13 +4,5 @@ AC_CONFIG_HEADERS([config.h])
 # Invoke macros from vprintf-gnu.m4
 gl_FUNC_VPRINTF_GNU
 
-# Account for global Bazel defaults
-HAVE_NL_LANGINFO=1
-AC_SUBST([HAVE_NL_LANGINFO])
-HAVE_WCRTOMB=1
-AC_SUBST([HAVE_WCRTOMB])
-HAVE_WCSLEN=1
-AC_SUBST([HAVE_WCSLEN])
-
 AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

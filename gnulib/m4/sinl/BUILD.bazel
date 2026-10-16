@@ -24,6 +24,9 @@ autoconf(
         # SINL_LIBM is set based on SIN_LIBM (empty on macOS)
         checks.AC_SUBST("SINL_LIBM", ""),
     ],
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
@@ -31,7 +34,6 @@ autoconf(
         "//gnulib/m4/floorl",
         "//gnulib/m4/isnanl",
         "//gnulib/m4/math_h",  # AC_REQUIRE([gl_MATH_H_DEFAULTS])
-        "//gnulib/m4/mktime",  # Provides HAVE_DECL_ALARM (needed for test compatibility)
         "//gnulib/m4/sin",  # AC_REQUIRE([gl_FUNC_SIN])
     ],
 )

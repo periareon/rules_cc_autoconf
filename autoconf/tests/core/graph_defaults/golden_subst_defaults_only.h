@@ -1,0 +1,3 @@
+#define SUBST_HAVE_FOO "1"
+#define SUBST_REPLACE_FOO "0"
+#define SUBST_REPLACE_BAR "0"

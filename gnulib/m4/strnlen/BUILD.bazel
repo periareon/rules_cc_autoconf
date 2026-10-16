@@ -20,11 +20,13 @@ autoconf(
         # Based on golden files, strnlen works on macOS, so REPLACE_STRNLEN=0
         checks.AC_SUBST("REPLACE_STRNLEN", 0),
     ],
+    default_deps = [
+        "//gnulib/m4/string_h:defaults",  # AC_REQUIRE: gl_STRING_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
         "//autoconf/macros/AC_FUNC_STRNLEN",
         "//gnulib/m4/extensions",
-        "//gnulib/m4/string_h",
     ],
 )

@@ -1,5 +1,6 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/sched_h.m4"""
 
+load("//autoconf:autoconf_defaults.bzl", "autoconf_defaults")
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 load("//gnulib:macros.bzl", gl_macros = "macros")
@@ -43,6 +44,9 @@ autoconf(
             condition = "ac_cv_header_sched_h",
         ),
     ] + gl_macros.GL_NEXT_HEADERS(["sched.h"]),
+    default_deps = [
+        ":defaults",  # the header's own defaults, as its m4 requires
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/include_next",
@@ -53,27 +57,27 @@ autoconf(
     ],
 )
 
-autoconf(
+autoconf_defaults(
     name = "gl_SCHED_H_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("HAVE_SCHED_YIELD", 1),
-        checks.AC_SUBST("REPLACE_SCHED_YIELD", 0),
-    ],
+    substs = {
+        "HAVE_SCHED_YIELD": "1",
+        "REPLACE_SCHED_YIELD": "0",
+    },
     visibility = ["//visibility:private"],
 )
 
-autoconf(
+autoconf_defaults(
     name = "gl_SCHED_H_REQUIRE_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("GNULIB_SCHED_YIELD", 0),
-    ],
+    substs = {
+        "GNULIB_SCHED_YIELD": "0",
+    },
     visibility = ["//visibility:private"],
     deps = [
         ":gl_SCHED_H_DEFAULTS",
     ],
 )
 
-autoconf(
+autoconf_defaults(
     name = "defaults",
     visibility = ["//visibility:public"],
     deps = [

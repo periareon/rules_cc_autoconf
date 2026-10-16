@@ -26,6 +26,9 @@ autoconf(
             checks.AC_SUBST("REPLACE_ICONV_UTF", "0"),
         ],
     }),
+    default_deps = [
+        "//gnulib/m4/iconv_h:defaults",  # AC_REQUIRE: gl_ICONV_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/iconv",  # AC_REQUIRE([AM_ICONV])

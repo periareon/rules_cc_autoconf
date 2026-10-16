@@ -5,9 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_FUNC_FCHMODAT
 gl_PREREQ_FCHMODAT
 
-# Account for global Bazel defaults
-HAVE_READLINKAT=1
-AC_SUBST([HAVE_READLINKAT])
-
 AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

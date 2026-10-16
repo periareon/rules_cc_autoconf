@@ -23,6 +23,9 @@ autoconf(
             if_true = 1,
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/frexpl",  # gl_CHECK_FREXPL_NO_LIBM, gl_FUNC_FREXPL_WORKS

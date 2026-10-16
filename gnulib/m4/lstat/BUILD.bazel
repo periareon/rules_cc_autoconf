@@ -126,6 +126,9 @@ int main(void) { return 0; }
             condition = "ac_cv_func_lstat",
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/sys_stat_h:defaults",  # AC_REQUIRE: gl_SYS_STAT_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":AC_CHECK_FUNCS_ONCE_lstat",  # AC_CHECK_FUNCS_ONCE([lstat])

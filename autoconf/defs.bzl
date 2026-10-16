@@ -6,6 +6,10 @@ load(
     _autoconf = "autoconf",
 )
 load(
+    ":autoconf_defaults.bzl",
+    _autoconf_defaults = "autoconf_defaults",
+)
+load(
     ":autoconf_hdr.bzl",
     _autoconf_hdr = "autoconf_hdr",
 )
@@ -32,6 +36,7 @@ load(
 )
 
 autoconf = _autoconf
+autoconf_defaults = _autoconf_defaults
 
 autoconf_hdr = _autoconf_hdr
 autoconf_linkopts = _autoconf_linkopts

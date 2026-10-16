@@ -111,6 +111,13 @@ register_toolchains("//toolchains:all")
 # documents what it changes and why. Drop them as the overlays are updated.
 
 single_version_override(
+    module_name = "m4",
+    patch_strip = 1,
+    patches = ["//patches:m4.patch"],
+    version = "1.4.21.bcr.6",
+)
+
+single_version_override(
     module_name = "cpio",
     patch_strip = 1,
     patches = ["//patches:cpio.patch"],

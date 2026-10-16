@@ -18,6 +18,9 @@ autoconf(
         # On macOS/Linux, tanf is in libc, so TANF_LIBM is empty
         checks.AC_SUBST("TANF_LIBM", ""),
     ],
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//gnulib/m4/extensions",  # AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS,

@@ -1,0 +1,19 @@
+# The m4 overlay (BCR m4 1.4.21.bcr.6) substitutes HAVE_RANDOM_H itself,
+# from the days when the gnulib stdlib_h port did not.  gl_STDLIB_H now
+# provides it as an ordinary result (AC_CHECK_HEADERS_ONCE([random.h]), as
+# upstream), so the local copy is a duplicate producer.  Drop it until the
+# overlay in the registry catches up.
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -392,11 +392,6 @@
+         checks.AC_DEFINE("GNULIB_MBRTOWC_SINGLE_THREAD", 1),
+         checks.AC_DEFINE("GNULIB_WCHAR_SINGLE_LOCALE", 1),
+ 
+-        # Variables missing from rules_cc_autoconf toolchain defaults
+-        checks.AC_SUBST(
+-            "HAVE_RANDOM_H",
+-            condition = "ac_cv_header_random_h",
+-        ),
+         checks.AC_SUBST(
+             "HAVE_LANGINFO_T_FMT_AMPM",
+             condition = "ac_cv_header_langinfo_h",

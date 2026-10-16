@@ -3,16 +3,28 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
+# gl_CHECK_LDEXP_NO_LIBM: ldexp() is available in libc without -lm.  This is
+# true on modern systems (macOS, Linux glibc).  strtod and printf-frexp need
+# only this probe, not gl_FUNC_LDEXP and its math.h defaults.
+autoconf(
+    name = "HAVE_LDEXP_IN_LIBC",
+    checks = [
+        checks.AC_DEFINE("HAVE_LDEXP_IN_LIBC", "1"),
+    ],
+    visibility = ["//visibility:public"],
+)
+
 autoconf(
     name = "ldexp",
     checks = [
-        # HAVE_LDEXP_IN_LIBC: ldexp() is available in libc without -lm
-        # This is true on modern systems (macOS, Linux glibc)
-        checks.AC_DEFINE("HAVE_LDEXP_IN_LIBC", "1"),
         checks.AC_SUBST("LDEXP_LIBM", ""),
+    ],
+    default_deps = [
+        "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS
     ],
     visibility = ["//visibility:public"],
     deps = [
+        ":HAVE_LDEXP_IN_LIBC",  # AC_REQUIRE([gl_CHECK_LDEXP_NO_LIBM])
         "//gnulib/m4/isnand",
     ],
 )

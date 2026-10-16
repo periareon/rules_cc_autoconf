@@ -159,6 +159,9 @@ autoconf(
             checks.AC_SUBST("REPLACE_REALPATH", 1),
         ],
     }),
+    default_deps = [
+        "//gnulib/m4/stdlib_h:defaults",  # AC_REQUIRE: gl_STDLIB_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # "//gnulib/m4/stdlib_h",

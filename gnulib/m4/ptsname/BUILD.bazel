@@ -31,6 +31,9 @@ autoconf(
         # Based on golden files, REPLACE_PTSNAME=0 on macOS (ptsname exists and works correctly).
         # If ptsname doesn't set errno on failure, REPLACE_PTSNAME=1.
     ],
+    default_deps = [
+        "//gnulib/m4/unistd_h:defaults",  # AC_REQUIRE: gl_UNISTD_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_UNISTD_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction

@@ -1,5 +1,6 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/threads_h.m4"""
 
+load("//autoconf:autoconf_defaults.bzl", "autoconf_defaults")
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 load("//gnulib:macros.bzl", gl_macros = "macros")
@@ -77,6 +78,9 @@ int main(void) {
         # LIBTHREADLOCAL - empty on macOS/Linux, only -lpthread on AIX
         checks.AC_SUBST("LIBTHREADLOCAL", ""),
     ],
+    default_deps = [
+        ":defaults",  # AC_REQUIRE: gl_THREADS_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_THREAD_LOCAL_DEFINITION",  # prologue of the _Thread_local test program
@@ -93,6 +97,9 @@ int main(void) {
 autoconf(
     name = "gl_THREAD_LOCAL_DEFINITION",
     checks = [],
+    default_deps = [
+        ":defaults",  # through a macro it invokes: gl_THREADS_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
 )
 
@@ -102,60 +109,63 @@ autoconf(
 autoconf(
     name = "gl_THREADS_MODULE_INDICATOR",
     checks = [],
+    default_deps = [
+        ":defaults",  # through a macro it invokes: gl_THREADS_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
 )
 
-autoconf(
+autoconf_defaults(
     name = "gl_THREADS_H_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("HAVE_THREAD_LOCAL", 1),
-        checks.AC_SUBST("BROKEN_THRD_JOIN", 0),
-        checks.AC_SUBST("BROKEN_THRD_START_T", 0),
-        checks.AC_SUBST("REPLACE_CALL_ONCE", 0),
-        checks.AC_SUBST("REPLACE_CND_BROADCAST", 0),
-        checks.AC_SUBST("REPLACE_CND_DESTROY", 0),
-        checks.AC_SUBST("REPLACE_CND_INIT", 0),
-        checks.AC_SUBST("REPLACE_CND_SIGNAL", 0),
-        checks.AC_SUBST("REPLACE_CND_TIMEDWAIT", 0),
-        checks.AC_SUBST("REPLACE_CND_WAIT", 0),
-        checks.AC_SUBST("REPLACE_MTX_DESTROY", 0),
-        checks.AC_SUBST("REPLACE_MTX_INIT", 0),
-        checks.AC_SUBST("REPLACE_MTX_LOCK", 0),
-        checks.AC_SUBST("REPLACE_MTX_TIMEDLOCK", 0),
-        checks.AC_SUBST("REPLACE_MTX_TRYLOCK", 0),
-        checks.AC_SUBST("REPLACE_MTX_UNLOCK", 0),
-        checks.AC_SUBST("REPLACE_THRD_CREATE", 0),
-        checks.AC_SUBST("REPLACE_THRD_CURRENT", 0),
-        checks.AC_SUBST("REPLACE_THRD_DETACH", 0),
-        checks.AC_SUBST("REPLACE_THRD_EQUAL", 0),
-        checks.AC_SUBST("REPLACE_THRD_EXIT", 0),
-        checks.AC_SUBST("REPLACE_THRD_JOIN", 0),
-        checks.AC_SUBST("REPLACE_THRD_SLEEP", 0),
-        checks.AC_SUBST("REPLACE_THRD_YIELD", 0),
-        checks.AC_SUBST("REPLACE_TSS_CREATE", 0),
-        checks.AC_SUBST("REPLACE_TSS_DELETE", 0),
-        checks.AC_SUBST("REPLACE_TSS_GET", 0),
-        checks.AC_SUBST("REPLACE_TSS_SET", 0),
-    ],
+    substs = {
+        "BROKEN_THRD_JOIN": "0",
+        "BROKEN_THRD_START_T": "0",
+        "HAVE_THREAD_LOCAL": "1",
+        "REPLACE_CALL_ONCE": "0",
+        "REPLACE_CND_BROADCAST": "0",
+        "REPLACE_CND_DESTROY": "0",
+        "REPLACE_CND_INIT": "0",
+        "REPLACE_CND_SIGNAL": "0",
+        "REPLACE_CND_TIMEDWAIT": "0",
+        "REPLACE_CND_WAIT": "0",
+        "REPLACE_MTX_DESTROY": "0",
+        "REPLACE_MTX_INIT": "0",
+        "REPLACE_MTX_LOCK": "0",
+        "REPLACE_MTX_TIMEDLOCK": "0",
+        "REPLACE_MTX_TRYLOCK": "0",
+        "REPLACE_MTX_UNLOCK": "0",
+        "REPLACE_THRD_CREATE": "0",
+        "REPLACE_THRD_CURRENT": "0",
+        "REPLACE_THRD_DETACH": "0",
+        "REPLACE_THRD_EQUAL": "0",
+        "REPLACE_THRD_EXIT": "0",
+        "REPLACE_THRD_JOIN": "0",
+        "REPLACE_THRD_SLEEP": "0",
+        "REPLACE_THRD_YIELD": "0",
+        "REPLACE_TSS_CREATE": "0",
+        "REPLACE_TSS_DELETE": "0",
+        "REPLACE_TSS_GET": "0",
+        "REPLACE_TSS_SET": "0",
+    },
     visibility = ["//visibility:private"],
 )
 
-autoconf(
+autoconf_defaults(
     name = "gl_THREADS_H_REQUIRE_DEFAULTS",
-    checks = [
-        checks.AC_SUBST("GNULIB_CALL_ONCE", 0),
-        checks.AC_SUBST("GNULIB_CND", 0),
-        checks.AC_SUBST("GNULIB_MTX", 0),
-        checks.AC_SUBST("GNULIB_THRD", 0),
-        checks.AC_SUBST("GNULIB_TSS", 0),
-    ],
+    substs = {
+        "GNULIB_CALL_ONCE": "0",
+        "GNULIB_CND": "0",
+        "GNULIB_MTX": "0",
+        "GNULIB_THRD": "0",
+        "GNULIB_TSS": "0",
+    },
     visibility = ["//visibility:private"],
     deps = [
         ":gl_THREADS_H_DEFAULTS",
     ],
 )
 
-autoconf(
+autoconf_defaults(
     name = "defaults",
     visibility = ["//visibility:public"],
     deps = [
@@ -165,6 +175,9 @@ autoconf(
 
 autoconf(
     name = "threads_h",
+    default_deps = [
+        ":defaults",  # the header's own defaults, as its m4 requires
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_THREADS_H",

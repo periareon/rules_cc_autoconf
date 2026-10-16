@@ -21,6 +21,9 @@ autoconf(
             checks.AC_DEFINE("REPLACE_VFPRINTF_POSIX", "1"),
         ],
     }),
+    default_deps = [
+        "//gnulib/m4/stdio_h:defaults",  # AC_REQUIRE: gl_STDIO_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_STDIO_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
@@ -73,6 +76,9 @@ autoconf(
     checks = [
         # AC_FUNC_ALLOCA sets ALLOCA
         # APPLE_UNIVERSAL_BUILD is set by multiarch module
+    ],
+    default_deps = [
+        "//gnulib/m4/stdio_h:defaults",  # through a macro it invokes: gl_STDIO_H_DEFAULTS
     ],
     visibility = ["//visibility:public"],
     deps = [

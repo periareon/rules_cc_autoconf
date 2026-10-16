@@ -24,6 +24,9 @@ autoconf(
             subst = True,
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/stdlib_h:defaults",  # AC_REQUIRE: gl_STDLIB_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # Note: gl_STDLIB_H_DEFAULTS is a _DEFAULTS function, so we ignore it per user's instruction
@@ -38,6 +41,9 @@ autoconf(
 
         # Note: HAVE_SETENV is now provided by AC_CHECK_FUNC with subst=True above
         checks.AC_SUBST("REPLACE_SETENV", 0),
+    ],
+    default_deps = [
+        "//gnulib/m4/stdlib_h:defaults",  # through a macro it invokes: gl_STDLIB_H_DEFAULTS
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -77,6 +83,9 @@ autoconf(
 
         # Runtime checks for return type and POSIX compliance use AC_RUN_IFELSE
         checks.AC_SUBST("REPLACE_UNSETENV", 0),
+    ],
+    default_deps = [
+        "//gnulib/m4/stdlib_h:defaults",  # AC_REQUIRE: gl_STDLIB_H_DEFAULTS
     ],
     visibility = ["//visibility:public"],
     deps = [

@@ -5,9 +5,5 @@ AC_CONFIG_HEADERS([config.h])
 gl_STAT_TIME
 gl_STAT_BIRTHTIME
 
-# Account for global Bazel defaults
-HAVE_SYS_TIME_H=1
-AC_SUBST([HAVE_SYS_TIME_H])
-
 AC_CONFIG_FILES([subst.h:subst.h.in])
 AC_OUTPUT

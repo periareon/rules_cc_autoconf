@@ -68,6 +68,9 @@ int main(void) {
             if_true = "1",
         ),
     ],
+    default_deps = [
+        "//gnulib/m4/spawn_h:defaults",  # AC_REQUIRE: gl_SPAWN_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         # For test compatibility - need basic header defines

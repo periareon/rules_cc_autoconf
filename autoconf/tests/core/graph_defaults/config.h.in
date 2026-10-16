@@ -1,0 +1,2 @@
+/* a define only a default provides */
+#undef DEFAULT_ONLY

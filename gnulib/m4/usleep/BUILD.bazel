@@ -36,6 +36,9 @@ autoconf(
         # - REPLACE_USLEEP=0 (function works correctly)
         checks.AC_SUBST("REPLACE_USLEEP", 0),
     ],
+    default_deps = [
+        "//gnulib/m4/unistd_h:defaults",  # AC_REQUIRE: gl_UNISTD_H_DEFAULTS
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//autoconf/macros/AC_CANONICAL_HOST",
