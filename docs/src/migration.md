@@ -1120,12 +1120,12 @@ Each source is compiled only when its expression is true; the grammar is the one
 
 ### A standard for every check
 
-Checks compile with Bazel's `--copt` / `--cxxopt` (the CFLAGS of a configure
-run), then the `autoconf` target's own `copts`, `conlyopts` and `cxxopts`
-(as on a `cc_library`), then a check's own `copts`. A target's flags are
-its own: they do not reach the ports of this repository or any other
-dependency, and results computed under them are not shared with targets
-that lack them.
+Checks compile with Bazel's `--copt`, `--conlyopt` and `--cxxopt` (the CFLAGS
+of a configure run), then the `autoconf` target's own `copts`, `conlyopts`
+and `cxxopts` (as on a `cc_library`), then a check's own `copts`. A target's
+flags are its own: they do not reach the ports of this repository or any
+other dependency, and results computed under them are not shared with
+targets that lack them.
 
 A language standard is not something a port or a project sets for itself.
 The standard of a build belongs to the root module, as it does for every
@@ -1134,8 +1134,8 @@ other C and C++ dependency: `--cxxopt=-std=c++17` (and `--host_cxxopt`) in
 the checks honour like `cc_library` does. Either way every check, port and
 compile sees one standard, in one configuration, with the toolchain's cached
 results intact. A module that put `-std=` in its own `copts` would override
-that choice: flags come in the order toolchain, `--copt` / `--cxxopt`,
-target `copts` / `conlyopts` / `cxxopts`, then `--per_file_copt` (or a
+that choice: flags come in the order toolchain, `--copt` / `--conlyopt` /
+`--cxxopt`, target `copts` / `conlyopts` / `cxxopts`, then `--per_file_copt` (or a
 check's `copts`), and every compiler takes the last standard it sees. When
 configure.ac makes a standard mandatory (`AX_CXX_COMPILE_STDCXX(17, noext,
 mandatory)`, `AC_PROG_CC_C99`), translate it the way configure behaves when

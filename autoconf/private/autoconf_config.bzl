@@ -381,15 +381,17 @@ def get_cc_toolchain_info(ctx):
         action_name = ACTION_NAMES.cpp_link_executable,
     )
 
-    # The target's own copts / conlyopts / cxxopts, as on a cc_library: for
-    # its checks only, after --copt / --cxxopt and before a check's own copts.
+    # The command line's --copt / --conlyopt / --cxxopt, then the target's own
+    # copts / conlyopts / cxxopts, as on a cc_library: for its checks only,
+    # before a check's own copts.  `--conlyopt=-std=c11` is how a build sets
+    # its C standard without touching C++, so it must reach every C probe.
     copts = getattr(ctx.attr, "copts", [])
     conlyopts = getattr(ctx.attr, "conlyopts", [])
     cxxopts = getattr(ctx.attr, "cxxopts", [])
     c_compile_variables = cc_common.create_compile_variables(
         feature_configuration = feature_configuration,
         cc_toolchain = cc_toolchain,
-        user_compile_flags = ctx.fragments.cpp.copts + copts + conlyopts + [_COPTS_MARKER],
+        user_compile_flags = ctx.fragments.cpp.copts + ctx.fragments.cpp.conlyopts + copts + conlyopts + [_COPTS_MARKER],
     )
 
     c_flags = cc_common.get_memory_inefficient_command_line(

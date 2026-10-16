@@ -962,7 +962,8 @@ def _ac_lang_standard(
     The probe compares `__STDC_VERSION__` (C) or `__cplusplus` -- `_MSVC_LANG`
     on MSVC, whose `__cplusplus` stays at 199711L -- with the value of
     `standard`, under the flags every check sees: the toolchain's, `--copt` /
-    `--cxxopt`, and the target's own `copts` / `conlyopts` / `cxxopts`.  It is
+    `--conlyopt` / `--cxxopt`, and the target's own `copts` / `conlyopts` /
+    `cxxopts`.  It is
     the test behind `AC_PROG_CC_C99`, `AC_PROG_CC_STDC` and
     `AX_CXX_COMPILE_STDCXX`'s mandatory mode, as one check: configure
     switches the compiler into the mode it needs and stops when it cannot;

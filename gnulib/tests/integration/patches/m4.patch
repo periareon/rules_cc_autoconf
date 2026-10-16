@@ -7,6 +7,11 @@
 # autoconf toolchain carries no defaults any more) and the main autoconf
 # target reads the headers' `:defaults` the configure script AC_REQUIREs
 # through `default_deps = GNULIB_M4_DEFAULT_DEPS`.
+# The C dialect pin (`-std=c11` for gcc and clang) is dropped: the ports' probes
+# run with the toolchain's default dialect, and under GCC 15 (default gnu23,
+# where alignof is a keyword) the stdalign probe answered for C23 while m4 was
+# compiled as C11 (bazel-central-registry#11072).  Compiling with the default
+# keeps the two in step; a converted project never pins the dialect per target.
 --- a/BUILD.bazel
 +++ b/BUILD.bazel
 @@ -75,6 +75,45 @@
@@ -83,7 +88,20 @@
          inlines = {
              "/* The definition of _GL_ARG_NONNULL is copied here.  */": "lib/arg-nonnull.h",
              "/* The definition of _GL_WARN_ON_USE is copied here.  */": "lib/warn-on-use.h",
-@@ -951,7 +985,6 @@
+@@ -835,12 +869,10 @@
+ M4_COPTS = select({
+     "@rules_cc//cc/compiler:clang": [
+         "-w",
+-        "-std=c11",
+         "-UDEBUG",
+     ],
+     "@rules_cc//cc/compiler:gcc": [
+         "-w",
+-        "-std=c11",
+         "-UDEBUG",
+     ],
+     "@rules_cc//cc/compiler:msvc-cl": [
+@@ -951,7 +983,6 @@
          "lib/wctype.c": "REPLACE_WCTYPE",
          "lib/wcwidth.c": "!ac_cv_func_wcwidth || REPLACE_WCWIDTH",
      },
