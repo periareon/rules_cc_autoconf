@@ -918,7 +918,8 @@ checks.AC_LANG_STANDARD(<a href="#checks.AC_LANG_STANDARD-standard">standard</a>
 <p>The probe compares <code>__STDC_VERSION__</code> (C) or <code>__cplusplus</code> -- <code>_MSVC_LANG</code>
 on MSVC, whose <code>__cplusplus</code> stays at 199711L -- with the value of
 <code>standard</code>, under the flags every check sees: the toolchain's, <code>--copt</code> /
-<code>--cxxopt</code>, and the target's own <code>copts</code> / <code>conlyopts</code> / <code>cxxopts</code>.  It is
+<code>--conlyopt</code> / <code>--cxxopt</code>, and the target's own <code>copts</code> / <code>conlyopts</code> /
+<code>cxxopts</code>.  It is
 the test behind <code>AC_PROG_CC_C99</code>, <code>AC_PROG_CC_STDC</code> and
 <code>AX_CXX_COMPILE_STDCXX</code>'s mandatory mode, as one check: configure
 switches the compiler into the mode it needs and stops when it cannot;

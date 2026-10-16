@@ -1462,7 +1462,8 @@ checks.AC_LANG_STANDARD(<a href="checks.html#checks.AC_LANG_STANDARD-standard">s
 <p>The probe compares <code>__STDC_VERSION__</code> (C) or <code>__cplusplus</code> -- <code>_MSVC_LANG</code>
 on MSVC, whose <code>__cplusplus</code> stays at 199711L -- with the value of
 <code>standard</code>, under the flags every check sees: the toolchain's, <code>--copt</code> /
-<code>--cxxopt</code>, and the target's own <code>copts</code> / <code>conlyopts</code> / <code>cxxopts</code>.  It is
+<code>--conlyopt</code> / <code>--cxxopt</code>, and the target's own <code>copts</code> / <code>conlyopts</code> /
+<code>cxxopts</code>.  It is
 the test behind <code>AC_PROG_CC_C99</code>, <code>AC_PROG_CC_STDC</code> and
 <code>AX_CXX_COMPILE_STDCXX</code>'s mandatory mode, as one check: configure
 switches the compiler into the mode it needs and stops when it cannot;
@@ -3010,12 +3011,12 @@ autoconf_srcs(
 </code></pre>
 <p>Each source is compiled only when its expression is true; the grammar is the one in <a href="migration.html#expression-syntax">Expression syntax</a>. The gnulib rule is <code>HAVE_X = 0 || REPLACE_X = 1</code>; checking only <code>REPLACE_X</code> misses every libc that lacks the function (MSVC, often MinGW).</p>
 <h3 id="a-standard-for-every-check"><a class="header" href="#a-standard-for-every-check">A standard for every check</a></h3>
-<p>Checks compile with Bazel's <code>--copt</code> / <code>--cxxopt</code> (the CFLAGS of a configure
-run), then the <code>autoconf</code> target's own <code>copts</code>, <code>conlyopts</code> and <code>cxxopts</code>
-(as on a <code>cc_library</code>), then a check's own <code>copts</code>. A target's flags are
-its own: they do not reach the ports of this repository or any other
-dependency, and results computed under them are not shared with targets
-that lack them.</p>
+<p>Checks compile with Bazel's <code>--copt</code>, <code>--conlyopt</code> and <code>--cxxopt</code> (the CFLAGS
+of a configure run), then the <code>autoconf</code> target's own <code>copts</code>, <code>conlyopts</code>
+and <code>cxxopts</code> (as on a <code>cc_library</code>), then a check's own <code>copts</code>. A target's
+flags are its own: they do not reach the ports of this repository or any
+other dependency, and results computed under them are not shared with
+targets that lack them.</p>
 <p>A language standard is not something a port or a project sets for itself.
 The standard of a build belongs to the root module, as it does for every
 other C and C++ dependency: <code>--cxxopt=-std=c++17</code> (and <code>--host_cxxopt</code>) in
@@ -3023,8 +3024,8 @@ other C and C++ dependency: <code>--cxxopt=-std=c++17</code> (and <code>--host_c
 the checks honour like <code>cc_library</code> does. Either way every check, port and
 compile sees one standard, in one configuration, with the toolchain's cached
 results intact. A module that put <code>-std=</code> in its own <code>copts</code> would override
-that choice: flags come in the order toolchain, <code>--copt</code> / <code>--cxxopt</code>,
-target <code>copts</code> / <code>conlyopts</code> / <code>cxxopts</code>, then <code>--per_file_copt</code> (or a
+that choice: flags come in the order toolchain, <code>--copt</code> / <code>--conlyopt</code> /
+<code>--cxxopt</code>, target <code>copts</code> / <code>conlyopts</code> / <code>cxxopts</code>, then <code>--per_file_copt</code> (or a
 check's <code>copts</code>), and every compiler takes the last standard it sees. When
 configure.ac makes a standard mandatory (<code>AX_CXX_COMPILE_STDCXX(17, noext, mandatory)</code>, <code>AC_PROG_CC_C99</code>), translate it the way configure behaves when
 the compiler cannot provide it: a check that probes <code>__cplusplus</code> or
