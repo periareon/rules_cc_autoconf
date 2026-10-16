@@ -3,6 +3,10 @@
 # provides it as an ordinary result (AC_CHECK_HEADERS_ONCE([random.h]), as
 # upstream), so the local copy is a duplicate producer.  Drop it until the
 # overlay in the registry catches up.
+# It also drops the overlay's `-std=c11` (gcc, clang): the ports' probes run with
+# the toolchain's default dialect, and under GCC 15 (default gnu23) the stdalign
+# probe answered for C23 while m4 compiled as C11, which breaks lib/mbsstr.c
+# (bazel-central-registry#11072).  Compiling with the default keeps them in step.
 --- a/BUILD.bazel
 +++ b/BUILD.bazel
 @@ -392,11 +392,6 @@
@@ -17,3 +21,16 @@
          checks.AC_SUBST(
              "HAVE_LANGINFO_T_FMT_AMPM",
              condition = "ac_cv_header_langinfo_h",
+@@ -835,12 +830,10 @@
+ M4_COPTS = select({
+     "@rules_cc//cc/compiler:clang": [
+         "-w",
+-        "-std=c11",
+         "-UDEBUG",
+     ],
+     "@rules_cc//cc/compiler:gcc": [
+         "-w",
+-        "-std=c11",
+         "-UDEBUG",
+     ],
+     "@rules_cc//cc/compiler:msvc-cl": [
