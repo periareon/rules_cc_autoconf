@@ -272,7 +272,7 @@ headers or wrapped source files.</p>
 <tr><td style="text-align: left"><a id="autoconf-build_settings"></a>build_settings</td><td style="text-align: left">List of <code>checks.AC_BUILD_SETTING(...)</code> entries associating Bazel build setting targets (any rule providing <code>BuildSettingInfo</code>) with autoconf-style defines and substitutions.</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="autoconf-checks"></a>checks</td><td style="text-align: left">List of JSON-encoded checks from <code>checks</code> (e.g., <code>checks.AC_CHECK_HEADER('stdio.h')</code>).</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="autoconf-deps"></a>deps</td><td style="text-align: left">Additional <code>autoconf</code>, <code>autoconf_cache</code>, or <code>autoconf_package_info</code> dependencies.</td><td style="text-align: left"><code>None</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf-kwargs"></a>kwargs</td><td style="text-align: left">Standard Bazel attributes (e.g. <code>visibility</code>, <code>tags</code>).</td><td style="text-align: left">none</td></tr>
+<tr><td style="text-align: left"><a id="autoconf-kwargs"></a>kwargs</td><td style="text-align: left">Standard Bazel attributes (e.g. <code>visibility</code>, <code>tags</code>) and the rule's other attributes: <code>cc_deps</code> (libraries the checks compile against and link, as configure's CPPFLAGS and LIBS carry them), <code>default_deps</code>, <code>copts</code>, <code>conlyopts</code>, <code>cxxopts</code>.</td><td style="text-align: left">none</td></tr>
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
 <h1 id="autoconf_defaults"><a class="header" href="#autoconf_defaults">autoconf_defaults</a></h1>
@@ -3043,6 +3043,27 @@ checks.AC_LANG_STANDARD("c++17", define = "HAVE_CXX17")
 Such a check needs no <code>define</code>: it is a validation action, run whenever the
 target is built, directly or through a dependency, even though nothing in
 config.h reads its result.</p>
+<h3 id="libraries-the-checks-need-cc_deps"><a class="header" href="#libraries-the-checks-need-cc_deps">Libraries the checks need: <code>cc_deps</code></a></h3>
+<p>A configure script probes with the project's dependencies on the include and
+link paths: <code>CPPFLAGS</code> and <code>LIBS</code> carry them, so <code>AC_CHECK_LIB([gmp], ...)</code>
+links against gmp and a probe may <code>#include &lt;gmp.h&gt;</code>. In Bazel those
+dependencies are <code>cc_library</code> targets, and the checks of an <code>autoconf</code> target
+see them through <code>cc_deps</code>:</p>
+<pre><code class="language-python">autoconf(
+    name = "autoconf",
+    cc_deps = ["@gmp//:gmp"],
+    checks = [
+        checks.AC_CHECK_LIB("gmp", "__gmpz_init"),
+        checks.AC_CHECK_HEADER("gmp.h"),
+    ],
+)
+</code></pre>
+<p>Every check of the target compiles with the dependencies' include directories
+and defines and links their archives after its own object, so the probe
+answers as it would with the library installed. The dependencies' flags are
+part of each check's identity: the same check with and without them never
+shares a result. Prefer this over a static <code>AC_DEFINE([HAVE_LIBGMP])</code>, which
+asserts what the probe can establish.</p>
 <h3 id="defaults-yield-to-your-values"><a class="header" href="#defaults-yield-to-your-values">Defaults yield to your values</a></h3>
 <p>The <code>*_H_DEFAULTS</code> values (<code>HAVE_FOO=1</code>, <code>REPLACE_FOO=0</code>, <code>GNULIB_FOO=0</code>) are not check results. Each header port keeps them in an <code>autoconf_defaults</code> target named <code>:defaults</code> (<code>//gnulib/m4/stdlib_h:defaults</code>), and targets read them through <code>default_deps</code>, never <code>deps</code>: the header port lists its own <code>:defaults</code> there, and so does every port whose m4 <code>AC_REQUIRE</code>s that header's <code>gl_*_H_DEFAULTS</code>. An <code>autoconf</code> target passes the defaults it reads on to its dependents, still as defaults. A default has the lowest precedence: an ordinary result of the same name, from any check in the graph or from your own target, overrides it without a duplicate error, and two defaults of one name must agree. Two consequences:</p>
 <ul>
