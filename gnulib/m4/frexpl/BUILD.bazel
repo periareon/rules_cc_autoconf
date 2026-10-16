@@ -186,6 +186,14 @@ autoconf(
             if_false = None,
             if_true = 1,
         ),
+        # m4 lines 49-53: gl_func_frexpl=yes when frexpl links and works, else
+        # no; gnulib.mk's gl_CONDITIONAL([GL_COND_OBJ_FREXPL]) reads it.
+        checks.M4_VARIABLE(
+            "gl_func_frexpl",
+            condition = "ac_cv_have_decl_frexpl && (gl_cv_func_frexpl_no_libm || gl_cv_func_frexpl_in_libm) && gl_cv_func_frexpl_works",
+            if_false = "no",
+            if_true = "yes",
+        ),
         # m4 line 51: REPLACE_FREXPL=1 when frexpl links but does not work
         checks.AC_SUBST(
             "REPLACE_FREXPL",

@@ -20,9 +20,13 @@ autoconf_defaults(
     visibility = ["//visibility:private"],
 )
 
-# Note: unimetadata_h has _REQUIRE_DEFAULTS but no GNULIB_* variables
+# gl_UNIMETADATA_H_REQUIRE_DEFAULTS: the one indicator unimetadata.in.h
+# reads, its upstream initial value.
 autoconf_defaults(
     name = "gl_UNIMETADATA_H_REQUIRE_DEFAULTS",
+    substs = {
+        "GNULIB_UNIMETADATA_UNICODE_VERSION_DLL_VARIABLE": "LIBUNISTRING_DLL_VARIABLE",
+    },
     visibility = ["//visibility:private"],
     deps = [
         ":gl_UNIMETADATA_H_DEFAULTS",

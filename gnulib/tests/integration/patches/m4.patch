@@ -3,9 +3,67 @@
 # provides it as an ordinary result (AC_CHECK_HEADERS_ONCE([random.h]), as
 # upstream), so the local copy is a duplicate producer.  Drop it until the
 # overlay in the registry catches up.
+# Defaults as the converter generates them: `defaults = True` is gone (the
+# autoconf toolchain carries no defaults any more) and the main autoconf
+# target reads the headers' `:defaults` the configure script AC_REQUIREs
+# through `default_deps = GNULIB_M4_DEFAULT_DEPS`.
 --- a/BUILD.bazel
 +++ b/BUILD.bazel
-@@ -392,11 +392,6 @@
+@@ -75,6 +75,45 @@
+         include = ["m4/*.m4"],
+         exclude = M4_UNIQUE_M4_FILES,
+     )
++]
++
++# The gl_<HEADER>_H_DEFAULTS the configure script AC_REQUIREs: the headers' `:defaults`,
++# read beneath the results (a probe of the same name overrides a default).
++GNULIB_M4_DEFAULT_DEPS = [
++    "@rules_cc_autoconf//gnulib/m4/arpa_inet_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/ctype_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/dirent_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/fcntl_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/iconv_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/inttypes:defaults",
++    "@rules_cc_autoconf//gnulib/m4/langinfo_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/locale_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/math_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/pthread_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sched_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/signal_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/spawn_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/stddef_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/stdio_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/stdlib_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/string_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sys_ioctl_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sys_random_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sys_select_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sys_socket_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sys_stat_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sys_time_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sys_types_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sys_uio_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/sys_wait_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/time_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/uchar_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/unicase_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/unictype_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/uninorm_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/unistd_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/wchar_h:defaults",
++    "@rules_cc_autoconf//gnulib/m4/wctype_h:defaults",
+ ]
+ 
+ autoconf_package_info(
+@@ -380,6 +419,7 @@
+ 
+ autoconf(
+     name = "configure_ac",
++    default_deps = GNULIB_M4_DEFAULT_DEPS,
+     checks = [
+         checks.AC_CHECK_FUNC("setlocale"),
+         checks.AC_CHECK_FUNC("getrlimit"),
+@@ -392,11 +432,6 @@
          checks.AC_DEFINE("GNULIB_MBRTOWC_SINGLE_THREAD", 1),
          checks.AC_DEFINE("GNULIB_WCHAR_SINGLE_LOCALE", 1),
  
@@ -17,3 +75,19 @@
          checks.AC_SUBST(
              "HAVE_LANGINFO_T_FMT_AMPM",
              condition = "ac_cv_header_langinfo_h",
+@@ -590,7 +625,6 @@
+     autoconf_hdr(
+         name = hdr[:-len(".h")] + "_h",
+         out = hdr,
+-        defaults = True,
+         inlines = {
+             "/* The definition of _GL_ARG_NONNULL is copied here.  */": "lib/arg-nonnull.h",
+             "/* The definition of _GL_WARN_ON_USE is copied here.  */": "lib/warn-on-use.h",
+@@ -951,7 +985,6 @@
+         "lib/wctype.c": "REPLACE_WCTYPE",
+         "lib/wcwidth.c": "!ac_cv_func_wcwidth || REPLACE_WCWIDTH",
+     },
+-    defaults = True,
+     deps = [":configure_ac"],
+ )
+ 
