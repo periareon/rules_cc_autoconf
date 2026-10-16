@@ -171,44 +171,38 @@
 <pre>
 load("@rules_cc_autoconf//autoconf:autoconf_toolchain.bzl", "autoconf_toolchain")
 
-autoconf_toolchain(<a href="#autoconf_toolchain-name">name</a>, <a href="#autoconf_toolchain-cache_deps">cache_deps</a>, <a href="#autoconf_toolchain-defaults">defaults</a>)
+autoconf_toolchain(<a href="#autoconf_toolchain-name">name</a>, <a href="#autoconf_toolchain-cache_deps">cache_deps</a>)
 </pre>
-<p>Define an autoconf toolchain providing cached check results and rendering defaults.</p>
-<p>The toolchain has two separate concepts:</p>
-<ul>
-<li><strong>cache_deps</strong>: Check results available for action deduplication. When an
-<code>autoconf</code> target lists a check whose cache variable name already has a result
-in <code>cache_deps</code>, the checker action is skipped and the existing result file is
-reused.</li>
-<li><strong>defaults</strong>: Baseline values for <code>autoconf_hdr</code> rendering. When
-<code>autoconf_hdr</code> has <code>defaults = True</code>, these values are merged into the
-generated header.</li>
-</ul>
-<p>Both <code>cache_deps</code> and <code>defaults</code> contribute to the unified cache used by the
-<code>autoconf</code> rule for action deduplication. Only <code>defaults</code> contributes to the
-<code>defaults_by_label</code> map used by <code>autoconf_hdr</code> for include/exclude filtering.</p>
-<p>Targets listed in <code>cache_deps</code> and <code>defaults</code> must use <code>autoconf_library</code>
-(not <code>autoconf</code>) to avoid a dependency cycle.</p>
+<p>Define an autoconf toolchain that shares check results across targets.</p>
+<p>The toolchain carries one thing: the <strong>content cache</strong> of its <code>cache_deps</code>.
+When an <code>autoconf</code> target lists a check whose implementation already has a
+result there, the checker action is skipped and the existing result file is
+reused.  Nothing else crosses the toolchain boundary: not the results as
+defines or substs, and not defaults.  Defaults are <code>autoconf_defaults</code>
+targets that a target reads through its own <code>default_deps</code> (see
+<code>autoconf_defaults</code>); the toolchain neither carries nor injects any.</p>
+<p>Targets listed in <code>cache_deps</code> must use <code>autoconf_cache</code> (not <code>autoconf</code>)
+to avoid a dependency cycle.</p>
 <p>Example:</p>
 <pre><code class="language-python">load("@rules_cc_autoconf//autoconf:defs.bzl", "autoconf_cache", "autoconf_toolchain")
 load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
 
 autoconf_cache(
-    name = "gnulib_defaults",
+    name = "common_checks",
     checks = [
-        checks.AC_SUBST("GNULIB_VFPRINTF_POSIX", "0"),
-        checks.AC_SUBST("REPLACE_POSIX_SPAWN", "0"),
+        checks.AC_CHECK_HEADER("stdio.h"),
+        checks.AC_CHECK_FUNC("strerror"),
     ],
 )
 
 autoconf_toolchain(
-    name = "gnulib_toolchain_impl",
-    defaults = [":gnulib_defaults"],
+    name = "my_toolchain_impl",
+    cache_deps = [":common_checks"],
 )
 
 toolchain(
-    name = "gnulib_toolchain",
-    toolchain = ":gnulib_toolchain_impl",
+    name = "my_toolchain",
+    toolchain = ":my_toolchain_impl",
     toolchain_type = "@rules_cc_autoconf//autoconf:toolchain_type",
 )
 </code></pre>
@@ -224,7 +218,7 @@ checker action and result file.</p>
 <p>When a new check is processed, its content key is looked up in order:</p>
 <ol>
 <li>Transitive deps' <code>content_cache</code></li>
-<li>Toolchain unified cache (<code>cache_deps</code> + <code>defaults</code>)</li>
+<li>Toolchain content cache (<code>cache_deps</code>)</li>
 <li>Current target's local <code>content_cache</code></li>
 </ol>
 <p>If a hit is found at any level the existing result file is reused and
@@ -247,8 +241,7 @@ conflict detection; content-based dedup is the identity signal.</li>
 define/subst conflict detection: it contributes only to the content
 cache and is meant to absorb broad sweeps of cache providers (e.g.,
 every gnulib m4 module) that legitimately publish overlapping symbols
-from different files. <code>defaults</code> and per-target <code>deps</code> still enforce
-conflicts.</p>
+from different files. Per-target <code>deps</code> still enforce conflicts.</p>
 <h3 id="resolving-conflicts"><a class="header" href="#resolving-conflicts">Resolving conflicts</a></h3>
 <p>The typical fix for <em>"Define 'X' is defined both locally and in
 dependencies with different result files"</em>:</p>
@@ -262,7 +255,6 @@ provides it.</li>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Type</th><th style="text-align: left">Mandatory</th><th style="text-align: left">Default</th></tr></thead><tbody>
 <tr><td style="text-align: left"><a id="autoconf_toolchain-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
 <tr><td style="text-align: left"><a id="autoconf_toolchain-cache_deps"></a>cache_deps</td><td style="text-align: left">Targets whose check results are available for action deduplication in <code>autoconf</code> targets. Only the content cache is exposed downstream; define/subst conflicts among these targets are NOT detected, so a broad sweep of cache providers with overlapping symbols (e.g., every gnulib m4 module) can be passed safely.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_toolchain-defaults"></a>defaults</td><td style="text-align: left">Targets whose results provide baseline values for <code>autoconf_hdr</code> rendering.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
 </tbody></table>
 </div>
 <p><a id="autoconf_cache"></a></p>
@@ -275,8 +267,8 @@ autoconf_cache(*, <a href="#autoconf_cache-name">name</a>, <a href="#autoconf_ca
 <p>Run autoconf-like checks without resolving the autoconf toolchain.</p>
 <p>Identical to <code>autoconf</code> except that it does <strong>not</strong> resolve the
 <code>autoconf_toolchain</code>. Use this rule for targets that are listed as
-<code>cache_deps</code> or <code>defaults</code> of an <code>autoconf_toolchain</code> -- using the
-regular <code>autoconf</code> rule in that position would create a dependency cycle.</p>
+<code>cache_deps</code> of an <code>autoconf_toolchain</code> -- using the regular <code>autoconf</code>
+rule in that position would create a dependency cycle.</p>
 <p>Dep-level caching still applies: if a check's cache variable name already
 has a result in transitive <code>deps</code>, the action is skipped.</p>
 <p><strong>PARAMETERS</strong></p>

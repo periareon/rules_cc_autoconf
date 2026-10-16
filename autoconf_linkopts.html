@@ -198,7 +198,7 @@ automatically.</p>
 <pre>
 load("@rules_cc_autoconf//autoconf:autoconf_linkopts.bzl", "autoconf_linkopts")
 
-autoconf_linkopts(<a href="#autoconf_linkopts-name">name</a>, <a href="#autoconf_linkopts-deps">deps</a>, <a href="#autoconf_linkopts-defaults">defaults</a>, <a href="#autoconf_linkopts-vars">vars</a>)
+autoconf_linkopts(<a href="#autoconf_linkopts-name">name</a>, <a href="#autoconf_linkopts-deps">deps</a>, <a href="#autoconf_linkopts-default_deps">default_deps</a>, <a href="#autoconf_linkopts-defaults">defaults</a>, <a href="#autoconf_linkopts-vars">vars</a>)
 </pre>
 <p>Resolve AC_SEARCH_LIBS / AC_SUBST results into linker flags.</p>
 <p>Reads subst result JSON files from autoconf deps and produces a
@@ -214,7 +214,8 @@ be provided by a different module or not needed on this platform).</p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Type</th><th style="text-align: left">Mandatory</th><th style="text-align: left">Default</th></tr></thead><tbody>
 <tr><td style="text-align: left"><a id="autoconf_linkopts-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
 <tr><td style="text-align: left"><a id="autoconf_linkopts-deps"></a>deps</td><td style="text-align: left">List of autoconf targets providing check results.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_linkopts-defaults"></a>defaults</td><td style="text-align: left">Whether to include toolchain defaults.</td><td style="text-align: left">Boolean</td><td style="text-align: left">optional</td><td style="text-align: left"><code>False</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_linkopts-default_deps"></a>default_deps</td><td style="text-align: left"><code>autoconf_defaults</code> targets whose values stand where no result of the name comes through <code>deps</code> (a result overrides a default silently; two defaults of one name must agree).  The defaults the <code>deps</code> carry are read as well.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_linkopts-defaults"></a>defaults</td><td style="text-align: left">Deprecated and ignored: defaults come through <code>deps</code> and <code>default_deps</code>; the autoconf toolchain no longer carries any.  Accepted so existing BUILD files keep loading.</td><td style="text-align: left">Boolean</td><td style="text-align: left">optional</td><td style="text-align: left"><code>False</code></td></tr>
 <tr><td style="text-align: left"><a id="autoconf_linkopts-vars"></a>vars</td><td style="text-align: left">List of AC_SUBST variable names to resolve (e.g., ["LIBPTHREAD", "FDATASYNC_LIB"]). Each variable is looked up in the subst results from deps. Non-empty values (like "-lpthread") are added to linkopts; empty values are skipped.</td><td style="text-align: left">List of strings</td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
 </tbody></table>
 </div>

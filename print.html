@@ -224,6 +224,7 @@ by Bazel’s C/C++ toolchain configuration.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="rules"><a class="header" href="#rules">Rules</a></h1>
 <ul>
 <li><a href="./autoconf.html#autoconf">autoconf</a></li>
+<li><a href="./autoconf_defaults.html#autoconf_defaults">autoconf_defaults</a></li>
 <li><a href="./autoconf_hdr.html#autoconf_hdr">autoconf_hdr</a></li>
 <li><a href="./autoconf_srcs.html#autoconf_srcs">autoconf_srcs</a></li>
 <li><a href="./autoconf_linkopts.html#autoconf_linkopts">autoconf_linkopts</a></li>
@@ -274,8 +275,66 @@ headers or wrapped source files.</p>
 <tr><td style="text-align: left"><a id="autoconf-kwargs"></a>kwargs</td><td style="text-align: left">Standard Bazel attributes (e.g. <code>visibility</code>, <code>tags</code>).</td><td style="text-align: left">none</td></tr>
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
-<h1 id="autoconf_hdr"><a class="header" href="#autoconf_hdr">autoconf_hdr</a></h1>
+<h1 id="autoconf_defaults"><a class="header" href="#autoconf_defaults">autoconf_defaults</a></h1>
 <h2 id="rules-1"><a class="header" href="#rules-1">Rules</a></h2>
+<ul>
+<li><a href="autoconf_defaults.html#autoconf_defaults">autoconf_defaults</a></li>
+</ul>
+<p><a id="autoconf_defaults"></a></p>
+<h2 id="autoconf_defaults-1"><a class="header" href="#autoconf_defaults-1">autoconf_defaults</a></h2>
+<pre>
+load("@rules_cc_autoconf//autoconf:autoconf_defaults.bzl", "autoconf_defaults")
+
+autoconf_defaults(<a href="autoconf_defaults.html#autoconf_defaults-name">name</a>, <a href="autoconf_defaults.html#autoconf_defaults-deps">deps</a>, <a href="autoconf_defaults.html#autoconf_defaults-defines">defines</a>, <a href="autoconf_defaults.html#autoconf_defaults-substs">substs</a>, <a href="autoconf_defaults.html#autoconf_defaults-variables">variables</a>)
+</pre>
+<p>Default values for autoconf results.</p>
+<p>A default is not a check: nothing is probed, no toolchain is resolved, and the
+values are written at analysis time.  A target reads defaults through
+<code>default_deps</code>, beneath every ordinary result, so a probe of the same name
+overrides the default silently where a second probe would be a duplicate
+error.  <code>deps</code> rejects defaults targets; they only enter through <code>default_deps</code>.</p>
+<p>This is how gnulib's <code>*_H_DEFAULTS</code> macros work: <code>gl_UNISTD_H_DEFAULTS</code> sets
+<code>HAVE_DUP3=1</code>, <code>REPLACE_DUP2=0</code> and so on, and the probes that run later
+reassign only what they find wanting.  Port such a macro as one
+<code>autoconf_defaults</code> target and list it in the <code>default_deps</code> of every target
+whose m4 <code>AC_REQUIRE</code>s it:</p>
+<pre><code class="language-python">load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
+load("@rules_cc_autoconf//autoconf:autoconf_defaults.bzl", "autoconf_defaults")
+load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
+
+# gl_UNISTD_H_DEFAULTS
+autoconf_defaults(
+    name = "defaults",
+    substs = {
+        "HAVE_DUP3": "1",
+        "REPLACE_DUP2": "0",
+    },
+)
+
+# gl_FUNC_DUP2: AC_REQUIRE([gl_UNISTD_H_DEFAULTS]), then may set REPLACE_DUP2=1
+autoconf(
+    name = "dup2",
+    checks = [
+        checks.AC_SUBST("REPLACE_DUP2", 1, condition = "!gl_cv_func_dup2_works"),
+    ],
+    default_deps = [":defaults"],
+)
+</code></pre>
+<p>Defaults compose: <code>deps</code> lists other <code>autoconf_defaults</code> targets whose values
+this one carries along (gnulib's <code>_H_REQUIRE_DEFAULTS</code> on top of
+<code>_H_DEFAULTS</code>), and an <code>autoconf</code> target passes the defaults it reads on to
+its dependents.  Two defaults of one name must agree.</p>
+<p><strong>ATTRIBUTES</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Type</th><th style="text-align: left">Mandatory</th><th style="text-align: left">Default</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a id="autoconf_defaults-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_defaults-deps"></a>deps</td><td style="text-align: left">Other <code>autoconf_defaults</code> targets whose values this target carries along.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_defaults-defines"></a>defines</td><td style="text-align: left">Default <code>AC_DEFINE</code> values: define name to value.  Decimal integers are stored as numbers, as <code>checks.AC_DEFINE("X", 1)</code> stores them; anything else as text.</td><td style="text-align: left"><a href="https://bazel.build/rules/lib/dict">Dictionary: String -&gt; String</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>{}</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_defaults-substs"></a>substs</td><td style="text-align: left">Default <code>AC_SUBST</code> values: variable name to value (<code>{"HAVE_DUP3": "1"}</code>), stored under the cache name <code>ac_cv_subst_&lt;NAME&gt;</code> as <code>checks.AC_SUBST</code> does.  Decimal integers are stored as numbers; anything else as text.</td><td style="text-align: left"><a href="https://bazel.build/rules/lib/dict">Dictionary: String -&gt; String</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>{}</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_defaults-variables"></a>variables</td><td style="text-align: left">Default shell variables that are neither defines nor substitutions (<code>checks.M4_VARIABLE</code>): name to value, read by <code>requires</code> and <code>condition</code> expressions and by <code>cc_gnulib_conditional_hdrs</code> conditions, e.g. <code>{"GL_GENERATE_ICONV_H": "false"}</code>.</td><td style="text-align: left"><a href="https://bazel.build/rules/lib/dict">Dictionary: String -&gt; String</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>{}</code></td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
+<h1 id="autoconf_hdr"><a class="header" href="#autoconf_hdr">autoconf_hdr</a></h1>
+<h2 id="rules-2"><a class="header" href="#rules-2">Rules</a></h2>
 <ul>
 <li><a href="autoconf_hdr.html#autoconf_hdr">autoconf_hdr</a></li>
 </ul>
@@ -284,8 +343,7 @@ headers or wrapped source files.</p>
 <pre>
 load("@rules_cc_autoconf//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
 
-autoconf_hdr(<a href="autoconf_hdr.html#autoconf_hdr-name">name</a>, <a href="autoconf_hdr.html#autoconf_hdr-deps">deps</a>, <a href="autoconf_hdr.html#autoconf_hdr-out">out</a>, <a href="autoconf_hdr.html#autoconf_hdr-defaults">defaults</a>, <a href="autoconf_hdr.html#autoconf_hdr-defaults_exclude">defaults_exclude</a>, <a href="autoconf_hdr.html#autoconf_hdr-defaults_include">defaults_include</a>, <a href="autoconf_hdr.html#autoconf_hdr-inlines">inlines</a>, <a href="autoconf_hdr.html#autoconf_hdr-mode">mode</a>,
-             <a href="autoconf_hdr.html#autoconf_hdr-substitutions">substitutions</a>, <a href="autoconf_hdr.html#autoconf_hdr-template">template</a>)
+autoconf_hdr(<a href="autoconf_hdr.html#autoconf_hdr-name">name</a>, <a href="autoconf_hdr.html#autoconf_hdr-deps">deps</a>, <a href="autoconf_hdr.html#autoconf_hdr-out">out</a>, <a href="autoconf_hdr.html#autoconf_hdr-default_deps">default_deps</a>, <a href="autoconf_hdr.html#autoconf_hdr-defaults">defaults</a>, <a href="autoconf_hdr.html#autoconf_hdr-inlines">inlines</a>, <a href="autoconf_hdr.html#autoconf_hdr-mode">mode</a>, <a href="autoconf_hdr.html#autoconf_hdr-substitutions">substitutions</a>, <a href="autoconf_hdr.html#autoconf_hdr-template">template</a>)
 </pre>
 <p>Generate configuration headers from results provided by <code>autoconf</code> targets.</p>
 <p>This rule takes check results from <code>autoconf</code> targets (via <code>deps</code>) and generates a header file.
@@ -323,9 +381,8 @@ autoconf_hdr(
 <tr><td style="text-align: left"><a id="autoconf_hdr-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
 <tr><td style="text-align: left"><a id="autoconf_hdr-deps"></a>deps</td><td style="text-align: left">List of <code>autoconf</code> targets which provide check results. Results from all deps will be merged together, and duplicate define names will produce an error. If not provided, an empty results file will be created.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
 <tr><td style="text-align: left"><a id="autoconf_hdr-out"></a>out</td><td style="text-align: left">The output config file (typically <code>config.h</code>).</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a>; <a href="https://bazel.build/reference/be/common-definitions#configurable-attributes">nonconfigurable</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_hdr-defaults"></a>defaults</td><td style="text-align: left">Whether to include toolchain defaults.<br><br>When False (the default), no toolchain defaults are included and only the explicit deps provide check results. When True, defaults from the autoconf toolchain are included, subject to filtering by defaults_include or defaults_exclude.</td><td style="text-align: left">Boolean</td><td style="text-align: left">optional</td><td style="text-align: left"><code>False</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_hdr-defaults_exclude"></a>defaults_exclude</td><td style="text-align: left">Labels to exclude from toolchain defaults.<br><br>Only effective when defaults=True. If specified, defaults from these labels are excluded. Labels not found in the toolchain are silently ignored. Mutually exclusive with defaults_include.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_hdr-defaults_include"></a>defaults_include</td><td style="text-align: left">Labels to include from toolchain defaults.<br><br>Only effective when defaults=True. If specified, only defaults from these labels are included. An error is raised if a specified label is not found in the toolchain. Mutually exclusive with defaults_exclude.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_hdr-default_deps"></a>default_deps</td><td style="text-align: left"><code>autoconf_defaults</code> targets whose values stand where no result of the name comes through <code>deps</code> (a result overrides a default silently; two defaults of one name must agree).  The defaults the <code>deps</code> carry are read as well.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_hdr-defaults"></a>defaults</td><td style="text-align: left">Deprecated and ignored: defaults come through <code>deps</code> and <code>default_deps</code>; the autoconf toolchain no longer carries any.  Accepted so existing BUILD files keep loading.</td><td style="text-align: left">Boolean</td><td style="text-align: left">optional</td><td style="text-align: left"><code>False</code></td></tr>
 <tr><td style="text-align: left"><a id="autoconf_hdr-inlines"></a>inlines</td><td style="text-align: left">A mapping of strings to files for replace within the content of the given <code>template</code> attribute.<br><br>The exact string in the template is replaced with the content of the associated file. Any <code>@VAR@</code> style placeholders in the inline file content will be replaced with their corresponding define values (package info, check results, etc.) after insertion.</td><td style="text-align: left">Dictionary: String -&gt; Label</td><td style="text-align: left">optional</td><td style="text-align: left"><code>{}</code></td></tr>
 <tr><td style="text-align: left"><a id="autoconf_hdr-mode"></a>mode</td><td style="text-align: left">Processing mode that determines what should be replaced within the file.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>"defines"</code></td></tr>
 <tr><td style="text-align: left"><a id="autoconf_hdr-substitutions"></a>substitutions</td><td style="text-align: left">A mapping of exact strings to replacement values.<br><br>Each entry performs an exact text replacement in the template - the key string is replaced with the value string. No special patterns or wrappers are added.<br><br>Example: <pre><code class="language-python">autoconf_hdr(
@@ -343,7 +400,7 @@ autoconf_hdr(
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
 <h1 id="autoconf_srcs"><a class="header" href="#autoconf_srcs">autoconf_srcs</a></h1>
-<h2 id="rules-2"><a class="header" href="#rules-2">Rules</a></h2>
+<h2 id="rules-3"><a class="header" href="#rules-3">Rules</a></h2>
 <ul>
 <li><a href="autoconf_srcs.html#autoconf_srcs">autoconf_srcs</a></li>
 </ul>
@@ -352,7 +409,7 @@ autoconf_hdr(
 <pre>
 load("@rules_cc_autoconf//autoconf:autoconf_srcs.bzl", "autoconf_srcs")
 
-autoconf_srcs(<a href="autoconf_srcs.html#autoconf_srcs-name">name</a>, <a href="autoconf_srcs.html#autoconf_srcs-deps">deps</a>, <a href="autoconf_srcs.html#autoconf_srcs-srcs">srcs</a>, <a href="autoconf_srcs.html#autoconf_srcs-defaults">defaults</a>, <a href="autoconf_srcs.html#autoconf_srcs-defaults_exclude">defaults_exclude</a>, <a href="autoconf_srcs.html#autoconf_srcs-defaults_include">defaults_include</a>, <a href="autoconf_srcs.html#autoconf_srcs-naming">naming</a>)
+autoconf_srcs(<a href="autoconf_srcs.html#autoconf_srcs-name">name</a>, <a href="autoconf_srcs.html#autoconf_srcs-deps">deps</a>, <a href="autoconf_srcs.html#autoconf_srcs-srcs">srcs</a>, <a href="autoconf_srcs.html#autoconf_srcs-default_deps">default_deps</a>, <a href="autoconf_srcs.html#autoconf_srcs-defaults">defaults</a>, <a href="autoconf_srcs.html#autoconf_srcs-naming">naming</a>)
 </pre>
 <p>Generate wrapper sources that are conditionally enabled by autoconf results.</p>
 <p>Typical use case:</p>
@@ -400,9 +457,8 @@ manually maintain <code>#ifdef</code> guards in every source file.</p>
 <tr><td style="text-align: left"><a id="autoconf_srcs-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
 <tr><td style="text-align: left"><a id="autoconf_srcs-deps"></a>deps</td><td style="text-align: left">List of <code>autoconf</code> targets which provide defines. Results from all deps will be merged together, and duplicate define names will produce an error.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
 <tr><td style="text-align: left"><a id="autoconf_srcs-srcs"></a>srcs</td><td style="text-align: left">A mapping of source file to define required to compile the file.</td><td style="text-align: left"><a href="https://bazel.build/rules/lib/dict">Dictionary: Label -&gt; String</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_srcs-defaults"></a>defaults</td><td style="text-align: left">Whether to include toolchain defaults.<br><br>When False (the default), no toolchain defaults are included and only the explicit deps provide check results. When True, defaults from the autoconf toolchain are included, subject to filtering by defaults_include or defaults_exclude.</td><td style="text-align: left">Boolean</td><td style="text-align: left">optional</td><td style="text-align: left"><code>False</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_srcs-defaults_exclude"></a>defaults_exclude</td><td style="text-align: left">Labels to exclude from toolchain defaults.<br><br>Only effective when defaults=True. If specified, defaults from these labels are excluded. Labels not found in the toolchain are silently ignored. Mutually exclusive with defaults_include.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_srcs-defaults_include"></a>defaults_include</td><td style="text-align: left">Labels to include from toolchain defaults.<br><br>Only effective when defaults=True. If specified, only defaults from these labels are included. An error is raised if a specified label is not found in the toolchain. Mutually exclusive with defaults_exclude.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_srcs-default_deps"></a>default_deps</td><td style="text-align: left"><code>autoconf_defaults</code> targets whose values stand where no result of the name comes through <code>deps</code> (a result overrides a default silently; two defaults of one name must agree).  The defaults the <code>deps</code> carry are read as well.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_srcs-defaults"></a>defaults</td><td style="text-align: left">Deprecated and ignored: defaults come through <code>deps</code> and <code>default_deps</code>; the autoconf toolchain no longer carries any.  Accepted so existing BUILD files keep loading.</td><td style="text-align: left">Boolean</td><td style="text-align: left">optional</td><td style="text-align: left"><code>False</code></td></tr>
 <tr><td style="text-align: left"><a id="autoconf_srcs-naming"></a>naming</td><td style="text-align: left">How to name generated sources: <code>package_relative</code> keeps the original package-relative path, <code>ac_suffix</code> inserts <code>.ac.</code> before the final suffix (e.g. <code>foo.cc -&gt; foo.ac.cc</code>), and <code>per_target</code> prefixes outputs with <code>{ctx.label.name}</code> to namespace them per rule.</td><td style="text-align: left">String</td><td style="text-align: left">optional</td><td style="text-align: left"><code>"package_relative"</code></td></tr>
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
@@ -439,7 +495,7 @@ cc_binary(
 AC_SEARCH_LIBS produces empty values and no extra -l flags are added.
 On older systems, the appropriate flags (-lpthread, -lrt) are added
 automatically.</p>
-<h2 id="rules-3"><a class="header" href="#rules-3">Rules</a></h2>
+<h2 id="rules-4"><a class="header" href="#rules-4">Rules</a></h2>
 <ul>
 <li><a href="autoconf_linkopts.html#autoconf_linkopts">autoconf_linkopts</a></li>
 </ul>
@@ -448,7 +504,7 @@ automatically.</p>
 <pre>
 load("@rules_cc_autoconf//autoconf:autoconf_linkopts.bzl", "autoconf_linkopts")
 
-autoconf_linkopts(<a href="autoconf_linkopts.html#autoconf_linkopts-name">name</a>, <a href="autoconf_linkopts.html#autoconf_linkopts-deps">deps</a>, <a href="autoconf_linkopts.html#autoconf_linkopts-defaults">defaults</a>, <a href="autoconf_linkopts.html#autoconf_linkopts-vars">vars</a>)
+autoconf_linkopts(<a href="autoconf_linkopts.html#autoconf_linkopts-name">name</a>, <a href="autoconf_linkopts.html#autoconf_linkopts-deps">deps</a>, <a href="autoconf_linkopts.html#autoconf_linkopts-default_deps">default_deps</a>, <a href="autoconf_linkopts.html#autoconf_linkopts-defaults">defaults</a>, <a href="autoconf_linkopts.html#autoconf_linkopts-vars">vars</a>)
 </pre>
 <p>Resolve AC_SEARCH_LIBS / AC_SUBST results into linker flags.</p>
 <p>Reads subst result JSON files from autoconf deps and produces a
@@ -464,13 +520,14 @@ be provided by a different module or not needed on this platform).</p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Type</th><th style="text-align: left">Mandatory</th><th style="text-align: left">Default</th></tr></thead><tbody>
 <tr><td style="text-align: left"><a id="autoconf_linkopts-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
 <tr><td style="text-align: left"><a id="autoconf_linkopts-deps"></a>deps</td><td style="text-align: left">List of autoconf targets providing check results.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_linkopts-defaults"></a>defaults</td><td style="text-align: left">Whether to include toolchain defaults.</td><td style="text-align: left">Boolean</td><td style="text-align: left">optional</td><td style="text-align: left"><code>False</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_linkopts-default_deps"></a>default_deps</td><td style="text-align: left"><code>autoconf_defaults</code> targets whose values stand where no result of the name comes through <code>deps</code> (a result overrides a default silently; two defaults of one name must agree).  The defaults the <code>deps</code> carry are read as well.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
+<tr><td style="text-align: left"><a id="autoconf_linkopts-defaults"></a>defaults</td><td style="text-align: left">Deprecated and ignored: defaults come through <code>deps</code> and <code>default_deps</code>; the autoconf toolchain no longer carries any.  Accepted so existing BUILD files keep loading.</td><td style="text-align: left">Boolean</td><td style="text-align: left">optional</td><td style="text-align: left"><code>False</code></td></tr>
 <tr><td style="text-align: left"><a id="autoconf_linkopts-vars"></a>vars</td><td style="text-align: left">List of AC_SUBST variable names to resolve (e.g., ["LIBPTHREAD", "FDATASYNC_LIB"]). Each variable is looked up in the subst results from deps. Non-empty values (like "-lpthread") are added to linkopts; empty values are skipped.</td><td style="text-align: left">List of strings</td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
 <p>autoconf_toolchain</p>
 <p>Provides default autoconf checks that can be overridden by targets.</p>
-<h2 id="rules-4"><a class="header" href="#rules-4">Rules</a></h2>
+<h2 id="rules-5"><a class="header" href="#rules-5">Rules</a></h2>
 <ul>
 <li><a href="autoconf_toolchain.html#autoconf_toolchain">autoconf_toolchain</a></li>
 </ul>
@@ -483,44 +540,38 @@ be provided by a different module or not needed on this platform).</p>
 <pre>
 load("@rules_cc_autoconf//autoconf:autoconf_toolchain.bzl", "autoconf_toolchain")
 
-autoconf_toolchain(<a href="autoconf_toolchain.html#autoconf_toolchain-name">name</a>, <a href="autoconf_toolchain.html#autoconf_toolchain-cache_deps">cache_deps</a>, <a href="autoconf_toolchain.html#autoconf_toolchain-defaults">defaults</a>)
+autoconf_toolchain(<a href="autoconf_toolchain.html#autoconf_toolchain-name">name</a>, <a href="autoconf_toolchain.html#autoconf_toolchain-cache_deps">cache_deps</a>)
 </pre>
-<p>Define an autoconf toolchain providing cached check results and rendering defaults.</p>
-<p>The toolchain has two separate concepts:</p>
-<ul>
-<li><strong>cache_deps</strong>: Check results available for action deduplication. When an
-<code>autoconf</code> target lists a check whose cache variable name already has a result
-in <code>cache_deps</code>, the checker action is skipped and the existing result file is
-reused.</li>
-<li><strong>defaults</strong>: Baseline values for <code>autoconf_hdr</code> rendering. When
-<code>autoconf_hdr</code> has <code>defaults = True</code>, these values are merged into the
-generated header.</li>
-</ul>
-<p>Both <code>cache_deps</code> and <code>defaults</code> contribute to the unified cache used by the
-<code>autoconf</code> rule for action deduplication. Only <code>defaults</code> contributes to the
-<code>defaults_by_label</code> map used by <code>autoconf_hdr</code> for include/exclude filtering.</p>
-<p>Targets listed in <code>cache_deps</code> and <code>defaults</code> must use <code>autoconf_library</code>
-(not <code>autoconf</code>) to avoid a dependency cycle.</p>
+<p>Define an autoconf toolchain that shares check results across targets.</p>
+<p>The toolchain carries one thing: the <strong>content cache</strong> of its <code>cache_deps</code>.
+When an <code>autoconf</code> target lists a check whose implementation already has a
+result there, the checker action is skipped and the existing result file is
+reused.  Nothing else crosses the toolchain boundary: not the results as
+defines or substs, and not defaults.  Defaults are <code>autoconf_defaults</code>
+targets that a target reads through its own <code>default_deps</code> (see
+<code>autoconf_defaults</code>); the toolchain neither carries nor injects any.</p>
+<p>Targets listed in <code>cache_deps</code> must use <code>autoconf_cache</code> (not <code>autoconf</code>)
+to avoid a dependency cycle.</p>
 <p>Example:</p>
 <pre><code class="language-python">load("@rules_cc_autoconf//autoconf:defs.bzl", "autoconf_cache", "autoconf_toolchain")
 load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")
 
 autoconf_cache(
-    name = "gnulib_defaults",
+    name = "common_checks",
     checks = [
-        checks.AC_SUBST("GNULIB_VFPRINTF_POSIX", "0"),
-        checks.AC_SUBST("REPLACE_POSIX_SPAWN", "0"),
+        checks.AC_CHECK_HEADER("stdio.h"),
+        checks.AC_CHECK_FUNC("strerror"),
     ],
 )
 
 autoconf_toolchain(
-    name = "gnulib_toolchain_impl",
-    defaults = [":gnulib_defaults"],
+    name = "my_toolchain_impl",
+    cache_deps = [":common_checks"],
 )
 
 toolchain(
-    name = "gnulib_toolchain",
-    toolchain = ":gnulib_toolchain_impl",
+    name = "my_toolchain",
+    toolchain = ":my_toolchain_impl",
     toolchain_type = "@rules_cc_autoconf//autoconf:toolchain_type",
 )
 </code></pre>
@@ -536,7 +587,7 @@ checker action and result file.</p>
 <p>When a new check is processed, its content key is looked up in order:</p>
 <ol>
 <li>Transitive deps' <code>content_cache</code></li>
-<li>Toolchain unified cache (<code>cache_deps</code> + <code>defaults</code>)</li>
+<li>Toolchain content cache (<code>cache_deps</code>)</li>
 <li>Current target's local <code>content_cache</code></li>
 </ol>
 <p>If a hit is found at any level the existing result file is reused and
@@ -559,8 +610,7 @@ conflict detection; content-based dedup is the identity signal.</li>
 define/subst conflict detection: it contributes only to the content
 cache and is meant to absorb broad sweeps of cache providers (e.g.,
 every gnulib m4 module) that legitimately publish overlapping symbols
-from different files. <code>defaults</code> and per-target <code>deps</code> still enforce
-conflicts.</p>
+from different files. Per-target <code>deps</code> still enforce conflicts.</p>
 <h3 id="resolving-conflicts"><a class="header" href="#resolving-conflicts">Resolving conflicts</a></h3>
 <p>The typical fix for <em>"Define 'X' is defined both locally and in
 dependencies with different result files"</em>:</p>
@@ -574,7 +624,6 @@ provides it.</li>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">Description</th><th style="text-align: left">Type</th><th style="text-align: left">Mandatory</th><th style="text-align: left">Default</th></tr></thead><tbody>
 <tr><td style="text-align: left"><a id="autoconf_toolchain-name"></a>name</td><td style="text-align: left">A unique name for this target.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
 <tr><td style="text-align: left"><a id="autoconf_toolchain-cache_deps"></a>cache_deps</td><td style="text-align: left">Targets whose check results are available for action deduplication in <code>autoconf</code> targets. Only the content cache is exposed downstream; define/subst conflicts among these targets are NOT detected, so a broad sweep of cache providers with overlapping symbols (e.g., every gnulib m4 module) can be passed safely.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
-<tr><td style="text-align: left"><a id="autoconf_toolchain-defaults"></a>defaults</td><td style="text-align: left">Targets whose results provide baseline values for <code>autoconf_hdr</code> rendering.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">List of labels</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>[]</code></td></tr>
 </tbody></table>
 </div>
 <p><a id="autoconf_cache"></a></p>
@@ -587,8 +636,8 @@ autoconf_cache(*, <a href="autoconf_toolchain.html#autoconf_cache-name">name</a>
 <p>Run autoconf-like checks without resolving the autoconf toolchain.</p>
 <p>Identical to <code>autoconf</code> except that it does <strong>not</strong> resolve the
 <code>autoconf_toolchain</code>. Use this rule for targets that are listed as
-<code>cache_deps</code> or <code>defaults</code> of an <code>autoconf_toolchain</code> -- using the
-regular <code>autoconf</code> rule in that position would create a dependency cycle.</p>
+<code>cache_deps</code> of an <code>autoconf_toolchain</code> -- using the regular <code>autoconf</code>
+rule in that position would create a dependency cycle.</p>
 <p>Dep-level caching still applies: if a check's cache variable name already
 has a result in transitive <code>deps</code>, the action is skipped.</p>
 <p><strong>PARAMETERS</strong></p>
@@ -601,7 +650,7 @@ has a result in transitive <code>deps</code>, the action is skipped.</p>
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
 <h1 id="autoconf_package_info"><a class="header" href="#autoconf_package_info">autoconf_package_info</a></h1>
-<h2 id="rules-5"><a class="header" href="#rules-5">Rules</a></h2>
+<h2 id="rules-6"><a class="header" href="#rules-6">Rules</a></h2>
 <ul>
 <li><a href="autoconf_package_info.html#autoconf_package_info">autoconf_package_info</a></li>
 </ul>
@@ -2198,9 +2247,11 @@ autoconf_hdr(
 </code></pre>
 <hr />
 <h2 id="architecture-overview"><a class="header" href="#architecture-overview">Architecture Overview</a></h2>
-<p>The migration system consists of three main components:</p>
+<p>The migration system consists of these components:</p>
 <h3 id="1-autoconf-rule"><a class="header" href="#1-autoconf-rule">1. <code>autoconf</code> Rule</a></h3>
 <p>Runs compilation checks against the configured <code>cc_toolchain</code> and produces check results. Each check creates a <strong>cache variable</strong> (e.g., <code>ac_cv_header_stdio_h</code>) and optionally a <strong>define</strong> (e.g., <code>HAVE_STDIO_H</code>) or <strong>subst</strong> value.</p>
+<h3 id="1b-autoconf_defaults-rule"><a class="header" href="#1b-autoconf_defaults-rule">1b. <code>autoconf_defaults</code> Rule</a></h3>
+<p>Holds literal values that a check may override: gnulib's <code>*_H_DEFAULTS</code> (<code>HAVE_FOO=1</code>, <code>REPLACE_FOO=0</code>). Nothing is probed. Targets read a defaults target through <code>default_deps</code>, beneath every ordinary result; <code>deps</code> rejects it. See <a href="migration.html#defaults-yield-to-your-values">Defaults yield to your values</a>.</p>
 <h3 id="2-autoconf_hdr-rule"><a class="header" href="#2-autoconf_hdr-rule">2. <code>autoconf_hdr</code> Rule</a></h3>
 <p>Takes check results from <code>autoconf</code> targets and generates header files by processing templates. Supports two modes:</p>
 <ul>
@@ -2212,7 +2263,7 @@ autoconf_hdr(
 <h3 id="4-autoconf_linkopts-rule-optional"><a class="header" href="#4-autoconf_linkopts-rule-optional">4. <code>autoconf_linkopts</code> Rule (optional)</a></h3>
 <p>Turns <strong>subst</strong> values that hold linker flags (often from <code>AC_SEARCH_LIBS</code>) into <strong><code>CcInfo</code></strong> for <code>cc_library</code> / <code>cc_binary</code> / <code>cc_test</code> dependencies. See <a href="migration.html#pattern-7b-ac_search_libs-and-autoconf_linkopts">Pattern 7b</a>.</p>
 <h3 id="autoconf-vs-autoconf_cache"><a class="header" href="#autoconf-vs-autoconf_cache"><code>autoconf</code> vs <code>autoconf_cache</code></a></h3>
-<p><code>autoconf_cache</code> (from <code>//autoconf:autoconf_toolchain.bzl</code>) is identical to <code>autoconf</code> except that it does <strong>not</strong> resolve the <code>autoconf_toolchain</code>. Targets that the toolchain itself depends on (its <code>cache_deps</code> and <code>defaults</code>) must use it; using <code>autoconf</code> there would create a dependency cycle. Every port under <code>//gnulib/m4</code> and <code>//autoconf/macros</code> therefore loads it under the name <code>autoconf</code>:</p>
+<p><code>autoconf_cache</code> (from <code>//autoconf:autoconf_toolchain.bzl</code>) is identical to <code>autoconf</code> except that it does <strong>not</strong> resolve the <code>autoconf_toolchain</code>. Targets that the toolchain itself depends on (its <code>cache_deps</code>) must use it; using <code>autoconf</code> there would create a dependency cycle. Every port under <code>//gnulib/m4</code> and <code>//autoconf/macros</code> therefore loads it under the name <code>autoconf</code>:</p>
 <pre><code class="language-python">load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 </code></pre>
@@ -2992,13 +3043,13 @@ checks.AC_LANG_STANDARD("c++17", define = "HAVE_CXX17")
 Such a check needs no <code>define</code>: it is a validation action, run whenever the
 target is built, directly or through a dependency, even though nothing in
 config.h reads its result.</p>
-<h3 id="toolchain-defaults-yield-to-your-values"><a class="header" href="#toolchain-defaults-yield-to-your-values">Toolchain defaults yield to your values</a></h3>
-<p>The <code>*_H_DEFAULTS</code> values (<code>HAVE_FOO=1</code>, <code>REPLACE_FOO=0</code>, <code>GNULIB_FOO=0</code>) are supplied by the autoconf toolchain, not by <code>deps</code>. In <code>autoconf_hdr</code> and <code>autoconf_srcs</code> a value coming from <code>deps</code> overrides a default, so a downstream target may set any value a default would otherwise supply without a duplicate error. The duplicate check applies only between explicit checks. Two consequences:</p>
+<h3 id="defaults-yield-to-your-values"><a class="header" href="#defaults-yield-to-your-values">Defaults yield to your values</a></h3>
+<p>The <code>*_H_DEFAULTS</code> values (<code>HAVE_FOO=1</code>, <code>REPLACE_FOO=0</code>, <code>GNULIB_FOO=0</code>) are not check results. Each header port keeps them in an <code>autoconf_defaults</code> target named <code>:defaults</code> (<code>//gnulib/m4/stdlib_h:defaults</code>), and targets read them through <code>default_deps</code>, never <code>deps</code>: the header port lists its own <code>:defaults</code> there, and so does every port whose m4 <code>AC_REQUIRE</code>s that header's <code>gl_*_H_DEFAULTS</code>. An <code>autoconf</code> target passes the defaults it reads on to its dependents, still as defaults. A default has the lowest precedence: an ordinary result of the same name, from any check in the graph or from your own target, overrides it without a duplicate error, and two defaults of one name must agree. Two consequences:</p>
 <ul>
-<li>Do not design around the defaults targets; they are an implementation detail of this repository. Define what your project needs.</li>
-<li>When a later release's port starts publishing a value you set locally, your copy becomes a duplicate-result error. Comment such overrides with the port they stand in for so they are easy to remove.</li>
+<li>Do not design around the defaults targets. Depend on the header port your templates need and define what your project computes itself.</li>
+<li>When a later release's port starts publishing a value you set locally as an ordinary result, your copy becomes a duplicate-result error. Comment such overrides with the port they stand in for so they are easy to remove.</li>
 </ul>
-<p>The "existing defaults must not be changed" rule in <a href="migration.html#step-6-understand-global-defaults-vs-check-results">Step 6</a> is about ports inside this repository, not about consumers.</p>
+<p>Your own defaults follow the same rule: put values that a probe may override into an <code>autoconf_defaults</code> target and list it in <code>default_deps</code>. <code>defaults = True</code> on <code>autoconf_hdr</code>, <code>autoconf_srcs</code>, <code>autoconf_linkopts</code> and <code>cc_gnulib_conditional_hdrs</code> is deprecated and ignored: the toolchain carries no defaults any more. Existing BUILD files keep loading; new ones should leave it unset and list <code>default_deps</code> where a template reads a header's defaults no dependency brings.</p>
 <h3 id="refining-platform-selects"><a class="header" href="#refining-platform-selects">Refining platform selects</a></h3>
 <p><code>checks</code> accepts <code>select()</code> keyed on any <code>config_setting</code>. Where a port had to choose a default for a fact only a runtime test could establish (see <a href="migration.html#cross-compilation-considerations">Cross-Compilation</a>), your own targets can key on custom <code>constraint_value</code>s that describe your environments more precisely and set the value accordingly.</p>
 <hr />
@@ -3032,7 +3083,7 @@ AC_DEFUN([gl_C32RTOMB_SANITYCHECK],    # Line 94 - Sanity check
 <h3 id="step-2-build-the-dependency-graph"><a class="header" href="#step-2-build-the-dependency-graph">Step 2: Build the Dependency Graph</a></h3>
 <p><strong>Critical:</strong> Extract all <code>AC_REQUIRE</code> statements to build the dependency graph, with one important exception:</p>
 <blockquote>
-<p><strong>Ignore <code>_DEFAULTS</code> functions.</strong> Functions like <code>gl_UCHAR_H_DEFAULTS</code>, <code>gl_WCHAR_H_DEFAULTS</code>, etc. set initial shell variable values that get overridden by the actual check functions. In Bazel, these defaults cause duplicate check errors if both the defaults and the actual check try to set the same variable.</p>
+<p><strong><code>_DEFAULTS</code> functions are a <code>default_deps</code> entry, not a <code>deps</code> entry.</strong> Functions like <code>gl_UCHAR_H_DEFAULTS</code> and <code>gl_WCHAR_H_DEFAULTS</code> set the initial shell variable values (<code>HAVE_X=1</code>, <code>REPLACE_X=0</code>) that the check functions may reassign. The header port keeps them in an <code>autoconf_defaults</code> target, <code>:defaults</code>, so <code>AC_REQUIRE([gl_WCHAR_H_DEFAULTS])</code> becomes <code>"//gnulib/m4/wchar_h:defaults"</code> in <code>default_deps</code>; a check's own result overrides a default without a duplicate error. <code>deps</code> rejects defaults targets, so the two cannot be confused. Do not depend on the private <code>gl_*_H_DEFAULTS</code> or <code>gl_*_H_REQUIRE_DEFAULTS</code> targets directly.</p>
 </blockquote>
 <p><strong>Dependency extraction example:</strong></p>
 <pre><code>gl_FUNC_C32RTOMB requires:
@@ -3190,30 +3241,40 @@ autoconf(
 </li>
 </ol>
 <h3 id="step-6-understand-global-defaults-vs-check-results"><a class="header" href="#step-6-understand-global-defaults-vs-check-results">Step 6: Understand Global Defaults vs Check Results</a></h3>
-<p><strong>Important architectural difference:</strong> Bazel uses a shared dependency graph with global defaults, while autoconf runs each <code>configure.ac</code> independently.</p>
-<p>In autoconf:</p>
+<p><strong>The same shape as autoconf, with precedence instead of ordering.</strong> In autoconf, <code>gl_UCHAR_H_DEFAULTS</code> sets <code>HAVE_C32RTOMB=1</code> as a shell variable and <code>gl_FUNC_C32RTOMB</code>, if it runs later, may reassign it to <code>0</code>; the last assignment wins. Bazel has no ordering, so the same two steps are two kinds of target: the header port's <code>autoconf_defaults</code> target <code>:defaults</code>, read through <code>default_deps</code>, provides <code>HAVE_C32RTOMB=1</code> as a <em>default</em>, and <code>gl_FUNC_C32RTOMB</code>'s probe provides an <em>ordinary</em> result that overrides it wherever both are in the graph. A <code>configure.ac</code> that never reaches <code>gl_FUNC_C32RTOMB</code> sees the default, exactly as GNU does.</p>
+<p><strong>Porting a <code>_H_DEFAULTS</code> macro.</strong> Its assignments become the <code>substs</code> of one <code>autoconf_defaults</code> target (<code>M4_VARIABLE</code>-style shell variables such as <code>GL_GENERATE_FOO_H</code> go in <code>variables</code>, <code>AC_DEFINE</code>s in <code>defines</code>); <code>gl_FOO_H_REQUIRE_DEFAULTS</code>, which adds the <code>GNULIB_*</code> indicators on top, is a second <code>autoconf_defaults</code> target with the first in its <code>deps</code>; the public <code>:defaults</code> aggregates both. A defaults target holds literal values only: nothing is probed, no toolchain is involved, and the files are written at analysis time. A probe that upstream keeps next to the defaults (<code>gl_STDLIB_H</code>'s <code>AC_CHECK_HEADERS_ONCE([random.h])</code>) belongs in the header's <code>autoconf</code> target, where it is an ordinary result.</p>
+<pre><code class="language-python">load("@rules_cc_autoconf//autoconf:autoconf_defaults.bzl", "autoconf_defaults")
+
+# gl_UCHAR_H_DEFAULTS
+autoconf_defaults(
+    name = "gl_UCHAR_H_DEFAULTS",
+    substs = {
+        "HAVE_C32RTOMB": "1",
+        "REPLACE_C32RTOMB": "0",
+    },
+)
+
+# gl_UCHAR_H_REQUIRE_DEFAULTS: the GNULIB_* indicators, on top of the above
+autoconf_defaults(
+    name = "gl_UCHAR_H_REQUIRE_DEFAULTS",
+    substs = {
+        "GNULIB_C32RTOMB": "0",
+    },
+    deps = [":gl_UCHAR_H_DEFAULTS"],
+)
+
+autoconf_defaults(
+    name = "defaults",
+    visibility = ["//visibility:public"],
+    deps = [":gl_UCHAR_H_REQUIRE_DEFAULTS"],
+)
+</code></pre>
+<p><strong>Key principle:</strong> a port lists in <code>default_deps</code> the <code>:defaults</code> of every header whose <code>gl_*_H_DEFAULTS</code> its m4 <code>AC_REQUIRE</code>s (directly or through a macro it invokes), and nothing else of the defaults. The values in a <code>:defaults</code> target mirror the m4's initial assignments; change them only when upstream does.</p>
+<p><strong>Conformance disagreements:</strong> the GNU conformance test compares <code>subst.h</code> as well as <code>config.h</code>, with the defaults the Bazel target's dependencies bring and nothing else. A disagreement means one of:</p>
 <ul>
-<li><code>gl_UCHAR_H_DEFAULTS</code> sets <code>HAVE_C32RTOMB=1</code> as a shell variable</li>
-<li>If <code>gl_FUNC_C32RTOMB</code> is later called, it may override this to <code>0</code></li>
-<li>Different <code>configure.ac</code> files may or may not call <code>gl_FUNC_C32RTOMB</code></li>
-</ul>
-<p>In Bazel:</p>
-<ul>
-<li>Global defaults (like <code>HAVE_C32RTOMB="1"</code> in <code>uchar_h</code>) are shared across all modules</li>
-<li>There's only ONE value for each variable in the dependency graph</li>
-<li>Changing a default to make one module's test pass may break other modules</li>
-</ul>
-<p><strong>Key principle:</strong> Existing defaults should NOT be changed to make a new module pass. Defaults are fine as long as nothing in the dependency graph explicitly depends on those targets with conflicting values. This rule is for ports in this repository; downstream projects may override any default (see <a href="migration.html#toolchain-defaults-yield-to-your-values">Toolchain defaults yield to your values</a>).</p>
-<p><strong>Conformance disagreements:</strong> Because of this architectural difference, the GNU conformance test may report a subst that differs between Bazel and <code>configure</code>. This happens when:</p>
-<ul>
-<li>Autoconf runs a specific check (e.g., <code>gl_FUNC_C32RTOMB</code> → <code>HAVE_C32RTOMB=0</code> on macOS)</li>
-<li>Bazel uses the global default (e.g., <code>uchar_h</code> → <code>HAVE_C32RTOMB=1</code>)</li>
-</ul>
-<p>Resolve these in order of preference:</p>
-<ul>
-<li>If the Bazel dependency graph should include those checks, add the appropriate dependency</li>
-<li>If a <code>*_h:defaults</code> value leaks into a test whose <code>configure.ac</code> never <code>AC_REQUIRE</code>s that <code>gl_*_H_DEFAULTS</code> macro, list the defaults target in the suite's <code>defaults_exclude</code></li>
-<li>Only when the difference is inherent (GNU probes the host <code>PATH</code>, runs a test binary whose answer is machine-dependent, or two macros legitimately compute one variable differently) list the variable in the suite's <code>known_divergences</code> with the reason. It is masked from the comparison and always printed in the test log.</li>
+<li>A missing dependency: the port's m4 requires a header's defaults (or another macro) the BUILD does not list. Add it.</li>
+<li>A missing override: upstream runs a check that reassigns a default and the port does not. Port the check.</li>
+<li>An inherent difference (GNU probes the host <code>PATH</code>, runs a test binary whose answer is machine-dependent, or two macros legitimately compute one variable differently): list the variable in the suite's <code>known_divergences</code> with the reason. It is masked from the comparison and always printed in the test log.</li>
 </ul>
 <h3 id="step-7-run-tests-and-iterate"><a class="header" href="#step-7-run-tests-and-iterate">Step 7: Run Tests and Iterate</a></h3>
 <pre><code class="language-bash"># Build the module
@@ -3464,7 +3525,7 @@ autoconf(
     visibility = ["//visibility:public"],
     deps = [
         ":gl_CHECK_FUNCS_ANDROID_posix_memalign",
-        # gl_STDLIB_H_DEFAULTS is a _DEFAULTS macro: not tracked as a dependency
+        # gl_STDLIB_H_DEFAULTS is a _DEFAULTS macro: listed in default_deps, not here
         "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
         "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
     ],
@@ -3652,8 +3713,9 @@ Verify no duplicate checks between direct checks and deps</li>
 <tr><td>String literals in defines</td><td>Use <code>'"string"'</code> (outer single, inner double quotes)</td></tr>
 <tr><td>Platform conditionals</td><td>Use <code>select()</code> for <code>case "$host_os"</code> patterns</td></tr>
 <tr><td>Cross-compilation failures</td><td>Validate sizeof/alignof/compute probes for the real target; replace true <strong>run</strong>-time Autoconf checks with <code>select()</code> or explicit substs</td></tr>
-<tr><td>Conformance test disagrees with GNU autoconf</td><td>Add the missing dependency, or <code>defaults_exclude</code> a leaking <code>*_h:defaults</code>; use <code>known_divergences</code> only for inherent differences (see Step 6)</td></tr>
+<tr><td>Conformance test disagrees with GNU autoconf</td><td>Add the missing dependency (a header's <code>:defaults</code> the m4 requires, or a check the port lacks); use <code>known_divergences</code> only for inherent differences (see Step 6)</td></tr>
 <tr><td>Changing defaults to fix one module</td><td>Don't change existing defaults; they may break other modules</td></tr>
+<tr><td>A <code>:defaults</code> or <code>*_DEFAULTS</code> target in <code>deps</code></td><td>Analysis fails: <code>deps</code> wants <code>CcAutoconfInfo</code>, defaults carry <code>CcAutoconfDefaultsInfo</code>.  Move it to <code>default_deps</code></td></tr>
 <tr><td>Unnecessary <code>name</code> + separate <code>AC_DEFINE</code></td><td>Use <code>define =</code> directly unless the cache variable is needed in <code>requires</code> or you need custom values</td></tr>
 <tr><td>Using <code>condition</code> with <code>if_false = None</code></td><td>Use <code>requires = ["cache_var==1"]</code> to gate defines; <code>condition</code> is for value selection, not gating</td></tr>
 <tr><td>Hiding a fixable port behind <code>known_divergences</code></td><td>Fix the port so Bazel matches GNU; a divergence entry needs a reason that explains why no port can match</td></tr>
