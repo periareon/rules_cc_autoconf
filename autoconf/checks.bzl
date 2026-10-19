@@ -1390,7 +1390,8 @@ def _ac_check_sizeof(
             - `None` (default): No define is created, only cache variable
             - `True`: Create define using the cache variable name (`name`)
             - `"SIZEOF_FOO"`: Create define with explicit name `SIZEOF_FOO` (implies `define=True`)
-        includes: Optional list of header names to include (e.g. `["stddef.h"]`)
+        includes: Optional list of header names to include (e.g. `["stddef.h"]`). Without it the
+            probe compiles with autoconf's default includes (`AC_INCLUDES_DEFAULT`), as the macro does.
         language: Language to use for check (`"c"` or `"cpp"`)
         copts: Optional list of extra compiler flags for this check
             (e.g., `["-std=c11"]`). Appended after the autoconf toolchain's
@@ -1429,7 +1430,9 @@ def _ac_check_sizeof(
         else:
             subst_name = subst
 
-    header_code = _header_code_from_includes(includes) if includes else ""
+    # As autoconf: the type is looked up with AC_INCLUDES_DEFAULT (`off_t` from
+    # <sys/types.h>) unless the caller names the headers.
+    header_code = _header_code_from_includes(includes) if includes else _AC_INCLUDES_DEFAULT
 
     code = _AC_CHECK_SIZEOF_TEMPLATE.format(header_code, type_name)
 
@@ -1517,7 +1520,8 @@ def _ac_check_alignof(
     Args:
         type_name: Name of the type
         define: Custom define name (defaults to `ALIGNOF_<TYPE>`)
-        includes: Optional list of header names to include (e.g. `["stddef.h"]`)
+        includes: Optional list of header names to include (e.g. `["stddef.h"]`). Without it the
+            probe compiles with autoconf's default includes (`AC_INCLUDES_DEFAULT`), as the macro does.
         language: Language to use for check (`"c"` or `"cpp"`)
         copts: Optional list of extra compiler flags for this check
             (e.g., `["-std=c11"]`). Appended after the autoconf toolchain's
@@ -1533,7 +1537,7 @@ def _ac_check_alignof(
     if not define:
         define = "ALIGNOF_" + type_name.upper().replace(" ", "_").replace("*", "P")
 
-    header_code = _header_code_from_includes(includes) if includes else ""
+    header_code = _header_code_from_includes(includes) if includes else _AC_INCLUDES_DEFAULT  # as AC_CHECK_SIZEOF
 
     code = _AC_CHECK_ALIGNOF_TEMPLATE.format(header_code, type_name)
 

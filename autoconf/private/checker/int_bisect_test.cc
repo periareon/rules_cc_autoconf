@@ -95,17 +95,36 @@ class FakeCompiler {
 
    private:
     std::optional<int> evaluate(const std::string& token) const {
-        auto it = constants_.find(token);
-        if (it != constants_.end()) return it->second;
+        // The bisection compares the expression as `((long long)(expr))`;
+        // the constants are known in that form only, so a probe that drops
+        // the cast does not compile (see test_compares_as_signed).  The
+        // bounds arrive as bare integer literals.
+        const std::string cast_open = "((long long)(";
+        const std::string cast_close = "))";
+        std::string inner = token;
+        bool cast = false;
+        if (token.size() > cast_open.size() + cast_close.size() &&
+            token.compare(0, cast_open.size(), cast_open) == 0 &&
+            token.compare(token.size() - cast_close.size(), cast_close.size(),
+                          cast_close) == 0) {
+            inner =
+                token.substr(cast_open.size(), token.size() - cast_open.size() -
+                                                   cast_close.size());
+            cast = true;
+        }
+        if (cast) {
+            auto it = constants_.find(inner);
+            if (it != constants_.end()) return it->second;
+        }
 
         // Integer literal, optionally negative.
-        if (token.empty()) return std::nullopt;
-        size_t i = token[0] == '-' ? 1 : 0;
-        if (i == token.size()) return std::nullopt;
-        for (; i < token.size(); ++i) {
-            if (token[i] < '0' || token[i] > '9') return std::nullopt;
+        if (inner.empty()) return std::nullopt;
+        size_t i = inner[0] == '-' ? 1 : 0;
+        if (i == inner.size()) return std::nullopt;
+        for (; i < inner.size(); ++i) {
+            if (inner[i] < '0' || inner[i] > '9') return std::nullopt;
         }
-        return std::stoi(token);
+        return std::stoi(inner);
     }
 
     std::map<std::string, int> constants_;
@@ -237,6 +256,14 @@ static bool test_gen_less_compare_rejects_missing_placeholders() {
                        "{lhs}");
 }
 
+// The expression is compared as a signed value: an unsigned one (`sizeof
+// (long)`) would otherwise make `expr < -1024` true.  The stand-in compiler
+// knows its constants only behind the cast.
+static bool test_compares_as_signed() {
+    FakeCompiler cc({{"sizeof (long)", 8}});
+    return compute("sizeof (long)", cc) == 8;
+}
+
 int main() {
     std::cout << "int_bisect_test:" << std::endl;
     TEST(underflow_rejected)
@@ -249,6 +276,7 @@ int main() {
     TEST(named_constants_found)
     TEST(custom_ranges)
     TEST(preamble_preserved_in_probes)
+    TEST(compares_as_signed)
     TEST(split_code_expr)
     TEST(split_code_expr_rejects_missing_marker)
     TEST(gen_less_compare_rejects_missing_placeholders)

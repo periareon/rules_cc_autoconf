@@ -71,7 +71,12 @@ int bisect_compile_time_int(const std::string& base_code_template,
     const std::pair<std::string, std::string> code_expr =
         split_code_expr(base_code_template);
     const std::string& code = code_expr.first;
-    const std::string& expr = code_expr.second;
+    // The comparisons below are against signed bounds.  An unsigned expression
+    // (`sizeof (long)`, an enumerator of an unsigned enum) would convert the
+    // negative bound to a huge value and make `expr < -1024` true, so the
+    // expression is compared as a signed value.  Autoconf's _AC_COMPUTE_INT
+    // handles the same case by testing the sign first.
+    const std::string expr = "((long long)(" + code_expr.second + "))";
     // int type for target might not be same as host
     // let's assume the value we detect (usually pre-defined constant value for
     // syscall) live in sensible range
@@ -80,8 +85,8 @@ int bisect_compile_time_int(const std::string& base_code_template,
         compiles(gen_less_compare(code, std::to_string(search_end), expr))) {
         // value out of host int range, give up
         throw std::runtime_error(
-            "Unable to determine compile-time value for constant '" + expr +
-            "' because it is outside the search range " +
+            "Unable to determine compile-time value for constant '" +
+            code_expr.second + "' because it is outside the search range " +
             std::to_string(search_begin) + " ~ " + std::to_string(search_end));
     }
     // both compile false, might also indicate no such constant exist
@@ -90,7 +95,7 @@ int bisect_compile_time_int(const std::string& base_code_template,
         // at least search_begin < constant or constant < search_end should
         // compile if none compile, means expr can't evaluate at compile time
         throw std::runtime_error(
-            "'" + expr +
+            "'" + code_expr.second +
             "' can't be evaluated (non-exist constant, invalid expression, or "
             "can't evaluate at compile time)");
     }

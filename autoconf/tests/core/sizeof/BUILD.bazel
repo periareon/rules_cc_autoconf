@@ -33,6 +33,13 @@ autoconf(
             "void*",
             define = "SIZEOF_VOIDP",
         ),
+        # No `includes`: autoconf's default includes declare off_t (<sys/types.h>).
+        checks.AC_CHECK_SIZEOF(
+            "off_t",
+            define = "SIZEOF_OFF_T",
+        ),
+        # An unsigned expression: compared as a signed value by the bisection.
+        checks.AC_COMPUTE_INT("SIZEOF_LONG_COMPUTED", "sizeof (long)"),
     ],
     deps = [":package"],
 )
