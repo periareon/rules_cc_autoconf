@@ -1051,7 +1051,9 @@ see them through <code>cc_deps</code>:</p>
 )
 </code></pre>
 <p>Every check of the target compiles with the dependencies' include directories
-and defines and links their archives after its own object, so the probe
+and defines and links their archives after its own object, with each
+archive's directory on the library search path so the <code>-l&lt;name&gt;</code> of an
+<code>AC_CHECK_LIB</code> resolves to the dependency's <code>lib&lt;name&gt;.a</code> by name; the probe
 answers as it would with the library installed. The dependencies' flags are
 part of each check's identity: the same check with and without them never
 shares a result. Prefer this over a static <code>AC_DEFINE([HAVE_LIBGMP])</code>, which
