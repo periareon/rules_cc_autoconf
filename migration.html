@@ -484,6 +484,7 @@ AC_CHECK_ALIGNOF([double])
 checks.AC_CHECK_SIZEOF("size_t", define = "SIZEOF_SIZE_T", includes = ["#include &lt;stddef.h&gt;"])
 checks.AC_CHECK_ALIGNOF("double", define = "ALIGNOF_DOUBLE")
 </code></pre>
+<p>Without <code>includes</code>, the probe compiles with autoconf's default includes (<code>&lt;sys/types.h&gt;</code> among them), as <code>AC_CHECK_SIZEOF([off_t])</code> does in configure.</p>
 <p><strong>Note:</strong> In <code>rules_cc_autoconf</code>, <code>AC_CHECK_SIZEOF</code> / <code>AC_CHECK_ALIGNOF</code> are implemented with <strong>compile-time</strong> probing (not by executing a test binary). They still encode facts about the <strong>target</strong> toolchain, so interpret results carefully when cross-compiling (see <a href="#cross-compilation-considerations">Cross-Compilation</a>).</p>
 <hr />
 <h3 id="pattern-7-library-checks"><a class="header" href="#pattern-7-library-checks">Pattern 7: Library Checks</a></h3>
