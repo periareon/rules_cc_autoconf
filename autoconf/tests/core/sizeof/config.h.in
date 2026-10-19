@@ -32,3 +32,9 @@
 
 /* Define to the size of `void*', as computed by sizeof. */
 #undef SIZEOF_VOIDP
+
+/* Define to the size of `off_t', as computed by sizeof. */
+#undef SIZEOF_OFF_T
+
+/* sizeof (long), through AC_COMPUTE_INT. */
+#undef SIZEOF_LONG_COMPUTED
