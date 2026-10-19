@@ -505,6 +505,7 @@ def collect_cc_deps(cc_deps, compiler_type, bin_dir):
         flags.append(("/D" if msvc else "-D") + define)
     libraries = []
     link_flags = []
+    link_inputs = []
     for linker_input in merged.linking_context.linker_inputs.to_list():
         for library in linker_input.libraries:
             archive = library.pic_static_library or library.static_library or library.interface_library or library.dynamic_library
@@ -513,12 +514,18 @@ def collect_cc_deps(cc_deps, compiler_type, bin_dir):
         for flag in linker_input.user_link_flags:
             if flag not in link_flags:
                 link_flags.append(flag)
+
+        # Files the link flags name (`additional_linker_inputs`: a version
+        # script, a response file): the sandbox needs them as much as the
+        # archives.
+        extra = linker_input.additional_inputs
+        link_inputs.extend(extra.to_list() if type(extra) == "depset" else extra)
     return struct(
         flags = flags,
         mapped_includes = mapped,
         libraries = libraries,
         link_flags = link_flags,
-        inputs = depset(libraries, transitive = [compilation.headers]),
+        inputs = depset(libraries + link_inputs, transitive = [compilation.headers]),
         key = flags + [m.prefix + bin_dir + "/" + m.rel for m in mapped] + [a.path for a in libraries] + link_flags,
     )
 
