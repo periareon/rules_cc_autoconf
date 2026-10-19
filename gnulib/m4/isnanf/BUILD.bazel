@@ -68,6 +68,13 @@ autoconf(
             name = "gl_cv_func_isnanf_no_libm",
             code = _ISNANF_LINK_CODE,
         ),
+        # The shell variable gnulib.mk's gl_CONDITIONAL reads (`test $gl_func_isnanf_no_libm = no`).
+        checks.M4_VARIABLE(
+            "gl_func_isnanf_no_libm",
+            condition = "gl_cv_func_isnanf_no_libm",
+            if_false = "no",
+            if_true = "yes",
+        ),
     ],
     visibility = ["//visibility:public"],
 )

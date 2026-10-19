@@ -189,6 +189,13 @@ autoconf(
             code = _ISFINITE_LINK_CODE,
             requires = ["ac_cv_have_decl_isfinite"],
         ),
+        # The shell variable gnulib.mk's gl_CONDITIONAL reads (`test $gl_func_isfinite_no_libm = no`).
+        checks.M4_VARIABLE(
+            "gl_func_isfinite_no_libm",
+            condition = "gl_cv_func_isfinite_no_libm",
+            if_false = "no",
+            if_true = "yes",
+        ),
         # ... then with -lm
         checks.AC_TRY_LINK(
             name = "gl_cv_func_isfinite_in_libm",

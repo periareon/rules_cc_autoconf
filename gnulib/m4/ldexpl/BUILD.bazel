@@ -62,6 +62,13 @@ autoconf(
             name = "gl_cv_func_ldexpl_no_libm",
             code = _LDEXPL_LINK_CODE,
         ),
+        # The shell variable gnulib.mk's gl_CONDITIONAL reads (`test $gl_func_ldexpl_no_libm = no`).
+        checks.M4_VARIABLE(
+            "gl_func_ldexpl_no_libm",
+            condition = "gl_cv_func_ldexpl_no_libm",
+            if_false = "no",
+            if_true = "yes",
+        ),
     ],
     visibility = ["//visibility:public"],
 )
@@ -126,6 +133,14 @@ autoconf(
                 "ac_cv_have_decl_ldexpl",
                 "!gl_cv_func_ldexpl_no_libm",
             ],
+        ),
+        # m4 lines 50-56: gl_func_ldexpl=yes when ldexpl is declared, links (with
+        # or without libm) and works; gnulib.mk's gl_CONDITIONAL reads it.
+        checks.M4_VARIABLE(
+            "gl_func_ldexpl",
+            condition = "ac_cv_have_decl_ldexpl && (gl_cv_func_ldexpl_no_libm || gl_cv_func_ldexpl_in_libm) && gl_cv_func_ldexpl_works",
+            if_false = "no",
+            if_true = "yes",
         ),
         # m4 line 58: AC_DEFINE([HAVE_LDEXPL], [1]) only when gl_func_ldexpl = yes,
         # i.e. ldexpl is declared, links (with or without libm) and works.

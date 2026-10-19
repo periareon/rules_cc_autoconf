@@ -36,6 +36,30 @@ autoconf(
             if_false = "",
             if_true = "-lgmp",
         ),
+        # serial 8: gmp.h is generated (as a wrapper for mini-gmp.h or gmp/gmp.h) unless
+        # the library and its own gmp.h are both there.
+        checks.M4_VARIABLE(
+            "GL_GENERATE_GMP_H",
+            condition = "ac_cv_search___gmpz_roinit_n && ac_cv_header_gmp_h",
+            if_false = "true",
+            if_true = "false",
+        ),
+        # gl_CONDITIONAL([GL_GENERATE_MINI_GMP_H], [test $HAVE_LIBGMP != yes]): an automake
+        # conditional in GNU; a substitution here, since the generated gmp.h wrapper (which
+        # gnulib.mk writes with echo under that conditional) reads it as @GL_GENERATE_MINI_GMP_H@.
+        checks.AC_SUBST(
+            "GL_GENERATE_MINI_GMP_H",
+            condition = "ac_cv_search___gmpz_roinit_n",
+            if_false = "true",
+            if_true = "false",
+        ),
+        # gl_CONDITIONAL([GL_GENERATE_GMP_GMP_H], [test $HAVE_LIBGMP = yes && test "$ac_cv_header_gmp_h" != yes])
+        checks.AC_SUBST(
+            "GL_GENERATE_GMP_GMP_H",
+            condition = "ac_cv_search___gmpz_roinit_n && !ac_cv_header_gmp_h",
+            if_false = "false",
+            if_true = "true",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [

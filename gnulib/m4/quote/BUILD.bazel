@@ -3,9 +3,12 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 
 autoconf(
-    name = "quote",
-    checks = [
-        # Note: quote.m4 may not exist in gnulib, or this module may not have checks
-    ],
+    name = "gl_QUOTE",
     visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "quote",
+    visibility = ["//visibility:public"],
+    deps = [":gl_QUOTE"],
 )

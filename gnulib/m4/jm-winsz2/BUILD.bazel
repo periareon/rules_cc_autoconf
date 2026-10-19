@@ -1,17 +1,34 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/jm-winsz2.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
-load("//autoconf:checks.bzl", "checks")
+load("//autoconf:checks.bzl", "checks", "utils")
 
+# gl_HEADER_TIOCGWINSZ_NEEDS_SYS_IOCTL: when termios.h does not define TIOCGWINSZ,
+# `gl_cv_sys_tiocgwinsz_needs_sys_ioctl_h` is yes when sys/ioctl.h does (Linux), and
+# GWINSZ_IN_SYS_IOCTL says so.
 autoconf(
     name = "jm-winsz2",
-    checks = select({
-        # On Linux, TIOCGWINSZ is in sys/ioctl.h
-        "@platforms//os:linux": [
-            checks.AC_DEFINE("GWINSZ_IN_SYS_IOCTL", 1),
-        ],
-        # On macOS, TIOCGWINSZ is in termios.h, not sys/ioctl.h
-        "//conditions:default": [],
-    }),
+    checks = [
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_sys_tiocgwinsz_needs_sys_ioctl_h",
+            code = utils.AC_LANG_PROGRAM(
+                [
+                    "#include <sys/types.h>",
+                    "#include <sys/ioctl.h>",
+                    "#ifndef TIOCGWINSZ",
+                    "#error TIOCGWINSZ is not defined by sys/ioctl.h",
+                    "#endif",
+                ],
+                [],
+            ),
+            requires = ["!gl_cv_sys_tiocgwinsz_needs_termios_h"],
+        ),
+        checks.AC_DEFINE(
+            "GWINSZ_IN_SYS_IOCTL",
+            1,
+            requires = ["gl_cv_sys_tiocgwinsz_needs_sys_ioctl_h"],
+        ),
+    ],
     visibility = ["//visibility:public"],
+    deps = ["//gnulib/m4/jm-winsz1:gl_HEADER_TIOCGWINSZ_IN_TERMIOS_H"],
 )

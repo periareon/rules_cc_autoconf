@@ -1,11 +1,80 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/jm-winsz1.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
+load("//autoconf:checks.bzl", "checks", "utils")
+
+# gl_HEADER_TIOCGWINSZ_IN_TERMIOS_H: `gl_cv_sys_tiocgwinsz_needs_termios_h` is yes when
+# termios.h defines TIOCGWINSZ (the m4 greps the preprocessed program for a `yes` under
+# `#ifdef TIOCGWINSZ`; a compile that fails without the macro says the same), on POSIX
+# termios systems only.
+autoconf(
+    name = "gl_HEADER_TIOCGWINSZ_IN_TERMIOS_H",
+    checks = [
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_sys_tiocgwinsz_needs_termios_h",
+            code = utils.AC_LANG_PROGRAM(
+                [
+                    "#include <sys/types.h>",
+                    "#include <termios.h>",
+                    "#ifndef TIOCGWINSZ",
+                    "#error TIOCGWINSZ is not defined by termios.h",
+                    "#endif",
+                ],
+                [],
+            ),
+            requires = ["ac_cv_sys_posix_termios"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = ["//autoconf/macros/AC_SYS_POSIX_TERMIOS"],
+)
+
+# gl_WINSIZE_IN_PTEM: `gl_cv_sys_struct_winsize_needs_sys_ptem_h` is yes when termios.h alone
+# does not declare struct winsize but sys/ptem.h does (Solaris: WINSIZE_IN_PTEM).  The two
+# compiles the m4 runs are the probes, so the cache variable is spelled by its two halves.
+autoconf(
+    name = "gl_WINSIZE_IN_PTEM",
+    checks = [
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_sys_struct_winsize_in_termios_h",
+            code = utils.AC_LANG_PROGRAM(
+                ["#include <termios.h>"],
+                [
+                    "struct winsize x;",
+                    "if (sizeof x > 0) return 0;",
+                ],
+            ),
+            requires = ["ac_cv_sys_posix_termios"],
+        ),
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_sys_struct_winsize_in_sys_ptem_h",
+            code = utils.AC_LANG_PROGRAM(
+                ["#include <sys/ptem.h>"],
+                [
+                    "struct winsize x;",
+                    "if (sizeof x > 0) return 0;",
+                ],
+            ),
+            requires = ["!gl_cv_sys_struct_winsize_in_termios_h"],
+        ),
+        checks.AC_DEFINE(
+            "WINSIZE_IN_PTEM",
+            1,
+            requires = [
+                "!gl_cv_sys_struct_winsize_in_termios_h",
+                "gl_cv_sys_struct_winsize_in_sys_ptem_h",
+            ],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = ["//autoconf/macros/AC_SYS_POSIX_TERMIOS"],
+)
 
 autoconf(
     name = "jm-winsz1",
-    checks = [
-        # Note: jm-winsz1.m4 may not exist in gnulib, or this module may not have checks
-    ],
     visibility = ["//visibility:public"],
+    deps = [
+        ":gl_HEADER_TIOCGWINSZ_IN_TERMIOS_H",
+        ":gl_WINSIZE_IN_PTEM",
+    ],
 )
