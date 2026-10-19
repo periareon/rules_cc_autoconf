@@ -260,6 +260,14 @@ class CheckRunner {
     void append_link_libraries(std::vector<std::string>& cmd);
 
     /**
+     * @brief `-L<dir>` (`/LIBPATH:<dir>` for cl) for the directory of every
+     * cc_deps archive, so a `-l<name>` under test (AC_CHECK_LIB) resolves to
+     * the dependency's lib<name>.a by name, as it would with the library
+     * installed; the archive itself is still passed by path.
+     */
+    std::vector<std::string> library_search_flags(bool msvc) const;
+
+    /**
      * @brief Append the trailing `/link` block to a cl.exe command line.
      *
      * cl hands everything after `/link` to link.exe, so this must be called

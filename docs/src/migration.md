@@ -1194,7 +1194,9 @@ autoconf(
 ```
 
 Every check of the target compiles with the dependencies' include directories
-and defines and links their archives after its own object, so the probe
+and defines and links their archives after its own object, with each
+archive's directory on the library search path so the `-l<name>` of an
+`AC_CHECK_LIB` resolves to the dependency's `lib<name>.a` by name; the probe
 answers as it would with the library installed. The dependencies' flags are
 part of each check's identity: the same check with and without them never
 shares a result. Prefer this over a static `AC_DEFINE([HAVE_LIBGMP])`, which
