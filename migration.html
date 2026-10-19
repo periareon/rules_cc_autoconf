@@ -988,6 +988,18 @@ autoconf_srcs(
 )
 </code></pre>
 <p>Each source is compiled only when its expression is true; the grammar is the one in <a href="#expression-syntax">Expression syntax</a>. The gnulib rule is <code>HAVE_X = 0 || REPLACE_X = 1</code>; checking only <code>REPLACE_X</code> misses every libc that lacks the function (MSVC, often MinGW).</p>
+<p>By default the generated file is a copy of the source, which breaks the
+source's own quoted includes of files next to it (<code>lib/unictype/*.c</code>
+include <code>"bitmap.h"</code>): the copy lives in the output tree, where those files
+are not. <code>wrap = "include"</code> makes the generated file a one-line
+<code>#include "&lt;path of the source&gt;"</code> instead, so such includes resolve where
+the source lives and diagnostics name the real file. The sources must then
+reach the compiler: list the <code>autoconf_srcs</code> target in the library's <code>deps</code>
+as well as its <code>srcs</code> (it provides the sources as headers of a <code>CcInfo</code>).
+The wrapper is named with the <code>.ac</code> infix (<code>foo.c</code> -&gt; <code>foo.ac.c</code>) whatever
+<code>naming</code> says: a wrapper named like a root-level source would resolve its own
+<code>#include "foo.c"</code> to itself, since quoted includes search the including
+file's directory first. The converter emits this form.</p>
 <h3 id="a-standard-for-every-check"><a class="header" href="#a-standard-for-every-check">A standard for every check</a></h3>
 <p>Checks compile with Bazel's <code>--copt</code>, <code>--conlyopt</code> and <code>--cxxopt</code> (the CFLAGS
 of a configure run), then the <code>autoconf</code> target's own <code>copts</code>, <code>conlyopts</code>
