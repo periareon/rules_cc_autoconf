@@ -165,6 +165,13 @@ autoconf(
             code = _ISINF_LINK_CODE,
             requires = ["ac_cv_have_decl_isinf"],
         ),
+        # The shell variable gnulib.mk's gl_CONDITIONAL reads (`test $gl_func_isinf_no_libm = no`).
+        checks.M4_VARIABLE(
+            "gl_func_isinf_no_libm",
+            condition = "gl_cv_func_isinf_no_libm",
+            if_false = "no",
+            if_true = "yes",
+        ),
         # ... then with -lm
         checks.AC_TRY_LINK(
             name = "gl_cv_func_isinf_in_libm",

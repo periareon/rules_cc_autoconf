@@ -7,6 +7,10 @@ autoconf(
     name = "libtextstyle",
     checks = [
         checks.AC_SUBST("HAVE_LIBTEXTSTYLE", "no"),
+        # gl_LIBTEXTSTYLE_OPTIONAL without the library: the stub textstyle.h is
+        # generated (TEXTSTYLE_H=textstyle.h, gl_CONDITIONAL_HEADER([textstyle.h])).
+        checks.AC_SUBST("TEXTSTYLE_H", "textstyle.h"),
+        checks.M4_VARIABLE("GL_GENERATE_TEXTSTYLE_H", "true"),
     ],
     visibility = ["//visibility:public"],
 )

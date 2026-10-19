@@ -3,9 +3,12 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 
 autoconf(
-    name = "posixtm",
-    checks = [
-        # Note: posixtm.m4 may not exist in gnulib, or this module may not have checks
-    ],
+    name = "gl_POSIXTM",
     visibility = ["//visibility:public"],
+)
+
+autoconf(
+    name = "posixtm",
+    visibility = ["//visibility:public"],
+    deps = [":gl_POSIXTM"],
 )

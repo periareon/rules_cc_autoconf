@@ -27,6 +27,10 @@ autoconf(
         ),
         # Canonical owner of FREXP_LIBM (empty on macOS); asinl/acosl get it from here to avoid duplicate in //... build
         checks.AC_SUBST("FREXP_LIBM", ""),
+        # gl_FUNC_FREXP's verdict after gl_FUNC_FREXP_WORKS: frexp works on every
+        # libc the ports support, so the module's object is not compiled
+        # (gl_CONDITIONAL([GL_COND_OBJ_FREXP], [test $gl_func_frexp_no_libm = no || test $gl_func_frexp = no])).
+        checks.M4_VARIABLE("gl_func_frexp", "yes"),
     ],
     default_deps = [
         "//gnulib/m4/math_h:defaults",  # AC_REQUIRE: gl_MATH_H_DEFAULTS

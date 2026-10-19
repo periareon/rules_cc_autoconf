@@ -109,6 +109,16 @@ autoconf(
             "STAT_STATFS2_BSIZE",
             requires = ["fu_cv_sys_stat_statfs2_bsize"],
         ),
+        # gl_FILE_SYSTEM_USAGE([gl_cv_fs_space=yes], [gl_cv_fs_space=no]) from gl_FSUSAGE: the
+        # action-if-found runs when one of the space-reporting calls works (fsusage.c is
+        # compiled on it; coreutils builds df on it).  The variable holds the word GNU assigns,
+        # so consumers compare it by value (`gl_cv_fs_space==yes`).
+        checks.M4_VARIABLE(
+            "gl_cv_fs_space",
+            condition = "fu_cv_sys_stat_statvfs || fu_cv_sys_stat_statvfs64 || fu_cv_sys_stat_statfs2_bsize",
+            if_false = "no",
+            if_true = "yes",
+        ),
     ] + select({
         # Linux also has statfs with f_frsize member
         "@platforms//os:linux": [

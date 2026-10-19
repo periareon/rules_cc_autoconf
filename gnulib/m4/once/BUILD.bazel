@@ -3,12 +3,15 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 
 autoconf(
-    name = "once",
-    checks = [
-        # Note: once.m4 may not exist in gnulib, or this module may not have checks
-    ],
+    name = "gl_ONCE",
     visibility = ["//visibility:public"],
-    deps = [
-        "//gnulib/m4/threadlib",
-    ],
+    # AC_REQUIRE([gl_THREADLIB]): the whole threadlib machinery as GNU expands it (its
+    # AC_CHECK_HEADERS_ONCE([threads.h]) included), which the port's aggregate carries.
+    deps = ["//gnulib/m4/threadlib"],
+)
+
+autoconf(
+    name = "once",
+    visibility = ["//visibility:public"],
+    deps = [":gl_ONCE"],
 )

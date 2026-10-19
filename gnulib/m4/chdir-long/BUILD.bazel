@@ -22,6 +22,10 @@ int main(void) { return x; }
 """,
             language = "c",
         ),
+        # The shell variable's value, as GNU sets it: "no" when PATH_MAX is defined, "yes"
+        # otherwise.  gnulib.mk compiles chdir-long.c under `test "$gl_cv_..." = no`, which
+        # consumers spell by value (`gl_cv_have_unlimited_file_name_length==no`): the result
+        # is a variable with two values, not a probe, so a bare name does not read as yes/no.
         checks.M4_VARIABLE(
             "gl_cv_have_unlimited_file_name_length",
             condition = "gl_cv_path_max_defined",

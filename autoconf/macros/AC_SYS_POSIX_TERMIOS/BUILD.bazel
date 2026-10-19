@@ -1,18 +1,36 @@
 """AC_SYS_POSIX_TERMIOS - Autoconf builtin macro
 
-Checks if the system supports POSIX termios.
+Checks if the system supports POSIX termios: termios.h and the tcgetattr call
+link (SunOS 4 had the header without the library calls).
 
-Defines:
-  - HAVE_POSIX_TERMIOS (if supported)
+Cache variable:
+  - ac_cv_sys_posix_termios (yes when the program links; coreutils builds
+    stty on it)
+
+GNU autoconf defines nothing from this macro; callers test the cache variable.
 """
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
-load("//autoconf:checks.bzl", "checks")
+load("//autoconf:checks.bzl", "checks", "utils")
 
 autoconf(
     name = "AC_SYS_POSIX_TERMIOS",
     checks = [
         checks.AC_CHECK_HEADER("termios.h"),
+        checks.AC_TRY_LINK(
+            name = "ac_cv_sys_posix_termios",
+            code = utils.AC_LANG_PROGRAM(
+                [
+                    "#include <sys/types.h>",
+                    "#include <unistd.h>",
+                    "#include <termios.h>",
+                ],
+                [
+                    "/* SunOS 4.0.3 has termios.h but not the library calls.  */",
+                    "tcgetattr(0, 0);",
+                ],
+            ),
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [

@@ -23,12 +23,12 @@ autoconf(
             ],
         ),
 
-        # If useconds_t doesn't exist, define it as unsigned int
-        # The condition references the check result
+        # If useconds_t doesn't exist, define it as unsigned int; `requires` (not
+        # `condition`) so the define stays `#undef` when the type exists.
         checks.AC_DEFINE(
             "useconds_t",
-            condition = "!HAVE_USECONDS_T",
-            if_true = "unsigned int",
+            "unsigned int",
+            requires = ["!HAVE_USECONDS_T"],
         ),
 
         # The m4 file has a runtime check (AC_RUN_IFELSE) to verify usleep works with large arguments
