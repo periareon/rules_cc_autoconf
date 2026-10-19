@@ -2374,7 +2374,7 @@ checks.AC_SUBST("HAVE_LSTAT", condition = "ac_cv_func_lstat", if_true = "1", if_
 <h4 id="expression-syntax"><a class="header" href="#expression-syntax">Expression syntax</a></h4>
 <p><code>requires</code> entries and <code>condition</code> strings share one grammar, evaluated by the checker:</p>
 <div class="table-wrapper"><table><thead><tr><th>Form</th><th>Meaning</th></tr></thead><tbody>
-<tr><td><code>NAME</code></td><td>True if the named check passed / the value is truthy</td></tr>
+<tr><td><code>NAME</code></td><td>True if the named check passed / the value is truthy (an <code>AC_SEARCH_LIBS</code> result is true when the function was found, in libc or in a library)</td></tr>
 <tr><td><code>!NAME</code></td><td>Negation</td></tr>
 <tr><td><code>NAME==1</code>, <code>NAME!=0</code>, <code>NAME&lt;3</code>, <code>NAME&gt;=2</code></td><td>Compare the recorded value (<code>==</code>, <code>!=</code>, <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code>)</td></tr>
 <tr><td><code>A &amp;&amp; B</code>, <code>A || B</code>, <code>( ... )</code></td><td>Boolean combination and grouping</td></tr>
