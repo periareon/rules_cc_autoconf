@@ -288,6 +288,22 @@ void test_eval_falsy_not_success() {
     assert(e.compute(results) == false);
 }
 
+// AC_SEARCH_LIBS stores the library flag: "" when the function is in libc
+// (autoconf's "none required"), "" with success=false when it is nowhere.
+// The bare name is the search's outcome, not the flag's emptiness.
+void test_eval_search_libs_in_libc() {
+    std::map<std::string, CheckResult> results;
+    results.emplace("ac_cv_search_dlopen",
+                    CheckResult("ac_cv_search_dlopen", std::string(""), true,
+                                false, false, CheckType::kSearchLibs));
+    results.emplace("ac_cv_search_nowhere",
+                    CheckResult("ac_cv_search_nowhere", std::string(""), false,
+                                false, false, CheckType::kSearchLibs));
+    assert(ConditionEvaluator("ac_cv_search_dlopen").compute(results));
+    assert(!ConditionEvaluator("ac_cv_search_nowhere").compute(results));
+    assert(!ConditionEvaluator("!ac_cv_search_dlopen").compute(results));
+}
+
 void test_eval_falsy_missing() {
     std::map<std::string, CheckResult> results;
     ConditionEvaluator e("FOO");
@@ -522,6 +538,7 @@ int main() {
     RUN(test_eval_truthy);
     RUN(test_eval_falsy_zero);
     RUN(test_eval_falsy_not_success);
+    RUN(test_eval_search_libs_in_libc);
     RUN(test_eval_falsy_missing);
     RUN(test_eval_negation);
     RUN(test_eval_eq_match);
