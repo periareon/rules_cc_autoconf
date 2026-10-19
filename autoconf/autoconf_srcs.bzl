@@ -3,6 +3,8 @@
 load("@bazel_features//:features.bzl", "bazel_features")
 load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@rules_cc//cc:find_cc_toolchain.bzl", "use_cc_toolchain")
+load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
+load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 load(
     "//autoconf/private:autoconf_config.bzl",
     "collect_defaults",
@@ -130,9 +132,34 @@ def _lookup_var(var, all_cache, all_define, all_subst, src_label, rule_label):
 
     return distinct_paths.values()[0][1]
 
+def _repository_relative(file):
+    """The file's path within its repository.
+
+    That is what a quoted include resolves against the repository's own include
+    roots (`-iquote external/<repo>` and its output-tree twin), in the main
+    repository and in any other.  It is the `short_path` without the
+    `../<repo>/` of an external file, and it holds for generated files and under
+    path mapping, where `path` would not.
+
+    Args:
+        file: The `File` to name.
+
+    Returns:
+        The repository-relative path, as a string.
+    """
+    short = file.short_path
+    if short.startswith("../"):
+        return short.split("/", 2)[2]
+    return short
+
 def _arg_map_src(value):
     in_file, condition, out_file = value
-    return "{},{},{}".format(in_file.path, condition, out_file.path)
+    return [
+        "--src",
+        "{},{},{}".format(in_file.path, condition, out_file.path),
+        "--include-as",
+        _repository_relative(in_file),
+    ]
 
 def _autoconf_srcs_impl(ctx):
     """Implementation of the autoconf_srcs rule."""
@@ -148,6 +175,7 @@ def _autoconf_srcs_impl(ctx):
     all_subst = merged.subst
 
     outputs = []
+    originals = []
 
     for src, condition in ctx.attr.srcs.items():
         files = src.files.to_list()
@@ -159,6 +187,12 @@ def _autoconf_srcs_impl(ctx):
 
         in_file = files[0]
         out_name = _output_name(ctx, in_file, ctx.attr.naming)
+        if ctx.attr.wrap == "include" and ctx.attr.naming != "ac_suffix":
+            # The wrapper's `#include "<path>"` is searched for in the wrapper's own
+            # directory first, so a wrapper named like a root-level source
+            # (`foo.c` including "foo.c") would include itself: the wrapper's
+            # name always carries the `.ac` infix.
+            out_name = _add_ac_suffix(out_name)
         out = ctx.actions.declare_file(out_name)
 
         # Extract all variable names from the (possibly compound) condition.
@@ -173,7 +207,9 @@ def _autoconf_srcs_impl(ctx):
             dep_files.append(results_file)
 
         # Use comma separator: {in},{CONDITION},{out}
-        args.add_all([(in_file, condition, out)], before_each = "--src", map_each = _arg_map_src)
+        args.add_all([(in_file, condition, out)], map_each = _arg_map_src)
+        if ctx.attr.wrap == "include":
+            args.add("--include-original")
 
         ctx.actions.run(
             toolchain = None,
@@ -187,8 +223,17 @@ def _autoconf_srcs_impl(ctx):
         )
 
         outputs.append(out)
+        originals.append(in_file)
 
-    return [DefaultInfo(files = depset(outputs))]
+    providers = [DefaultInfo(files = depset(outputs))]
+    if ctx.attr.wrap == "include":
+        # The wrappers `#include` the originals, so the originals must reach
+        # the compiler: a consumer that lists this target in `deps` as well as
+        # `srcs` gets them as headers of its compilation context.
+        providers.append(CcInfo(compilation_context = cc_common.create_compilation_context(
+            headers = depset(originals),
+        )))
+    return providers
 
 autoconf_srcs = rule(
     implementation = _autoconf_srcs_impl,
@@ -266,7 +311,9 @@ no longer carries any.  Accepted so existing BUILD files keep loading.""",
             doc = """\
 How to name generated sources: `package_relative` keeps the original package-relative path, `ac_suffix`
 inserts `.ac.` before the final suffix (e.g. `foo.cc -> foo.ac.cc`), and `per_target` prefixes outputs
-with `{ctx.label.name}` to namespace them per rule.
+with `{ctx.label.name}` to namespace them per rule.  Under `wrap = "include"` the output always carries the
+`.ac` infix as well (`foo.c -> foo.ac.c`, `per_target`: `{ctx.label.name}/foo.ac.c`): a wrapper named like
+a root-level source would resolve its own `#include "foo.c"` to itself.
 """,
             values = [
                 "package_relative",
@@ -279,6 +326,16 @@ with `{ctx.label.name}` to namespace them per rule.
             doc = "A mapping of source file to define required to compile the file.",
             allow_files = True,
             mandatory = True,
+        ),
+        "wrap": attr.string(
+            doc = "How a generated file stands for its source.  `copy` (the default) carries a copy of the " +
+                  "source's contents.  `include` carries only `#include \"<path of the source>\"`, so the " +
+                  "source's own quoted includes (`#include \"sibling.h\"`) still resolve in its directory and " +
+                  "`__FILE__` and diagnostics name the source; the sources must then reach the compiler, which " +
+                  "they do when the consumer lists this target in `deps` as well as `srcs` (the target " +
+                  "provides them as headers of a `CcInfo`).",
+            default = "copy",
+            values = ["copy", "include"],
         ),
         "_runner": attr.label(
             cfg = "exec",
