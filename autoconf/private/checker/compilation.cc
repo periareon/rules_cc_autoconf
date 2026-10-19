@@ -366,11 +366,32 @@ void CheckRunner::append_link_libraries(std::vector<std::string>& cmd) {
                config_.link_libraries.end());
 }
 
+std::vector<std::string> CheckRunner::library_search_flags(bool msvc) const {
+    std::vector<std::string> flags;
+    for (const std::string& item : config_.link_libraries) {
+        const std::filesystem::path path(item);
+        const std::string extension = path.extension().string();
+        if (extension != ".a" && extension != ".lib" && extension != ".so" &&
+            extension != ".dylib") {
+            continue;  // a link flag, not an archive
+        }
+        const std::string dir = path.parent_path().string();
+        if (dir.empty()) continue;
+        const std::string flag = (msvc ? "/LIBPATH:" : "-L") + dir;
+        if (std::find(flags.begin(), flags.end(), flag) == flags.end()) {
+            flags.push_back(flag);
+        }
+    }
+    return flags;
+}
+
 void CheckRunner::append_msvc_link_block(
     std::vector<std::string>& cmd, const std::string& language,
     const std::vector<std::string>& extra_linkopts) {
     std::vector<std::string> link_flags =
         get_link_only_flags(language, extra_linkopts);
+    const std::vector<std::string> search = library_search_flags(true);
+    link_flags.insert(link_flags.end(), search.begin(), search.end());
     if (link_flags.empty()) return;
     cmd.push_back("/link");
     cmd.insert(cmd.end(), std::make_move_iterator(link_flags.begin()),
@@ -536,6 +557,8 @@ bool CheckRunner::try_compile_and_link_with_lib(
     cmd.push_back(source_file->string());
     cmd.push_back("-o");
     cmd.push_back((tmp.dir / tmp.safe_id).string());
+    const std::vector<std::string> search = library_search_flags(false);
+    cmd.insert(cmd.end(), search.begin(), search.end());
     cmd.push_back("-l" + library);
     append_link_libraries(cmd);
 

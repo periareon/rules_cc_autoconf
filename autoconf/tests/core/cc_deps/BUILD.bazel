@@ -43,6 +43,12 @@ CHECKS = [
         "greet",
         define = "HAVE_GREET",
     ),
+    # -lgreeter resolves to the dependency's archive (libgreeter.a) by name.
+    checks.AC_CHECK_LIB(
+        "greeter",
+        "greet",
+        define = "HAVE_LIBGREETER",
+    ),
     checks.AC_CHECK_HEADER(
         "greeter_version.h",
         define = "HAVE_GREETER_VERSION_H",

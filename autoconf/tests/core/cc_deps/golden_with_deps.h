@@ -2,6 +2,8 @@
 #define HAVE_GREETER_H 1
 /* the library's function links */
 #define HAVE_GREET 1
+/* the library links by its -l name through the dependency's archive */
+#define HAVE_LIBGREETER 1
 /* a generated header of the library is on the include path */
 #define HAVE_GREETER_VERSION_H 1
 /* the library's define reaches the probes */
