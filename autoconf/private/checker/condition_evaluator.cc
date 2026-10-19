@@ -283,10 +283,13 @@ bool compare_values(const std::string& actual, CmpOp op,
 // A bare variable as a condition.  Empty and "0" are false as in the shell
 // and the preprocessor; so is the literal "false", which is what gnulib's
 // GL_GENERATE_*_H variables (and the shell's `true`/`false` idiom) carry.
-// The value is the decoded string: a subst arrives JSON-encoded.
+// The value is the decoded string: a subst arrives JSON-encoded.  A
+// search_libs result is the library flag, empty when the function is in libc
+// (autoconf's "none required"): its success is the search's outcome.
 bool is_truthy(const CheckResult* r) {
     if (!r) return false;
     if (!r->success) return false;
+    if (r->type == CheckType::kSearchLibs) return true;
     const std::string v = result_value(r);
     return !v.empty() && v != "0" && v != "false";
 }

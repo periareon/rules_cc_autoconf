@@ -115,6 +115,8 @@ std::optional<CheckResult> CheckResult::from_json(const std::string& name,
             type = CheckType::kMember;
         } else if (type_str == "GL_NEXT_HEADER") {
             type = CheckType::kGlNextHeader;
+        } else if (type_str == "search_libs") {
+            type = CheckType::kSearchLibs;
         }
     }
 

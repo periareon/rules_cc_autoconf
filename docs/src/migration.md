@@ -252,7 +252,7 @@ Use the correct parameter for the right purpose:
 
 | Form | Meaning |
 |------|---------|
-| `NAME` | True if the named check passed / the value is truthy |
+| `NAME` | True if the named check passed / the value is truthy (an `AC_SEARCH_LIBS` result is true when the function was found, in libc or in a library) |
 | `!NAME` | Negation |
 | `NAME==1`, `NAME!=0`, `NAME<3`, `NAME>=2` | Compare the recorded value (`==`, `!=`, `<`, `>`, `<=`, `>=`) |
 | `A && B`, `A \|\| B`, `( ... )` | Boolean combination and grouping |
