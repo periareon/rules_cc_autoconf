@@ -54,3 +54,27 @@ cc_test(
         ":generated_srcs",
     ],
 )
+
+# `wrap = "include"`: the generated file includes the source by path instead
+# of copying it, so `uses_sibling.c`'s `#include "sibling.h"` resolves next to
+# the source.  The target goes in `deps` too: that is how the sources reach
+# the compiler.
+autoconf_srcs(
+    name = "including_srcs",
+    srcs = {
+        "sibling/not_compiled.c": "HAVE_BAD_SRC",
+        "sibling/uses_sibling.c": "HAVE_GOOD_SRC",
+    },
+    wrap = "include",
+    deps = [":autoconf"],
+)
+
+cc_test(
+    name = "test_including_srcs",
+    srcs = [
+        "sibling/sibling.h",
+        "sibling_driver.c",
+        ":including_srcs",
+    ],
+    deps = [":including_srcs"],
+)

@@ -1118,6 +1118,19 @@ autoconf_srcs(
 
 Each source is compiled only when its expression is true; the grammar is the one in [Expression syntax](#expression-syntax). The gnulib rule is `HAVE_X = 0 || REPLACE_X = 1`; checking only `REPLACE_X` misses every libc that lacks the function (MSVC, often MinGW).
 
+By default the generated file is a copy of the source, which breaks the
+source's own quoted includes of files next to it (`lib/unictype/*.c`
+include `"bitmap.h"`): the copy lives in the output tree, where those files
+are not. `wrap = "include"` makes the generated file a one-line
+`#include "<path of the source>"` instead, so such includes resolve where
+the source lives and diagnostics name the real file. The sources must then
+reach the compiler: list the `autoconf_srcs` target in the library's `deps`
+as well as its `srcs` (it provides the sources as headers of a `CcInfo`).
+The wrapper is named with the `.ac` infix (`foo.c` -> `foo.ac.c`) whatever
+`naming` says: a wrapper named like a root-level source would resolve its own
+`#include "foo.c"` to itself, since quoted includes search the including
+file's directory first. The converter emits this form.
+
 ### A standard for every check
 
 Checks compile with Bazel's `--copt`, `--conlyopt` and `--cxxopt` (the CFLAGS

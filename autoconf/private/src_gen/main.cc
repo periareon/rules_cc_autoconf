@@ -38,14 +38,20 @@ struct SrcsArgs {
         std::string input_path{};
         std::string condition{};
         std::string output_path{};
+        // The path `--include-original` writes: the input's path within its
+        // repository (set by `--include-as`), or the input path itself.
+        std::string include_path{};
 
-        SrcMapping() : input_path(), condition(), output_path() {}
+        SrcMapping()
+            : input_path(), condition(), output_path(), include_path() {}
     };
 
     std::vector<SrcMapping> srcs{};
+    bool include_original = false;
     bool show_help = false;
 
-    SrcsArgs() : dep_mappings(), srcs(), show_help(false) {}
+    SrcsArgs()
+        : dep_mappings(), srcs(), include_original(false), show_help(false) {}
 };
 
 void print_usage(const char* program_name) {
@@ -57,6 +63,12 @@ void print_usage(const char* program_name) {
     std::cout
         << "  --src <in>,<CONDITION>,<out>  Input path, condition expression, "
            "and output path (may be repeated)\n";
+    std::cout
+        << "  --include-as <path>   The path the preceding --src is included "
+           "by under --include-original (its path within its repository)\n";
+    std::cout << "  --include-original    Write `#include \"<in>\"` instead of "
+                 "a copy of "
+                 "the input's contents\n";
     std::cout << "  --help                Show this help message\n";
 }
 
@@ -89,6 +101,16 @@ bool parse_args(int argc, char* argv[], SrcsArgs* out_args) {
                           << std::endl;
                 return false;
             }
+        } else if (arg == "--include-original") {
+            args.include_original = true;
+        } else if (arg == "--include-as") {
+            if (i + 1 >= argc || args.srcs.empty()) {
+                std::cerr
+                    << "Error: --include-as needs a path and follows a --src"
+                    << std::endl;
+                return false;
+            }
+            args.srcs.back().include_path = argv[++i];
         } else if (arg == "--src") {
             if (i + 1 < argc) {
                 std::string value = argv[++i];
@@ -121,10 +143,7 @@ bool parse_args(int argc, char* argv[], SrcsArgs* out_args) {
         }
     }
 
-    if (args.dep_mappings.empty()) {
-        std::cerr << "Error: At least one --dep is required" << std::endl;
-        return false;
-    }
+    // No --dep is fine: a constant condition (`1`) names no result.
 
     *out_args = args;
     return true;
@@ -188,6 +207,35 @@ bool eval_condition_for_src(
 
     ConditionEvaluator evaluator(condition);
     return evaluator.compute(results);
+}
+
+// The `include` form: the output names the original instead of copying it,
+// by the path it has in the execution root, which the compiler finds through
+// the quote-include roots every C/C++ rule passes (the source tree and the
+// output tree of the repository).  The original's own `#include "x.h"` then
+// resolve next to it, where a copy's would not.
+bool generate_including_source(const std::filesystem::path& out_path,
+                               const std::string& orig_path,
+                               const std::string& condition, bool enabled) {
+    std::filesystem::create_directories(out_path.parent_path());
+    std::ofstream out_file = open_ofstream(out_path);
+    if (!out_file.is_open()) {
+        std::cerr << "Error: Failed to open output file: " << out_path.string()
+                  << std::endl;
+        return false;
+    }
+    std::string path = orig_path;
+    for (char& c : path) {
+        if (c == '\\') c = '/';
+    }
+    if (enabled) {
+        out_file << "#include \"" << path << "\"\n";
+    } else {
+        out_file << "/* " << path << " is not compiled: " << condition
+                 << " is false */\n";
+    }
+    out_file.close();
+    return true;
 }
 
 bool generate_wrapped_source(const std::filesystem::path& out_path,
@@ -301,7 +349,16 @@ int main(int argc, char* argv[]) {
             return 1;
         }
 
-        if (!generate_wrapped_source(out_path, orig_path, condition, enabled)) {
+        const bool written =
+            args.include_original
+                ? generate_including_source(out_path,
+                                            mapping.include_path.empty()
+                                                ? mapping.input_path
+                                                : mapping.include_path,
+                                            condition, enabled)
+                : generate_wrapped_source(out_path, orig_path, condition,
+                                          enabled);
+        if (!written) {
             return 1;
         }
     }
