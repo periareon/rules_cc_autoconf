@@ -27,11 +27,15 @@ cc_library(
         "greeter.h",
         ":greeter_version_h",
     ],
+    # A file the link flags name (as a version script would be): the checks'
+    # link runs in the sandbox, so the file has to reach it with the archive.
+    additional_linker_inputs = ["greeter.rsp"],
     defines = ["GREETER_API_LEVEL=2"],
     includes = [
         ".",
         "gen",
     ],
+    linkopts = ["@$(execpath greeter.rsp)"],
 )
 
 CHECKS = [
