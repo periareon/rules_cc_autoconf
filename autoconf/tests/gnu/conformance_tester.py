@@ -29,7 +29,9 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from collections.abc import Callable
 from pathlib import Path
+from typing import ClassVar
 
 from python.runfiles import Runfiles
 
@@ -198,9 +200,7 @@ def _parse_subst_placeholders(content: str) -> set[str]:
 
 def _extract_config_log_section(content: str, section_name: str) -> str | None:
     pattern = re.compile(
-        r"## -+ ##\n## "
-        + re.escape(section_name)
-        + r" ##\n## -+ ##\n(.*?)(?=\n## -+ ##|\Z)",
+        r"## -+ ##\n## " + re.escape(section_name) + r" ##\n## -+ ##\n(.*?)(?=\n## -+ ##|\Z)",
         re.DOTALL,
     )
     match = pattern.search(content)
@@ -336,9 +336,7 @@ def _mask(
         return lines
     # Allow a prefix such as `SUBST_` (subst templates) but not a suffix.
     name_pattern = (
-        re.compile(
-            r"(?<![A-Za-z0-9])(?:" + "|".join(re.escape(n) for n in names) + r")(?![A-Za-z0-9_])"
-        )
+        re.compile(r"(?<![A-Za-z0-9])(?:" + "|".join(re.escape(n) for n in names) + r")(?![A-Za-z0-9_])")
         if names
         else None
     )
@@ -347,7 +345,7 @@ def _mask(
         if name_pattern and name_pattern.search(first):
             return True
         match = _DEFINED_NAME.match(first)
-        return bool(match) and any(p.match(match.group(1)) for p in patterns)
+        return match is not None and any(p.match(match.group(1)) for p in patterns)
 
     kept: list[str] = []
     for group in _logical_lines(lines):
@@ -384,7 +382,33 @@ def _normalise_cpu(machine: str) -> str:
 class GnuAutoconfConformanceTest(unittest.TestCase):
     """Compare GNU autoconf output with Bazel output."""
 
-    msvc = False
+    msvc: ClassVar[bool] = False
+    runfiles: ClassVar[Runfiles]
+    source_repo: ClassVar[str | None]
+    get_path: ClassVar[Callable[[str], Path]]
+    configure_ac: ClassVar[Path]
+    config_h_in: ClassVar[Path]
+    subst_h_in: ClassVar[Path | None]
+    bazel_config_h: ClassVar[Path | None]
+    bazel_subst_h: ClassVar[Path | None]
+    cache_manifest: ClassVar[Path | None]
+    cc_env_file: ClassVar[Path]
+    known_divergences: ClassVar[dict[str, str]]
+    configure_args: ClassVar[list[str]]
+    m4_files: ClassVar[list[Path]]
+    aux_files: ClassVar[list[Path]]
+    build_aux_files: ClassVar[list[Path]]
+    outputs_dir: ClassVar[Path]
+    work_dir: ClassVar[Path]
+    autotools: ClassVar[Autotools]
+    compiler_type: ClassVar[str]
+    cc_path: ClassVar[str]
+    configure_env: ClassVar[dict[str, str]]
+    gnu_config_h: ClassVar[Path]
+    gnu_config_lines: ClassVar[list[str]]
+    gnu_subst_h: ClassVar[Path]
+    gnu_subst_lines: ClassVar[list[str] | None]
+    fingerprint: ClassVar[dict[str, str]]
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -406,7 +430,7 @@ class GnuAutoconfConformanceTest(unittest.TestCase):
     def _locate(cls) -> None:
         runfiles = Runfiles.Create()
         if not runfiles:
-            raise EnvironmentError("Failed to locate runfiles")
+            raise OSError("Failed to locate runfiles")
         cls.runfiles = runfiles
         cls.source_repo = "_main" if platform.system() == "Windows" else None
 
@@ -428,21 +452,15 @@ class GnuAutoconfConformanceTest(unittest.TestCase):
         cls.bazel_subst_h = optional("TEST_BAZEL_SUBST_H")
         cls.cache_manifest = optional("TEST_CACHE_MANIFEST")
         cls.cc_env_file = get_path(os.environ["TEST_CC_ENV"])
-        cls.known_divergences: dict[str, str] = json.loads(
-            os.environ.get("TEST_KNOWN_DIVERGENCES", "{}")
-        )
-        cls.configure_args: list[str] = json.loads(os.environ.get("TEST_CONFIGURE_ARGS", "[]"))
+        cls.known_divergences = json.loads(os.environ.get("TEST_KNOWN_DIVERGENCES", "{}"))
+        cls.configure_args = json.loads(os.environ.get("TEST_CONFIGURE_ARGS", "[]"))
 
         m4_list = get_path(os.environ["TEST_M4_LIST"])
         cls.m4_files = [
-            get_path(line.strip())
-            for line in m4_list.read_text(encoding="utf-8").splitlines()
-            if line.strip()
+            get_path(line.strip()) for line in m4_list.read_text(encoding="utf-8").splitlines() if line.strip()
         ]
         cls.aux_files = [get_path(p) for p in os.environ.get("TEST_AUX_FILES", "").split()]
-        cls.build_aux_files = [
-            get_path(p) for p in os.environ.get("TEST_BUILD_AUX_FILES", "").split()
-        ]
+        cls.build_aux_files = [get_path(p) for p in os.environ.get("TEST_BUILD_AUX_FILES", "").split()]
 
         cls.outputs_dir = Path(
             os.environ.get(
@@ -615,16 +633,14 @@ class GnuAutoconfConformanceTest(unittest.TestCase):
         )
         (cls.work_dir / "configure.log").write_text(result.stdout, encoding="utf-8")
         assert result.returncode == 0, f"configure failed:\n{result.stdout}"
-        assert "command not found" not in result.stdout, (
-            "configure hit an unexpanded macro:\n" + result.stdout
-        )
+        assert "command not found" not in result.stdout, "configure hit an unexpanded macro:\n" + result.stdout
 
         cls.gnu_config_h = cls.work_dir / "config.h"
         assert cls.gnu_config_h.exists(), "configure did not write config.h"
         # Drop the `/* config.h.  Generated from config.h.in by configure.  */` line.
         cls.gnu_config_lines = cls.gnu_config_h.read_text(encoding="utf-8").splitlines()[1:]
 
-        cls.gnu_subst_lines: list[str] | None = None
+        cls.gnu_subst_lines = None
         if cls.subst_h_in:
             cls.gnu_subst_h = cls.work_dir / "subst.h"
             assert cls.gnu_subst_h.exists(), "configure did not write subst.h"
@@ -666,7 +682,9 @@ class GnuAutoconfConformanceTest(unittest.TestCase):
         if platform.system() == "Darwin" and shutil.which("xcrun"):
             sdk_version = first_line(["xcrun", "--show-sdk-version"])
         elif IS_WINDOWS:
-            sdk_version = os.environ.get("WindowsSDKVersion", cls.configure_env.get("WindowsSDKVersion", "")).strip("\\")
+            sdk_version = os.environ.get("WindowsSDKVersion", cls.configure_env.get("WindowsSDKVersion", "")).strip(
+                "\\"
+            )
 
         versions = cls.autotools.versions(cls.work_dir)
         versions["shell"] = cls.configure_env["CONFIG_SHELL"]
@@ -767,9 +785,7 @@ class GnuAutoconfConformanceTest(unittest.TestCase):
 
         output_variables, confdef_variables = _parse_expected_variables(config_log)
         all_variables = sorted(output_variables | confdef_variables)
-        (self.outputs_dir / "parsed_variables.json").write_text(
-            json.dumps(all_variables, indent=2), encoding="utf-8"
-        )
+        (self.outputs_dir / "parsed_variables.json").write_text(json.dumps(all_variables, indent=2), encoding="utf-8")
 
         define_vars = _parse_undef_placeholders(self.config_h_in.read_text(encoding="utf-8"))
         missing_in_config = [v for v in all_variables if v not in define_vars]
@@ -783,11 +799,7 @@ class GnuAutoconfConformanceTest(unittest.TestCase):
             encoding="utf-8",
         )
         (self.outputs_dir / "expected_subst.h.in").write_text(
-            "\n".join(
-                ["/* subst.h.in */"]
-                + ['#define SUBST_{0} "@{0}@"'.format(v) for v in all_variables]
-                + [""]
-            ),
+            "\n".join(["/* subst.h.in */"] + [f'#define SUBST_{v} "@{v}@"' for v in all_variables] + [""]),
             encoding="utf-8",
         )
 

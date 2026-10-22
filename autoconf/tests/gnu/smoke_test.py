@@ -5,11 +5,14 @@ from __future__ import annotations
 import subprocess
 import unittest
 from pathlib import Path
+from typing import ClassVar
 
 from autoconf.tests.gnu.autotools import Autotools, scratch_dir
 
 
 class AutotoolsSmokeTest(unittest.TestCase):
+    autotools: ClassVar[Autotools]
+    work: ClassVar[Path]
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -62,9 +65,7 @@ class AutotoolsSmokeTest(unittest.TestCase):
             check=False,
         )
         self.assertEqual(configure.returncode, 0, configure.stdout)
-        self.assertEqual(
-            (self.work / "out.txt").read_text(encoding="utf-8"), "value=smoke\n"
-        )
+        self.assertEqual((self.work / "out.txt").read_text(encoding="utf-8"), "value=smoke\n")
 
 
 if __name__ == "__main__":

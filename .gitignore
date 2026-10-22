@@ -4,3 +4,9 @@ bazel-*
 user.bazelrc
 
 /.vscode/
+
+__pycache__
+*.pyc
+
+# Release archives `bazel run //tools/convert -- convert --src <url>` fetches
+/.convert-cache/

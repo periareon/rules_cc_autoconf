@@ -12,9 +12,7 @@ import tempfile
 from pathlib import Path
 
 GITHUB_REPO_URL = "https://github.com/coreutils/gnulib.git"
-BLOB_URL_RE = re.compile(
-    r"https://github\.com/coreutils/gnulib/blob/([a-f0-9]{40})/(.+)"
-)
+BLOB_URL_RE = re.compile(r"https://github\.com/coreutils/gnulib/blob/([a-f0-9]{40})/(.+)")
 
 
 # -- Local git operations on a bare clone -------------------------------------
@@ -95,19 +93,16 @@ def bazel_label(build_file: Path, workspace: Path) -> str:
 # -- Diff computation ---------------------------------------------------------
 
 
-COPYRIGHT_RE = re.compile(
-    r"^[-+]dnl Copyright (?:\(C\) )?[\d,\- ]+ Free Software Foundation[,.]"
-)
+COPYRIGHT_RE = re.compile(r"^[-+]dnl Copyright (?:\(C\) )?[\d,\- ]+ Free Software Foundation[,.]")
 
 
 def _is_copyright_only(diff_lines: list[str]) -> bool:
     """True if every added/removed line in the diff is a copyright notice."""
     for line in diff_lines:
-        if line.startswith("---") or line.startswith("+++"):
+        if line.startswith(("---", "+++")):
             continue
-        if line.startswith("-") or line.startswith("+"):
-            if not COPYRIGHT_RE.match(line):
-                return False
+        if (line.startswith(("-", "+"))) and not COPYRIGHT_RE.match(line):
+            return False
     return True
 
 
@@ -239,13 +234,9 @@ def main() -> None:
                     unchanged.append(bazel_label(bf, workspace))
                 continue
 
-            print(
-                f"Diffing {old_hash[:12]}..{new_hash[:12]} in m4/...", file=sys.stderr
-            )
+            print(f"Diffing {old_hash[:12]}..{new_hash[:12]} in m4/...", file=sys.stderr)
             changed_paths = get_changed_m4_files(repo_dir, old_hash, new_hash)
-            print(
-                f"  {len(changed_paths)} m4 file(s) changed upstream.", file=sys.stderr
-            )
+            print(f"  {len(changed_paths)} m4 file(s) changed upstream.", file=sys.stderr)
 
             for bf, m4_path in entries:
                 label = bazel_label(bf, workspace)
@@ -274,9 +265,7 @@ def main() -> None:
                         diffs[label] = diff_text
                         print(f"  CHANGED {label}", file=sys.stderr)
 
-        primary_old = (
-            max(old_hashes, key=lambda h: len(by_hash[h])) if old_hashes else "unknown"
-        )
+        primary_old = max(old_hashes, key=lambda h: len(by_hash[h])) if old_hashes else "unknown"
 
         for bf in no_url:
             skipped[bazel_label(bf, workspace)] = "no URL comment in docstring"
@@ -287,8 +276,7 @@ def main() -> None:
         print(f"\nReport written to {report_path}", file=sys.stderr)
 
         print(
-            f"\nSummary: {len(unchanged)} unchanged, {len(diffs)} changed, "
-            f"{len(skipped)} skipped.",
+            f"\nSummary: {len(unchanged)} unchanged, {len(diffs)} changed, {len(skipped)} skipped.",
             file=sys.stderr,
         )
 

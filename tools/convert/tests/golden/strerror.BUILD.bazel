@@ -1,0 +1,121 @@
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/strerror.m4"""
+
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
+load("//autoconf:checks.bzl", "checks")
+
+# m4/strerror.m4:62
+autoconf(
+    name = "gl_FUNC_STRERROR_0",
+    checks = [
+        # m4/strerror.m4:~100: AC_DEFINE([REPLACE_STRERROR_0], [1], [Define to 1 if strerror(0)])
+        checks.AC_DEFINE(
+            "REPLACE_STRERROR_0",
+            1,
+            requires = ["!gl_cv_func_strerror_0_works"],
+        ),
+    ] + select({
+        "@platforms//os:linux": [
+            # gl_cv_func_strerror_0_works: the m4 runs a program; the value is its cross-compiling guess per platform:
+            #   case "$host_os" in
+            #                                # Guess yes on glibc systems.
+            #            *-gnu* | gnu*)      gl_cv_func_strerror_0_works="guessing yes" ;;
+            #                                # Guess yes on musl systems.
+            #            *-musl* | midipix*) gl_cv_func_strerror_0_works="guessing yes" ;;
+            #                                # Guess yes on native Windows.
+            #            mingw* | windows*)  gl_cv_func_strerror_0_works="guessing yes" ;;
+            #                                # If we don't know, obey --enable-cross-guesses.
+            #            *)                  gl_cv_func_strerror_0_works="$gl_cross_guess_normal" ;;
+            #          esac
+            checks.M4_VARIABLE("gl_cv_func_strerror_0_works", 1),
+        ],
+        "@platforms//os:windows": [
+            # gl_cv_func_strerror_0_works: the m4 runs a program; the value is its cross-compiling guess per platform:
+            #   case "$host_os" in
+            #                                # Guess yes on glibc systems.
+            #            *-gnu* | gnu*)      gl_cv_func_strerror_0_works="guessing yes" ;;
+            #                                # Guess yes on musl systems.
+            #            *-musl* | midipix*) gl_cv_func_strerror_0_works="guessing yes" ;;
+            #                                # Guess yes on native Windows.
+            #            mingw* | windows*)  gl_cv_func_strerror_0_works="guessing yes" ;;
+            #                                # If we don't know, obey --enable-cross-guesses.
+            #            *)                  gl_cv_func_strerror_0_works="$gl_cross_guess_normal" ;;
+            #          esac
+            checks.M4_VARIABLE("gl_cv_func_strerror_0_works", 1),
+        ],
+        "//conditions:default": [
+            # gl_cv_func_strerror_0_works: the m4 runs a program; the value is its cross-compiling guess per platform:
+            #   case "$host_os" in
+            #                                # Guess yes on glibc systems.
+            #            *-gnu* | gnu*)      gl_cv_func_strerror_0_works="guessing yes" ;;
+            #                                # Guess yes on musl systems.
+            #            *-musl* | midipix*) gl_cv_func_strerror_0_works="guessing yes" ;;
+            #                                # Guess yes on native Windows.
+            #            mingw* | windows*)  gl_cv_func_strerror_0_works="guessing yes" ;;
+            #                                # If we don't know, obey --enable-cross-guesses.
+            #            *)                  gl_cv_func_strerror_0_works="$gl_cross_guess_normal" ;;
+            #          esac
+            checks.M4_VARIABLE("gl_cv_func_strerror_0_works", 0),
+        ],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+    ],
+)
+
+# m4/strerror.m4:9
+autoconf(
+    name = "gl_FUNC_STRERROR",
+    checks = [
+        # REPLACE_STRERROR is assigned by the shell of the m4 (an AC_SUBST'd gnulib default)
+        checks.AC_SUBST(
+            "REPLACE_STRERROR",
+            1,
+            requires = ["!(GL_GENERATE_ERRNO_H==false && REPLACE_STRERROR_0==0 && gl_cv_func_working_strerror && gl_cv_func_strerror_r_works)"],
+        ),
+    ] + select({
+        "@platforms//os:linux": [
+            # gl_cv_func_working_strerror: the m4 runs a program; the value is its cross-compiling guess per platform:
+            #   case "$host_os" in
+            #                                  # Guess yes on glibc systems.
+            #              *-gnu* | gnu*)      gl_cv_func_working_strerror="guessing yes" ;;
+            #                                  # Guess yes on musl systems.
+            #              *-musl* | midipix*) gl_cv_func_working_strerror="guessing yes" ;;
+            #                                  # If we don't know, obey --enable-cross-guesses.
+            #              *)                  gl_cv_func_working_strerror="$gl_cross_guess_normal" ;;
+            #            esac
+            checks.M4_VARIABLE("gl_cv_func_working_strerror", 1),
+        ],
+        "//conditions:default": [
+            # gl_cv_func_working_strerror: the m4 runs a program; the value is its cross-compiling guess per platform:
+            #   case "$host_os" in
+            #                                  # Guess yes on glibc systems.
+            #              *-gnu* | gnu*)      gl_cv_func_working_strerror="guessing yes" ;;
+            #                                  # Guess yes on musl systems.
+            #              *-musl* | midipix*) gl_cv_func_working_strerror="guessing yes" ;;
+            #                                  # If we don't know, obey --enable-cross-guesses.
+            #              *)                  gl_cv_func_working_strerror="$gl_cross_guess_normal" ;;
+            #            esac
+            checks.M4_VARIABLE("gl_cv_func_working_strerror", 0),
+        ],
+    }),
+    default_deps = [
+        "//gnulib/m4/string_h:defaults",  # AC_REQUIRE([gl_STRING_H_DEFAULTS]) (the header's defaults)
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_STRERROR_0",  # AC_REQUIRE([gl_FUNC_STRERROR_0])
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//gnulib/m4/errno_h:gl_HEADER_ERRNO_H",  # AC_REQUIRE([gl_HEADER_ERRNO_H])
+        "//gnulib/m4/strerror_r:gl_FUNC_STRERROR_R_WORKS",  # AC_REQUIRE([gl_FUNC_STRERROR_R_WORKS])
+    ],
+)
+
+autoconf(
+    name = "strerror",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_FUNC_STRERROR",
+        ":gl_FUNC_STRERROR_0",
+    ],
+)

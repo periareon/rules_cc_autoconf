@@ -1,4 +1,6 @@
 exports_files([
+    ".mypy.ini",
+    ".ruff.toml",
     "MODULE.bazel",
     "version.bzl",
     "LICENSE",

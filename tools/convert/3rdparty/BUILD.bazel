@@ -1,0 +1,140 @@
+"""Third-party Python packages of the converter (development only)."""
+
+load("@rules_multirun//:defs.bzl", "multirun")
+load("@rules_req_compile//:defs.bzl", "py_reqs_compiler", "py_reqs_solution_test")
+load("@rules_venv//python:py_library.bzl", "py_library")
+load("@rules_venv//python/mypy:defs.bzl", "py_mypy_toolchain")
+load("@rules_venv//python/pytest:defs.bzl", "py_pytest_toolchain")
+load("@rules_venv//python/ruff:defs.bzl", "py_ruff_toolchain")
+
+# Bazel constraints and the wheel platform tag each lock file is compiled for.
+PLATFORMS = {
+    "linux_aarch64": {
+        "constraints": [
+            "@platforms//os:linux",
+            "@platforms//cpu:aarch64",
+        ],
+        "wheel_tag": "manylinux_2_28_aarch64",
+    },
+    "linux_x86_64": {
+        "constraints": [
+            "@platforms//os:linux",
+            "@platforms//cpu:x86_64",
+        ],
+        "wheel_tag": "manylinux_2_28_x86_64",
+    },
+    "macos_aarch64": {
+        "constraints": [
+            "@platforms//os:macos",
+            "@platforms//cpu:aarch64",
+        ],
+        "wheel_tag": "macosx_11_0_arm64",
+    },
+    "macos_x86_64": {
+        "constraints": [
+            "@platforms//os:macos",
+            "@platforms//cpu:x86_64",
+        ],
+        "wheel_tag": "macosx_11_0_x86_64",
+    },
+    "windows_x86_64": {
+        "constraints": [
+            "@platforms//os:windows",
+            "@platforms//cpu:x86_64",
+        ],
+        "wheel_tag": "win_amd64",
+    },
+}
+
+[
+    config_setting(
+        name = platform,
+        constraint_values = info["constraints"],
+        visibility = ["//visibility:public"],
+    )
+    for platform, info in PLATFORMS.items()
+]
+
+exports_files(["requirements.in"] + ["requirements_{}.txt".format(p) for p in PLATFORMS])
+
+# Each compiler resolves the solution for its own platform regardless of the
+# host, so every lock file can be regenerated from any machine.
+[
+    py_reqs_compiler(
+        name = "requirements.{}.update".format(platform),
+        platform = info["wheel_tag"],
+        requirements_in = "requirements.in",
+        requirements_txt = "requirements_{}.txt".format(platform),
+    )
+    for platform, info in PLATFORMS.items()
+]
+
+[
+    py_reqs_solution_test(
+        name = "requirements_{}_test".format(platform),
+        compiler = ":requirements.{}.update".format(platform),
+    )
+    for platform in PLATFORMS
+]
+
+# Regenerates all lock files: `bazel run //tools/convert/3rdparty:requirements.update`.
+multirun(
+    name = "requirements.update",
+    commands = [":requirements.{}.update".format(platform) for platform in PLATFORMS],
+    jobs = 0,
+)
+
+# pytest for `py_pytest_test`: rules_venv registers its own pytest toolchain
+# only for its own development, so this repository registers one from the
+# converter's requirements (MODULE.bazel: register_toolchains).
+py_library(
+    name = "pytest_deps",
+    deps = ["@pip_convert//pytest"],
+)
+
+py_pytest_toolchain(
+    name = "pytest_toolchain",
+    pytest = ":pytest_deps",
+)
+
+toolchain(
+    name = "pytest",
+    toolchain = ":pytest_toolchain",
+    toolchain_type = "@rules_venv//python/pytest:toolchain_type",
+    visibility = ["//visibility:public"],
+)
+
+# mypy for `py_mypy_aspect`, which the .bazelrc applies to every build: the
+# checker from the converter's requirements and the repository's strict
+# configuration (MODULE.bazel: register_toolchains).
+py_library(
+    name = "mypy_deps",
+    deps = ["@pip_convert//mypy"],
+)
+
+py_mypy_toolchain(
+    name = "mypy_toolchain",
+    config = "//:.mypy.ini",
+    mypy = ":mypy_deps",
+)
+
+toolchain(
+    name = "mypy",
+    toolchain = ":mypy_toolchain",
+    toolchain_type = "@rules_venv//python/mypy:toolchain_type",
+    visibility = ["//visibility:public"],
+)
+
+# ruff for `py_ruff_aspect`, lint and format on every build (.bazelrc), with the
+# repository's .ruff.toml chosen through the rules' config flag.
+py_ruff_toolchain(
+    name = "ruff_toolchain",
+    ruff = "@pip_convert//ruff",
+)
+
+toolchain(
+    name = "ruff",
+    toolchain = ":ruff_toolchain",
+    toolchain_type = "@rules_venv//python/ruff:toolchain_type",
+    visibility = ["//visibility:public"],
+)
