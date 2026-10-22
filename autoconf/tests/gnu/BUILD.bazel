@@ -43,7 +43,6 @@ toolchain(
 py_library(
     name = "autotools",
     srcs = ["autotools.py"],
-    imports = ["../../.."],
     deps = ["@rules_venv//python/runfiles"],
 )
 
