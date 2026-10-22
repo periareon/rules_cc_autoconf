@@ -88,12 +88,11 @@ autoconf(
         "@platforms//os:macos": [
 
             # macOS posix_spawn is buggy (gl_POSIX_SPAWN_WORKS / gl_POSIX_SPAWN_SECURE
-            # fail at runtime); always use gnulib replacement.
-            checks.AC_DEFINE(
-                "REPLACE_POSIX_SPAWN",
-                1,
-                subst = True,
-            ),
+            # fail at runtime); always use gnulib replacement.  The define and the subst
+            # are separate checks, as in the other arms, so `ac_cv_subst_REPLACE_POSIX_SPAWN`
+            # (what a gnulib.mk condition over REPLACE_POSIX_SPAWN resolves to) exists here too.
+            checks.AC_DEFINE("REPLACE_POSIX_SPAWN", 1),
+            checks.AC_SUBST("REPLACE_POSIX_SPAWN", 1),
         ],
         "@platforms//os:windows": [
             # UCRT has spawn.h but no POSIX spawn API or POSIX_SPAWN_* constants.

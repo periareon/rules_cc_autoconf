@@ -1,11 +1,16 @@
 """https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/nstrftime.m4"""
 
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
+load("//autoconf:checks.bzl", "checks")
 
 autoconf(
     name = "nstrftime",
     checks = [
-        # gl_NSTRFTIME checks for struct tm members
+        # gl_NSTRFTIME (nstrftime.m4:20): nstrftime.c defines `my_strftime`, which this renames
+        # to the one function the module exports; without it the file defines a plain `strftime`
+        # that collides with libc and leaves parse-datetime.c's `nstrftime` call undefined.
+        checks.AC_DEFINE("my_strftime", "nstrftime"),
+        # The struct tm member probes come from //gnulib/m4/tm_gmtoff.
     ],
     visibility = ["//visibility:public"],
     deps = [

@@ -411,13 +411,39 @@ std::string SourceGenerator::process_subst_replacements(
         }
     }
 
-    // Single pass: scan for @...@ patterns and replace from map
+    // Single pass: scan for @...@ patterns and replace from map.  Comments
+    // are tracked so that a value spanning lines (a system header inlined for
+    // @NEXT_<hdr>_H@ where #include_next is unavailable) never lands inside
+    // one: gnulib's stdint.in.h mentions @NEXT_STDINT_H@ in a comment, and
+    // the header's first `*/` would end that comment early.  Single-line
+    // values are substituted everywhere, as config.status does.
     std::string output;
     output.reserve(content.size());
     size_t i = 0;
     size_t len = content.size();
+    bool in_block_comment = false;
+    bool in_line_comment = false;
 
     while (i < len) {
+        if (in_block_comment) {
+            if (content[i] == '*' && i + 1 < len && content[i + 1] == '/') {
+                in_block_comment = false;
+                output += "*/";
+                i += 2;
+                continue;
+            }
+        } else if (in_line_comment) {
+            if (content[i] == '\n') {
+                in_line_comment = false;
+            }
+        } else if (content[i] == '/' && i + 1 < len && content[i + 1] == '*') {
+            in_block_comment = true;
+            output += "/*";
+            i += 2;
+            continue;
+        } else if (content[i] == '/' && i + 1 < len && content[i + 1] == '/') {
+            in_line_comment = true;
+        }
         if (content[i] == '@') {
             // Look for closing @
             size_t end = content.find('@', i + 1);
@@ -441,7 +467,10 @@ std::string SourceGenerator::process_subst_replacements(
                         std::unordered_map<std::string,
                                            std::string>::const_iterator it =
                             subst_map.find(name);
-                        if (it != subst_map.end()) {
+                        bool in_comment = in_block_comment || in_line_comment;
+                        if (it != subst_map.end() &&
+                            !(in_comment &&
+                              it->second.find('\n') != std::string::npos)) {
                             output += it->second;
                             i = end + 1;
                             continue;

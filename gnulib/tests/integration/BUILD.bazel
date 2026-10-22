@@ -173,15 +173,6 @@ alias(
 )
 
 alias(
-    name = "mosquitto",
-    actual = "@mosquitto",
-    target_compatible_with = select({
-        "@platforms//os:windows": ["@platforms//:incompatible"],
-        "//conditions:default": [],
-    }),
-)
-
-alias(
     name = "mpc",
     actual = "@mpc",
 )
@@ -380,7 +371,6 @@ alias(
         ":linuxptp",
         ":m4",
         ":make",
-        ":mosquitto",
         ":mpc",
         ":mpfr",
         ":nasm",

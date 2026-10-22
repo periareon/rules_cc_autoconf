@@ -6,5 +6,7 @@
 #define HAVE_LIBGREETER 1
 /* a generated header of the library is on the include path */
 #define HAVE_GREETER_VERSION_H 1
+/* a probe's own -l linkopt resolves to the dependency's archive */
+#define GREETER_LINKOPT_OK 1
 /* the library's define reaches the probes */
 #define GREETER_API_OK 1
