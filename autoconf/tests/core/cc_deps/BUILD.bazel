@@ -57,6 +57,18 @@ CHECKS = [
         "greeter_version.h",
         define = "HAVE_GREETER_VERSION_H",
     ),
+    # A probe's own -l linkopt (lib-link.m4's `-lssl -lcrypto`) resolves to the
+    # dependency's archive by name as well.
+    checks.AC_TRY_LINK(
+        name = "_cv_greeter_linkopt",
+        code = """
+#include <greeter.h>
+int main(void) { return greet(); }
+""",
+        define = "GREETER_LINKOPT_OK",
+        language = "c",
+        linkopts = ["-lgreeter"],
+    ),
     checks.AC_TRY_COMPILE(
         name = "_cv_greeter_api",
         code = """

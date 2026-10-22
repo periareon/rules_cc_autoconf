@@ -1,5 +1,6 @@
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("//tools/cxxopts:cxxopts.bzl", "cxxopts", "linkopts")
 
 # Library for source generation
@@ -46,4 +47,12 @@ cc_binary(
         "//autoconf/private/common:action_args",
         "//tools/json",
     ],
+)
+
+cc_test(
+    name = "source_generator_test",
+    srcs = ["source_generator_test.cc"],
+    cxxopts = cxxopts(),
+    linkopts = linkopts(),
+    deps = [":source_generator"],
 )

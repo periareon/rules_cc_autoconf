@@ -43,14 +43,13 @@ autoconf(
             if_false = 0,
             if_true = 1,
         ),
+        # Based on golden file, LIB_NL_LANGINFO="" (empty string) on macOS
+        checks.AC_SUBST("LIB_NL_LANGINFO", ""),
     ] + select({
-        # if test $ac_cv_func_nl_langinfo = yes; then
-        #   case "$host_os" in darwin* | solaris*) NL_LANGINFO_MTSAFE=0 ;;
-        #                      *) NL_LANGINFO_MTSAFE=1 ;; esac
-        #   AC_DEFINE_UNQUOTED([NL_LANGINFO_MTSAFE], ...)
-        # fi
-        # Only defined when nl_langinfo exists (not on native Windows).
-        # On macOS: nl_langinfo is not multithread-safe
+        # nl_langinfo.m4:19-24: `case "$host_os" in darwin* | solaris*) NL_LANGINFO_MTSAFE=0 ;;
+        # *) 1 ;; esac` (macOS 26's nl_langinfo is not multithread-safe), defined only when
+        # nl_langinfo exists (not on native Windows).  lib/nl_langinfo.c's `!NL_LANGINFO_MTSAFE`
+        # branch handles macOS; only its `__sun` part reaches for Solaris names.
         "@platforms//os:macos": [
             checks.AC_DEFINE_UNQUOTED(
                 "NL_LANGINFO_MTSAFE",
@@ -58,7 +57,6 @@ autoconf(
                 requires = ["ac_cv_func_nl_langinfo"],
             ),
         ],
-        # On Linux with glibc and others: nl_langinfo is multithread-safe
         "//conditions:default": [
             checks.AC_DEFINE_UNQUOTED(
                 "NL_LANGINFO_MTSAFE",
@@ -66,10 +64,7 @@ autoconf(
                 requires = ["ac_cv_func_nl_langinfo"],
             ),
         ],
-    }) + [
-        # Based on golden file, LIB_NL_LANGINFO="" (empty string) on macOS
-        checks.AC_SUBST("LIB_NL_LANGINFO", ""),
-    ],
+    }),
     default_deps = [
         "//gnulib/m4/langinfo_h:defaults",  # AC_REQUIRE: gl_LANGINFO_H_DEFAULTS
     ],

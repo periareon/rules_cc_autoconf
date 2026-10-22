@@ -1,0 +1,24 @@
+"""AC_TYPE_SSIZE_T - Autoconf builtin macro
+
+Checks if ssize_t type is defined.
+
+Defines:
+  - ssize_t (if not defined, defined to int)
+"""
+
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
+load("//autoconf:checks.bzl", "checks")
+
+autoconf(
+    name = "AC_TYPE_SSIZE_T",
+    checks = [
+        # AC_CHECK_TYPE([ssize_t], [int]): the default includes carry <sys/types.h>.
+        checks.AC_CHECK_TYPE("ssize_t"),
+        checks.AC_DEFINE(
+            "ssize_t",
+            "int",
+            requires = ["!ac_cv_type_ssize_t"],
+        ),
+    ],
+    visibility = ["//visibility:public"],
+)

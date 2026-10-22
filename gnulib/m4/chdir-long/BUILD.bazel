@@ -6,13 +6,32 @@ load("//autoconf:checks.bzl", "checks")
 autoconf(
     name = "gl_FUNC_CHDIR_LONG",
     checks = [
-        # gl_FUNC_CHDIR_LONG: AC_EGREP_CPP checks if PATH_MAX is defined.
+        # gl_FUNC_CHDIR_LONG: AC_EGREP_CPP checks if PATH_MAX is defined, after
+        # gl_PATHMAX_SNIPPET arranged it the way "pathmax.h" does (260 on native Windows,
+        # MAXPATHLEN where that is all there is): the sources see the same PATH_MAX.
         # If PATH_MAX is defined → gl_cv_have_unlimited_file_name_length=no
         # If PATH_MAX is NOT defined → gl_cv_have_unlimited_file_name_length=yes
         checks.AC_TRY_COMPILE(
             name = "gl_cv_path_max_defined",
             code = """\
+#if HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 #include <limits.h>
+#if defined HAVE_SYS_PARAM_H && !defined PATH_MAX && !defined MAXPATHLEN
+# include <sys/param.h>
+#endif
+#if !defined PATH_MAX && defined MAXPATHLEN
+# define PATH_MAX MAXPATHLEN
+#endif
+#ifdef __hpux
+# undef PATH_MAX
+# define PATH_MAX 1024
+#endif
+#if defined _WIN32 && ! defined __CYGWIN__
+# undef PATH_MAX
+# define PATH_MAX 260
+#endif
 #ifdef PATH_MAX
 int x = PATH_MAX;
 int main(void) { return x; }

@@ -1,0 +1,23 @@
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//gnulib/tests:gnu_gnulib_diff_test_suite.bzl", "gnu_gnulib_diff_test_suite")
+
+# AC_TYPE_SSIZE_T is AC_CHECK_TYPE([ssize_t], [int]), whose AC_INCLUDES_DEFAULT also
+# defines the standard header results; the port leaves those to the project's own
+# AC_CHECK_INCLUDES_DEFAULT, so the conformance target carries both.
+autoconf(
+    name = "autoconf",
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//autoconf/macros/AC_TYPE_SSIZE_T",
+    ],
+)
+
+gnu_gnulib_diff_test_suite(
+    name = "AC_TYPE_SSIZE_T_test",
+    bazel_autoconf_target = ":autoconf",
+    config_h_in = "config.h.in",
+    configure_ac = "configure.ac",
+    m4_files = [],
+    subst_h_in = "subst.h.in",
+    test_c = "test_ssize_t.c",
+)

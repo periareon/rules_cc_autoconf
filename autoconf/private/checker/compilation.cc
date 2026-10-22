@@ -454,6 +454,11 @@ bool CheckRunner::try_link(const std::filesystem::path& object_file,
             DebugLogger::debug("Using compiler as linker: [" + link_tool + "]");
         }
         cmd.push_back(link_tool);
+        // The cc_deps archives' directories: a probe's own `-l<name>` linkopt
+        // (lib-link's `-lssl -lcrypto`) resolves to the dependency's archive by
+        // name, as check_library's -l<library> does.
+        const std::vector<std::string> search = library_search_flags(false);
+        cmd.insert(cmd.end(), search.begin(), search.end());
         auto link_flags = get_link_only_flags(language, extra_linkopts);
         cmd.insert(cmd.end(), link_flags.begin(), link_flags.end());
         cmd.push_back(object_file.string());
