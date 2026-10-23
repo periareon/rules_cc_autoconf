@@ -3766,7 +3766,427 @@ Verify no duplicate checks between direct checks and deps</li>
 <tr><td>Using <code>condition</code> with <code>if_false = None</code></td><td>Use <code>requires = ["cache_var==1"]</code> to gate defines; <code>condition</code> is for value selection, not gating</td></tr>
 <tr><td>Hiding a fixable port behind <code>known_divergences</code></td><td>Fix the port so Bazel matches GNU; a divergence entry needs a reason that explains why no port can match</td></tr>
 </tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="converting-a-project"><a class="header" href="#converting-a-project">Converting a project</a></h1>
+<p><code>//tools/convert</code> turns an autoconf project into a Bazel module built on
+these rules. It reads the project's <code>configure.ac</code> (expanded by the real
+<code>autom4te</code>) and the file lists of its build (<code>Makefile.am</code>, or a hand-written
+<code>Makefile.in</code>), and writes <code>BUILD.bazel</code>, <code>MODULE.bazel</code> and a report. What
+it cannot translate on its own it asks about in one file, <code>decisions.bzl</code>,
+which a person answers and keeps.</p>
+<p>The result is a module in the shape of the hand-written BCR overlays: an
+<code>autoconf</code> target per configure body with <code>checks.*</code> calls, <code>config.h</code> and the
+other configured headers, the gnulib library with its conditional sources
+and wrapper headers, a <code>cc_library</code> per library and a <code>cc_binary</code> per program
+of the automake tree, <code>bool_flag</code>s for the configure options, and <code>select()</code>s
+where configure branched on the platform.</p>
+<h2 id="which-projects"><a class="header" href="#which-projects">Which projects</a></h2>
+<p>What sits next to <code>configure.ac</code> decides how much of a module comes out. The
+first note of the report names the shape it found.</p>
+<div class="table-wrapper"><table><thead><tr><th>Shape</th><th>Identified by</th><th>What comes out</th></tr></thead><tbody>
+<tr><td>1. autoconf + automake, usually gnulib</td><td><code>configure.ac</code>, <code>Makefile.am</code>, often <code>m4/gnulib-comp.m4</code></td><td>The whole module. coreutils, grep, sed, gzip, m4, bison, gawk, make, patch, mpfr, flex.</td></tr>
+<tr><td>2. autoconf + hand-written Makefiles</td><td><code>configure.ac</code>, no <code>Makefile.am</code>; <code>Makefile.in</code> files, or plain <code>Makefile</code>s that <code>include</code> a file configure writes (tftp-hpa's <code>config/MCONFIG</code>), with literal source lists and <code>$(CC) -o</code> rules</td><td>The whole module, read from the Makefile rules: archives are libraries, link rules programs, the compile rule's <code>-D</code> and <code>-I</code> the flags, an <code>$(includedir)/&lt;name&gt;</code> install directory an include prefix; an included configured file is read from its <code>.in</code> template. readline, libpcap, tcpdump, tftp-hpa. The reader follows literal lists and <code>$(VAR)</code> references, not make functions.</td></tr>
+<tr><td>3. autoconf + make as a program</td><td><code>configure.ac</code>; Makefiles built from <code>$(wildcard ...)</code>, <code>$(patsubst ...)</code>, generated fragments, or rules written by awk at configure time</td><td>The configuration only: the <code>autoconf</code> target, its headers and flags. glibc, gcc, binutils, ncurses. The libraries and programs are written by hand in <code>BUILD.bazel</code>.</td></tr>
+<tr><td>4. hand-written <code>configure</code></td><td>no <code>configure.ac</code></td><td>Nothing; the converter stops. ffmpeg, musl, zlib, nginx, openssl. The <a href="./migration.html">migration guide</a> applies by hand.</td></tr>
+</tbody></table>
 </div>
+<p>A Makefile.am that switches compilers (<code>CC = $(TARGET_CC)</code>, grub's firmware
+side) builds nothing for the host: its programs and libraries are left out
+and reported, whatever the shape of the rest.</p>
+<h2 id="running-it"><a class="header" href="#running-it">Running it</a></h2>
+<p>From a clone of this repository:</p>
+<pre><code class="language-sh">bazel run //tools/convert -- convert --src https://ftp.gnu.org/gnu/gzip/gzip-1.15.tar.xz --out /path/to/output --dev
+</code></pre>
+<p><code>--src</code> takes a release archive URL, a local archive or a source tree.
+<code>--out</code> receives <code>BUILD.bazel</code>, <code>MODULE.bazel</code>, <code>CONVERSION_REPORT.md</code> and
+<code>decisions.bzl</code>. The banner of each generated file repeats the command, which
+is what regenerates the conversion. Options:</p>
+<div class="table-wrapper"><table><thead><tr><th>Option</th><th>Effect</th></tr></thead><tbody>
+<tr><td><code>--dev</code></td><td><code>MODULE.bazel</code> overrides <code>rules_cc_autoconf</code> with this checkout. Without it the module depends on the released version.</td></tr>
+<tr><td><code>--decisions FILE</code></td><td>Read and extend this decisions file instead of <code>decisions.bzl</code> in the output directory.</td></tr>
+<tr><td><code>--annotate</code></td><td>Comment every check, dep and rule with the m4 call or Makefile line it came from.</td></tr>
+<tr><td><code>--subdir DIR</code></td><td>Convert the <code>configure.ac</code> in a subdirectory of the tree.</td></tr>
+<tr><td><code>--vendor-ports</code></td><td>Copy the gnulib ports the conversion uses into the module, see <a href="convert.html#vendoring-the-ports">Vendoring the ports</a>.</td></tr>
+<tr><td><code>--only FILE</code></td><td>Convert one m4 file in the layout of the hand ports, see <a href="convert.html#converting-single-m4-files">Converting single m4 files</a>.</td></tr>
+<tr><td><code>--bcr-entry DIR</code></td><td>Write a registry entry in place and take the inputs from it, see <a href="convert.html#a-registry-entry">A registry entry</a>.</td></tr>
+<tr><td><code>--http-archive-entry DIR</code></td><td>Write the one generated BUILD file into a consumer's <code>3rdparty/&lt;name&gt;/</code> for <code>http_archive</code>, see <a href="convert.html#an-http_archive">An http_archive</a>.</td></tr>
+<tr><td><code>--layout per-file|package</code></td><td>One package per m4 file, or a single package. The default is <code>per-file</code> with <code>--only</code> and <code>package</code> otherwise.</td></tr>
+<tr><td><code>--external</code>, <code>--in-repo</code></td><td>Emit for an external project (<code>@rules_cc_autoconf//...</code> labels), or for this repository (<code>//...</code> labels and <code>autoconf_cache</code>). The default follows the layout: external for a package, in-repo per file.</td></tr>
+<tr><td><code>--buildifier auto|none|PATH</code></td><td>The buildifier that formats the output. <code>auto</code> takes the one on <code>PATH</code>.</td></tr>
+<tr><td><code>--strip-prefix PREFIX</code></td><td>The release archive's <code>strip_prefix</code> for <code>source.json</code>. By default <code>&lt;name&gt;-&lt;version&gt;</code>.</td></tr>
+<tr><td><code>--keep-work</code></td><td>Keep the scratch directory of the expansion; its path is printed.</td></tr>
+</tbody></table>
+</div>
+<p><code>--help</code> lists the rest. <code>--profile FILE</code> belongs to the tool rather than to
+the <code>convert</code> subcommand, so it goes before the subcommand:
+<code>bazel run //tools/convert -- --profile run.prof convert ...</code>. It writes a
+cProfile of the run to <code>FILE</code> and a text summary to <code>FILE.txt</code>.</p>
+<p>What to do with the output depends on where the module is going, see
+<a href="convert.html#using-the-output">Using the output</a>.</p>
+<h2 id="decisions"><a class="header" href="#decisions">Decisions</a></h2>
+<p>The first run usually exits with status 3 and lists the constructs it could
+not translate under "Decisions required" in the report. Each is an entry of
+<code>decisions.bzl</code> with <code>decision.UNDECIDED</code> as its value: replace the value and
+run the same command again. The outputs are written even while decisions are
+missing, so the project can be looked at, but a conversion is complete only
+when the file answers every question.</p>
+<p>The file is read with a parser, never evaluated; its header names the
+rules_cc_autoconf that wrote it. New entries are added in key order with a
+comment block showing the construct: the upstream text in a fenced block tagged
+with its language, where it was found, and why it is asked. Entries the
+converter stops asking for are reported as unused. A <code>checks.X(...)</code> value reads
+as in a BUILD file: add <code>load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")</code> at the top.</p>
+<p>A <code>DEFAULTS</code> table answers every undecided key of a kind at once, for a
+construct that never matters for the module (a firmware compiler's probes, a
+toolchain's warning flags); the report lists what a default answered:</p>
+<pre><code class="language-python">DEFAULTS = {
+    "probe": decision.IGNORE,
+}
+</code></pre>
+<p>The kinds the converter asks for:</p>
+<div class="table-wrapper"><table><thead><tr><th>Key</th><th>Asked when</th><th>Accepts</th></tr></thead><tbody>
+<tr><td><code>probe:&lt;cache variable&gt;</code></td><td>A probe has no compile-time form: a runtime test, a cache value computed by shell, a check whose actions decide the variable, a program reading shell variables the rules cannot expand (<code>#include "$srcdir/gmp-h.in"</code>)</td><td><code>IGNORE</code>, <code>ACCEPT</code> (the converter's own guess), a literal, a <code>select()</code> of literals (a value-recording check such as <code>AC_CHECK_SIZEOF</code> defines its <code>SIZEOF_*</code> to it as well), or a replacement <code>checks.AC_TRY_COMPILE(name = ...)</code> / <code>AC_TRY_LINK</code></td></tr>
+<tr><td><code>variable:&lt;NAME&gt;</code></td><td>A substituted or M4 variable is assigned in ways no one check expresses. For <code>AC_DEFINE_UNQUOTED</code> a string decision is the C literal's contents, without its quotes</td><td><code>IGNORE</code>, <code>ACCEPT_PARTIAL</code>, a literal, a <code>select()</code>, or <code>checks.AC_SUBST(...)</code> with <code>condition</code> / <code>if_true</code> / <code>if_false</code></td></tr>
+<tr><td><code>guard:&lt;target&gt;:&lt;check&gt;</code></td><td>A check runs under a condition <code>requires</code> cannot spell: a variable no check produces, two platform dimensions, an option mixed with the platform</td><td><code>ALWAYS</code>, <code>NEVER</code>, a <code>requires</code> list, or a <code>select()</code> of such lists</td></tr>
+<tr><td><code>macro:&lt;NAME&gt;</code></td><td>A macro has no port and no translation</td><td><code>IGNORE</code>, the label of a port, or the checks that stand in for it</td></tr>
+<tr><td><code>actions:&lt;macro&gt;:&lt;argument&gt;</code></td><td>A check's action arguments hold shell or calls the converter does not translate</td><td><code>IGNORE</code> or the checks that stand in for them</td></tr>
+<tr><td><code>am_conditional:&lt;NAME&gt;</code></td><td>Sources sit under an automake conditional that is neither an option nor a platform</td><td><code>ALWAYS</code>, <code>NEVER</code>, or a <code>config_setting</code> label whose <code>select()</code> arm takes the sources</td></tr>
+<tr><td><code>src_condition:&lt;NAME&gt;</code></td><td>A gnulib source's <code>gl_CONDITIONAL</code> cannot be derived from the ports</td><td><code>ALWAYS</code>, <code>NEVER</code>, or a condition expression</td></tr>
+<tr><td><code>generated:&lt;path&gt;</code></td><td>A source is not in the tree and no translatable recipe writes it</td><td><code>IGNORE</code>, the rule that writes it (inline, with its <code>load()</code> lines), or <code>":&lt;target&gt;"</code> for a rule in <code>BUILD.bazel</code></td></tr>
+<tr><td><code>cppflag:&lt;dir&gt;:&lt;NAME&gt;</code></td><td>A <code>-D</code> value only configure computes</td><td><code>IGNORE</code> or the C token</td></tr>
+<tr><td><code>link:&lt;dir&gt;/&lt;target&gt;:&lt;item&gt;</code></td><td>An <code>LDADD</code> item is neither a library of the tree nor a <code>-l</code> option</td><td><code>IGNORE</code>, a dep label, or a linkopt</td></tr>
+</tbody></table>
+</div>
+<p>The kinds it never asks for, added by hand when wanted:</p>
+<div class="table-wrapper"><table><thead><tr><th>Key</th><th>Effect</th><th>Accepts</th></tr></thead><tbody>
+<tr><td><code>flag:&lt;option&gt;</code></td><td>Overrides the default of an option's <code>bool_flag</code>, which otherwise comes from the not-given arm's assignment, the variable the value is copied into, or the help string</td><td><code>True</code>, <code>False</code>, <code>IGNORE</code></td></tr>
+<tr><td><code>program:&lt;path&gt;</code></td><td>A program configure adds only when a probe holds is emitted with <code>tags = ["manual"]</code> and listed in the report with its key (<code>program:src/hostid</code>: the program's path from the project root, which is also the target's name); this names the platforms it builds on</td><td><code>ALWAYS</code>, <code>NEVER</code>, or a platform label list</td></tr>
+<tr><td><code>copts:&lt;package&gt;</code>, <code>conlyopts:&lt;package&gt;</code>, <code>cxxopts:&lt;package&gt;</code></td><td>Compiler options every target of the package compiles with (<code>.</code> is the root), after <code>NO_WARNINGS</code>: a diagnostic a newer compiler turns into an error in code written for an older one, which no consumer can set on a module it depends on</td><td><code>["-Wno-error=incompatible-pointer-types"]</code></td></tr>
+<tr><td><code>license:&lt;file&gt;</code></td><td>The SPDX identifier of an exported license file (<code>COPYING</code>, <code>LICENSE</code>). The converter reads the family and version from the text and the <code>-only</code> / <code>-or-later</code> suffix from the source headers; a file that does not settle (a custom notice, headers that disagree) is requested with its opening lines. The identifier adds the registry's package metadata: a <code>license()</code> over the file, the <code>package_metadata</code> with the module's purl, and <code>package(default_package_metadata = ...)</code></td><td><code>"GPL-3.0-or-later"</code>, <code>IGNORE</code> (exported without metadata)</td></tr>
+<tr><td><code>src_condition:&lt;NAME&gt;</code></td><td>Overrides the condition the conversion derived for a gnulib source</td><td>as above</td></tr>
+<tr><td><code>library:&lt;package&gt;:&lt;name&gt;</code></td><td>Leaves a registry library out of one package (<code>.</code> is the root): the project is built as on a host without it, the not-found path of its probes and pkg-config checks taken. <code>&lt;name&gt;</code> is the library as configure spells it, the <code>-l</code> name (<code>lzma</code>), the pkg-config package (<code>sdl2</code>) or the registry module; the report's notes name the key for each library found</td><td><code>IGNORE</code></td></tr>
+<tr><td><code>subst:&lt;NAME&gt;</code>, <code>check:&lt;cache variable&gt;</code></td><td>Drops the project's copy of a result a dependency already provides, when Bazel reports it as produced twice</td><td><code>IGNORE</code></td></tr>
+<tr><td><code>define:&lt;NAME&gt;</code>, <code>define:&lt;package&gt;:&lt;NAME&gt;</code></td><td>Drops the project's copy of a define a dependency already provides (<code>IGNORE</code>), or pins the define: a value rewrites the config header's <code>#undef</code> line, over the port's result, for a bundled gnulib older than the ports' whose sources want its own m4's answer (grep's <code>NL_LANGINFO_MTSAFE</code> on macOS). A bare name pins every config header of the project; with a package (<code>.</code> the root) only that package's, where the labels a <code>select()</code> names live (gawk's pc/config.h answers on a setting its root <code>BUILD.bazel</code> defines)</td><td><code>IGNORE</code>, a value, or a <code>select()</code> of values</td></tr>
+</tbody></table>
+</div>
+<p>The <a href="./migration.html">migration guide</a> says how each autoconf construct maps
+to a check, a rule or a <code>select</code>, which is what a replacement is written in.</p>
+<h3 id="bundled-decisions"><a class="header" href="#bundled-decisions">Bundled decisions</a></h3>
+<p>The questions every gnulib project raises the same way, the gettext probes
+and substitutions of a project that builds no message catalogs, gnulib's
+own witness variables, are answered once, in <code>gnulib/m4/decisions.bzl</code>
+beside the ports. The converter reads it beneath the project's decisions
+file: a key the project's file answers wins, a key it leaves out or
+<code>UNDECIDED</code> takes the bundled answer, and only then does <code>DEFAULTS</code> apply.
+The report lists every answer taken from it under "Decisions inherited",
+so nothing applies silently; the bundled file's own keys never count as
+unused. <code>--bundled-decisions FILE</code> reads another file, <code>none</code> reads none;
+by default the converter finds the checkout's, or the copy in its runfiles
+when it runs from elsewhere.</p>
+<h3 id="buildbazel-and-autoconfbzl"><a class="header" href="#buildbazel-and-autoconfbzl">BUILD.bazel and autoconf.bzl</a></h3>
+<p>In project mode every package the conversion writes to has two files.
+<code>autoconf.bzl</code> is generated: the package's targets are the body of one
+macro, <code>autoconf_targets()</code>, the constants several rules share stand at the
+top level, and <code>visibility("private")</code> keeps the file loadable from its own
+package alone. The converter writes it whole on every run, formatted twice,
+as a BUILD file first (where buildifier expands every rule call and sorts
+the lists it sorts) and then as the <code>.bzl</code> file the statements move into, so
+it reads like a BUILD file. <code>BUILD.bazel</code> is hand-written: the converter
+writes it once, as a stub that loads the macro and calls it, and never
+touches it again. In a registry entry both sit in <code>overlay/</code>,
+<code>extension/BUILD.bazel</code> and <code>extension/autoconf.bzl</code> beside a sub-configure
+package's. A package the conversion does not write (a <code>tests/</code> package of
+hand-written tests) is a hand-written <code>BUILD.bazel</code> in the same place, which
+the converter leaves alone.</p>
+<p><code>BUILD.bazel</code> does three things:</p>
+<ul>
+<li><strong>Adds targets.</strong> Tests, tools, aliases, anything the conversion does not
+produce. A rule it loads from another module makes that module a
+<code>bazel_dep</code> of the generated MODULE.bazel. A constant <code>autoconf.bzl</code>
+defines at the top level (<code>NO_WARNINGS</code>, the option table) can be loaded
+from it; one defined inside the macro (a <code>glob()</code>, or a list built from
+one) cannot.</li>
+<li><strong>Replaces generated targets.</strong> A rule with the same <code>name</code> as a generated
+one replaces it: at the next conversion the generated rule is left out of
+<code>autoconf.bzl</code>, whose macro docstring names it with a "Targets replaced"
+section of the report, and consumers are unchanged.</li>
+<li><strong>Provides generated files.</strong> A <code>generated:&lt;path&gt;</code> decision of the form
+<code>":&lt;target&gt;"</code> names a rule of <code>BUILD.bazel</code> that writes the file; the
+converter lists the file among the consumer's sources and emits no rule.
+This is the home for a tool shared by several outputs or a <code>.bzl</code> macro of
+its own; a one-line <code>genrule</code> fits inline in the decisions file.</li>
+</ul>
+<p>For a shape 3 project <code>BUILD.bazel</code> holds the libraries and programs
+outright: there is no generated output to replace.</p>
+<p><strong>Visibility.</strong> Every generated target carries an explicit <code>visibility</code>, so
+a <code>package(default_visibility = ...)</code> in <code>BUILD.bazel</code> never publishes them.
+Public is deliberate and small: what <code>make install</code> ships, the libraries,
+programs and headers and their aliases, and the option flags, which are the
+module's configure options. Everything else, the <code>autoconf</code> targets, the
+config headers, <code>autoconf_linkopts</code>, the option settings, the gnulib and
+private header libraries and the generated-file rules, is private, or
+<code>//:__subpackages__</code> when the module has other packages (a sub-configure,
+a hand-written <code>tests/</code>), which then see them. A tree rendered into a
+subdirectory of a larger workspace is confined to that directory instead,
+<code>//third_party/foo:__subpackages__</code>, and vendored ports are confined the
+same way.</p>
+<p>A tree or entry converted before this layout, with a generated <code>BUILD.bazel</code>
+and a hand-written <code>BUILD.additions.bazel</code> beside it, is migrated by the
+next run: the additive file's contents become the new <code>BUILD.bazel</code>, its
+loads merged with the <code>autoconf.bzl</code> load (which names the top-level
+constants the text reads), and the additive file is removed; the report says
+so. A constant it read that <code>autoconf.bzl</code> now defines inside the macro has to
+be declared in <code>BUILD.bazel</code> by hand, and the report names those too.</p>
+<h2 id="how-it-translates"><a class="header" href="#how-it-translates">How it translates</a></h2>
+<p>One bullet per construct; the table after them holds the details a reviewer
+of the output may want.</p>
+<ul>
+<li><strong>Expansion.</strong> <code>autom4te</code> expands <code>configure.ac</code> with a prelude that marks
+every <code>AC_DEFUN</code> body and check macro call. The converter never parses m4;
+an <code>m4_fatal</code> becomes a warning so the expansion completes.</li>
+<li><strong>Targets and deps.</strong> Each <code>AC_DEFUN</code> body is an <code>autoconf</code> target.
+<code>AC_REQUIRE</code> and calls of ported macros become <code>deps</code> on the ports under
+<code>//gnulib/m4</code> and <code>//autoconf/macros</code>, the headers' <code>:defaults</code> targets
+<code>default_deps</code>. A local check a port already produces is left out and
+reported.</li>
+<li><strong>Checks.</strong> Check macros become <code>checks.*</code> and <code>macros.*</code> calls, their
+action arguments read as configure runs them. Runtime probes are never
+executed. Language standards are requirements, not flags.</li>
+<li><strong>Shell.</strong> The shell between calls is evaluated symbolically: the
+condition a call runs under becomes its <code>requires</code>, platform cases become
+<code>select()</code>s, options become flags with config settings, assignments to
+substituted variables become <code>AC_SUBST</code> checks. What the analysis cannot
+follow becomes a decision, never a guess.</li>
+<li><strong>Registry libraries.</strong> A library the registry provides, that configure
+probes for or pkg-config asks about, becomes a <code>bazel_dep</code> and a dep of
+what links it. The checks that compile or link against it move to an
+<code>autoconf</code> target of their own with the library as its one <code>cc_deps</code>
+entry, which the main target depends on; every other check stays
+toolchain-only, so its result does not depend on the dependency graph.
+configure's own probes stay probes; <code>PKG_CHECK_MODULES</code> has none to run
+and is decided at conversion time from the registry's versions.</li>
+<li><strong>The gnulib tree.</strong> <code>gnulib-comp.m4</code> and <code>gnulib.mk</code> give the module
+deps, the wrapper headers, the recipe-written headers and the
+conditional sources of one gnulib library.</li>
+<li><strong>The automake tree.</strong> Every <code>Makefile.am</code> gives a <code>cc_library</code> per
+library and a <code>cc_binary</code> per program, with <code>LDADD</code>, <code>LIBADD</code> and the
+flag variables resolved into deps, defines, includes and copts.</li>
+<li><strong>Generated files.</strong> Recipes the converter can read become <code>write_file</code>,
+substitution or template rules; <code>AC_CONFIG_FILES</code> templates are rendered;
+everything else is a <code>generated:</code> decision.</li>
+<li><strong>Sub-configures.</strong> Each <code>AC_CONFIG_SUBDIRS</code> directory is a package of
+the same module, converted from its own tree, sharing the decisions file.</li>
+<li><strong>Licensing.</strong> The license files the release ships are exported, with
+the registry's package metadata over them: the SPDX identifier is read
+from the text and the source headers, and asked for as a <code>license:</code>
+decision when they do not settle it.</li>
+</ul>
+<h3 id="details-by-construct"><a class="header" href="#details-by-construct">Details by construct</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Construct</th><th>Becomes</th><th>Why it is done that way</th></tr></thead><tbody>
+<tr><td>A probe without a cache variable</td><td>A check named by its place in the source, <code>autoconf_probe_configure_475</code></td><td>A decision keyed by it holds across converter versions</td></tr>
+<tr><td><code>AC_REPLACE_FUNCS</code></td><td>A function check and a replacement compiled only when the function is missing</td><td>As the macro behaves</td></tr>
+<tr><td>A check that refers to earlier defines</td><td><code>compile_defines</code> on the check; the body split into <code>autoconf_1</code>, <code>autoconf_2</code>, ... where a probe needs an earlier result of the same body</td><td>Probes see <code>confdefs.h</code> as configure's do</td></tr>
+<tr><td><code>AC_USE_SYSTEM_EXTENSIONS</code></td><td>The extension macros on every later declaration, type, member, compile and link check</td><td>configure defines them before those checks</td></tr>
+<tr><td><code>AC_RUN_IFELSE</code></td><td>The m4's cross-compiling guess per platform, the program kept in a comment; a guess that is the same everywhere is a <code>probe:</code> decision</td><td>Nothing is executed at analysis time</td></tr>
+<tr><td><code>AC_PROG_CC_C99</code>, <code>AX_CXX_COMPILE_STDCXX</code>, <code>-std=</code> in <code>CFLAGS</code></td><td>A check that stops the build naming the flag to set</td><td>A Bazel build's standard belongs to the root module</td></tr>
+<tr><td><code>test $x = yes</code> on a probe's variable</td><td>The probe's success</td><td>The value is what configure tested</td></tr>
+<tr><td>A variable copied from a probe's result (<code>found="$pa_cv_func_x"</code>), an alias of its name (<code>AS_VAR_PUSHDEF([cache], ...)</code> then <code>AC_CACHE_VAL([cache], ...)</code>), <code>AS_VAR_SET</code> / <code>AS_VAR_IF</code></td><td>The probe, under the name the expansion spells</td><td>nasm's PA macros name every cache variable through an alias</td></tr>
+<tr><td>A variable assigned inside a macro the body expands (<code>PA_ARG_ENABLED([x], ..., [PDFOPT=...])</code>)</td><td>Seen by the calls after the macro and by the body's <code>AC_SUBST</code> of it, under the call's condition</td><td>configure runs the macro's shell in place</td></tr>
+<tr><td>A probe over an empty program (<code>AX_CHECK_COMPILE_FLAG</code>, <code>PA_ADD_CFLAGS</code>, libpcap's <code>AC_LBL_CHECK_COMPILER_OPT</code>)</td><td>Left out; its cache variable reads <code>no</code>, so the flag's defines and additions do not happen</td><td>A Bazel toolchain owns the compiler options; the check tested the flag, not the code</td></tr>
+<tr><td>A probe whose two arms substitute one name to constants (<code>AC_SUBST([X], [1])</code> / <code>[0]</code>)</td><td>One <code>AC_SUBST(X, condition = &lt;probe&gt;, if_true, if_false)</code>; a constant an enclosing branch substitutes merges into <code>if_false</code></td><td>One producer per name</td></tr>
+<tr><td><code>AC_LIBOBJ</code> / <code>AC_REPLACE_FUNCS</code> objects in a hand-written Makefile's <code>@LIBOBJS@</code></td><td>The source from <code>AC_CONFIG_LIBOBJ_DIR</code>, next to the Makefile, or where the Makefile's own rule for the object points (<code>strlcpy.o: $(srcdir)/missing/strlcpy.c</code>), compiled when the function is missing</td><td>The object name says nothing about the source's directory; the rule does</td></tr>
+<tr><td>gnulib-tool's conditional dependencies (<code>func_gl_gnulib_m4code_&lt;module&gt; ()</code> in gl_INIT)</td><td>The function bodies read where they are defined, their <code>gl_CONDITIONAL</code>s and <code>AC_LIBOBJ</code>s under the tests inside them</td><td>A static build enables every module, so each body runs once</td></tr>
+<tr><td>A wrapper-header placeholder no port provides (<code>@EMULTIHOP_HIDDEN@</code> in errno.in.h)</td><td><code>AC_SUBST(name, 0)</code> in the main target</td><td>An unsubstituted <code>@NAME@</code> does not compile where the wrapper is generated</td></tr>
+<tr><td><code>gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_STDIO_H_SIGPIPE], [1])</code> / <code>gl_MODULE_INDICATOR_SET_VARIABLE</code> in gl_INIT</td><td><code>AC_SUBST(GNULIB_X, 1)</code> beside the module indicators, under the call's condition where it has one; the header ports' own <code>_MODULE_INDICATOR_DEFAULTS</code> calls and the 0s are left to the ports' defaults</td><td>stdio.h renames printf to the SIGPIPE-emulating replacement and signal.h defines SIGPIPE only when these read 1</td></tr>
+<tr><td>Shell variables in a probe's program (<code>#define GMP_NAIL_BITS $GMP_NAIL_BITS</code>, <code>#include "$srcdir/gmp-h.in"</code>)</td><td>A literal the body assigns is expanded in place; <code>$ac_includes_default</code> is <code>utils.AC_INCLUDES_DEFAULT</code>; anything else makes the probe a <code>probe:</code> decision</td><td>configure expands them before compiling; the rules compile the text as written</td></tr>
+<tr><td>A platform arm's constant define beside a probe's conditional define of the same name and value (make's <code>HAVE_DOS_PATHS</code> from <code>AS_CASE([$host])</code> and from a <code>_WIN32</code> compile test)</td><td>The probe's define; the arm's constant is left out</td><td>configure defines it once either way; the rules take one producer per define</td></tr>
+<tr><td>A macro of a gnulib-tool file whose name no port carries (bison's <code>m4/printf-posix-rpl.m4</code>, since merged into printf-posix.m4)</td><td>The port target of that name</td><td>gnulib-comp.m4's gl_FILE_LIST says gnulib wrote the file, so the macro is the port's, not the project's</td></tr>
+<tr><td>gnulib.mk's <code>test $HAVE_X = 0</code> over a HAVE_* a port probe alone produces</td><td>The probe's cache variable (<code>!ac_cv_func_wcwidth</code>)</td><td>The bare name resolves to the header port's default (<code>HAVE_WCWIDTH=1</code>) where the failed probe defined nothing, and <code>ac_cv_subst_HAVE_X</code> names that default outright; a name a port's own <code>AC_SUBST</code> produces keeps that spelling</td></tr>
+<tr><td>An automake <code>else</code> branch, or <code>if !COND</code> (make's <code>src/posixos.c</code> under <code>else</code> of <code>if WINDOWSENV</code>)</td><td>The conditional's negation: the other arms of the select the conditional lowers to (<code>{"@platforms//os:windows": [], "//conditions:default": ["src/posixos.c"]}</code>), a decision's ALWAYS and NEVER swapped</td><td>An else branch is compiled exactly where the if branch is not</td></tr>
+<tr><td><code>AM_CPPFLAGS += -I&lt;dir&gt;</code> under an automake conditional</td><td>The directory in that arm of <code>includes</code></td><td>As a <code>-D</code> under a conditional goes in that arm of local_defines</td></tr>
+<tr><td><code>AC_SEARCH_LIBS</code> with actions</td><td>The actions as body shell under the search's result, their nested calls translated (an <code>AC_LIBOBJ</code> fallback compiled when the search fails)</td><td>As for the other singular checks</td></tr>
+<tr><td><code>AC_LIB_HAVE_LINKFLAGS([ssl], [crypto], [includes], [code])</code></td><td>A link probe against <code>-lssl -lcrypto</code> defining <code>HAVE_LIBSSL</code>, with <code>HAVE_LIBSSL</code>, <code>LIBSSL</code> and <code>LTLIBSSL</code> substituted; the registry's module as the dependency, as for <code>AC_CHECK_LIB</code></td><td>gettext's lib-link.m4 is that probe plus a prefix search</td></tr>
+<tr><td><code>-lm</code>, <code>-lpthread</code>, <code>-ldl</code>, <code>-lrt</code>, <code>-lws2_32</code> and the other system libraries</td><td><code>linkopts</code>, never a registry module</td><td>The toolchain provides them</td></tr>
+<tr><td><code>AC_CANONICAL_HOST</code> and other once-only library macros called inside a project macro</td><td>Their port, as when called at the top level</td><td>m4sugar hoists such a body before the caller's output; the call markers travel inside it</td></tr>
+<tr><td>A call of an autoconf builtin in a shell comment, or an unbracketed one in a <code>case</code> arm the shell never ran</td><td>Not a definition the expansion missed; noted and left out</td><td>The expansion attributes what it expanded</td></tr>
+<tr><td><code>PKG_CHECK_MODULES</code> under a configure option</td><td>The dependency in the option's arm of the targets that link <code>$(X_LIBS)</code></td><td>The library is wanted only with the option</td></tr>
+<tr><td>A variable another module provides with words (an ALLCAPS substitution, a port's M4 variable)</td><td>Compared by value</td><td>Those values are the interface</td></tr>
+<tr><td><code>AC_MSG_ERROR</code></td><td>Ends the path; a variable assigned on every continuing path counts as always assigned</td><td>configure would not reach the rest</td></tr>
+<tr><td><code>case $host_os</code> / <code>$host_cpu</code> / <code>$GCC</code></td><td><code>select()</code>s on <code>@platforms//os:*</code>, <code>@platforms//cpu:*</code>, <code>@rules_cc//cc/compiler:*</code>, one dimension per select</td><td>One axis per select keeps the arms readable</td></tr>
+<tr><td><code>AC_ARG_ENABLE</code> / <code>AC_ARG_WITH</code> compared with yes/no</td><td>A <code>BOOL_OPTIONS</code> table of defaults with a <code>bool_flag</code> and a <code>config_setting</code> comprehension over it</td><td>Thirteen lines an option otherwise</td></tr>
+<tr><td>An option compared with other values</td><td>A <code>string_flag</code> (an <code>int_flag</code> for numbers) with a <code>config_setting</code> per value</td><td>The script branches on the value</td></tr>
+<tr><td><code>PKG_CHECK_MODULES([X], [pkg &gt;= 1.2])</code></td><td>The found action when the registry provides every package at a satisfying version, with <code>X_CFLAGS</code> and <code>X_LIBS</code> holding what that action gives them (empty otherwise, the dependency carries headers and archive); the not-found action otherwise. <code>PKG_CHECK_EXISTS</code> likewise; <code>PKG_CHECK_VAR</code> stays a <code>variable:</code> decision</td><td>There is no probe to run; the registry's version is the one compared and the report says an override is not checked</td></tr>
+<tr><td>A registry library a target links</td><td><code>implementation_deps</code>, after the project's own include directories, unless a public header includes it</td><td>Its headers are not part of the target's interface</td></tr>
+<tr><td>A check that names a registry library (<code>AC_CHECK_LIB</code>, <code>AC_SEARCH_LIBS</code>, a header check or a probe including one of its headers)</td><td>Moved to <code>autoconf_&lt;lib&gt;</code>, with every library it links as <code>cc_deps</code> (<code>-lssl -lcrypto</code>: both openssl targets); the bodies after it depend on it, a check of an earlier body gets <code>autoconf_&lt;lib&gt;_&lt;n&gt;</code>, a check under a <code>select()</code> arm (libssh2's openssl probe under <code>--with-crypto=openssl</code>) the same arm of the library target</td><td>Only the checks that need the dependency see it; the rest share results across modules</td></tr>
+<tr><td>gnulib's conditional sources</td><td><code>autoconf_srcs(wrap = "include")</code></td><td>A source's own <code>#include "sibling.h"</code> keeps working</td></tr>
+<tr><td>gnulib's generated wrapper headers</td><td>Written under <code>_gnulib_gen/</code> (the conditional ones under <code>_gnulib_cond/</code>), served ahead of the source directory</td><td>A maintainer's copy next to the <code>.in.h</code> template must not shadow the rendered one</td></tr>
+<tr><td>An <code>EXTRA_*_SOURCES</code> object</td><td>Follows <code>HAVE_X = 0 || REPLACE_X = 1</code> over the header's substitutions, or the port's <code>case $host_os</code>, or a <code>src_condition:</code> decision; <code>REPLACE_X = 1</code> lowers to <code>REPLACE_X != 0</code></td><td>gnulib's <code>REPLACE_*</code> are zero or non-zero, and a newer gnulib answers 2 where an older <code>gnulib.mk</code> wrote 1</td></tr>
+<tr><td><code>SUBDIRS</code></td><td>Every <code>Makefile.am</code> reached, <code>po</code>, <code>doc</code>, <code>tests</code> and the like excepted</td><td>Those build no code</td></tr>
+<tr><td><code>LDADD</code> order</td><td>An archive depends on the archives every <code>LDADD</code> lists after it</td><td>A static link keeps the Makefiles' order</td></tr>
+<tr><td><code>AM_CPPFLAGS</code>, <code>_CPPFLAGS</code>, <code>_CFLAGS</code></td><td>Defines, includes and <code>-f</code> code-generation options, expanded through the Makefile's own flag variables with automake's installation directories at their defaults; a variable only configure sets is reported</td><td>What make would pass, without configure's part</td></tr>
+<tr><td><code>-I&lt;dir&gt;</code> naming a source directory with headers</td><td>A dependency on a shared library of those headers with the directory as its include path, in <code>implementation_deps</code> for a library</td><td>The headers are declared for the sandbox and the directory stays private to the targets whose flags named it</td></tr>
+<tr><td>A library or program and the gnulib library</td><td>A dependency when its flags put gnulib's directory on the include path or its <code>LDADD</code> links the archive; otherwise built without it, as upstream builds it</td><td>gnulib's wrapper headers change what a compile sees</td></tr>
+<tr><td>Several gnulib directories (libpaper's <code>libgnu/</code> and <code>src/libgnu/</code>, each with its <code>Makefile.gnulib</code>)</td><td>One gnulib library each, sharing the <code>autoconf</code> target; the second's top-level constants carry its name (<code>GNUPAPER_SRC_CONDITIONS</code>)</td><td>One <code>gl_INIT</code> is one set of results</td></tr>
+<tr><td>A library listed only under an automake conditional</td><td>Built when the conditional is a configure option or a decided config setting (<code>target_compatible_with</code>), left out when decided <code>NEVER</code>, an <code>am_conditional:</code> decision otherwise</td><td>As for programs</td></tr>
+<tr><td>Sources under both a <code>case $host_os</code> arm and a probe</td><td>An <code>autoconf_srcs</code> target per platform arm, in that arm's <code>srcs</code> and in <code>deps</code></td><td>One <code>select()</code> dimension at a time</td></tr>
+<tr><td><code>@top_builddir@/dir/file.c</code>, <code>$(top_srcdir)/dir/file.c</code> in a Makefile.am</td><td>The file at that path of the tree</td><td>What make would compile</td></tr>
+<tr><td>Installed headers</td><td>The library's <code>hdrs</code>; the rest compile with the sources</td><td>Private names never reach a consumer</td></tr>
+<tr><td><code>includes = ["."]</code> in the root package</td><td><code>strip_include_prefix = "/"</code></td><td>rules_cc rejects the repository root as an include directory</td></tr>
+<tr><td><code>libfoo.a</code></td><td>A rule named <code>foo</code> (<code>lib/foo</code> plus a <code>libfoo</code> alias when a program <code>foo</code> exists); an installed libtool library also a <code>cc_shared_library</code>; programs of subdirectories get top-level aliases</td><td>The names consumers expect</td></tr>
+<tr><td>The headers next to the programs of a directory</td><td>One top-level glob constant named after the directories, <code>LIB_SRC_HDRS</code>, in each program's <code>srcs</code></td><td>One glob a hundred programs share</td></tr>
+<tr><td>Warnings</td><td>Every target's <code>copts</code> start with <code>NO_WARNINGS</code>, a <code>select()</code> giving <code>/w</code> to MSVC and clang-cl and <code>-w</code> to every other compiler; <code>bison()</code> runs with <code>-Wnone</code>, <code>flex()</code> with <code>--nowarn</code></td><td>A consumer cannot act on upstream's warnings and cannot change the flags of a module it depends on</td></tr>
+<tr><td>A program listed only under an automake conditional decided as a config setting, or whose every source is</td><td><code>target_compatible_with</code> on that setting</td><td>A <code>select()</code> with an empty arm would be a binary without sources</td></tr>
+<tr><td><code>bin_PROGRAMS = @bin_PROGRAMS@</code></td><td>Read from <code>EXTRA_PROGRAMS</code> and configure's assignments</td><td>The list lives in configure</td></tr>
+<tr><td>Yacc and lex sources</td><td>The registry's <code>bison()</code> and <code>flex()</code> rules, under <code>bison/</code> and <code>flex/</code></td><td>The shipped generated files stay out of the way</td></tr>
+<tr><td>A recipe of <code>printf</code> or <code>echo</code> lines</td><td>A <code>write_file</code>, through <code>autoconf_hdr(mode = "subst")</code> when it carries configure's values</td><td>The content is known</td></tr>
+<tr><td>A sed rewrite of a header</td><td>Substitutions</td><td>The content is known</td></tr>
+<tr><td>A header assembled by <code>echo</code> lines under conditionals</td><td>One template with <code>#if</code> variants</td><td>One file, every arm</td></tr>
+<tr><td><code>AC_CONFIG_FILES</code> templates that are not Makefiles</td><td>Rendered by <code>autoconf_hdr</code>; a rendered header joins <code>config_headers</code> beside the <code>AC_CONFIG_HEADERS</code> output</td><td>Sources include it as they do <code>config.h</code></td></tr>
+<tr><td>No <code>AC_CONFIG_HEADERS</code></td><td><code>autoheader</code>'s <code>config.h.in</code> written next to the BUILD file and rendered as <code>config.h</code> behind <code>HAVE_CONFIG_H</code></td><td>configure would pass the defines as <code>-D</code> flags</td></tr>
+<tr><td>A sub-configure's headers library</td><td>Without the root <code>config.h</code></td><td>Bazel searches every dependency repository's root for quoted includes</td></tr>
+</tbody></table>
+</div>
+<h2 id="vendoring-the-ports"><a class="header" href="#vendoring-the-ports">Vendoring the ports</a></h2>
+<p>By default the module depends on the gnulib ports of this repository
+(<code>@rules_cc_autoconf//gnulib/m4/...</code>), which change as the repository tracks
+gnulib. <code>--vendor-ports</code> copies every port the conversion resolved, and
+every port those depend on, into
+<code>third_party/rules_cc_autoconf/&lt;package&gt;/BUILD.bazel</code> of the module, with
+labels rewritten and the in-repository rule replaced by the public
+<code>autoconf</code> rule. The module is then pinned to the snapshot it was converted
+against; regenerating against a newer checkout refreshes the copies and the
+diff shows what gnulib changed. The rules themselves, and the two ports that
+are rule implementations (<code>AC_C_INLINE</code>, <code>AC_C_RESTRICT</code>), still come from
+rules_cc_autoconf; the report names them. The converter needs the checkout
+the ports come from: run it there with <code>bazel run</code>, or pass <code>--index &lt;checkout&gt;</code>.</p>
+<h2 id="converting-single-m4-files"><a class="header" href="#converting-single-m4-files">Converting single m4 files</a></h2>
+<p>To port one m4 file the way the hand ports under <code>//gnulib/m4</code> are written,
+name the file and give a <code>configure.ac</code> that invokes its macros:</p>
+<pre><code class="language-sh">bazel run //tools/convert -- convert --src /path/to/project --out /tmp/port --only foo.m4 --in-repo
+</code></pre>
+<p>Every other macro resolves to the existing ports. The output is one package
+per m4 file with an aggregator target named after the file, in the layout
+of <code>//gnulib/m4/&lt;name&gt;</code>.</p>
+<h2 id="checking-against-gnu-autoconf"><a class="header" href="#checking-against-gnu-autoconf">Checking against GNU autoconf</a></h2>
+<p>The <code>check</code> subcommand runs the project's real <code>configure</code> with the pinned
+autotools and the compiler, flags and environment of the current Bazel C++
+toolchain, as the conformance tests of this repository do, and diffs the
+resulting config header against one Bazel built from the converted
+<code>BUILD.bazel</code>:</p>
+<pre><code class="language-sh">bazel run //tools/convert -- check --src /path/to/project --out /tmp/check \
+    --bazel-config-h lib/config.h=/path/to/output/bazel-bin/lib/config.h
+</code></pre>
+<p>The GNU results stay in <code>/tmp/check/gnu/</code>. This validates the host platform
+only; the conformance tests under <code>//gnulib/tests</code> are the reference for the
+rest.</p>
+<h2 id="using-the-output"><a class="header" href="#using-the-output">Using the output</a></h2>
+<p>There are three ways to take a conversion into a build, from the most to
+the least packaged. In each, the files a person edits are <code>decisions.bzl</code>
+and the <code>BUILD.bazel</code> files; everything else is regenerated.</p>
+<p>In all three the output directory holds hand-written files beside the
+generated ones, and the converter owns only its own. Every file it writes
+starts with a banner that says <code>@generated</code> and names rules_cc_autoconf;
+that mark is what it goes by:</p>
+<ul>
+<li>A file in the way that lacks the mark and differs from what would be
+written stops the run, before anything is written, with the paths listed.
+Hand-written files are kept where they are: move the file aside, or
+delete it. A hand-written <code>BUILD.bazel</code> is never in the way, since the
+conversion writes <code>autoconf.bzl</code> beside it.</li>
+<li>After writing, the converter's files that this run did not produce are
+removed, and nothing else: a package that left the automake tree leaves
+no stale <code>autoconf.bzl</code> behind, while a hand-written file is never
+touched. The report lists what was removed.</li>
+</ul>
+<p>A project's own generated files (a parser that says <code>@generated</code>) are not
+the converter's, since the mark needs both words. <code>MODULE.bazel</code> is the one
+exception to the first rule: it is always regenerated, and the <code>module()</code>
+attributes of the file that was there, <code>bazel_compatibility</code> and
+<code>compatibility_level</code> among them, are kept in the new one.</p>
+<h3 id="a-registry-entry"><a class="header" href="#a-registry-entry">A registry entry</a></h3>
+<p><code>--bcr-entry</code> names the entry in a Bazel Central Registry checkout and takes
+everything else from it:</p>
+<pre><code class="language-sh"># the first time: the archive and its integrity
+bazel run //tools/convert -- convert --bcr-entry bcr/modules/foo/1.2.bcr.1 \
+    --src https://ftp.gnu.org/gnu/foo/foo-1.2.tar.gz --integrity sha256-...
+# every time after
+bazel run //tools/convert -- convert --bcr-entry bcr/modules/foo/1.2.bcr.1
+</code></pre>
+<p>The path gives the module name and version. In the entry directory:</p>
+<div class="table-wrapper"><table><thead><tr><th>File</th><th>Role</th></tr></thead><tbody>
+<tr><td><code>decisions.bzl</code></td><td>The decisions file: read if present, created if not.</td></tr>
+<tr><td><code>source.json</code></td><td>Written on the first run from <code>--src</code> and <code>--integrity</code>; later runs take the archive URL, integrity and <code>strip_prefix</code> from it. Its overlay map lists every file under <code>overlay/</code>, as the registry's own integrity tool does.</td></tr>
+<tr><td><code>overlay/</code></td><td>The module's files, hand-written and generated side by side: the generated <code>autoconf.bzl</code> files (nested ones included, since a registry overlay may add files anywhere in the archive) and <code>MODULE.bazel</code>, the hand-written <code>BUILD.bazel</code> beside each, and whatever else the module needs (a <code>.bzl</code> a BUILD file loads, a <code>tests/BUILD.bazel</code> with its sources). Generated files are replaced, the rest is kept, under the rules above.</td></tr>
+<tr><td><code>MODULE.bazel</code>, <code>presubmit.yml</code>, <code>../metadata.json</code></td><td>The registry's own files. <code>MODULE.bazel</code> is regenerated, keeping the <code>module()</code> attributes an existing one had besides name and version (<code>bazel_compatibility</code>, <code>compatibility_level</code>); other statements it held are listed in the report. <code>presubmit.yml</code> is written when missing and otherwise left alone; the homepage comes from <code>--homepage</code>, <code>AC_INIT</code> or the existing <code>metadata.json</code>.</td></tr>
+</tbody></table>
+</div>
+<p>An entry converted before this layout, with a generated <code>BUILD.bazel</code> and a
+<code>BUILD.additions.bazel</code> beside it, is migrated by the next run, see
+<a href="convert.html#buildbazel-and-autoconfbzl">BUILD.bazel and autoconf.bzl</a>.</p>
+<p>The report and the scratch output go to <code>--out</code>, by default a temporary
+directory whose path the run prints, so nothing but the entry lands in the
+checkout. The banner of the generated files repeats the <code>--bcr-entry</code>
+command. Without a checkout, <code>--bcr</code> with <code>--out</code>, <code>--source-url</code>,
+<code>--integrity</code> and optionally <code>--bcr-version</code> writes the same entry under
+<code>&lt;out&gt;/modules/</code>.</p>
+<h3 id="an-http_archive"><a class="header" href="#an-http_archive">An http_archive</a></h3>
+<p>For a project whose conversion is one BUILD file, a consumer can keep the
+generated file in its own repository and inject it with <code>http_archive</code>.
+<code>--http-archive-entry</code> names the directory, conventionally
+<code>3rdparty/&lt;name&gt;/</code>, and reads <code>decisions.bzl</code> and <code>source.json</code> from it as
+<code>--bcr-entry</code> does:</p>
+<pre><code class="language-sh">bazel run //tools/convert -- convert --http-archive-entry 3rdparty/foo \
+    --src https://ftp.gnu.org/gnu/foo/foo-1.2.tar.gz --integrity sha256-...
+</code></pre>
+<p>It writes the generated BUILD file there as <code>BUILD.foo.bazel</code>, the name
+<code>http_archive</code> users expect for an injected build file (a hand-written file
+of that name is not overwritten), records the archive
+in <code>source.json</code>, and prints the lines the consumer's <code>MODULE.bazel</code> needs:
+the <code>bazel_dep</code>s the generated module declared and the <code>http_archive</code> call
+with <code>build_file = "//3rdparty/foo:BUILD.foo.bazel"</code>. The report carries the
+same lines. The consumer also depends on <code>rules_cc_autoconf</code>. The injected
+file is all generated: there is no hand-written <code>BUILD.bazel</code> beside it, so
+a project that needs targets of its own takes one of the other two ways.</p>
+<p><code>http_archive</code> injects one file. A conversion that writes more, a
+sub-configure package, a <code>config.h.in</code> the release lacks, vendored ports,
+stops with a message naming the extra files: that project is rendered into
+its tree instead.</p>
+<h3 id="rendering-into-the-project"><a class="header" href="#rendering-into-the-project">Rendering into the project</a></h3>
+<p>For anything larger than one BUILD file, or when the sources are a checkout
+rather than a release archive, point <code>--out</code> at the source tree, or copy the
+output over it:</p>
+<pre><code class="language-sh">bazel run //tools/convert -- convert --src /path/to/foo --out /path/to/foo \
+    --decisions /path/to/foo/decisions.bzl
+</code></pre>
+<p>The tree is then a Bazel module: <code>MODULE.bazel</code>, the <code>autoconf.bzl</code> and
+<code>BUILD.bazel</code> files and <code>decisions.bzl</code> live in it, and a consumer
+reaches it with <code>local_path_override</code>, <code>git_override</code> or <code>archive_override</code>,
+or by vendoring the tree. Packaging and redistribution are the project's
+own concern from there; the converter's part is the same regeneration
+command, with the tree as both input and output. A source tree that ships
+its own <code>BUILD.bazel</code> files keeps them: the converter writes <code>autoconf.bzl</code>
+beside each, and the report names the BUILD files that do not call
+<code>autoconf_targets()</code> yet.</p>
+<h2 id="keeping-the-converter-current"><a class="header" href="#keeping-the-converter-current">Keeping the converter current</a></h2>
+<ul>
+<li><code>tools/convert/index.toml</code> is a snapshot of the hand ports: which macro
+lives in which target and what each provides. Regenerate it after adding
+or renaming ports with <code>bazel run //tools/convert:update_index</code>.</li>
+<li>The golden tests under <code>//tools/convert</code> fix the output for a few gnulib
+modules and for gzip, each with its decisions file next to the expected
+output, and run buildifier with all warnings on it. After an intentional
+change, refresh a golden with
+<code>bazel run //tools/convert:&lt;name&gt;_golden_test -- --update</code>.</li>
+<li>The Python is type-checked by mypy in strict mode (<code>.mypy.ini</code>) and linted
+and format-checked by ruff (<code>.ruff.toml</code>) on every build: the <code>.bazelrc</code>
+applies rules_venv's <code>py_mypy_aspect</code> and <code>py_ruff_aspect</code>, with the
+toolchains in <code>tools/convert/3rdparty</code>, so <code>bazel build //...</code> fails on a
+type error, a lint finding or an unformatted file. <code>bazel run @rules_venv//python/ruff:format</code> and <code>:fix</code> apply what ruff can fix; a
+target tagged <code>no_mypy</code> or <code>no_ruff</code> is skipped.</li>
+<li>The prelude mirrors autoconf 2.73 internals. Updating the pinned autoconf
+means revisiting <code>tools/convert/instrument.m4</code> and the shape regexes next
+to it.</li>
+</ul>
+
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
