@@ -259,9 +259,14 @@ class ProjectState:
     """Header ports whose `_DEFAULTS` the script AC_REQUIREs: package -> its `:defaults` label (default_deps)."""
     src_conditions: dict[str, list[df.Cond]] = field(default_factory=dict)
     """GL_COND_OBJ_X -> conds."""
-    hand_targets: set[str] = field(default_factory=set)
-    """Names of the rules the hand-written BUILD.bazel declares: what a `generated:` decision may name."""
+    hand_targets: dict[str, str] = field(default_factory=dict)
+    """The rules the hand-written BUILD.bazel declares, name -> rule kind (`alias`, `string_flag`): what a
+    `generated:` decision may name, and what an option flag of the same name steps aside for unless it is a
+    flag itself."""
     hand_packages: set[str] = field(default_factory=set)
+    hand_build: str = ""
+    """The hand-written BUILD.bazel's text: what it keys a select() on (`:libz_enabled`) is an
+    option setting the generated file must declare, reached by a translated condition or not."""
     """Package paths (`tests`) whose BUILD file is hand-written beside the generated root: a generated
     file under one of them cannot be an output of the root package."""
     cond_headers: dict[str, str] = field(default_factory=dict)
@@ -321,6 +326,9 @@ class ProjectState:
     """config_headers (+ top_headers) labels."""
     literal_substs: dict[str, str] = field(default_factory=dict)
     """Unconditional AC_SUBST literals."""
+    subst_values: dict[str, list[str]] = field(default_factory=dict)
+    """Every literal the main target's AC_SUBSTs give a variable: unconditionally, under a
+    condition, or in a select() arm (`LIBLZMA` = `-llzma` where the library was found)."""
     port_ambiguous: set[str] = field(default_factory=set)
     """Names that are a port subst and a define (index)."""
     port_substs: set[str] = field(default_factory=set)
@@ -540,6 +548,7 @@ class Translator:
         self.tarname = self._tarname(tree)  # PACKAGE_TARNAME of the configure.ac, as AC_INIT defaults it
         self.dropped_global: set[str] = set()  # cache variables no check carries (multi-valued chains)
         self.toolchain_vars: set[str] = set()  # cache / action variables of compiler-option tests
+        self._assigners: dict[str, set[int]] | None = None  # variable -> bodies whose own shell assigns it
         # Every cache variable and ALLCAPS shell variable something in the
         # whole configure script sets. One outside this set is never set:
         # configure reads it as empty, and so does the translation.
@@ -647,6 +656,83 @@ class Translator:
                 if (lang, flag) not in out:
                     out.append((lang, flag))
         return out
+
+    def _unset_empty(self, node: Node) -> Callable[[str], bool]:
+        """Whether a variable nothing bound before `node`'s body ran is empty where the body does
+        not assign it: a plain shell variable of the project's own configure script that only this
+        body assigns, under one condition, and tests for emptiness afterwards (`excuse="explicitly
+        disabled"` under `--disable-tool`, then `if test x"$excuse" = x` around the tool's checks,
+        which run unless it was disabled).  Not one the environment or configure's own prelude
+        (`ac_*`) may have set, nor an option's (`enable_*` / `with_*`: configure takes any
+        `--enable-x` from the command line, and a macro the expansion does not spell out, such
+        as libtool's LT_INIT, may declare it), nor one another body's shell assigns
+        (AC_CANONICAL_TARGET's `target_cpu`, which the script then only renames in a `case`) or
+        another module's macros provide; and not in a single m4 file's expansion, which lacks the
+        script around it."""
+        assigners = self._bodies_assigning()
+
+        def unset_empty(name: str) -> bool:
+            return (
+                self.project is not None
+                and name not in ENVIRONMENT_VARIABLES
+                and not name.startswith(("ac_", "as_", "am_", "enable_", "with_"))
+                and assigners.get(name, set()) <= {node.id}
+                and not (self.index is not None and name in self.index.variables)
+            )
+
+        return unset_empty
+
+    def _bodies_assigning(self) -> dict[str, set[int]]:
+        """Variable -> the ids of the bodies whose own shell assigns it, over the whole expansion.
+        A macro's text counts as its caller's where `_placeholder_text` inlines it (cache commands,
+        see-through checks, pkg-config's actions, the one the verdict rules out included: it is
+        dead, not hidden), and so do the action arguments it renders around a placeholder (a
+        check's plain actions, an option's given / not-given actions, AM_COND_IF's branches),
+        wherever the expansion places them.  Anything else a placeholder's expansion assigns is
+        the macro's own, which the body never sees assigned: AC_CANONICAL_TARGET's `target_cpu`,
+        the variable a probe's actions set (the probe's result, in the rules), the cache variable
+        of a cache check a decision answers.  The top level is the root body, id 0
+        (`translate_root`)."""
+        if self._assigners is None:
+            out: dict[str, set[int]] = {}
+
+            def visit(items: list[Node | Text], owner: int, rendered: Mapping[str, int]) -> None:
+                for item in items:
+                    if isinstance(item, Text):
+                        for name in _shell_assigned(item.text):
+                            out.setdefault(name, set()).add(rendered.get(name, owner))
+                    elif self._inlined_shell(item):
+                        visit(item.items, owner, rendered)
+                    else:
+                        # The outermost caller rendering an assignment owns it; the inner calls
+                        # only pass it on.
+                        own = {name: owner for name in _shell_assigned(self._rendered_args(item))}
+                        visit(item.items, item.id, {**own, **rendered})
+
+            visit(self.tree.items, 0, {})
+            self._assigners = out
+        return self._assigners
+
+    def _inlined_shell(self, node: Node) -> bool:
+        """Whether `_placeholder_text` makes `node`'s shell its caller's own."""
+        if node.kind == "defun" and node.name in PKG_MACROS | {PKG_FOUND, PKG_MISSING}:
+            return True
+        return node.kind == "call" and (
+            (node.name in TRANSPARENT and not self._decided_probe(node)) or self._sees_through(node)
+        )
+
+    def _rendered_args(self, node: Node) -> str:
+        """The action arguments `_placeholder_text` renders as shell around `node`'s placeholder."""
+        if node.kind != "call":
+            return ""
+        if self.project is not None and node.name in ("AC_ARG_ENABLE", "AC_ARG_WITH"):
+            return " ".join(node.args[2:4])
+        if self.project is not None and node.name == "AM_COND_IF":
+            return " ".join(node.args[1:3])
+        if _action_probe_cache(node) is not None:
+            index = _ACTION_PROBES[node.name]
+            return " ".join(node.args[index : index + 2])
+        return ""
 
     def _never_set(self, name: str) -> bool:
         """A cache variable or ALLCAPS variable (`$ISC`) nothing in the
@@ -989,6 +1075,19 @@ class Translator:
                     isinstance(value, df.Ref) and value.name == var
                 ):
                     bindings[var] = value
+            # A literal the caller assigned conditionally, on a path the call itself sits on
+            # (`X=""` a few lines before a macro, in the same branch, whose expansion appends to
+            # `$X`): the body sees it as configure would at the call.
+            guard = outer.guards.get(node.id)
+            if guard is not None:
+                for var, (cond, value) in outer.evaluator.branch_state.items():
+                    if (
+                        var not in bindings
+                        and outer.evaluator.state.get(var) is None
+                        and isinstance(value, df.Lit)
+                        and df.tautology(df.disj(df.neg(guard), cond))
+                    ):
+                        bindings[var] = value
         bindings.update(self._probe_bindings(node))
         toolchain = self._toolchain_decided_vars(node)
         self.toolchain_vars |= toolchain
@@ -999,6 +1098,7 @@ class Translator:
             fatal=self._fatal_ids(node),
             value_words=self.index.variables if self.index is not None else None,
             pinned=toolchain,
+            unset_empty=self._unset_empty(node),
         ).run(seq)
         # The program lookups' stand-in values win over the lookups' own
         # expansion (`ac_cv_path_M4=$ac_path_M4` inside the loop).
@@ -1142,6 +1242,9 @@ class Translator:
                     self.project.pkg_cc_deps.add(library.label)
                     if variable and library.label not in self.project.pkg_libs.setdefault(f"{variable}_LIBS", []):
                         self.project.pkg_libs[f"{variable}_LIBS"].append(library.label)
+                        self.report.notes.append(
+                            f"pkg-config: $({variable}_LIBS) on an LDADD line is a dependency on {library.label}"
+                        )
         return found if node.name == PKG_FOUND else not found
 
     def _pkg_verdict(self, specs: str) -> tuple[bool, list[libraries.Library], str]:
@@ -1491,6 +1594,12 @@ class Translator:
                 self._apply_guard_decision(calls, decision, ctx)
             else:
                 self._drop(calls, ctx)
+            return
+        if df.flag_atoms(guard) and list(arms) == [lower.DEFAULT_ARM]:
+            # The option's invocations agree on the condition: plain checks (none, for a
+            # condition no invocation meets, as the arms would have been empty).
+            if arms[lower.DEFAULT_ARM] is not df.FALSE:
+                self._place_arm(calls, arms[lower.DEFAULT_ARM], ctx.target.checks, ctx)
             return
         unmatched = lower.unmatched_patterns(guard)
         family = family_of_labels(arms)
@@ -1879,9 +1988,13 @@ class Translator:
             last = assignments[-1]
             if guard is df.TRUE and last.cond is df.TRUE and not isinstance(last.value, df.UnknownValue):
                 outer.evaluator.state[var] = last.value
-            elif isinstance(outer.evaluator.state.get(var), df.Lit):
-                outer.evaluator.state[var] = None
-                outer.evaluator.branch_state[var] = (df.conj(guard, last.cond), last.value)
+            else:
+                if isinstance(outer.evaluator.state.get(var), df.Lit):
+                    outer.evaluator.state[var] = None
+                # The conditional literal stays known under its path, for a later call on the
+                # same path (a pkg-config found action appending to the variable the macro set).
+                if isinstance(last.value, df.Lit):
+                    outer.evaluator.branch_state[var] = (df.conj(guard, last.cond), last.value)
 
     def _record_list_appends(self, node: Node, analysis: df.Analysis, guard: df.Cond) -> None:
         """Literal words an inlined macro assigns or appends to a shell variable, under the call's
@@ -2912,7 +3025,12 @@ class Translator:
             and not self._dropped_by_decision("check", cache_var(node.name, n))
             and not self._dropped_by_decision("define", define_of(node.name, n))
         ]
-        names = [n for n in names if not self._check_from_port(node, n, ctx)]
+        names = [
+            n
+            for n in names
+            if not self._decided_check(node, cache_var(node.name, n), define_of(node.name, n), ctx)
+            and not self._check_from_port(node, n, ctx)
+        ]
         if not names:
             return []
         kwargs: dict[str, AttrValue] = {}
@@ -2945,6 +3063,31 @@ class Translator:
         decision = self.decisions.optional(f"{kind}:{name}", kind)
         return decision is not None and decision.ignore
 
+    def _decided_check(self, node: Node, var: str, define: str, ctx: _Ctx) -> bool:
+        """A `probe:<cache variable>` decision answering a header, function, type or library
+        check with a value: the value stands in for the probe, as it does for a cache check
+        (`"no"` for a library the registry does not have, which configure would probe the host
+        for), compared by value where the script tests it; `"yes"` also makes the check's
+        define.  IGNORE drops the check, so conditions over it become decisions.  Never
+        requested: a check without a decision is emitted as it is."""
+        decision = self.decisions.optional(f"probe:{var}", "probe") if var else None
+        if decision is None:
+            return False
+        comment = f"{self._source_comment(node, ctx)}: {var} (decisions file)"
+        if decision.ignore:
+            ctx.dropped.add(var)
+            return True
+        value = decision.value
+        if not isinstance(value, (str, int)) or isinstance(value, bool):
+            raise dec.DecisionError(f'probe:{var}: a header, function or library check takes a value ("yes" / "no")')
+        calls = [Call("checks.M4_VARIABLE", [var, value], comments=[comment])]
+        if define and str(value) in df.YES:
+            calls.append(Call("checks.AC_DEFINE", [define, 1], comments=[comment]))
+        # Whatever the check ran under: the answer is a fact about the host the project is built
+        # for, and the script's conditions over it carry the check's own condition already.
+        self._place(calls, df.TRUE, ctx)
+        return True
+
     def _check_from_port(self, node: Node, subject: str, ctx: _Ctx) -> bool:
         """Project mode: a `*_ONCE` check (or any check a port carries under its
         own target) becomes a dep on that port instead of a second probe."""
@@ -2974,6 +3117,7 @@ class Translator:
         if (
             self._dropped_by_decision("check", cache_var(node.name, subject))
             or self._dropped_by_decision("define", define_of(node.name, subject))
+            or self._decided_check(node, cache_var(node.name, subject), define_of(node.name, subject), ctx)
             or self._check_from_port(node, subject, ctx)
         ):
             return []
@@ -3210,6 +3354,8 @@ class Translator:
         args = node.args + ["", "", "", "", ""]
         lib, function = args[0].strip(), args[1].strip()
         cache = f"ac_cv_lib_{cache_name(lib)}_{cache_name(function)}"
+        if self._decided_check(node, cache, f"HAVE_LIB{cache_name(lib).upper()}", ctx):
+            return []
         self._registry_library(lib, f"AC_CHECK_LIB([{lib}], [{function}])")
         items: list[CheckItem] = [Call("checks.AC_CHECK_LIB", [lib, function])]
         actions = [
@@ -3938,7 +4084,18 @@ class Translator:
         the answer. IGNORE or no answer records the variable as dropped, so conditions over it
         become decisions too; ACCEPT_PARTIAL is only valid where the caller allows it.
         """
-        context = {"assignments": [f"{d.text}  when {describe(d.cond)}" for d in decisions]}
+        context = {
+            "assignments": [
+                f"{d.text}  when {describe(d.cond)}"
+                + ("" if isinstance(d.value, df.Lit) else f"  [value not a literal: {type(d.value).__name__}]")
+                + (
+                    ""
+                    if lower.expression(d.cond).ok
+                    else f"  [condition not expressible: {lower.expression(d.cond).unknown}]"
+                )
+                for d in decisions
+            ]
+        }
         decision = self._request(
             f"variable:{var}", "variable", ctx, summary, context, shell=[d.text for d in decisions]
         )
@@ -3956,6 +4113,7 @@ class Translator:
         self, var: str, decisions: list[df.Assignment], ctx: _Ctx, *, kind: str, comment: str, guess: bool = False
     ) -> None:
         """Lower a variable's decision list to one check per select() arm."""
+        decisions = _last_wins(decisions, lambda d: d.cond)
         # The raw disjunction: `disj` folds `GCC && !GCC` to TRUE, which would hide the
         # dimension (compiler, platform, option) the arms are split on.
         whole = (
@@ -3967,7 +4125,9 @@ class Translator:
         labels = [lower.DEFAULT_ARM]
         split_fn: Callable[[df.Cond, str], df.Cond] | None = None
         if has_flag:
-            arms = lower.flag_arms(whole, self.project) if self.project is not None else None
+            arms = (
+                lower.flag_arms(whole, self.project, [d.cond for d in decisions]) if self.project is not None else None
+            )
             if arms is None:
                 self._variable_request(
                     var,
@@ -3979,11 +4139,18 @@ class Translator:
                 )
                 return
             (flag,) = df.option_names(whole)
-            labels = list(arms)
-            settings = self._state.option_settings
-            split_fn = lambda cond, label: df.substitute_option(
-                cond, flag, None if label == lower.DEFAULT_ARM else settings[label][1]
-            )
+            if list(arms) == [lower.DEFAULT_ARM]:
+                # The invocations agree: plain checks, the conditions read as for the option
+                # not given.
+                decisions = [
+                    df.Assignment(df.substitute_option(d.cond, flag, None), d.value, d.text) for d in decisions
+                ]
+            else:
+                labels = list(arms)
+                settings = self._state.option_settings
+                split_fn = lambda cond, label: df.substitute_option(
+                    cond, flag, None if label == lower.DEFAULT_ARM else settings[label][1]
+                )
         elif lower.platform_atoms(whole):
             arms, reason = self._arms(whole)
             if arms is None:
@@ -4052,6 +4219,7 @@ class Translator:
         conditions.  Conditions that cannot be expressed are dropped and
         reported so the check stays right where it applies.
         """
+        arm_decisions = _last_wins(arm_decisions, lambda pair: pair[0])
         values: list[tuple[df.Cond, str | int, df.Assignment]] = []
         for cond, decision in arm_decisions:
             value = lower.guess_value(decision.value) if guess else None
@@ -4844,6 +5012,29 @@ def _iter_texts(items: Iterable[Node | Text]) -> Iterator[Text]:
             yield item
         else:
             yield from _iter_texts(item.items)
+
+
+# Any shell variable `text` assigns or loops over; `-DFOO=1` and `--enable-x=` are not assignments.
+_SHELL_ASSIGN_RE = re.compile(r"(?<![\w$.\-])([A-Za-z_]\w*)=|\bfor\s+([A-Za-z_]\w*)\s+in\b")
+
+
+def _shell_assigned(text: str) -> set[str]:
+    """Every shell variable `text` assigns (a `for` loop's included)."""
+    return {a or b for a, b in _SHELL_ASSIGN_RE.findall(text)}
+
+
+def _last_wins[T](items: list[T], cond: Callable[[T], df.Cond]) -> list[T]:
+    """The assignments of a decision list that can be the final one: last assignment wins, so one
+    the later assignments cover on every path contributes nothing (`X=$enableval` under the
+    option, then `X=yes` or `X=no` by the checks' outcome; `X=""` then `X="$X -flag"` in one
+    branch, the second spelled out by the dataflow, whatever opaque condition the branch
+    carries)."""
+    return [
+        item
+        for index, item in enumerate(items)
+        if not any(cond(item) == cond(later) for later in items[index + 1 :])
+        and not df.tautology(df.disj(df.neg(cond(item)), *(cond(later) for later in items[index + 1 :])))
+    ]
 
 
 def _assigned_names(text: str) -> set[str]:

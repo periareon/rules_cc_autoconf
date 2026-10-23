@@ -260,6 +260,39 @@ def test_configure_option_through_enableval() -> None:
     assert arms == {":dfltcc_enabled": df.TRUE, lower.DEFAULT_ARM: df.FALSE}
 
 
+def test_option_invocations_agreeing_on_a_condition_are_no_split() -> None:
+    """`test "$enable_lzma" != no` for an option off by default: `--enable-lzma` and the option not
+    given both differ from `no`, and the invocation that would not (`--disable-lzma`) has no
+    flag value, so the arms would agree; the condition is one default arm, its value the
+    invocations' common one, and no option label is registered.  Its negation (checks only
+    `--disable-lzma` runs) is the same with FALSE."""
+    analysis = analyze("""\
+        if __RCCAC_FLAG_lzma__; then
+          enable_lzma=$__rccac_optval_lzma
+        else
+          enable_lzma=
+        fi
+        if test x"$enable_lzma" != xno; then
+          __RCCAC_NODE_1__
+        fi
+        if test x"$enable_lzma" = xno; then
+          __RCCAC_NODE_2__
+        fi
+        """)
+
+    registered: list[str] = []
+
+    class _Registering(_Options):
+        def label(self, name: str, value: str) -> str:
+            registered.append(name)
+            return super().label(name, value)
+
+    options = _Registering()
+    assert lower.flag_arms(analysis.guards[1], options) == {lower.DEFAULT_ARM: df.TRUE}
+    assert lower.flag_arms(analysis.guards[2], options) == {lower.DEFAULT_ARM: df.FALSE}
+    assert registered == []
+
+
 def test_option_values_and_platform_dimensions() -> None:
     """`--with-ssl=openssl` is an option value; host CPU and `$GCC` are select dimensions."""
     analysis = analyze("""\
@@ -536,3 +569,55 @@ def test_m4code_function_body_is_read_where_defined() -> None:
         df.Eq("HAVE_POSIX_SPAWN", "0", by_value=True), df.Eq("REPLACE_POSIX_SPAWN", "1", by_value=True)
     )
     assert 8 not in analysis.guards  # an ordinary function: when it runs is not known
+
+
+def test_sequential_assignments_in_one_branch_spell_out_the_earlier_value() -> None:
+    """`X=""` then `X="$X -flag"` inside one branch: the second word's reference to the variable is
+    the value the same branch assigned just before, so the decision list holds two literals under
+    the one condition, the later being the branch's value."""
+    analysis = analyze("""\
+        if test "$grub_mount_excuse" = ""; then
+          FUSE_CFLAGS=""
+          FUSE_CFLAGS="$FUSE_CFLAGS -DFUSE_USE_VERSION=32"
+        fi
+        """)
+    first, second = analysis.decisions("FUSE_CFLAGS")
+    assert first.cond == second.cond
+    # The shell's value, leading space included; `translate.literal` strips it when lowering.
+    assert (first.value, second.value) == (df.Lit(""), df.Lit(" -DFUSE_USE_VERSION=32"))
+    # The same when the branch's condition is opaque (a command the dataflow does not model):
+    # the two statements share their path, whatever it carries.
+    analysis = analyze("""\
+        if some_command --probe; then
+          FUSE_CFLAGS=""
+          FUSE_CFLAGS="$FUSE_CFLAGS -DFUSE_USE_VERSION=32"
+        fi
+        """)
+    first, second = analysis.decisions("FUSE_CFLAGS")
+    assert df.has_unknown(first.cond) and first.cond == second.cond
+    assert second.value == df.Lit(" -DFUSE_USE_VERSION=32")
+
+
+def test_variable_assigned_only_under_a_condition_is_empty_elsewhere() -> None:
+    """`excuse="..."` under one condition, then `test x"$excuse" = x`: when the caller says nothing
+    bound the variable before the body (`unset_empty`), the paths no assignment covers hold the
+    empty value, as an unset shell variable is to `test`, so the emptiness test is the negation of
+    the assigning condition.  Without that word, or for a variable the caller bound, the value
+    before the first assignment is unknown and so is the test."""
+    text = """\
+        if test "$ac_cv_lib_fuse" = no; then
+          excuse="need the fuse library"
+        fi
+        if test x"$excuse" = x; then
+          FUSE_CFLAGS="-DFUSE_USE_VERSION=32"
+        fi
+        """
+    probe: dict[str, df.Value] = {"ac_cv_lib_fuse": df.Probe("ac_cv_lib_fuse")}
+    seq = sh.parse(textwrap.dedent(text))
+    analysis = df.Evaluator(dict(probe), unset_empty=lambda name: True).run(seq)
+    assert analysis.decisions("FUSE_CFLAGS")[0].cond == df.Truthy("ac_cv_lib_fuse")
+    analysis = df.Evaluator(dict(probe)).run(seq)
+    assert df.has_unknown(analysis.decisions("FUSE_CFLAGS")[0].cond)
+    bound: dict[str, df.Value] = {**probe, "excuse": df.Ref("excuse")}
+    analysis = df.Evaluator(bound, unset_empty=lambda name: True).run(seq)
+    assert df.has_unknown(analysis.decisions("FUSE_CFLAGS")[0].cond)

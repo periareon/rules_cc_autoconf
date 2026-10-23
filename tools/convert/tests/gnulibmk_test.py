@@ -132,6 +132,13 @@ def test_makefile_am() -> None:
     ]
     assert gzip.ldadd == ["libver.a", "lib/libgzip.a", "$(CLOCK_TIME_LIB)", "$(FDATASYNC_LIB)"]
     assert _link_vars(gzip.ldadd, ProjectState()) == ["CLOCK_TIME_LIB", "FDATASYNC_LIB"]
+    # A variable configure sets to `-l` words of registry libraries only (`LIBLZMA` = `-llzma`,
+    # the module xz) names deps every target has already: not a linkopts variable.  One with a
+    # word the registry does not cover stays.
+    state = ProjectState()
+    state.configure_libs = {"lzma": "@xz//:lzma"}
+    state.subst_values = {"LIBLZMA": ["", "-llzma"], "LIBFOO": ["-lfoo -llzma"]}
+    assert _link_vars(["$(LIBLZMA)", "$(LIBFOO)"], state) == ["LIBFOO"]
     assert [s.path for s in mk.libraries["libver_a"].sources] == ["version.c", "version.h"]
 
 
@@ -355,3 +362,26 @@ def test_read_makefile_follows_includes_through_reldir(tmp_path: Path) -> None:
     assert "libc_libc_a_SOURCES += libc/argz/argz_add.c" in text
     mk = gnulibmk.parse(text)
     assert [s.path for s in mk.libraries["libc_libc_a"].sources] == ["libc/argz/argz_add.c"]
+
+
+def test_non_recursive_header_inputs() -> None:
+    """sed's and coreutils' gnulib.mk name every file with its directory: the second input of
+    the assert.h recipe is kept (it is not a make variable) and strip_directory cuts it with the
+    rest."""
+    mk = gnulibmk.parse(
+        textwrap.dedent("""\
+            noinst_LIBRARIES += lib/libsed.a
+            lib_libsed_a_SOURCES = lib/x.c lib/y.c
+            if GL_GENERATE_ASSERT_H
+            lib/assert.h: lib/assert.in.h lib/verify.h $(top_builddir)/config.status
+            \t$(gl_V_at){ $(SED_HEADER_STDOUT) < $(srcdir)/lib/assert.in.h && \\
+            \t  sed -e 's|_gl_verify|_gl_static_assert|g' < $(srcdir)/lib/verify.h; } > $@-t
+            \t$(AM_V_at)mv $@-t $@
+            endif
+            """)
+    )
+    assert [(h.out, h.template, h.extra_inputs) for h in mk.headers] == [
+        ("lib/assert.h", "lib/assert.in.h", ["lib/verify.h"])
+    ]
+    assert gnulibmk.strip_directory(mk, "lib")
+    assert [(h.out, h.template, h.extra_inputs) for h in mk.headers] == [("assert.h", "assert.in.h", ["verify.h"])]

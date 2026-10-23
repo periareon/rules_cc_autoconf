@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import os
 import re
+from collections.abc import Mapping
 from collections.abc import Set as AbstractSet
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -53,6 +54,7 @@ from tools.convert.makefiles import (
     _configured_subdirs,
     _literal_substs,
     _project_shape,
+    _subst_values,
 )
 from tools.convert.markers import Tree
 from tools.convert.modulebazel import (  # noqa: F401
@@ -281,8 +283,9 @@ def convert_project(
     command: str | None = None,
     source_root: Path | None = None,
     extra_loads: AbstractSet[str] = frozenset(),
-    hand_targets: AbstractSet[str] = frozenset(),
+    hand_targets: Mapping[str, str] | None = None,
     hand_packages: AbstractSet[str] = frozenset(),
+    hand_build: str = "",
     module_attrs: dict[str, str] | None = None,
     parent_headers: str | None = None,
     package_path: str = "",
@@ -294,8 +297,9 @@ def convert_project(
     `bazel run` line that reproduces the conversion, for the banners; `source_root` the
     whole source tree where `src` is a `--subdir` of it (the BUILD files shipped anywhere
     in the tree load into the generated module); `extra_loads` the repositories the hand-written
-    BUILD.bazel loads, declared the same way, and `hand_targets` the names of its rules (a
-    `generated:` decision may hand a file to one); `hand_packages` the paths of the hand-written packages
+    BUILD.bazel loads, declared the same way, and `hand_targets` its rules, name -> kind (a
+    `generated:` decision may hand a file to one; an option flag steps aside for one), `hand_build` its text
+    (the option settings it keys a select() on are declared); `hand_packages` the paths of the hand-written packages
     beside the root (an overlay's `tests/`), which no root rule may write into; `parent_headers` the enclosing project's config headers
     library when `src` is an AC_CONFIG_SUBDIRS sub-configure (gawk's extension/ compiles with
     `-I$(srcdir)/..`) and `package_path` that package's path in the module (the scope of its
@@ -330,8 +334,9 @@ def convert_project(
         port_variables=index.variables if index is not None else set(),
         port_conditionals=index.conditionals if index is not None else {},
         package_path=package_path or ".",
-        hand_targets=set(hand_targets),
+        hand_targets=dict(hand_targets or {}),
         hand_packages=set(hand_packages),
+        hand_build=hand_build,
     )
     options = Options(repo="@rules_cc_autoconf", in_repo=False, layout="package")
     translator = Translator(
@@ -579,6 +584,7 @@ def convert_project(
         )
 
     state.literal_substs = _literal_substs(main)
+    state.subst_values = _subst_values(main)
     state.produced_results = _produced_results(main, package, state, index)
     _programs_tree(package, src, decisions, state, notes)
     _require_standards(main, state, notes)
@@ -970,8 +976,8 @@ def _config_header_rules(
     if header_targets:
         # `AC_CONFIG_HEADERS([lib/config.h])`: sources still write `#include
         # <config.h>` (Makefile.am adds -Ilib), so that directory is an
-        # include directory too.  In the root package `includes = ["."]` becomes
-        # `strip_include_prefix = "/"` at the end (`_root_includes`).
+        # include directory too.  In the root package `includes = ["."]` becomes the two
+        # prefix attributes at the end (`_root_includes`).
         dirs = sorted(
             (
                 {os.path.dirname(e.partition(":")[0]) for e in state.config_headers}
@@ -1049,12 +1055,24 @@ def _config_header_rules(
 
 
 def _root_includes(package: Package) -> None:
-    """The root package's `includes = ["."]` would name the repository root, which rules_cc
-    (0.2.17 on) rejects.  Every root library with headers gets `strip_include_prefix = "/"`
-    instead: its headers reach consumers under their repository paths (`<config.h>`,
-    `<libpkgconf/libpkgconf.h>`), the way `-I$(top_srcdir)` served them, and the virtual include
-    directory travels with the library to the binaries and tests that depend on it.  The `.`
-    entries go; quoted includes find the root through Bazel's own `-iquote` anyway."""
+    """The root package's `includes = ["."]` goes, and every root library with headers gets
+    `strip_include_prefix = "/"` with `include_prefix = "."`.  Together they reach a root header
+    the way `-I$(top_srcdir)` served it, on every Bazel a registry consumer runs:
+
+    - `includes = ["."]` would be the obvious spelling, but Bazel 7 and 8 refuse it at the main
+      repository's root, and everywhere it turns the repository root into a `-isystem` entry,
+      which gcc then drops from the quote chain it already holds through `-iquote`: a dependency's
+      `config.h` earlier in the bracket chain (gmp's, for mpfr's `#include "config.h"`) is found
+      first.
+    - `strip_include_prefix = "/"` gives Bazel 9 a virtual include directory with every header
+      under its repository path; Bazel 7 and 8 build that directory only for a header whose path
+      changes or, with an `include_prefix`, for a generated one, which `include_prefix = "."`
+      (a no-op on the path) provides: the generated `config.h` is reachable as `<config.h>`, and
+      the source headers of the root through `-iquote`, as before.
+
+    A library with a prefix of its own keeps it; a binary just loses the entry.  The virtual
+    directory of `config_headers` must come before a dependency that exposes a `config.h` of its
+    own (xz's), so the config headers library is first in `deps`."""
     for rule in package.after:
         if not isinstance(rule, Rule) or rule.kind not in ("cc_library", "cc_binary", "cc_test"):
             continue
@@ -1070,6 +1088,7 @@ def _root_includes(package: Package) -> None:
             and "hdrs" in rule.attrs
             and not any(k in rule.attrs for k in ("strip_include_prefix", "include_prefix"))
         ):
+            rule.attrs["include_prefix"] = "."
             rule.attrs["strip_include_prefix"] = "/"
 
 
@@ -1199,6 +1218,9 @@ def _license_rules(
     return {"package_metadata"} if decided else set()
 
 
+FLAG_KINDS = frozenset({"bool_flag", "string_flag", "int_flag"})
+
+
 def _option_rules(package: Package, state: ProjectState) -> list[Statement]:
     """The configure options as build settings: only the ones some `select()`
     in the output keys on, each with the config_settings it uses.  An option
@@ -1210,11 +1232,12 @@ def _option_rules(package: Package, state: ProjectState) -> list[Statement]:
     for label, (name, value) in state.option_settings.items():
         if f'"{label}"' in body and name in state.flags:
             by_option.setdefault(name, set()).add(value)
-    # A decision or BUILD.bazel may key a select() on an option's `:<name>_enabled` setting
-    # that no translated condition reached (gawk's `extensions`, whose tests mix in the host OS):
+    # A decision or the hand-written BUILD.bazel may key a select() on an option's
+    # `:<name>_enabled` setting that no translated condition reached (gawk's `extensions`, whose
+    # tests mix in the host OS; libssh2's `libz`, whose only test every invocation answers alike):
     # the option is a flag then too.
     for name in state.flags:
-        if f'":{name}_enabled"' in body:
+        if f'":{name}_enabled"' in body or f'":{name}_enabled"' in state.hand_build:
             by_option.setdefault(name, set()).add("yes")
     rules: list[Statement] = []
     taken = {s.name for s in [*package.targets, *package.after] if hasattr(s, "name")}
@@ -1257,9 +1280,17 @@ def _option_rules(package: Package, state: ProjectState) -> list[Statement]:
         flag = state.flags[name]
         values = by_option[name]
         comment = f"configure.ac: {flag.macro}([{flag.option}]): {flag.help}".rstrip(": ")
-        # libpcap's --with-pcap next to its `pcap` library: the flag steps aside,
-        # the config_settings (what the selects key on) keep their names.
-        flag_name = f"{name}_option" if name in taken else name
+        # An option named like a target: a generated library of that name (--with-foo next to
+        # `libfoo.a`), or a hand-written rule of that name that is not a flag (an alias kept
+        # for an archive's old label).  The flag steps aside to `<name>_option`; the
+        # config_settings (what the selects key on) keep their names.  Under the target's name
+        # the flag would be left out as replaced, and the config_setting would read a library
+        # as a flag.  A flag BUILD.bazel declares itself replaces the generated one, as any
+        # hand-written rule does.
+        hand_kind = state.hand_targets.get(name)
+        flag_name = (
+            f"{name}_option" if name in taken or (hand_kind is not None and hand_kind not in FLAG_KINDS) else name
+        )
         if values <= {"yes"}:
             rules.append(
                 Rule(
