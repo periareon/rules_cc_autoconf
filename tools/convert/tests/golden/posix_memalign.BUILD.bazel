@@ -1,0 +1,62 @@
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/posix_memalign.m4"""
+
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
+load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
+
+# gl_CHECK_FUNCS_ANDROID([posix_memalign], [...]): shared probe and define; its own target so other modules can depend on it.
+# m4/gnulib-common.m4:1667
+autoconf(
+    name = "gl_CHECK_FUNCS_ANDROID_posix_memalign",
+    checks = gl_macros.GL_CHECK_FUNCS_ANDROID(
+        ["posix_memalign"],
+        includes = ["#include <stdlib.h>"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+# m4/posix_memalign.m4:9
+autoconf(
+    name = "gl_FUNC_POSIX_MEMALIGN",
+    checks = [
+        # gl_cv_func_posix_memalign_works: the m4 runs a program; the value is its cross-compiling guess per platform:
+        #   case "$host_os" in
+        #                         # Guess no on AIX.
+        #               aix*)     gl_cv_func_posix_memalign_works="guessing no" ;;
+        #                         # Guess no on OpenBSD through 6.1.
+        #               openbsd[1-5].* | openbsd6.[01] | openbsd6.[01].*)
+        #                         gl_cv_func_posix_memalign_works="guessing no" ;;
+        #                         # If we don't know, obey --enable-cross-guesses.
+        #               *)        gl_cv_func_posix_memalign_works="$gl_cross_guess_normal" ;;
+        #             esac
+        checks.M4_VARIABLE("gl_cv_func_posix_memalign_works", 0),
+        # REPLACE_POSIX_MEMALIGN is assigned by the shell of the m4 (an AC_SUBST'd gnulib default)
+        # partial: `REPLACE_POSIX_MEMALIGN=1` when gl_cv_onwards_func_posix_memalign matches future* is not expressed (accepted in the decisions file)
+        checks.AC_SUBST(
+            "REPLACE_POSIX_MEMALIGN",
+            1,
+            requires = ["ac_cv_func_posix_memalign && !gl_cv_func_posix_memalign_works"],
+        ),
+        # HAVE_POSIX_MEMALIGN is assigned by the shell of the m4 (an AC_SUBST'd gnulib default)
+        checks.AC_SUBST(
+            "HAVE_POSIX_MEMALIGN",
+            0,
+            requires = ["!ac_cv_func_posix_memalign"],
+        ),
+    ],
+    default_deps = [
+        "//gnulib/m4/stdlib_h:defaults",  # AC_REQUIRE([gl_STDLIB_H_DEFAULTS]) (the header's defaults)
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_CHECK_FUNCS_ANDROID_posix_memalign",  # m4/posix_memalign.m4:~17: gl_CHECK_FUNCS_ANDROID([posix_memalign], [[#include <stdlib.h>]])
+        "//autoconf/macros/AC_CANONICAL_HOST",  # AC_REQUIRE([AC_CANONICAL_HOST])
+        "//autoconf/macros/AC_USE_SYSTEM_EXTENSIONS",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
+    ],
+)
+
+autoconf(
+    name = "posix_memalign",
+    visibility = ["//visibility:public"],
+    deps = [":gl_FUNC_POSIX_MEMALIGN"],
+)

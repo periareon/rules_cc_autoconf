@@ -52,9 +52,7 @@ def parse_symbols(content: str) -> dict[str, str]:
     return symbols
 
 
-def merge_defines(
-    existing_content: str, expected_content: str
-) -> tuple[str, list[str]]:
+def merge_defines(existing_content: str, expected_content: str) -> tuple[str, list[str]]:
     """Merge new symbols from expected into existing, preserving existing order.
 
     Returns (merged_content, list_of_added_symbols).
@@ -62,18 +60,12 @@ def merge_defines(
     existing_symbols = parse_symbols(existing_content)
     expected_symbols = parse_symbols(expected_content)
 
-    new_symbols = {
-        sym: line
-        for sym, line in expected_symbols.items()
-        if sym not in existing_symbols
-    }
+    new_symbols = {sym: line for sym, line in expected_symbols.items() if sym not in existing_symbols}
 
     if not new_symbols:
         return existing_content, []
 
-    lines = (
-        existing_content.rstrip("\n").split("\n") if existing_content.strip() else []
-    )
+    lines = existing_content.rstrip("\n").split("\n") if existing_content.strip() else []
 
     for sym in sorted(new_symbols):
         lines.append(new_symbols[sym])
@@ -142,8 +134,7 @@ def main() -> None:
 
     if not testlogs.exists():
         print(
-            "ERROR: bazel-testlogs not found. Run tests first:\n"
-            "  bazel test //gnulib/tests/compat/...",
+            "ERROR: bazel-testlogs not found. Run tests first:\n  bazel test //gnulib/tests/compat/...",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -185,10 +176,7 @@ def main() -> None:
         if not target.exists():
             if args.dry_run:
                 syms = parse_symbols(expected_content)
-                print(
-                    f"  [dry-run] Would create: {COMPAT_REL / module / target_name} "
-                    f"({len(syms)} symbols)"
-                )
+                print(f"  [dry-run] Would create: {COMPAT_REL / module / target_name} ({len(syms)} symbols)")
             else:
                 target.write_text(expected_content)
                 print(f"  CREATE: {COMPAT_REL / module / target_name}")
@@ -204,18 +192,12 @@ def main() -> None:
 
         total_added += len(added)
         if args.dry_run:
-            print(
-                f"  [dry-run] Would add {len(added)} symbol(s) to "
-                f"{COMPAT_REL / module / target_name}:"
-            )
+            print(f"  [dry-run] Would add {len(added)} symbol(s) to {COMPAT_REL / module / target_name}:")
             for sym in added:
                 print(f"    + {sym}")
         else:
             target.write_text(merged)
-            print(
-                f"  MERGE: {COMPAT_REL / module / target_name} "
-                f"(+{len(added)}: {', '.join(added)})"
-            )
+            print(f"  MERGE: {COMPAT_REL / module / target_name} (+{len(added)}: {', '.join(added)})")
         merged_count += 1
 
     print(

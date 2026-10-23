@@ -1,0 +1,3 @@
+"""The hand ports' shared files: the decisions the converter bundles for every gnulib project."""
+
+exports_files(["decisions.bzl"])

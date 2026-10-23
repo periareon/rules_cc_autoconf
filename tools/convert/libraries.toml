@@ -1,0 +1,392 @@
+# @generated: C libraries by `-l` name and the Bazel Central Registry modules that provide them, each module's latest version and verified library target.
+# Regenerate with `bazel run //tools/convert:update_libraries -- --registry <bazel-central-registry clone>`; do not edit.
+
+[libraries.FLAC]
+module = "flac"
+version = "1.5.0.bcr.1"
+label = "@flac//:flac"
+
+[libraries.SDL2]
+module = "sdl2"
+version = "2.32.0.bcr.beta.6"
+label = "@sdl2//:SDL2"
+
+[libraries.SDL3]
+module = "sdl3"
+version = "3.4.18"
+label = "@sdl3//:sdl3"
+
+[libraries.X11]
+module = "libx11"
+version = "1.8.12.bcr.5"
+label = "@libx11//:libx11"
+
+[libraries.asound]
+module = "alsa_lib"
+version = "1.2.9.bcr.4"
+label = "@alsa_lib//:asound"
+
+[libraries.bz2]
+module = "bzip2"
+version = "1.0.8.bcr.4"
+label = "@bzip2//:bz2"
+
+[libraries.cairo]
+module = "cairo"
+version = "1.18.4.bcr.2"
+label = "@cairo//:cairo"
+
+[libraries.cap]
+module = "libcap"
+version = "2.27.bcr.3"
+label = "@libcap//:cap"
+
+[libraries.cjson]
+module = "cjson"
+version = "1.7.19-0.20240923110858-12c4bf1986c2.bcr.4"
+label = "@cjson//:cjson"
+
+[libraries.crypt]
+module = "libxcrypt"
+version = "4.4.36.bcr.1"
+label = "@libxcrypt//:libxcrypt"
+
+[libraries.crypto]
+module = "openssl"
+version = "4.0.1.bcr.0"
+label = "@openssl//:crypto"
+
+[libraries.curl]
+module = "curl"
+version = "8.22.0"
+label = "@curl//:curl"
+
+[libraries.de265]
+module = "libde265"
+version = "1.0.18.bcr.1"
+label = "@libde265//:de265"
+
+[libraries.dw]
+module = "elfutils"
+version = "0.195"
+label = "@elfutils//:dw"
+
+[libraries.elf]
+module = "elfutils"
+version = "0.195"
+label = "@elfutils//:elf"
+
+[libraries.ev]
+module = "libev"
+version = "4.33"
+label = "@libev//:libev"
+
+[libraries.event]
+module = "libevent"
+version = "2.1.12-stable.bcr.0"
+label = "@libevent//:event"
+
+[libraries.event_core]
+module = "libevent"
+version = "2.1.12-stable.bcr.0"
+label = "@libevent//:event_core"
+
+[libraries.ffi]
+module = "libffi"
+version = "3.4.7.bcr.5"
+label = "@libffi//:libffi"
+
+[libraries.fontconfig]
+module = "fontconfig"
+version = "2.16.0"
+label = "@fontconfig//:fontconfig"
+
+[libraries.freetype]
+module = "freetype"
+version = "2.14.1.bcr.1"
+label = "@freetype//:freetype"
+
+[libraries.fuse]
+module = "libfuse"
+version = "3.18.3"
+label = "@libfuse//:libfuse"
+
+[libraries.fuse3]
+module = "libfuse"
+version = "3.18.3"
+label = "@libfuse//:libfuse"
+
+[libraries.gd]
+module = "libgd"
+version = "2.3.3.bcr.1"
+label = "@libgd//:gd"
+
+[libraries.gif]
+module = "giflib"
+version = "5.2.1.bcr.1"
+label = "@giflib//:giflib"
+
+[libraries.gmp]
+module = "gmp"
+version = "6.3.0.bcr.3"
+label = "@gmp//:gmp"
+
+[libraries.gpiod]
+module = "libgpiod"
+version = "2.1.3"
+label = "@libgpiod//:gpiod"
+
+[libraries.harfbuzz]
+module = "harfbuzz"
+version = "14.1.0.bcr.2"
+label = "@harfbuzz//:harfbuzz"
+
+[libraries.heif]
+module = "libheif"
+version = "1.21.2.bcr.1"
+label = "@libheif//:heif"
+
+[libraries.hiredis]
+module = "hiredis"
+version = "1.3.0"
+label = "@hiredis//:hiredis"
+
+[libraries.lz4]
+module = "lz4"
+version = "1.10.0.bcr.2"
+label = "@lz4//:lz4"
+
+[libraries.lzma]
+module = "xz"
+version = "5.4.5.bcr.9"
+label = "@xz//:lzma"
+
+[libraries.mbedcrypto]
+module = "mbedtls"
+version = "3.6.7"
+label = "@mbedtls//:mbedtls"
+
+[libraries.mbedtls]
+module = "mbedtls"
+version = "3.6.7"
+label = "@mbedtls//:mbedtls"
+
+[libraries.microhttpd]
+module = "libmicrohttpd"
+version = "1.0.2.bcr.1"
+label = "@libmicrohttpd//:microhttpd"
+
+[libraries.mosquitto]
+module = "mosquitto"
+version = "2.1.2.bcr.2"
+label = "@mosquitto//:libmosquitto"
+
+[libraries.mp3lame]
+module = "lame"
+version = "4.0"
+label = "@lame//:lame"
+
+[libraries.mpc]
+module = "mpc"
+version = "1.4.1.bcr.2"
+label = "@mpc//:mpc"
+
+[libraries.mpfr]
+module = "mpfr"
+version = "4.2.2.bcr.2"
+label = "@mpfr//:mpfr"
+
+[libraries.ncurses]
+module = "ncurses"
+version = "6.4.20221231.bcr.13"
+label = "@ncurses//:ncurses"
+
+[libraries.ncursesw]
+module = "ncurses"
+version = "6.4.20221231.bcr.13"
+label = "@ncurses//:ncurses"
+
+[libraries.nghttp2]
+module = "nghttp2"
+version = "1.65.0.bcr.1"
+label = "@nghttp2//:nghttp2"
+
+[libraries.numa]
+module = "numactl"
+version = "2.0.19.bcr.1"
+label = "@numactl//:numa"
+
+[libraries.opus]
+module = "opus"
+version = "1.6.1"
+label = "@opus//:opus"
+
+[libraries.pcap]
+module = "libpcap"
+version = "1.10.5.bcr.3"
+label = "@libpcap//:libpcap"
+
+[libraries.pcre2-8]
+module = "pcre2"
+version = "10.49"
+label = "@pcre2//:pcre2"
+
+[libraries.pixman-1]
+module = "pixman"
+version = "0.46.4"
+label = "@pixman//:pixman"
+
+[libraries.png]
+module = "libpng"
+version = "1.6.58.bcr.1"
+label = "@libpng//:png"
+
+[libraries.popt]
+module = "popt"
+version = "1.19"
+label = "@popt//:popt"
+
+[libraries.pq]
+module = "postgres"
+version = "18.4"
+label = "@postgres//:pq"
+
+[libraries.readline]
+module = "readline"
+version = "8.3.bcr.2"
+label = "@readline//:readline"
+
+[libraries.rocksdb]
+module = "rocksdb"
+version = "11.8.1"
+label = "@rocksdb//:rocksdb"
+
+[libraries.sodium]
+module = "libsodium"
+version = "1.0.19"
+label = "@libsodium//:libsodium"
+
+[libraries.sqlite3]
+module = "sqlite3"
+version = "3.53.4"
+label = "@sqlite3//:sqlite3"
+
+[libraries.ssh2]
+module = "libssh2"
+version = "1.11.1.bcr.1"
+label = "@libssh2//:libssh2"
+
+[libraries.ssl]
+module = "openssl"
+version = "4.0.1.bcr.0"
+label = "@openssl//:ssl"
+
+[libraries.systemd]
+module = "systemd"
+version = "260.1.bcr.2"
+label = "@systemd//:libsystemd"
+
+[libraries.termcap]
+module = "ncurses"
+version = "6.4.20221231.bcr.13"
+label = "@ncurses//:ncurses"
+
+[libraries.tiff]
+module = "libtiff"
+version = "4.7.2.bcr.2"
+label = "@libtiff//:tiff"
+
+[libraries.tinfo]
+module = "ncurses"
+version = "6.4.20221231.bcr.13"
+label = "@ncurses//:ncurses"
+
+[libraries.tre]
+module = "tre"
+version = "0.9.0"
+label = "@tre//:tre"
+
+[libraries.unwind]
+module = "libunwind"
+version = "1.8.3"
+label = "@libunwind//:unwind"
+
+[libraries."usb-1.0"]
+module = "libusb"
+version = "1.0.30"
+label = "@libusb//:libusb"
+
+[libraries.uuid]
+module = "libuuid"
+version = "2.41.2.bcr.0"
+label = "@libuuid//:uuid"
+
+[libraries.uv]
+module = "libuv"
+version = "1.48.0.bcr.2"
+label = "@libuv//:libuv"
+
+[libraries.webp]
+module = "libwebp"
+version = "1.6.0.bcr.1"
+label = "@libwebp//:libwebp"
+
+[libraries.websockets]
+module = "libwebsockets"
+version = "4.5.2"
+label = "@libwebsockets//:websockets"
+
+[libraries.x264]
+module = "x264"
+version = "2023.10.1.bcr.6"
+label = "@x264//:x264"
+
+[libraries.x265]
+module = "x265"
+version = "4.1.bcr.1"
+label = "@x265//:x265"
+
+[libraries.xcb]
+module = "libxcb"
+version = "1.17.0.bcr.3"
+label = "@libxcb//:xcb"
+
+[libraries.xkbcommon]
+module = "xkbcommon"
+version = "1.9.2.bcr.beta.1"
+label = "@xkbcommon//:xkbcommon"
+
+[libraries.xml2]
+module = "libxml2"
+version = "2.15.3"
+label = "@libxml2//:xml2"
+
+[libraries.xslt]
+module = "libxslt"
+version = "1.1.43.bcr.1"
+label = "@libxslt//:libxslt"
+
+[libraries.z]
+module = "zlib"
+version = "1.3.2.bcr.2"
+label = "@zlib//:z"
+
+[libraries.zip]
+module = "libzip"
+version = "1.12.1"
+label = "@libzip//:libzip"
+
+[libraries.zmq]
+module = "libzmq"
+version = "4.3.5.bcr.7"
+label = "@libzmq//:zmq"
+
+[libraries.zstd]
+module = "zstd"
+version = "1.5.7.bcr.3"
+label = "@zstd//:zstd"
+
+[libraries.zzip]
+module = "zziplib"
+version = "0.13.72.bcr.1"
+label = "@zziplib//:zzip"

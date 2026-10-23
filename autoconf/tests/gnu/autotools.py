@@ -13,6 +13,7 @@ import os
 import platform
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 from python.runfiles import Runfiles
@@ -45,13 +46,17 @@ def space_free(path: Path | str) -> str:
     text = posix(path)
     if not IS_WINDOWS or " " not in text:
         return text
-    import ctypes  # pylint: disable=import-outside-toplevel
+    # `IS_WINDOWS` already implies a native Windows interpreter; the explicit
+    # `sys.platform` check is what lets the type checker see the Windows-only
+    # `ctypes.windll`.
+    if sys.platform == "win32":
+        import ctypes  # pylint: disable=import-outside-toplevel
 
-    buffer = ctypes.create_unicode_buffer(32768)
-    length = ctypes.windll.kernel32.GetShortPathNameW(str(path), buffer, len(buffer))
-    if length and " " not in buffer.value:
-        return posix(buffer.value)
-    raise EnvironmentError(f"No space-free spelling available for {text!r}")
+        buffer = ctypes.create_unicode_buffer(32768)
+        length = ctypes.windll.kernel32.GetShortPathNameW(str(path), buffer, len(buffer))
+        if length and " " not in buffer.value:
+            return posix(buffer.value)
+    raise OSError(f"No space-free spelling available for {text!r}")
 
 
 class Autotools:
@@ -67,14 +72,12 @@ class Autotools:
     def __init__(self, tooldir: Path, shell: str | None = None) -> None:
         runfiles = Runfiles.Create()
         if not runfiles:
-            raise EnvironmentError("Failed to locate runfiles")
+            raise OSError("Failed to locate runfiles")
 
         source_repo = "_main" if IS_WINDOWS else None
         self.shell = shell or os.environ.get("CONFIG_SHELL") or "/bin/sh"
         if IS_WINDOWS and not Path(self.shell).exists():
-            raise EnvironmentError(
-                f"A POSIX shell is required on Windows (CONFIG_SHELL={self.shell!r} not found)"
-            )
+            raise OSError(f"A POSIX shell is required on Windows (CONFIG_SHELL={self.shell!r} not found)")
         # The spelling handed to configure and perl, which word-split it.
         self.shell_for_env = space_free(self.shell)
 
@@ -133,9 +136,7 @@ class Autotools:
             else:
                 script_path = self.autoconf_root / "bin" / script
             self.wrappers[tool] = self._write_wrapper(tool, script_path)
-            self.exec_wrappers[tool] = (
-                self._write_cmd_wrapper(tool, script_path) if IS_WINDOWS else self.wrappers[tool]
-            )
+            self.exec_wrappers[tool] = self._write_cmd_wrapper(tool, script_path) if IS_WINDOWS else self.wrappers[tool]
         self.wrappers["m4"] = self._write_wrapper("m4", None)
         self.wrappers["perl"] = self._write_wrapper("perl", None)
 
@@ -159,6 +160,8 @@ class Autotools:
         elif name == "perl":
             command = f'exec "{posix(self.perl)}" "$@"\n'
         else:
+            if script is None:
+                raise ValueError(f"{name}: a perl script path is required")
             command = f'exec "{posix(self.perl)}" "{posix(script)}" "$@"\n'
         path.write_text("#!/bin/sh\n" + command, encoding="utf-8", newline="\n")
         path.chmod(0o755)
@@ -330,9 +333,7 @@ class Autotools:
             check=False,
         )
         if check and result.returncode != 0:
-            raise RuntimeError(
-                f"`{' '.join(argv)}` failed with exit code {result.returncode}:\n{result.stdout}"
-            )
+            raise RuntimeError(f"`{' '.join(argv)}` failed with exit code {result.returncode}:\n{result.stdout}")
         return result
 
     def versions(self, cwd: Path) -> dict[str, str]:

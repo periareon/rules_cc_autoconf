@@ -33,6 +33,17 @@ build --output_groups=+autoconf_checks
 # Validate check JSON field names at analysis time.
 build --aspects=//autoconf/private:validate_checks.bzl%validate_checks_aspect
 
+# Type-check every Python target with mypy (strict, see .mypy.ini) as part of the build.
+build --aspects=@rules_venv//python/mypy:defs.bzl%py_mypy_aspect
+build --output_groups=+py_mypy_checks
+
+# Lint and check the formatting of every Python target with ruff (see .ruff.toml) as part of
+# the build; `bazel run @rules_venv//python/ruff:format` and `:fix` apply what ruff can fix.
+build --aspects=@rules_venv//python/ruff:py_ruff_aspect.bzl%py_ruff_aspect
+build --output_groups=+py_ruff_checks
+build --@rules_venv//python/ruff:config=//:.ruff.toml
+build --@rules_venv//python/ruff:mode=check,format
+
 ###############################################################################
 ## Incompatibility flags
 ###############################################################################

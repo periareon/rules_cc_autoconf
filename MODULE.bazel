@@ -15,6 +15,10 @@ bazel_dep(name = "m4", version = "1.4.21.bcr.6", dev_dependency = True)
 bazel_dep(name = "rules_perl", version = "1.2.0", dev_dependency = True)
 bazel_dep(name = "rules_rust_mdbook", version = "0.74.0", dev_dependency = True)
 bazel_dep(name = "rules_shell", version = "0.8.0", dev_dependency = True)
+bazel_dep(name = "buildifier_prebuilt", version = "10.1.0", dev_dependency = True)
+bazel_dep(name = "rules_req_compile", version = "1.3.0", dev_dependency = True)
+bazel_dep(name = "rules_python", version = "1.7.0", dev_dependency = True)
+bazel_dep(name = "rules_multirun", version = "0.14.0", dev_dependency = True)
 bazel_dep(name = "rules_venv", version = "0.33.0", dev_dependency = True)
 bazel_dep(name = "stardoc", version = "0.8.0", dev_dependency = True)
 
@@ -65,3 +69,47 @@ host_cc_fingerprint(
     name = "host_cc_fingerprint",
     dev_dependency = True,
 )
+
+# The Python the development tools run on (`//tools/convert`, `gnulib/tools`,
+# the test helpers): the requirement locks under tools/convert/3rdparty are
+# compiled for this version, so it is pinned rather than left to rules_python's
+# default.
+python = use_extension("@rules_python//python/extensions:python.bzl", "python", dev_dependency = True)
+python.toolchain(
+    is_default = True,
+    python_version = "3.14",
+)
+
+# Python packages of the converter (`//tools/convert`), a development tool.
+requirements = use_extension("@rules_req_compile//extensions:python.bzl", "requirements", dev_dependency = True)
+requirements.parse(
+    name = "pip_convert",
+    config_settings = {
+        "//tools/convert/3rdparty:linux_aarch64": "linux_aarch64",
+        "//tools/convert/3rdparty:linux_x86_64": "linux_x86_64",
+        "//tools/convert/3rdparty:macos_aarch64": "macos_aarch64",
+        "//tools/convert/3rdparty:macos_x86_64": "macos_x86_64",
+        "//tools/convert/3rdparty:windows_x86_64": "windows_x86_64",
+    },
+    requirements_locks = {
+        "//tools/convert/3rdparty:requirements_linux_aarch64.txt": "linux_aarch64",
+        "//tools/convert/3rdparty:requirements_linux_x86_64.txt": "linux_x86_64",
+        "//tools/convert/3rdparty:requirements_macos_aarch64.txt": "macos_aarch64",
+        "//tools/convert/3rdparty:requirements_macos_x86_64.txt": "macos_x86_64",
+        "//tools/convert/3rdparty:requirements_windows_x86_64.txt": "windows_x86_64",
+    },
+)
+use_repo(requirements, "pip_convert")
+
+# pytest for the converter's unit tests (rules_venv's py_pytest_test), and mypy
+# and ruff for the checking aspects the .bazelrc applies to every build.
+register_toolchains(
+    "//tools/convert/3rdparty:mypy",
+    "//tools/convert/3rdparty:pytest",
+    "//tools/convert/3rdparty:ruff",
+    dev_dependency = True,
+)
+
+# Source archives converted by the converter's golden tests.
+convert_test_sources = use_extension("//tools/convert:deps.bzl", "convert_test_sources", dev_dependency = True)
+use_repo(convert_test_sources, "gzip_src")

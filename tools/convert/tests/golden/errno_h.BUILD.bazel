@@ -1,0 +1,37 @@
+"""https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/errno_h.m4"""
+
+load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
+load("//autoconf:checks.bzl", "checks")
+load("//gnulib:macros.bzl", gl_macros = "macros")
+
+autoconf(
+    name = "gl_HEADER_ERRNO_H",
+    checks = [
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_header_errno_h_complete",
+            code = "int e[] = {ETXTBSY, ENOMSG, EIDRM, ENOLINK, EPROTO, EMULTIHOP, EBADMSG, EOVERFLOW, ENOTSUP, ENETRESET, ECONNABORTED, ESTALE, EDQUOT, ECANCELED, EOWNERDEAD, ENOTRECOVERABLE, EILSEQ, ESOCKTNOSUPPORT}; (void)e;",
+            includes = ["#include <errno.h>"],
+        ),
+    ] + gl_macros.GL_NEXT_HEADERS(
+        ["errno.h"],
+        condition = "!gl_cv_header_errno_h_complete",
+    ) + [
+        checks.M4_VARIABLE(
+            "GL_GENERATE_ERRNO_H",
+            condition = "gl_cv_header_errno_h_complete",
+            if_false = "true",
+            if_true = "false",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CANONICAL_HOST",
+        "//gnulib/m4/include_next",
+    ],
+)
+
+autoconf(
+    name = "errno_h",
+    visibility = ["//visibility:public"],
+    deps = [":gl_HEADER_ERRNO_H"],
+)

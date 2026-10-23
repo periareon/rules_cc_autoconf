@@ -1,0 +1,14 @@
+# ruff over the repository's Python: lint and format, run by rules_venv's py_ruff_aspect on every
+# build (.bazelrc) and by hand with `bazel run @rules_venv//python/ruff:format` and `:fix`.
+# https://docs.astral.sh/ruff/configuration/
+target-version = "py314"
+# The code is written to 120 columns.
+line-length = 120
+
+[lint]
+# ruff's default rule set plus import order; nothing else sorts imports here.
+extend-select = ["I"]
+
+[lint.isort]
+# `from tools.convert import x` lines stay one import per line, as the modules are written.
+force-single-line = false

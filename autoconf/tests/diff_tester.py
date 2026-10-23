@@ -1,5 +1,7 @@
 """The `diff_test` runner."""
 
+from __future__ import annotations
+
 import difflib
 import os
 import platform
@@ -39,7 +41,6 @@ def diff(
 
 
 class DiffTests(unittest.TestCase):
-
     def setUp(self) -> None:
         """Setup class instances"""
 
@@ -49,7 +50,7 @@ class DiffTests(unittest.TestCase):
 
         r = Runfiles.Create()
         if not r:
-            raise EnvironmentError("Failed to locate runfiles")
+            raise OSError("Failed to locate runfiles")
 
         # Use runfiles to locate files
         source_repo = None
@@ -70,7 +71,7 @@ class DiffTests(unittest.TestCase):
 
         return super().setUp()
 
-    def test_diff(self):
+    def test_diff(self) -> None:
         """Compare two files."""
 
         diff_output = diff(
