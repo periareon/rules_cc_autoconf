@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import textwrap
 from pathlib import Path
 
 import pytest
@@ -12,17 +13,33 @@ from tools.convert.automake import _programs_tree, _split_deps
 from tools.convert.cli import _manual_programs_section
 from tools.convert.common import NO_WARNINGS, _platform_labels, no_warnings_statement
 from tools.convert.decisions import Decisions, Word
-from tools.convert.gnulib_lib import _gnulib_names, _literal_sed_substs, _template_indicators
-from tools.convert.gnulibmk import Source
+from tools.convert.gnulib_lib import (
+    _classify_sources,
+    _condition_table,
+    _gnulib_names,
+    _literal_sed_substs,
+    _template_indicators,
+    _wrapper_header_rules,
+)
+from tools.convert.gnulibmk import Library, Source
+from tools.convert.gnulibmk import parse as parse_mk
 from tools.convert.index import Port, PortIndex, parse_build
 from tools.convert.ir import Assign, Call, CheckItem, Dep, Package, Raw, Rule, Target, strings
 from tools.convert.makefiles import _automake_tree, _configured_subdirs, _library_target, _parse_tree_makefile
 from tools.convert.modulebazel import _module_bazel
-from tools.convert.project import _gnulib_file_list, _module_flags, _pinned_defines, _root_includes
+from tools.convert.project import _gnulib_file_list, _module_flags, _option_rules, _pinned_defines, _root_includes
 from tools.convert.results import _confdefs, _drop_duplicate_defines
-from tools.convert.sources import _conditional_sources, _written_content, am_decision, simplified_conditions
+from tools.convert.sources import (
+    _conditional_sources,
+    _preprocessor_flags,
+    _written_content,
+    am_decision,
+    simplified_conditions,
+)
 from tools.convert.tests.helpers import as_call, as_raw, as_str, must
 from tools.convert.translate import (
+    FlagInfo,
+    GnulibLibrary,
     ListedProgram,
     Options,
     ProjectState,
@@ -1496,9 +1513,9 @@ def test_flag_classes_and_link_order(tmp_path: Path) -> None:
     assert ":mods" not in deps(rules["gcry"])
     assert ":kern" not in deps(rules["gcry"])
     # A root program compiled with -I$(top_srcdir): its directory's headers come through a
-    # library rooted at the repository, not through `includes = ["."]`.
+    # library rooted at the repository, not through an `includes` entry of its own.
     t = rules["tests/t"]
-    assert t.attrs["includes"] == ["include"]  # the Makefile's -I stays, `.` goes
+    assert t.attrs["includes"] == ["include"]  # the Makefile's -I stays
     assert ":tests_headers" in strings(t.attrs["deps"])
     assert rules["tests_headers"].attrs["strip_include_prefix"] == "/"
     assert '"tests/**/*.h"' in as_raw(rules["tests_headers"].attrs["hdrs"]).text
@@ -1621,8 +1638,10 @@ def test_option_gated_program(tmp_path: Path) -> None:
 
 
 def test_root_includes() -> None:
-    """`includes = ["."]` names the repository root in the root package, which rules_cc rejects:
-    a library with headers gets `strip_include_prefix = "/"`, a binary loses the entry."""
+    """`includes = ["."]` goes from every root target (gcc would drop the repository root from the
+    quote chain); a root library with headers gets `strip_include_prefix = "/"` (Bazel 9's virtual
+    include directory) with `include_prefix = "."` (Bazel 7 and 8 build that directory for the
+    generated config.h only with a prefix); a library with a prefix of its own keeps it."""
     package = Package(path="", docstring="")
     package.after += [
         Rule("cc_library", "config_headers", {"hdrs": [":config"], "includes": [".", "lib"]}),
@@ -1634,13 +1653,19 @@ def test_root_includes() -> None:
     ]
     _root_includes(package)
     attrs = {name: rule.attrs for name, rule in rules_by_name(package).items()}
-    assert attrs["config_headers"] == {"hdrs": [":config"], "includes": ["lib"], "strip_include_prefix": "/"}
+    assert attrs["config_headers"] == {
+        "hdrs": [":config"],
+        "includes": ["lib"],
+        "include_prefix": ".",
+        "strip_include_prefix": "/",
+    }
     assert attrs["prefixed"] == {"hdrs": ["x.h"], "include_prefix": "foo"}  # its own prefix stands
     assert attrs["tool"] == {"srcs": ["t.c"]}
     assert attrs["lib/bar"] == {"srcs": ["lib/a.c"], "includes": ["lib"]}
     assert attrs["pkgconf"] == {
         "hdrs": ["libpkgconf/libpkgconf.h"],
         "includes": ["libpkgconf"],
+        "include_prefix": ".",
         "strip_include_prefix": "/",
     }
 
@@ -2102,3 +2127,542 @@ def test_plain_appends_and_other_actions() -> None:
     assert list_append_words("AC_DEFINE([HAVE_X], [1])") is None
     assert list_append_words('LIBS="-lfoo $LIBS"') is None
     assert list_append_words("have_guile=yes") is None  # an ordinary assignment, not a list
+
+
+def test_wrapper_header_appended_input(tmp_path: Path) -> None:
+    """gnulib's assert.h is assembled from assert.in.h and then verify.h through a sed: the
+    second file becomes an autoconf_hdr rendering it with the sed as substitutions, spliced
+    into the wrapper at the template's closing comment through GNULIB_COND_HDR_INLINES."""
+    root = tmp_path
+    (root / "lib").mkdir()
+    (root / "lib/assert.in.h").write_text(
+        "#@INCLUDE_NEXT@ @NEXT_ASSERT_H@\n\n/* The definition of static_assert is copied here.  */\n"
+    )
+    (root / "lib/verify.h").write_text(
+        "#ifndef _GL_VERIFY_H\n#define _GL_VERIFY_H\n#ifdef _GL_STATIC_ASSERT_H\n"
+        '# define _Static_assert(...) _GL_VERIFY (__VA_ARGS__, "failed", -)\n#endif\n'
+        "template <int w> struct _gl_verify_type {};\n"
+        '/* @assert.h omit start@  */\n#define verify(R) _GL_VERIFY (R, "verify", -)\n'
+        "/* @assert.h omit end@  */\n#endif\n"
+    )
+    (root / "lib/alloca.in.h").write_text("#if @HAVE_ALLOCA_H@\n#endif\n")
+    mk_text = textwrap.dedent("""\
+        noinst_LIBRARIES += libgnu.a
+        libgnu_a_SOURCES = x.c
+        if GL_GENERATE_ALLOCA_H
+        alloca.h: alloca.in.h $(top_builddir)/config.status
+        \t$(gl_V_at)$(SED_HEADER_STDOUT) -e 's|@''HAVE_ALLOCA_H''@|$(HAVE_ALLOCA_H)|g' $(srcdir)/alloca.in.h > $@-t
+        \t$(AM_V_at)mv $@-t $@
+        endif
+        if GL_GENERATE_ASSERT_H
+        assert.h: assert.in.h verify.h $(top_builddir)/config.status
+        \t$(gl_V_at){ $(SED_HEADER_STDOUT) \\
+        \t      -e 's|@''NEXT_ASSERT_H''@|$(NEXT_ASSERT_H)|g' \\
+        \t      < $(srcdir)/assert.in.h && \\
+        \t  sed -e '/@assert.h omit start@/,/@assert.h omit end@/d' \\
+        \t      -e 's|_gl_verify|_gl_static_assert|g' \\
+        \t      -e 's|_GL_VERIFY|_GL_STATIC_ASSERT|g' \\
+        \t      -e 's|_GL\\(_STATIC_ASSERT_H\\)|_GL_M4\\1|g' \\
+        \t      < $(srcdir)/verify.h; \\
+        \t} > $@-t
+        \t$(AM_V_at)mv $@-t $@
+        endif
+        """)
+    mk = parse_mk(mk_text)
+    assert [(h.out, h.extra_inputs) for h in mk.headers] == [("alloca.h", []), ("assert.h", ["verify.h"])]
+
+    def render(mk_text: str) -> tuple[Package, list[str]]:
+        package = Package(path="", docstring="")
+        notes: list[str] = []
+        _wrapper_header_rules(
+            package, parse_mk(mk_text), root / "lib/gnulib.mk", root, "lib/", "gnu", "GNU", ProjectState(), notes
+        )
+        return package, notes
+
+    package, notes = render(mk_text)
+    assert notes == []
+    rules = rules_by_name(package)
+    half = rules["lib_assert_h_verify"]
+    assert half.kind == "autoconf_hdr"
+    assert half.attrs == {
+        "out": "_gnulib_cond/assert-verify.h",
+        "mode": "subst",
+        "substitutions": {
+            "#define _GL_VERIFY_H": "#define _GL_M4_STATIC_ASSERT_H",
+            "#ifndef _GL_VERIFY_H": "#ifndef _GL_M4_STATIC_ASSERT_H",
+            "/* @assert.h omit end@  */": "#endif /* @assert.h omit end@  */",
+            "/* @assert.h omit start@  */": "#if 0 /* @assert.h omit start@  */",
+            "_GL_STATIC_ASSERT_H": "_GL_M4_STATIC_ASSERT_H",
+            "_GL_VERIFY": "_GL_STATIC_ASSERT",
+            "_gl_verify": "_gl_static_assert",
+        },
+        "template": "lib/verify.h",
+        "deps": [":autoconf"],
+    }
+    inlines = next(s for s in package.after if isinstance(s, Assign) and s.name == "GNULIB_COND_HDR_INLINES")
+    assert inlines.value == {
+        "assert": {"/* The definition of static_assert is copied here.  */": ":lib_assert_h_verify"}
+    }
+    comprehension = next(s for s in package.after if isinstance(s, Raw) and "_h_processed" in s.text)
+    assert "inlines = GNULIB_COND_HDR_INLINES.get(stem, {})," in comprehension.text
+    # The half is a rule of its own, before the comprehension that splices it.
+    assert package.after.index(half) < package.after.index(comprehension)
+
+    # A non-recursive gnulib.mk reads the inputs as `$(top_srcdir)/lib/verify.h`.
+    package, _notes = render(mk_text.replace("$(srcdir)/verify.h", "$(top_srcdir)/lib/verify.h"))
+    assert rules_by_name(package)["lib_assert_h_verify"].attrs["template"] == "lib/verify.h"
+
+    # A recipe that is not a sed (cat) is noted and the wrapper keeps the template alone.
+    package, notes = render(mk_text.replace("sed -e '/@assert.h omit start@/,/@assert.h omit end@/d'", "cat"))
+    assert notes == [
+        "lib/assert.h: also assembled from lib/verify.h, left out: its recipe is not a sed the converter follows"
+    ]
+    assert "lib_assert_h_verify" not in rules_by_name(package)
+    assert not any(isinstance(s, Assign) and s.name == "GNULIB_COND_HDR_INLINES" for s in package.after)
+
+
+def test_option_flag_steps_aside_for_a_hand_target() -> None:
+    """flex: BUILD.bazel keeps an alias `libfl` (the archive's old label) while configure.ac has
+    --enable-libfl.  The bool_flag takes the name `libfl_option`, as it does beside a generated
+    target of that name (libpcap's `pcap`), and the config_setting keeps `libfl_enabled`; the
+    flag under the alias's name would be dropped as replaced and the setting would read the
+    alias as a flag (a dependency cycle)."""
+    state = ProjectState()
+    state.flags["libfl"] = FlagInfo("AC_ARG_ENABLE", "libfl", "build libfl", default=True)
+    state.option_settings[":libfl_enabled"] = ("libfl", "yes")
+    package = Package(path="", docstring="")
+    package.after.append(Raw('cc_library(name = "src/fl", target_compatible_with = select({":libfl_enabled": []}))'))
+    rules = {s.name: s for s in _option_rules(package, state) if isinstance(s, Rule)}
+    assert rules["libfl"].kind == "bool_flag"
+    assert rules["libfl_enabled"].attrs["flag_values"] == {":libfl": "True"}
+    state.hand_targets["libfl"] = "alias"
+    rules = {s.name: s for s in _option_rules(package, state) if isinstance(s, Rule)}
+    assert "libfl" not in rules
+    assert rules["libfl_option"].kind == "bool_flag"
+    assert rules["libfl_option"].attrs["build_setting_default"] is True
+    assert rules["libfl_enabled"].attrs["flag_values"] == {":libfl_option": "True"}
+    # A flag BUILD.bazel declares itself (libssh2's `crypto` string_flag) replaces the generated
+    # one: the name stays, and the replacement step drops the generated flag.
+    state.hand_targets["libfl"] = "bool_flag"
+    rules = {s.name: s for s in _option_rules(package, state) if isinstance(s, Rule)}
+    assert rules["libfl"].kind == "bool_flag"
+    assert rules["libfl_enabled"].attrs["flag_values"] == {":libfl": "True"}
+
+
+def test_option_the_hand_written_build_file_keys_on_is_declared() -> None:
+    """libssh2: BUILD.bazel selects `src/ssh2`'s deps on `:libz_enabled`, while configure.ac's
+    only test of --with-libz every invocation answers alike, so no translated condition opens an
+    arm on it; the option is a flag all the same, declared for the hand-written file."""
+    state = ProjectState()
+    state.flags["libz"] = FlagInfo("AC_ARG_WITH", "libz", "use zlib", default=False)
+    package = Package(path="", docstring="")
+    assert _option_rules(package, state) == []
+    state.hand_build = 'cc_library(name = "src/ssh2", deps = select({":libz_enabled": ["@zlib//:z"]}))'
+    rules = {s.name: s for s in _option_rules(package, state) if isinstance(s, Rule)}
+    assert rules["libz"].kind == "bool_flag"
+    assert rules["libz_enabled"].attrs["flag_values"] == {":libz": "True"}
+
+
+def test_src_condition_overrides_derived_gnulib_condition(tmp_path: Path) -> None:
+    """A `src_condition:` decision for a condition gl_INIT derived (bison's chdir-long.c, grub's
+    windows-*.c) overrides it: NEVER leaves the sources out with a note and keeps the name out of
+    the table, ALWAYS makes them plain, an expression replaces the derived one and its negation
+    serves the gnulib.mk `else` arm; the verror heuristic's GL_COND_OBJ_ERROR is overridable too."""
+    state = ProjectState()
+    state.src_conditions = {
+        "GL_COND_OBJ_A": [df.neg(df.Truthy("ac_cv_func_a"))],
+        "GL_COND_OBJ_B": [df.neg(df.Truthy("ac_cv_func_b"))],
+        "GL_COND_OBJ_C": [df.neg(df.Truthy("ac_cv_func_c"))],
+        "GL_COND_OBJ_D": [df.neg(df.Truthy("ac_cv_func_d"))],
+        "GL_COND_OBJ_ERROR": [df.neg(df.Truthy("ac_cv_func_error"))],
+    }
+    library = Library(
+        "libgnu_a",
+        "libgnu.a",
+        sources=[
+            Source("a.c", "GL_COND_OBJ_A", None),
+            Source("a-else.c", "!GL_COND_OBJ_A", None),
+            Source("b.c", "GL_COND_OBJ_B", None),
+            Source("c.c", "GL_COND_OBJ_C", None),
+            Source("c-else.c", "!GL_COND_OBJ_C", None),
+            Source("d.c", "GL_COND_OBJ_D", None),
+            Source("verror.c", None, None),
+            Source("error.c", "GL_COND_OBJ_ERROR", None),
+        ],
+    )
+    decisions = Decisions.from_text(
+        """DECISIONS = {
+    "src_condition:GL_COND_OBJ_A": NEVER,
+    "src_condition:GL_COND_OBJ_B": ALWAYS,
+    "src_condition:GL_COND_OBJ_C": "REPLACE_C!=0",
+    "src_condition:GL_COND_OBJ_ERROR": "!ac_cv_func_error",
+}"""
+    )
+    notes: list[str] = []
+    mk_path = tmp_path / "lib/gnulib.mk"
+    table, platforms, exceptions = _condition_table(library, tmp_path, state, notes, decisions, mk_path, "")
+    assert table == {
+        "GL_COND_OBJ_A": "0",
+        "GL_COND_OBJ_B": "1",
+        "GL_COND_OBJ_C": "REPLACE_C!=0",
+        "GL_COND_OBJ_D": "!ac_cv_func_d",  # derived, no decision
+        "GL_COND_OBJ_ERROR": "!ac_cv_func_error",  # the decision, not the verror heuristic's `1`
+    }
+    assert (platforms, exceptions) == ({}, {})
+    assert state.src_condition_exprs == {
+        "GL_COND_OBJ_C": "REPLACE_C!=0",
+        "GL_COND_OBJ_D": "!ac_cv_func_d",
+        "GL_COND_OBJ_ERROR": "!ac_cv_func_error",
+    }
+    assert "GL_COND_OBJ_A: condition decided NEVER (gl_INIT's: !ac_cv_func_a)" in notes
+    assert "GL_COND_OBJ_C: condition decided REPLACE_C!=0 (gl_INIT's: !ac_cv_func_c)" in notes
+    conditional, platform_srcs, excluded, extra, plain = _classify_sources(
+        library, tmp_path, "lib/", state, notes, decisions, mk_path, "", table, platforms, exceptions
+    )
+    # a.c is out, its else arm is unconditional; c-else.c negates the decided expression.
+    assert conditional == {
+        "lib/c.c": "GL_COND_OBJ_C",
+        "lib/c-else.c": "!GL_COND_OBJ_C",
+        "lib/d.c": "GL_COND_OBJ_D",
+        "lib/error.c": "GL_COND_OBJ_ERROR",
+    }
+    assert table["!GL_COND_OBJ_C"] == "!(REPLACE_C!=0)"
+    assert plain == ["lib/a-else.c", "lib/b.c", "lib/verror.c"]
+    assert (platform_srcs, excluded, extra) == ({}, [], [])
+    assert "a.c: left out (src_condition:GL_COND_OBJ_A is NEVER)" in notes
+    assert decisions.unused == []
+
+
+def test_library_linked_under_option_brings_private_headers_into_the_arm(tmp_path: Path) -> None:
+    """A program links a library only under an option (`if WITH_X` / `tool_LDADD = libbar.a
+    lib/libgnu.a`): the library and the gnulib archive sit in that option's select() arm, and so
+    do their private headers libraries, not the unconditional deps, so the headers are visible
+    exactly when the archives are linked."""
+    root = tmp_path
+    (root / "bar").mkdir()
+    (root / "Makefile.am").write_text(
+        "noinst_LIBRARIES = libbar.a\nlibbar_a_SOURCES = bar/bar.c\n"
+        "bin_PROGRAMS = tool\ntool_SOURCES = tool.c\n"
+        "if WITH_X\ntool_LDADD = libbar.a lib/libgnu.a\nendif\n"
+    )
+    for name in ("bar/bar.c", "bar/bar.h", "tool.c"):
+        (root / name).write_text("")
+    package = Package(path="", docstring="")
+    state = ProjectState()
+    state.config_targets = ["config"]
+    state.header_libraries = [":config_headers"]
+    state.gnulib_libraries.append(GnulibLibrary("lib", ":lib/gnu", "lib/libgnu.a", ":lib/gnu_private_headers"))
+    decisions = Decisions.from_text('DECISIONS = {"am_conditional:WITH_X": ":x_enabled"}')
+    notes: list[str] = []
+    _programs_tree(package, root, decisions, state, notes)
+    rules = rules_by_name(package)
+    assert "bar_private_headers" in rules  # bar/bar.h is not installed
+    deps = as_raw(rules["tool"].attrs["deps"]).text
+    unconditional, _plus, arms = deps.partition(" + ")
+    for label in (":bar", ":bar_private_headers", ":lib/gnu", ":lib/gnu_private_headers"):
+        assert label not in unconditional, label
+        assert f'"{label}"' in arms, label
+    assert '":x_enabled": [' in arms
+
+
+def test_pkg_config_libs_under_conditional_ldadd(tmp_path: Path) -> None:
+    """`tool_LDADD += $(ZLIB_LIBS)` under `if WITH_Z`, the variable being a pkg-config package the
+    registry provides: the registry library goes into that option's select() arm.  The libraries
+    configure found (LIBS) are in the unconditional deps already and must not be repeated in
+    the arm, which Bazel would reject as a duplicated label."""
+    root = tmp_path
+    (root / "Makefile.am").write_text(
+        "bin_PROGRAMS = tool\ntool_SOURCES = tool.c\ntool_LDADD =\nif WITH_Z\ntool_LDADD += $(ZLIB_LIBS)\nendif\n"
+    )
+    (root / "tool.c").write_text("")
+    package = Package(path="", docstring="")
+    state = ProjectState()
+    state.config_targets = ["config"]
+    state.header_libraries = [":config_headers"]
+    state.pkg_libs = {"ZLIB_LIBS": ["@zlib//:z"]}
+    state.configure_libs = {"gmp": "@gmp//:gmp"}
+    decisions = Decisions.from_text('DECISIONS = {"am_conditional:WITH_Z": ":z_enabled"}')
+    notes: list[str] = []
+    _programs_tree(package, root, decisions, state, notes)
+    deps = as_raw(rules_by_name(package)["tool"].attrs["deps"]).text
+    unconditional, _plus, arms = deps.partition(" + ")
+    assert unconditional.count("@gmp//:gmp") == 1
+    assert "@gmp//:gmp" not in arms
+    assert "@zlib//:z" not in unconditional
+    assert '":z_enabled": [' in arms and '"@zlib//:z"' in arms
+    assert not any("linked unconditionally" in n for n in notes)
+
+
+def test_conditional_flag_variable_spelled_out_into_the_arm() -> None:
+    """`tool_CFLAGS = $(AM_CFLAGS) $(ZLIB_CFLAGS)` under `if WITH_Z`, decided as a select() arm:
+    the Makefile's own variable and the one-literal substitution configure sets (a pkg-config
+    found action's `-D`) are spelled out as for an unconditional line, and the define and the
+    code-generation option go into that arm; warnings are dropped, as unconditionally; a
+    variable only configure computes is reported once, not as a word left out."""
+    mk = parse_mk(
+        "AM_CFLAGS = -Wall -fno-builtin\nbin_PROGRAMS = tool\ntool_SOURCES = tool.c\n"
+        "if WITH_Z\ntool_CFLAGS = $(AM_CFLAGS) $(ZLIB_CFLAGS) $(HOST_CFLAGS)\nendif\n"
+    )
+    state = ProjectState()
+    state.literal_substs = {"ZLIB_CFLAGS": "-DZ_API=32"}
+    decisions = Decisions.from_text('DECISIONS = {"am_conditional:WITH_Z": ":z_enabled"}')
+    notes: list[str] = []
+    defines, copts, standards, includes, copt_arms, define_arms, include_arms = _preprocessor_flags(
+        mk, "tool", "", notes, state, decisions
+    )
+    # AM_CFLAGS applies to every target unconditionally; its expansion under the conditional
+    # adds nothing to the arm.
+    assert (defines, copts, standards, includes) == ([], ["-fno-builtin"], [], [])
+    assert define_arms == {":z_enabled": ["Z_API=32"]}
+    assert (copt_arms, include_arms) == ({}, {})
+    assert [n for n in notes if "left out" in n and "ALWAYS" in n] == []
+    assert any("$(HOST_CFLAGS)" in n and "only configure" in n for n in notes)
+
+
+def test_lower_decisions_last_assignment_under_one_condition_wins() -> None:
+    """Two assignments under the same condition (`X=""` then `X="$X -flag"` in one branch) lower to
+    one check with the later value, under that condition; the earlier literal is not a second
+    arm that would make the list inexpressible.  Likewise an assignment the later ones cover on
+    every path (`X=$enableval` under the option, then `X=yes` or `X=no` by a check's outcome):
+    its value, literal or not, is never the final one."""
+    tree = markers.parse("#! /bin/sh\n")
+    translator = Translator(
+        tree,
+        index=INDEX,
+        selected_files={"configure.ac"},
+        m4_sources={},
+        options=Options(),
+        decisions=Decisions(),
+        project=ProjectState(),
+    )
+    cond: df.Cond = df.Truthy("gl_cv_fuse")
+    assignments: list[tuple[df.Cond, df.Assignment]] = [
+        (cond, df.Assignment(cond, df.Lit(""), 'FUSE_CFLAGS=""')),
+        (
+            cond,
+            df.Assignment(cond, df.Lit(" -DFUSE_USE_VERSION=32"), 'FUSE_CFLAGS="$FUSE_CFLAGS -DFUSE_USE_VERSION=32"'),
+        ),
+    ]
+    check, dropped = translator._lower_decisions("FUSE_CFLAGS", assignments, "checks.AC_SUBST", False)
+    assert dropped == []
+    assert check == Call("checks.AC_SUBST", ["FUSE_CFLAGS", "-DFUSE_USE_VERSION=32"], {"requires": ["gl_cv_fuse"]})
+    # The same two values under different conditions stay two arms, as before.
+    other: df.Cond = df.Truthy("gl_cv_other")
+    check, _dropped = translator._lower_decisions(
+        "X", [(cond, assignments[0][1]), (other, assignments[1][1])], "checks.AC_SUBST", False
+    )
+    assert check is None
+    given: df.Cond = df.Flag("mount")
+    covered: list[tuple[df.Cond, df.Assignment]] = [
+        (given, df.Assignment(given, df.Ref("__rccac_optval_mount"), "enable_mount=$enableval")),
+        (cond, df.Assignment(cond, df.Lit("yes"), "enable_mount=yes")),
+        (df.neg(cond), df.Assignment(df.neg(cond), df.Lit("no"), "enable_mount=no")),
+    ]
+    check, dropped = translator._lower_decisions("enable_mount", covered, "checks.AC_SUBST", False)
+    assert dropped == []
+    assert check == Call(
+        "checks.AC_SUBST", ["enable_mount"], {"condition": "gl_cv_fuse", "if_true": "yes", "if_false": "no"}
+    )
+
+
+def test_probe_decision_answers_a_library_or_header_check() -> None:
+    """`probe:ac_cv_lib_tasn1_asn1_write_value: "no"`: the library check is not emitted, the value
+    stands in for it (the project built as on a host without the library) and the script's test
+    of the cache variable compares it by value; a header answered "yes" also gets its define."""
+    lines = (
+        ["#! /bin/sh"]
+        + call(1, "AC_CHECK_LIB", "tasn1", "asn1_write_value")
+        + call(2, "AC_CHECK_HEADER", "foo.h")
+        + [
+            'if test "$ac_cv_lib_tasn1_asn1_write_value" = yes; then',
+            "  enable_protect=yes",
+            "else",
+            "  enable_protect=no",
+            "fi",
+        ]
+        + call(3, "AC_SUBST", "enable_protect")
+    )
+    translator = Translator(
+        markers.parse("\n".join(lines) + "\n"),
+        index=INDEX,
+        selected_files={"configure.ac"},
+        m4_sources={},
+        options=Options(),
+        decisions=Decisions.from_text(
+            'DECISIONS = {"probe:ac_cv_lib_tasn1_asn1_write_value": "no", "probe:ac_cv_header_foo_h": "yes"}'
+        ),
+        project=ProjectState(),
+    )
+    translator.translate()
+    target = translator.translate_root("autoconf", loc_file="configure.ac")
+    calls = [(c.fn, c.args, c.kwargs) for c in as_calls(target.checks)]
+    assert ("checks.AC_CHECK_LIB", ["tasn1", "asn1_write_value"], {}) not in calls
+    assert ("checks.AC_CHECK_HEADER", ["foo.h"], {}) not in calls
+    assert ("checks.M4_VARIABLE", ["ac_cv_lib_tasn1_asn1_write_value", "no"], {}) in calls
+    assert ("checks.M4_VARIABLE", ["ac_cv_header_foo_h", "yes"], {}) in calls
+    assert ("checks.AC_DEFINE", ["HAVE_FOO_H", 1], {}) in calls
+    assert (
+        "checks.AC_SUBST",
+        ["enable_protect"],
+        {"condition": "ac_cv_lib_tasn1_asn1_write_value==yes", "if_true": "yes", "if_false": "no"},
+    ) in calls
+    assert translator.decisions.pending == {}
+
+
+def test_option_compared_against_no_opens_no_select() -> None:
+    """An option off by default whose only test is against `no` (`if test x"$enable_mount" = xno;
+    then excuse="explicitly disabled"`, the tool's settings under `test x"$excuse" = x`): the
+    `--enable-mount` and not-given invocations agree, and `--disable-mount` has no flag value,
+    so the settings are plain checks, not select() arms, and the option is not registered."""
+    lines = (
+        ["#! /bin/sh"]
+        + [
+            "if __RCCAC_FLAG_mount__; then",
+            "  enable_mount=$__rccac_optval_mount",
+            "else",
+            "  enable_mount=",
+            "fi",
+            'if test x"$enable_mount" = xno; then',
+            '  mount_excuse="explicitly disabled"',
+            "fi",
+            'if test x"$mount_excuse" = x; then',
+            '  FOO_CFLAGS="-DFOO_API=2"',
+            "fi",
+        ]
+        + call(2, "AC_SUBST", "FOO_CFLAGS")
+    )
+    state = ProjectState()
+    translator = Translator(
+        markers.parse("\n".join(lines) + "\n"),
+        index=INDEX,
+        selected_files={"configure.ac"},
+        m4_sources={},
+        options=Options(),
+        decisions=Decisions(),
+        project=state,
+    )
+    translator.translate()
+    target = translator.translate_root("autoconf", loc_file="configure.ac")
+    substs = [c for c in as_calls(target.checks) if c.fn == "checks.AC_SUBST" and c.args[:1] == ["FOO_CFLAGS"]]
+    assert [(c.args, c.kwargs) for c in substs] == [(["FOO_CFLAGS", "-DFOO_API=2"], {})]
+    assert target.selects == {}
+    assert state.option_settings == {}
+    assert translator.decisions.pending == {}
+
+
+def test_variable_assigned_only_under_a_condition_is_empty_elsewhere() -> None:
+    """`excuse="need foo.h"` under one condition, then `if test x"$excuse" = x` around a tool's
+    settings: nothing bound the variable before the script, so where the assignment does not hold
+    it is empty, as an unset shell variable is to `test`, and the setting requires the assigning
+    condition not to hold, without a decision.  A name configure's own prelude owns (`ac_*`), or
+    one another macro's expansion assigns (`target_cpu`, which AC_CANONICAL_TARGET sets and the
+    script renames), may hold a value before the body: its emptiness stays undecided, and the
+    value a decision."""
+
+    def translate(excuse: str, macro_sets: str = "") -> Translator:
+        lines = (
+            ["#! /bin/sh"]
+            + call(1, "AC_CHECK_HEADERS", "foo.h")
+            + call(3, "AC_CANONICAL_HOST", body=macro_sets)
+            + [
+                'if test "$ac_cv_header_foo_h" = no; then',
+                f'  {excuse}="need foo.h"',
+                "fi",
+                f'if test x"${excuse}" = x; then',
+                '  FOO_CFLAGS="-DFOO_API=2"',
+                "fi",
+            ]
+            + call(2, "AC_SUBST", "FOO_CFLAGS")
+        )
+        translator = Translator(
+            markers.parse("\n".join(lines) + "\n"),
+            index=INDEX,
+            selected_files={"configure.ac"},
+            m4_sources={},
+            options=Options(),
+            decisions=Decisions(),
+            project=ProjectState(),
+        )
+        translator.translate()
+        return translator
+
+    translator = translate("foo_excuse")
+    target = translator.translate_root("autoconf", loc_file="configure.ac")
+    substs = [c for c in as_calls(target.checks) if c.fn == "checks.AC_SUBST" and c.args[:1] == ["FOO_CFLAGS"]]
+    assert [(c.args, c.kwargs) for c in substs] == [
+        (["FOO_CFLAGS", "-DFOO_API=2"], {"requires": ["ac_cv_header_foo_h"]})
+    ]
+    assert translator.decisions.pending == {}
+    translator = translate("ac_foo_excuse")
+    translator.translate_root("autoconf", loc_file="configure.ac")
+    assert "variable:FOO_CFLAGS" in translator.decisions.pending
+    translator = translate("foo_excuse", macro_sets="foo_excuse=guessed")
+    translator.translate_root("autoconf", loc_file="configure.ac")
+    assert "variable:FOO_CFLAGS" in translator.decisions.pending
+
+
+def test_probe_a_decision_answers_is_not_an_unset_variable() -> None:
+    """`AC_CACHE_CHECK(..., [my_cv_x], [... my_cv_x=yes ...])` under one condition, `my_cv_x=no` in
+    the else, the probe IGNOREd by a decision: the cache variable is the probe's to set, not the
+    body's, so where the probe would run it is not empty but unknown; a test of it afterwards
+    stays a decision rather than reading the else branch as the only assignment."""
+    lines = (
+        ["#! /bin/sh"]
+        + call(1, "AC_CHECK_HEADERS", "foo.h")
+        + ['if test "$ac_cv_header_foo_h" = yes; then']
+        + call(3, "AC_CACHE_CHECK", "whether x works", "my_cv_x", "my_cv_x=yes", body="my_cv_x=yes")
+        + ["else", "  my_cv_x=no", "fi", 'if test "$my_cv_x" != no; then', '  FOO_CFLAGS="-DFOO_API=2"', "fi"]
+        + call(4, "AC_SUBST", "FOO_CFLAGS")
+    )
+    translator = Translator(
+        markers.parse("\n".join(lines) + "\n"),
+        index=INDEX,
+        selected_files={"configure.ac"},
+        m4_sources={},
+        options=Options(),
+        decisions=Decisions.from_text('DECISIONS = {"probe:my_cv_x": decision.IGNORE}'),
+        project=ProjectState(),
+    )
+    translator.translate()
+    target = translator.translate_root("autoconf", loc_file="configure.ac")
+    assert not [c for c in as_calls(target.checks) if c.fn == "checks.AC_SUBST" and c.args[:1] == ["FOO_CFLAGS"]]
+    assert translator.decisions.pending
+
+
+def test_inlined_macro_sees_the_callers_conditional_literal() -> None:
+    """Two macros expanded in one branch, the first setting `X=""`, the second appending to `$X`
+    (pkg-config's own `X_CFLAGS=` and the found action's `X_CFLAGS="$X_CFLAGS -D..."`): each body
+    is analysed on its own, the second seeded with the literal the first settled on that path, so
+    its value is a literal and the two assignments under the one condition lower to the later."""
+    lines = (
+        ["#! /bin/sh"]
+        + call(1, "AC_CHECK_HEADERS", "foo.h")
+        + ['if test "$ac_cv_header_foo_h" = yes; then']
+        + [
+            marker("BEGIN", "id=2", "name=MY_PKG", "loc=acinclude.m4:5"),
+            'FOO_CFLAGS=""',
+            marker("END", "id=2", "name=MY_PKG"),
+            marker("BEGIN", "id=3", "name=MY_FOUND", "loc=acinclude.m4:9"),
+            'FOO_CFLAGS="$FOO_CFLAGS -DFOO_API=2"',
+            marker("END", "id=3", "name=MY_FOUND"),
+        ]
+        + ["fi"]
+        + call(4, "AC_SUBST", "FOO_CFLAGS")
+    )
+    tree = markers.parse("\n".join(lines) + "\n")
+    translator = Translator(
+        tree,
+        index=INDEX,
+        selected_files={"configure.ac", "acinclude.m4"},
+        m4_sources={},
+        options=Options(),
+        decisions=Decisions(),
+        project=ProjectState(),
+    )
+    translator.translate()
+    target = translator.translate_root("autoconf", loc_file="configure.ac")
+    substs = [c for c in as_calls(target.checks) if c.fn == "checks.AC_SUBST" and c.args[:1] == ["FOO_CFLAGS"]]
+    assert [(c.args, c.kwargs) for c in substs] == [
+        (["FOO_CFLAGS", "-DFOO_API=2"], {"requires": ["ac_cv_header_foo_h"]})
+    ]
+    assert translator.decisions.pending == {}

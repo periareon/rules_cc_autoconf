@@ -204,6 +204,12 @@ def test_omit_replaced() -> None:
     assert 'name = "gen_h"' not in text
     assert 'name = "bar"' in text  # untouched, still depends on :foo
     assert emit.rule_names('cc_library(\n    name = "x",\n    srcs = select({"a": []}),\n)\n') == ["x"]
+    assert emit.rule_kinds(
+        'native.alias(\n    name = "x",\n    actual = ":y",\n)\nstring_flag(name = "f", build_setting_default = "a")\n'
+    ) == {
+        "x": "alias",
+        "f": "string_flag",
+    }
     # Not Python (a Starlark-only construct): the column-0 scan still finds the names.
     assert emit.rule_names(
         'x = [1,]\nfoo(\n    name = "a",\n)\nbar(name = "b", deps = [":a"] + glob(["*"]),)\nif True:\n'

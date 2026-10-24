@@ -69,13 +69,23 @@ def _public(installed: bool) -> dict[str, AttrValue]:
 
 def _link_vars(items: list[str], state: ProjectState) -> list[str]:
     """The `$(X_LIB)` variables of an LDADD / LIBADD line (a pkg-config `$(X_LIBS)` the registry
-    answers is a dep instead, see `_link_items`)."""
+    answers is a dep instead, see `_link_items`).  A variable configure only ever sets to `-l`
+    words of libraries the registry provides (`LIBLZMA` = `-llzma`, the module `xz` probed
+    through the main target) names libraries that are every target's deps already
+    (`configure_libs`): its linkopts would ask the linker for a system copy, so it is left out."""
     out: list[str] = []
     for item in items:
         name = make_var_name(item)
-        if name is not None and name not in out and name not in state.pkg_libs:
+        if name is not None and name not in out and name not in state.pkg_libs and not _registry_covered(name, state):
             out.append(name)
     return out
+
+
+def _registry_covered(name: str, state: ProjectState) -> bool:
+    """Whether every value configure substitutes for `name` is `-l` words of registry libraries
+    (or empty), with at least one such word."""
+    words = [word for value in state.subst_values.get(name, []) for word in value.split()]
+    return bool(words) and all(word.startswith("-l") and word[2:] in state.configure_libs for word in words)
 
 
 def _ensure_linkopts(package: Package, link_vars: list[str]) -> None:
@@ -116,12 +126,17 @@ def _link_items(
     decisions: dec.Decisions,
     state: ProjectState | None = None,
     dep_arms: dict[str, list[str]] | None = None,
+    under_condition: bool = False,
 ) -> tuple[list[str], list[str]]:
     """An LDADD / LIBADD line as Bazel deps (libraries of the tree, registry modules for the
     `-l` names tools/convert/libraries.py knows) and linkopts (other `-l`, `-L`); anything else
     is a `link` decision.  With `state`, the configure-found registry libraries (LIBS) join every
-    target's deps."""
-    deps: list[str] = [] if state is None else list(state.configure_libs.values())
+    target's deps, and a pkg-config `$(X_LIBS)` is the registry library it stands for.  With
+    `under_condition`, the line is one automake conditional's words and the caller puts the
+    result in that conditional's select() arm: LIBS are not seeded again (they are in the
+    unconditional deps already) and a library found under an option is not noted as linked
+    unconditionally."""
+    deps: list[str] = [] if state is None or under_condition else list(state.configure_libs.values())
     linkopts: list[str] = []
     directory = makefile_name[: -len("Makefile.am")].rstrip("/") or "."
     for item in items:
@@ -164,7 +179,9 @@ def _link_items(
                 dep_arms.setdefault(arm, []).extend(label for label in labels if label not in dep_arms.get(arm, []))
             else:
                 cond = state.pkg_conditions.get(var)
-                if arm is not None:
+                if under_condition:
+                    pass  # the caller's conditional is the arm
+                elif arm is not None:
                     notes.append(
                         f"{makefile_name}: {owner} links {item} under a configure option, which a library's "
                         "deps do not model; linked unconditionally"
@@ -1133,12 +1150,19 @@ def _programs(
                 # target carries it, and its own condition (the probe) gates the option.
                 link_vars += arm_vars
                 _ensure_linkopts(package, arm_vars)
-            arm_deps, arm_linkopts = _link_items(words, libraries, notes, makefile_name, program.name, decisions)
+            # With `state`, a pkg-config `$(X_LIBS)` among the words is the registry library it
+            # stands for; `under_condition` keeps LIBS out of the arm, where they would duplicate
+            # the unconditional deps (Bazel rejects a label listed twice in `deps`).
+            arm_deps, arm_linkopts = _link_items(
+                words, libraries, notes, makefile_name, program.name, decisions, state, under_condition=True
+            )
             if verdict is True:
                 deps += [d for d in arm_deps if d not in deps]
                 linkopts += [o for o in arm_linkopts if o not in linkopts]
             elif label is not None:  # the one other case left by the `continue` above
-                dep_arms.setdefault(label, []).extend(d for d in arm_deps if d not in dep_arms.get(label, []))
+                dep_arms.setdefault(label, []).extend(
+                    d for d in arm_deps if d not in deps and d not in dep_arms.get(label, [])
+                )
                 linkopt_arms.setdefault(label, []).extend(
                     o for o in arm_linkopts if o not in linkopt_arms.get(label, [])
                 )
@@ -1147,12 +1171,23 @@ def _programs(
         elif not headers_lib:
             deps += [d for d in _config_deps(state) if d not in deps]
         deps += [p for lib, p in state.private_header_libs.items() if lib in deps and p not in deps]
+        # A library linked only under an option (`if WITH_X` / `prog_LDADD += libbar.a`) sits in
+        # that option's select() arm; its `_private_headers` companion goes into the same arm,
+        # not the unconditional deps, so its headers are visible exactly when it is linked.
+        for label, arm in dep_arms.items():
+            arm += [p for lib, p in state.private_header_libs.items() if lib in arm and p not in deps and p not in arm]
         if link_vars:
             deps.append(":linkopts")
         defines, flag_copts, standards, flag_includes, copt_arms, define_arms, include_arms = _preprocessor_flags(
             mk, canonical, prefix.rstrip("/"), notes, state, decisions
         )
         deps = _gnulib_deps(state, deps, prefix.rstrip("/"), flag_includes, fallback=not libraries)
+        # The same for a gnulib archive linked only under an option: its private headers
+        # library joins the arm (after _gnulib_deps, which handles the unconditional case).
+        for arm in dep_arms.values():
+            for lib in state.gnulib_libraries:
+                if lib.label in arm and lib.private_headers_label not in deps and lib.private_headers_label not in arm:
+                    arm.append(lib.private_headers_label)
         if source_dirs and state.package_path == "." and "." in flag_includes:
             # Root package with -I$(top_srcdir): the headers are included by their repository
             # paths (`<tests/win-shim.h>`), which `includes = ["."]` cannot say there (rules_cc

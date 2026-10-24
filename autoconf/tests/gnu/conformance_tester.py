@@ -96,15 +96,18 @@ SKIPPED_OUTPUT_VARIABLES = frozenset(
         "LIB_TIMER_TIME",
         "LIB_XATTR",
         "LIBICONV",
-        "LIBMULTITHREAD",
-        "LIBPMULTITHREAD",
-        "LIBPTHREAD",
         "LIBREADLINE",
         "LIBSOCKET",
         "OBJDUMP",
-        "LIBSTDTHREAD",
         "LIBTERMCAP",
-        "LIBTHREAD",
+        # LIBSTDTHREAD: gl_STDTHREADLIB_BODY's AC_SUBST is expanded inside gl_THREADLIB_BODY's
+        # `isoc` branch, which the default gl_use_threads=yes never executes, so GNU registers
+        # the variable empty wherever only gl_THREADLIB runs; the ports reach the body through
+        # the threadlib umbrella and compute it (`-lpthread` on a host without <threads.h>),
+        # and GNU's executed value there is "$LIBPMULTITHREAD $SCHED_YIELD_LIB" with its space.
+        # Compared again once the ports depend on the macros they AC_REQUIRE and a
+        # three-valued substitution can be written.
+        "LIBSTDTHREAD",
         "LIBTHREADLOCAL",
         "am__fastdepCXX_FALSE",
         "am__fastdepCXX_TRUE",

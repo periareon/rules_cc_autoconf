@@ -3,6 +3,52 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
+# gl_PTHREADLIB_BODY's link tests, written out once: the condition of every value below
+# reads their cache variables.
+PTHREAD_MUTEX_LOCK_PROGRAM = """\
+#include <pthread.h>
+pthread_mutex_t m;
+int main(void) {
+    pthread_mutex_lock(&m);
+    return 0;
+}
+"""
+
+# AC_CHECK_LIB's program: the function declared, not included, so only the link decides.
+PTHREAD_KILL_PROGRAM = """\
+char pthread_kill(void);
+int main(void) {
+    return pthread_kill();
+}
+"""
+
+# AC_EGREP_CPP([Lucky user], ...) on `linux*`: glibc 2.34 moved the thread functions into libc.
+GLIBC_2_34_PROGRAM = """\
+#include <features.h>
+#ifdef __GNU_LIBRARY__
+# if (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 34) || (__GLIBC__ > 2)
+#  define LUCKY_USER 1
+# endif
+#endif
+#ifndef LUCKY_USER
+# error "not glibc 2.34 or newer"
+#endif
+int main(void) {
+    return 0;
+}
+"""
+
+# gl_pthread_api = yes: pthread_mutex_lock links with no library at all (every libc of the
+# supported hosts; glibc before 2.34 carries single-threaded stubs).  Upstream then tries
+# `-pthread` (Ubuntu 14.04) and, failing both, `-lpthread` and `-lc_r` (FreeBSD 4); the
+# `-pthread` and `-lc_r` arms are left out: no supported host reaches them.
+PTHREAD_API = "_gl_pthread_api_yes || ac_cv_lib_pthread_pthread_kill"
+
+# LIBPMULTITHREAD: `-lpthread` when AC_CHECK_LIB([pthread], [pthread_kill]) links (it does
+# wherever a libpthread exists, the symbol being in libc or not), except on glibc 2.34 and
+# newer, where upstream clears it (gl_pthread_in_glibc).  `-lthr` (FreeBSD 5) is left out.
+LIBPMULTITHREAD_IS_LPTHREAD = "ac_cv_lib_pthread_pthread_kill && !(_gl_pthread_api_yes && gl_cv_pthread_in_glibc)"
+
 autoconf(
     name = "gl_PTHREADLIB_BODY",
     checks = [
@@ -11,44 +57,64 @@ autoconf(
             name = "ac_cv_header_pthread_h",
         ),
 
-        # Upstream AC_LINK_IFELSE for pthread API detection (with proper includes).
-        # Only attempted when <pthread.h> exists: AS_IF([test "$gl_have_pthread_h" = yes]).
+        # for gl_pthread in "" "-pthread": AC_LINK_IFELSE(pthread_mutex_lock), first without a
+        # library; AS_IF([test "$gl_have_pthread_h" = yes]) around all of it.
         checks.AC_TRY_LINK(
             name = "_gl_pthread_api_yes",
-            code = """\
-#include <pthread.h>
-pthread_mutex_t m;
-int main(void) {
-    pthread_mutex_lock(&m);
-    return 0;
-}
-""",
+            code = PTHREAD_MUTEX_LOCK_PROGRAM,
             language = "c",
             requires = ["ac_cv_header_pthread_h"],
         ),
 
-        # AC_DEFINE([HAVE_PTHREAD_API]) only runs inside
-        # AS_IF([test $gl_pthread_api = yes]); otherwise the macro stays
-        # undefined (not 0).
+        # AS_CASE([$host_os], [linux*], [AC_EGREP_CPP(...)]): upstream probes on Linux only, and
+        # gl_pthread_in_glibc stays `no` elsewhere.  The probe runs on every host here, with the
+        # same outcome (no other libc defines __GNU_LIBRARY__ with that version), because the
+        # conditions below name its cache variable on every host and the rule requires each
+        # name it reads to be declared.
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_pthread_in_glibc",
+            code = GLIBC_2_34_PROGRAM,
+            language = "c",
+        ),
+
+        # AC_CHECK_LIB([pthread], [pthread_kill]), as a link with `-lpthread` so that no
+        # HAVE_LIBPTHREAD is defined (upstream passes an action-if-found).
+        checks.AC_TRY_LINK(
+            name = "ac_cv_lib_pthread_pthread_kill",
+            code = PTHREAD_KILL_PROGRAM,
+            language = "c",
+            linkopts = ["-lpthread"],
+            requires = ["ac_cv_header_pthread_h"],
+        ),
+
+        # LIBPTHREAD: "" when pthread_mutex_lock links on its own, `-lpthread` when only
+        # libpthread provides the API (`-pthread` and `-lc_r` left out, see PTHREAD_API).
+        checks.AC_SUBST(
+            "LIBPTHREAD",
+            condition = "_gl_pthread_api_yes || !ac_cv_lib_pthread_pthread_kill",
+            if_false = "-lpthread",
+            if_true = "",
+        ),
+        checks.AC_SUBST(
+            "LIBPMULTITHREAD",
+            condition = LIBPMULTITHREAD_IS_LPTHREAD,
+            if_false = "",
+            if_true = "-lpthread",
+        ),
+
+        # PTHREAD_IN_USE_DETECTION_HARD (Solaris before 10, HP-UX) is left out.
+
+        # AC_DEFINE([HAVE_PTHREAD_API]) only AS_IF([test $gl_pthread_api = yes]); otherwise
+        # the macro stays undefined (not 0).
         checks.AC_DEFINE(
             "HAVE_PTHREAD_API",
-            condition = "_gl_pthread_api_yes",
+            condition = PTHREAD_API,
             if_false = None,
             if_true = 1,
         ),
 
-        # Upstream uses AC_CHECK_LIB([pthread], [pthread_kill]). AC_SEARCH_LIBS
-        # is equivalent: tries libc first, then -lpthread. Produces "" if in
-        # libc (glibc >= 2.34, macOS), "-lpthread" otherwise.
-        checks.AC_SEARCH_LIBS(
-            "pthread_mutex_lock",
-            ["pthread"],
-            subst = "LIBPMULTITHREAD",
-        ),
-        checks.AC_SUBST("LIBPTHREAD", ""),
-
-        # Upstream uses AC_CHECK_LIB([rt], [sched_yield]) and
-        # AC_CHECK_LIB([posix4], [sched_yield]). AC_SEARCH_LIBS equivalent.
+        # AC_LINK_IFELSE(sched_yield), then AC_CHECK_LIB([rt]) and AC_CHECK_LIB([posix4])
+        # (Solaris 7-10 and 2.5.1-2.6): AC_SEARCH_LIBS tries libc first, then each library.
         checks.AC_SEARCH_LIBS(
             "sched_yield",
             [
@@ -57,7 +123,16 @@ int main(void) {
             ],
             subst = "SCHED_YIELD_LIB",
         ),
-        checks.AC_SUBST("LIB_SCHED_YIELD", ""),
+        # LIB_SCHED_YIELD="$SCHED_YIELD_LIB": the same search under the older name.
+        checks.AC_SEARCH_LIBS(
+            "sched_yield",
+            [
+                "rt",
+                "posix4",
+            ],
+            name = "gl_cv_search_sched_yield_lib_sched_yield",
+            subst = "LIB_SCHED_YIELD",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -81,29 +156,35 @@ autoconf(
     name = "gl_WEAK_SYMBOLS",
     checks = select({
         # AS_CASE([$host_os], [cygwin* | mingw* | windows*], ...): upstream
-        # forces gl_cv_have_weak="guessing no" without probing, because
-        # programs using weak pthread_in_use() references crash at runtime.
+        # forces gl_cv_have_weak="guessing no" without probing on every Windows
+        # host, MSVC and mingw alike, because programs using weak
+        # pthread_in_use() references crash at runtime.
         "@platforms//os:windows": [],
         "//conditions:default": [
-            # AC_RUN_IFELSE test for weak symbols is not portable to cross-compilation
-            # On most ELF platforms (Linux, etc.), weak symbols are supported
+            # AC_LINK_IFELSE of a `#pragma weak` declaration makes gl_cv_have_weak "maybe";
+            # AC_RUN_IFELSE (a weak fputs that is non-null) then says yes.  The checker does
+            # not run programs: the link alone decides, which is what the run step finds on
+            # every ELF and Mach-O host.  The `-static` LDFLAGS case and the FreeBSD /
+            # DragonFly / MidnightBSD shared-library probe are left out.
             checks.AC_TRY_LINK(
-                name = "gl_cv_have_weak_symbols",
+                name = "gl_cv_have_weak",
                 code = """\
-extern void weakfunc(void) __attribute__((weak));
+extern void xyzzy(void);
+#pragma weak xyzzy
 int main(void) {
-    if (weakfunc != (void*)0) weakfunc();
+    xyzzy();
     return 0;
 }
 """,
                 language = "c",
             ),
 
-            # Use requires pattern to ensure undef (not 0) when not found
+            # AC_DEFINE([HAVE_WEAK_SYMBOLS]) under AS_CASE([$gl_cv_have_weak], [*yes]): undefined
+            # otherwise, not 0.
             checks.AC_DEFINE(
                 "HAVE_WEAK_SYMBOLS",
                 "1",
-                requires = ["gl_cv_have_weak_symbols==1"],
+                requires = ["gl_cv_have_weak"],
             ),
         ],
     }),
@@ -118,27 +199,89 @@ int main(void) {
 # Note: In autoconf, gl_DISABLE_THREADS sets AVOID_ANY_THREADS=1.
 # But most modules (lock, thread, cond, etc.) expect threading to be ENABLED.
 # So we configure with threads enabled by default (USE_POSIX_THREADS_FROM_LIBC on modern Linux/macOS).
+# AC_CHECK_HEADERS_ONCE([threads.h]): gl_THREADLIB_BODY asks when symbols can be weak,
+# gl_STDTHREADLIB_BODY always; one check target so that both agree on the one define.
+autoconf(
+    name = "HAVE_THREADS_H",
+    checks = [
+        checks.AC_CHECK_HEADER(
+            "threads.h",
+            define = "HAVE_THREADS_H",
+        ),
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_use_threads is `yes` (the --enable-threads default, gl_DISABLE_THREADS aside): the POSIX
+# branch where <pthread.h> and the API exist, the native Windows branch otherwise.  The
+# `isoc` and `isoc+posix` branches need --enable-threads=isoc and are left out.
 autoconf(
     name = "gl_THREADLIB_BODY",
-    checks = [
-        # Thread library substitutions - empty on most platforms with modern libc
-        checks.AC_SUBST("LIBTHREAD", ""),
-        checks.AC_SUBST("LTLIBTHREAD", ""),
-        checks.AC_SUBST("LIBMULTITHREAD", ""),
-        checks.AC_SUBST("LTLIBMULTITHREAD", ""),
-    ] + select({
-        "@platforms//os:linux": [
-            checks.AC_DEFINE("USE_POSIX_THREADS", "1"),
-            checks.AC_DEFINE("USE_POSIX_THREADS_FROM_LIBC", "1"),
-        ],
-        "@platforms//os:macos": [
-            checks.AC_DEFINE("USE_POSIX_THREADS", "1"),
-        ],
+    checks = select({
+        # AS_CASE([$host_os], [mingw* | windows*]): gl_THREADLIB_EARLY_BODY defaults
+        # gl_use_threads to `windows` on both (gl_use_winpthreads_default=no), whatever the
+        # compiler, so the POSIX branch is never tried there and the four variables keep their
+        # initial empty values.  `@platforms//os:windows` is that host_os case, not a compiler.
         "@platforms//os:windows": [
+            checks.AC_SUBST("LIBTHREAD", ""),
+            checks.AC_SUBST("LTLIBTHREAD", ""),
+            checks.AC_SUBST("LIBMULTITHREAD", ""),
+            checks.AC_SUBST("LTLIBMULTITHREAD", ""),
             checks.AC_DEFINE("USE_WINDOWS_THREADS", "1"),
         ],
         "//conditions:default": [
-            checks.AC_DEFINE("USE_POSIX_THREADS", "1"),
+            # LIBTHREAD=$LIBPTHREAD, then cleared again under USE_POSIX_THREADS_WEAK.
+            checks.AC_SUBST(
+                "LIBTHREAD",
+                condition = "!_gl_pthread_api_yes && ac_cv_lib_pthread_pthread_kill && !gl_cv_have_weak",
+                if_false = "",
+                if_true = "-lpthread",
+            ),
+            checks.AC_SUBST(
+                "LTLIBTHREAD",
+                condition = "!_gl_pthread_api_yes && ac_cv_lib_pthread_pthread_kill && !gl_cv_have_weak",
+                if_false = "",
+                if_true = "-lpthread",
+            ),
+            # LIBMULTITHREAD=$LIBPMULTITHREAD.
+            checks.AC_SUBST(
+                "LIBMULTITHREAD",
+                condition = LIBPMULTITHREAD_IS_LPTHREAD,
+                if_false = "",
+                if_true = "-lpthread",
+            ),
+            checks.AC_SUBST(
+                "LTLIBMULTITHREAD",
+                condition = LIBPMULTITHREAD_IS_LPTHREAD,
+                if_false = "",
+                if_true = "-lpthread",
+            ),
+            checks.AC_DEFINE(
+                "USE_POSIX_THREADS",
+                condition = PTHREAD_API,
+                if_false = None,
+                if_true = 1,
+            ),
+            # if test -z "$LIBMULTITHREAD": the thread functions are in libc (glibc 2.34 and
+            # newer; a libc without any libpthread to link).
+            checks.AC_DEFINE(
+                "USE_POSIX_THREADS_FROM_LIBC",
+                condition = "(" + PTHREAD_API + ") && !(" + LIBPMULTITHREAD_IS_LPTHREAD + ")",
+                if_false = None,
+                if_true = 1,
+            ),
+            # Otherwise, with weak symbols: references to libpthread are made weak, and a
+            # program that does not link it stays single-threaded (glibc before 2.34, macOS).
+            # Without them, PTHREAD_IN_USE_DETECTION_HARD on the BSDs is left out.
+            checks.AC_DEFINE(
+                "USE_POSIX_THREADS_WEAK",
+                condition = "(" + PTHREAD_API + ") && (" + LIBPMULTITHREAD_IS_LPTHREAD + ") && gl_cv_have_weak",
+                if_false = None,
+                if_true = 1,
+            ),
         ],
     }),
     visibility = ["//visibility:public"],
@@ -148,7 +291,12 @@ autoconf(
         ":gl_PTHREADLIB_BODY",
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
-    ],
+    ] + select({
+        # AS_CASE([$gl_cv_have_weak], [*yes], [AC_CHECK_HEADERS_ONCE([threads.h])]): weak
+        # symbols are "guessing no" on every Windows host, and a link test elsewhere.
+        "@platforms//os:windows": [],
+        "//conditions:default": [":HAVE_THREADS_H"],
+    }),
 )
 
 autoconf(
@@ -184,19 +332,28 @@ autoconf(
 
 autoconf(
     name = "gl_STDTHREADLIB_BODY",
-    checks = [
-        # Use standard cache variable name so other modules can reference it
-        checks.AC_CHECK_HEADER(
-            "threads.h",
-            define = "HAVE_THREADS_H",
-        ),
-
-        # LIBSTDTHREAD is set based on whether thrd_create is in libc or needs a library
-        # On most systems, if threads.h exists, thrd_create is in libc
-        checks.AC_SUBST("LIBSTDTHREAD", ""),
-    ],
+    checks = select({
+        # AS_CASE([$host_os], [mingw* | windows*], [LIBSTDTHREAD=]): a host_os case, MSVC and
+        # mingw alike.
+        "@platforms//os:windows": [
+            checks.AC_SUBST("LIBSTDTHREAD", ""),
+        ],
+        # Elsewhere: "" when <threads.h> exists and thrd_create links on its own; else
+        # "$LIBPMULTITHREAD" (plus `-lstdthreads -lpthread` where a libstdthreads exists,
+        # FreeBSD, and "$SCHED_YIELD_LIB" without <threads.h>, Solaris: both left out, both
+        # empty on the supported hosts).
+        "//conditions:default": [
+            checks.AC_SUBST(
+                "LIBSTDTHREAD",
+                condition = "!(ac_cv_header_threads_h && ac_cv_func_thrd_create) && (" + LIBPMULTITHREAD_IS_LPTHREAD + ")",
+                if_false = "",
+                if_true = "-lpthread",
+            ),
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
+        ":HAVE_THREADS_H",  # AC_CHECK_HEADERS_ONCE([threads.h])
         ":gl_ANYTHREADLIB_EARLY",
         "//autoconf/macros/AC_CANONICAL_HOST",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
@@ -204,19 +361,12 @@ autoconf(
         "@platforms//os:windows": [],
         "//conditions:default": [
             ":gl_PTHREADLIB_BODY",
+            # gl_CHECK_FUNCS_ANDROID([thrd_create]), the check gl_FUNC_THRD_CREATE shares.
+            "//gnulib/m4/thrd:HAVE_THRD_CREATE",
         ],
     }),
 )
 
-# HAVE_THRD_CREATE lives here (not in gl_STDTHREADLIB_BODY) so that targets
-# that need only the threads.h check (e.g. pthread_h via gl_PTHREAD_H_PART1)
-# can depend on gl_STDTHREADLIB_BODY only and not get the C11 define.
-#
-# Upstream only runs gl_CHECK_FUNCS_ANDROID([thrd_create]) in the non-mingw
-# branch of AS_CASE([$host_os]); on mingw/windows it just sets LIBSTDTHREAD=
-# and HAVE_THRD_CREATE stays undefined (MSVC's UCRT would otherwise link it).
-# The same unconditional check target is shared with gl_FUNC_THRD_CREATE so
-# that both ports agree on the single HAVE_THRD_CREATE result.
 autoconf(
     name = "gl_STDTHREADLIB",
     checks = [],
@@ -224,12 +374,7 @@ autoconf(
     deps = [
         ":gl_ANYTHREADLIB_EARLY",  # AC_REQUIRE([gl_ANYTHREADLIB_EARLY])
         ":gl_STDTHREADLIB_BODY",  # gl_STDTHREADLIB_BODY
-    ] + select({
-        "@platforms//os:windows": [],
-        "//conditions:default": [
-            "//gnulib/m4/thrd:HAVE_THRD_CREATE",
-        ],
-    }),
+    ],
 )
 
 # Adds CPPFLAGS like -D_THREAD_SAFE or -D_REENTRANT if needed
@@ -273,6 +418,7 @@ autoconf(
     name = "threadlib",
     visibility = ["//visibility:public"],
     deps = [
+        ":HAVE_THREADS_H",
         ":gl_ANYTHREADLIB_EARLY",
         ":gl_AVOID_WINPTHREAD",
         ":gl_PTHREADLIB",

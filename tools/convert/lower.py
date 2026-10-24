@@ -375,7 +375,7 @@ def platform_atoms(cond: df.Cond) -> bool:
     return bool(df.host_os_atoms(cond) or df.host_cpu_atoms(cond) or df.gnuc_atoms(cond))
 
 
-def flag_arms(cond: df.Cond, options: OptionTable) -> dict[str, df.Cond] | None:
+def flag_arms(cond: df.Cond, options: OptionTable, conds: Sequence[df.Cond] = ()) -> dict[str, df.Cond] | None:
     """Split a condition on one configure option into `select()` arms.
 
     `options.label(name, value)` names the `config_setting` of the option with that value,
@@ -385,7 +385,11 @@ def flag_arms(cond: df.Cond, options: OptionTable) -> dict[str, df.Cond] | None:
     default the enabled arm is `--enable-x` and the default arm the option not given; for one
     on by default the enabled arm is the option not given (`enable_x=yes` in its own not-given
     action) and the default arm `--disable-x`.  Conditions over two different options, or
-    mixing options and platform atoms, are not split (None).
+    mixing options and platform atoms, are not split (None).  A condition the invocations all
+    agree on (an option off by default compared against `no`: `--enable-x` and the option not
+    given both differ from it) is no split: the one default arm, the option not registered.
+    `conds` are the conditions the arms will carry when they are not `cond` itself (a decision
+    list's, `cond` their disjunction): the invocations must agree on every one of them.
     """
     names = df.option_names(cond)
     if not names:
@@ -398,11 +402,18 @@ def flag_arms(cond: df.Cond, options: OptionTable) -> dict[str, df.Cond] | None:
         (set(options.values(name)) | {a.value for a in df.flag_atoms(cond) if isinstance(a, df.FlagValue)})
         - {"yes", "no"}
     )
-    arms = {options.label(name, "yes"): df.substitute_option(cond, name, None if on_by_default else "yes")}
-    for value in values:
-        arms[options.label(name, value)] = df.substitute_option(cond, name, value)
-    arms[DEFAULT_ARM] = df.substitute_option(cond, name, "no" if on_by_default else None)
-    return arms
+    invocations: list[tuple[str, str | None]] = [
+        ("yes", None if on_by_default else "yes"),
+        *((value, value) for value in values),
+        (DEFAULT_ARM, "no" if on_by_default else None),
+    ]
+    readings = [[df.substitute_option(c, name, given) for c in (conds or [cond])] for _, given in invocations]
+    if all(reading == readings[0] for reading in readings[1:]):
+        return {DEFAULT_ARM: df.substitute_option(cond, name, invocations[-1][1])}
+    return {
+        (DEFAULT_ARM if value == DEFAULT_ARM else options.label(name, value)): df.substitute_option(cond, name, given)
+        for value, given in invocations
+    }
 
 
 def unmatched_patterns(cond: df.Cond) -> list[str]:

@@ -562,31 +562,43 @@ _NAME_KWARG_RE = re.compile(r'\bname\s*=\s*"([^"]+)"')
 
 
 def rule_names(text: str) -> list[str]:
-    """The `name` of every top-level rule call in a BUILD text, in order.  Parsed as Python
-    (a BUILD file is one syntactically); a text Python rejects falls back to a scan of the
-    calls that start at column 0."""
+    """The `name` of every top-level rule call in a BUILD text, in order."""
+    return list(rule_kinds(text))
+
+
+def rule_kinds(text: str) -> dict[str, str]:
+    """The `name` of every top-level rule call in a BUILD text, in order, with the rule called
+    (`cc_library`, `alias`, `string_flag`; `native.alias` as `alias`).  Parsed as Python (a
+    BUILD file is one syntactically); a text Python rejects falls back to a scan of the calls
+    that start at column 0."""
+    kinds: dict[str, str] = {}
     try:
         module = ast.parse(text)
     except SyntaxError:
-        names = []
         for match in _CALL_START_RE.finditer(text):
             end = text.find("\n)", match.end())
             name = _NAME_KWARG_RE.search(text, match.end(), end if end >= 0 else len(text))
             if name:
-                names.append(name.group(1))
-        return names
-    names = []
+                kinds[name.group(1)] = match.group(1).rsplit(".", 1)[-1]
+        return kinds
     for statement in module.body:
         call = statement.value if isinstance(statement, ast.Expr) else None
-        if isinstance(call, ast.Call):
-            for keyword in call.keywords:
-                if (
-                    keyword.arg == "name"
-                    and isinstance(keyword.value, ast.Constant)
-                    and isinstance(keyword.value.value, str)
-                ):
-                    names.append(keyword.value.value)
-    return names
+        if not isinstance(call, ast.Call):
+            continue
+        if isinstance(call.func, ast.Name):
+            kind = call.func.id
+        elif isinstance(call.func, ast.Attribute):
+            kind = call.func.attr
+        else:
+            continue
+        for keyword in call.keywords:
+            if (
+                keyword.arg == "name"
+                and isinstance(keyword.value, ast.Constant)
+                and isinstance(keyword.value.value, str)
+            ):
+                kinds[keyword.value.value] = kind
+    return kinds
 
 
 def statement_names(statement: Statement) -> list[str]:
