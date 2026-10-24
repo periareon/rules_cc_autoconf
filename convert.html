@@ -186,7 +186,7 @@ and reported, whatever the shape of the rest.</p>
 <pre><code class="language-sh">bazel run //tools/convert -- convert --src https://ftp.gnu.org/gnu/gzip/gzip-1.15.tar.xz --out /path/to/output --dev
 </code></pre>
 <p><code>--src</code> takes a release archive URL, a local archive or a source tree.
-<code>--out</code> receives <code>BUILD.bazel</code>, <code>MODULE.bazel</code>, <code>CONVERSION_REPORT.md</code> and
+<code>--out</code> receives <code>BUILD.bazel</code>, <code>MODULE.bazel</code>, <code>REPO.bazel</code> (the module's defaults: license metadata, the standard as a future toolchain feature), <code>CONVERSION_REPORT.md</code> and
 <code>decisions.bzl</code>. The banner of each generated file repeats the command, which
 is what regenerates the conversion. Options:</p>
 <div class="table-wrapper"><table><thead><tr><th>Option</th><th>Effect</th></tr></thead><tbody>
@@ -339,7 +339,8 @@ an <code>m4_fatal</code> becomes a warning so the expansion completes.</li>
 reported.</li>
 <li><strong>Checks.</strong> Check macros become <code>checks.*</code> and <code>macros.*</code> calls, their
 action arguments read as configure runs them. Runtime probes are never
-executed. Language standards are requirements, not flags.</li>
+executed. The language standard configure switches the compiler into is pinned
+on the package, and recorded by a check.</li>
 <li><strong>Shell.</strong> The shell between calls is evaluated symbolically: the
 condition a call runs under becomes its <code>requires</code>, platform cases become
 <code>select()</code>s, options become flags with config settings, assignments to
@@ -376,7 +377,7 @@ decision when they do not settle it.</li>
 <tr><td>A check that refers to earlier defines</td><td><code>compile_defines</code> on the check; the body split into <code>autoconf_1</code>, <code>autoconf_2</code>, ... where a probe needs an earlier result of the same body</td><td>Probes see <code>confdefs.h</code> as configure's do</td></tr>
 <tr><td><code>AC_USE_SYSTEM_EXTENSIONS</code></td><td>The extension macros on every later declaration, type, member, compile and link check</td><td>configure defines them before those checks</td></tr>
 <tr><td><code>AC_RUN_IFELSE</code></td><td>The m4's cross-compiling guess per platform, the program kept in a comment; a guess that is the same everywhere is a <code>probe:</code> decision</td><td>Nothing is executed at analysis time</td></tr>
-<tr><td><code>AC_PROG_CC_C99</code>, <code>AX_CXX_COMPILE_STDCXX</code>, <code>-std=</code> in <code>CFLAGS</code></td><td>A check that stops the build naming the flag to set</td><td>A Bazel build's standard belongs to the root module</td></tr>
+<tr><td><code>AC_PROG_CC_C99</code>, <code>AC_PROG_CC_STDC</code>, <code>AX_CXX_COMPILE_STDCXX</code>, <code>-std=</code> in <code>CFLAGS</code> or a Makefile</td><td>The mode configure switches the compiler into is pinned on every target and check of the package (<code>C_STD_OPTS</code> / <code>CXX_STD_OPTS</code>: <code>-std=gnu99</code>, or <code>/std:c11</code> on MSVC and clang-cl), and recorded by a <code>checks.AC_LANG_STANDARD</code> that does not stop the build; the script's own <code>test "$ac_cv_prog_cc_c99" = no</code> + <code>AC_MSG_ERROR</code> becomes the check's <code>error</code>. <code>REPO.bazel</code> carries the same standard as a commented-out toolchain feature, for when rules_cc names them (bazelbuild/rules_cc#936)</td><td>Autoconf's macros switch the compiler and record whether they could; only the script stops. The root module's <code>--conlyopt</code> / <code>--cxxopt</code> come later on the command line and still win</td></tr>
 <tr><td><code>test $x = yes</code> on a probe's variable</td><td>The probe's success</td><td>The value is what configure tested</td></tr>
 <tr><td>A variable copied from a probe's result (<code>found="$pa_cv_func_x"</code>), an alias of its name (<code>AS_VAR_PUSHDEF([cache], ...)</code> then <code>AC_CACHE_VAL([cache], ...)</code>), <code>AS_VAR_SET</code> / <code>AS_VAR_IF</code></td><td>The probe, under the name the expansion spells</td><td>nasm's PA macros name every cache variable through an alias</td></tr>
 <tr><td>A variable assigned inside a macro the body expands (<code>PA_ARG_ENABLED([x], ..., [PDFOPT=...])</code>)</td><td>Seen by the calls after the macro and by the body's <code>AC_SUBST</code> of it, under the call's condition</td><td>configure runs the macro's shell in place</td></tr>
