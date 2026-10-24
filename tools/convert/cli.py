@@ -967,8 +967,9 @@ def _convert_project(
         decisions=decisions,
         command=reproduce_command(args),
         extra_loads=extra_loads,
-        hand_targets=set(emit.rule_names(root_hand.text)),
+        hand_targets=emit.rule_kinds(root_hand.text),
         hand_packages=_hand_packages(hand_root),
+        hand_build=root_hand.text,
         module_attrs=module_attrs,
         module_name=args.entry.name if args.entry is not None else None,
         extra_modules=extra_modules,
@@ -1168,7 +1169,8 @@ def _convert_subprojects(
                 command=reproduce_command(args),
                 parent_headers=f"//:{TOP_HEADERS}",
                 package_path=package_path,
-                hand_targets=set(emit.rule_names(hand_package.text)),
+                hand_targets=emit.rule_kinds(hand_package.text),
+                hand_build=hand_package.text,
                 root_package=_root_package(args, out),
             )
             result.package.path = package_path

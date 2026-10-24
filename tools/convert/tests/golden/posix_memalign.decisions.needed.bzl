@@ -33,6 +33,6 @@ DECISIONS = {
     # ```
     # assignments:
     #   REPLACE_POSIX_MEMALIGN=1  when ac_cv_func_posix_memalign && !gl_cv_func_posix_memalign_works
-    #   REPLACE_POSIX_MEMALIGN=1  when gl_cv_onwards_func_posix_memalign matches future*
+    #   REPLACE_POSIX_MEMALIGN=1  when gl_cv_onwards_func_posix_memalign matches future*  [condition not expressible: gl_cv_onwards_func_posix_memalign matches future*]
     "variable:REPLACE_POSIX_MEMALIGN": decision.UNDECIDED,
 }

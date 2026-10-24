@@ -394,20 +394,26 @@ def _preprocessor_flags(
         # `libgrubgcry_a_CPPFLAGS = $(AM_CPPFLAGS) $(CPPFLAGS_GCRY)`: the flag classes a Makefile
         # defines (grub's conf/Makefile.common) are spelled out; a variable only configure sets
         # (`$(HOST_CPPFLAGS)`) stays a reference, reported below.
-        items = _expand_make_vars(list(mk.variables.get(variable, [])), mk)
-        # `$(FUSE_CFLAGS)`: a substitution configure sets to one literal (a pkg-config package's
-        # found action, `-DFUSE_USE_VERSION=32`) is spelled out too.
-        spelled_out: list[str] = []
-        for item in items:
-            name = make_var_name(item)
-            if name is not None and name in state.literal_substs:
-                spelled_out += state.literal_substs[name].split()
-            else:
-                spelled_out.append(item)
-        items = spelled_out
+        # A `$(VAR)` the Makefile itself defines is expanded; one configure sets to a single
+        # literal (a pkg-config package's found action, `$(FUSE_CFLAGS)` = `-DFUSE_USE_VERSION=32`)
+        # is spelled out too.  Both for the unconditional words and for the words under a
+        # conditional, which otherwise could never be classified.
+        def spelled_out(words: list[str]) -> list[str]:
+            out: list[str] = []
+            for item in _expand_make_vars(words, mk):
+                name = make_var_name(item)
+                if name is not None and name in state.literal_substs:
+                    out += state.literal_substs[name].split()
+                else:
+                    out.append(item)
+            return _joined_options(out)
+
+        items = spelled_out(list(mk.variables.get(variable, [])))
         # `AM_CPPFLAGS += -DENABLE_MERGE` inside `if ENABLE_MERGE`: the words
         # count when the conditional is decided ALWAYS (the same decision that
-        # compiles the sources under it); otherwise they are reported.
+        # compiles the sources under it); under a conditional that is one select() arm,
+        # the defines, includes and code-generation options go in that arm; otherwise
+        # they are reported.
         for word, cond in _joined_options(mk.conditional_variables.get(variable, [])):
             decision = am_decision(cond, decisions)
             # The arm label: a decided select(), or the one arm a flag-driven (or host-OS)
@@ -418,29 +424,50 @@ def _preprocessor_flags(
             label = decision.arm if decision is not None else None
             if decision is None:
                 label = conditional_arm(cond, state)
-            if decision is not None and decision.always:
-                items.append(word)
-            elif label is not None and word.startswith("-I"):
-                # make's `AM_CPPFLAGS += -I $(top_srcdir)/src/w32/include` under `if WINDOWSENV`:
-                # the directory goes in that arm of includes.
-                included = include_dir(word, variable)
-                if included is not None and included not in include_arms.setdefault(label, []):
-                    include_arms[label].append(included)
-            elif label is not None and word.startswith("-D"):
-                # ppp's `pppd_CPPFLAGS += -DPPPD_PLUGIN_DIR=...` under `if PPP_WITH_PLUGINS`: the
-                # define goes in that arm of local_defines.
-                define = define_of(word, variable)
-                if define is not None and define not in define_arms.setdefault(label, []):
-                    define_arms[label].append(define)
-            elif label is not None and re.fullmatch(r"-m[a-z0-9][a-z0-9+=.-]*", word):
-                # `src_libcksum_avx2_a_CFLAGS = -mavx2` under a conditional decided as a
-                # select() arm: the machine options go in that arm of copts.
-                copt_arms.setdefault(label, []).append(word)
-            elif decision is None or not decision.never:
-                notes.append(
-                    f"{directory or '.'}/Makefile.am: {variable} {word} under `if {cond}` left out "
-                    f"(decide am_conditional:{cond} ALWAYS to keep it)"
-                )
+            for option in spelled_out([word]):
+                if decision is not None and decision.always:
+                    items.append(option)
+                elif label is not None and option.startswith("-I"):
+                    # make's `AM_CPPFLAGS += -I $(top_srcdir)/src/w32/include` under `if WINDOWSENV`:
+                    # the directory goes in that arm of includes.
+                    included = include_dir(option, variable)
+                    if (
+                        included is not None
+                        and included not in includes
+                        and included not in include_arms.setdefault(label, [])
+                    ):
+                        include_arms[label].append(included)
+                elif label is not None and option.startswith("-D"):
+                    # ppp's `pppd_CPPFLAGS += -DPPPD_PLUGIN_DIR=...` under `if PPP_WITH_PLUGINS`: the
+                    # define goes in that arm of local_defines.
+                    define = define_of(option, variable)
+                    if define is not None and define not in defines and define not in define_arms.setdefault(label, []):
+                        define_arms[label].append(define)
+                elif label is not None and (
+                    re.fullmatch(r"-m[a-z0-9][a-z0-9+=.-]*", option)
+                    or (
+                        re.fullmatch(r"-f[a-z][a-z0-9-]*(?:=[A-Za-z0-9_.-]+)?", option)
+                        and option not in _OPTIMIZATION_FLAGS
+                    )
+                ):
+                    # `src_libcksum_avx2_a_CFLAGS = -mavx2` under a conditional decided as a
+                    # select() arm: the machine and code-generation options go in that arm of copts
+                    # (an option the unconditional flags carry already, `$(AM_CFLAGS)` expanded under
+                    # the conditional too, is not repeated).
+                    if option not in copts and option not in copt_arms.setdefault(label, []):
+                        copt_arms[label].append(option)
+                elif option.startswith("-std="):
+                    if option not in standards:
+                        standards.append(option)
+                elif make_var_name(option) is not None:
+                    unknown_vars.add((variable, option))
+                elif option.startswith(("-W", "-O", "-g")) or option in _OPTIMIZATION_FLAGS:
+                    pass  # warnings and optimization levels: the build's own business, as above
+                elif decision is None or not decision.never:
+                    notes.append(
+                        f"{directory or '.'}/Makefile.am: {variable} {option} under `if {cond}` left out "
+                        f"(decide am_conditional:{cond} ALWAYS to keep it)"
+                    )
         for item in _joined_options(items):
             option = item
             if option.startswith("-D"):

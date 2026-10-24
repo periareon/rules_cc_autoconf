@@ -439,7 +439,9 @@ def parse(text: str) -> Makefile:
                 and deps
                 and (deps[0].endswith(".in.h") or (target.endswith(".gl.h") and deps[0].endswith((".h", ".c"))))
             ):
-                plain = [d for d in deps[1:] if not d.startswith("$(") and "/" not in d.lstrip("./")]
+                # The other file inputs (`verify.h`; `lib/verify.h` in a non-recursive gnulib.mk,
+                # which `strip_directory` cuts like every other path), not `$(top_builddir)/config.status`.
+                plain = [d for d in deps[1:] if not d.startswith("$(")]
                 mk.headers.append(GeneratedHeader(target, deps[0], condition(), plain, module))
             # `lib/gmp.h: $(top_builddir)/config.status` with an echo recipe: candidate.
             echo_rule = (

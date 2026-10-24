@@ -632,6 +632,23 @@ def _literal_substs(main: Target) -> dict[str, str]:
     return out
 
 
+def _subst_values(main: Target) -> dict[str, list[str]]:
+    """Every literal the main target's AC_SUBSTs give a variable, whatever the condition: the
+    plain value, a `condition` check's `if_true` and `if_false`, the values of the select() arms."""
+    out: dict[str, list[str]] = {}
+    for items in [main.checks, *main.arm_lists]:
+        for item in items:
+            if not (
+                isinstance(item, Call) and item.fn == "checks.AC_SUBST" and item.args and isinstance(item.args[0], str)
+            ):
+                continue
+            values = [item.args[1]] if len(item.args) > 1 else [item.kwargs.get("if_true"), item.kwargs.get("if_false")]
+            for value in values:
+                if isinstance(value, (str, int)) and str(value) not in out.setdefault(item.args[0], []):
+                    out[item.args[0]].append(str(value))
+    return out
+
+
 def _shell_unquote(text: str) -> str:
     """The C token a Makefile's shell quoting spells: `'"x"'` and `"\\"x\\""` are `"x"`."""
     if len(text) >= 2 and text[0] == text[-1] == "'":

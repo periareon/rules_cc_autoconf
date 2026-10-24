@@ -9,7 +9,7 @@ from pathlib import Path
 
 from tools.convert import dataflow as df
 from tools.convert import decisions as dec
-from tools.convert import gnulibmk, lower
+from tools.convert import gnulibmk, lower, sedtext
 from tools.convert.common import (
     _SOURCE_SUFFIXES,
     GNULIB_GENERATED_DIR,
@@ -37,7 +37,7 @@ from tools.convert.sources import (
     am_condition,
     simplified_conditions,
 )
-from tools.convert.translate import GnulibLibrary, ProjectState, basename, condition_names, describe
+from tools.convert.translate import GnulibLibrary, ProjectState, basename, condition_names, describe, slug
 
 # The snippet files gnulib's `make` splices into generated headers, keyed by
 # the marker comment each replaces.
@@ -59,6 +59,10 @@ KNOWN_AM_CONDITIONS = [
     # unless a system libunistring of a sufficient version was found.
     ("gl_LIBUNISTRING_VERSION_CMP", "HAVE_LIBUNISTRING!=yes"),
 ]
+# `_condition_table` values for a condition decided ALWAYS (its sources are plain) and NEVER (they
+# are left out, with a note); neither reaches the generated SRC_CONDITIONS table.
+ALWAYS_CONDITION = "1"
+NEVER_CONDITION = "0"
 _INCLUDE_GNULIB_MK_RE = re.compile(r"^include\s+\S*(?:gnulib\.mk|Makefile\.gnulib)\s*$", re.MULTILINE)
 # gnulib-comp.m4 says where gnulib-tool put the library and what it named the fragment.
 _GL_SOURCE_BASE_RE = re.compile(r"^\s*gl_source_base='([^']*)'", re.MULTILINE)
@@ -410,7 +414,7 @@ def _emit_gnulib_library(
         package.after.append(
             Assign(
                 "SRC_CONDITIONS",
-                dict(sorted(src_conditions.items())),
+                dict(sorted((name, cond) for name, cond in src_conditions.items() if cond != NEVER_CONDITION)),
                 comments=[
                     "Conditions attached to each conditionally-compiled gnulib source: gl_INIT's",
                     "gl_CONDITIONAL tests and the `if`s around AC_LIBOBJ, over the rules' results.",
@@ -662,6 +666,8 @@ def _wrapper_header_rules(
         if _header_condition(header).startswith("GL_GENERATE_"):
             state.generate_defaults.add(_header_condition(header))
     templates: dict[str, str] = {}  # stem -> template, where it is not `<stem>.in.h` (se-context.in.h)
+    appended: dict[str, dict[str, Rule]] = {}  # stem -> marker -> the rule rendering a second input file
+    dir_slug = (prefix.rstrip("/") or "lib").replace("/", "_")
     if conditional:
         stems = []
         for header in conditional:
@@ -688,10 +694,7 @@ def _wrapper_header_rules(
                 if header_condition.startswith("gl_GNULIB_ENABLED_"):
                     state.enabled_switches.add(header_condition)
             if header.extra_inputs:
-                notes.append(
-                    f"{header.out}: also assembled from {', '.join(header.extra_inputs)} "
-                    "(see the gzip overlay's lib_assert_h_static_assert_half for the pattern)"
-                )
+                appended[stem] = _appended_inputs(mk, mk_path, src, prefix, header, stem, dir_slug, notes)
         package.after.append(
             Assign(
                 "GNULIB_COND_HDR_STEMS",
@@ -726,12 +729,34 @@ def _wrapper_header_rules(
             if templates
             else f'"{prefix}{{}}.in.h".format(stem)'
         )
-        dir_slug = (prefix.rstrip("/") or "lib").replace("/", "_")
+        cond_inlines_expr = inlines_expr
+        if any(appended.values()):
+            for halves in appended.values():
+                package.after.extend(halves.values())
+            package.after.append(
+                Assign(
+                    "GNULIB_COND_HDR_INLINES",
+                    {
+                        stem: {marker: f":{rule.name}" for marker, rule in halves.items()}
+                        for stem, halves in appended.items()
+                        if halves
+                    },
+                    comments=[
+                        "Snippets spliced into one particular wrapper on top of GL_INLINES: a second file",
+                        f"{mk_path.name}'s recipe appends to the header, rendered through the recipe's sed.",
+                    ],
+                )
+            )
+            cond_inlines_expr = (
+                f"{inlines_expr} | GNULIB_COND_HDR_INLINES.get(stem, {{}})"
+                if inlines
+                else "GNULIB_COND_HDR_INLINES.get(stem, {})"
+            )
         package.after.append(
             Raw(
                 f'[\n    autoconf_hdr(\n        name = "{dir_slug}_{{}}_h_processed".format(stem.replace("-", "_")),\n'
                 f'        out = "_gnulib_cond/" + {out_expr},\n'
-                f'        inlines = {inlines_expr},\n        mode = "subst",\n'
+                f'        inlines = {cond_inlines_expr},\n        mode = "subst",\n'
                 f'        template = {template_expr},\n        deps = [":autoconf"],\n    )\n'
                 "    for stem in GNULIB_COND_HDR_STEMS\n]"
             )
@@ -813,6 +838,91 @@ def _wrapper_header_rules(
     return private
 
 
+# `< $(srcdir)/verify.h`; a non-recursive gnulib.mk reads `$(top_srcdir)/lib/verify.h`.
+_SRCDIR_INPUT_RE = re.compile(r"<\s*\$\((?:top_)?srcdir\)/(\S+)")
+
+
+def _appended_inputs(
+    mk: gnulibmk.Makefile,
+    mk_path: Path,
+    src: Path,
+    prefix: str,
+    header: gnulibmk.GeneratedHeader,
+    stem: str,
+    dir_slug: str,
+    notes: list[str],
+) -> dict[str, Rule]:
+    """The second input file a wrapper header's recipe appends after the template (gnulib's
+    `assert.h`: `verify.h` through a sed that keeps its `static_assert` half), as an
+    `autoconf_hdr` rendering that file with the sed as substitutions, keyed by the template's
+    closing comment where it is spliced in (`/* The definition of static_assert is copied
+    here.  */`, the template's last line).  A recipe the converter cannot follow is noted."""
+    halves: dict[str, Rule] = {}
+    recipe = " ".join(line.rstrip("\\").strip() for line in mk.recipes.get(header.out, []))
+    # `{ sed ... < $(srcdir)/assert.in.h && sed ... < $(srcdir)/verify.h; } > $@-t`: the
+    # program for each input is what precedes its redirection.
+    parts = _SRCDIR_INPUT_RE.split(recipe)
+    programs = {parts[i + 1].rstrip(";"): parts[i] for i in range(0, len(parts) - 1, 2)}
+    template = src / prefix / header.template
+    marker = next((line for line in reversed(template.read_text(errors="replace").splitlines()) if line.strip()), "")
+    for extra in header.extra_inputs:
+        program = next((p for name, p in programs.items() if name.rsplit("/", 1)[-1] == extra), None)
+        commands = sedtext.parse(program) if program is not None and "sed" in program else None
+        source = src / prefix / extra
+        reason = None
+        if commands is None:
+            reason = "its recipe is not a sed the converter follows"
+        elif not source.is_file():
+            reason = f"{prefix}{extra} is not in the tree"
+        elif not sedtext.is_comment_line(marker) or marker in GL_INLINES or marker in halves:
+            reason = f"{header.template} does not end with a comment line to splice it at"
+        else:
+            substitutions = sedtext.substitutions(commands, source.read_text(errors="replace"))
+            if substitutions is None:
+                reason = "the recipe's sed has no equivalent as exact substitutions"
+        if reason is not None:
+            notes.append(f"{prefix}{header.out}: also assembled from {prefix}{extra}, left out: {reason}")
+            continue
+        assert substitutions is not None
+        extra_stem = extra.rsplit(".", 1)[0]
+        attrs: dict[str, AttrValue] = {"out": f"_gnulib_cond/{stem}-{extra}", "mode": "subst"}
+        if substitutions:
+            attrs["substitutions"] = substitutions
+        attrs["template"] = f"{prefix}{extra}"
+        attrs["deps"] = [":autoconf"]
+        halves[marker] = Rule(
+            "autoconf_hdr",
+            f"{dir_slug}_{stem.replace('-', '_')}_h_{slug(extra_stem)}",
+            attrs,
+            comments=[
+                f"{header.out} is assembled from two files: {header.template}, then {extra} through",
+                f"the sed of {mk_path.name}'s recipe, here as substitutions (a range the sed",
+                "deletes is fenced off with `#if 0`).  For assert.h that half supplies a one-argument",
+                "`_Static_assert` to compilers predating C23 (gcc < 9).",
+            ],
+            load_from="//autoconf:autoconf_hdr.bzl",
+        )
+    return halves
+
+
+def _apply_src_decision(
+    decision: dec.Decision, cond_name: str, src_conditions: dict[str, str], state: ProjectState
+) -> str:
+    """Record a `src_condition:` decision for `cond_name` in the condition table: ALWAYS as
+    `ALWAYS_CONDITION`, NEVER as `NEVER_CONDITION`, an expression as itself (and as an expression
+    whose providers `_condition_providers` pulls in).  Returns the word or expression for a
+    note."""
+    if decision.condition is not None:
+        src_conditions[cond_name] = decision.condition
+        state.src_condition_exprs[cond_name] = decision.condition
+        return decision.condition
+    if decision.always:
+        src_conditions[cond_name] = ALWAYS_CONDITION
+        return "ALWAYS"
+    src_conditions[cond_name] = NEVER_CONDITION
+    return "NEVER"
+
+
 def _header_condition(header: gnulibmk.GeneratedHeader) -> str:
     """The automake conditional a conditionally generated wrapper header is under (the
     `conditional` list of `_wrapper_header_rules` holds no header without one)."""
@@ -853,6 +963,17 @@ def _condition_table(
             "(gl_HAVE_MODULE_VERROR)"
         )
     for cond_name, conds in state.src_conditions.items():
+        # A hand-added `src_condition:` decision overrides the derived condition, the verror
+        # heuristic above included (the docs' promise): a gnulib.mk older than the ports' gnulib
+        # tests a cache variable the port no longer sets, or spells the condition in a way the
+        # lowering cannot follow.  The note keeps the override auditable once a newer gnulib.mk
+        # derives the right condition itself.
+        decided = decisions.optional(f"src_condition:{cond_name}", "src_condition")
+        if decided is not None:
+            applied = _apply_src_decision(decided, cond_name, src_conditions, state)
+            derived = " || ".join(describe(c) for c in conds)
+            notes.append(f"{cond_name}: condition decided {applied} (gl_INIT's: {derived})")
+            continue
         if cond_name in src_conditions:
             continue  # settled above
         if cond_name.startswith("gl_GNULIB_ENABLED_"):
@@ -896,16 +1017,8 @@ def _condition_table(
                 {**_am_block(mk_text, mk_path.name, cond_name), "conditions": [describe(c) for c in conds]},
             )
         )
-        if decision is None:
-            continue
-        if decision.condition is not None:
-            # A decided expression reads results like a lowered one: the port
-            # providing them is pulled in the same way (_condition_providers).
-            state.src_condition_exprs[cond_name] = decision.condition
-        if decision.always:
-            src_conditions[cond_name] = "1"
-        elif decision.condition is not None:
-            src_conditions[cond_name] = decision.condition
+        if decision is not None:
+            _apply_src_decision(decision, cond_name, src_conditions, state)
     return src_conditions, platform_conditions, platform_exceptions
 
 
@@ -951,6 +1064,9 @@ def _classify_sources(
             cond_name = source.condition
             if cond_name.startswith("gl_GNULIB_ENABLED_"):
                 src_conditions.setdefault(cond_name, "1")  # conditional dependencies: every module is enabled
+            if src_conditions.get(cond_name) == NEVER_CONDITION:
+                notes.append(f"{source.path}: left out (src_condition:{cond_name} is NEVER)")
+                continue
             if (
                 cond_name.startswith("!")
                 and " && " not in cond_name
@@ -961,10 +1077,20 @@ def _classify_sources(
                 # gnulib.mk's `else` branch (m4's localename-unsafe.c, under `if
                 # GL_COND_OBJ_LOCALENAME_UNSAFE_LIMITED` else): the conditional's negation.
                 base = cond_name[1:]
-                if src_conditions.get(base) == "1":
+                if src_conditions.get(base) == ALWAYS_CONDITION:
                     notes.append(f"{source.path}: under the else of `if {base}`, which always holds here; left out")
                     continue
-                if base in state.src_conditions:
+                if src_conditions.get(base) == NEVER_CONDITION:
+                    # The `if` arm never compiles: the else arm always does.
+                    if path not in plain_srcs:
+                        plain_srcs.append(path)
+                    continue
+                decided_base = decisions.optional(f"src_condition:{base}", "src_condition")
+                if decided_base is not None and decided_base.condition is not None:
+                    # The decided expression, not the derived one, is what the else arm negates.
+                    src_conditions[cond_name] = f"!({decided_base.condition})"
+                    state.src_condition_exprs[cond_name] = src_conditions[cond_name]
+                elif base in state.src_conditions:
                     negated = _lower_gnulib(df.neg(df.disj(*state.src_conditions[base])), state)
                     if negated.ok and negated.expr:
                         src_conditions[cond_name] = negated.expr

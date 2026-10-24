@@ -586,8 +586,13 @@ class Evaluator:
         value_words: set[str] | None = None,
         fatal: set[int] | None = None,
         pinned: set[str] | None = None,
+        unset_empty: Callable[[str], bool] | None = None,
     ) -> None:
         self.state: dict[str, Value | None] = dict(bindings or {})  # None: conditional/unknown
+        # Whether a variable nothing bound before the body ran is empty on the paths the body
+        # does not assign it (what an unset shell variable is to `test`); the caller knows which
+        # variables the script around the body, or the environment, may have set.
+        self.unset_empty = unset_empty
         # Variables whose binding stands whatever the body assigns them: the cache variable of a
         # compiler-option test (`pa_cv_CFLAGS__Wall=yes` before the probe that may reset it), which
         # the toolchain decides, not the shell around the probe.
@@ -608,6 +613,7 @@ class Evaluator:
         self.analysis = Analysis()
         for name, value in CROSS_GUESS_DEFAULTS.items():
             self.state.setdefault(name, Lit(value))
+        self.bound: frozenset[str] = frozenset(self.state)  # bound before the body ran
 
     def run(self, seq: sh.Seq) -> Analysis:
         self.seq(seq, TRUE)
@@ -839,7 +845,12 @@ class Evaluator:
 
         Only when every assignment has a literal value and the assignments
         together cover every path; otherwise None (the value before the
-        first assignment is not known here).
+        first assignment is not known here), unless nothing bound the variable
+        before the body ran and `unset_empty` says so: then the paths no
+        assignment covers hold the empty value (`excuse="disabled"` under one
+        option, then `test x"$excuse" = x`).  Only for assignments under known
+        conditions: with an opaque one in the list, the paths it leaves are as
+        opaque as before.
         """
         # The macros the body expanded in place assigned it too (translate's `_settle` records
         # them in `inherited`, under the calls' conditions), after the body's own assignments: a
@@ -849,6 +860,13 @@ class Evaluator:
         decisions = self.analysis.decisions(var) + self.analysis.inherited.get(var, [])
         if not decisions:
             return None
+        if (
+            self.unset_empty is not None
+            and var not in self.bound
+            and self.unset_empty(var)
+            and not any(has_unknown(d.cond) for d in decisions)
+        ):
+            decisions = [Assignment(TRUE, Lit(""), f"{var} unset")] + decisions
         verdicts: list[Cond | bool] = []
         for d in decisions:
             verdict = predicate(d.value)
@@ -951,10 +969,20 @@ class Evaluator:
                 # `enableval=yes` a few lines up in the same branch: the
                 # value assigned under a path that implies the current one.
                 branch = self.branch_state.get(var)
-                if branch is not None and tautology(disj(neg(self.path), branch[0])):
+                if branch is not None and self._on_path(branch[0]):
                     return branch[1]
             return value
+        # A variable only an inlined macro assigned so far, conditionally (settled into
+        # `branch_state` without a binding): known on the paths that assignment covers.
+        branch = self.branch_state.get(var)
+        if branch is not None and self._on_path(branch[0]):
+            return branch[1]
         return Ref(var)
+
+    def _on_path(self, cond: Cond) -> bool:
+        """Whether `cond` holds wherever the current path does: the very same path (two statements
+        of one branch, whatever opaque conditions the path carries) or one it implies."""
+        return cond == self.path or tautology(disj(neg(self.path), cond))
 
     def value(self, word: sh.Word) -> Value:
         if word.unknown:

@@ -127,8 +127,8 @@ DECISIONS = {
     #   ASFLAGS_config='-Wa,--noexecstack'
     # ```
     # assignments:
-    #   ASFLAGS_config='-Wa,--noexecstack'  when DEFS matches *NO_ASM*
-    #   ASFLAGS_config=  when DEFS matches *NO_ASM*
+    #   ASFLAGS_config='-Wa,--noexecstack'  when DEFS matches *NO_ASM*  [condition not expressible: DEFS matches *NO_ASM*]
+    #   ASFLAGS_config=  when DEFS matches *NO_ASM*  [condition not expressible: DEFS matches *NO_ASM*]
     "variable:ASFLAGS_config": decision.UNDECIDED,
 
     # ---- variable: GNULIB_WARN_CFLAGS
@@ -145,7 +145,7 @@ DECISIONS = {
     # ```sh
     #   GZIP_TRANSFORMED=` echo gzip  | sed "$program_transform_name"`
     # ```
-    # assignments: GZIP_TRANSFORMED=$( echo gzip  | sed "$program_transform_name")  when always
+    # assignments: GZIP_TRANSFORMED=$( echo gzip  | sed "$program_transform_name")  when always  [value not a literal: UnknownValue]
     "variable:GZIP_TRANSFORMED": decision.UNDECIDED,
 
     # ---- variable: SHELL
@@ -159,8 +159,8 @@ DECISIONS = {
     #   SHELL=/bin/sh
     # ```
     # assignments:
-    #   SHELL=$ac_cv_path_shell  when always
-    #   SHELL=/bin/sh  when test $SHELL = no
+    #   SHELL=$ac_cv_path_shell  when always  [value not a literal: UnknownValue]
+    #   SHELL=/bin/sh  when test $SHELL = no  [condition not expressible: test $SHELL = no]
     "variable:SHELL": decision.UNDECIDED,
 
     # ---- variable: WARN_CFLAGS
@@ -185,7 +185,7 @@ DECISIONS = {
     # ```sh
     #   ZDIFF_TRANSFORMED=`echo zdiff | sed "$program_transform_name"`
     # ```
-    # assignments: ZDIFF_TRANSFORMED=$(echo zdiff | sed "$program_transform_name")  when always
+    # assignments: ZDIFF_TRANSFORMED=$(echo zdiff | sed "$program_transform_name")  when always  [value not a literal: UnknownValue]
     "variable:ZDIFF_TRANSFORMED": decision.UNDECIDED,
 
     # ---- variable: ZGREP_TRANSFORMED
@@ -194,6 +194,6 @@ DECISIONS = {
     # ```sh
     #   ZGREP_TRANSFORMED=`echo zgrep | sed "$program_transform_name"`
     # ```
-    # assignments: ZGREP_TRANSFORMED=$(echo zgrep | sed "$program_transform_name")  when always
+    # assignments: ZGREP_TRANSFORMED=$(echo zgrep | sed "$program_transform_name")  when always  [value not a literal: UnknownValue]
     "variable:ZGREP_TRANSFORMED": decision.UNDECIDED,
 }

@@ -381,6 +381,12 @@ GNULIB_COND_HDR_STEMS = [
     "stdint",
 ]
 
+GNULIB_COND_HDR_INLINES = {
+    "assert": {
+        "/* The definition of static_assert is copied here.  */": ":lib_assert_h_verify",
+    },
+}
+
 SRC_CONDITIONS = {
     "GL_COND_OBJ_CALLOC": "REPLACE_CALLOC_FOR_CALLOC_GNU!=0 || REPLACE_CALLOC_FOR_CALLOC_POSIX!=0",
     "GL_COND_OBJ_CLOSE": "REPLACE_CLOSE!=0",
@@ -674,6 +680,7 @@ def autoconf_targets():
             ],
             allow_empty = True,
         ),
+        include_prefix = ".",
         includes = ["lib"],
         strip_include_prefix = "/",
         visibility = ["//visibility:private"],
@@ -689,11 +696,26 @@ def autoconf_targets():
             deps = [":autoconf"],
         )
 
+    autoconf_hdr(
+        name = "lib_assert_h_verify",
+        out = "_gnulib_cond/assert-verify.h",
+        mode = "subst",
+        substitutions = {
+            "/* @assert.h omit end@  */": "#endif /* @assert.h omit end@  */",
+            "/* @assert.h omit start@  */": "#if 0 /* @assert.h omit start@  */",
+            "_GL_VERIFY": "_GL_STATIC_ASSERT",
+            "_gl_verify": "_gl_static_assert",
+        },
+        template = "lib/verify.h",
+        visibility = ["//visibility:private"],
+        deps = [":autoconf"],
+    )
+
     for stem in GNULIB_COND_HDR_STEMS:
         autoconf_hdr(
             name = "lib_{}_h_processed".format(stem.replace("-", "_")),
             out = "_gnulib_cond/" + stem + ".h",
-            inlines = GL_INLINES,
+            inlines = GL_INLINES | GNULIB_COND_HDR_INLINES.get(stem, {}),
             mode = "subst",
             template = "lib/{}.in.h".format(stem),
             deps = [":autoconf"],
@@ -724,6 +746,7 @@ def autoconf_targets():
             # The templates are inputs of the autoconf_hdr targets, not headers.
             exclude = ["lib/**/*.in.h"],
         ),
+        include_prefix = ".",
         includes = ["lib"],
         strip_include_prefix = "/",
         visibility = ["//visibility:private"],
