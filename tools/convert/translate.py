@@ -377,6 +377,10 @@ class ProjectState:
     configure_libs: dict[str, str] = field(default_factory=dict)
     """Registry libraries configure puts in LIBS (AC_CHECK_LIB, AC_SEARCH_LIBS, `-l` by hand), which
     every target links: `-l` name -> label."""
+    configure_link_vars: list[str] = field(default_factory=list)
+    """Substitutions holding the `-l` flag of a system library configure appends to LIBS (an
+    AC_SEARCH_LIBS result, AC_CHECK_LIB's default action), which every target links through the
+    shared `autoconf_linkopts`, as LIBS is: `-ldl` for dlopen on glibc before 2.34."""
     pkg_libs: dict[str, list[str]] = field(default_factory=dict)
     """`FUSE_LIBS` -> the registry library labels a found PKG_CHECK_MODULES stands for: the deps of what links `$(FUSE_LIBS)`."""
     pkg_conditions: dict[str, df.Cond] = field(default_factory=dict)
@@ -1679,7 +1683,9 @@ class Translator:
                 copies = [clone(c) for c in calls]
                 if isinstance(value, list):
                     for call in copies:
-                        call.kwargs["requires"] = strings(call.kwargs.get("requires")) + value
+                        requires = strings(call.kwargs.get("requires")) + value
+                        if requires:  # ALWAYS as an arm's value is an empty list: no attribute
+                            call.kwargs["requires"] = requires
                 produced = set().union(*(produced_keys(other) for other in arm if isinstance(other, Call)))
                 for call in copies:
                     if produced_keys(call) & produced:
@@ -1696,7 +1702,7 @@ class Translator:
             return
         target_list = dest if dest is not None else ctx.target.checks
         for call in calls:
-            if decision.requires is not None:
+            if decision.requires:
                 call.kwargs["requires"] = strings(call.kwargs.get("requires")) + list(decision.requires)
             _append_unique(target_list, call)
 
@@ -3356,8 +3362,20 @@ class Translator:
         cache = f"ac_cv_lib_{cache_name(lib)}_{cache_name(function)}"
         if self._decided_check(node, cache, f"HAVE_LIB{cache_name(lib).upper()}", ctx):
             return []
-        self._registry_library(lib, f"AC_CHECK_LIB([{lib}], [{function}])")
+        registry = self._registry_library(lib, f"AC_CHECK_LIB([{lib}], [{function}])")
         items: list[CheckItem] = [Call("checks.AC_CHECK_LIB", [lib, function])]
+        if self.project is not None and not registry and not args[2].strip():
+            # The default action-if-found is `LIBS="-l<lib> $LIBS"`: a system library (not a
+            # registry module, which would be a dep of every target) reaches every link as a
+            # substitution the shared linkopts target carries.  The check's own result is its
+            # success, so a sibling substitution spells the flag.
+            items.append(
+                Call(
+                    "checks.AC_SUBST",
+                    [self._link_var(f"{cache}_LIBS")],
+                    {"condition": cache, "if_true": f"-l{lib}", "if_false": ""},
+                )
+            )
         actions = [
             (label, args[i]) for label, i in (("action-if-found", 2), ("action-if-not-found", 3)) if args[i].strip()
         ]
@@ -3368,12 +3386,28 @@ class Translator:
                 items += self._actions_decision(node, ctx, actions)
         return items
 
+    def _link_var(self, name: str) -> str:
+        """Register `name` as a substitution every target links through `:linkopts` (LIBS)."""
+        if name not in self._state.configure_link_vars:
+            self._state.configure_link_vars.append(name)
+        return name
+
     def _m_AC_SEARCH_LIBS(self, node: Node, ctx: _Ctx) -> list[CheckItem]:
         args = node.args + ["", "", "", "", ""]
         function, candidates = args[0].strip(), m4args.words(args[1])
-        for lib in candidates:
-            self._registry_library(lib, f"AC_SEARCH_LIBS([{function}], [{' '.join(candidates)}])")
-        items: list[CheckItem] = [Call("checks.AC_SEARCH_LIBS", [function, candidates])]
+        registry = [
+            lib
+            for lib in candidates
+            if self._registry_library(lib, f"AC_SEARCH_LIBS([{function}], [{' '.join(candidates)}])")
+        ]
+        kwargs: dict[str, AttrValue] = {}
+        if self.project is not None and candidates and not registry:
+            # A search that finds the function in a library prepends `-l<lib>` to LIBS, whatever
+            # its actions: for system libraries (a registry module would be a dep of every
+            # target) the check's value, `-l<lib>` or empty, is a substitution the shared
+            # linkopts target carries to every link.
+            kwargs["subst"] = self._link_var(f"ac_cv_search_{cache_name(function)}_LIBS")
+        items: list[CheckItem] = [Call("checks.AC_SEARCH_LIBS", [function, candidates], kwargs)]
         actions = [
             (label, args[i]) for label, i in (("action-if-found", 2), ("action-if-not-found", 3)) if args[i].strip()
         ]
