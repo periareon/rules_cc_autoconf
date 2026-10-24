@@ -72,8 +72,10 @@ def _link_vars(items: list[str], state: ProjectState) -> list[str]:
     answers is a dep instead, see `_link_items`).  A variable configure only ever sets to `-l`
     words of libraries the registry provides (`LIBLZMA` = `-llzma`, the module `xz` probed
     through the main target) names libraries that are every target's deps already
-    (`configure_libs`): its linkopts would ask the linker for a system copy, so it is left out."""
-    out: list[str] = []
+    (`configure_libs`): its linkopts would ask the linker for a system copy, so it is left out.
+    The substitutions configure appends to LIBS for a system library (`configure_link_vars`,
+    `-ldl` from AC_SEARCH_LIBS([dlopen], [dl])) come first, on every line: LIBS is on every link."""
+    out: list[str] = list(state.configure_link_vars)
     for item in items:
         name = make_var_name(item)
         if name is not None and name not in out and name not in state.pkg_libs and not _registry_covered(name, state):

@@ -2509,6 +2509,46 @@ def test_probe_decision_answers_a_library_or_header_check() -> None:
     assert translator.decisions.pending == {}
 
 
+def test_system_library_searches_reach_every_link() -> None:
+    """`AC_SEARCH_LIBS([dlopen], [dl])` and `AC_CHECK_LIB(m, log10)` with the default action both
+    put the library's `-l` flag in LIBS, which every link of the Makefile carries: for a system
+    library (not a registry module) the flag becomes a substitution the shared linkopts target
+    lists, the search's own value or a sibling of the library check.  A check with its own
+    action-if-found, a registry library (a dep already) and a search with no candidate get
+    none."""
+    lines = (
+        ["#! /bin/sh"]
+        + call(1, "AC_SEARCH_LIBS", "dlopen", "dl")
+        + call(2, "AC_CHECK_LIB", "m", "log10")
+        + call(3, "AC_CHECK_LIB", "pthread", "pthread_mutex_lock", "LIBPTHREAD=-lpthread")
+        + call(4, "AC_SEARCH_LIBS", "daemon", "")
+        + call(5, "AC_CHECK_LIB", "gmp", "__gmpz_init")
+    )
+    state = ProjectState()
+    translator = Translator(
+        markers.parse("\n".join(lines) + "\n"),
+        index=INDEX,
+        selected_files={"configure.ac"},
+        m4_sources={},
+        options=Options(),
+        decisions=Decisions(),
+        project=state,
+    )
+    translator.translate()
+    target = translator.translate_root("autoconf", loc_file="configure.ac")
+    calls = [(c.fn, c.args, c.kwargs) for c in as_calls(target.checks)]
+    assert ("checks.AC_SEARCH_LIBS", ["dlopen", ["dl"]], {"subst": "ac_cv_search_dlopen_LIBS"}) in calls
+    assert (
+        "checks.AC_SUBST",
+        ["ac_cv_lib_m_log10_LIBS"],
+        {"condition": "ac_cv_lib_m_log10", "if_true": "-lm", "if_false": ""},
+    ) in calls
+    assert ("checks.AC_SEARCH_LIBS", ["daemon", []], {}) in calls
+    substs = [str(c[1][0]) for c in calls if c[0] == "checks.AC_SUBST"]
+    assert [name for name in substs if "pthread" in name or "gmp" in name] == []
+    assert state.configure_link_vars == ["ac_cv_search_dlopen_LIBS", "ac_cv_lib_m_log10_LIBS"]
+
+
 def test_option_compared_against_no_opens_no_select() -> None:
     """An option off by default whose only test is against `no` (`if test x"$enable_mount" = xno;
     then excuse="explicitly disabled"`, the tool's settings under `test x"$excuse" = x`): the
