@@ -574,6 +574,13 @@ def _programs_tree(
                 mk.variables.get(f"{canonical}_LDFLAGS", []) + mk.variables.get("AM_LDFLAGS", []), mk
             )
             module = "-module" in ldflags
+            # Without `-no-undefined` in its LDFLAGS, libtool lets the library reference symbols
+            # its users provide (flex's libfl.la: libmain.c's main() calls the scanner's
+            # yylex()): on darwin it links the dylib with `-undefined dynamic_lookup`, which
+            # the linker otherwise rejects (Linux allows an undefined symbol in a shared
+            # object), and on Windows, where a DLL cannot have one, it builds no shared
+            # library at all ("undefined symbols not allowed ... building static only").
+            no_undefined = "-no-undefined" in ldflags
             stem = library.archive[: -len(".la")]
             shared_name = _dict_literal(
                 {  # a bare name lands in the package directory: keep the subdirectory
@@ -583,21 +590,41 @@ def _programs_tree(
                 },
                 "    ",
             )
+            shared_attrs: dict[str, AttrValue] = {
+                "shared_lib_name": Raw(f"select({shared_name})"),
+                "deps": [f":{name}"],
+            }
+            shared_comments = [
+                (
+                    f"{makefile_name}: {library.archive} is a libtool {'module' if module else 'library'}: "
+                    "the shared object automake installs."
+                )
+            ]
+            if not no_undefined:
+                shared_attrs["user_link_flags"] = Raw(
+                    "select({\n"
+                    '        "@platforms//os:macos": ["-Wl,-undefined,dynamic_lookup"],\n'
+                    '        "//conditions:default": [],\n'
+                    "    })"
+                )
+                shared_attrs["target_compatible_with"] = Raw(
+                    "select({\n"
+                    '        "@platforms//os:windows": ["@platforms//:incompatible"],\n'
+                    '        "//conditions:default": [],\n'
+                    "    })"
+                )
+                shared_comments.append(
+                    "No `-no-undefined` in its LDFLAGS: as libtool, the library may reference symbols its "
+                    "users provide, linked with `-undefined dynamic_lookup` on macOS and not built as a DLL on "
+                    "Windows (static only there)."
+                )
+            shared_attrs["visibility"] = ["//visibility:public"]
             package.after.append(
                 Rule(
                     "cc_shared_library",
                     f"{name}_shared",
-                    {
-                        "shared_lib_name": Raw(f"select({shared_name})"),
-                        "deps": [f":{name}"],
-                        "visibility": ["//visibility:public"],
-                    },
-                    comments=[
-                        (
-                            f"{makefile_name}: {library.archive} is a libtool {'module' if module else 'library'}: "
-                            "the shared object automake installs."
-                        )
-                    ],
+                    shared_attrs,
+                    comments=shared_comments,
                     load_from="@rules_cc//cc:cc_shared_library.bzl",
                 )
             )

@@ -1938,11 +1938,20 @@ def test_automake_tree_and_programs(tmp_path: Path) -> None:
 
 
 def test_shared_libraries_and_aliases(tmp_path: Path) -> None:
-    """Installed libtool libraries get a cc_shared_library; subdirectory targets a root alias."""
+    """Installed libtool libraries get a cc_shared_library; subdirectory targets a root alias.  A
+    library whose LDFLAGS lack `-no-undefined` may reference symbols its users provide, as
+    libtool allows: its shared library links with `-undefined dynamic_lookup` on macOS and is
+    not built on Windows; one with `-no-undefined` carries neither."""
     root = tmp_path
     (root / "Makefile.am").write_text("SUBDIRS = lib src ext\n")
     for sub, text in (
-        ("lib", "lib_LTLIBRARIES = libbar.la\nlibbar_la_SOURCES = a.c\n"),
+        (
+            "lib",
+            (
+                "lib_LTLIBRARIES = libbar.la libwhole.la\nlibbar_la_SOURCES = a.c\n"
+                "libwhole_la_SOURCES = w.c\nlibwhole_la_LDFLAGS = -version-info 1:0:0 -no-undefined\n"
+            ),
+        ),
         ("src", "bin_PROGRAMS = foo\nfoo_SOURCES = main.c\n"),
         (
             "ext",
@@ -1954,7 +1963,7 @@ def test_shared_libraries_and_aliases(tmp_path: Path) -> None:
     ):
         (root / sub).mkdir()
         (root / sub / "Makefile.am").write_text(text)
-    for name in ("lib/a.c", "src/main.c", "ext/p.c", "ext/h.c"):
+    for name in ("lib/a.c", "lib/w.c", "src/main.c", "ext/p.c", "ext/h.c"):
         (root / name).write_text("")
     package = Package(path="", docstring="")
     state = ProjectState()
@@ -1963,6 +1972,12 @@ def test_shared_libraries_and_aliases(tmp_path: Path) -> None:
     shared = rules["lib/bar_shared"]
     assert shared.kind == "cc_shared_library"
     assert shared.attrs["deps"] == [":lib/bar"]
+    assert '"@platforms//os:macos": ["-Wl,-undefined,dynamic_lookup"]' in as_raw(shared.attrs["user_link_flags"]).text
+    assert (
+        '"@platforms//os:windows": ["@platforms//:incompatible"]' in as_raw(shared.attrs["target_compatible_with"]).text
+    )
+    whole = rules["lib/whole_shared"]
+    assert "user_link_flags" not in whole.attrs and "target_compatible_with" not in whole.attrs
     assert '"lib/libbar.dylib"' in as_raw(shared.attrs["shared_lib_name"]).text
     assert '"@platforms//os:windows": "lib/bar.dll"' in as_raw(shared.attrs["shared_lib_name"]).text
     assert '"ext/plug.so"' in as_raw(rules["ext/plug_shared"].attrs["shared_lib_name"]).text
