@@ -31,7 +31,7 @@ bison_toolchain_info(
     bison_env = select({
         "@platforms//os:windows": {
             "BISON_PKGDATADIR": "external/bison+/data",
-            "M4_RLOCATIONPATH": "m4+/m4.exe",
+            "M4_RLOCATIONPATH": "m4+/src/m4.exe",
         },
         "//conditions:default": {},
     }),

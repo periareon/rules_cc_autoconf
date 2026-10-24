@@ -25,6 +25,8 @@ from tools.convert.common import (
     BOOL_OPTIONS,
     CONFIG_HEADERS,
     NO_WARNINGS,
+    STANDARD_CONSTANTS,
+    STANDARD_FEATURES_TODO,
     TOP_HEADERS,
     _dict_literal,
     _inside_project,
@@ -34,6 +36,7 @@ from tools.convert.common import (
     module_name,
     no_warnings_statement,
     quote_label,
+    standard_statement,
 )
 from tools.convert.emit import render_statement
 from tools.convert.expand import Expansion
@@ -291,6 +294,7 @@ def convert_project(
     package_path: str = "",
     module_name: str | None = None,
     extra_modules: dict[str, str] | None = None,
+    repo_file: bool = True,
     root_package: str = "",
 ) -> ProjectResult:
     """Translate a whole project into a root package.  `command` is the
@@ -299,7 +303,9 @@ def convert_project(
     in the tree load into the generated module); `extra_loads` the repositories the hand-written
     BUILD.bazel loads, declared the same way, and `hand_targets` its rules, name -> kind (a
     `generated:` decision may hand a file to one; an option flag steps aside for one), `hand_build` its text
-    (the option settings it keys a select() on are declared); `hand_packages` the paths of the hand-written packages
+    (the option settings it keys a select() on are declared); `repo_file` whether the module root gets a
+    REPO.bazel with the repository's defaults (not for an http_archive's single BUILD file); `hand_packages`
+    the paths of the hand-written packages
     beside the root (an overlay's `tests/`), which no root rule may write into; `parent_headers` the enclosing project's config headers
     library when `src` is an AC_CONFIG_SUBDIRS sub-configure (gawk's extension/ compiles with
     `-I$(srcdir)/..`) and `package_path` that package's path in the module (the scope of its
@@ -594,7 +600,9 @@ def convert_project(
     if any(isinstance(st, Rule) and st.kind in ("cc_library", "cc_binary", "cc_test") for st in package.after):
         package.before.append(no_warnings_statement())
         notes += _module_flags(package, decisions, package_path or ".")
-    license_loads = _license_rules(package, src, decisions, package_path, notes)
+    _standard_flags(package, state)
+    root = package_path in ("", ".")
+    license_loads = _license_rules(package, src, decisions, package_path, notes, repo_defaults=repo_file and root)
 
     # bazel_skylib is always declared: the module's own test packages (the
     # overlays' tests/) load diff_test and write_file from it, and
@@ -637,6 +645,10 @@ def convert_project(
             "configure (texlive's $(MAKE_SUBDIRS)); converted as a package of this module"
         )
     extra_files.update(state.extra_templates)
+    if repo_file and root:
+        repo_bazel = _repo_bazel(state, metadata=bool(license_loads))
+        if repo_bazel is not None:
+            extra_files["REPO.bazel"] = repo_bazel
     notes.insert(0, _project_shape(src, package))
     if package_path in ("", "."):
         _root_includes(package)
@@ -1140,13 +1152,71 @@ def _module_flags(package: Package, decisions: dec.Decisions, package_path: str)
     return notes
 
 
+_STANDARD_ATTRS = {"C": "conlyopts", "CXX": "cxxopts"}
+
+
+def _standard_flags(package: Package, state: ProjectState) -> None:
+    """The standards configure switches the compiler into (`pinned_standards`), as `C_STD_OPTS` /
+    `CXX_STD_OPTS` constants on every cc target and autoconf target of the package: the
+    `conlyopts` / `cxxopts` the macro's or the flags' `-std=` amount to, per compiler family
+    (`common.standard_statement`)."""
+    for lang, standard in sorted(state.pinned_standards.items()):
+        constant = STANDARD_CONSTANTS[lang]
+        attr = _STANDARD_ATTRS[lang]
+        at = next(
+            (i + 1 for i, st in enumerate(package.before) if isinstance(st, Assign) and st.name == NO_WARNINGS),
+            len(package.before),
+        )
+        package.before.insert(at, standard_statement(lang, standard, state.standard_origins.get(lang, "configure")))
+        for rule in package.after:
+            if isinstance(rule, Rule) and rule.kind in _CC_RULES:
+                rule.attrs[attr] = _plus_constant(rule.attrs.get(attr), constant)
+        for target in package.targets:
+            if target.kind == "autoconf":
+                target.attrs[attr] = _plus_constant(target.attrs.get(attr), constant)
+
+
+def _plus_constant(value: AttrValue | None, constant: str) -> AttrValue:
+    """`value + CONSTANT`: the constant alone for an absent or empty attribute."""
+    if value is None or value == []:
+        return Raw(constant)
+    text = value.text if isinstance(value, Raw) else repr(value).replace("'", '"')
+    return Raw(f"{text} + {constant}")
+
+
+def _repo_bazel(state: ProjectState, *, metadata: bool) -> str | None:
+    """REPO.bazel, the repository's defaults for every package of the module: the license metadata
+    (`default_package_metadata`, autoconf.bzl's `package_metadata`), and the language standard
+    configure switches the compiler into, written as the toolchain feature it will be and
+    commented out until rules_cc names the standards (`C_STD_OPTS` pins it meanwhile).  None when
+    there is nothing to set."""
+    standards = [state.pinned_standards[lang] for lang in ("C", "CXX") if lang in state.pinned_standards]
+    if not metadata and not standards:
+        return None
+    lines = ["# The repository's defaults: REPO.bazel applies to every package of the module.", "repo("]
+    if metadata:
+        lines += [
+            "    # The license metadata every target carries (autoconf.bzl's package_metadata).",
+            '    default_package_metadata = ["//:package_metadata"],',
+        ]
+    if standards:
+        features = ", ".join(f'"{standard}"' for standard in standards)
+        lines += [
+            f"    # {STANDARD_FEATURES_TODO}",
+            f"    # features = [{features}],",
+        ]
+    lines.append(")")
+    return ownership.marked("\n".join(lines) + "\n", ".bazel", "REPO.bazel, the module's defaults")
+
+
 def _license_rules(
-    package: Package, src: Path, decisions: dec.Decisions, package_path: str, notes: list[str]
+    package: Package, src: Path, decisions: dec.Decisions, package_path: str, notes: list[str], *, repo_defaults: bool
 ) -> set[str]:
     """The root package exports the license files the release ships (COPYING, LICENSE), as the
     registry's hand-written entries do, and adds the registry's package metadata over them: a
     `license()` per file with its SPDX identifier, the `package_metadata` that carries them with
-    the module's purl, and `package(default_package_metadata = ...)` so every target has them.
+    the module's purl, and `package(default_package_metadata = ...)` so every target has them (REPO.bazel's
+    `repo(default_package_metadata = ...)` instead, for every package of the module, with `repo_defaults`).
     The identifier comes from a `license:<file>` decision, else from the text and the source
     headers (`licenses.detect`); a file neither settles is requested, with its opening lines.
     `IGNORE` leaves a file exported without metadata.  Returns the repositories the rules load,
@@ -1179,7 +1249,7 @@ def _license_rules(
             )
         )
     statements: list[Statement] = []
-    if decided:
+    if decided and not repo_defaults:
         statements.append(Raw('package(default_package_metadata = [":package_metadata"])'))
     listed = _list_literal(files, "    ") if len(files) > 1 else f'["{files[0]}"]'
     statements.append(Raw(f"exports_files({listed})"))

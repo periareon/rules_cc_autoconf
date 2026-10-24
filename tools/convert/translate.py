@@ -350,15 +350,22 @@ class ProjectState:
     port_conditionals: dict[str, str] = field(default_factory=dict)
     """Automake conditionals the ports spell."""
     c_standard: str | None = None
-    """A standard the script forces with CFLAGS=-std=...: a requirement check (checks.AC_LANG_STANDARD)
-    of the main target, since a Bazel build's standard is the root module's."""
+    """A standard the script forces with CFLAGS=-std=...: pinned on every target (`pinned_standards`)
+    and recorded by a checks.AC_LANG_STANDARD of the main target."""
     cxx_standard: str | None = None
     """The same for CXXFLAGS=-std=...."""
     required_standards: set[str] = field(default_factory=set)
-    """Standards already covered by a requirement check (AC_PROG_CC_C99, AX_CXX_COMPILE_STDCXX, or one
-    added for the above), by their ISO name (`gnu11` -> `c11`): a second one would be a duplicate."""
+    """Standards a check already records (AC_PROG_CC_C99, AX_CXX_COMPILE_STDCXX, or one added for the
+    above), by their ISO name (`gnu11` -> `c11`): a second one would be a duplicate producer."""
     makefile_standards: dict[str, str] = field(default_factory=dict)
     """`-std=` found in a Makefile's flags, per language."""
+    pinned_standards: dict[str, str] = field(default_factory=dict)
+    """Language (`C` / `CXX`) -> the standard, as spelled on the command line (`gnu99`), that configure
+    switches the compiler into for the whole build (AC_PROG_CC_C99, AX_CXX_COMPILE_STDCXX, `-std=` in
+    the flags): `project._standard_flags` pins it on every target and check of the package (see
+    `common.standard_statement`), and `standard_origins` says what set it, for the comment."""
+    standard_origins: dict[str, str] = field(default_factory=dict)
+    """Language -> what in the script chose `pinned_standards[lang]` (`AC_PROG_CC_C99`)."""
     templates: list[Path] = field(default_factory=list)
     """The .in.h templates of the gnulib library."""
 
@@ -745,6 +752,8 @@ class Translator:
         its inputs). Variables of the environment stay unknown."""
         if self.project is None or name in self.cache_vars_set or name in ENVIRONMENT_VARIABLES:
             return False
+        if name.startswith("ac_cv_std_"):
+            return False  # a standard check's result (`_STANDARD_MACRO_VARIABLES`), set by the rules
         return "_cv_" in name or bool(_ALLCAPS_RE.match(name))
 
     # -- decisions ------------------------------------------------------------
@@ -1030,6 +1039,7 @@ class Translator:
             )
         for unknown in analysis.unknowns:
             self.report.note(f"{ctx.where}: shell not followed: {unknown}")
+        self._script_aborts(analysis, target)
         if target.kind == "autoconf_defaults":
             self._finish_defaults(target)
         return target
@@ -1502,6 +1512,11 @@ class Translator:
         """Cache variables set by probes with synthesized check names."""
         bindings: dict[str, df.Value] = {}
         for child in node.walk():
+            if child.kind == "call" and child.name in _STANDARD_MACRO_VARIABLES and _directly_in(child, node):
+                # `ac_cv_prog_cc_c99` is `no` when the macro could not switch the compiler: the
+                # standard check's failure (`test "$ac_cv_prog_cc_c99" = no` -> `!ac_cv_std_c99`).
+                macro_var, standard_cache = _STANDARD_MACRO_VARIABLES[child.name]
+                bindings[macro_var] = df.Probe(standard_cache)
             if child.kind == "call" and child.name in PROBES and child.name != "AC_RUN_IFELSE":
                 cache = child.enclosing("AC_CACHE_CHECK", "AC_CACHE_VAL")
                 if cache is None:
@@ -3202,11 +3217,12 @@ class Translator:
 
     # -- language standards: a requirement, not a flag -------------------------
     #
-    # configure switches the compiler into the mode a macro asks for and
-    # stops when it cannot.  A Bazel build's standard is the root module's
-    # (--copt / --cxxopt or a toolchain feature), so the macros become checks
-    # that probe the mode the compiler is in and stop the build with the
-    # flag to add when it is not the one asked for.
+    # configure switches the compiler into the mode a macro asks for (`-std=gnu99` appended to
+    # CC) and records whether it could; only a script's own AC_MSG_ERROR stops it.  The
+    # translation pins the mode on every target and check of the package (`pinned_standards`,
+    # a compiler-family select until rules_cc names the standards as toolchain features) and
+    # records the mode the compiler is then in with a checks.AC_LANG_STANDARD, which the
+    # script's own test of `$ac_cv_prog_cc_c99` reads.
 
     def _set_standard(self, lang: str, standard: str) -> None:
         """A `CFLAGS="$CFLAGS -std=..."` of the script: the last one wins (configure appends in order)."""
@@ -3215,27 +3231,36 @@ class Translator:
         else:
             self._state.c_standard = standard
 
-    def _standard(self, lang: str, standard: str, node: Node) -> list[CheckItem]:
-        """`checks.AC_LANG_STANDARD(standard, error = True)` for a macro that insists on a standard."""
+    def _standard(self, lang: str, standard: str, node: Node, pin: str) -> list[CheckItem]:
+        """A macro that switches the compiler into `standard` mode (AC_PROG_CC_C99: `-std=gnu99`):
+        the mode is pinned on the package (`pin`, as configure spells it) and the check records
+        it, without stopping the build; autoconf's macro does not stop either, a script that
+        wants to tests `$ac_cv_prog_cc_c99` itself (`_m_AC_MSG_ERROR`)."""
         if self.project is not None:
             self.project.required_standards.add(iso_standard(standard))
-        self.report.note(
-            f"{node.name}: the {lang} compiler must be in {standard} mode or later; checked, "
-            "not set (a Bazel build's standard is the root module's)"
-        )
-        return [Call("checks.AC_LANG_STANDARD", [standard], {"error": True})]
+            self._pin_standard(lang, pin, node.name)
+        self.report.note(f"{node.name}: every target and check compiles in {pin} mode, as configure would set CC")
+        return [Call("checks.AC_LANG_STANDARD", [standard])]
+
+    def _pin_standard(self, lang: str, pin: str, origin: str) -> None:
+        """Record the standard a macro switches the compiler into: the first macro to do so wins
+        (the next ones run under the first's CC).  A `-std=` of the script's CFLAGS or of a
+        Makefile comes later on the compile line and overrides it (`sources._require_standards`)."""
+        if lang not in self._state.pinned_standards:
+            self._state.pinned_standards[lang] = pin
+            self._state.standard_origins[lang] = origin
 
     def _cxx_standard(self, version: str, ext: str, mandatory: str, node: Node) -> list[CheckItem]:
         """AX_CXX_COMPILE_STDCXX: `checks.AX_CXX_COMPILE_STDCXX`, which defines HAVE_CXX<N> and, when
-        mandatory, stops the build when the compiler is not in that mode."""
+        mandatory, stops the build when the compiler is not in that mode; the mode is pinned on the
+        package (`-std=gnu++N`, or `c++N` for `noext`), as the macro sets CXX."""
         ext = ext.strip() if ext.strip() in ("ext", "noext") else "ext"
         optional = mandatory.strip() == "optional"
-        if self.project is not None and not optional:
-            self.project.required_standards.add(f"c++{version}")
-        self.report.note(
-            f"{node.name}: the C++ compiler must be in C++{version} mode or later; checked, "
-            "not set (a Bazel build's standard is the root module's)"
-        )
+        if self.project is not None:
+            if not optional:
+                self.project.required_standards.add(f"c++{version}")
+            self._pin_standard("CXX", f"{'c' if ext == 'noext' else 'gnu'}++{version}", node.name)
+        self.report.note(f"{node.name}: every target and check compiles in C++{version} mode, as the macro sets CXX")
         return [Call("checks.AX_CXX_COMPILE_STDCXX", [version, ext], {"mandatory": False} if optional else {})]
 
     def _m_AX_CXX_COMPILE_STDCXX(self, node: Node, ctx: _Ctx) -> list[CheckItem]:
@@ -3255,7 +3280,11 @@ class Translator:
         return self._cxx_standard("17", args[0], args[1], node)
 
     def _m_AC_PROG_CC_C99(self, node: Node, ctx: _Ctx) -> list[CheckItem]:
-        return self._standard("C", "c99", node)
+        return self._standard("C", "c99", node, "gnu99")
+
+    def _m_AC_PROG_CC_STDC(self, node: Node, ctx: _Ctx) -> list[CheckItem]:
+        """ISO C, which autoconf 2.69 takes to be C99 (falling back to C89); `ac_cv_prog_cc_stdc`."""
+        return self._standard("C", "c99", node, "gnu99")
 
     def _m_AC_CHECK_SIZEOF(self, node: Node, ctx: _Ctx) -> list[CheckItem]:
         args = node.args + ["", "", ""]
@@ -3789,11 +3818,40 @@ class Translator:
         return []
 
     def _m_AC_MSG_ERROR(self, node: Node, ctx: _Ctx) -> list[CheckItem]:
+        """`if test "$ac_cv_prog_cc_c99" = no; then AC_MSG_ERROR(...)`: the script's own stop when
+        the compiler is not in the mode it needs, the one fatal part of a standard macro: the
+        standard's check gets the message as `error`.  Any other abort is reported, not modeled."""
+        guard = self._guard(node, ctx)
+        message = m4args.strip_m4(node.args[0]).strip().split("\n")[0] if node.args else ""
+        if self._standard_abort(guard, message, ctx.target):
+            return []
         self.report.note(
-            f"{ctx.where}: configure aborts with AC_MSG_ERROR({node.args[0] if node.args else ''}) "
-            f"when {describe(self._guard(node, ctx))}; not modeled"
+            f"{ctx.where}: configure aborts with AC_MSG_ERROR({message}) when {describe(guard)}; not modeled"
         )
         return []
+
+    def _standard_abort(self, guard: df.Cond, message: str, target: Target) -> bool:
+        """An abort under a standard check's failure (`!ac_cv_std_c99`): the check gets `message` as
+        its `error`, the one fatal part of AC_PROG_CC_C99 and friends.  False for any other abort."""
+        if not (isinstance(guard, df.Not) and isinstance(guard.cond, df.Truthy)):
+            return False
+        if not guard.cond.name.startswith("ac_cv_std_"):
+            return False
+        standard = guard.cond.name[len("ac_cv_std_") :]
+        for items in [target.checks, *target.arm_lists]:
+            for item in items:
+                if isinstance(item, Call) and item.fn == "checks.AC_LANG_STANDARD" and item.args[:1] == [standard]:
+                    item.kwargs["error"] = message or True
+                    return True
+        target.checks.append(Call("checks.AC_LANG_STANDARD", [standard], {"error": message or True}))
+        return True
+
+    def _script_aborts(self, analysis: df.Analysis, target: Target) -> None:
+        """The body's own `AC_MSG_ERROR`s the expansion spelled as `as_fn_error` (`_analyze` records
+        them with their path): the ones under a standard check's failure become the check's
+        `error`; the rest only bound the dataflow's paths (`fatal`)."""
+        for path, message in analysis.aborts:
+            self._standard_abort(df.substitute_unset(path, self._never_set), message, target)
 
     _m_AC_MSG_FAILURE = _m_AC_MSG_ERROR
 
@@ -5069,6 +5127,13 @@ def _last_wins[T](items: list[T], cond: Callable[[T], df.Cond]) -> list[T]:
         if not any(cond(item) == cond(later) for later in items[index + 1 :])
         and not df.tautology(df.disj(df.neg(cond(item)), *(cond(later) for later in items[index + 1 :])))
     ]
+
+
+# The cache variable a standard macro sets and the standard check that stands for it.
+_STANDARD_MACRO_VARIABLES = {
+    "AC_PROG_CC_C99": ("ac_cv_prog_cc_c99", "ac_cv_std_c99"),
+    "AC_PROG_CC_STDC": ("ac_cv_prog_cc_stdc", "ac_cv_std_c99"),
+}
 
 
 def _assigned_names(text: str) -> set[str]:

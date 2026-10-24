@@ -13,6 +13,7 @@ from tools.convert.automake import _programs_tree, _split_deps
 from tools.convert.cli import _manual_programs_section
 from tools.convert.common import NO_WARNINGS, _platform_labels, no_warnings_statement
 from tools.convert.decisions import Decisions, Word
+from tools.convert.emit import render_statement
 from tools.convert.gnulib_lib import (
     _classify_sources,
     _condition_table,
@@ -27,11 +28,20 @@ from tools.convert.index import Port, PortIndex, parse_build
 from tools.convert.ir import Assign, Call, CheckItem, Dep, Package, Raw, Rule, Target, strings
 from tools.convert.makefiles import _automake_tree, _configured_subdirs, _library_target, _parse_tree_makefile
 from tools.convert.modulebazel import _module_bazel
-from tools.convert.project import _gnulib_file_list, _module_flags, _option_rules, _pinned_defines, _root_includes
+from tools.convert.project import (
+    _gnulib_file_list,
+    _module_flags,
+    _option_rules,
+    _pinned_defines,
+    _repo_bazel,
+    _root_includes,
+    _standard_flags,
+)
 from tools.convert.results import _confdefs, _drop_duplicate_defines
 from tools.convert.sources import (
     _conditional_sources,
     _preprocessor_flags,
+    _require_standards,
     _written_content,
     am_decision,
     simplified_conditions,
@@ -1240,7 +1250,10 @@ def test_public_headers_and_implementation_deps(tmp_path: Path) -> None:
 
 
 def test_language_standards() -> None:
-    """AX_CXX_COMPILE_STDCXX / AC_PROG_CC_C99 / CFLAGS=-std=: requirement checks, not flags."""
+    """AX_CXX_COMPILE_STDCXX / AC_PROG_CC_C99 / CFLAGS=-std=: the mode configure switches the compiler
+    into is pinned on the package and recorded by a check that does not stop the build (autoconf's
+    macros do not stop either).  A macro's pin is the first one's; the script's CFLAGS come later
+    on the compile line and override it."""
     # The configure.ac top level (project mode): no DEFUN markers around the calls.
     lines = ["#! /bin/sh", 'CFLAGS="$CFLAGS -std=gnu11"']
     lines += call(2, "AX_CXX_COMPILE_STDCXX", "17", "noext", "mandatory")
@@ -1258,14 +1271,91 @@ def test_language_standards() -> None:
     )
     translator.translate()
     main = translator.translate_root("autoconf", loc_file="configure.ac")
-    # CFLAGS=-std=gnu11 is the script's own flag; the macros become requirement checks.
     assert state.c_standard == "gnu11"
     assert state.cxx_standard is None
     assert [(c.fn, c.args, c.kwargs) for c in main.checks if isinstance(c, Call)] == [
         ("checks.AX_CXX_COMPILE_STDCXX", ["17", "noext"], {}),
-        ("checks.AC_LANG_STANDARD", ["c99"], {"error": True}),
+        ("checks.AC_LANG_STANDARD", ["c99"], {}),
     ]
     assert state.required_standards == {"c++17", "c99"}
+    assert state.pinned_standards == {"C": "gnu99", "CXX": "c++17"}
+    notes: list[str] = []
+    _require_standards(main, state, notes)
+    assert state.pinned_standards == {"C": "gnu11", "CXX": "c++17"}
+    assert state.standard_origins["C"] == "CFLAGS: -std=gnu11"
+    assert [c.args for c in main.checks if isinstance(c, Call) and c.fn == "checks.AC_LANG_STANDARD"] == [
+        ["c99"],
+        ["gnu11"],
+    ]
+
+
+def test_standard_macro_error_is_the_scripts_own() -> None:
+    """`AC_PROG_CC_C99` then `if test "$ac_cv_prog_cc_c99" = no; then AC_MSG_ERROR(...)`: the macro's
+    cache variable is the standard check's result, and the script's own abort, which the
+    expansion spells as `as_fn_error` in the shell, is the one fatal part, carried as the check's
+    `error` message; nothing is asked."""
+    lines = (
+        ["#! /bin/sh"]
+        + call(1, "AC_PROG_CC_C99")
+        + [
+            'if test "$ac_cv_prog_cc_c99" = "no"; then',
+            '  as_fn_error $? "a C99 compiler is required" "$LINENO" 5',
+            "fi",
+        ]
+    )
+    translator = Translator(
+        markers.parse("\n".join(lines) + "\n"),
+        index=INDEX,
+        selected_files={"configure.ac"},
+        m4_sources={},
+        options=Options(),
+        decisions=Decisions(),
+        project=ProjectState(),
+    )
+    translator.translate()
+    main = translator.translate_root("autoconf", loc_file="configure.ac")
+    assert [(c.fn, c.args, c.kwargs) for c in as_calls(main.checks)] == [
+        ("checks.AC_LANG_STANDARD", ["c99"], {"error": "a C99 compiler is required"})
+    ]
+    assert translator.decisions.pending == {}
+
+
+def test_repo_bazel_carries_the_module_defaults() -> None:
+    """REPO.bazel: the license metadata as every package's default, and the pinned standard as the
+    toolchain feature it will be, commented out with the rules_cc change it waits for; nothing
+    when there is neither."""
+    state = ProjectState()
+    assert _repo_bazel(state, metadata=False) is None
+    state.pinned_standards = {"C": "gnu99", "CXX": "gnu++17"}
+    state.standard_origins = {"C": "AC_PROG_CC_C99", "CXX": "AX_CXX_COMPILE_STDCXX"}
+    text = _repo_bazel(state, metadata=True)
+    assert text is not None and text.startswith("# @gener" + "ated")
+    assert 'default_package_metadata = ["//:package_metadata"],' in text
+    assert '# features = ["gnu99", "gnu++17"],' in text
+    assert "TODO(bazelbuild/rules_cc#936)" in text
+    assert "features = " not in text.replace("# features", "")
+
+
+def test_standard_flags_pin_every_target() -> None:
+    """The pinned standard is one `C_STD_OPTS` select per package, appended to the `conlyopts` of
+    every cc target and autoconf target (`/std:c11` on MSVC and clang-cl, `-std=gnu99` elsewhere),
+    with the toolchain-feature follow-up noted."""
+    package = Package(path="", docstring="")
+    package.before.append(no_warnings_statement())
+    package.after.append(Rule("cc_library", "src/x", {"copts": Raw(NO_WARNINGS)}))
+    package.after.append(Rule("cc_binary", "tool", {"conlyopts": ["-fno-builtin"]}))
+    package.targets.append(Target(name="autoconf"))
+    state = ProjectState()
+    state.pinned_standards = {"C": "gnu99"}
+    state.standard_origins = {"C": "AC_PROG_CC_C99"}
+    _standard_flags(package, state)
+    assert [s.name for s in package.before if isinstance(s, Assign)] == [NO_WARNINGS, "C_STD_OPTS"]
+    rules = rules_by_name(package)
+    assert as_raw(rules["src/x"].attrs["conlyopts"]).text == "C_STD_OPTS"
+    assert as_raw(rules["tool"].attrs["conlyopts"]).text == '["-fno-builtin"] + C_STD_OPTS'
+    assert as_raw(package.targets[0].attrs["conlyopts"]).text == "C_STD_OPTS"
+    text = render_statement(package.before[1])
+    assert '"-std=gnu99"' in text and '"/std:c11"' in text and "TODO(bazelbuild/rules_cc#936)" in text
 
 
 def test_subst_decision_drops_local_copy() -> None:

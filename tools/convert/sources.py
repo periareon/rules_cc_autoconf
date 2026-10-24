@@ -252,31 +252,31 @@ _OPTIMIZATION_FLAGS = {
 
 
 def _require_standards(main: Target, state: ProjectState, notes: list[str]) -> None:
-    """Requirement checks for the standards the script or a Makefile forces
-    with `-std=` (`CFLAGS="$CFLAGS -std=gnu11"`, `AM_CFLAGS = -std=gnu99`).
-
-    configure would compile everything in that mode; a Bazel build's standard
-    is the root module's (--copt / --cxxopt or a toolchain feature), so the
-    main target checks the mode the compiler is in and stops the build with
-    the flag to add when it is older.  Standards a macro already checks
-    (AC_PROG_CC_C99, AX_CXX_COMPILE_STDCXX) are not checked twice."""
+    """The standards the script or a Makefile forces with `-std=` (`CFLAGS="$CFLAGS -std=gnu11"`,
+    `AM_CFLAGS = -std=gnu99`): configure compiles everything in that mode, so it is pinned on
+    every target of the package (`pinned_standards`) and recorded by a checks.AC_LANG_STANDARD
+    of the main target where no macro records it (AC_PROG_CC_C99, AX_CXX_COMPILE_STDCXX).  The
+    last `-std` on a compile line wins: a Makefile's comes after CFLAGS, which comes after the
+    switch a macro appended to CC, so a flag overrides a macro's pin."""
     wanted = {"C": state.c_standard, "CXX": state.cxx_standard}
+    origins = {"C": "CFLAGS", "CXX": "CXXFLAGS"}
     for lang, standard in state.makefile_standards.items():
-        if not wanted[lang]:
-            wanted[lang] = standard
-            notes.append(
-                f"{standard}: a Makefile.am passes -std={standard}; the main target checks for it instead "
-                "of pinning it (a Bazel build's standard is the root module's)"
-            )
+        wanted[lang] = standard
+        origins[lang] = "Makefile.am"
     for lang in ("C", "CXX"):
         chosen = wanted[lang]
-        if not chosen or iso_standard(chosen) in state.required_standards:
+        if not chosen:
+            continue
+        if state.pinned_standards.get(lang) != chosen:
+            state.pinned_standards[lang] = chosen
+            state.standard_origins[lang] = f"{origins[lang]}: -std={chosen}"
+            notes.append(f"{origins[lang]} passes -std={chosen}: every target and check compiles in that mode")
+        if iso_standard(chosen) in state.required_standards:
             continue
         state.required_standards.add(iso_standard(chosen))
-        call = Call("checks.AC_LANG_STANDARD", [chosen], {"error": True})
-        call.comments.append(f"The script compiles everything with -std={chosen}.  A Bazel build's standard is the")
+        call = Call("checks.AC_LANG_STANDARD", [chosen])
         call.comments.append(
-            "root module's (--copt / --cxxopt), so it is checked here rather than pinned on the targets."
+            f"{origins[lang]} passes -std={chosen}: the mode every target of the package is pinned to."
         )
         main.checks.append(call)
 

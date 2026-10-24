@@ -203,6 +203,68 @@ def _platform_labels(cond: df.Cond | None) -> list[str] | None:
 NO_WARNINGS = "NO_WARNINGS"
 """The copts constant that turns warnings off: `/w` for MSVC and clang-cl, `-w` elsewhere."""
 
+STANDARD_CONSTANTS = {"C": "C_STD_OPTS", "CXX": "CXX_STD_OPTS"}
+"""The `conlyopts` / `cxxopts` constants pinning the language standard configure switched the
+compiler into, per language."""
+
+STANDARD_FEATURES_TODO = (
+    "TODO(bazelbuild/rules_cc#936): Define upstream requested standard when features have been agreed upon"
+)
+"""The note on every pin: rules_cc's toolchain features naming the standards (`gnu99`, `c++17`) will
+replace the per-compiler selects."""
+
+# The MSVC spelling of a standard (`/std:`), by ISO name; None where MSVC has no switch (the
+# legacy mode is what the compiler does without one).  clang-cl takes the same switches.
+_MSVC_STANDARDS = {
+    "c89": None,
+    "c90": None,
+    "c99": "/std:c11",  # MSVC has no C99 mode: C11 is the first one with __STDC_VERSION__
+    "c11": "/std:c11",
+    "c17": "/std:c17",
+    "c18": "/std:c17",
+    "c23": "/std:clatest",
+    "c++98": "/std:c++14",  # /std:c++14 is the oldest mode MSVC offers
+    "c++03": "/std:c++14",
+    "c++11": "/std:c++14",
+    "c++14": "/std:c++14",
+    "c++17": "/std:c++17",
+    "c++20": "/std:c++20",
+    "c++23": "/std:c++latest",
+    "c++26": "/std:c++latest",
+}
+
+
+def _iso(standard: str) -> str:
+    standard = standard.lower()
+    return "c" + standard[3:] if standard.startswith("gnu") else standard
+
+
+def standard_statement(lang: str, standard: str, origin: str) -> Assign:
+    """The `C_STD_OPTS` / `CXX_STD_OPTS` select, one per language and package: the `-std` (GNU)
+    or `/std:` (MSVC, clang-cl) switch for `standard`, spelled as configure chose it (`gnu99`),
+    which every target of the package and every check compiles with.  `origin` says what in the
+    script set it, for the comment."""
+    msvc = _MSVC_STANDARDS.get(_iso(standard))
+    msvc_list = f'["{msvc}"]' if msvc else "[]"
+    return Assign(
+        STANDARD_CONSTANTS[lang],
+        # The TODO sits inside the value: the default output drops the IR's comments
+        # (`emit.strip_annotations`), and a consumer patching the entry should see it.
+        Raw(
+            "select({\n"
+            f"    # {STANDARD_FEATURES_TODO}\n"
+            f'    "@rules_cc//cc/compiler:clang-cl": {msvc_list},\n'
+            f'    "@rules_cc//cc/compiler:msvc-cl": {msvc_list},\n'
+            f'    "//conditions:default": ["-std={standard}"],\n'
+            "})"
+        ),
+        comments=[
+            f"{origin}: every target and check compiles in {standard} mode, as configure set CC.",
+            "A consumer's --conlyopt / --cxxopt comes later on the command line and wins.",
+            STANDARD_FEATURES_TODO,
+        ],
+    )
+
 
 def no_warnings_statement() -> Assign:
     """The `NO_WARNINGS` select, one per package: upstream's warnings are not the consumer's to

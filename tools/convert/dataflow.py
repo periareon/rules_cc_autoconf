@@ -114,6 +114,7 @@ FLAG_COMMAND_RE = re.compile(r"^__RCCAC_FLAG_([A-Za-z0-9_]+)__$")
 # AC_CACHE_VAL's cache-hit test: `if ${var+y}` (2.70+) or `test "${var+set}" = set`.
 # A fresh configure run has no cache, so the commands always run.
 _FATAL_CMD_RE = re.compile(r"^\s*(?:as_fn_error\b|exit\s+[1-9])")
+_FATAL_MESSAGE_RE = re.compile(r'^\s*as_fn_error\s+\S+\s+"((?:[^"\\]|\\.)*)"')  # as_fn_error $? "message" ...
 _CACHE_HIT_RE = re.compile(r'^"?\$\{[A-Za-z_][A-Za-z0-9_]*\+(?:y|set)\}"?$')
 _CACHE_HIT_CMD_RE = re.compile(r"^\$\{[A-Za-z_][A-Za-z0-9_]*\+:\}\s+false$")  # autoconf 2.69: `if ${var+:} false`
 # The platform variables `_platform_condition` reads: the host triple's parts and AC_PROG_CC's
@@ -427,6 +428,10 @@ class Analysis:
     """Constructs the walk did not follow, as reported to the user."""
     placeholders: set[int] = field(default_factory=set)
     """The ids the caller put in the text."""
+    aborts: list[tuple[Cond, str]] = field(default_factory=list)
+    """The script's own `AC_MSG_ERROR`s already expanded in the shell (`as_fn_error $? "message"`), with
+    the path condition each stops configure on: the translator reads the ones over a result it
+    models (a standard check's failure)."""
     evaluator: Evaluator | None = None
     """The pass itself, to evaluate further tests against the final state."""
     inherited: dict[str, list[Assignment]] = field(default_factory=dict)
@@ -659,6 +664,8 @@ class Evaluator:
             # `as_fn_error $? "..."`: AC_MSG_ERROR already expanded (inside AS_IF, an else
             # branch): configure stops here, like a fatal placeholder.
             self.fatal_paths.append(path)
+            message = _FATAL_MESSAGE_RE.match(stmt.text)
+            self.analysis.aborts.append((path, message.group(1) if message else ""))
         # Cmd: no effect on the variables we track.
 
     def assign(self, stmt: sh.Assign, path: Cond) -> None:

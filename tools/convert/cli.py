@@ -974,6 +974,7 @@ def _convert_project(
         module_name=args.entry.name if args.entry is not None else None,
         extra_modules=extra_modules,
         root_package=_root_package(args, out),
+        repo_file=not args.http_archive_entry,
     )
     # Rendered into a staging directory, then placed: the destination (the scratch output, a
     # registry entry's overlay, the project tree) holds hand-written files too, and the converter
