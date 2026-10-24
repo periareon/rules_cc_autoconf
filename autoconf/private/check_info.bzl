@@ -61,12 +61,36 @@ TYPES_REQUIRING_CODE = {
     "sizeof": True,
 }
 
+def _lf_line_endings(value):
+    """`value` with every CRLF of its strings turned into LF, lists and dicts included.
+
+    A check's program is a string literal of a BUILD file, and a BUILD file checked out with
+    CRLF (git's autocrlf on Windows) puts CRLF into the literal.  The check's JSON is an action
+    input, so the same check would have one action key from a Windows checkout and another from
+    a Linux one, and remote execution or a shared cache would see two different checks.  Line
+    terminators are the checkout's, not the author's: they are canonicalized here, once, where
+    every check is encoded.  A lone CR, which only an explicit `\\r` escape produces, is kept.
+    """
+    if type(value) == "string":
+        return value.replace("\r\n", "\n")
+    if type(value) == "list":  # a check's lists hold strings (`includes`, `libraries`)
+        return [_lf_string(item) for item in value]
+    if type(value) == "dict":  # one level deep: a check is a flat dict of fields
+        return {
+            key: [_lf_string(item) for item in field] if type(field) == "list" else _lf_string(field)
+            for key, field in value.items()
+        }
+    return value
+
+def _lf_string(value):
+    return value.replace("\r\n", "\n") if type(value) == "string" else value
+
 def make_check(check):
     """Encode a check dict as JSON.
 
-    Single entry point for all factory functions. Currently a thin wrapper
-    around json.encode(); exists so that future global transformations or
-    legacy conversions can be applied in one place.
+    Single entry point for all factory functions: the one place for global
+    transformations, which today means canonical LF line endings
+    (`_lf_line_endings`).
 
     Args:
         check: Dict with check fields (e.g. {"type": "compile", "name": ...}).
@@ -74,7 +98,7 @@ def make_check(check):
     Returns:
         A JSON-encoded string suitable for the autoconf rule's checks attr.
     """
-    return json.encode(check)
+    return json.encode(_lf_line_endings(check))
 
 def _autoconf_check_init(
         type,

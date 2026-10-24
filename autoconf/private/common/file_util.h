@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <ios>
 #include <string>
 #include <system_error>
 
@@ -46,11 +47,12 @@ inline std::ifstream open_ifstream(const std::string& path) {
  * every path works regardless of length.  On other platforms this is
  * equivalent to `std::ofstream(path)`.
  */
-inline std::ofstream open_ofstream(const std::string& path) {
+inline std::ofstream open_ofstream(const std::string& path,
+                                   std::ios::openmode mode = std::ios::out) {
 #ifdef _WIN32
-    return std::ofstream(to_extended_length_path(path).c_str());
+    return std::ofstream(to_extended_length_path(path).c_str(), mode);
 #else
-    return std::ofstream(path);
+    return std::ofstream(path, mode);
 #endif
 }
 
@@ -95,8 +97,9 @@ inline std::ifstream open_ifstream(const std::filesystem::path& path) {
     return open_ifstream(path.string());
 }
 
-inline std::ofstream open_ofstream(const std::filesystem::path& path) {
-    return open_ofstream(path.string());
+inline std::ofstream open_ofstream(const std::filesystem::path& path,
+                                   std::ios::openmode mode = std::ios::out) {
+    return open_ofstream(path.string(), mode);
 }
 
 inline bool file_remove(const std::filesystem::path& path,

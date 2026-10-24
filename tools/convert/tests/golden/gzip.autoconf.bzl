@@ -486,9 +486,6 @@ GZIP_PLATFORM_SRCS = select({
 def autoconf_targets():
     """The targets configure.ac and the Makefile.am files describe, in the package that calls this."""
 
-    # buildifier: disable=native-package
-    native.package(default_package_metadata = [":package_metadata"])
-
     native.exports_files(["COPYING"])
 
     license(

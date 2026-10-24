@@ -37,6 +37,108 @@ int main(void) {
             if_false = 0,
             if_true = 1,
         ),
+        # Upstream's "for good max_align_t": whether <stddef.h> declares max_align_t, aligned at
+        # least as much as every basic type.  Probed, not pinned: a C99 mode (`--conlyopt=-std=gnu99`,
+        # which every check compiles under, like the sources) and MSVC's C mode have no max_align_t,
+        # and HAVE_MAX_ALIGN_T=0 then makes gnulib's stddef.in.h supply rpl_max_align_t.
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_type_max_align_t",
+            code = """\
+/* On FreeBSD 12.0/x86, max_align_t defined by <stddef.h> has
+   the correct alignment with the default (wrong) definition of
+   _Alignof, but a wrong alignment as soon as we activate an
+   ISO C compliant _Alignof definition.  */
+#if ((defined __GNUC__ && 4 <= __GNUC__) || defined __clang__) && !defined __cplusplus
+ #define _Alignof(type) __builtin_offsetof (struct { char __a; type __b; }, __b)
+#endif
+#include <stddef.h>
+unsigned int s = sizeof (max_align_t);
+#if defined __GNUC__ || defined __clang__ || defined __IBM__ALIGNOF__
+int check1[2 * (__alignof__ (double) <= __alignof__ (max_align_t)) - 1];
+int check2[2 * (__alignof__ (long double) <= __alignof__ (max_align_t)) - 1];
+#endif
+typedef struct { char a; max_align_t b; } max_helper;
+typedef struct { char a; long b; } long_helper;
+typedef struct { char a; double b; } double_helper;
+typedef struct { char a; long double b; } long_double_helper;
+int check3[2 * (offsetof (long_helper, b) <= offsetof (max_helper, b)) - 1];
+int check4[2 * (offsetof (double_helper, b) <= offsetof (max_helper, b)) - 1];
+int check5[2 * (offsetof (long_double_helper, b) <= offsetof (max_helper, b)) - 1];
+int main(void) {
+    return 0;
+}
+""",
+            language = "c",
+        ),
+        # `if test $gl_cv_type_max_align_t = no; then HAVE_MAX_ALIGN_T=0`, over the default of 1
+        # (gl_STDDEF_H_DEFAULTS); a result always stands in for its default, so it carries both values.
+        checks.AC_SUBST(
+            "HAVE_MAX_ALIGN_T",
+            condition = "gl_cv_type_max_align_t",
+            if_false = 0,
+            if_true = 1,
+        ),
+        # Upstream's "whether NULL can be used in arbitrary expressions"; REPLACE_NULL=1 when not.
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_decl_null_works",
+            code = """\
+#include <stddef.h>
+int test[2 * (sizeof NULL == sizeof (void *)) -1];
+int main(void) {
+    return 0;
+}
+""",
+            language = "c",
+        ),
+        checks.AC_SUBST(
+            "REPLACE_NULL",
+            condition = "gl_cv_decl_null_works",
+            if_false = 1,
+            if_true = 0,
+        ),
+        # Upstream's "whether nullptr_t needs <stddef.h>" (gcc.gnu.org/PR114869: GCC 13.3 and 14
+        # predeclare nullptr_t): `nullptr_t x;` with no header.  Named for what compiling it
+        # proves, since a check is its success: upstream's gl_cv_nullptr_t_needs_stddef is "no"
+        # exactly when this succeeds, and NULLPTR_T_NEEDS_STDDEF=0 then.
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_nullptr_t_predeclared",
+            code = """\
+nullptr_t x;
+int main(void) {
+    return 0;
+}
+""",
+            language = "c",
+        ),
+        checks.AC_SUBST(
+            "NULLPTR_T_NEEDS_STDDEF",
+            condition = "gl_cv_nullptr_t_predeclared",
+            if_false = 1,
+            if_true = 0,
+        ),
+        # Upstream's "whether <stddef.h> is idempotent" (gcc.gnu.org/PR114870, GCC 13.3 and
+        # 14.2): a compile-time version test; "guessing yes" is its success, and
+        # STDDEF_NOT_IDEMPOTENT=1 otherwise.
+        checks.AC_TRY_COMPILE(
+            name = "gl_cv_stddef_idempotent",
+            code = """\
+#if \\
+    ((__GNUC__ == 13 && __GNUC_MINOR__ <= 3) \\
+     || (__GNUC__ == 14 && __GNUC_MINOR__ <= 2))
+ #error "bug 114870 is present"
+#endif
+int main(void) {
+    return 0;
+}
+""",
+            language = "c",
+        ),
+        checks.AC_SUBST(
+            "STDDEF_NOT_IDEMPOTENT",
+            condition = "gl_cv_stddef_idempotent",
+            if_false = 1,
+            if_true = 0,
+        ),
     ],
     default_deps = [
         ":defaults",  # the header's own defaults, as its m4 requires
@@ -53,34 +155,17 @@ int main(void) {
 autoconf_defaults(
     name = "gl_STDDEF_H_DEFAULTS",
     substs = {
-        # HAVE_WCHAR_T default — present on every libc we target.  Upstream's
-        # gl_STDDEF_H probes it explicitly; we mirror the result as a static
-        # default since no platform we support is missing wchar_t.
+        # Upstream's gl_STDDEF_H_DEFAULTS; the probes of `stddef_h` (max_align_t, NULL, nullptr_t,
+        # idempotence) set the other value where the compiler or its <stddef.h> calls for it.
+        "HAVE_MAX_ALIGN_T": "1",
+        # Not in the pinned gnulib (its stddef.in.h no longer reads it), but the older snapshots
+        # projects bundle still substitute @HAVE_WCHAR_T@ (bison 3.8.2's), and every libc we
+        # target has wchar_t.
         "HAVE_WCHAR_T": "1",
+        "NULLPTR_T_NEEDS_STDDEF": "1",
         "REPLACE_NULL": "0",
-    } | select({
-        # On Ubuntu 24.04 (glibc 2.39 / GCC 14), nullptr_t is provided
-        # natively and stddef.h is NOT idempotent.
-        "@platforms//os:linux": {
-            "NULLPTR_T_NEEDS_STDDEF": "0",
-            "STDDEF_NOT_IDEMPOTENT": "1",
-        },
-        "//conditions:default": {
-            "NULLPTR_T_NEEDS_STDDEF": "1",
-            "STDDEF_NOT_IDEMPOTENT": "0",
-        },
-    }) | select({
-        "@rules_cc//cc/compiler:msvc-cl": {
-            # MSVC in C mode does not provide max_align_t in <stddef.h>;
-            # gnulib's stddef.in.h supplies rpl_max_align_t when this is 0.
-            # MinGW GCC provides max_align_t via _GCC_MAX_ALIGN_T so it
-            # does not need this override.
-            "HAVE_MAX_ALIGN_T": "0",
-        },
-        "//conditions:default": {
-            "HAVE_MAX_ALIGN_T": "1",
-        },
-    }),
+        "STDDEF_NOT_IDEMPOTENT": "0",
+    },
     visibility = ["//visibility:private"],
 )
 

@@ -39,7 +39,7 @@ bazel run //tools/convert -- convert --src https://ftp.gnu.org/gnu/gzip/gzip-1.1
 ```
 
 `--src` takes a release archive URL, a local archive or a source tree.
-`--out` receives `BUILD.bazel`, `MODULE.bazel`, `CONVERSION_REPORT.md` and
+`--out` receives `BUILD.bazel`, `MODULE.bazel`, `REPO.bazel` (the module's defaults: license metadata, the standard as a future toolchain feature), `CONVERSION_REPORT.md` and
 `decisions.bzl`. The banner of each generated file repeats the command, which
 is what regenerates the conversion. Options:
 
@@ -213,7 +213,8 @@ of the output may want.
   reported.
 - **Checks.** Check macros become `checks.*` and `macros.*` calls, their
   action arguments read as configure runs them. Runtime probes are never
-  executed. Language standards are requirements, not flags.
+  executed. The language standard configure switches the compiler into is pinned
+  on the package, and recorded by a check.
 - **Shell.** The shell between calls is evaluated symbolically: the
   condition a call runs under becomes its `requires`, platform cases become
   `select()`s, options become flags with config settings, assignments to
@@ -252,7 +253,7 @@ of the output may want.
 | A check that refers to earlier defines | `compile_defines` on the check; the body split into `autoconf_1`, `autoconf_2`, ... where a probe needs an earlier result of the same body | Probes see `confdefs.h` as configure's do |
 | `AC_USE_SYSTEM_EXTENSIONS` | The extension macros on every later declaration, type, member, compile and link check | configure defines them before those checks |
 | `AC_RUN_IFELSE` | The m4's cross-compiling guess per platform, the program kept in a comment; a guess that is the same everywhere is a `probe:` decision | Nothing is executed at analysis time |
-| `AC_PROG_CC_C99`, `AX_CXX_COMPILE_STDCXX`, `-std=` in `CFLAGS` | A check that stops the build naming the flag to set | A Bazel build's standard belongs to the root module |
+| `AC_PROG_CC_C99`, `AC_PROG_CC_STDC`, `AX_CXX_COMPILE_STDCXX`, `-std=` in `CFLAGS` or a Makefile | The mode configure switches the compiler into is pinned on every target and check of the package (`C_STD_OPTS` / `CXX_STD_OPTS`: `-std=gnu99`, or `/std:c11` on MSVC and clang-cl), and recorded by a `checks.AC_LANG_STANDARD` that does not stop the build; the script's own `test "$ac_cv_prog_cc_c99" = no` + `AC_MSG_ERROR` becomes the check's `error`. `REPO.bazel` carries the same standard as a commented-out toolchain feature, for when rules_cc names them (bazelbuild/rules_cc#936) | Autoconf's macros switch the compiler and record whether they could; only the script stops. The root module's `--conlyopt` / `--cxxopt` come later on the command line and still win |
 | `test $x = yes` on a probe's variable | The probe's success | The value is what configure tested |
 | A variable copied from a probe's result (`found="$pa_cv_func_x"`), an alias of its name (`AS_VAR_PUSHDEF([cache], ...)` then `AC_CACHE_VAL([cache], ...)`), `AS_VAR_SET` / `AS_VAR_IF` | The probe, under the name the expansion spells | nasm's PA macros name every cache variable through an alias |
 | A variable assigned inside a macro the body expands (`PA_ARG_ENABLED([x], ..., [PDFOPT=...])`) | Seen by the calls after the macro and by the body's `AC_SUBST` of it, under the call's condition | configure runs the macro's shell in place |

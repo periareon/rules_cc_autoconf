@@ -234,6 +234,11 @@ struct BuildDir {
 
     /**
      * @brief Write source code to a file inside the build directory.
+     *
+     * Written in binary mode: the compiler sees the program byte for byte as
+     * the check spelled it.  A text-mode stream on Windows turned each CRLF of
+     * a program taken from a CRLF checkout into CR CR LF, which cl reads as a
+     * "Mac format" file and across which a backslash-newline splice fails.
      * @param code The source code to write.
      * @param extension The file extension (e.g., ".c" or ".cpp").
      * @return The path to the written source file, or nullopt on failure.
@@ -241,7 +246,8 @@ struct BuildDir {
     std::optional<std::filesystem::path> write_source(
         const std::string& code, const std::string& extension) {
         std::filesystem::path source_file = dir / (safe_id + extension);
-        std::ofstream source = open_ofstream(source_file);
+        std::ofstream source =
+            open_ofstream(source_file, std::ios::out | std::ios::binary);
         if (!source.is_open()) {
             DebugLogger::warn("Failed to create source file");
             return std::nullopt;
