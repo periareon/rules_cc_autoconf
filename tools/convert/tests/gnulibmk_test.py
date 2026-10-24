@@ -139,6 +139,10 @@ def test_makefile_am() -> None:
     state.configure_libs = {"lzma": "@xz//:lzma"}
     state.subst_values = {"LIBLZMA": ["", "-llzma"], "LIBFOO": ["-lfoo -llzma"]}
     assert _link_vars(["$(LIBLZMA)", "$(LIBFOO)"], state) == ["LIBFOO"]
+    # What configure appended to LIBS for a system library is on every link line.
+    state.configure_link_vars = ["ac_cv_search_dlopen_LIBS"]
+    assert _link_vars(["$(LIBFOO)"], state) == ["ac_cv_search_dlopen_LIBS", "LIBFOO"]
+    assert _link_vars([], state) == ["ac_cv_search_dlopen_LIBS"]
     assert [s.path for s in mk.libraries["libver_a"].sources] == ["version.c", "version.h"]
 
 
