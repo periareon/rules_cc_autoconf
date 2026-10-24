@@ -1944,6 +1944,7 @@ When migrating an M4 file, follow this checklist:
 | Duplicate check errors | Use `//gnulib/m4` targets instead of manual checks |
 | Missing main() wrapper | `AC_TRY_COMPILE` / `AC_TRY_LINK` `code` must be a complete program, unless `includes` is also given (then `code` is the body of `main()`); or build it with `utils.AC_LANG_PROGRAM` |
 | Probe fails and you cannot see why | The checker drops compiler output; rerun with `--action_env=RULES_CC_AUTOCONF_DEBUG=debug` |
+| Probe differs between a Windows checkout and a Linux one | Line endings: a BUILD file checked out with CRLF puts CRLF into a check's program. Every check is encoded with LF (`make_check`), so the action and its result are the same from either checkout; a lone `\r` written as an escape is kept |
 | `autoconf` used inside `//gnulib/m4` or `//autoconf/macros` | Load `autoconf = "autoconf_cache"` from `//autoconf:autoconf_toolchain.bzl` to avoid a toolchain dependency cycle |
 | Different check kinds for one variable across `select()` arms | Use the same kind (`AC_SUBST` vs `M4_VARIABLE` vs `AC_DEFINE`) on every branch, matching what the m4 does with it |
 | MSVC flags, `.lib` libs or `/D` defines selected on `@platforms//os:windows` | Clang targeting MinGW is also `os:windows`. Select compiler-driver things on `@rules_cc//cc/compiler:*`; keep only libc/OS behaviour on the OS constraint |

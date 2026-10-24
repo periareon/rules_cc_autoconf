@@ -1,4 +1,6 @@
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//tools/cxxopts:cxxopts.bzl", "cxxopts")
 
 cc_library(
     name = "file_util",
@@ -16,5 +18,12 @@ cc_library(
         "//autoconf/private:__subpackages__",
         "//gnulib/private:__subpackages__",
     ],
+    deps = [":file_util"],
+)
+
+cc_test(
+    name = "file_util_test",
+    srcs = ["file_util_test.cc"],
+    cxxopts = cxxopts(),
     deps = [":file_util"],
 )
