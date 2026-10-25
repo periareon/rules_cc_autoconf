@@ -165,7 +165,11 @@ can depend on it to get the correct platform-specific linkopts.</p>
 <p>On GCC/Clang the flags are passed via a @response-file in user_link_flags.
 On MSVC/clang-cl (where nested @file is unsupported), a .c file with
 #pragma comment(lib, ...) directives is compiled and the resulting object
-is linked in, achieving the same effect through MSVC's native mechanism.</p>
+is linked in, achieving the same effect through MSVC's native mechanism.
+That object's one variable, the anchor that keeps it alive, is a pick-any
+COMDAT (<code>__declspec(selectany)</code>), so a binary linking several
+<code>autoconf_linkopts</code> targets (a module's root and sub-configure ones) does not
+define it twice.</p>
 <p>Example:</p>
 <pre><code class="language-python">load("@rules_cc_autoconf//autoconf:autoconf_linkopts.bzl", "autoconf_linkopts")
 
