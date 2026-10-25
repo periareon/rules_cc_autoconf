@@ -22,7 +22,7 @@ from tools.convert.common import (
     headers_glob,
     source_label,
 )
-from tools.convert.ir import Assign, Call, Package, Raw, Rule, Target, strings
+from tools.convert.ir import Assign, AttrValue, Call, Package, Raw, Rule, Target, strings
 from tools.convert.makefiles import (
     _am_block,
     _expand_make_text,
@@ -1051,19 +1051,20 @@ def _probe_conditioned_srcs(
     """`autoconf_srcs` targets for the sources compiled when a probe expression holds: one for
     the sources of every platform, and one per platform arm (`probe_arms`) for the sources a
     platform case and a probe both gate.  Returns the first's label and the arms' (arm label ->
-    target label); the owner lists them in `srcs` (the arm ones in that arm of its select) and
-    all of them in `deps`, through which the sources reach the compiler.  Off its platform an
-    arm target has nothing to say: its conditions are not evaluated there."""
+    target label); the owner lists them in `srcs` and `deps` (the arm ones in that arm of each
+    select), through which the sources reach the compiler.  An arm target's conditions name
+    checks only that platform's arm of the autoconf target runs (libpcap's netfilter probe under
+    `host_os = linux*`), so it is `manual`: a wildcard build elsewhere would fail evaluating
+    them, and the owner reaches it only in that arm.  Not `target_compatible_with`: that would
+    make any consumer listing it outside the arm incompatible too, and a wildcard build would
+    silently drop the consumer rather than report the misplaced dependency."""
 
-    def rule(name: str, sources: dict[str, str], comment: str) -> str:
+    def rule(name: str, sources: dict[str, str], comment: str, arm: str | None = None) -> str:
+        attrs: dict[str, AttrValue] = {"srcs": dict(sorted(sources.items())), "wrap": "include", "deps": [":autoconf"]}
+        if arm is not None:
+            attrs["tags"] = ["manual"]
         package.after.append(
-            Rule(
-                "autoconf_srcs",
-                name,
-                {"srcs": dict(sorted(sources.items())), "wrap": "include", "deps": [":autoconf"]},
-                comments=[comment],
-                load_from="//autoconf:autoconf_srcs.bzl",
-            )
+            Rule("autoconf_srcs", name, attrs, comments=[comment], load_from="//autoconf:autoconf_srcs.bzl")
         )
         return f":{name}"
 
@@ -1079,6 +1080,7 @@ def _probe_conditioned_srcs(
             f"{target}_conditional_srcs_{slug(arm.split(':')[-1])}",
             sources,
             f"{target}: sources configure compiles on {arm} when a check's result says so.",
+            arm,
         )
         for arm, sources in sorted((probe_arms or {}).items())
     }

@@ -44,6 +44,7 @@ from tools.convert.results import _confdefs, _drop_duplicate_defines
 from tools.convert.sources import (
     _conditional_sources,
     _preprocessor_flags,
+    _probe_conditioned_srcs,
     _require_standards,
     _written_content,
     am_decision,
@@ -1695,6 +1696,41 @@ def test_negated_and_compound_automake_conditionals() -> None:
     assert arms == {":chapms_enabled": ["pppd/crypto_ms.c"]}
     assert included == []
     assert any("tls.c" in n for n in notes), notes  # EAPTLS / PEAP undecided here: left out, noted
+
+
+def test_platform_arm_probe_sources_build_on_their_platform_alone() -> None:
+    """libpcap's pcap-netfilter-linux.c under `host_os = linux*` and `ac_cv_netfilter_can_compile`:
+    a probe-conditioned source of the Linux arm, whose `autoconf_srcs` target is `manual`.
+    Elsewhere its condition names a check only the Linux arm of the autoconf target runs, and a
+    wildcard build (`@libpcap//...` on macOS) would fail evaluating it; the owner reaches the
+    target only in that arm of its srcs and deps.  Not `target_compatible_with`, which would
+    spread to a consumer listing it unconditionally.  The platform-free target is a plain one."""
+    state = ProjectState()
+    state.src_conditions = {
+        "NETFILTER": [df.conj(df.HostOs(("linux*",)), df.Truthy("ac_cv_netfilter_can_compile"))],
+        "HAVE_DAG": [df.Truthy("ac_cv_header_dagapi_h")],
+    }
+    state.produced_results = {"ac_cv_netfilter_can_compile", "ac_cv_header_dagapi_h"}
+    notes: list[str] = []
+    included, arms, probe, probe_arms = _conditional_sources(
+        [Source("pcap-netfilter-linux.c", "NETFILTER", None), Source("pcap-dag.c", "HAVE_DAG", None)],
+        state,
+        Decisions(),
+        "Makefile.am",
+        "libpcap.a",
+        "",
+        "",
+        notes,
+    )
+    assert (included, arms, probe) == ([], {}, {"pcap-dag.c": "ac_cv_header_dagapi_h"})
+    assert probe_arms == {"@platforms//os:linux": {"pcap-netfilter-linux.c": "ac_cv_netfilter_can_compile"}}
+    package = Package(path="", docstring="")
+    label, arm_labels = _probe_conditioned_srcs(package, "pcap", probe, probe_arms)
+    assert (label, arm_labels) == (":pcap_conditional_srcs", {"@platforms//os:linux": ":pcap_conditional_srcs_linux"})
+    rules = rules_by_name(package)
+    assert "tags" not in rules["pcap_conditional_srcs"].attrs
+    assert rules["pcap_conditional_srcs_linux"].attrs["tags"] == ["manual"]
+    assert "target_compatible_with" not in rules["pcap_conditional_srcs_linux"].attrs
 
 
 def test_gnulib_else_branch_source() -> None:

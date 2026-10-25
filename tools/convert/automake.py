@@ -479,7 +479,11 @@ def _programs_tree(
         linked_gnulib = {lib.label for lib in state.gnulib_libraries if lib.label in deps}
         if probe_label:
             deps.append(probe_label)  # the conditional sources reach the compiler through deps
-        deps += [t for t in probe_arm_labels.values() if t not in deps]  # the arm sources' headers, every platform
+        # The arm sources' headers, in the arm alone: off its platform the target's conditions
+        # name checks the autoconf target does not run there, and analyzing it fails.
+        for arm_label, arm_target in probe_arm_labels.items():
+            if arm_target not in dep_arms.setdefault(arm_label, []):
+                dep_arms[arm_label].append(arm_target)
         deps += [d for d in links_after.get(f":{name}", []) if d not in deps]
         deps += [d for d in _config_deps(state) if d not in deps]
         if link_vars:
