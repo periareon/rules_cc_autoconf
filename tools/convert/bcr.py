@@ -20,12 +20,13 @@ registry's own integrity tool does.
 from __future__ import annotations
 
 import json
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Collection, Iterable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import NotRequired, TypedDict, cast
 
 from tools.convert import ownership
+from tools.convert.libraries import upstream_version
 from tools.convert.source import integrity
 
 PRESUBMIT = """\
@@ -155,17 +156,47 @@ def vendored_entry(directory: Path) -> Entry:
     return Entry(directory=directory, name=directory.name, version=None, registry=None, source=_source_json(directory))
 
 
-def newest_versions(registry: Path, names: Iterable[str]) -> dict[str, str]:
-    """The newest non-yanked version `modules/<name>/metadata.json` lists for each of `names`
-    the registry has; the list is in publication order."""
+def _published(registry: Path, name: str) -> list[str]:
+    """The non-yanked versions `modules/<name>/metadata.json` lists, in publication order."""
+    metadata = _metadata(registry, name)
+    if metadata is None:
+        return []
+    yanked = set(metadata.get("yanked_versions", {}))
+    return [v for v in metadata.get("versions", []) if v not in yanked]
+
+
+def newest_versions(
+    registry: Path,
+    names: Iterable[str],
+    *,
+    current: Mapping[str, str] | None = None,
+    allow_upstream: Collection[str] = (),
+) -> dict[str, str]:
+    """The newest non-yanked version of each of `names` the registry has.
+
+    With `current` (module -> the version a table or an entry holds now), a module stays on its
+    upstream version: the newest `.bcr.N` of `1.3.2` is taken, `1.4.0` is not, unless the module
+    is in `allow_upstream`.  Moving a dependency to another upstream release is a decision
+    someone makes per module; a registry re-cut of the same release is not.  A module without
+    a current version takes the newest of all."""
     out: dict[str, str] = {}
     for name in names:
-        metadata = _metadata(registry, name)
-        if metadata is None:
-            continue
-        yanked = set(metadata.get("yanked_versions", {}))
-        versions = [v for v in metadata.get("versions", []) if v not in yanked]
+        versions = _published(registry, name)
+        held = (current or {}).get(name)
+        if held is not None and name not in allow_upstream:
+            versions = [v for v in versions if upstream_version(v) == upstream_version(held)]
         if versions:
+            out[name] = versions[-1]
+    return out
+
+
+def upstream_bumps(registry: Path, current: Mapping[str, str]) -> dict[str, str]:
+    """Module -> the newest version the registry has of another upstream release than the one
+    `current` holds: what `newest_versions` left alone, for the message that says so."""
+    out: dict[str, str] = {}
+    for name, held in current.items():
+        versions = _published(registry, name)
+        if versions and upstream_version(versions[-1]) != upstream_version(held):
             out[name] = versions[-1]
     return out
 

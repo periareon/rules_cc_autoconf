@@ -118,3 +118,26 @@ def test_write_entry(tmp_path: Path) -> None:
     with pytest.raises(ownership.Conflict):
         write_entry(staging3)
     assert (overlay / "BUILD.bazel").read_text() == "# mine\n"
+
+
+def test_newest_versions_stay_on_the_upstream_release(tmp_path: Path) -> None:
+    """A dependency takes the newest `.bcr.N` of the upstream release it already depends on; a
+    newer upstream release is reported, and taken only for a module named in `allow_upstream`
+    or one without a current version.  Yanked versions never count."""
+    registry = tmp_path / "registry"
+    (registry / "modules/zlib").mkdir(parents=True)
+    (registry / "modules/zlib/metadata.json").write_text(
+        json.dumps(
+            {
+                "versions": ["1.3.1.bcr.1", "1.3.1.bcr.2", "1.3.1.bcr.3", "1.4.0", "1.4.0.bcr.1"],
+                "yanked_versions": {"1.3.1.bcr.3": "broken"},
+            }
+        )
+    )
+    held = {"zlib": "1.3.1.bcr.1"}
+    assert bcr.newest_versions(registry, ["zlib"], current=held) == {"zlib": "1.3.1.bcr.2"}
+    assert bcr.newest_versions(registry, ["zlib"], current=held, allow_upstream={"zlib"}) == {"zlib": "1.4.0.bcr.1"}
+    assert bcr.newest_versions(registry, ["zlib"]) == {"zlib": "1.4.0.bcr.1"}
+    assert bcr.newest_versions(registry, ["zlib", "nothere"], current={"zlib": "1.4.0"}) == {"zlib": "1.4.0.bcr.1"}
+    assert bcr.upstream_bumps(registry, held) == {"zlib": "1.4.0.bcr.1"}
+    assert bcr.upstream_bumps(registry, {"zlib": "1.4.0"}) == {}
