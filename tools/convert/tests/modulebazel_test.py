@@ -37,3 +37,24 @@ register_toolchains("//:all")
         "    compatibility_level = 1,\n)"
     ) in text
     assert modulebazel.existing_module(tmp_path / "missing") == ({}, [])
+
+
+def test_bazel_floor_follows_the_rules() -> None:
+    """A kept `>=` below the rules' floor is raised, none is added, a higher one and the other
+    constraints stay; the change is reported, an unchanged value is not."""
+    raised, note = modulebazel.with_bazel_floor({"bazel_compatibility": '[">=7.2.1"]'}, "7.4.0")
+    assert raised == {"bazel_compatibility": '[">=7.4.0"]'}
+    assert note == '`bazel_compatibility = [">=7.4.0"]` (was `[">=7.2.1"]`): rules_cc_autoconf needs Bazel 7.4.0'
+    added, note = modulebazel.with_bazel_floor({"compatibility_level": "1"}, "7.4.0")
+    assert added == {"compatibility_level": "1", "bazel_compatibility": '[">=7.4.0"]'}
+    assert note is not None and "was not declared" in note
+    kept, note = modulebazel.with_bazel_floor({"bazel_compatibility": '[">=8.0.0", "<10"]'}, "7.4.0")
+    assert (kept, note) == ({"bazel_compatibility": '[">=8.0.0", "<10"]'}, None)
+    merged, note = modulebazel.with_bazel_floor({"bazel_compatibility": '["<10", ">=7.2.1"]'}, "7.4.0")
+    assert (merged["bazel_compatibility"], note is not None) == ('[">=7.4.0", "<10"]', True)
+    assert modulebazel.with_bazel_floor({"bazel_compatibility": '[">=7.2.1"]'}, None) == (
+        {"bazel_compatibility": '[">=7.2.1"]'},
+        None,
+    )
+    text = modulebazel._module_bazel("foo", "1.2.bcr.3", "0.34.0", None, False, module_attrs=raised)
+    assert '    bazel_compatibility = [">=7.4.0"],\n' in text

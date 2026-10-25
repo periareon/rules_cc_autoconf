@@ -12,6 +12,7 @@ Subcommands:
 from __future__ import annotations
 
 import argparse
+import ast
 import cProfile
 import dataclasses
 import json
@@ -289,23 +290,41 @@ def find_buildifier(spec: str) -> str | None:
     return spec
 
 
-def rules_version() -> str:
-    """The rules_cc_autoconf version of this checkout (version.bzl)."""
+def _checkout_file(name: str) -> Path | None:
+    """A top-level file of this rules_cc_autoconf checkout (`version.bzl`, `MODULE.bazel`): under
+    the directory `bazel run` was invoked from, or in the runfiles."""
     candidates = []
     root = os.environ.get("BUILD_WORKSPACE_DIRECTORY")
     if root:
-        candidates.append(Path(root) / "version.bzl")
+        candidates.append(Path(root) / name)
     runfiles = Runfiles.Create()
     if runfiles:
-        found = runfiles.Rlocation("_main/version.bzl", "_main" if IS_WINDOWS else None)
+        found = runfiles.Rlocation(f"_main/{name}", "_main" if IS_WINDOWS else None)
         if found:
             candidates.append(Path(found))
-    for candidate in candidates:
-        if candidate.is_file():
-            match = re.search(r'VERSION\s*=\s*"([^"]+)"', candidate.read_text(encoding="utf-8"))
-            if match:
-                return match.group(1)
+    return next((c for c in candidates if c.is_file()), None)
+
+
+def rules_version() -> str:
+    """The rules_cc_autoconf version of this checkout (version.bzl)."""
+    candidate = _checkout_file("version.bzl")
+    if candidate is not None:
+        match = re.search(r'VERSION\s*=\s*"([^"]+)"', candidate.read_text(encoding="utf-8"))
+        if match:
+            return match.group(1)
     return "0.0.0"
+
+
+def rules_bazel_floor() -> str | None:
+    """The oldest Bazel this checkout's MODULE.bazel declares it works with (the `>=` entry of
+    its `bazel_compatibility`), which a generated module declares too; None when it declares
+    none."""
+    candidate = _checkout_file("MODULE.bazel")
+    if candidate is None:
+        return None
+    text = modulebazel_mod.existing_module(candidate)[0].get("bazel_compatibility")
+    entries = ast.literal_eval(text) if text else []
+    return next((entry[2:] for entry in entries if isinstance(entry, str) and entry.startswith(">=")), None)
 
 
 def _apply_entry(args: argparse.Namespace) -> None:
@@ -975,6 +994,7 @@ def _convert_project(
     # A MODULE.bazel already at the destination: its module() entry is kept (bazel_compatibility,
     # compatibility_level), the rest is regenerated and anything else it held is reported.
     module_attrs, module_others = modulebazel_mod.existing_module(_destination_module(args, out))
+    module_attrs, floor_note = modulebazel_mod.with_bazel_floor(module_attrs, rules_bazel_floor())
     result = project_mod.convert_project(
         tree,
         expansion,
@@ -1003,7 +1023,7 @@ def _convert_project(
         _vendor(args, result, index, staging)
         if not args.annotate:
             emit.strip_annotations(result.package)
-        report_lines = _manual_programs_section(result) + _module_report(module_attrs, module_others)
+        report_lines = _manual_programs_section(result) + _module_report(module_attrs, module_others, floor_note)
         buildifier = find_buildifier(args.buildifier)
         build = staging / "BUILD.bazel"
         if args.http_archive_entry:
@@ -1081,9 +1101,10 @@ def _convert_project(
         shutil.rmtree(staging, ignore_errors=True)
 
 
-def _module_report(module_attrs: dict[str, str], module_others: list[str]) -> list[str]:
+def _module_report(module_attrs: dict[str, str], module_others: list[str], floor_note: str | None) -> list[str]:
     """The report sections on the MODULE.bazel found at the destination: the `module()` attributes
-    kept and the statements not carried over (`modulebazel.existing_module`)."""
+    kept and the statements not carried over (`modulebazel.existing_module`), and the Bazel floor
+    raised to the rules' (`modulebazel.with_bazel_floor`)."""
     lines: list[str] = []
     if module_attrs:
         lines += [
@@ -1093,6 +1114,8 @@ def _module_report(module_attrs: dict[str, str], module_others: list[str]) -> li
             "The `module()` attributes the file at the destination had besides name and version:",
             "",
         ] + [f"- `{attr} = {text}`" for attr, text in module_attrs.items()]
+    if floor_note:
+        lines += ["", "## MODULE.bazel: Bazel floor", "", f"- {floor_note}"]
     if module_others:
         lines += [
             "",
