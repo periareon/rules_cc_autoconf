@@ -1,6 +1,7 @@
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:autoconf_linkopts.bzl", "autoconf_linkopts")
 load("//autoconf:autoconf_package_info.bzl", "autoconf_package_info")
 load("//autoconf:checks.bzl", "checks")
 load("//autoconf/tests:diff_test.bzl", "diff_test")
@@ -84,4 +85,34 @@ cc_test(
         "//autoconf/tests:msvc_like": [],
         "//conditions:default": ["@platforms//:incompatible"],
     }),
+)
+
+# Regression test: two `autoconf_linkopts` targets in one link.  On MSVC each
+# compiles a pragma file into an object the binary links directly; the anchor
+# variable in those objects is a pick-any COMDAT, else the link fails with
+# LNK2005 (gawk's root and extension `linkopts` in one gawk.exe).  The vars
+# need not resolve: the objects, and the collision, exist regardless.
+autoconf_linkopts(
+    name = "linkopts_first",
+    vars = ["NO_SUCH_LINK_VAR"],
+    deps = [":autoconf"],
+)
+
+autoconf_linkopts(
+    name = "linkopts_second",
+    vars = ["NO_SUCH_LINK_VAR"],
+    deps = [":autoconf"],
+)
+
+cc_test(
+    name = "test_two_linkopts_targets",
+    srcs = ["test_two_linkopts_targets.c"],
+    target_compatible_with = select({
+        "//autoconf/tests:msvc_like": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+    deps = [
+        ":linkopts_first",
+        ":linkopts_second",
+    ],
 )
