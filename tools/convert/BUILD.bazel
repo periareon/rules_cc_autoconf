@@ -61,6 +61,7 @@ py_binary(
         "instrument.m4",
         "libraries.toml",
         "pkg_stub.m4",
+        "//:MODULE.bazel",
         "//:version.bzl",
         "//gnulib/m4:decisions.bzl",
     ],

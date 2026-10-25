@@ -96,6 +96,33 @@ def existing_module(path: Path) -> tuple[dict[str, str], list[str]]:
     return attrs, others
 
 
+def _version_key(version: str) -> tuple[int, ...]:
+    """`7.4.0` -> (7, 4, 0); a non-numeric component counts as 0 (a `-pre` suffix)."""
+    return tuple(int(part) if part.isdigit() else 0 for part in version.split("."))
+
+
+def with_bazel_floor(module_attrs: dict[str, str], floor: str | None) -> tuple[dict[str, str], str | None]:
+    """`module_attrs` with `bazel_compatibility` at least `floor` (the `>=` the rules' own
+    MODULE.bazel declares, `7.4.0`): a kept `>=` below it is raised, none adds it, and the other
+    constraints (`<`, `-`) and a higher floor stay.  Also what changed, for the report, or None.
+    The entries the hand-written originals declared (`>=7.2.1`) predate the attribute types the
+    rules use now, and a consumer on such a Bazel gets a Starlark traceback instead of the
+    resolver's "not compatible" message."""
+    if floor is None:
+        return module_attrs, None
+    text = module_attrs.get("bazel_compatibility")
+    entries = list(ast.literal_eval(text)) if text else []
+    floors = [entry[2:] for entry in entries if isinstance(entry, str) and entry.startswith(">=")]
+    highest = max([*floors, floor], key=_version_key)
+    if floors == [highest]:
+        return module_attrs, None
+    merged = [f">={highest}", *(entry for entry in entries if not (isinstance(entry, str) and entry.startswith(">=")))]
+    rendered = "[" + ", ".join(f'"{entry}"' for entry in merged) + "]"
+    was = f"was `{text}`" if text else "was not declared"
+    note = f"`bazel_compatibility = {rendered}` ({was}): rules_cc_autoconf needs Bazel {highest}"
+    return {**module_attrs, "bazel_compatibility": rendered}, note
+
+
 def _module_bazel(
     name: str,
     version: str,
