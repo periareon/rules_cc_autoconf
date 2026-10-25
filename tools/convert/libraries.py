@@ -50,6 +50,10 @@ class Library:
     label: str
     """The module's library target, as a dependency label (`@gmp//:gmp`)."""
 
+    headers: tuple[str, ...] = ()
+    """The headers that identify the library (`gmp.h`), from the table's `[headers]`: a probe
+    including one compiles and links against it (see `update_libraries.HEADERS`)."""
+
 
 def _snapshot_path() -> Path:
     """`libraries.toml` through runfiles, falling back to the source tree."""
@@ -75,16 +79,39 @@ def pin_versions(versions: dict[str, str]) -> None:
     _PINS.update(versions)
     table.cache_clear()
     _by_module.cache_clear()
+    headers.cache_clear()
 
 
 @lru_cache(maxsize=1)
 def table() -> dict[str, Library]:
-    """`-l` name -> registry library, from libraries.toml (versions as pinned)."""
+    """`-l` name -> registry library, from libraries.toml (versions as pinned), each with the
+    headers of the `[headers]` table that name it."""
     data = tomllib.loads(_snapshot_path().read_text(encoding="utf-8"))
+    headers_of: dict[str, list[str]] = {}
+    for header, name in data.get("headers", {}).items():
+        headers_of.setdefault(name, []).append(header)
     return {
-        name: Library(entry["module"], _PINS.get(entry["module"], entry["version"]), entry["label"])
+        name: Library(
+            entry["module"],
+            _PINS.get(entry["module"], entry["version"]),
+            entry["label"],
+            tuple(sorted(headers_of.get(name, []))),
+        )
         for name, entry in data["libraries"].items()
     }
+
+
+@lru_cache(maxsize=1)
+def headers() -> dict[str, str]:
+    """Header -> the `-l` name of the library it identifies (`gmp.h` -> gmp): a probe's
+    `#include` of one links that library, as `-lgmp` in configure's own shell would."""
+    return {header: name for name, entry in table().items() for header in entry.headers}
+
+
+def headers_of_label(label: str) -> set[str]:
+    """The identifying headers of the registry library a dependency label names (`@gmp//:gmp`
+    -> {gmp.h}); empty for a label the table does not list."""
+    return {header for entry in table().values() if entry.label == label for header in entry.headers}
 
 
 @lru_cache(maxsize=1)

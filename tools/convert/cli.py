@@ -751,21 +751,25 @@ def _http_archive_entry(
 
 
 def _manual_programs_section(result: project_mod.ProjectResult, package_path: str = "") -> list[str]:
-    """The programs emitted with `tags = ["manual"]`, so a reviewer sees what `//...` leaves out."""
+    """The programs emitted with `tags = ["manual"]`, and a whole package tagged so because its
+    sub-configure's `subdir:` decision is MANUAL or undecided, so a reviewer sees what `//...` leaves out."""
     manual = result.state.manual_programs if result.state is not None else []
-    if not manual:
+    if not manual and result.manual_package is None:
         return []
     where = f" in {package_path}" if package_path else ""
-    return [
+    lines = [
         "",
-        f"## Programs tagged manual{where}",
+        f"## Targets tagged manual{where}",
         "",
         "configure builds these only when a probe holds. A target's existence cannot depend on a",
         "probe result, so they are defined but left out of `//...`; tests that use them should carry",
         "`target_compatible_with` for the platforms they build on. To build one in `//...`, decide",
         "the key given with the platforms (a label list), or `decision.ALWAYS` / `decision.NEVER`.",
         "",
-    ] + [f"- `{name}` ({why}): `program:{name}`" for name, why in sorted(manual)]
+    ]
+    if result.manual_package is not None:
+        lines.append(f"- every C/C++ target of this package: {result.manual_package}")
+    return lines + [f"- `{name}` ({why}): `program:{name}`" for name, why in sorted(manual)]
 
 
 def _write_report(
@@ -998,7 +1002,17 @@ def _convert_project(
         if result.notes:
             report_lines += ["", "## Notes", ""] + [f"- {n}" for n in result.notes]
         _convert_subprojects(
-            args, staging, _source(args), result.subdirs, index, decisions, report_lines, dev_override, buildifier, hand
+            args,
+            staging,
+            _source(args),
+            result.subdirs,
+            index,
+            decisions,
+            report_lines,
+            dev_override,
+            buildifier,
+            hand,
+            gates=result.subdir_gates,
         )
         # The packages that got an autoconf.bzl: each gets its hand-written BUILD.bazel once placed.
         generated = sorted(
@@ -1139,16 +1153,22 @@ def _convert_subprojects(
     hand: dict[str, HandBuild],
     depth: int = 1,
     prefix: str = "",
+    gates: dict[str, project_mod.SubdirGate] | None = None,
+    inherited_gate: project_mod.SubdirGate | None = None,
 ) -> list[Path]:
     """`AC_CONFIG_SUBDIRS`: each sub-configure becomes a package of the same
     module, at its directory (texlive's `libs/*`, `texk/*`), converted from its
     own configure.ac and Makefile.am tree; its own AC_CONFIG_SUBDIRS are
-    followed in turn.  One MODULE.bazel, one decisions file, one report."""
+    followed in turn.  One MODULE.bazel, one decisions file, one report.
+    `gates` (`ProjectResult.subdir_gates`) is the `target_compatible_with` of
+    the packages their configure enters conditionally; a sub-sub-configure
+    inherits its parent's unless it has one of its own."""
 
     written: list[Path] = []
     if depth > 4:
         return written
     for subdir in subdirs:
+        gate = (gates or {}).get(subdir, inherited_gate)
         package_path = f"{prefix}{subdir}"
         sub_src = src / subdir
         try:
@@ -1173,6 +1193,7 @@ def _convert_subprojects(
                 hand_targets=emit.rule_kinds(hand_package.text),
                 hand_build=hand_package.text,
                 root_package=_root_package(args, out),
+                gate=gate,
             )
             result.package.path = package_path
             directory = out / package_path
@@ -1199,6 +1220,8 @@ def _convert_subprojects(
                 hand,
                 depth + 1,
                 f"{package_path}/",
+                gates=result.subdir_gates,
+                inherited_gate=gate,
             )
         finally:
             _cleanup(args, work, tooldir)

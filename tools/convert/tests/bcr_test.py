@@ -105,7 +105,8 @@ def test_write_entry(tmp_path: Path) -> None:
     assert [p.relative_to(version_dir).as_posix() for p in removed] == ["overlay/lib/BUILD.bazel"]
     assert not (overlay / "lib").exists()
     source_json = json.loads((version_dir / "source.json").read_text())
-    assert sorted(source_json["overlay"]) == ["BUILD.bazel", "MODULE.bazel", "geninit.bzl", "tests/BUILD.bazel"]
+    # In the order of the posix paths' bytes on every host (not Windows' case-insensitive Path order).
+    assert list(source_json["overlay"]) == ["BUILD.bazel", "MODULE.bazel", "geninit.bzl", "tests/BUILD.bazel"]
     assert source_json["overlay"]["geninit.bzl"] == source.integrity(b"def geninit():\n    pass\n")
     metadata = json.loads((registry / "modules/foo/metadata.json").read_text())
     assert metadata["versions"] == ["1.2.bcr.1"]

@@ -114,7 +114,8 @@ The kinds it never asks for, added by hand when wanted:
 | Key | Effect | Accepts |
 |---|---|---|
 | `flag:<option>` | Overrides the default of an option's `bool_flag`, which otherwise comes from the not-given arm's assignment, the variable the value is copied into, or the help string | `True`, `False`, `IGNORE` |
-| `program:<path>` | A program configure adds only when a probe holds is emitted with `tags = ["manual"]` and listed in the report with its key (`program:src/hostid`: the program's path from the project root, which is also the target's name); this names the platforms it builds on | `ALWAYS`, `NEVER`, or a platform label list |
+| `program:<path>` | A program configure adds only when a probe holds is emitted with `tags = ["manual"]` and listed in the report with its key (`program:src/hostid`: the program's path from the project root, which is also the target's name); this names the platforms it builds on | `ALWAYS`, `NEVER`, `MANUAL` (defined, `tags = ["manual"]`), or a platform label list |
+| `subdir:<dir>` | configure enters an `AC_CONFIG_SUBDIRS` directory only sometimes, and neither the condition nor the Makefile's `if` around `SUBDIRS += <dir>` lowers to a platform or a config setting (gawk enters extension/ when its dlfcn.h probe succeeded); this names where the package's targets build, as their `target_compatible_with`. Until it is decided the package's C/C++ targets are defined with `tags = ["manual"]`, as a probe-conditioned program is, so `//...` leaves them out | `ALWAYS` (built everywhere, the condition dropped), `NEVER` (not converted), `MANUAL` (the condition is not expressible: keep the targets out of `//...`), or a list of platform or config-setting labels; one `"!<label>,<label>"` entry for everywhere but those (`["!@rules_cc//cc/compiler:msvc-cl,//:extensions_off"]`) |
 | `copts:<package>`, `conlyopts:<package>`, `cxxopts:<package>` | Compiler options every target of the package compiles with (`.` is the root), after `NO_WARNINGS`: a diagnostic a newer compiler turns into an error in code written for an older one, which no consumer can set on a module it depends on | `["-Wno-error=incompatible-pointer-types"]` |
 | `license:<file>` | The SPDX identifier of an exported license file (`COPYING`, `LICENSE`). The converter reads the family and version from the text and the `-only` / `-or-later` suffix from the source headers; a file that does not settle (a custom notice, headers that disagree) is requested with its opening lines. The identifier adds the registry's package metadata: a `license()` over the file, the `package_metadata` with the module's purl, and `package(default_package_metadata = ...)` | `"GPL-3.0-or-later"`, `IGNORE` (exported without metadata) |
 | `src_condition:<NAME>` | Overrides the condition the conversion derived for a gnulib source | as above |
@@ -226,6 +227,9 @@ of the output may want.
   `autoconf` target of their own with the library as its one `cc_deps`
   entry, which the main target depends on; every other check stays
   toolchain-only, so its result does not depend on the dependency graph.
+  A library configure only probes under one of its options (gawk's
+  `-lmpfr -lgmp` under `--enable-mpfr`) is a dep in that option's
+  `select()` arm, so turning the flag off drops it from the graph.
   configure's own probes stay probes; `PKG_CHECK_MODULES` has none to run
   and is decided at conversion time from the registry's versions.
 - **The gnulib tree.** `gnulib-comp.m4` and `gnulib.mk` give the module
@@ -239,6 +243,11 @@ of the output may want.
   everything else is a `generated:` decision.
 - **Sub-configures.** Each `AC_CONFIG_SUBDIRS` directory is a package of
   the same module, converted from its own tree, sharing the decisions file.
+  One configure enters only sometimes builds where configure enters it: a
+  host-OS condition or a decided automake conditional becomes the package's
+  `target_compatible_with`; a probe-dependent one (gawk's extension/ needs
+  dlfcn.h) is a `subdir:` decision, and its targets are tagged `manual`
+  until it is made.
 - **Licensing.** The license files the release ships are exported, with
   the registry's package metadata over them: the SPDX identifier is read
   from the text and the source headers, and asked for as a `license:`
@@ -283,7 +292,7 @@ of the output may want.
 | An option compared with other values | A `string_flag` (an `int_flag` for numbers) with a `config_setting` per value | The script branches on the value |
 | `PKG_CHECK_MODULES([X], [pkg >= 1.2])` | The found action when the registry provides every package at a satisfying version, with `X_CFLAGS` and `X_LIBS` holding what that action gives them (empty otherwise, the dependency carries headers and archive); the not-found action otherwise. `PKG_CHECK_EXISTS` likewise; `PKG_CHECK_VAR` stays a `variable:` decision | There is no probe to run; the registry's version is the one compared and the report says an override is not checked |
 | A registry library a target links | `implementation_deps`, after the project's own include directories, unless a public header includes it | Its headers are not part of the target's interface |
-| A check that names a registry library (`AC_CHECK_LIB`, `AC_SEARCH_LIBS`, a header check or a probe including one of its headers) | Moved to `autoconf_<lib>`, with every library it links as `cc_deps` (`-lssl -lcrypto`: both openssl targets); the bodies after it depend on it, a check of an earlier body gets `autoconf_<lib>_<n>`, a check under a `select()` arm (libssh2's openssl probe under `--with-crypto=openssl`) the same arm of the library target | Only the checks that need the dependency see it; the rest share results across modules |
+| A check that names a registry library (`AC_CHECK_LIB`, `AC_SEARCH_LIBS`, a header check or a probe including one of its headers) | Moved to `autoconf_<lib>`, with every library it links as `cc_deps` (`-lssl -lcrypto`: both openssl targets); the bodies after it depend on it, a check of an earlier body gets `autoconf_<lib>_<n>`, a check under a `select()` arm (libssh2's openssl probe under `--with-crypto=openssl`) the same arm of the library target. A library only ever probed in one option's arm is a `cc_deps` entry, and a dep of the Makefile targets, in that arm alone (gawk's gmp and mpfr under `--enable-mpfr`) | Only the checks that need the dependency see it; the rest share results across modules. An optional library leaves the graph with its option |
 | gnulib's conditional sources | `autoconf_srcs(wrap = "include")` | A source's own `#include "sibling.h"` keeps working |
 | gnulib's generated wrapper headers | Written under `_gnulib_gen/` (the conditional ones under `_gnulib_cond/`), served ahead of the source directory | A maintainer's copy next to the `.in.h` template must not shadow the rendered one |
 | A wrapper header assembled from two files (gnulib's `assert.h`: `assert.in.h`, then `verify.h` through a sed) | A second `autoconf_hdr` rendering the appended file with the recipe's sed as exact substitutions (a deleted range fenced with `#if 0`), spliced in at the template's closing comment through `GNULIB_COND_HDR_INLINES`; a sed the converter cannot translate is reported | The appended half is what gives compilers predating C23 (gcc < 9) a one-argument `_Static_assert` |

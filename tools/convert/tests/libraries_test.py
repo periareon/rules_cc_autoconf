@@ -6,7 +6,7 @@ from tools.convert import libraries
 from tools.convert.decisions import Decisions, Word
 from tools.convert.ir import Call, Dep, Target
 from tools.convert.results import _library_check_targets, _registry_libraries_in_configure
-from tools.convert.tests.helpers import calls, must
+from tools.convert.tests.helpers import as_raw, calls, must
 from tools.convert.translate import ProjectState
 
 # ---- The library table and its name lookup
@@ -101,6 +101,43 @@ def test_configure_links_registry_library() -> None:
     ]
     assert [d.label for d in segment.deps] == [":autoconf_gmp"]  # its own checks may require them
     assert any("autoconf_gmp" in n for n in notes)
+    assert state.library_arms == {}  # probed outside every select(): every target's
+
+
+def test_library_probed_only_under_an_option() -> None:
+    """gawk's `-lmpfr -lgmp`: the one probe that links them (a program including mpfr.h and
+    gmp.h) sits in the `:mpfr_enabled` arm.  Both libraries become the library target's
+    cc_deps, and `library_arms` records the arm, so what links them depends on them there
+    only.  A library a check also probes unconditionally, or one probed under a platform arm,
+    stays every target's."""
+    state = ProjectState()
+    state.configure_libs = {"gmp": "@gmp//:gmp", "mpfr": "@mpfr//:mpfr", "z": "@zlib//:z", "bz2": "@bzip2//:bz2"}
+    main = Target(name="autoconf", checks=[Call("checks.AC_CHECK_HEADER", ["zlib.h"])])
+    main.deps = [Dep("//autoconf/macros/AC_PROG_CC")]
+    main.arm(":mpfr_enabled", "mpfr").append(
+        Call(
+            "checks.AC_TRY_LINK",
+            [],
+            {"name": "_found_mpfr", "code": "#include <mpfr.h>\n#include <gmp.h>\nint main(void) { return 0; }"},
+        )
+    )
+    main.arm("//conditions:default", "mpfr")
+    main.arm(":zlib_enabled", "zlib").append(Call("checks.AC_CHECK_LIB", ["z", "inflate"]))
+    main.arm("//conditions:default", "zlib")
+    main.arm("@platforms//os:linux").append(Call("checks.AC_CHECK_LIB", ["bz2", "BZ2_bzCompress"]))
+    notes: list[str] = []
+    targets = _library_check_targets(main, [], state, notes)
+    assert [t.name for t in targets] == ["autoconf_bz2", "autoconf_gmp", "autoconf_z"]
+    assert [c.kwargs.get("name") for c in calls(targets[1].selects["mpfr"][":mpfr_enabled"])] == ["_found_mpfr"]
+    assert state.library_arms == {"@gmp//:gmp": ":mpfr_enabled", "@mpfr//:mpfr": ":mpfr_enabled"}
+    assert any("-lmpfr: probed only under the :mpfr_enabled arm" in n for n in notes), notes
+    # mpfr.h names mpfr too; both are cc_deps in the arm only, so the option off drops the modules.
+    assert as_raw(targets[1].attrs["cc_deps"]).text == (
+        'select({\n        ":mpfr_enabled": [\n            "@gmp//:gmp",\n            "@mpfr//:mpfr",\n        ],\n'
+        '        "//conditions:default": [],\n    })'
+    )
+    assert targets[0].attrs == {"cc_deps": ["@bzip2//:bz2"]}
+    assert targets[2].attrs == {"cc_deps": ["@zlib//:z"]}
 
 
 def test_library_checks_under_select_arms() -> None:
@@ -132,10 +169,15 @@ def test_library_checks_under_select_arms() -> None:
     assert {
         label: [c.kwargs.get("name") for c in calls(items)] for label, items in target.selects["crypto"].items()
     } == {":crypto_openssl": ["ac_cv_libssl"], "//conditions:default": []}
-    assert target.attrs == {"cc_deps": ["@openssl//:crypto", "@openssl//:ssl"]}
+    # Both libraries as cc_deps, in the arm the probe runs in.
+    cc_deps = as_raw(target.attrs["cc_deps"]).text
+    assert cc_deps.startswith('select({\n        ":crypto_openssl": [\n            "@openssl//:crypto",\n')
+    assert '"@openssl//:ssl",' in cc_deps and '"//conditions:default": [],' in cc_deps
     assert [c.fn for c in calls(main.selects["crypto"][":crypto_openssl"])] == ["checks.AC_SUBST"]
     assert [d.label for d in main.deps] == ["//autoconf/macros/AC_PROG_CC", ":autoconf_crypto"]
     assert any(":crypto_openssl arm" in n for n in notes), notes
+    # Probed under that one option only: linked in its arm.
+    assert state.library_arms == {"@openssl//:crypto": ":crypto_openssl", "@openssl//:ssl": ":crypto_openssl"}
 
 
 def test_library_decision_ignore() -> None:
@@ -154,6 +196,22 @@ def test_library_decision_ignore() -> None:
 def test_table_entries_are_labels() -> None:
     for name, entry in libraries.table().items():
         assert entry.label.startswith(f"@{entry.module}//:"), (name, entry)
+
+
+def test_headers_name_table_entries() -> None:
+    """The `[headers]` table: each header names one `-l` entry of the table, the entry lists its
+    headers, and a dependency label finds them (what `results` and `automake._split_deps` use)."""
+    headers = libraries.headers()
+    assert headers["gmp.h"] == "gmp"
+    assert headers["mpfr.h"] == "mpfr"
+    assert headers["curses.h"] == "ncurses"
+    for header, name in headers.items():
+        assert name in libraries.table(), header
+        assert header in libraries.table()[name].headers, header
+    assert known("mpfr").headers == ("mpfr.h",)
+    assert known("pcap").headers == ("pcap.h", "pcap/pcap.h")
+    assert libraries.headers_of_label("@gmp//:gmp") == {"gmp.h"}
+    assert libraries.headers_of_label("@nosuch//:lib") == set()
 
 
 # ---- pkg-config specs and versions

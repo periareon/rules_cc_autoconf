@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Mapping
 
 _BARE_KEY_RE = re.compile(r"^[A-Za-z0-9_-]+$")
 
@@ -71,3 +72,10 @@ def tables(name: str, rows: dict[str, dict[str, object]]) -> str:
         lines += [f"{key(k)} = {value(v)}" for k, v in row.items() if not _is_empty(v)]
         out.append("\n".join(lines))
     return "\n\n".join(out) + "\n"
+
+
+def table(name: str, entries: Mapping[str, object]) -> str:
+    """One `[name]` table of key = value lines, in the entries' order, empty values left out."""
+    lines = [f"[{key(name)}]"]
+    lines += [f"{key(k)} = {value(v)}" for k, v in entries.items() if not _is_empty(v)]
+    return "\n".join(lines) + "\n"

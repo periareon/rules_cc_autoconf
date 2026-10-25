@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import dataclasses
+import re
 import textwrap
 from pathlib import Path
 
@@ -237,6 +238,57 @@ def test_program_kind() -> None:
     assert must(decisions.optional("program:arch", "program")).never
     with pytest.raises(dec.DecisionError):
         dec.Decisions.from_text('DECISIONS = {"program:x": ["linux"]}').optional("program:x", "program")
+
+
+def test_subdir_kind() -> None:
+    """`subdir:`: ALWAYS, NEVER (not converted), the labels the sub-configure's package builds under
+    (platform constraints or config_settings), or one `!a,b` entry for everywhere but those."""
+    decisions = dec.Decisions.from_text("""DECISIONS = {
+    "subdir:extension": ["!@rules_cc//cc/compiler:msvc-cl,//:extensions_off"],
+    "subdir:libs/zlib": ["@platforms//os:linux", ":bundled_zlib"],
+    "subdir:doc": decision.NEVER,
+    "subdir:tests": decision.ALWAYS,
+}""")
+    extension = must(decisions.optional("subdir:extension", "subdir"))
+    assert (shape(extension), extension.platforms) == (
+        {"platforms"},
+        ["!@rules_cc//cc/compiler:msvc-cl,//:extensions_off"],
+    )
+    assert must(decisions.optional("subdir:libs/zlib", "subdir")).platforms == ["@platforms//os:linux", ":bundled_zlib"]
+    assert must(decisions.optional("subdir:doc", "subdir")).never
+    assert must(decisions.optional("subdir:tests", "subdir")).always
+    for bad in ('["linux"]', '["!a", "@platforms//os:linux"]', "[]", '"@platforms//os:linux"'):
+        with pytest.raises(dec.DecisionError):
+            dec.Decisions.from_text(f'DECISIONS = {{"subdir:x": {bad}}}').optional("subdir:x", "subdir")
+
+
+def test_words_per_kind() -> None:
+    """A word is only a decision for the kinds that list it: MANUAL for `program:` and `subdir:`
+    (the two that say whether a target is in `//...`), not elsewhere; IGNORE never for those two.
+    The legend (`FORMS`) names exactly the words `WORD_FORMS` accepts, every word is one the
+    `decision` struct defines (`WORDS`), and a key read as another kind than it spells is refused."""
+    for kind, words in dec.WORD_FORMS.items():
+        assert kind in dec.FORMS, kind
+        assert set(words) <= set(dec.WORDS), (kind, words)
+        assert set(re.findall(r"decision\.([A-Z_]+)", dec.FORMS[kind])) == set(words), kind
+    for kind in dec.FORMS:
+        assert not re.search(r"decision\.[A-Z_]+", dec.FORMS[kind]) or kind in dec.WORD_FORMS, kind
+    assert must(
+        dec.Decisions.from_text('DECISIONS = {"program:x": decision.MANUAL}').optional("program:x", "program")
+    ).manual
+    assert must(
+        dec.Decisions.from_text('DECISIONS = {"subdir:x": decision.MANUAL}').optional("subdir:x", "subdir")
+    ).manual
+    for kind in sorted(set(dec.FORMS) - {"program", "subdir"}):
+        with pytest.raises(dec.DecisionError):
+            dec.Decisions.from_text(f'DECISIONS = {{"{kind}:x": decision.MANUAL}}').optional(f"{kind}:x", kind)
+    for kind in ("program", "subdir"):
+        with pytest.raises(dec.DecisionError):
+            dec.Decisions.from_text(f'DECISIONS = {{"{kind}:x": decision.IGNORE}}').optional(f"{kind}:x", kind)
+    with pytest.raises(dec.DecisionError, match="its key says 'program'"):
+        dec.Decisions.from_text('DECISIONS = {"program:x": decision.ALWAYS}').optional("program:x", "subdir")
+    with pytest.raises(dec.DecisionError, match="not a kind"):
+        dec.normalize("nosuch", "nosuch:x", dec.Word("ALWAYS"))
 
 
 def test_multiline_reason_stays_a_comment() -> None:

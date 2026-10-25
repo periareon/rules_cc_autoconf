@@ -185,8 +185,46 @@ SHIPPED_TARGETS: dict[str, str] = {
     "pcre2": "pcre2",  # pcre2-<version>/BUILD.bazel: cc_library(name = "pcre2")
 }
 
+# The header a probe includes to use a library, by the `-l` name of `CANDIDATES` it stands
+# for: a configure check whose program includes one of these compiles and links against that
+# library (`#include <gmp.h>` in gawk's MPFR probe), and a public header of a converted project
+# including one keeps the library among its `deps` rather than its `implementation_deps`.  One
+# owner per header: where several `-l` names share one (ncurses, ncursesw and tinfo all install
+# curses.h), the name a probe including it most plausibly means.  Only the identifying public
+# header of each library, not everything it installs, so that a project's own header of the same
+# name does not pass for it.  Emitted as the `[headers]` table; a header whose library the
+# registry scan did not resolve is left out with a message.
+HEADERS: dict[str, str] = {
+    "archive.h": "archive",
+    "bzlib.h": "bz2",
+    "curl/curl.h": "curl",
+    "curses.h": "ncurses",
+    "expat.h": "expat",
+    "ffi.h": "ffi",
+    "gmp.h": "gmp",
+    "lz4.h": "lz4",
+    "lzma.h": "lzma",
+    "mpc.h": "mpc",
+    "mpfr.h": "mpfr",
+    "ncurses.h": "ncurses",
+    "openssl/ssl.h": "ssl",
+    "pcap.h": "pcap",
+    "pcap/pcap.h": "pcap",
+    "pcre.h": "pcre",
+    "pcre2.h": "pcre2-8",
+    "png.h": "png",
+    "readline/readline.h": "readline",
+    "sqlite3.h": "sqlite3",
+    "uuid/uuid.h": "uuid",
+    "zip.h": "zip",
+    "zlib.h": "z",
+    "zstd.h": "zstd",
+}
+
+# A library rule or alias and its name, in a BUILD file or inside a generated `autoconf.bzl`'s
+# macro (indented, `native.alias(`): the converter's overlays declare their public names there.
 _LIBRARY_RULE_RE = re.compile(
-    r'^(?:cc_library|alias|cc_shared_library|cc_import)\(\s*\n\s*name = "([^"]+)"', re.MULTILINE
+    r'^\s*(?:native\.)?(?:cc_library|alias|cc_shared_library|cc_import)\(\s*\n\s*name = "([^"]+)"', re.MULTILINE
 )
 
 
@@ -229,7 +267,11 @@ def scan(registry: Path) -> tuple[dict[str, dict[str, str]], list[str]]:
                     "no overlay to read the library target from"
                 )
                 break
-            target = _target_for(lib, module, _LIBRARY_RULE_RE.findall(overlay))
+            # A generated overlay declares its targets in autoconf.bzl; BUILD.bazel keeps the
+            # hand-written ones (and the names earlier versions exported, as aliases).
+            autoconf_bzl = _show(registry, f"modules/{module}/{version}/overlay/autoconf.bzl") or ""
+            names = _LIBRARY_RULE_RE.findall(autoconf_bzl) + _LIBRARY_RULE_RE.findall(overlay)
+            target = _target_for(lib, module, names)
             if target is None:
                 messages.append(f"{lib}: {module} {version}'s overlay has no target named after the library")
                 break
@@ -250,14 +292,23 @@ def main() -> int:
     table, messages = scan(args.registry.expanduser().resolve())
     target = workspace / "tools/convert/libraries.toml"
     rows: dict[str, dict[str, object]] = {lib: dict(entry) for lib, entry in sorted(table.items())}
+    headers = {header: lib for header, lib in sorted(HEADERS.items()) if lib in table}
+    messages += [
+        f"{header}: its library {lib} is not in the table; left out"
+        for header, lib in HEADERS.items()
+        if lib not in table
+    ]
     text = (
         tomlout.header(
             UPDATE_COMMAND,
             "C libraries by `-l` name and the Bazel Central Registry modules that "
-            "provide them, each module's latest version and verified library target",
+            "provide them, each module's latest version and verified library target, and the "
+            "headers that identify them",
         )
         + "\n"
         + tomlout.tables("libraries", rows)
+        + "\n"
+        + tomlout.table("headers", headers)
     )
     target.write_text(text, encoding="utf-8", newline="\n")
     for message in messages:
