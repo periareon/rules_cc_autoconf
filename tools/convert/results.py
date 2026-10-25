@@ -9,9 +9,22 @@ from dataclasses import dataclass, field
 
 from tools.convert import decisions as dec
 from tools.convert import libraries as registry_libraries
-from tools.convert.common import _list_literal
+from tools.convert.common import _dict_of_lists, _list_literal
 from tools.convert.index import PortIndex
-from tools.convert.ir import DEFAULT_ARM, Assign, AttrValue, Call, CheckItem, Dep, Package, Raw, Target, strings
+from tools.convert.ir import (
+    DEFAULT_ARM,
+    PLATFORM_FAMILIES,
+    Assign,
+    AttrValue,
+    Call,
+    CheckItem,
+    Dep,
+    Package,
+    Raw,
+    Target,
+    select_family,
+    strings,
+)
 from tools.convert.translate import ProjectState, basename, check_key, clone, condition_names, provided_names, slug
 
 _LIST_CHECKS = {
@@ -109,18 +122,8 @@ def _loc_file(target: Target) -> str:
 
 _LINK_TOKEN_RE = re.compile(r"(?<![\w./-])-l([A-Za-z0-9_+.-]+)\b")
 _INCLUDE_RE = re.compile(r'#\s*include\s*[<"]([A-Za-z0-9_./-]+\.h)[>"]')
-# Headers that name a registry library: a probe that includes one links it.
-KNOWN_HEADERS = {
-    "gmp.h": "gmp",
-    "zlib.h": "z",
-    "bzlib.h": "bz2",
-    "lzma.h": "lzma",
-    "curses.h": "ncurses",
-    "ncurses.h": "ncurses",
-    "readline/readline.h": "readline",
-    "pcap/pcap.h": "pcap",
-    "pcap.h": "pcap",
-}
+# The headers that name a registry library (a probe that includes one links it) are the
+# table's `[headers]`: `registry_libraries.headers()`.
 
 
 def _registry_libraries_in_configure(
@@ -145,8 +148,8 @@ def _registry_libraries_in_configure(
                     if registry_libraries.known(name):
                         found.setdefault(name, f"-l{name}")
             for header in _INCLUDE_RE.findall(line):
-                if header in KNOWN_HEADERS:
-                    found.setdefault(KNOWN_HEADERS[header], f"#include <{header}>")
+                if header in registry_libraries.headers():
+                    found.setdefault(registry_libraries.headers()[header], f"#include <{header}>")
         for name, how in sorted(found.items()):
             if name in state.configure_libs:
                 continue
@@ -162,7 +165,7 @@ def _registry_libraries_in_configure(
                 continue
             library = registry_libraries.known(name)
             if library is None:
-                # A KNOWN_HEADERS library the table does not list: no module to declare.
+                # A header whose library the table does not list: no module to declare.
                 notes.append(f"{file}: {how}: no registry module is known for {name}; left out")
                 continue
             state.external_modules[library.module] = library.version
@@ -214,16 +217,24 @@ def _library_check_targets(main: Target, segments: list[Target], state: ProjectS
     `requires` and `compile_defines` still reach its results.  A check under a select() arm
     (libssh2's openssl probe under `--with-crypto=openssl`) moves to the same arm of the
     library target; a check against two libraries at once (`-lssl -lcrypto`) gets both as
-    `cc_deps`."""
+    `cc_deps`.
+
+    A library of `configure_libs` that only ever gets probed under one configure option's arm
+    (gawk's `-lmpfr -lgmp`, linked by the one probe `--enable-mpfr` runs) is found only there:
+    `state.library_arms` records the arm, and the Makefile targets depend on the library in
+    that arm (`automake._link_items`) instead of unconditionally."""
     libraries: dict[str, str] = dict(state.configure_libs)
     for label in sorted(state.pkg_cc_deps):  # pkg-config libraries: by their target name
         libraries.setdefault(label.rsplit(":", 1)[-1] if ":" in label else label.lstrip("@").split("/")[0], label)
     if not libraries:
         return []
-    headers_of = {name: {h for h, lib in KNOWN_HEADERS.items() if lib == name} for name in libraries}
+    known_headers = registry_libraries.headers()
+    headers_of = {name: {h for h, lib in known_headers.items() if lib == name} for name in libraries}
     bodies = segments + [main]
     port_deps = [d for d in main.deps if not d.label.startswith(":autoconf_")]
     out: list[Target] = []
+    probed_unconditionally: set[str] = set()  # labels a check outside every select() needs
+    probed_in_arms: dict[str, set[str]] = {}  # label -> the arm labels of the checks that need it
 
     def take(items: list[CheckItem], name: str) -> list[Call]:
         """The checks of `items` that need library `name`, with the ones they require (readline's
@@ -273,6 +284,12 @@ def _library_check_targets(main: Target, segments: list[Target], state: ProjectS
                     if any(_needs_library(i, lib, headers_of[lib]) for i in everything)
                 }
             )
+            for lib, lbl in libraries.items():
+                if any(_needs_library(i, lib, headers_of[lib]) for i in taken):
+                    probed_unconditionally.add(lbl)
+                for (_family, arm_label), picked in arm_taken.items():
+                    if any(_needs_library(i, lib, headers_of[lib]) for i in picked):
+                        probed_in_arms.setdefault(lbl, set()).add(arm_label)
             target.attrs["cc_deps"] = needed_labels
             target.deps = list(port_deps) + [Dep(f":autoconf_{i}") for i in range(1, k + 1)]
             target.deps_suffix = list(main.deps_suffix)
@@ -290,6 +307,36 @@ def _library_check_targets(main: Target, segments: list[Target], state: ProjectS
                 f"{name}: {len(everything)} check(s) probe against {', '.join(needed_labels)} in {target_name}"
                 f"{where}; the main target has no cc_deps"
             )
+    for lib, label in sorted(state.configure_libs.items()):
+        arms = probed_in_arms.get(label, set())
+        if label in probed_unconditionally or len(arms) != 1:
+            continue
+        (arm,) = arms
+        # One configure option's arm only: a platform arm would make the library a host's
+        # business, and a negated conditional (`!L1,L2`) is no single arm to link it in.
+        if arm == DEFAULT_ARM or arm.startswith("!") or select_family(arm) in PLATFORM_FAMILIES:
+            continue
+        state.library_arms[label] = arm
+        notes.append(
+            f"-l{lib}: probed only under the {arm} arm; the targets that link {label} depend on it in "
+            "that arm, as configure finds it there"
+        )
+    # The library targets' cc_deps follow: a library only probed in an arm is a cc_dep in that
+    # arm, so the option off keeps the module out of the graph (the checks are in the arm too).
+    for target in out:
+        labels = strings(target.attrs["cc_deps"])
+        unconditional = [lbl for lbl in labels if lbl not in state.library_arms]
+        by_arm: dict[str, list[str]] = {}
+        for lbl in labels:
+            if lbl in state.library_arms:
+                by_arm.setdefault(state.library_arms[lbl], []).append(lbl)
+        if by_arm:
+            selects = [
+                f"select({_dict_of_lists({arm: arm_labels, DEFAULT_ARM: []}, '    ')})"
+                for arm, arm_labels in sorted(by_arm.items())
+            ]
+            parts = ([_list_literal(unconditional, "    ")] if unconditional else []) + selects
+            target.attrs["cc_deps"] = Raw(" + ".join(parts))
     return out
 
 

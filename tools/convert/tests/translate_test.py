@@ -29,6 +29,8 @@ from tools.convert.ir import Assign, Call, CheckItem, Dep, Package, Raw, Rule, T
 from tools.convert.makefiles import _automake_tree, _configured_subdirs, _library_target, _parse_tree_makefile
 from tools.convert.modulebazel import _module_bazel
 from tools.convert.project import (
+    SubdirGate,
+    _gate_package,
     _gnulib_file_list,
     _module_flags,
     _option_rules,
@@ -36,6 +38,7 @@ from tools.convert.project import (
     _repo_bazel,
     _root_includes,
     _standard_flags,
+    _subdir_gates,
 )
 from tools.convert.results import _confdefs, _drop_duplicate_defines
 from tools.convert.sources import (
@@ -1616,6 +1619,10 @@ def test_flag_classes_and_link_order(tmp_path: Path) -> None:
         [":config_headers", "@xz//:lzma"],
     )
     assert _split_deps([":config_headers", "@xz//:lzma"], exports, {"lzma.h"}) == (["@xz//:lzma"], [":config_headers"])
+    # The table's headers, where the label would not suggest them: a public header including
+    # curses.h keeps ncurses a dep; without it, the library is an implementation detail.
+    assert _split_deps(["@ncurses//:ncurses"], exports, {"curses.h"}) == (["@ncurses//:ncurses"], [])
+    assert _split_deps(["@ncurses//:ncurses"], exports, {"stdio.h"}) == ([], ["@ncurses//:ncurses"])
 
 
 def test_replace_lowers_to_nonzero_and_src_condition_override() -> None:
@@ -1818,7 +1825,7 @@ def test_substituted_program_decided_by_its_makefile_path(tmp_path: Path) -> Non
     assert any("decide program:src/hostid" in c for c in rules["src/hostid"].comments), rules["src/hostid"].comments
     assert [name for name, _why in state.manual_programs] == ["src/hostid"]
     # The report's key is the one the lookup reads.
-    report = _manual_programs_section(type("Result", (), {"state": state})())
+    report = _manual_programs_section(type("Result", (), {"state": state, "manual_package": None})())
     assert "`program:src/hostid`" in "\n".join(report)
     for key in ("program:src/hostid", "program:hostid"):
         rules, state, _ = convert(Decisions({key: Word("ALWAYS")}))
@@ -1827,6 +1834,10 @@ def test_substituted_program_decided_by_its_makefile_path(tmp_path: Path) -> Non
     rules, _, notes = convert(Decisions({"program:src/hostid": Word("NEVER")}))
     assert "src/hostid" not in rules
     assert any("program:src/hostid is NEVER" in n for n in notes), notes
+    # MANUAL: the considered answer that the condition is not expressible; the same shape as undecided.
+    rules, state, _ = convert(Decisions({"program:src/hostid": Word("MANUAL")}))
+    assert rules["src/hostid"].attrs["tags"] == ["manual"]
+    assert state.manual_programs == [("src/hostid", "program:src/hostid is MANUAL")]
     rules, _, _ = convert(Decisions({"program:src/hostid": ["@platforms//os:linux"]}))
     assert "target_compatible_with" in rules["src/hostid"].attrs
 
@@ -1853,7 +1864,9 @@ def test_substituted_program_of_a_sub_makefile(tmp_path: Path) -> None:
     (rule,) = [r for name, r in rules.items() if name.endswith("hostid") and "tags" in r.attrs]
     assert rule.attrs["tags"] == ["manual"]
     reported = [
-        line for line in _manual_programs_section(type("Result", (), {"state": state})()) if line.startswith("- `")
+        line
+        for line in _manual_programs_section(type("Result", (), {"state": state, "manual_package": None})())
+        if line.startswith("- `")
     ]
     assert len(reported) == 1, reported
     key = reported[0].rsplit("`", 2)[-2]  # the `program:...` the report tells the reader to decide
@@ -2496,6 +2509,131 @@ def test_pkg_config_libs_under_conditional_ldadd(tmp_path: Path) -> None:
     assert "@zlib//:z" not in unconditional
     assert '":z_enabled": [' in arms and '"@zlib//:z"' in arms
     assert not any("linked unconditionally" in n for n in notes)
+
+
+def test_registry_library_probed_under_an_option_is_linked_in_its_arm(tmp_path: Path) -> None:
+    """gawk: configure probes `-lmpfr -lgmp` only under --enable-mpfr (`library_arms`), so the
+    program and the tree library depend on both registry libraries in the `:mpfr_enabled` arm,
+    not unconditionally (a `gawk_minimal` with the flag off then pulls neither).  A library an
+    LDADD line links by hand (`-lgmp`) is unconditional, and not repeated in the arm."""
+    root = tmp_path
+    (root / "support").mkdir()
+    (root / "Makefile.am").write_text(
+        "noinst_LIBRARIES = libsupport.a\nlibsupport_a_SOURCES = support/s.c\n"
+        "bin_PROGRAMS = tool other\ntool_SOURCES = tool.c\ntool_LDADD = libsupport.a\n"
+        "other_SOURCES = other.c\nother_LDADD = -lgmp\n"
+    )
+    for name in ("support/s.c", "tool.c", "other.c"):
+        (root / name).write_text("")
+    package = Package(path="", docstring="")
+    state = ProjectState()
+    state.config_targets = ["config"]
+    state.header_libraries = [":config_headers"]
+    state.configure_libs = {"gmp": "@gmp//:gmp", "mpfr": "@mpfr//:mpfr"}
+    state.library_arms = {"@gmp//:gmp": ":mpfr_enabled", "@mpfr//:mpfr": ":mpfr_enabled"}
+    notes: list[str] = []
+    _programs_tree(package, root, Decisions(), state, notes)
+    rules = rules_by_name(package)
+    deps = as_raw(rules["tool"].attrs["deps"]).text
+    unconditional, _plus, arms = deps.partition(" + ")
+    assert "@gmp//:gmp" not in unconditional and "@mpfr//:mpfr" not in unconditional
+    assert '":mpfr_enabled": [' in arms and '"@gmp//:gmp"' in arms and '"@mpfr//:mpfr"' in arms
+    # The tree library: the registry libraries are implementation details, in the same arm.
+    assert "deps" not in rules["support"].attrs or "@gmp//:gmp" not in str(rules["support"].attrs["deps"])
+    implementation = as_raw(rules["support"].attrs["implementation_deps"]).text
+    unconditional, _plus, arms = implementation.partition(" + ")
+    assert "@gmp//:gmp" not in unconditional
+    assert '":mpfr_enabled": [' in arms and '"@gmp//:gmp"' in arms and '"@mpfr//:mpfr"' in arms
+    # `-lgmp` on the LDADD line: gmp unconditional, once; mpfr still in the arm.
+    deps = as_raw(rules["other"].attrs["deps"]).text
+    unconditional, _plus, arms = deps.partition(" + ")
+    assert unconditional.count("@gmp//:gmp") == 1
+    assert "@gmp//:gmp" not in arms
+    assert '":mpfr_enabled": [' in arms and '"@mpfr//:mpfr"' in arms
+
+
+def test_subdir_gates(tmp_path: Path) -> None:
+    """gawk enters extension/ only when its dlfcn.h probe made `$enable_extensions` yes, and the
+    Makefile lists it under `if ENABLE_EXTENSIONS`: a target cannot follow a probe, so the
+    `subdir:` decision is asked and the package builds everywhere meanwhile.  Decided, the labels
+    become the package's `target_compatible_with` (`!a,b`: everywhere but those); NEVER drops the
+    directory.  A host-OS condition, or an automake conditional decided to a config_setting,
+    needs no decision."""
+    root = tmp_path
+    (root / "Makefile.am").write_text(
+        "SUBDIRS = support .\nif ENABLE_EXTENSIONS\nSUBDIRS += extension\nendif\nSUBDIRS += doc\n"
+    )
+    state = ProjectState()
+    state.subdir_conditions = {
+        "extension": df.Eq("enable_extensions", "yes"),
+        "doc": df.TRUE,
+        "linuxonly": df.host_condition("*-*-linux*"),
+    }
+    decisions = Decisions()
+    notes: list[str] = []
+    kept, gates = _subdir_gates(root, state, decisions, ["extension", "doc", "linuxonly"], notes)
+    assert kept == ["extension", "doc", "linuxonly"]
+    assert "subdir:extension" in decisions.missing
+    assert "doc" not in gates
+    # Undecided: defined but manual, as a probe-conditioned program is.
+    assert gates["extension"].compatible_with is None
+    assert must(gates["extension"].manual_reason).startswith("subdir:extension undecided: AC_CONFIG_SUBDIRS")
+    assert any("tagged manual until subdir:extension is decided" in n for n in notes), notes
+    linux = must(gates["linuxonly"].compatible_with).text
+    assert '"@platforms//os:linux": []' in linux and '"//conditions:default": ["@platforms//:incompatible"]' in linux
+    decisions = Decisions.from_text(
+        'DECISIONS = {"subdir:extension": ["!@rules_cc//cc/compiler:msvc-cl,//:extensions_off"], '
+        '"subdir:doc": decision.NEVER}'
+    )
+    kept, gates = _subdir_gates(root, state, decisions, ["extension", "doc"], [])
+    assert kept == ["extension"]
+    text = must(gates["extension"].compatible_with).text
+    assert '"@rules_cc//cc/compiler:msvc-cl": ["@platforms//:incompatible"]' in text
+    assert '"//:extensions_off": ["@platforms//:incompatible"]' in text
+    assert '"//conditions:default": []' in text
+    assert decisions.missing == []
+    decisions = Decisions.from_text('DECISIONS = {"subdir:extension": decision.MANUAL}')
+    kept, gates = _subdir_gates(root, state, decisions, ["extension"], [])
+    assert kept == ["extension"]
+    assert gates["extension"] == SubdirGate(manual_reason="subdir:extension is MANUAL")
+    state.subdir_conditions = {}
+    decisions = Decisions.from_text('DECISIONS = {"am_conditional:ENABLE_EXTENSIONS": ":extensions_on"}')
+    kept, gates = _subdir_gates(root, state, decisions, ["extension"], [])
+    assert kept == ["extension"]
+    assert '":extensions_on": []' in must(gates["extension"].compatible_with).text
+    assert decisions.missing == []
+
+
+def test_gate_package() -> None:
+    """A sub-configure's gate lands on every C/C++ rule of its package that has none of its own."""
+    package = Package(path="extension", docstring="")
+    gate = Raw("select({})")
+    package.after += [
+        Rule("cc_library", "a", {"srcs": ["a.c"]}, load_from="@rules_cc//cc:cc_library.bzl"),
+        Rule("cc_shared_library", "a_shared", {"deps": [":a"]}, load_from="@rules_cc//cc:cc_shared_library.bzl"),
+        Rule(
+            "cc_library",
+            "b",
+            {"target_compatible_with": ["x"], "tags": ["t"]},
+            load_from="@rules_cc//cc:cc_library.bzl",
+        ),
+        Rule("filegroup", "f", {"srcs": [":a"]}),
+    ]
+    notes: list[str] = []
+    _gate_package(package, SubdirGate(compatible_with=gate), notes)
+    rules = rules_by_name(package)
+    assert rules["a"].attrs["target_compatible_with"] is gate
+    assert rules["a_shared"].attrs["target_compatible_with"] is gate
+    assert rules["b"].attrs["target_compatible_with"] == ["x"]
+    assert "target_compatible_with" not in rules["f"].attrs
+    assert notes == ["2 target(s) build where the parent configure enters this directory (its subdir: gate)"]
+    # A manual gate tags every C/C++ rule, keeping the tags a rule has; the filegroup is left alone.
+    notes = []
+    _gate_package(package, SubdirGate(manual_reason="subdir:extension is MANUAL"), notes)
+    assert rules["a"].attrs["tags"] == ["manual"]
+    assert rules["b"].attrs["tags"] == ["t", "manual"]
+    assert "tags" not in rules["f"].attrs
+    assert notes == ["3 target(s) tagged manual, out of `//...` (subdir:extension is MANUAL)"]
 
 
 def test_conditional_flag_variable_spelled_out_into_the_arm() -> None:

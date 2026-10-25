@@ -18,9 +18,10 @@ from collections.abc import Set as AbstractSet
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from tools.convert import dataflow as df
 from tools.convert import decisions as dec
-from tools.convert import licenses, lower, ownership
-from tools.convert.automake import _programs_tree
+from tools.convert import gnulibmk, licenses, lower, ownership
+from tools.convert.automake import _programs_tree, _resolve_conditional
 from tools.convert.common import (
     BOOL_OPTIONS,
     CONFIG_HEADERS,
@@ -28,9 +29,12 @@ from tools.convert.common import (
     STANDARD_CONSTANTS,
     STANDARD_FEATURES_TODO,
     TOP_HEADERS,
+    _compatible_with,
     _dict_literal,
     _inside_project,
     _list_literal,
+    _platform_exceptions,
+    _platform_labels,
     generated_docstring,
     headers_glob,
     module_name,
@@ -52,7 +56,7 @@ from tools.convert.gnulib_lib import (
     _template_variables,
 )
 from tools.convert.index import PortIndex
-from tools.convert.ir import Assign, AttrValue, Call, Each, Package, Raw, Rule, Statement, Target
+from tools.convert.ir import Assign, AttrValue, Call, Each, Package, Raw, Rule, Statement, Target, strings
 from tools.convert.makefiles import (
     _configured_subdirs,
     _literal_substs,
@@ -93,6 +97,7 @@ from tools.convert.translate import (
     basename,
     condition_names,
     default_tarname,
+    describe,
     provided_names,
     slug,
 )
@@ -119,7 +124,12 @@ class ProjectResult:
     homepage: str | None = None
     """AC_INIT's URL, or the www.gnu.org page of a GNU package."""
     subdirs: list[str] = field(default_factory=list)
-    """AC_CONFIG_SUBDIRS with a configure.ac of their own."""
+    """AC_CONFIG_SUBDIRS with a configure.ac of their own, the ones a `subdir:` decision rules out left out."""
+    subdir_gates: dict[str, SubdirGate] = field(default_factory=dict)
+    """Sub-configure -> how its package builds, for the ones configure enters conditionally (gawk's
+    extension/ only where it finds dlfcn.h; see `_subdir_gates`)."""
+    manual_package: str | None = None
+    """Why every target of this package is tagged `manual`, when it is one (`_gate_package`)."""
     tarname: str = ""
     """AC_INIT's tarname: `flex`, where the name is "the fast lexical analyser generator"."""
     extra_files: dict[str, str] = field(default_factory=dict)
@@ -247,6 +257,128 @@ MODULE_PACKAGES = ["//:__subpackages__"]
 """A builder's spelling for "the module's own packages": normalized to the confinement."""
 
 
+@dataclass(frozen=True)
+class SubdirGate:
+    """How a sub-configure's package builds: under `compatible_with` (its targets'
+    `target_compatible_with`), or defined but tagged `manual` (`manual_reason` says why: the
+    `subdir:` decision is MANUAL, or still undecided)."""
+
+    compatible_with: Raw | None = None
+    manual_reason: str | None = None
+
+
+def _subdir_gates(
+    src: Path, state: ProjectState, decisions: dec.Decisions, subdirs: list[str], notes: list[str]
+) -> tuple[list[str], dict[str, SubdirGate]]:
+    """The sub-configures to convert and, for the ones configure enters only sometimes, the
+    `target_compatible_with` their packages' targets get.
+
+    configure enters gawk's extension/ only when `$enable_extensions` is yes, which its dlfcn.h
+    probe settles, and the Makefile.am lists the directory under `if ENABLE_EXTENSIONS`: a host
+    without dlfcn.h (MSVC) builds no extensions.  A target's existence cannot follow a probe, so
+    a `subdir:<dir>` decision says where the package builds: ALWAYS, NEVER (not converted),
+    MANUAL (defined, `tags = ["manual"]`) or the configuration labels (`!<label>,...` for
+    everywhere but those).  Without one, a condition that is purely about the host OS, or an
+    automake conditional that resolves to a constant or to one config_setting, is taken as it
+    stands; anything else asks for the decision, and the package's targets are `manual` until it
+    is made, as a program configure builds only when a probe holds is (`_program_build_attrs`)."""
+    am_conditions: dict[str, list[str]] = {}
+    makefile = src / "Makefile.am"
+    if makefile.is_file():
+        mk = gnulibmk.parse(makefile.read_text(encoding="utf-8", errors="replace"))
+        for word, am_cond in mk.conditional_variables.get("SUBDIRS", []):
+            am_conditions.setdefault(word.strip("/"), []).append(am_cond)
+    kept: list[str] = []
+    gates: dict[str, SubdirGate] = {}
+    for subdir in subdirs:
+        key = f"subdir:{subdir}"
+        cond = state.subdir_conditions.get(subdir, df.TRUE)
+        conditionals = am_conditions.get(subdir, [])
+        decision = decisions.optional(key, "subdir")
+        if decision is not None:
+            if decision.never:
+                notes.append(f"{subdir}/: not converted ({key} is NEVER)")
+                continue
+            kept.append(subdir)
+            if decision.manual:
+                gates[subdir] = SubdirGate(manual_reason=f"{key} is MANUAL")
+                notes.append(f"{subdir}/: its targets are defined but tagged manual ({key} is MANUAL)")
+            elif decision.platforms:
+                gates[subdir] = SubdirGate(compatible_with=_compatible_with(decision.platforms, only=True))
+                notes.append(f"{subdir}/: its targets build under {', '.join(decision.platforms)} only ({key})")
+            continue
+        gate: Raw | None = None
+        reasons: list[str] = []
+        if cond is not df.TRUE:
+            excluded = _platform_exceptions(cond)
+            included = _platform_labels(cond) if excluded is None else None
+            if excluded:
+                gate = _compatible_with(excluded, only=False)
+            elif included:
+                gate = _compatible_with(included, only=True)
+            elif excluded is None and included is None:
+                reasons.append(f"AC_CONFIG_SUBDIRS({subdir}) runs under `{describe(cond)}`")
+        never = False
+        for conditional in conditionals:
+            verdict, arm = _resolve_conditional(conditional, state, decisions)
+            if verdict is False:
+                notes.append(f"{subdir}/: not converted (SUBDIRS lists it under `if {conditional}`, never true here)")
+                never = True
+                break
+            if verdict is True:
+                continue
+            if arm is not None:
+                gate = gate or _compatible_with([arm], only=True)
+            else:
+                reasons.append(f"SUBDIRS lists it under `if {conditional}` ({verdict})")
+        if never:
+            continue
+        kept.append(subdir)
+        if reasons:
+            decisions.resolve(
+                dec.Request(
+                    key,
+                    "subdir",
+                    "configure.ac",
+                    f"configure enters {subdir}/ only sometimes, and a target's existence cannot depend on a "
+                    "probe result: say where its package builds",
+                    {"condition": reasons},
+                )
+            )
+            why = f"{key} undecided: {'; '.join(reasons)}"
+            gates[subdir] = SubdirGate(manual_reason=why)
+            notes.append(f"{subdir}/: its targets are defined but tagged manual until {key} is decided ({why})")
+        elif gate is not None:
+            gates[subdir] = SubdirGate(compatible_with=gate)
+            notes.append(f"{subdir}/: its targets build where configure enters it: {gate.text.replace(chr(10), ' ')}")
+    return kept, gates
+
+
+_GATED_RULE_KINDS = frozenset({"cc_binary", "cc_import", "cc_library", "cc_shared_library", "cc_test"})
+
+
+def _gate_package(package: Package, gate: SubdirGate, notes: list[str]) -> None:
+    """Apply a sub-configure's gate to every C/C++ rule of its package: `target_compatible_with`
+    where a rule has none of its own (the package builds where the parent configure enters the
+    directory), or `tags = ["manual"]` (defined, out of `//...`) for a MANUAL or undecided one."""
+    count = 0
+    for statement in package.after:
+        if not isinstance(statement, Rule) or statement.kind not in _GATED_RULE_KINDS:
+            continue
+        if gate.manual_reason is not None:
+            tags = strings(statement.attrs.get("tags"))
+            if "manual" not in tags:
+                statement.attrs["tags"] = [*tags, "manual"]
+                count += 1
+        elif gate.compatible_with is not None and "target_compatible_with" not in statement.attrs:
+            statement.attrs["target_compatible_with"] = gate.compatible_with
+            count += 1
+    if gate.manual_reason is not None:
+        notes.append(f"{count} target(s) tagged manual, out of `//...` ({gate.manual_reason})")
+    else:
+        notes.append(f"{count} target(s) build where the parent configure enters this directory (its subdir: gate)")
+
+
 def confined_visibility(root_package: str, shared: bool) -> str:
     """The visibility of what the conversion keeps to itself: private, or every package of the
     converted tree when it has more than one (`shared`: a sub-configure, a hand-written `tests/`),
@@ -296,6 +428,7 @@ def convert_project(
     extra_modules: dict[str, str] | None = None,
     repo_file: bool = True,
     root_package: str = "",
+    gate: SubdirGate | None = None,
 ) -> ProjectResult:
     """Translate a whole project into a root package.  `command` is the
     `bazel run` line that reproduces the conversion, for the banners; `source_root` the
@@ -644,6 +777,9 @@ def convert_project(
             f"{subdir}/: has a configure.ac of its own and the Makefile.am's SUBDIRS is computed by "
             "configure (texlive's $(MAKE_SUBDIRS)); converted as a package of this module"
         )
+    subdirs, subdir_gates = _subdir_gates(src, state, decisions, subdirs, notes)
+    if gate is not None:
+        _gate_package(package, gate, notes)
     extra_files.update(state.extra_templates)
     if repo_file and root:
         repo_bazel = _repo_bazel(state, metadata=bool(license_loads))
@@ -666,6 +802,8 @@ def convert_project(
         source_tree_modules=source_modules,
         external_modules=dict(state.external_modules),
         subdirs=subdirs,
+        subdir_gates=subdir_gates,
+        manual_package=gate.manual_reason if gate is not None else None,
         tarname=state.tarname or "",
         module_attrs=dict(module_attrs or {}),
         uses_skylib=uses_skylib,

@@ -241,10 +241,15 @@ def write_entry(
     (version_dir / "MODULE.bazel").write_text(module_text, encoding="utf-8", newline="\n")
     written.append(version_dir / "MODULE.bazel")
 
+    # Keyed and ordered by the posix path, not the Path: Windows paths compare case-insensitively
+    # and would order `autoconf.bzl` before `BUILD.bazel`, unlike a run on Linux or macOS.
     overlay_integrity = {
-        path.relative_to(overlay).as_posix(): integrity(path.read_bytes())
-        for path in sorted(overlay.rglob("*"))
-        if path.is_file() and path.name != "MODULE.bazel.lock"
+        rel: integrity(path.read_bytes())
+        for rel, path in sorted(
+            (path.relative_to(overlay).as_posix(), path)
+            for path in overlay.rglob("*")
+            if path.is_file() and path.name != "MODULE.bazel.lock"
+        )
     }
     # The registry's own keys of an existing source.json (mirror URLs, the patch strip level) and
     # the entry's patches/ directory are kept: they are the registry's, not the conversion's.

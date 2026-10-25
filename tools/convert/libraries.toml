@@ -1,4 +1,4 @@
-# @generated: C libraries by `-l` name and the Bazel Central Registry modules that provide them, each module's latest version and verified library target.
+# @generated: C libraries by `-l` name and the Bazel Central Registry modules that provide them, each module's latest version and verified library target, and the headers that identify them.
 # Regenerate with `bazel run //tools/convert:update_libraries -- --registry <bazel-central-registry clone>`; do not edit.
 
 [libraries.FLAC]
@@ -38,7 +38,7 @@ label = "@cairo//:cairo"
 
 [libraries.cap]
 module = "libcap"
-version = "2.27.bcr.3"
+version = "2.27.bcr.4"
 label = "@libcap//:cap"
 
 [libraries.cjson]
@@ -128,7 +128,7 @@ label = "@giflib//:giflib"
 
 [libraries.gmp]
 module = "gmp"
-version = "6.3.0.bcr.3"
+version = "6.3.0.bcr.4"
 label = "@gmp//:gmp"
 
 [libraries.gpiod]
@@ -193,17 +193,17 @@ label = "@mpc//:mpc"
 
 [libraries.mpfr]
 module = "mpfr"
-version = "4.2.2.bcr.2"
+version = "4.2.2.bcr.3"
 label = "@mpfr//:mpfr"
 
 [libraries.ncurses]
 module = "ncurses"
-version = "6.4.20221231.bcr.13"
+version = "6.4.20221231.bcr.14"
 label = "@ncurses//:ncurses"
 
 [libraries.ncursesw]
 module = "ncurses"
-version = "6.4.20221231.bcr.13"
+version = "6.4.20221231.bcr.14"
 label = "@ncurses//:ncurses"
 
 [libraries.nghttp2]
@@ -288,7 +288,7 @@ label = "@systemd//:libsystemd"
 
 [libraries.termcap]
 module = "ncurses"
-version = "6.4.20221231.bcr.13"
+version = "6.4.20221231.bcr.14"
 label = "@ncurses//:ncurses"
 
 [libraries.tiff]
@@ -298,7 +298,7 @@ label = "@libtiff//:tiff"
 
 [libraries.tinfo]
 module = "ncurses"
-version = "6.4.20221231.bcr.13"
+version = "6.4.20221231.bcr.14"
 label = "@ncurses//:ncurses"
 
 [libraries.tre]
@@ -318,7 +318,7 @@ label = "@libusb//:libusb"
 
 [libraries.uuid]
 module = "libuuid"
-version = "2.41.2.bcr.0"
+version = "2.41.2.bcr.1"
 label = "@libuuid//:uuid"
 
 [libraries.uv]
@@ -390,3 +390,26 @@ label = "@zstd//:zstd"
 module = "zziplib"
 version = "0.13.72.bcr.1"
 label = "@zziplib//:zzip"
+
+[headers]
+"bzlib.h" = "bz2"
+"curl/curl.h" = "curl"
+"curses.h" = "ncurses"
+"ffi.h" = "ffi"
+"gmp.h" = "gmp"
+"lz4.h" = "lz4"
+"lzma.h" = "lzma"
+"mpc.h" = "mpc"
+"mpfr.h" = "mpfr"
+"ncurses.h" = "ncurses"
+"openssl/ssl.h" = "ssl"
+"pcap.h" = "pcap"
+"pcap/pcap.h" = "pcap"
+"pcre2.h" = "pcre2-8"
+"png.h" = "png"
+"readline/readline.h" = "readline"
+"sqlite3.h" = "sqlite3"
+"uuid/uuid.h" = "uuid"
+"zip.h" = "zip"
+"zlib.h" = "z"
+"zstd.h" = "zstd"

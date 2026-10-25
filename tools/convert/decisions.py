@@ -28,8 +28,8 @@ struct inline (`STRUCT`), so that the words read as `decision.IGNORE`:
 
 A value is a word of the struct (`decision.UNDECIDED`, `decision.IGNORE`,
 `decision.ACCEPT`, `decision.ACCEPT_PARTIAL`, `decision.ALWAYS`,
-`decision.NEVER`; the bare word is still read, for files written before the
-struct); a literal; a `select({...})` over configuration labels; or
+`decision.NEVER`, `decision.MANUAL`; the bare word is still read, for files
+written before the struct); a literal; a `select({...})` over configuration labels; or
 `checks.*` / `macros.*` / `utils.*` calls exactly as they would appear in
 `BUILD.bazel` (one call or a list of calls).  Which of these a key accepts
 depends on its kind; see `FORMS`.
@@ -46,7 +46,7 @@ from typing import Literal, TypeGuard
 
 from tools.convert.ir import AttrValue, Call, Raw
 
-WORDS = ("UNDECIDED", "IGNORE", "ACCEPT", "ACCEPT_PARTIAL", "ALWAYS", "NEVER")
+WORDS = ("UNDECIDED", "IGNORE", "ACCEPT", "ACCEPT_PARTIAL", "ALWAYS", "NEVER", "MANUAL")
 STRUCT_NAME = "decision"  # `decision.IGNORE`: the struct each decisions file defines inline (STRUCT)
 CALL_NAMESPACES = ("checks", "macros", "utils")
 VARIABLE_NAME = "DECISIONS"
@@ -70,7 +70,8 @@ WORD_FORMS = {
     "cppflag": ("IGNORE",),
     "link": ("IGNORE",),
     "library": ("IGNORE",),
-    "program": ("ALWAYS", "NEVER"),
+    "program": ("ALWAYS", "NEVER", "MANUAL"),
+    "subdir": ("ALWAYS", "NEVER", "MANUAL"),
     "license": ("IGNORE",),
 }
 
@@ -96,8 +97,12 @@ FORMS = {
     "cppflag": 'decision.IGNORE | "<value>" (the C token, e.g. "\\"so\\"")',
     "link": 'decision.IGNORE | ":<label>" (a dep) | "-l<name>" (a linkopt)',
     "library": "decision.IGNORE (a registry library configure probes for, built without; never requested)",
-    "program": 'decision.ALWAYS | decision.NEVER | ["@platforms//os:linux", ...] (the platforms the program '
-    "builds on, as target_compatible_with; never requested)",
+    "program": 'decision.ALWAYS | decision.NEVER | decision.MANUAL (defined, tags = ["manual"]) | '
+    '["@platforms//os:linux", ...] (the platforms the program builds on, as target_compatible_with; never requested)',
+    "subdir": "decision.ALWAYS | decision.NEVER (the sub-configure is not converted) | decision.MANUAL (its targets "
+    'defined with tags = ["manual"], as while undecided) | ["<label>", ...] (the configuration labels, platform '
+    "constraints or config_settings, the sub-configure's targets build under, as target_compatible_with; one "
+    '"!<label>,<label>" entry for everywhere but those)',
     "license": 'decision.IGNORE | "<SPDX identifier>" (the registry\'s package metadata: a license() over the '
     "exported license file; requested when the text and the source headers do not settle it)",
     "copts": '["<flag>", ...] (compiler options every target of the package compiles with, after NO_WARNINGS; '
@@ -273,6 +278,12 @@ class Decision:
     def never(self) -> bool:
         """`decision.NEVER`: the guarded checks or sources never apply."""
         return self.word == "NEVER"
+
+    @property
+    def manual(self) -> bool:
+        """`decision.MANUAL` (program, subdir): the targets are defined with `tags = ["manual"]`, out of
+        `//...`, where configure builds them only when a probe holds that no configuration expresses."""
+        return self.word == "MANUAL"
 
 
 # -- reading the file ---------------------------------------------------------
@@ -495,6 +506,12 @@ def normalize(kind: str, key: str, value: DecisionValue) -> Decision:
     def bad() -> DecisionError:
         return DecisionError(f"decision {key!r} has the wrong shape for its kind; expected {FORMS.get(kind, '?')}")
 
+    if kind not in FORMS:
+        raise DecisionError(f"decision {key!r}: {kind!r} is not a kind of decision")
+    # A key spells its kind (`program:src/hostid`): a caller asking for another kind is a bug of
+    # the converter, which would otherwise read the decision in the wrong shape.
+    if key.split(":", 1)[0] != kind and not key.startswith(f"{DEFAULTS_NAME}["):
+        raise DecisionError(f"decision {key!r} read as a {kind!r} decision, but its key says {key.split(':', 1)[0]!r}")
     if isinstance(value, Word):
         word = value.name
         if word not in WORD_FORMS.get(kind, ()):
@@ -529,6 +546,14 @@ def normalize(kind: str, key: str, value: DecisionValue) -> Decision:
         platforms = _strings(value)
         if platforms is not None and all(v.startswith("@") for v in platforms):
             return Decision(kind, key, platforms=platforms)
+        raise bad()
+    if kind == "subdir":
+        # Platform constraints or config_settings; `!a,b` (everywhere but) only on its own.
+        labels = _strings(value)
+        if labels is not None and labels and all(v.startswith(("@", "//", ":")) for v in labels):
+            return Decision(kind, key, platforms=labels)
+        if labels is not None and len(labels) == 1 and labels[0].startswith("!"):
+            return Decision(kind, key, platforms=labels)
         raise bad()
     if kind in ("copts", "conlyopts", "cxxopts"):
         flags = _strings(value)

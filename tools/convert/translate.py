@@ -306,6 +306,8 @@ class ProjectState:
     """AC_CONFIG_HEADERS entries (`config.h`, `lib/config.h:lib/config.hin`)."""
     config_subdirs: list[str] = field(default_factory=list)
     """AC_CONFIG_SUBDIRS: sub-configures, literal names."""
+    subdir_conditions: dict[str, df.Cond] = field(default_factory=dict)
+    """Sub-configure -> the condition its AC_CONFIG_SUBDIRS call ran under (`project._subdir_gates`)."""
     config_files: list[str] = field(default_factory=list)
     """AC_CONFIG_FILES entries (`Makefile`, `src/Makefile`)."""
     am_conditionals: dict[str, df.Cond] = field(default_factory=dict)
@@ -384,6 +386,11 @@ class ProjectState:
     configure_libs: dict[str, str] = field(default_factory=dict)
     """Registry libraries configure puts in LIBS (AC_CHECK_LIB, AC_SEARCH_LIBS, `-l` by hand), which
     every target links: `-l` name -> label."""
+    library_arms: dict[str, str] = field(default_factory=dict)
+    """Label of a `configure_libs` library -> the one configure-option `select()` arm every check
+    that probes it sits in (gawk's `-lmpfr -lgmp` under --enable-mpfr): what links it depends on
+    it in that arm, as configure only finds it there (`results._library_check_targets`).  A
+    library probed unconditionally, or by no check at all, is not listed and is every target's."""
     configure_link_vars: list[str] = field(default_factory=list)
     """Substitutions holding the `-l` flag of a system library configure appends to LIBS (an
     AC_SEARCH_LIBS result, AC_CHECK_LIB's default action), which every target links through the
@@ -2620,9 +2627,17 @@ class Translator:
             # them at configure time and is reported, not followed.
             words = m4args.words(args[0]) if args else []
             state.config_subdirs.extend(w for w in words if "$" not in w)
+            # The condition configure enters the sub-configure under (gawk's extension/ only when
+            # `$enable_extensions` is yes): `project._subdir_gates` turns it into the
+            # sub-package's `target_compatible_with`, or asks a `subdir:` decision.
+            guard = self._guard(node, ctx)
             for word in words:
                 if "$" in word:
                     self.report.note(f"AC_CONFIG_SUBDIRS({word}): computed at configure time; not followed")
+                elif word in state.subdir_conditions:
+                    state.subdir_conditions[word] = df.disj(state.subdir_conditions[word], guard)
+                else:
+                    state.subdir_conditions[word] = guard
             return True
         if name in ("AC_ARG_ENABLE", "AC_ARG_WITH"):
             # The option itself is modeled by the synthesized shell around its placeholder

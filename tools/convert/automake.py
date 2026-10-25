@@ -133,12 +133,25 @@ def _link_items(
     """An LDADD / LIBADD line as Bazel deps (libraries of the tree, registry modules for the
     `-l` names tools/convert/libraries.py knows) and linkopts (other `-l`, `-L`); anything else
     is a `link` decision.  With `state`, the configure-found registry libraries (LIBS) join every
-    target's deps, and a pkg-config `$(X_LIBS)` is the registry library it stands for.  With
-    `under_condition`, the line is one automake conditional's words and the caller puts the
-    result in that conditional's select() arm: LIBS are not seeded again (they are in the
-    unconditional deps already) and a library found under an option is not noted as linked
+    target's deps (one configure only probes under an option, `state.library_arms`, joins that
+    option's arm of `dep_arms`), and a pkg-config `$(X_LIBS)` is the registry library it stands
+    for.  With `under_condition`, the line is one automake conditional's words and the caller
+    puts the result in that conditional's select() arm: LIBS are not seeded again (they are in
+    the unconditional deps already) and a library found under an option is not noted as linked
     unconditionally."""
-    deps: list[str] = [] if state is None or under_condition else list(state.configure_libs.values())
+    seeded = [] if state is None or under_condition else list(state.configure_libs.values())
+    deps: list[str] = [label for label in seeded if state is None or label not in state.library_arms]
+    for label in seeded:
+        arm = state.library_arms.get(label) if state is not None else None
+        if arm is None:
+            continue
+        if dep_arms is None:
+            deps.append(label)
+            notes.append(
+                f"{makefile_name}: {owner} links {label}, found under {arm}, unconditionally (no select() here)"
+            )
+        elif label not in dep_arms.setdefault(arm, []):
+            dep_arms[arm].append(label)
     linkopts: list[str] = []
     directory = makefile_name[: -len("Makefile.am")].rstrip("/") or "."
     for item in items:
@@ -216,7 +229,21 @@ def _link_items(
                     deps.append(decision.dep)
             elif decision.linkopt is not None:
                 linkopts.append(decision.linkopt)
+    if dep_arms:
+        # A library the line links on its own (`-lgmp` in LDADD) is unconditional whatever arm
+        # its probe sat in; Bazel rejects a label in both the list and a select() arm.
+        for arm_deps in dep_arms.values():
+            arm_deps[:] = [label for label in arm_deps if label not in deps]
     return deps, linkopts
+
+
+def _deps_value(deps: list[str], arms: dict[str, list[str]]) -> list[str] | Raw:
+    """The deps of a target: the list, plus one `select()` per arm label whose labels apply only
+    there (a library linked under an automake conditional, a registry library probed under one
+    configure option)."""
+    if not arms:
+        return deps
+    return Raw(_list_literal(deps, "    ") + " + " + " + ".join(_arm_selects(arms, sorted)))
 
 
 def _programs_tree(
@@ -424,7 +451,12 @@ def _programs_tree(
         link_vars = _link_vars(items, state)
         if link_vars:
             _ensure_linkopts(package, link_vars)
-        deps, linkopts = _link_items(items, libraries, notes, makefile_name, library.archive, decisions, state)
+        # The registry libraries configure only probes under an option (`state.library_arms`)
+        # go into that option's select() arm of the deps, as a program's do.
+        dep_arms: dict[str, list[str]] = {}
+        deps, linkopts = _link_items(
+            items, libraries, notes, makefile_name, library.archive, decisions, state, dep_arms
+        )
         # `pppoatm_la_LIBADD = -latm` under `if WITH_LIBATM`: the words join as the conditional
         # resolves (an am_conditional decision, or a flag-free condition that lowers to a
         # constant); an arm a select() would need is reported, not modeled for a library.
@@ -432,7 +464,7 @@ def _programs_tree(
             verdict, _arm = _resolve_conditional(cond, state, decisions)
             if verdict is True:
                 arm_deps, arm_linkopts = _link_items(
-                    [word], libraries, notes, makefile_name, library.archive, decisions, state
+                    [word], libraries, notes, makefile_name, library.archive, decisions, state, dep_arms
                 )
                 deps += [d for d in arm_deps if d not in deps]
                 linkopts += [o for o in arm_linkopts if o not in linkopts]
@@ -513,9 +545,18 @@ def _programs_tree(
             attrs["includes"] = includes_value(
                 sorted(set(strings(attrs.get("includes"))) | set(flag_includes) | set(gen_includes)), include_arms
             )
-        public_deps, implementation_deps = _split_deps(
-            sorted(deps, key=label_sort_key), exports, _includes_of(src, public_headers)
-        )
+        public_includes = _includes_of(src, public_headers)
+        public_deps, implementation_deps = _split_deps(sorted(deps, key=label_sort_key), exports, public_includes)
+        # The arms split the same way: a registry library in an option's arm is an
+        # implementation detail there unless a public header includes one of its headers.
+        public_arms: dict[str, list[str]] = {}
+        implementation_arms: dict[str, list[str]] = {}
+        for arm_label, arm_deps in dep_arms.items():
+            arm_public, arm_private = _split_deps(sorted(arm_deps, key=label_sort_key), exports, public_includes)
+            if arm_public:
+                public_arms[arm_label] = arm_public
+            if arm_private:
+                implementation_arms[arm_label] = arm_private
         if library.include_prefix and public_headers:
             # The installed headers under their install subdirectory, as consumers include
             # them (`<readline/readline.h>`); the library's own sources keep the bare names.
@@ -546,10 +587,10 @@ def _programs_tree(
                 **_public(library.installed),
             }
         )
-        if public_deps:
-            attrs["deps"] = public_deps
-        if implementation_deps:
-            attrs["implementation_deps"] = implementation_deps
+        if public_deps or public_arms:
+            attrs["deps"] = _deps_value(public_deps, public_arms)
+        if implementation_deps or implementation_arms:
+            attrs["implementation_deps"] = _deps_value(implementation_deps, implementation_arms)
         if linkopts:
             attrs["linkopts"] = linkopts
         if name in gates:
@@ -936,12 +977,19 @@ def _split_deps(
     for dep in deps:
         exported = exports.get(dep)
         if exported is None and dep.startswith("@"):
-            # A registry library (`@xz//:lzma`): its headers are guessed from the label.  It
-            # stays an implementation detail unless a public header includes one, so that its
-            # own include directories (xz publishes a config.h) come after the project's.
+            # A registry library (`@xz//:lzma`): its headers are the table's (`mpfr.h` for
+            # `@mpfr//:mpfr`), plus the names the label suggests for one the table has no
+            # headers for.  It stays an implementation detail unless a public header includes
+            # one, so that its own include directories (xz publishes a config.h) come after the
+            # project's.
             module, _, target = dep[1:].partition("//")
             target = target.rsplit(":", 1)[-1]
-            exported = {f"{target}.h", f"{module}.h", f"{module}/{module}.h", f"{target}/{target}.h"}
+            exported = registry_libraries.headers_of_label(dep) | {
+                f"{target}.h",
+                f"{module}.h",
+                f"{module}/{module}.h",
+                f"{target}/{target}.h",
+            }
         if exported is not None and dep == f":{CONFIG_HEADERS}":
             # The config headers library also globs the root's other headers (TOP_HEADERS), which
             # a public header may include; only the configuration headers themselves make it
@@ -1244,10 +1292,7 @@ def _programs(
             srcs_value = _with_headers(package, srcs_value, source_dirs)
         include_deps, flag_includes = _include_dir_deps(package, flag_includes, src, {}, notes, prefix.rstrip("/"))
         deps += [d for d in include_deps if d not in deps]
-        sorted_deps = sorted(deps, key=label_sort_key)
-        deps_value: list[str] | Raw = sorted_deps
-        if dep_arms:
-            deps_value = Raw(_list_literal(sorted_deps, "    ") + " + " + " + ".join(_arm_selects(dep_arms, sorted)))
+        deps_value = _deps_value(sorted(deps, key=label_sort_key), dep_arms)
         attrs: dict[str, AttrValue] = {
             "srcs": srcs_value,
             "copts": _copts_value(flag_copts, copt_arms),
@@ -1332,6 +1377,9 @@ def _substituted_program_attrs(
             return None
         if decision.always:
             return {}
+        if decision.manual:
+            state.manual_programs.append((target, f"{key} is MANUAL"))
+            return {"tags": ["manual"], "_comment": f"{key} is MANUAL: defined, left out of `//...`"}
         return {"target_compatible_with": _compatible_with(decision.platforms or [], only=True)}
     if not listed:
         notes.append(
