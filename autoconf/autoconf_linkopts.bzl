@@ -11,6 +11,10 @@ On GCC/Clang the flags are passed via a @response-file in user_link_flags.
 On MSVC/clang-cl (where nested @file is unsupported), a .c file with
 #pragma comment(lib, ...) directives is compiled and the resulting object
 is linked in, achieving the same effect through MSVC's native mechanism.
+That object's one variable, the anchor that keeps it alive, is a pick-any
+COMDAT (`__declspec(selectany)`), so a binary linking several
+`autoconf_linkopts` targets (a module's root and sub-configure ones) does not
+define it twice.
 
 Example:
 
