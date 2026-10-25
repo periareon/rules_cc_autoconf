@@ -9,7 +9,12 @@ files live inside the archive or a patch has no overlay to read, so it is skippe
 message rather than guessed, unless `SHIPPED_TARGETS` names the target its archive defines.  Names the host provides (`m`, `dl`, `rt`, `pthread`) are not
 here: they are link options, not modules.
 
-Usage: `bazel run //tools/convert:update_libraries -- --registry <bazel-central-registry clone>`
+A module keeps the upstream release the table already holds and takes its newest `.bcr.N`;
+`--allow-upstream <module>` lets one move to a newer upstream release.
+
+Usage: `bazel run //tools/convert:update_libraries`, which reads the public registry at
+https://bcr.bazel.build; `--registry <bazel-central-registry clone>` reads a clone's
+`origin/main` instead (a fork with entries not published yet).
 """
 
 from __future__ import annotations
@@ -19,12 +24,18 @@ import json
 import re
 import subprocess
 import sys
+import urllib.error
+import urllib.request
+from collections.abc import Callable
 from pathlib import Path
 
-from tools.convert import tomlout
+from tools.convert import libraries, tomlout
 from tools.convert.index import workspace_root
+from tools.convert.libraries import upstream_version
+from tools.convert.source import USER_AGENT
 
-UPDATE_COMMAND = "bazel run //tools/convert:update_libraries -- --registry <bazel-central-registry clone>"
+UPDATE_COMMAND = "bazel run //tools/convert:update_libraries"
+PUBLIC_REGISTRY = "https://bcr.bazel.build"
 
 CANDIDATES: dict[str, list[str]] = {
     # compression
@@ -228,14 +239,43 @@ _LIBRARY_RULE_RE = re.compile(
 )
 
 
-def _show(registry: Path, path: str) -> str | None:
-    """A file of the registry's `origin/main` (the working tree may sit on another branch)."""
-    try:
-        return subprocess.check_output(
-            ["git", "-C", str(registry), "show", f"origin/main:{path}"], text=True, stderr=subprocess.DEVNULL
-        )
-    except subprocess.CalledProcessError:
-        return None
+# A registry file by its path under the registry root (`modules/zlib/metadata.json`); None when
+# the registry has no such file.
+Reader = Callable[[str], "str | None"]
+
+
+def clone_reader(registry: Path) -> Reader:
+    """Files of a clone's `origin/main` (the working tree may sit on another branch)."""
+
+    def show(path: str) -> str | None:
+        try:
+            return subprocess.check_output(
+                ["git", "-C", str(registry), "show", f"origin/main:{path}"], text=True, stderr=subprocess.DEVNULL
+            )
+        except subprocess.CalledProcessError:
+            return None
+
+    return show
+
+
+def public_reader(base_url: str = PUBLIC_REGISTRY) -> Reader:
+    """Files of a registry served over HTTP, the public one by default.  A missing file is a
+    404; anything else (no network, a server error) is raised rather than read as "no such
+    module", which would silently drop libraries from the table."""
+
+    def fetch(path: str) -> str | None:
+        request = urllib.request.Request(f"{base_url}/{path}", headers={"User-Agent": USER_AGENT})
+        try:
+            with urllib.request.urlopen(request) as response:
+                return str(response.read().decode("utf-8"))
+        except urllib.error.HTTPError as error:
+            if error.code == 404:
+                return None
+            raise RuntimeError(f"{base_url}/{path}: HTTP {error.code}") from error
+        except OSError as error:
+            raise RuntimeError(f"{base_url}/{path}: {error}") from error
+
+    return fetch
 
 
 def _target_for(lib: str, module: str, names: list[str]) -> str | None:
@@ -247,17 +287,43 @@ def _target_for(lib: str, module: str, names: list[str]) -> str | None:
     return None
 
 
-def scan(registry: Path) -> tuple[dict[str, dict[str, str]], list[str]]:
-    """The resolved table and the messages for what could not be resolved."""
+def _newest(versions: list[str], held: str | None, allow_upstream: bool) -> tuple[str, str | None]:
+    """The version to record: the newest `.bcr.N` of the upstream release the table holds
+    (`held`), or the newest of all for a module the table does not hold yet or that
+    `allow_upstream` frees; with the newer upstream release left alone, if any, for the
+    message.  Moving a library to another upstream release is a decision made per module."""
+    newest = versions[-1]
+    if held is None or allow_upstream or upstream_version(newest) == upstream_version(held):
+        return newest, None
+    same = [v for v in versions if upstream_version(v) == upstream_version(held)]
+    return (same[-1] if same else held), newest
+
+
+def scan(
+    show: Reader, current: dict[str, str] | None = None, allow_upstream: set[str] | None = None
+) -> tuple[dict[str, dict[str, str]], list[str]]:
+    """The resolved table and the messages for what could not be resolved, from the registry
+    `show` reads; `current` is module -> the version the table holds now, `allow_upstream` the
+    modules that may change upstream release."""
     table: dict[str, dict[str, str]] = {}
     messages: list[str] = []
     for lib, modules in CANDIDATES.items():
         for module in modules:
-            metadata = _show(registry, f"modules/{module}/metadata.json")
+            metadata = show(f"modules/{module}/metadata.json")
             if metadata is None:
                 continue
-            version = json.loads(metadata)["versions"][-1]
-            overlay = _show(registry, f"modules/{module}/{version}/overlay/BUILD.bazel")
+            data = json.loads(metadata)
+            yanked = set(data.get("yanked_versions", {}))
+            versions = [v for v in data["versions"] if v not in yanked]
+            if not versions:
+                continue
+            version, newer = _newest(versions, (current or {}).get(module), module in (allow_upstream or set()))
+            if newer is not None:
+                messages.append(
+                    f"{lib}: the registry has {module} {newer}; the table stays on {version} "
+                    f"(pass --allow-upstream {module} to move)"
+                )
+            overlay = show(f"modules/{module}/{version}/overlay/BUILD.bazel")
             if overlay is None and module in SHIPPED_TARGETS:
                 table[lib] = {"module": module, "version": version, "label": f"@{module}//:{SHIPPED_TARGETS[module]}"}
                 break
@@ -269,7 +335,7 @@ def scan(registry: Path) -> tuple[dict[str, dict[str, str]], list[str]]:
                 break
             # A generated overlay declares its targets in autoconf.bzl; BUILD.bazel keeps the
             # hand-written ones (and the names earlier versions exported, as aliases).
-            autoconf_bzl = _show(registry, f"modules/{module}/{version}/overlay/autoconf.bzl") or ""
+            autoconf_bzl = show(f"modules/{module}/{version}/overlay/autoconf.bzl") or ""
             names = _LIBRARY_RULE_RE.findall(autoconf_bzl) + _LIBRARY_RULE_RE.findall(overlay)
             target = _target_for(lib, module, names)
             if target is None:
@@ -283,13 +349,28 @@ def scan(registry: Path) -> tuple[dict[str, dict[str, str]], list[str]]:
 
 
 def main() -> int:
-    """Regenerate tools/convert/libraries.toml from a registry clone."""
+    """Regenerate tools/convert/libraries.toml from the public registry or a clone."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--registry", type=Path, required=True, help="a clone of bazelbuild/bazel-central-registry")
+    parser.add_argument(
+        "--registry",
+        type=Path,
+        default=None,
+        help=f"a clone of bazelbuild/bazel-central-registry to read instead of {PUBLIC_REGISTRY}",
+    )
     parser.add_argument("--workspace", type=Path, default=None)
+    parser.add_argument(
+        "--allow-upstream",
+        action="append",
+        default=[],
+        metavar="MODULE",
+        help="let this module move to a newer upstream release; by default a module keeps the "
+        "upstream release the table holds and takes only its newest `.bcr.N`",
+    )
     args = parser.parse_args()
     workspace = workspace_root(args.workspace)
-    table, messages = scan(args.registry.expanduser().resolve())
+    current = {entry.module: entry.version for entry in libraries.table().values()}
+    show = clone_reader(args.registry.expanduser().resolve()) if args.registry else public_reader()
+    table, messages = scan(show, current, set(args.allow_upstream))
     target = workspace / "tools/convert/libraries.toml"
     rows: dict[str, dict[str, object]] = {lib: dict(entry) for lib, entry in sorted(table.items())}
     headers = {header: lib for header, lib in sorted(HEADERS.items()) if lib in table}

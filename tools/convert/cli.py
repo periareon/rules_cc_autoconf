@@ -357,16 +357,31 @@ def _apply_entry(args: argparse.Namespace) -> None:
         # An entry's edges to the registry's other tool modules (bison, flex, m4) point at the
         # newest version the checkout holds, so that a set cut together depends on itself.
 
-        pinned = [
-            n for n, m in modulebazel_mod.MODULES.items() if m.role in ("tool", "loaded") and ".bcr." in m.version
-        ]
-        for name, version in bcr.newest_versions(entry.registry, pinned).items():
+        # Newest of the same upstream release: a registry re-cut (`.bcr.N`) is taken, another
+        # upstream version only for the modules `--allow-upstream` names.
+        allow_upstream = set(args.allow_upstream or [])
+        tools = {
+            n: m.version
+            for n, m in modulebazel_mod.MODULES.items()
+            if m.role in ("tool", "loaded") and ".bcr." in m.version
+        }
+        for name, version in bcr.newest_versions(
+            entry.registry, tools, current=tools, allow_upstream=allow_upstream
+        ).items():
             modulebazel_mod.MODULES[name] = dataclasses.replace(modulebazel_mod.MODULES[name], version=version)
         # The registry libraries likewise (gmp for mpc): the checkout's newest over the snapshot's.
-
+        held = {lib.module: lib.version for lib in libraries_mod.table().values()}
         libraries_mod.pin_versions(
-            bcr.newest_versions(entry.registry, {lib.module for lib in libraries_mod.table().values()})
+            bcr.newest_versions(entry.registry, held, current=held, allow_upstream=allow_upstream)
         )
+        depends_on = {**tools, **held}
+        for name, version in sorted(bcr.upstream_bumps(entry.registry, depends_on).items()):
+            if name not in allow_upstream:
+                print(
+                    f"note: the registry has {name} {version}, another upstream release than the "
+                    f"{depends_on[name]} this entry depends on; pass --allow-upstream {name} to take it",
+                    file=sys.stderr,
+                )
     # A new entry has no overlay yet; the conversion writes into it either way.
     entry.overlay.mkdir(parents=True, exist_ok=True)
     if not args.out:
@@ -1402,6 +1417,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="copy the gnulib ports the project uses into third_party/rules_cc_autoconf/ of the "
         "project (no dependency on rules_cc_autoconf's ports; run from its checkout, or "
         "pass --index <checkout>)",
+    )
+    convert_parser.add_argument(
+        "--allow-upstream",
+        action="append",
+        metavar="MODULE",
+        help="let this registry dependency move to a newer upstream release (by default an entry's "
+        "dependencies take the newest `.bcr.N` of the release they already depend on)",
     )
     convert_parser.add_argument(
         "--index", default="auto", help="where the hand ports are: a workspace path, `snapshot`, `auto`, `none`"

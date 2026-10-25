@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from tools.convert import libraries
+from tools.convert import libraries, update_libraries
 from tools.convert.decisions import Decisions, Word
 from tools.convert.ir import Call, Dep, Target
 from tools.convert.results import _library_check_targets, _registry_libraries_in_configure
@@ -241,3 +241,32 @@ def test_specs_and_versions() -> None:
     assert known("fuse3").module == "libfuse"
     assert known("freetype2").module == "freetype"
     assert libraries.known("glib-2.0") is None
+
+
+# ---- Regenerating the table
+
+
+def _registry(files: dict[str, str]) -> update_libraries.Reader:
+    """A registry of just `files`, by path; what the clone and the public readers return."""
+    return files.get
+
+
+def test_scan_reads_the_newest_overlay_of_the_held_release() -> None:
+    """A module stays on the upstream release the table holds and takes its newest `.bcr.N`;
+    the library target comes from that version's overlay, generated (`autoconf.bzl`) or hand-written."""
+    files = {
+        "modules/zlib/metadata.json": '{"versions": ["1.3.1", "1.3.1.bcr.5", "1.3.2", "1.3.2.bcr.2"], '
+        '"yanked_versions": {"1.3.2.bcr.2": "broken"}}',
+        "modules/zlib/1.3.1.bcr.5/overlay/BUILD.bazel": 'cc_library(\n    name = "z",\n)\n',
+        "modules/zlib/1.3.2/overlay/BUILD.bazel": 'load("autoconf.bzl", "targets")\n',
+        "modules/zlib/1.3.2/overlay/autoconf.bzl": 'def targets():\n    native.alias(\n        name = "z",\n    )\n',
+    }
+    table, messages = update_libraries.scan(_registry(files), {"zlib": "1.3.1.bcr.2"})
+    assert table["z"] == {"module": "zlib", "version": "1.3.1.bcr.5", "label": "@zlib//:z"}
+    assert any("the registry has zlib 1.3.2; the table stays on 1.3.1.bcr.5" in m for m in messages)
+    table, _ = update_libraries.scan(_registry(files), {"zlib": "1.3.1.bcr.2"}, allow_upstream={"zlib"})
+    assert table["z"]["version"] == "1.3.2"  # the yanked bcr.2 is skipped; the target read from autoconf.bzl
+    table, _ = update_libraries.scan(_registry(files))  # not held yet: the newest
+    assert table["z"]["version"] == "1.3.2"
+    _, messages = update_libraries.scan(_registry({}))
+    assert "z: no registry module among ['zlib']" in messages

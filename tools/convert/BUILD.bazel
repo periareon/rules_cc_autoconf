@@ -86,11 +86,17 @@ py_binary(
     deps = [":convert_bin"],
 )
 
+py_library(
+    name = "update_libraries_lib",
+    srcs = ["update_libraries.py"],
+    deps = [":convert_bin"],
+)
+
 py_binary(
     name = "update_libraries",
     srcs = ["update_libraries.py"],
     main = "update_libraries.py",
-    deps = [":convert_bin"],
+    deps = [":update_libraries_lib"],
 )
 
 py_binary(
@@ -123,6 +129,7 @@ py_library(
         deps = [
             ":convert_bin",
             ":test_helpers",
+            ":update_libraries_lib",
         ],
     )
     for test in [

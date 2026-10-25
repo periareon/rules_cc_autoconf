@@ -1,5 +1,5 @@
 # @generated: C libraries by `-l` name and the Bazel Central Registry modules that provide them, each module's latest version and verified library target, and the headers that identify them.
-# Regenerate with `bazel run //tools/convert:update_libraries -- --registry <bazel-central-registry clone>`; do not edit.
+# Regenerate with `bazel run //tools/convert:update_libraries`; do not edit.
 
 [libraries.FLAC]
 module = "flac"

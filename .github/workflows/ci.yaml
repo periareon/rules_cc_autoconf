@@ -283,6 +283,13 @@ jobs:
           source: '.'
           extensions: 'h,c,cc'
           clangFormatVersion: 14
+      # The converter's snapshot of the hand ports (which macro lives in which
+      # target, what each provides) is read from runfiles where the ports'
+      # BUILD files are not visible; it must match them.
+      - name: Index snapshot is current
+        run: |
+          bazel run //tools/convert:update_index
+          git diff --exit-code -- tools/convert/index.toml
 
   # Single job that every other job feeds into. It succeeds only when all of
   # them succeeded, so it is the one status check to mark as required in the
