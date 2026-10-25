@@ -4187,7 +4187,17 @@ beside each, and the report names the BUILD files that do not call
 <ul>
 <li><code>tools/convert/index.toml</code> is a snapshot of the hand ports: which macro
 lives in which target and what each provides. Regenerate it after adding
-or renaming ports with <code>bazel run //tools/convert:update_index</code>.</li>
+or renaming ports with <code>bazel run //tools/convert:update_index</code>; CI fails
+when the committed snapshot differs from the ports.</li>
+<li><code>tools/convert/libraries.toml</code> maps <code>-l</code> names to registry modules, with
+the version an entry depends on. <code>bazel run //tools/convert:update_libraries</code>
+refreshes it from the public registry (<code>--registry &lt;clone&gt;</code> reads a clone's
+<code>origin/main</code> instead): a module keeps the upstream release the table holds
+and takes its newest <code>.bcr.N</code>; moving to another upstream release is per
+module, <code>--allow-upstream &lt;module&gt;</code>. A registry entry's
+regeneration pins its dependencies the same way, from the checkout, with
+<code>convert --allow-upstream &lt;module&gt;</code> for the exceptions; the newer releases
+left alone are listed as notes.</li>
 <li>The golden tests under <code>//tools/convert</code> fix the output for a few gnulib
 modules and for gzip, each with its decisions file next to the expected
 output, and run buildifier with all warnings on it. After an intentional
