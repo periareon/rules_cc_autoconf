@@ -2,7 +2,7 @@
 
 module(
     name = "rules_cc_autoconf",
-    version = "0.33.1",
+    version = "0.34.0",
     bazel_compatibility = [">=7.4.0"],
 )
 
@@ -14,7 +14,7 @@ bazel_dep(name = "nlohmann_json", version = "3.12.0.bcr.1")
 
 bazel_dep(name = "m4", version = "1.4.21.bcr.6", dev_dependency = True)
 bazel_dep(name = "rules_perl", version = "1.2.0", dev_dependency = True)
-bazel_dep(name = "rules_rust_mdbook", version = "0.74.0", dev_dependency = True)
+bazel_dep(name = "rules_rust_mdbook", version = "0.75.0", dev_dependency = True)
 bazel_dep(name = "rules_shell", version = "0.8.0", dev_dependency = True)
 bazel_dep(name = "buildifier_prebuilt", version = "10.1.0", dev_dependency = True)
 bazel_dep(name = "rules_req_compile", version = "1.6.5", dev_dependency = True)
