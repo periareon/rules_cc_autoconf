@@ -25,7 +25,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import NotRequired, TypedDict, cast
 
-from tools.convert import ownership
+from tools.convert import modulebazel, ownership
 from tools.convert.libraries import upstream_version
 from tools.convert.source import integrity
 
@@ -163,6 +163,20 @@ def _published(registry: Path, name: str) -> list[str]:
         return []
     yanked = set(metadata.get("yanked_versions", {}))
     return [v for v in metadata.get("versions", []) if v not in yanked]
+
+
+def entry_pins(entry: Entry) -> dict[str, str]:
+    """Module -> version the entry's MODULE.bazel pins or, for a fresh `.bcr.N` that has none
+    yet, its predecessor's: the newest published version of the module other than the entry's
+    own.  What a regeneration keeps a dependency's upstream release from: ppp 2.5.2.bcr.1 pins
+    openssl 3.5.5, and its re-cut stays there although the library table moved to 4.0.1."""
+    pins = modulebazel.bazel_dep_versions(entry.directory / "MODULE.bazel")
+    if pins or entry.registry is None:
+        return pins
+    previous = [v for v in _published(entry.registry, entry.name) if v != entry.version]
+    if not previous:
+        return {}
+    return modulebazel.bazel_dep_versions(entry.registry / "modules" / entry.name / previous[-1] / "MODULE.bazel")
 
 
 def newest_versions(

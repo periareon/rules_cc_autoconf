@@ -8,7 +8,7 @@ import os
 import posixpath
 import re
 import textwrap
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from pathlib import Path
 
 from tools.convert import dataflow as df
@@ -328,6 +328,35 @@ def headers_glob(patterns: list[str], *, exclude: Sequence[str] = (), indent: st
         text += f"{inner}exclude = [\n" + "".join(f'{inner}    "{h}",\n' for h in exclude) + f"{inner}],\n"
     text += f"{inner}allow_empty = True,\n{indent})"
     return Raw(text)
+
+
+def header_patterns(src: Path, dirs: Iterable[str], suffix: str = ".h") -> list[str]:
+    """The glob patterns of the headers under each of `dirs`: `<dir>/**/*.h` for a named
+    directory, and for the root (`""` or `"."`) `*.h` plus `<top>/**/*.h` for each top-level
+    directory of `src` that holds a header.  A recursive glob is fine under a known prefix; it
+    never starts at the root.  `**/*.h` from the root walks the whole tree and, when the module
+    is itself the root workspace (a presubmit's `module_path: ""`), follows the `bazel-*`
+    convenience symlinks of an earlier build into bazel-out and every external repository
+    (readline's `top_srcdir_headers` picked up its own `_virtual_includes` tree); named
+    directories never reach them.  `suffix` is `.in.h` for the templates a gnulib glob leaves
+    out."""
+    out: list[str] = []
+    for directory in dirs:
+        name = directory.rstrip("/")
+        if name in ("", "."):
+            out.append(f"*{suffix}")
+            out += sorted(
+                f"{d.name}/**/*{suffix}"
+                for d in src.iterdir()
+                if d.is_dir()
+                and d.name != ".git"
+                and not d.name.startswith("bazel-")
+                and not d.is_symlink()
+                and any(f.name.endswith(suffix) for f in d.rglob("*") if f.is_file())
+            )
+        else:
+            out.append(f"{name}/**/*{suffix}")
+    return list(dict.fromkeys(out))
 
 
 def _list_literal(items: list[str], indent: str) -> str:

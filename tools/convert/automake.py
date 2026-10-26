@@ -20,6 +20,7 @@ from tools.convert.common import (
     _dict_literal,
     _list_literal,
     _platform_exceptions,
+    header_patterns,
     headers_glob,
     source_label,
 )
@@ -514,7 +515,7 @@ def _programs_tree(
                     "cc_library",
                     private_lib,
                     {
-                        "hdrs": headers_glob([f"{d}/**/*.h" for d in private_dirs], exclude=public_under),
+                        "hdrs": headers_glob(header_patterns(src, private_dirs), exclude=public_under),
                         # The module's own test packages (tests/, as the overlays lay them out)
                         # include private headers as upstream's -I$(top_srcdir)/lib lets them.
                         "includes": private_dirs,
@@ -783,7 +784,7 @@ def _include_dir_deps(
                         "cc_library",
                         name,
                         {
-                            "hdrs": headers_glob(["**/*.h"]),
+                            "hdrs": headers_glob(header_patterns(src, ["."])),
                             "strip_include_prefix": "/",
                             "visibility": ["//:__subpackages__"],
                         },
@@ -820,7 +821,7 @@ def _include_dir_deps(
                 "cc_library",
                 name,
                 {
-                    "hdrs": headers_glob([f"{directory}/**/*.h"]),
+                    "hdrs": headers_glob(header_patterns(src, [directory])),
                     "includes": [directory],
                     "visibility": ["//:__subpackages__"],
                 },
@@ -1074,7 +1075,7 @@ def _programs(
     if prefix:
         headers_lib = f"{prefix}headers"
         headers_attrs: dict[str, AttrValue] = {
-            "hdrs": headers_glob([f"{prefix}**/*.h"]),
+            "hdrs": headers_glob(header_patterns(src, [prefix])),
             "includes": [prefix.rstrip("/")],
         }
         if _config_deps(state):
@@ -1280,7 +1281,7 @@ def _programs(
                     Rule(
                         "cc_library",
                         headers_name,
-                        {"hdrs": headers_glob([f"{d}/**/*.h" for d in source_dirs]), "strip_include_prefix": "/"},
+                        {"hdrs": headers_glob(header_patterns(src, source_dirs)), "strip_include_prefix": "/"},
                         comments=[
                             (
                                 f"{makefile_name}: the headers under {', '.join(source_dirs)}/, which "
@@ -1293,7 +1294,7 @@ def _programs(
             deps.append(f":{headers_name}")
             flag_includes = [d for d in flag_includes if d != "."]
         elif source_dirs:
-            srcs_value = _with_headers(package, srcs_value, source_dirs)
+            srcs_value = _with_headers(package, src, srcs_value, source_dirs)
         include_deps, flag_includes = _include_dir_deps(package, flag_includes, src, {}, notes, prefix.rstrip("/"))
         deps += [d for d in include_deps if d not in deps]
         deps_value = _deps_value(sorted(deps, key=label_sort_key), dep_arms)

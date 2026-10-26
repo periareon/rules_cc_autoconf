@@ -22,6 +22,7 @@ from tools.convert.common import (
     _list_literal,
     _platform_exceptions,
     _platform_labels,
+    header_patterns,
 )
 from tools.convert.emit import label_sort_key
 from tools.convert.expand import Expansion
@@ -799,9 +800,10 @@ def _wrapper_header_rules(
     # The glob leaves out the templates and any shipped copy of a header the library generates
     # (both generated unconditionally and conditionally): the rendered one is the header.
     shipped = sorted({f"{prefix}{out}" for out in generated} | {f"{prefix}{h.out}" for h in conditional})
-    exclude = _list_literal([f"{prefix}**/*.in.h"] + [p for p in shipped if (src / p).is_file()], "        ")
+    template_patterns = header_patterns(src, [prefix or "."], ".in.h")
+    exclude = _list_literal(template_patterns + [p for p in shipped if (src / p).is_file()], "        ")
     hdrs = Raw(
-        f'glob(\n        ["{prefix}**/*.h"],\n'
+        f"glob(\n        {_list_literal(header_patterns(src, [prefix or '.']), '        ')},\n"
         f"        # The templates are inputs of the autoconf_hdr targets, not headers.\n"
         f"        exclude = {exclude},\n    )"
     )

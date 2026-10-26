@@ -19,6 +19,7 @@ from tools.convert.common import (
     TOP_HEADERS,
     _dict_of_lists,
     _list_literal,
+    header_patterns,
     headers_glob,
     source_label,
 )
@@ -1142,7 +1143,7 @@ def _srcs_value(srcs: list[str], arms: dict[str, list[str]], package: Package | 
     return Raw(f"{_list_literal(srcs, '    ')} + {selects}")
 
 
-def _with_headers(package: Package, srcs_value: list[str] | Raw, dirs: list[str]) -> Raw:
+def _with_headers(package: Package, src: Path, srcs_value: list[str] | Raw, dirs: list[str]) -> Raw:
     """The headers next to a program's sources in subdirectories of a
     non-recursive Makefile.am (make's `src/`, pkgconf's `cli/`): no headers
     library serves them, so they are private sources of the program.  The
@@ -1153,7 +1154,7 @@ def _with_headers(package: Package, srcs_value: list[str] | Raw, dirs: list[str]
         package.after.append(
             Assign(
                 name,
-                headers_glob([f"{d}/**/*.h" for d in dirs], indent=""),
+                headers_glob(header_patterns(src, dirs), indent=""),
                 comments=[
                     (
                         f"The headers under {', '.join(dirs)}/: private sources of each program there, which "

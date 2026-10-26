@@ -141,3 +141,34 @@ def test_newest_versions_stay_on_the_upstream_release(tmp_path: Path) -> None:
     assert bcr.newest_versions(registry, ["zlib", "nothere"], current={"zlib": "1.4.0"}) == {"zlib": "1.4.0.bcr.1"}
     assert bcr.upstream_bumps(registry, held) == {"zlib": "1.4.0.bcr.1"}
     assert bcr.upstream_bumps(registry, {"zlib": "1.4.0"}) == {}
+
+
+def test_entry_pins_come_from_the_entry_or_its_predecessor(tmp_path: Path) -> None:
+    """A library the entry's MODULE.bazel pins keeps its upstream release on regeneration; a fresh
+    `.bcr.N` without a MODULE.bazel yet reads its predecessor's, the newest published version
+    other than its own; a module's first version pins nothing."""
+    registry = tmp_path / "registry"
+    for version, openssl in (("2.5.2", "3.5.5.bcr.2"), ("2.5.2.bcr.1", "3.5.5.bcr.4")):
+        (registry / "modules/ppp" / version).mkdir(parents=True)
+        (registry / "modules/ppp" / version / "MODULE.bazel").write_text(
+            f'module(name = "ppp", version = "{version}")\nbazel_dep(name = "openssl", version = "{openssl}")\n'
+        )
+    (registry / "modules/ppp/2.5.2.bcr.2").mkdir()
+    (registry / "modules/ppp/metadata.json").write_text(
+        json.dumps({"versions": ["2.5.2", "2.5.2.bcr.1", "2.5.2.bcr.2"], "yanked_versions": {}})
+    )
+    (registry / "modules/openssl").mkdir()
+    (registry / "modules/openssl/metadata.json").write_text(
+        json.dumps({"versions": ["3.5.5.bcr.4", "3.5.5.bcr.5", "4.0.1.bcr.0"], "yanked_versions": {}})
+    )
+    assert bcr.entry_pins(bcr.entry(registry / "modules/ppp/2.5.2.bcr.1")) == {"openssl": "3.5.5.bcr.4"}
+    fresh = bcr.entry(registry / "modules/ppp/2.5.2.bcr.2")
+    assert bcr.entry_pins(fresh) == {"openssl": "3.5.5.bcr.4"}
+    # What the regeneration then takes: the newest .bcr.N of the pinned release, not the table's 4.0.1.
+    table = {"openssl": "4.0.1.bcr.0"}
+    current = {name: bcr.entry_pins(fresh).get(name, version) for name, version in table.items()}
+    assert bcr.newest_versions(registry, table, current=current) == {"openssl": "3.5.5.bcr.5"}
+    assert bcr.upstream_bumps(registry, current) == {"openssl": "4.0.1.bcr.0"}
+    (registry / "modules/new/1.0").mkdir(parents=True)
+    (registry / "modules/new/metadata.json").write_text(json.dumps({"versions": ["1.0"], "yanked_versions": {}}))
+    assert bcr.entry_pins(bcr.entry(registry / "modules/new/1.0")) == {}
