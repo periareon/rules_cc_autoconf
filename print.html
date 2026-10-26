@@ -4197,7 +4197,10 @@ and takes its newest <code>.bcr.N</code>; moving to another upstream release is 
 module, <code>--allow-upstream &lt;module&gt;</code>. A registry entry's
 regeneration pins its dependencies the same way, from the checkout, with
 <code>convert --allow-upstream &lt;module&gt;</code> for the exceptions; the newer releases
-left alone are listed as notes.</li>
+left alone are listed as notes. A library the entry already pins, in its
+MODULE.bazel or its previous version's for a fresh <code>.bcr.N</code>, keeps that
+upstream release rather than the table's; the table serves the libraries
+the entry never pinned.</li>
 <li>The golden tests under <code>//tools/convert</code> fix the output for a few gnulib
 modules and for gzip, each with its decisions file next to the expected
 output, and run buildifier with all warnings on it. After an intentional
