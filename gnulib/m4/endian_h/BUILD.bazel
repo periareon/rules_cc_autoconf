@@ -7,41 +7,21 @@ load("//gnulib:macros.bzl", gl_macros = "macros")
 autoconf(
     name = "endian_h",
     checks = [
-        # Standard header defines are provided by AC_CHECK_INCLUDES_DEFAULT dependency
+        # AC_CHECK_HEADERS_ONCE([endian.h]) and ([sys/endian.h]): plain header probes on every
+        # platform, as configure runs them.  No macOS SDK ships <sys/endian.h> (they have
+        # <machine/endian.h> and <sys/_endian.h>), and configure there gets HAVE_SYS_ENDIAN_H=0,
+        # GL_GENERATE_ENDIAN_H=true: gnulib's wrapper then defines the conversion functions
+        # itself.  An earlier version of this port answered the sys/endian.h probe on macOS from
+        # the deployment target instead, and the wrapper's `#include <sys/endian.h>` failed
+        # (gzip's lib/crc.c on the BCR presubmit).
         checks.AC_CHECK_HEADER(
             "endian.h",
             name = "ac_cv_header_endian_h",
         ),
-    ] + select({
-        # macOS: <sys/endian.h> is present in modern SDKs but only after
-        # _DARWIN_C_SOURCE / __DARWIN_C_LEVEL have been set BEFORE any
-        # other system header is included. Both `compile_defines` and an
-        # inline `#define` fail because the framework just prepends text
-        # — by the time the probe's `#include <sys/endian.h>` runs,
-        # <sys/cdefs.h> has often already finalized __DARWIN_C_LEVEL.
-        # Sub in the SDK-version compile probe — a Big-Sur+ deployment
-        # target guarantees the header is available.
-        "@platforms//os:macos": [
-            checks.AC_TRY_COMPILE(
-                name = "ac_cv_header_sys_endian_h",
-                code = """\
-#include <Availability.h>
-#if !defined(__MAC_OS_X_VERSION_MIN_REQUIRED) \\
-    || __MAC_OS_X_VERSION_MIN_REQUIRED < 110000
-#error "macOS deployment target is older than 11.0 (Big Sur)"
-#endif
-int main(void) { return 0; }
-""",
-            ),
-        ],
-        "//conditions:default": [
-            checks.AC_CHECK_HEADER(
-                "sys/endian.h",
-                name = "ac_cv_header_sys_endian_h",
-            ),
-        ],
-    }) + [
-        # HAVE_ENDIAN_H derives from the header check result
+        checks.AC_CHECK_HEADER(
+            "sys/endian.h",
+            name = "ac_cv_header_sys_endian_h",
+        ),
         checks.AC_DEFINE(
             "HAVE_ENDIAN_H",
             requires = ["ac_cv_header_endian_h==1"],
@@ -52,10 +32,6 @@ int main(void) { return 0; }
             if_false = 0,
             if_true = 1,
         ),
-        # HAVE_SYS_ENDIAN_H derives from the sys/endian.h check.
-        # Both AC_DEFINE (config.h) and AC_SUBST (subst.h) — mirrors how
-        # gnulib's gl_HEADER_SYS_ENDIAN_H+AC_CHECK_HEADERS_ONCE emit it
-        # in both places when the header is present.
         checks.AC_DEFINE(
             "HAVE_SYS_ENDIAN_H",
             requires = ["ac_cv_header_sys_endian_h==1"],
@@ -66,8 +42,11 @@ int main(void) { return 0; }
             if_false = 0,
             if_true = 1,
         ),
-        # Whether <endian.h> brings the stdint types and the byte-order macros
-        # and conversion functions (both fail where the header is missing).
+        # Whether <endian.h> brings the stdint types, and the byte-order macros and conversion
+        # functions.  configure runs these only when the header exists; here they run always
+        # and fail without it, which is the same answer.  The matching probes of <sys/endian.h>
+        # (gl_cv_header_sys_endian_h_stdint_types, gl_cv_header_working_sys_endian_h) are not
+        # ported: the macro says it does not use their results.
         checks.AC_TRY_COMPILE(
             name = "gl_cv_header_endian_h_stdint_types",
             code = """\
@@ -110,21 +89,21 @@ int main(void) {
 }
 """,
         ),
-        # GL_GENERATE_ENDIAN_H (gl_CONDITIONAL_HEADER): gnulib ships its own
-        # endian.h unless the system's has both.  M4_VARIABLE, like
-        # GL_GENERATE_ALLOCA_H: an automake conditional, not a subst.
+        # GL_GENERATE_ENDIAN_H (gl_CONDITIONAL_HEADER): gnulib ships its own endian.h unless
+        # the system's has both.  M4_VARIABLE, like GL_GENERATE_ALLOCA_H: an automake
+        # conditional, not a subst.
         checks.M4_VARIABLE(
             "GL_GENERATE_ENDIAN_H",
             condition = "gl_cv_header_endian_h_stdint_types && gl_cv_header_working_endian_h",
             if_false = "true",
             if_true = "false",
         ),
-        # ENDIAN_H_JUST_MISSING_STDINT: When endian.h exists but doesn't include stdint types.
-        # Linux's endian.h includes stdint.h, so if HAVE_ENDIAN_H=1, this is 1.
-        # If no endian.h, this is 0.
+        # ENDIAN_H_JUST_MISSING_STDINT: the macro tests `$GL_GENERATE_ENDIAN_H` as a string
+        # (`true` and `false` both pass `test`), so the value is 1 exactly when the system's
+        # <endian.h> works, whether or not the wrapper is generated.
         checks.AC_SUBST(
             "ENDIAN_H_JUST_MISSING_STDINT",
-            condition = "ac_cv_header_endian_h",
+            condition = "gl_cv_header_working_endian_h",
             if_false = 0,
             if_true = 1,
         ),
@@ -133,8 +112,8 @@ int main(void) {
     deps = [
         # Note: AC_CHECK_INCLUDES_DEFAULT is added for test compatibility
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
-        # Provides _DARWIN_C_SOURCE define (via AC_USE_SYSTEM_EXTENSIONS)
-        # that the sys/endian.h probe references through `compile_defines`.
+        # gl_ENDIAN_H runs after gl_EARLY's AC_USE_SYSTEM_EXTENSIONS: the probes see the same
+        # feature-test defines configure's do.
         "//gnulib/m4/extensions",
         # gl_CHECK_NEXT_HEADERS requires gl_INCLUDE_NEXT which is defined in include_next module
         "//gnulib/m4/include_next",
