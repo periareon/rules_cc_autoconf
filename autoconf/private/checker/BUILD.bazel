@@ -126,6 +126,16 @@ cc_test(
     deps = [":check_runner"],
 )
 
+cc_test(
+    name = "library_check_test",
+    srcs = ["library_check_test.cc"],
+    cxxopts = cxxopts(),
+    deps = [
+        ":check_runner",
+        "//tools/json",
+    ],
+)
+
 cc_binary(
     name = "checker_bin",
     srcs = [

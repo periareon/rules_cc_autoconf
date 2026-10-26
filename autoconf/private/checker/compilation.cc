@@ -437,7 +437,8 @@ bool CheckRunner::try_compile(const std::string& code,
 bool CheckRunner::try_link(const std::filesystem::path& object_file,
                            const std::filesystem::path& executable,
                            const std::string& language,
-                           const std::vector<std::string>& extra_linkopts) {
+                           const std::vector<std::string>& extra_linkopts,
+                           const std::vector<std::string>& libraries) {
     std::vector<std::string> cmd;
     bool msvc = is_msvc_like(config_.compiler_type);
 
@@ -448,6 +449,9 @@ bool CheckRunner::try_link(const std::filesystem::path& object_file,
         cmd.insert(cmd.end(), link_flags.begin(), link_flags.end());
         cmd.push_back("/OUT:" + executable.string());
         cmd.push_back(object_file.string());
+        for (const std::string& library : libraries) {
+            cmd.push_back(library + ".lib");
+        }
         append_link_libraries(cmd);
     } else {
         std::string link_tool =
@@ -468,6 +472,9 @@ bool CheckRunner::try_link(const std::filesystem::path& object_file,
         auto link_flags = get_link_only_flags(language, extra_linkopts);
         cmd.insert(cmd.end(), link_flags.begin(), link_flags.end());
         cmd.push_back(object_file.string());
+        for (const std::string& library : libraries) {
+            cmd.push_back("-l" + library);
+        }
         append_link_libraries(cmd);
         cmd.push_back("-o");
         cmd.push_back(executable.string());
@@ -561,19 +568,25 @@ bool CheckRunner::try_compile_and_link_with_lib(
         return run_command("compile and link", cmd) == 0;
     }
 
-    // GCC/Clang drive the linker themselves, so link flags can sit among the
-    // compile flags -- but they must precede the source and -l<library>.
-    auto link_flags = get_link_only_flags(language, extra_linkopts);
-    cmd.insert(cmd.end(), link_flags.begin(), link_flags.end());
+    // GCC/Clang: compile, then link, as try_compile_and_link does.  One
+    // `cc <compile flags> <link flags> conftest.c -l<library>` would put the
+    // toolchain's link flags beside its compile flags, and a flag both carry
+    // with different values lets the link's win: hermetic-llvm's compile
+    // -resource-dir holds clang's builtin headers, its link -resource-dir
+    // only compiler-rt, so <limits.h> was not found and every AC_CHECK_LIB
+    // answered no there while the function probes, linked in two steps,
+    // answered right.
+    std::filesystem::path obj = tmp.object_path(false);
+    cmd.push_back("-c");
     cmd.push_back(source_file->string());
     cmd.push_back("-o");
-    cmd.push_back((tmp.dir / tmp.safe_id).string());
-    const std::vector<std::string> search = library_search_flags(false);
-    cmd.insert(cmd.end(), search.begin(), search.end());
-    cmd.push_back("-l" + library);
-    append_link_libraries(cmd);
-
-    return run_command("compile and link", cmd) == 0;
+    cmd.push_back(obj.string());
+    if (run_command("compile", cmd) != 0) {
+        DebugLogger::warn("Compilation failed");
+        return false;
+    }
+    return try_link(obj, tmp.executable_path(), language, extra_linkopts,
+                    {library});
 }
 
 }  // namespace rules_cc_autoconf

@@ -156,12 +156,16 @@ class CheckRunner {
      * @param language Language of the code ("c" or "cpp").
      * @param extra_linkopts Additional linker flags appended after toolchain
      * flags.
+     * @param libraries Library names (without -l) linked right after the
+     * object, before the cc_deps archives: where a one-step
+     * `cc conftest.c -l<name>` puts them.
      * @return true if linking succeeded, false otherwise.
      */
     bool try_link(const std::filesystem::path& object_file,
                   const std::filesystem::path& executable,
                   const std::string& language = "c",
-                  const std::vector<std::string>& extra_linkopts = {});
+                  const std::vector<std::string>& extra_linkopts = {},
+                  const std::vector<std::string>& libraries = {});
 
     /**
      * @brief Try to compile and link code (without running).
