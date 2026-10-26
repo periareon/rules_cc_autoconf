@@ -58,3 +58,19 @@ def test_bazel_floor_follows_the_rules() -> None:
     )
     text = modulebazel._module_bazel("foo", "1.2.bcr.3", "0.34.0", None, False, module_attrs=raised)
     assert '    bazel_compatibility = [">=7.4.0"],\n' in text
+
+
+def test_bazel_dep_versions(tmp_path: Path) -> None:
+    path = tmp_path / "MODULE.bazel"
+    path.write_text(
+        'module(name = "ppp", version = "2.5.2.bcr.1")\n'
+        'bazel_dep(name = "rules_cc_autoconf", version = "0.31.0")\n'
+        'bazel_dep(name = "openssl", version = "3.5.5.bcr.4")\n'
+        'bazel_dep(name = "rules_shell", version = "0.8.0", dev_dependency = True)\n'
+    )
+    assert modulebazel.bazel_dep_versions(path) == {
+        "rules_cc_autoconf": "0.31.0",
+        "openssl": "3.5.5.bcr.4",
+        "rules_shell": "0.8.0",
+    }
+    assert modulebazel.bazel_dep_versions(tmp_path / "missing") == {}

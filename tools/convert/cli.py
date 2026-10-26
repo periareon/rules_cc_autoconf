@@ -389,11 +389,17 @@ def _apply_entry(args: argparse.Namespace) -> None:
         ).items():
             modulebazel_mod.MODULES[name] = dataclasses.replace(modulebazel_mod.MODULES[name], version=version)
         # The registry libraries likewise (gmp for mpc): the checkout's newest over the snapshot's.
+        # A library the entry already pins (its MODULE.bazel, or the previous version's for a
+        # fresh `.bcr.N`) keeps that upstream release rather than the table's: ppp stays on
+        # openssl 3.5.5 after the table moved to 4.0.1.  The table's version serves the
+        # libraries the entry never pinned.
         held = {lib.module: lib.version for lib in libraries_mod.table().values()}
+        pinned = bcr.entry_pins(entry)
+        current = {name: pinned.get(name, version) for name, version in held.items()}
         libraries_mod.pin_versions(
-            bcr.newest_versions(entry.registry, held, current=held, allow_upstream=allow_upstream)
+            bcr.newest_versions(entry.registry, held, current=current, allow_upstream=allow_upstream)
         )
-        depends_on = {**tools, **held}
+        depends_on = {**tools, **current}
         for name, version in sorted(bcr.upstream_bumps(entry.registry, depends_on).items()):
             if name not in allow_upstream:
                 print(

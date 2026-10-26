@@ -490,7 +490,10 @@ beside each, and the report names the BUILD files that do not call
   module, `--allow-upstream <module>`. A registry entry's
   regeneration pins its dependencies the same way, from the checkout, with
   `convert --allow-upstream <module>` for the exceptions; the newer releases
-  left alone are listed as notes.
+  left alone are listed as notes. A library the entry already pins, in its
+  MODULE.bazel or its previous version's for a fresh `.bcr.N`, keeps that
+  upstream release rather than the table's; the table serves the libraries
+  the entry never pinned.
 - The golden tests under `//tools/convert` fix the output for a few gnulib
   modules and for gzip, each with its decisions file next to the expected
   output, and run buildifier with all warnings on it. After an intentional

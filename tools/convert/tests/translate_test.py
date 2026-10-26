@@ -11,7 +11,13 @@ from tools.convert import dataflow as df
 from tools.convert import emit, lower, markers
 from tools.convert.automake import _programs_tree, _split_deps
 from tools.convert.cli import _manual_programs_section
-from tools.convert.common import NO_WARNINGS, _platform_labels, no_warnings_statement
+from tools.convert.common import (
+    NO_WARNINGS,
+    _platform_labels,
+    header_patterns,
+    headers_glob,
+    no_warnings_statement,
+)
 from tools.convert.decisions import Decisions, Word
 from tools.convert.emit import render_statement
 from tools.convert.gnulib_lib import (
@@ -1731,6 +1737,23 @@ def test_platform_arm_probe_sources_build_on_their_platform_alone() -> None:
     assert "tags" not in rules["pcap_conditional_srcs"].attrs
     assert rules["pcap_conditional_srcs_linux"].attrs["tags"] == ["manual"]
     assert "target_compatible_with" not in rules["pcap_conditional_srcs_linux"].attrs
+
+
+def test_header_globs_start_at_a_known_directory(tmp_path: Path) -> None:
+    """A recursive header glob is fine under a named directory (`lib/**/*.h`), never from the
+    root: `**/*.h` walks the whole tree and, with the module as the root workspace (readline's
+    presubmit), follows the bazel-* convenience symlinks into bazel-out.  The root becomes
+    `*.h` plus one `<top>/**/*.h` per top-level directory holding a header; directories without
+    one, .git, bazel-* and symlinks are left out.  `.in.h` gives a gnulib library's exclude."""
+    for path in ("pppd/pppd.h", "include/net/ppp.h", "include/doc.txt", "scripts/run.sh", ".git/x.h", "bazel-out/y.h"):
+        (tmp_path / path).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / path).write_text("")
+    (tmp_path / "config.h").write_text("")
+    (tmp_path / "linked").symlink_to(tmp_path / "pppd")
+    assert header_patterns(tmp_path, ["."]) == ["*.h", "include/**/*.h", "pppd/**/*.h"]
+    assert header_patterns(tmp_path, ["pppd", "include/"]) == ["pppd/**/*.h", "include/**/*.h"]
+    assert header_patterns(tmp_path, ["lib/"], ".in.h") == ["lib/**/*.in.h"]
+    assert "exclude" not in headers_glob(header_patterns(tmp_path, ["."])).text
 
 
 def test_gnulib_else_branch_source() -> None:

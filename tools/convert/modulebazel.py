@@ -96,6 +96,28 @@ def existing_module(path: Path) -> tuple[dict[str, str], list[str]]:
     return attrs, others
 
 
+def bazel_dep_versions(path: Path) -> dict[str, str]:
+    """Module -> version of the `bazel_dep(...)` lines of a MODULE.bazel; empty when there is no
+    file, or it is not a Starlark subset Python parses."""
+    if not path.is_file():
+        return {}
+    try:
+        tree = ast.parse(path.read_text(encoding="utf-8", errors="replace"))
+    except SyntaxError:
+        return {}
+    out: dict[str, str] = {}
+    for node in tree.body:
+        call = node.value if isinstance(node, ast.Expr) and isinstance(node.value, ast.Call) else None
+        if call is None or not (isinstance(call.func, ast.Name) and call.func.id == "bazel_dep"):
+            continue
+        keywords = {keyword.arg: keyword.value for keyword in call.keywords}
+        name, version = keywords.get("name"), keywords.get("version")
+        values = [n.value if isinstance(n, ast.Constant) else None for n in (name, version)]
+        if all(isinstance(v, str) for v in values):
+            out[str(values[0])] = str(values[1])
+    return out
+
+
 def _version_key(version: str) -> tuple[int, ...]:
     """`7.4.0` -> (7, 4, 0); a non-numeric component counts as 0 (a `-pre` suffix)."""
     return tuple(int(part) if part.isdigit() else 0 for part in version.split("."))
