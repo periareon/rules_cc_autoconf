@@ -3989,7 +3989,10 @@ One configure enters only sometimes builds where configure enters it: a
 host-OS condition or a decided automake conditional becomes the package's
 <code>target_compatible_with</code>; a probe-dependent one (gawk's extension/ needs
 dlfcn.h) is a <code>subdir:</code> decision, and its targets are tagged <code>manual</code>
-until it is made.</li>
+until it is made. An option the sub-configure's script declares under the
+same name as the root's (gawk's extension/ runs the root's MPFR macro) is
+the root's flag: the package keys on <code>//:&lt;name&gt;_enabled</code> and declares no
+flag of its own, so one <code>--//:&lt;name&gt;</code> switches the whole module.</li>
 <li><strong>Licensing.</strong> The license files the release ships are exported, with
 the registry's package metadata over them: the SPDX identifier is read
 from the text and the source headers, and asked for as a <code>license:</code>
