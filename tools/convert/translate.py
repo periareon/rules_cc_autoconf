@@ -238,7 +238,7 @@ class FlagInfo:
     takes_value: bool = False
     """`--with-x=VALUE`: configure copies the option's value into a variable
     (`PPPD_RUNTIME_DIR="$with_runtime_dir"`) and tests it for emptiness alone.  A `string_flag`
-    rather than a bool, feeding the module's `autoconf_template_vars` (`value_option_parts`)."""
+    rather than a bool, read by the main target as a build setting (`value_option_parts`)."""
     value_default: str = ""
     """The string_flag's default: what configure assigns when the option is not given, at the
     install directories' defaults (`${runstatedir}/pppd` is `/usr/local/var/run/pppd`), or a
@@ -400,8 +400,8 @@ class ProjectState:
     may share."""
     template_vars: dict[str, str] = field(default_factory=dict)
     """Substituted variable -> the value option it takes (`PPPD_RUNTIME_DIR` -> `runtime_dir`):
-    the `autoconf_template_vars` target renders them, a dep of the main target, and a `-D` of
-    the variable in a Makefile's CPPFLAGS reads it as the make variable `$(PPPD_RUNTIME_DIR)`."""
+    the main target reads the flag as a `build_settings` entry, which substitutes `@VAR@` and
+    is the make variable a `-D` of it in a Makefile's CPPFLAGS reads (`$(PPPD_RUNTIME_DIR)`)."""
     shared_options: set[str] = field(default_factory=set)
     """The root package's options this sub-configure's script declares too (gawk's extension/
     runs the same MPFR macro): its selects key on the root's `//:<name>_enabled`, and it declares
@@ -4269,8 +4269,8 @@ class Translator:
         [PPPD_RUNTIME_DIR="${runstatedir}/pppd"])`.  No check expresses "the value the user
         gave", and a `variable:` decision could only pin a constant, which is how a published ppp
         hard-coded `/run/pppd`.  The option becomes a `string_flag` with configure's default,
-        and the variable an `autoconf_template_vars` entry reading it; the Makefile's
-        `-DPPPD_RUNTIME_DIR` follows through the make variable.  True when handled so."""
+        and the variable a `build_settings` entry of the main target, published as a make
+        variable; the Makefile's `-DPPPD_RUNTIME_DIR` follows through it.  True when handled so."""
         parts = value_option_parts(decisions)
         if parts is None:
             return False
@@ -4296,8 +4296,8 @@ class Translator:
         self._state.template_vars[var] = flag
         option = f"--{'with' if info.macro == 'AC_ARG_WITH' else 'enable'}-{info.option}"
         self.report.note(
-            f"{var}: takes {option}=VALUE: the string_flag `{flag}` (default `{info.value_default}`), through "
-            f"the module's `autoconf_template_vars`; a Makefile's -D{var} reads it as $({var})"
+            f"{var}: takes {option}=VALUE: the string_flag `{flag}` (default `{info.value_default}`), a "
+            f"build setting of the main target; a Makefile's -D{var} reads it as $({var})"
         )
         return True
 

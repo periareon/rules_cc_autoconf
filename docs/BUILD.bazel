@@ -39,15 +39,6 @@ stardoc(
 )
 
 stardoc(
-    name = "autoconf_template_vars",
-    out = "src/autoconf_template_vars.md",
-    input = "//autoconf:autoconf_template_vars.bzl",
-    table_of_contents_template = "@stardoc//stardoc:templates/markdown_tables/table_of_contents.vm",
-    tags = ["manual"],
-    deps = ["//autoconf:autoconf_template_vars_bzl"],
-)
-
-stardoc(
     name = "autoconf_srcs",
     out = "src/autoconf_srcs.md",
     input = "//autoconf:autoconf_srcs.bzl",

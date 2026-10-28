@@ -11,6 +11,7 @@ def _transition_impl(_settings, _attr):
         "//autoconf/tests/core/build_settings:enable_threads": False,
         "//autoconf/tests/core/build_settings:log_level": 5,
         "//autoconf/tests/core/build_settings:package_name": "altproj",
+        "//autoconf/tests/core/build_settings:plugin_dir": "/opt/myproj/plugins",
     }
 
 _transition = transition(
@@ -20,6 +21,7 @@ _transition = transition(
         "//autoconf/tests/core/build_settings:package_name",
         "//autoconf/tests/core/build_settings:enable_threads",
         "//autoconf/tests/core/build_settings:log_level",
+        "//autoconf/tests/core/build_settings:plugin_dir",
     ],
 )
 
