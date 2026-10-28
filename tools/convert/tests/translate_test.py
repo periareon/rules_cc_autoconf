@@ -193,6 +193,42 @@ def translation() -> Translation:
     return translator, translator.translate()
 
 
+def test_volunteered_guard_adds_a_condition_to_an_unconditional_check() -> None:
+    """ppp: configure checks <crypt.h> and `AC_CHECK_LIB([crypt])` independently, and a sysroot
+    with the header and no library compiles crypt() calls it cannot link.  A `guard:` decision
+    nobody asked for, keyed by the one header, splits it out of the grouped check with the
+    requires list; the other headers stay grouped, and NEVER drops one."""
+    tree = markers.parse(expansion())
+
+    def translate(text: str) -> tuple[Decisions, list[Call]]:
+        decisions = Decisions.from_text(text)
+        translator = Translator(
+            tree,
+            index=INDEX,
+            selected_files={"foo.m4"},
+            m4_sources={"m4/foo.m4": M4},
+            options=Options(),
+            decisions=decisions,
+        )
+        (package,) = translator.translate()
+        foo = package.target("gl_FOO")
+        assert foo is not None
+        return decisions, [c for c in foo.checks if isinstance(c, Call)]
+
+    decided, calls = translate('DECISIONS = {"guard:gl_FOO:AC_CHECK_HEADER:b_h": ["ac_cv_header_a_h"]}')
+    headers = {
+        " ".join(strings(c.args[0])): strings(c.kwargs.get("requires"))
+        for c in calls
+        if c.fn == "macros.AC_CHECK_HEADERS"
+    }
+    assert headers["a.h"] == []
+    assert headers["b.h"] == ["ac_cv_header_a_h"]
+    assert decided.unused == []
+    _, calls = translate('DECISIONS = {"guard:gl_FOO:AC_CHECK_HEADER:b_h": NEVER}')
+    grouped = [" ".join(strings(c.args[0])) for c in calls if c.fn == "macros.AC_CHECK_HEADERS"]
+    assert "a.h" in grouped and not any("b.h" in g for g in grouped)
+
+
 def test_targets_and_deps(translation: Translation) -> None:
     _, packages = translation
     (package,) = packages
