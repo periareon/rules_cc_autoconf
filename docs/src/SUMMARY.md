@@ -11,6 +11,7 @@
   - [autoconf_hdr](./autoconf_hdr.md)
   - [autoconf_srcs](./autoconf_srcs.md)
   - [autoconf_linkopts](./autoconf_linkopts.md)
+  - [autoconf_template_vars](./autoconf_template_vars.md)
   - [autoconf_toolchain](./autoconf_toolchain.md)
   - [autoconf_package_info](./autoconf_package_info.md)
   - [checks](./checks.md)
