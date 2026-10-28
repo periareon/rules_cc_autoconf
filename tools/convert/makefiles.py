@@ -293,6 +293,14 @@ def _discover_makefile_in_targets(
         return names
 
     installed = installed_names()
+    # What `make` builds: the prerequisites of `all`, by basename.  A program rule outside them
+    # (readline's rlptytest, in OTHEREXE alone) is a candidate as an EXTRA_PROGRAMS entry is:
+    # no target unless a `program:` decision says so.  No `all` rule: every rule counts.
+    reachable = (
+        {re.sub(r"\$\(EXEEXT\)|@EXEEXT@", "", w).rsplit("/", 1)[-1] for w in embedded(expand(mk.rules["all"]))}
+        if "all" in mk.rules
+        else None
+    )
     archive_objects: dict[str, list[str]] = {}  # archive -> its objects, for the convenience rules
     rules = list(mk.rules.items())
     # Archives first: a program rule may link one, and a convenience rule (readline's
@@ -330,10 +338,23 @@ def _discover_makefile_in_targets(
                     "target built by hand); not a program"
                 )
                 continue
+            # The configure substitutions the link line names besides the archives
+            # (`$(TERMCAP_LIB)` with `TERMCAP_LIB = @TERMCAP_LIB@`): link variables, as a
+            # Makefile.am's `$(X_LIB)` in LDADD.  A variable the Makefile never defines
+            # (readline's `$(LIBUTIL)`) is empty under make and nothing here either.
+            link_vars = []
+            for word in (w for line in recipe if _LINK_RE.search(line) for w in line.split()):
+                var = make_var_name(word)
+                if var is not None and mk.variables.get(var) == [f"@{var}@"] and word not in link_vars:
+                    link_vars.append(word)
             canonical = re.sub(r"[^A-Za-z0-9_@]", "_", base)
             if canonical not in mk.programs:
                 mk.programs[canonical] = gnulibmk.Program(
-                    base, sources_of(objects, base), ldadd=archives, installed=base in installed
+                    base,
+                    sources_of(objects, base),
+                    ldadd=archives + link_vars,
+                    installed=base in installed,
+                    substituted=reachable is not None and base not in reachable,
                 )
     # `tilde.o: tilde.c` with `$(CC) ... -DREADLINE_LIBRARY -c`: the rule's own -D options,
     # applied to the target that compiles the object (one object's flag on the whole target).
