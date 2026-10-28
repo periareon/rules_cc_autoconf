@@ -2524,8 +2524,8 @@ def test_value_option_becomes_a_string_flag_and_a_template_variable() -> None:
     """ppp: `AS_IF([test -n "$with_runtime_dir"], [PPPD_RUNTIME_DIR="$with_runtime_dir"],
     [PPPD_RUNTIME_DIR="${runstatedir}/pppd"])`.  The variable takes the option's value: a
     string_flag named after the option with configure's default at the install directories'
-    defaults, no bool flag, and the variable rendered by `autoconf_template_vars`.  A `-D` of the
-    variable reads the make variable, and the owner lists the target in `toolchains`."""
+    defaults, no bool flag, and the variable a build setting of the main target.  A `-D` of the
+    variable reads the make variable, and the owner lists the main target in `toolchains`."""
     optval = df.Ref(f"{df.OPTVAL_PREFIX}runtime_dir")
     given = df.Flag("runtime_dir")
     decisions = [
@@ -2565,7 +2565,7 @@ def test_value_option_becomes_a_string_flag_and_a_template_variable() -> None:
     defines, *_ = _preprocessor_flags(mk, "pppd", "pppd", [], state, asked)
     assert 'PPPD_RUNTIME_DIR="\\"$(PPPD_RUNTIME_DIR)\\""' in defines
     assert list(asked.pending) == ["cppflag:pppd:PPPD_VERSION"]
-    assert _template_var_toolchains(defines, {}, state) == {"toolchains": [":template_vars"]}
+    assert _template_var_toolchains(defines, {}, state) == {"toolchains": [":autoconf"]}
     assert _template_var_toolchains(["HAVE_CONFIG_H"], {}, state) == {}
 
 

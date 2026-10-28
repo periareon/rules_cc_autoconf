@@ -15,7 +15,6 @@ from tools.convert.common import (
     _LIBRARY_RE,
     _SOURCE_SUFFIXES,
     CONFIG_HEADERS,
-    TEMPLATE_VARS,
     _compatible_with,
     _config_deps,
     _dict_literal,
@@ -95,12 +94,12 @@ def _registry_covered(name: str, state: ProjectState) -> bool:
 def _template_var_toolchains(
     defines: list[str], define_arms: dict[str, list[str]], state: ProjectState
 ) -> dict[str, AttrValue]:
-    """`toolchains` naming the module's `autoconf_template_vars` target when a define reads one of
-    its make variables (`PPPD_RUNTIME_DIR=\\"$(PPPD_RUNTIME_DIR)\\"`); nothing otherwise.  The
-    target is the root package's, where the value options live."""
+    """`toolchains` naming the main autoconf target when a define reads one of its make
+    variables (`PPPD_RUNTIME_DIR=\\"$(PPPD_RUNTIME_DIR)\\"`, a value option's); nothing otherwise.
+    The target is the root package's, where the value options live."""
     if not any("$(" in d for d in [*defines, *(d for arm in define_arms.values() for d in arm)]):
         return {}
-    label = f":{TEMPLATE_VARS}" if state.package_path in ("", ".") else f"//:{TEMPLATE_VARS}"
+    label = ":autoconf" if state.package_path in ("", ".") else "//:autoconf"
     return {"toolchains": [label]}
 
 

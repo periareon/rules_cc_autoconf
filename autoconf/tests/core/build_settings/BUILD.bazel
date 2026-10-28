@@ -4,6 +4,7 @@ load("//autoconf:autoconf.bzl", "autoconf")
 load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
 load("//autoconf:checks.bzl", "checks")
 load("//autoconf/tests:diff_test.bzl", "diff_test")
+load(":template_vars_test.bzl", "names_a_checker_result_test")
 load(":transition.bzl", "transitioned_file")
 
 string_flag(
@@ -19,6 +20,13 @@ bool_flag(
 int_flag(
     name = "log_level",
     build_setting_default = 2,
+)
+
+# A `--with-plugin-dir=DIR` option: configure copies the value into PLUGIN_DIR, a .pc file
+# reads `@PLUGIN_DIR@` and the Makefile passes `-DPLUGIN_DIR="..."`.
+string_flag(
+    name = "plugin_dir",
+    build_setting_default = "/usr/local/lib/myproj/plugins",
 )
 
 autoconf(
@@ -41,7 +49,74 @@ autoconf(
             target = ":log_level",
             unquote = True,
         ),
+        checks.AC_BUILD_SETTING(
+            name = "ac_cv_subst_PLUGIN_DIR",
+            subst = "PLUGIN_DIR",
+            target = ":plugin_dir",
+        ),
     ],
+    # Every build setting is a make variable under its define and subst names; a further
+    # name is bound to the entry's `name`.
+    template_vars = {"PLUGIN_DIRECTORY": "ac_cv_subst_PLUGIN_DIR"},
+)
+
+# The substitution, as a .pc file gets it.
+autoconf_hdr(
+    name = "subst",
+    out = "subst.h",
+    mode = "subst",
+    template = "subst.h.in",
+    deps = [":autoconf"],
+)
+
+diff_test(
+    name = "diff_test_subst",
+    file1 = "golden_subst.h",
+    file2 = ":subst.h",
+)
+
+transitioned_file(
+    name = "subst_transitioned",
+    actual = ":subst",
+)
+
+diff_test(
+    name = "diff_test_subst_transitioned",
+    file1 = "golden_subst_transitioned.h",
+    file2 = ":subst_transitioned",
+)
+
+# The make variables: `-D`s carrying the values, as the Makefile's CPPFLAGS did; the test
+# compares them with the header's substitutions.  `PLUGIN_DIR` is the subst name the entry
+# publishes on its own, `PLUGIN_DIRECTORY` the name `template_vars` adds, `PACKAGE_NAME` a
+# define entry's.  Bazel tokenizes a define like a shell word, so the C string's quotes are
+# escaped, as a Makefile's `-DX='"..."'` has them.
+cc_test(
+    name = "test_template_vars",
+    srcs = [
+        "test_template_vars.c",
+        ":config.h",
+        ":subst.h",
+    ],
+    local_defines = [
+        "PLUGIN_DIR=\\\"$(PLUGIN_DIR)\\\"",
+        "PLUGIN_DIRECTORY=\\\"$(PLUGIN_DIRECTORY)\\\"",
+        "MAKE_PACKAGE_NAME=\\\"$(PACKAGE_NAME)\\\"",
+    ],
+    toolchains = [":autoconf"],
+)
+
+# Naming a check's result fails: only a build setting is known at analysis time.
+autoconf(
+    name = "names_a_checker_result",
+    checks = [checks.AC_CHECK_HEADER("stdio.h")],
+    tags = ["manual"],
+    template_vars = {"STDIO": "ac_cv_header_stdio_h"},
+)
+
+names_a_checker_result_test(
+    name = "names_a_checker_result_test",
+    target_under_test = ":names_a_checker_result",
 )
 
 autoconf_hdr(

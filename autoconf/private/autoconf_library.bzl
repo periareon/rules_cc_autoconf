@@ -134,7 +134,8 @@ def _process_build_settings(
         cache_checks,
         define_checks,
         subst_checks,
-        available_content_cache):
+        available_content_cache,
+        settings):
     """Render each `build_settings` entry as a pre-computed check result.
 
     For each (target, metadata_json) pair, read the BuildSettingInfo value,
@@ -142,6 +143,9 @@ def _process_build_settings(
     in the same cache/define/subst/content_cache dicts the JSON-check loop
     populates. Content-key dedup applies the same way: two targets that
     reference the same flag with the same resolved value share one file.
+    `settings` collects each entry as `name` -> (text, published names): the
+    text of its value and the define key and subst name it renders under,
+    for the make variables.
     """
     for target, metadata_json in ctx.attr.build_settings.items():
         metadata = json.decode(metadata_json)
@@ -160,10 +164,19 @@ def _process_build_settings(
         subst_name = _coerce_name(name, _coerce_name(define_key, subst))
 
         value = target[BuildSettingInfo].value
+        text = value if type(value) == "string" else json.encode(value)
+
+        # A define wants the JSON spelling, a string quoted as `#define X "..."` is; a
+        # substitution wants the text itself, which is what the checker writes for an AC_SUBST
+        # result and what the header renderer places at `@X@`.  An entry that is both gets a
+        # second file for the substitution.
+        quoted = encode_result(value)
+        raw = json.encode_indent({"success": True, "value": text}, indent = " " * 4) + "\n"
         content_key = json.encode([
             "build_setting",
             str(target.label),
             value,
+            "define" if define else "subst",
         ])
 
         if content_key in content_cache and name in cache_results:
@@ -178,8 +191,23 @@ def _process_build_settings(
             write(
                 actions = ctx.actions,
                 output = output,
-                content = encode_result(value),
+                content = quoted if define else raw,
             )
+        subst_output = output
+        if define and subst:
+            subst_key = json.encode(["build_setting", str(target.label), value, "subst"])
+            if subst_key in available_content_cache:
+                subst_output = available_content_cache[subst_key]
+            elif subst_key in content_cache:
+                subst_output = content_cache[subst_key]
+            else:
+                subst_output = ctx.actions.declare_file("{}/{}.subst.result.cache.json".format(ctx.label.name, name))
+                write(
+                    actions = ctx.actions,
+                    output = subst_output,
+                    content = raw,
+                )
+            content_cache[subst_key] = subst_output
 
         source_desc = {
             "build_setting": str(target.label),
@@ -198,11 +226,59 @@ def _process_build_settings(
         if subst:
             _assert_no_duplicate("Subst", subst_name, subst_checks, ctx, source_desc)
             subst_checks[subst_name] = source_desc
-            subst_results[subst_name] = output
+            subst_results[subst_name] = subst_output
 
         cache_checks[name] = source_desc
         cache_results[name] = output
         content_cache[content_key] = output
+        published = [key for key in [define_key if define else None, subst_name if subst else None] if key]
+        settings[name] = struct(text = text, published = published)
+
+def _template_variables(ctx, settings):
+    """The `TemplateVariableInfo` of the build settings.
+
+    Every `build_settings` entry is a make variable under each name it renders as, its define
+    key and its subst name, so a `cc_*` target listing this target in `toolchains` reads the
+    setting's value as `$(VAR)` in `local_defines` or `copts` the way `autoconf_hdr` reads
+    `@VAR@` (a Makefile's `-DPLUGIN_DIR="..."` following `--with-plugin-dir`).  `template_vars`
+    adds names: make variable -> the `name` of the entry whose value it carries.  Nothing else
+    can be a make variable: a check's result is an action output, unknown at analysis time.
+
+    Args:
+        ctx: The rule context.
+        settings: Entry name -> struct(text, published), from `_process_build_settings`.
+
+    Returns:
+        A `platform_common.TemplateVariableInfo`.
+    """
+    variables = {}
+    sources = {}
+
+    def publish(variable, name):
+        if variable in sources and sources[variable] != name:
+            fail("Make variable `{}` of `{}` is produced by two build settings, `{}` and `{}`.".format(
+                variable,
+                ctx.label,
+                sources[variable],
+                name,
+            ))
+        sources[variable] = name
+        variables[variable] = settings[name].text
+
+    for name, setting in settings.items():
+        for variable in setting.published:
+            publish(variable, name)
+    for variable, name in ctx.attr.template_vars.items():
+        if name not in settings:
+            fail(("template_vars of `{}`: `{}` names `{}`, which is not the `name` of a `build_settings` entry " +
+                  "of this target. Only a build setting is known at analysis time; a check's result is " +
+                  "produced by an action and cannot be a make variable.").format(
+                ctx.label,
+                variable,
+                name,
+            ))
+        publish(variable, name)
+    return platform_common.TemplateVariableInfo(variables)
 
 def autoconf_impl_common(ctx, resolve_toolchain):
     """Shared implementation for autoconf and autoconf_library rules.
@@ -354,6 +430,7 @@ def autoconf_impl_common(ctx, resolve_toolchain):
         if check.get("error"):
             validation_outputs.append(output)
 
+    settings = {}
     _process_build_settings(
         ctx,
         cache_results = cache_results,
@@ -365,7 +442,9 @@ def autoconf_impl_common(ctx, resolve_toolchain):
         define_checks = define_checks,
         subst_checks = subst_checks,
         available_content_cache = available_content_cache,
+        settings = settings,
     )
+    template_variables = _template_variables(ctx, settings)
 
     # Write config to JSON
     config_json = write_config_json(ctx, create_config_dict(
@@ -557,6 +636,7 @@ def autoconf_impl_common(ctx, resolve_toolchain):
     )
     return [
         info,
+        template_variables,
         OutputGroupInfo(
             _validation = depset(validation_outputs),
             autoconf_checks = depset(check_specs),
@@ -604,7 +684,10 @@ def to_build_settings_dict(entries):
 COMMON_ATTRS = {
     "build_settings": attr.label_keyed_string_dict(
         doc = "Mapping of Bazel build setting targets (any rule providing `BuildSettingInfo`) " +
-              "to JSON metadata produced by `checks.AC_BUILD_SETTING`.",
+              "to JSON metadata produced by `checks.AC_BUILD_SETTING`. Each entry is also a make " +
+              "variable under its define and subst names: a `cc_*` target listing this target in " +
+              "`toolchains` reads the setting's value as `$(VAR)` in `local_defines` or `copts`, as " +
+              "`autoconf_hdr` reads `@VAR@`.",
         providers = [BuildSettingInfo],
         default = {},
     ),
@@ -645,6 +728,13 @@ COMMON_ATTRS = {
     "deps": attr.label_list(
         doc = "Additional `autoconf`, `autoconf_library`, or `autoconf_package_info` dependencies.",
         providers = [CcAutoconfInfo],
+    ),
+    "template_vars": attr.string_dict(
+        doc = "Further make variables: variable -> the `name` of the `build_settings` entry whose value " +
+              "it carries (`{\"PLUGIN_DIRECTORY\": \"ac_cv_subst_PLUGIN_DIR\"}`), beyond the define and " +
+              "subst names every entry publishes. Only a build setting can be one; a check's result is " +
+              "an action output and naming it fails.",
+        default = {},
     ),
     "_checker": attr.label(
         cfg = config.exec(AUTOCONF_EXEC_GROUP),
@@ -689,7 +779,7 @@ or wrapped source files.
     toolchains = [
         config_common.toolchain_type("@rules_cc_autoconf//autoconf:toolchain_type", mandatory = False),
     ],
-    provides = [CcAutoconfInfo],
+    provides = [CcAutoconfInfo, platform_common.TemplateVariableInfo],
 )
 
 def _autoconf_cache_impl(ctx):
@@ -711,5 +801,5 @@ has a result in transitive ``deps``, the action is skipped.
     attrs = COMMON_ATTRS,
     fragments = ["cpp"],
     exec_groups = {AUTOCONF_EXEC_GROUP: exec_group(toolchains = use_cc_toolchain())},
-    provides = [CcAutoconfInfo],
+    provides = [CcAutoconfInfo, platform_common.TemplateVariableInfo],
 )

@@ -28,7 +28,6 @@ from tools.convert.common import (
     NO_WARNINGS,
     STANDARD_CONSTANTS,
     STANDARD_FEATURES_TODO,
-    TEMPLATE_VARS,
     TOP_HEADERS,
     _compatible_with,
     _dict_literal,
@@ -57,7 +56,7 @@ from tools.convert.gnulib_lib import (
     _template_variables,
 )
 from tools.convert.index import PortIndex
-from tools.convert.ir import Assign, AttrValue, Call, Dep, Each, Package, Raw, Rule, Statement, Target, strings
+from tools.convert.ir import Assign, AttrValue, Call, Each, Package, Raw, Rule, Statement, Target, strings
 from tools.convert.makefiles import (
     _configured_subdirs,
     _literal_substs,
@@ -504,19 +503,18 @@ def convert_project(
     notes = list(translator.report.notes) + notes_libraries
 
     if state.template_vars:
-        # The value options' variables, rendered from their string_flags: a dep of the main
-        # target, so `@VAR@` substitutes in the generated files, and the make variables the
-        # Makefiles' `-DVAR` defines read (`toolchains`).
-        package.after.append(
-            Rule(
-                "autoconf_template_vars",
-                TEMPLATE_VARS,
-                {"vars": {var: f":{flag}" for var, flag in sorted(state.template_vars.items())}},
-                comments=["The substituted variables the configure options with a value set (--with-x=VALUE)."],
-                load_from="//autoconf:autoconf_template_vars.bzl",
+        # The value options' variables: the main target reads each string_flag as a
+        # `build_settings` entry, so `@VAR@` substitutes in the generated files and `$(VAR)` is
+        # a make variable for the Makefiles' `-DVAR` defines, whose targets list the main
+        # target in `toolchains`.
+        main.attrs["build_settings"] = [
+            Call(
+                "checks.AC_BUILD_SETTING",
+                [],
+                {"name": f"ac_cv_subst_{var}", "subst": var, "target": f":{flag}"},
             )
-        )
-        main.deps.append(Dep(f":{TEMPLATE_VARS}"))
+            for var, flag in sorted(state.template_vars.items())
+        ]
     notes += _drop_duplicate_defines(main, package.targets, index, list(state.gnulib_packages.values()))
     for target in [*package.targets, main]:
         notes += _rename_repeated_probes(target)
@@ -1537,7 +1535,7 @@ def _option_rules(package: Package, state: ProjectState) -> list[Statement]:
         )
         if flag.takes_value:
             # `--with-x=VALUE`, the value copied into a substituted variable: a string_flag with
-            # configure's default (`autoconf_template_vars` reads it); its config_settings, when
+            # configure's default (the main target reads it as a build setting); its config_settings, when
             # the script also compares the value, follow.
             rules.append(
                 Rule(

@@ -1,3 +1,0 @@
-/* subst.h.in */
-#define SUBST_PPPD_RUNTIME_DIR "@PPPD_RUNTIME_DIR@"
-#define SUBST_MAX_LINKS @MAX_LINKS@
