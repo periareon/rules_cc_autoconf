@@ -1629,6 +1629,10 @@ class Translator:
                 ctx.target.checks.append(item)
         if not calls or guard is df.FALSE:
             return
+        if guard is df.TRUE:
+            calls = self._volunteered_guards(calls, ctx)
+            if not calls:
+                return
         if not lower.platform_atoms(guard) and not df.flag_atoms(guard):
             self._place_arm(calls, guard, ctx.target.checks, ctx)
             return
@@ -1685,6 +1689,40 @@ class Translator:
                 existing = strings(call.kwargs.get("requires"))
                 call.kwargs["requires"] = existing + [r for r in reqs if r not in existing]
             _append_unique(dest, call)
+
+    def _volunteered_guards(self, calls: list[Call], ctx: _Ctx) -> list[Call]:
+        """Unconditional checks a `guard:` decision nobody asked for applies to: the entry adds a
+        condition the script lacks (ppp's `<crypt.h>` check after `AC_CHECK_LIB([crypt])`, so a
+        sysroot with the header and no library does not compile crypt() calls it cannot link).
+        The key names one check, `guard:<target>:AC_CHECK_HEADER:crypt_h`; a header or function
+        of a grouped `macros.AC_CHECK_HEADERS([...])` call is split out of the group under its
+        singular key.  Returns the calls left to place as they were."""
+        remaining: list[Call] = []
+        for call in calls:
+            short = call.fn.split(".")[-1]
+            first = call.args[0] if call.args else None
+            if call.fn.startswith("macros.") and short.endswith("S") and isinstance(first, list):
+                kept: list[str] = []
+                for subject in strings(first):
+                    decision = self.decisions.optional(f"guard:{ctx.target.name}:{short[:-1]}:{slug(subject)}", "guard")
+                    if decision is None:
+                        kept.append(subject)
+                        continue
+                    single = clone(call)
+                    single.args = [[subject], *call.args[1:]]
+                    self._apply_guard_decision([single], decision, ctx)
+                if kept:
+                    if len(kept) != len(strings(first)):
+                        call = clone(call)
+                        call.args = [kept, *call.args[1:]]
+                    remaining.append(call)
+                continue
+            decision = self.decisions.optional(f"guard:{ctx.target.name}:{check_key(call)}", "guard")
+            if decision is None:
+                remaining.append(call)
+            else:
+                self._apply_guard_decision([call], decision, ctx)
+        return remaining
 
     def _guard_decision(self, calls: list[Call], cond: df.Cond, ctx: _Ctx, reason: str) -> dec.Decision | None:
         key = f"guard:{ctx.target.name}:{check_key(calls[0])}"
