@@ -1066,7 +1066,12 @@ def _programs(
     link_vars: list[str] = []
     link_items: dict[str, list[str]] = {}
     for canonical, program in mk.programs.items():
-        items = _expand_make_vars(program.ldadd or mk.variables.get("LDADD", []), mk)
+        words = program.ldadd or mk.variables.get("LDADD", [])
+        # A Makefile.in variable that is configure's substitution of itself (`TERMCAP_LIB =
+        # @TERMCAP_LIB@`) is a link variable, as a Makefile.am's `$(X_LIB)`: kept as the
+        # reference, which expansion would turn into a bare `@TERMCAP_LIB@` and lose.
+        kept = [w for w in words if (n := make_var_name(w)) is not None and mk.variables.get(n) == [f"@{n}@"]]
+        items = kept + _expand_make_vars([w for w in words if w not in kept], mk)
         link_items[canonical] = items
         link_vars += [v for v in _link_vars(items, state) if v not in link_vars]
     if link_vars:
@@ -1358,10 +1363,9 @@ def _substituted_program_attrs(
     program under a condition: unconditionally (a plain target), under a host-OS condition
     (`target_compatible_with`), or under a probe result, which a target's existence cannot depend
     on: `tags = ["manual"]` so `//...` leaves it alone, the condition in a comment and in the
-    report.  A `program:` decision overrides: ALWAYS, NEVER or the platforms it builds on.
+    report.  A `program:` decision overrides, for any program: ALWAYS, NEVER, MANUAL or the
+    platforms it builds on (readline's examples/rlptytest, Linux only).
     """
-    if not program.substituted:
-        return {}
     target = f"{prefix}{program.name}"
     bare = program.name.rsplit("/", 1)[-1]
     listed = [
@@ -1386,10 +1390,13 @@ def _substituted_program_attrs(
             state.manual_programs.append((target, f"{key} is MANUAL"))
             return {"tags": ["manual"], "_comment": f"{key} is MANUAL: defined, left out of `//...`"}
         return {"target_compatible_with": _compatible_with(decision.platforms or [], only=True)}
+    if not program.substituted:
+        return {}
     if not listed:
         notes.append(
-            f"{makefile_name}: {program.name} is an EXTRA_PROGRAMS candidate configure never "
-            f"adds to the programs it builds; no target (decide {key} to build it)"
+            f"{makefile_name}: {program.name} is not among the programs configure builds (an "
+            f"EXTRA_PROGRAMS candidate it never adds, or a rule `all` does not reach); no target "
+            f"(decide {key} to build it)"
         )
         return None
     cond = df.disj(*(e.cond for e in listed))

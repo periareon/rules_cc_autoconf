@@ -416,15 +416,18 @@ def test_makefile_in_targets(tmp_path: Path) -> None:
     root = tmp_path
     (root / "Makefile.in").write_text(
         "CSRC = fptype.c tcpdump.c\nLIBSRC = print.c @LOCALSRC@\nOBJ = $(CSRC:.c=.o)\n"
-        "LIBOBJ = $(LIBSRC:.c=.o) @LIBOBJS@\nPROG = tcpdump\nLIB = libnetdissect.a\n"
-        "$(PROG): $(OBJ) @V_PCAPDEP@ $(LIB)\n\t@rm -f $@\n\t$(CC) $(CFLAGS) -o $@ $(OBJ) $(LIB) $(LIBS)\n"
+        "LIBOBJ = $(LIBSRC:.c=.o) @LIBOBJS@\nPROG = tcpdump\nLIB = libnetdissect.a\nTERMCAP_LIB = @TERMCAP_LIB@\n"
+        "all: $(PROG)\n"
+        "$(PROG): $(OBJ) @V_PCAPDEP@ $(LIB)\n\t@rm -f $@\n"
+        "\t$(CC) $(CFLAGS) -o $@ $(OBJ) $(LIB) $(LIBS) $(TERMCAP_LIB) $(LIBUTIL)\n"
+        "extra: extra.o $(LIB)\n\t$(CC) $(CFLAGS) -o $@ extra.o $(LIB)\n"
         "$(LIB): $(LIBOBJ)\n\t$(AR) cr $@ $(LIBOBJ)\n\t$(RANLIB) $@\n"
         "strlcpy.o: $(srcdir)/missing/strlcpy.c\n\t$(CC) $(CFLAGS) -o $@ -c $(srcdir)/missing/strlcpy.c\n"
         "install: $(PROG)\n\t$(INSTALL_PROGRAM) $(PROG) $(DESTDIR)$(sbindir)/$(PROG)\n"
         "clean:\n\trm -f *.o\n"
     )
     (root / "missing").mkdir()
-    for name in ("fptype.c", "tcpdump.c", "print.c", "missing/strlcpy.c"):
+    for name in ("fptype.c", "tcpdump.c", "print.c", "missing/strlcpy.c", "extra.c"):
         (root / name).write_text("")
     package = Package(path="", docstring="")
     state = ProjectState()
@@ -451,6 +454,24 @@ def test_makefile_in_targets(tmp_path: Path) -> None:
     assert any("@V_PCAPDEP@" in n for n in notes)
     conditional = next(r for r in package.after if isinstance(r, Rule) and r.kind == "autoconf_srcs")
     assert "missing/strlcpy.c" in str(conditional.attrs["srcs"])
+    # The link line's configure substitution is a link variable, through the shared linkopts
+    # target; `$(LIBUTIL)`, which the Makefile never defines, is empty under make and nothing here.
+    assert rules["linkopts"].attrs["vars"] == ["TERMCAP_LIB"]
+    assert ":linkopts" in strings(rules["tcpdump"].attrs["deps"])
+    # `extra` has a rule but `all` does not reach it (readline's rlptytest, in OTHEREXE alone):
+    # no target, and the note names the decision that builds it.
+    assert "extra" not in rules
+    assert any("extra is not among the programs configure builds" in n and "program:extra" in n for n in notes)
+    for text, built in (('"program:extra": NEVER', False), ('"program:extra": ["@platforms//os:linux"]', True)):
+        package = Package(path="", docstring="")
+        decided = Decisions.from_text("DECISIONS = {" + text + "}")
+        _programs_tree(package, root, decided, state, [])
+        rules = rules_by_name(package)
+        assert ("extra" in rules) is built
+        if built:
+            gate = as_raw(rules["extra"].attrs["target_compatible_with"]).text
+            assert '"@platforms//os:linux": []' in gate
+        assert decided.unused == []
 
 
 def test_plain_makefiles_including_a_configured_file(tmp_path: Path) -> None:

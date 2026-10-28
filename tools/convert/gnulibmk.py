@@ -160,7 +160,8 @@ class Program:
     """As written: libver.a, $(CLOCK_TIME_LIB)."""
     substituted: bool = False
     """An `EXTRA_PROGRAMS` candidate: built only when configure's value of a substituted
-    `*_PROGRAMS` variable (`bin_PROGRAMS = @bin_PROGRAMS@`) names it."""
+    `*_PROGRAMS` variable (`bin_PROGRAMS = @bin_PROGRAMS@`) names it.  Also a Makefile.in rule
+    `all` does not reach (readline's rlptytest): built only when a `program:` decision says."""
 
     default_sources: bool = False
     """No `_SOURCES` variable: the source is automake's default, the program's name with its
