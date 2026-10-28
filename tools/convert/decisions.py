@@ -85,7 +85,7 @@ FORMS = {
     'select({"<label>": ["<cache variable>", ...]})',
     "macro": 'decision.IGNORE | "<dep label>" | checks.X(...) | [checks ...]',
     "actions": "decision.IGNORE | checks.X(...) | [checks ...]",
-    "flag": "decision.IGNORE | True | False (the default of the bool_flag)",
+    "flag": 'decision.IGNORE | True | False (the default of the bool_flag) | "<value>" (the default of a value option\'s string_flag)',
     "am_conditional": 'decision.ALWAYS | decision.NEVER | ":<config_setting>" (sources go in that select arm)',
     "src_condition": 'decision.ALWAYS | decision.NEVER | "<condition expression>"',
     "define": 'decision.IGNORE (a define a dependency already provides) | <value> | select({"<label>": <value>}) (the '
@@ -592,6 +592,8 @@ def normalize(kind: str, key: str, value: DecisionValue) -> Decision:
     if kind == "flag":
         if isinstance(value, bool):
             return Decision(kind, key, default=value)
+        if isinstance(value, str):  # the default of a value option's string_flag
+            return Decision(kind, key, value=value)
         raise bad()
     if kind == "license":
         if isinstance(value, str) and _SPDX_RE.fullmatch(value):

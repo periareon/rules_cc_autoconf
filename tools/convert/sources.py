@@ -339,7 +339,16 @@ def _preprocessor_flags(
         (`cppflag:`); None when it is left out."""
         name, eq, value = item[2:].partition("=")
         value = _shell_unquote(_expand_make_text(value, mk, state))
-        if "$" in value or "@" in value or "$" in name:
+        # `-DPPPD_RUNTIME_DIR='"@PPPD_RUNTIME_DIR@"'` of a value option's variable: the make
+        # variable `$(PPPD_RUNTIME_DIR)` of the `autoconf_template_vars` target, which the owner
+        # lists in `toolchains`, so the define follows the flag as the substitution does.
+        templated = [var for var in state.template_vars if f"@{var}@" in value]
+        for var in templated:
+            value = value.replace(f"@{var}@", f"$({var})")
+        plain = value
+        for var in templated:
+            plain = plain.replace(f"$({var})", "")
+        if "$" in plain or "@" in plain or "$" in name:
             # `-DSHLIBEXT=$(SHLIBEXT)`: a value only configure computes.
             decision = decisions.resolve(
                 dec.Request(

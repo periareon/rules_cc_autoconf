@@ -8,8 +8,8 @@ from pathlib import Path
 import pytest
 
 from tools.convert import dataflow as df
-from tools.convert import emit, lower, markers
-from tools.convert.automake import _programs_tree, _split_deps
+from tools.convert import emit, gnulibmk, lower, markers
+from tools.convert.automake import _programs_tree, _split_deps, _template_var_toolchains
 from tools.convert.cli import _manual_programs_section
 from tools.convert.common import (
     NO_WARNINGS,
@@ -32,6 +32,7 @@ from tools.convert.gnulib_lib import (
 from tools.convert.gnulibmk import Library, Source
 from tools.convert.gnulibmk import parse as parse_mk
 from tools.convert.index import Port, PortIndex, parse_build
+from tools.convert.install_dirs import expand_install_dirs
 from tools.convert.ir import Assign, Call, CheckItem, Dep, Package, Raw, Rule, Target, strings
 from tools.convert.makefiles import _automake_tree, _configured_subdirs, _library_target, _parse_tree_makefile
 from tools.convert.modulebazel import _module_bazel
@@ -74,6 +75,7 @@ from tools.convert.translate import (
     m4_cache_name,
     produced_keys,
     provided_names,
+    value_option_parts,
 )
 
 T = "\t"
@@ -2516,6 +2518,55 @@ def test_sub_configure_shares_the_root_option() -> None:
     rules = {s.name: s for s in _option_rules(package, state) if isinstance(s, Rule)}
     assert "mpfr" not in rules and "mpfr_enabled" not in rules
     assert rules["pma"].kind == "bool_flag"
+
+
+def test_value_option_becomes_a_string_flag_and_a_template_variable() -> None:
+    """ppp: `AS_IF([test -n "$with_runtime_dir"], [PPPD_RUNTIME_DIR="$with_runtime_dir"],
+    [PPPD_RUNTIME_DIR="${runstatedir}/pppd"])`.  The variable takes the option's value: a
+    string_flag named after the option with configure's default at the install directories'
+    defaults, no bool flag, and the variable rendered by `autoconf_template_vars`.  A `-D` of the
+    variable reads the make variable, and the owner lists the target in `toolchains`."""
+    optval = df.Ref(f"{df.OPTVAL_PREFIX}runtime_dir")
+    given = df.Flag("runtime_dir")
+    decisions = [
+        df.Assignment(given, optval, 'PPPD_RUNTIME_DIR="$with_runtime_dir"'),
+        df.Assignment(df.neg(given), df.Lit("${runstatedir}/pppd"), 'PPPD_RUNTIME_DIR="${runstatedir}/pppd"'),
+    ]
+    parts = value_option_parts(decisions)
+    assert parts is not None and parts[0] == "runtime_dir" and [d.text for d in parts[1]] == [decisions[1].text]
+    # Not that shape: the given arm assigns something else, or a platform is mixed in.
+    assert value_option_parts([df.Assignment(given, df.Lit("yes"), ""), decisions[1]]) is None
+    assert value_option_parts([df.Assignment(df.conj(given, df.HostOs(("linux*",))), optval, ""), decisions[1]]) is None
+    assert expand_install_dirs("${runstatedir}/pppd") == "/usr/local/var/run/pppd"
+    assert expand_install_dirs("${libdir}/pppd/$VERSION", {"VERSION": "2.5.2"}) == "/usr/local/lib/pppd/2.5.2"
+    assert expand_install_dirs("$(datadir)/$(PACKAGE)/x", {"PACKAGE": "ppp"}) == "/usr/local/share/ppp/x"
+    assert expand_install_dirs("${unknown}/y") == "${unknown}/y"
+
+    state = ProjectState()
+    state.flags["runtime_dir"] = FlagInfo(
+        "AC_ARG_WITH", "runtime-dir", "", takes_value=True, value_default="/usr/local/var/run/pppd"
+    )
+    state.flags["pma"] = FlagInfo("AC_ARG_ENABLE", "pma", "", default=True)
+    state.option_settings[":pma_enabled"] = ("pma", "yes")
+    package = Package(path="", docstring="")
+    package.after.append(Raw('cc_library(name = "x", deps = select({":pma_enabled": []}))'))
+    rules = {s.name: s for s in _option_rules(package, state) if isinstance(s, Rule)}
+    assert rules["runtime_dir"].kind == "string_flag"
+    assert rules["runtime_dir"].attrs["build_setting_default"] == "/usr/local/var/run/pppd"
+    assert "values" not in rules["runtime_dir"].attrs
+    assert "runtime_dir_enabled" not in rules
+    assert rules["pma"].kind == "bool_flag"
+
+    # The Makefile's `-DPPPD_RUNTIME_DIR='"@PPPD_RUNTIME_DIR@"'`: the make variable, escaped as
+    # a C string, and no cppflag decision asked.
+    state.template_vars = {"PPPD_RUNTIME_DIR": "runtime_dir"}
+    mk = gnulibmk.parse("pppd_CPPFLAGS = -DPPPD_RUNTIME_DIR='\"@PPPD_RUNTIME_DIR@\"' -DPPPD_VERSION='\"@VERSION@\"'\n")
+    asked = Decisions()
+    defines, *_ = _preprocessor_flags(mk, "pppd", "pppd", [], state, asked)
+    assert 'PPPD_RUNTIME_DIR="\\"$(PPPD_RUNTIME_DIR)\\""' in defines
+    assert list(asked.pending) == ["cppflag:pppd:PPPD_VERSION"]
+    assert _template_var_toolchains(defines, {}, state) == {"toolchains": [":template_vars"]}
+    assert _template_var_toolchains(["HAVE_CONFIG_H"], {}, state) == {}
 
 
 def test_option_the_hand_written_build_file_keys_on_is_declared() -> None:
