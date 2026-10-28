@@ -927,7 +927,6 @@ targets = [
     "argz",
 ]
 defines = [
-    "GL_GENERATE_ARGZ_H",
     "HAVE_ARGZ_H",
     "HAVE_ERROR_T",
     "HAVE_WORKING_ARGZ",
@@ -937,6 +936,9 @@ defines = [
 deps = [
     "autoconf/macros/AC_CANONICAL_HOST",
     "autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+]
+variables = [
+    "GL_GENERATE_ARGZ_H",
 ]
 cache = [
     "ac_cv_func_argz_replace",
