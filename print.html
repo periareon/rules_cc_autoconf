@@ -228,6 +228,7 @@ by Bazel’s C/C++ toolchain configuration.</p>
 <li><a href="./autoconf_hdr.html#autoconf_hdr">autoconf_hdr</a></li>
 <li><a href="./autoconf_srcs.html#autoconf_srcs">autoconf_srcs</a></li>
 <li><a href="./autoconf_linkopts.html#autoconf_linkopts">autoconf_linkopts</a></li>
+<li><a href="./autoconf_template_vars.html#autoconf_template_vars">autoconf_template_vars</a></li>
 <li><a href="./autoconf_toolchain.html#autoconf_toolchain">autoconf_toolchain</a></li>
 <li><a href="./autoconf_package_info.html#autoconf_package_info">autoconf_package_info</a></li>
 <li><a href="./checks.html#checks">checks</a></li>
@@ -535,7 +536,8 @@ be provided by a different module or not needed on this platform).</p>
 <tr><td style="text-align: left"><a id="autoconf_linkopts-defaults"></a>defaults</td><td style="text-align: left">Deprecated and ignored: defaults come through <code>deps</code> and <code>default_deps</code>; the autoconf toolchain no longer carries any.  Accepted so existing BUILD files keep loading.</td><td style="text-align: left">Boolean</td><td style="text-align: left">optional</td><td style="text-align: left"><code>False</code></td></tr>
 <tr><td style="text-align: left"><a id="autoconf_linkopts-vars"></a>vars</td><td style="text-align: left">List of AC_SUBST variable names to resolve (e.g., ["LIBPTHREAD", "FDATASYNC_LIB"]). Each variable is looked up in the subst results from deps. Non-empty values (like "-lpthread") are added to linkopts; empty values are skipped.</td><td style="text-align: left">List of strings</td><td style="text-align: left">required</td><td style="text-align: left"></td></tr>
 </tbody></table>
-</div><div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="autoconf_template_vars"><a class="header" href="#autoconf_template_vars">autoconf_template_vars</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><!-- Generated with Stardoc: http://skydoc.bazel.build -->
 <p>autoconf_toolchain</p>
 <p>Provides default autoconf checks that can be overridden by targets.</p>
 <h2 id="rules-5"><a class="header" href="#rules-5">Rules</a></h2>
