@@ -411,39 +411,10 @@ def _emit_gnulib_library(
         platform_conditions,
         platform_exceptions,
     )
-    if conditional_srcs:
-        package.after.append(
-            Assign(
-                "SRC_CONDITIONS",
-                dict(sorted((name, cond) for name, cond in src_conditions.items() if cond != NEVER_CONDITION)),
-                comments=[
-                    "Conditions attached to each conditionally-compiled gnulib source: gl_INIT's",
-                    "gl_CONDITIONAL tests and the `if`s around AC_LIBOBJ, over the rules' results.",
-                ],
-            )
-        )
-        package.after.append(
-            Rule(
-                "autoconf_srcs",
-                f"{prefix}{lib_name}_gnulib_conditional_srcs",
-                {
-                    "srcs": Raw(
-                        "{\n        src: SRC_CONDITIONS[name]\n        for src, name in "
-                        + _dict_literal(dict(sorted(conditional_srcs.items())), "        ")
-                        + ".items()\n    }"
-                    ),
-                    # `include`: each generated file includes its source by path, so
-                    # the source's own `#include "sibling.h"` (lib/unictype/*.c and
-                    # bitmap.h) resolves where the source lives; the library lists the
-                    # target in `deps` too, which is how the sources reach the compiler.
-                    "wrap": "include",
-                    # The <header>_h defaults (REPLACE_X=0, HAVE_X=1) come with the main
-                    # target's GNULIB_M4_DEFAULT_DEPS.
-                    "deps": [":autoconf"],
-                },
-                load_from="//autoconf:autoconf_srcs.bzl",
-            )
-        )
+    # The EXTRA sources no rule places (`extra_unknown`) are decided before SRC_CONDITIONS and
+    # the conditional-sources rule are rendered below: a `src_condition:` decided as an
+    # expression joins both (coreutils' asprintf.c under REPLACE_VASPRINTF); appended after
+    # the literals were written, it was silently dropped while the decision counted as used.
     if extra_unknown:
         # Sources other compiles include textually are not compiled on their own.
         included = set(
@@ -481,6 +452,39 @@ def _emit_gnulib_library(
                 src_conditions[cond_name] = decision.condition
                 state.src_condition_exprs[cond_name] = decision.condition
                 conditional_srcs[path] = cond_name
+    if conditional_srcs:
+        package.after.append(
+            Assign(
+                "SRC_CONDITIONS",
+                dict(sorted((name, cond) for name, cond in src_conditions.items() if cond != NEVER_CONDITION)),
+                comments=[
+                    "Conditions attached to each conditionally-compiled gnulib source: gl_INIT's",
+                    "gl_CONDITIONAL tests and the `if`s around AC_LIBOBJ, over the rules' results.",
+                ],
+            )
+        )
+        package.after.append(
+            Rule(
+                "autoconf_srcs",
+                f"{prefix}{lib_name}_gnulib_conditional_srcs",
+                {
+                    "srcs": Raw(
+                        "{\n        src: SRC_CONDITIONS[name]\n        for src, name in "
+                        + _dict_literal(dict(sorted(conditional_srcs.items())), "        ")
+                        + ".items()\n    }"
+                    ),
+                    # `include`: each generated file includes its source by path, so
+                    # the source's own `#include "sibling.h"` (lib/unictype/*.c and
+                    # bitmap.h) resolves where the source lives; the library lists the
+                    # target in `deps` too, which is how the sources reach the compiler.
+                    "wrap": "include",
+                    # The <header>_h defaults (REPLACE_X=0, HAVE_X=1) come with the main
+                    # target's GNULIB_M4_DEFAULT_DEPS.
+                    "deps": [":autoconf"],
+                },
+                load_from="//autoconf:autoconf_srcs.bzl",
+            )
+        )
     configmake = [s for s in _built_sources(mk, []) if s.path.endswith("configmake.h")]
     # `nodist_libgreputils_a_SOURCES = colorize.c` with a recipe: a source the
     # tree does not ship, written by its rule (or a `generated:` decision).
