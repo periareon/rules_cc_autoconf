@@ -36,6 +36,7 @@ py_binary(
         "gnulib_lib.py",
         "gnulibmk.py",
         "index.py",
+        "install_dirs.py",
         "ir.py",
         "libraries.py",
         "licenses.py",

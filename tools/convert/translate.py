@@ -31,6 +31,7 @@ from tools.convert import decisions as dec
 from tools.convert import libraries, lower, m4args
 from tools.convert import shparse as sh
 from tools.convert.index import PortIndex, Resolution
+from tools.convert.install_dirs import expand_install_dirs
 from tools.convert.ir import (
     PLATFORM_FAMILIES,
     AttrValue,
@@ -234,6 +235,15 @@ class FlagInfo:
     flipped default changes what a build does by default, not which code the option gates (gawk's
     `flag:mpfr: False` once made the MPFR deps and checks unconditional)."""
 
+    takes_value: bool = False
+    """`--with-x=VALUE`: configure copies the option's value into a variable
+    (`PPPD_RUNTIME_DIR="$with_runtime_dir"`) and tests it for emptiness alone.  A `string_flag`
+    rather than a bool, feeding the module's `autoconf_template_vars` (`value_option_parts`)."""
+    value_default: str = ""
+    """The string_flag's default: what configure assigns when the option is not given, at the
+    install directories' defaults (`${runstatedir}/pppd` is `/usr/local/var/run/pppd`), or a
+    `flag:` decision's string."""
+
     @property
     def generated_default(self) -> bool:
         """The bool_flag's `build_setting_default`: the decision's, else configure's."""
@@ -388,6 +398,10 @@ class ProjectState:
     option_names: list[str] = field(default_factory=list)
     """The options the package renders flags for (`project._option_rules`), what a sub-configure
     may share."""
+    template_vars: dict[str, str] = field(default_factory=dict)
+    """Substituted variable -> the value option it takes (`PPPD_RUNTIME_DIR` -> `runtime_dir`):
+    the `autoconf_template_vars` target renders them, a dep of the main target, and a `-D` of
+    the variable in a Makefile's CPPFLAGS reads it as the make variable `$(PPPD_RUNTIME_DIR)`."""
     shared_options: set[str] = field(default_factory=set)
     """The root package's options this sub-configure's script declares too (gawk's extension/
     runs the same MPFR macro): its selects key on the root's `//:<name>_enabled`, and it declares
@@ -1425,7 +1439,10 @@ class Translator:
             )
         decision = self.decisions.optional(f"flag:{flag_name}", "flag")
         if decision is not None:
-            info.build_default = bool(decision.default)
+            if isinstance(decision.value, str):
+                info.value_default = decision.value  # a value option's default, if it turns out to be one
+            else:
+                info.build_default = bool(decision.default)
             if decision.ignore:
                 del state.flags[flag_name]
                 return ""
@@ -3034,6 +3051,8 @@ class Translator:
             value = args[1]
             if "$" in value or "`" in value:
                 resolved = self._shell_value(value, ctx)
+                if resolved is None and self._subst_from_value_option(var, value, ctx):
+                    return []
                 if resolved is None:
                     decision = self._request(
                         f"variable:{var}",
@@ -4234,6 +4253,54 @@ class Translator:
                 self._apply_guard_decision([stripped], decision, ctx, items)
         return dropped_any
 
+    def _subst_from_value_option(self, var: str, value: str, ctx: _Ctx) -> bool:
+        """`AC_SUBST([PPPD_PLUGIN_DIR], ["$PPPD_PLUGIN_DIR"])`, the two-argument form naming a
+        variable that takes a configure option's value: the same template variable as the
+        one-argument form gets from the variables pass, and no decision."""
+        match = _VAR_REF_RE.fullmatch(value.strip())
+        if not match:
+            return False
+        decisions = ctx.analysis.decisions(match.group(1))
+        return bool(decisions) and self._value_option(var, _last_wins(decisions, lambda d: d.cond))
+
+    def _value_option(self, var: str, decisions: list[df.Assignment]) -> bool:
+        """A substituted variable that takes a configure option's value: ppp's
+        `AS_IF([test -n "$with_runtime_dir"], [PPPD_RUNTIME_DIR="$with_runtime_dir"],
+        [PPPD_RUNTIME_DIR="${runstatedir}/pppd"])`.  No check expresses "the value the user
+        gave", and a `variable:` decision could only pin a constant, which is how a published ppp
+        hard-coded `/run/pppd`.  The option becomes a `string_flag` with configure's default,
+        and the variable an `autoconf_template_vars` entry reading it; the Makefile's
+        `-DPPPD_RUNTIME_DIR` follows through the make variable.  True when handled so."""
+        parts = value_option_parts(decisions)
+        if parts is None:
+            return False
+        flag, absent = parts
+        info = self._state.flags.get(flag)
+        if info is None:
+            return False
+        if not info.value_default:
+            literal = absent[-1].value if absent else None
+            text = literal.text if isinstance(literal, (df.Lit, df.UnknownValue)) else ""
+            init = [*(self._state.init_args or []), "", "", "", ""]
+            tarname = self.tarname or ""
+            substs = {
+                **self._state.literal_substs,
+                "PACKAGE_NAME": init[0],
+                "VERSION": init[1],
+                "PACKAGE_VERSION": init[1],
+                "PACKAGE": tarname,
+                "PACKAGE_TARNAME": tarname,
+            }
+            info.value_default = expand_install_dirs(sh.unquote_word(text), substs)
+        info.takes_value = True
+        self._state.template_vars[var] = flag
+        option = f"--{'with' if info.macro == 'AC_ARG_WITH' else 'enable'}-{info.option}"
+        self.report.note(
+            f"{var}: takes {option}=VALUE: the string_flag `{flag}` (default `{info.value_default}`), through "
+            f"the module's `autoconf_template_vars`; a Makefile's -D{var} reads it as $({var})"
+        )
+        return True
+
     def _variable_request(
         self,
         var: str,
@@ -4288,6 +4355,9 @@ class Translator:
         has_flag = bool(df.flag_atoms(whole))
         labels = [lower.DEFAULT_ARM]
         split_fn: Callable[[df.Cond, str], df.Cond] | None = None
+
+        if has_flag and kind == "checks.AC_SUBST" and self._value_option(var, decisions):
+            return
         if has_flag:
             arms = (
                 lower.flag_arms(whole, self.project, [d.cond for d in decisions]) if self.project is not None else None
@@ -4442,6 +4512,41 @@ def describe(cond: df.Cond) -> str:
     if lowered.ok:
         return lowered.expr or "always"
     return lowered.unknown or "?"
+
+
+def value_option_parts(decisions: list[df.Assignment]) -> tuple[str, list[df.Assignment]] | None:
+    """The option a variable's assignments take their value from, and the assignments of the
+    option-not-given invocation (the default), when the assignments have that shape: every one
+    that runs with the option given assigns the option's own value, the rest run without it and
+    assign a literal, and no other condition is mixed in.  None otherwise."""
+    conds = [d.cond for d in decisions]
+    whole = df.Or(tuple(conds)) if len(conds) > 1 else (conds[0] if conds else df.FALSE)
+    names = df.option_names(whole)
+    if len(names) != 1:
+        return None
+    (flag,) = names
+    given = [d for d in decisions if df.substitute_option(d.cond, flag, "VALUE") is df.TRUE]
+    absent = [d for d in decisions if df.substitute_option(d.cond, flag, None) is df.TRUE]
+    if not given or len(given) + len(absent) != len(decisions):
+        return None
+    if not all(_is_option_value_text(d.value, flag) for d in given):
+        return None
+    if not all(isinstance(d.value, (df.Lit, df.UnknownValue)) for d in absent):
+        return None
+    return flag, absent
+
+
+def _is_option_value_text(value: df.Value, flag: str) -> bool:
+    """Whether an assigned value is the option's own: the evaluator's option-value reference, or
+    the shell spelling the body uses (`"$with_runtime_dir"`, `${enable_x}`, `$withval`), opaque
+    to the evaluator because the option variable is set on one path and emptied on the other."""
+    if isinstance(value, df.Ref):
+        return value.name == f"{df.OPTVAL_PREFIX}{flag}"
+    if not isinstance(value, (df.Lit, df.UnknownValue)):
+        return False
+    text = sh.unquote_word(value.text).strip()
+    names = {f"with_{flag}", f"enable_{flag}", "withval", "enableval", f"{df.OPTVAL_PREFIX}{flag}"}
+    return text in {f"${n}" for n in names} | {f"${{{n}}}" for n in names}
 
 
 def check_key(call: Call) -> str:

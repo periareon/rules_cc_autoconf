@@ -125,6 +125,9 @@ TOP_HEADERS = "headers"  # the top-level headers alone, when sub-configures gene
 GNULIB_GENERATED_DIR = "_gnulib_gen"
 
 
+TEMPLATE_VARS = "template_vars"  # the `autoconf_template_vars` target of a module's value options
+
+
 def _compatible_with(platforms: list[str], *, only: bool) -> Raw:
     """`target_compatible_with` as a select(): compatible on `platforms` only (`only=True`), or
     everywhere but on them."""

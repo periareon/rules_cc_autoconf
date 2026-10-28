@@ -15,6 +15,7 @@ from tools.convert.common import (
     _LIBRARY_RE,
     _SOURCE_SUFFIXES,
     CONFIG_HEADERS,
+    TEMPLATE_VARS,
     _compatible_with,
     _config_deps,
     _dict_literal,
@@ -89,6 +90,18 @@ def _registry_covered(name: str, state: ProjectState) -> bool:
     (or empty), with at least one such word."""
     words = [word for value in state.subst_values.get(name, []) for word in value.split()]
     return bool(words) and all(word.startswith("-l") and word[2:] in state.configure_libs for word in words)
+
+
+def _template_var_toolchains(
+    defines: list[str], define_arms: dict[str, list[str]], state: ProjectState
+) -> dict[str, AttrValue]:
+    """`toolchains` naming the module's `autoconf_template_vars` target when a define reads one of
+    its make variables (`PPPD_RUNTIME_DIR=\\"$(PPPD_RUNTIME_DIR)\\"`); nothing otherwise.  The
+    target is the root package's, where the value options live."""
+    if not any("$(" in d for d in [*defines, *(d for arm in define_arms.values() for d in arm)]):
+        return {}
+    label = f":{TEMPLATE_VARS}" if state.package_path in ("", ".") else f"//:{TEMPLATE_VARS}"
+    return {"toolchains": [label]}
 
 
 def _ensure_linkopts(package: Package, link_vars: list[str]) -> None:
@@ -590,6 +603,7 @@ def _programs_tree(
                 "copts": _copts_value(flag_copts, copt_arms),
                 "local_defines": _defines_value(["HAVE_CONFIG_H"] + defines, define_arms),
                 **_public(library.installed),
+                **_template_var_toolchains(defines, define_arms, state),
             }
         )
         if public_deps or public_arms:
@@ -1310,6 +1324,7 @@ def _programs(
             "deps": deps_value,
         }
         attrs.update(_public(program.installed))
+        attrs.update(_template_var_toolchains(defines, define_arms, state))
         if flag_includes or gen_includes or include_arms:
             attrs["includes"] = includes_value(sorted(set(flag_includes) | set(gen_includes)), include_arms)
         _record_makefile_standards(standards, state)

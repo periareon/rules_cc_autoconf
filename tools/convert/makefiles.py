@@ -11,6 +11,7 @@ from tools.convert import dataflow as df
 from tools.convert import decisions as dec
 from tools.convert import gnulibmk
 from tools.convert.common import _LIBRARY_RE, _SOURCE_SUFFIXES, makefile_relative
+from tools.convert.install_dirs import INSTALL_DIRS
 from tools.convert.ir import Call, Package, Rule, Target
 from tools.convert.translate import ProjectState
 
@@ -573,37 +574,6 @@ def _option_switch(state: ProjectState, name: str) -> str:
     return f"--{'with' if flag.macro == 'AC_ARG_WITH' else 'enable'}-{flag.option}"
 
 
-# Automake's installation directories at configure's defaults (`--prefix=/usr/local`).
-INSTALL_DIRS = {
-    "prefix": "/usr/local",
-    "exec_prefix": "$(prefix)",
-    "bindir": "$(exec_prefix)/bin",
-    "sbindir": "$(exec_prefix)/sbin",
-    "libexecdir": "$(exec_prefix)/libexec",
-    "libdir": "$(exec_prefix)/lib",
-    "datarootdir": "$(prefix)/share",
-    "datadir": "$(datarootdir)",
-    "sysconfdir": "$(prefix)/etc",
-    "sharedstatedir": "$(prefix)/com",
-    "localstatedir": "$(prefix)/var",
-    "runstatedir": "$(localstatedir)/run",
-    "includedir": "$(prefix)/include",
-    "oldincludedir": "/usr/include",
-    "localedir": "$(datarootdir)/locale",
-    "infodir": "$(datarootdir)/info",
-    "mandir": "$(datarootdir)/man",
-    "docdir": "$(datarootdir)/doc/$(PACKAGE)",
-    "pkgdatadir": "$(datadir)/$(PACKAGE)",
-    "pkglibdir": "$(libdir)/$(PACKAGE)",
-    "pkglibexecdir": "$(libexecdir)/$(PACKAGE)",
-    "pkgincludedir": "$(includedir)/$(PACKAGE)",
-    "htmldir": "$(docdir)",
-    "dvidir": "$(docdir)",
-    "pdfdir": "$(docdir)",
-    "psdir": "$(docdir)",
-    "lispdir": "$(datarootdir)/emacs/site-lisp",
-    "PATH_SEPARATOR": ":",
-}
 _MAKE_VAR_RE = re.compile(r"\$[({]([A-Za-z_][A-Za-z0-9_]*)[)}]")
 _MAKE_VAR_WORD_RE = re.compile(r"\$\(([A-Za-z_][A-Za-z0-9_]*)\)")
 

@@ -28,6 +28,7 @@ from tools.convert.common import (
     NO_WARNINGS,
     STANDARD_CONSTANTS,
     STANDARD_FEATURES_TODO,
+    TEMPLATE_VARS,
     TOP_HEADERS,
     _compatible_with,
     _dict_literal,
@@ -56,7 +57,7 @@ from tools.convert.gnulib_lib import (
     _template_variables,
 )
 from tools.convert.index import PortIndex
-from tools.convert.ir import Assign, AttrValue, Call, Each, Package, Raw, Rule, Statement, Target, strings
+from tools.convert.ir import Assign, AttrValue, Call, Dep, Each, Package, Raw, Rule, Statement, Target, strings
 from tools.convert.makefiles import (
     _configured_subdirs,
     _literal_substs,
@@ -502,6 +503,20 @@ def convert_project(
     package.targets = [t for t in package.targets if not t.is_empty]
     notes = list(translator.report.notes) + notes_libraries
 
+    if state.template_vars:
+        # The value options' variables, rendered from their string_flags: a dep of the main
+        # target, so `@VAR@` substitutes in the generated files, and the make variables the
+        # Makefiles' `-DVAR` defines read (`toolchains`).
+        package.after.append(
+            Rule(
+                "autoconf_template_vars",
+                TEMPLATE_VARS,
+                {"vars": {var: f":{flag}" for var, flag in sorted(state.template_vars.items())}},
+                comments=["The substituted variables the configure options with a value set (--with-x=VALUE)."],
+                load_from="//autoconf:autoconf_template_vars.bzl",
+            )
+        )
+        main.deps.append(Dep(f":{TEMPLATE_VARS}"))
     notes += _drop_duplicate_defines(main, package.targets, index, list(state.gnulib_packages.values()))
     for target in [*package.targets, main]:
         notes += _rename_repeated_probes(target)
@@ -1453,6 +1468,11 @@ def _option_rules(package: Package, state: ProjectState) -> list[Statement]:
     for name in state.flags:
         if f'":{name}_enabled"' in body or f'":{name}_enabled"' in state.hand_build:
             by_option.setdefault(name, set()).add("yes")
+    # A value option (`--with-runtime-dir=DIR`) is a flag whether or not a select() keys on it:
+    # its value feeds the template variables.
+    for name, info in state.flags.items():
+        if info.takes_value:
+            by_option.setdefault(name, set())
     # An option a sub-configure shares with the root is the root's flag (`shared_options`): the
     # sub-package keys on `//:<name>_enabled` and declares nothing of its own.
     for name in state.shared_options:
@@ -1468,7 +1488,12 @@ def _option_rules(package: Package, state: ProjectState) -> list[Statement]:
     table_comments: list[str] = []
     for name in sorted(by_option):
         flag = state.flags[name]
-        if by_option[name] <= {"yes"} and name not in taken and not {name, f"{name}_enabled"} & set(state.hand_targets):
+        if (
+            by_option[name] <= {"yes"}
+            and not flag.takes_value
+            and name not in taken
+            and not {name, f"{name}_enabled"} & set(state.hand_targets)
+        ):
             table[name] = flag.generated_default
             table_comments.append(f"{name}: configure.ac: {flag.macro}([{flag.option}]): {flag.help}".rstrip(": "))
     if len(table) < 2:
@@ -1510,6 +1535,25 @@ def _option_rules(package: Package, state: ProjectState) -> list[Statement]:
         flag_name = (
             f"{name}_option" if name in taken or (hand_kind is not None and hand_kind not in FLAG_KINDS) else name
         )
+        if flag.takes_value:
+            # `--with-x=VALUE`, the value copied into a substituted variable: a string_flag with
+            # configure's default (`autoconf_template_vars` reads it); its config_settings, when
+            # the script also compares the value, follow.
+            rules.append(
+                Rule(
+                    "string_flag",
+                    flag_name,
+                    {"build_setting_default": flag.value_default, "visibility": ["//visibility:public"]},
+                    comments=[
+                        comment + f" (--{'enable' if flag.macro == 'AC_ARG_ENABLE' else 'with'}-{flag.option}=VALUE)"
+                    ],
+                    load_from="@bazel_skylib//rules:common_settings.bzl",
+                )
+            )
+            for value in sorted(values):
+                setting = f"{name}_enabled" if value == "yes" else f"{name}_{slug(value)}"
+                rules.append(Rule("config_setting", setting, {"flag_values": {f":{flag_name}": value}}))
+            continue
         if values <= {"yes"}:
             rules.append(
                 Rule(
