@@ -25,6 +25,7 @@ import subprocess
 import sys
 import tempfile
 from collections.abc import Callable
+from collections.abc import Set as AbstractSet
 from pathlib import Path
 from typing import TypedDict
 
@@ -1054,6 +1055,7 @@ def _convert_project(
             buildifier,
             hand,
             gates=result.subdir_gates,
+            shared_options=set(result.option_names),
         )
         # The packages that got an autoconf.bzl: each gets its hand-written BUILD.bazel once placed.
         generated = sorted(
@@ -1199,6 +1201,7 @@ def _convert_subprojects(
     prefix: str = "",
     gates: dict[str, project_mod.SubdirGate] | None = None,
     inherited_gate: project_mod.SubdirGate | None = None,
+    shared_options: AbstractSet[str] = frozenset(),
 ) -> list[Path]:
     """`AC_CONFIG_SUBDIRS`: each sub-configure becomes a package of the same
     module, at its directory (texlive's `libs/*`, `texk/*`), converted from its
@@ -1238,6 +1241,7 @@ def _convert_subprojects(
                 hand_build=hand_package.text,
                 root_package=_root_package(args, out),
                 gate=gate,
+                shared_options=shared_options,
             )
             result.package.path = package_path
             directory = out / package_path
@@ -1265,6 +1269,7 @@ def _convert_subprojects(
                 depth + 1,
                 f"{package_path}/",
                 gates=result.subdir_gates,
+                shared_options=shared_options,
                 inherited_gate=gate,
             )
         finally:

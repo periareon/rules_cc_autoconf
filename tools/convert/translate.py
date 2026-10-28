@@ -226,7 +226,18 @@ class FlagInfo:
     help: str
     """The option's help text (AS_HELP_STRING's description)."""
     default: bool = False
-    """Whether the bool_flag is on by default (what configure does when the option is not given)."""
+    """Whether the option is on when configure runs without it: what its not-given action does.
+    The arms of a select() over the option are read from this (`lower.flag_arms`)."""
+    build_default: bool | None = None
+    """A `flag:` decision's default for the generated bool_flag, when it differs from configure's.
+    Only the flag's `build_setting_default` reads it: the arms keep configure's own default, so a
+    flipped default changes what a build does by default, not which code the option gates (gawk's
+    `flag:mpfr: False` once made the MPFR deps and checks unconditional)."""
+
+    @property
+    def generated_default(self) -> bool:
+        """The bool_flag's `build_setting_default`: the decision's, else configure's."""
+        return self.default if self.build_default is None else self.build_default
 
 
 @dataclass
@@ -374,6 +385,13 @@ class ProjectState:
     # Configure options as `select()` keys: the config_setting labels the
     # output uses (only those get a flag rendered) and the values the
     # project compares each option with (`--with-ssl=openssl`).
+    option_names: list[str] = field(default_factory=list)
+    """The options the package renders flags for (`project._option_rules`), what a sub-configure
+    may share."""
+    shared_options: set[str] = field(default_factory=set)
+    """The root package's options this sub-configure's script declares too (gawk's extension/
+    runs the same MPFR macro): its selects key on the root's `//:<name>_enabled`, and it declares
+    no flag of its own, so one `--//:<name>` switches the whole module."""
     option_settings: dict[str, tuple[str, str]] = field(default_factory=dict)
     """Label -> (option, value)."""
     flag_values: dict[str, set[str]] = field(default_factory=dict)
@@ -443,7 +461,8 @@ class ProjectState:
         return re.sub(r"[^a-z0-9_.-]", "_", (self.tarname or "").lower())
 
     def label(self, name: str, value: str) -> str:
-        label = f":{name}_enabled" if value == "yes" else f":{name}_{slug(value)}"
+        package = "//" if name in self.shared_options else ""
+        label = f"{package}:{name}_enabled" if value == "yes" else f"{package}:{name}_{slug(value)}"
         self.option_settings[label] = (name, value)
         return label
 
@@ -1406,7 +1425,7 @@ class Translator:
             )
         decision = self.decisions.optional(f"flag:{flag_name}", "flag")
         if decision is not None:
-            info.default = bool(decision.default)
+            info.build_default = bool(decision.default)
             if decision.ignore:
                 del state.flags[flag_name]
                 return ""

@@ -247,7 +247,10 @@ of the output may want.
   host-OS condition or a decided automake conditional becomes the package's
   `target_compatible_with`; a probe-dependent one (gawk's extension/ needs
   dlfcn.h) is a `subdir:` decision, and its targets are tagged `manual`
-  until it is made.
+  until it is made. An option the sub-configure's script declares under the
+  same name as the root's (gawk's extension/ runs the root's MPFR macro) is
+  the root's flag: the package keys on `//:<name>_enabled` and declares no
+  flag of its own, so one `--//:<name>` switches the whole module.
 - **Licensing.** The license files the release ships are exported, with
   the registry's package metadata over them: the SPDX identifier is read
   from the text and the source headers, and asked for as a `license:`

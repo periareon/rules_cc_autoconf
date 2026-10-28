@@ -2448,6 +2448,40 @@ def test_option_flag_steps_aside_for_a_hand_target() -> None:
     assert rules["libfl_enabled"].attrs["flag_values"] == {":libfl": "True"}
 
 
+def test_flag_decision_flips_the_generated_default_only() -> None:
+    """gawk's `flag:mpfr: False` on an option configure turns on by default: the bool_flag's
+    default flips, while the arms keep reading configure's own default, so the option still
+    gates the MPFR deps and checks (with the decision taken as configure's default, every
+    invocation agreed and the selects collapsed to unconditional deps)."""
+    state = ProjectState()
+    state.flags["mpfr"] = FlagInfo("AC_ARG_ENABLE", "mpfr", "", default=True, build_default=False)
+    assert state.default("mpfr") is True  # what lower.flag_arms splits on
+    state.option_settings[":mpfr_enabled"] = ("mpfr", "yes")
+    package = Package(path="", docstring="")
+    package.after.append(Raw('cc_library(name = "x", deps = select({":mpfr_enabled": ["@mpfr"]}))'))
+    rules = {s.name: s for s in _option_rules(package, state) if isinstance(s, Rule)}
+    assert rules["mpfr"].attrs["build_setting_default"] is False
+    assert rules["mpfr_enabled"].attrs["flag_values"] == {":mpfr": "True"}
+
+
+def test_sub_configure_shares_the_root_option() -> None:
+    """gawk's extension/configure.ac runs the same MPFR macro as the root: the sub-package keys on
+    the root's `//:mpfr_enabled` and declares no flag of its own, so one `--//:mpfr` switches the
+    whole module; its other options stay its own."""
+    state = ProjectState(package_path="extension", shared_options={"mpfr"})
+    state.flags["mpfr"] = FlagInfo("AC_ARG_WITH", "mpfr", "", default=True)
+    state.flags["pma"] = FlagInfo("AC_ARG_ENABLE", "pma", "", default=True)
+    assert state.label("mpfr", "yes") == "//:mpfr_enabled"
+    assert state.label("pma", "yes") == ":pma_enabled"
+    package = Package(path="extension", docstring="")
+    package.after.append(
+        Raw('cc_library(name = "x", deps = select({"//:mpfr_enabled": ["@mpfr"], ":pma_enabled": []}))')
+    )
+    rules = {s.name: s for s in _option_rules(package, state) if isinstance(s, Rule)}
+    assert "mpfr" not in rules and "mpfr_enabled" not in rules
+    assert rules["pma"].kind == "bool_flag"
+
+
 def test_option_the_hand_written_build_file_keys_on_is_declared() -> None:
     """libssh2: BUILD.bazel selects `src/ssh2`'s deps on `:libz_enabled`, while configure.ac's
     only test of --with-libz every invocation answers alike, so no translated condition opens an
