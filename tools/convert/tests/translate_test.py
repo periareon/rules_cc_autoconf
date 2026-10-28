@@ -23,6 +23,7 @@ from tools.convert.emit import render_statement
 from tools.convert.gnulib_lib import (
     _classify_sources,
     _condition_table,
+    _emit_gnulib_library,
     _gnulib_names,
     _literal_sed_substs,
     _template_indicators,
@@ -2508,6 +2509,49 @@ def test_src_condition_overrides_derived_gnulib_condition(tmp_path: Path) -> Non
     assert (platform_srcs, excluded, extra) == ({}, [], [])
     assert "a.c: left out (src_condition:GL_COND_OBJ_A is NEVER)" in notes
     assert decisions.unused == []
+
+
+def test_extra_libobj_source_decided_conditional_reaches_the_rendered_table(tmp_path: Path) -> None:
+    """coreutils' asprintf.c: an EXTRA source whose AC_LIBOBJ sits inside a ported macro and whose
+    HAVE_/REPLACE_ substs the port does not spell is a `src_condition:` decision.  Decided as an
+    expression it joins SRC_CONDITIONS and the conditional-sources rule; once those literals were
+    rendered before the decision was read, the source silently disappeared while the decision
+    counted as used (seq failed to link rpl_asprintf on macOS)."""
+    lib = tmp_path / "lib"
+    lib.mkdir()
+    for name in ("asprintf.c", "vasprintf.c", "dummy.c"):
+        (lib / name).write_text("")
+    (lib / "Makefile.am").write_text("include gnulib.mk\n")
+    (lib / "gnulib.mk").write_text(
+        "noinst_LIBRARIES += libgnu.a\nlibgnu_a_SOURCES =\nEXTRA_libgnu_a_SOURCES =\n\n"
+        "## begin gnulib module dummy\nlibgnu_a_SOURCES += dummy.c\n## end   gnulib module dummy\n\n"
+        "## begin gnulib module vasprintf\nEXTRA_DIST += asprintf.c vasprintf.c\n"
+        "EXTRA_libgnu_a_SOURCES += asprintf.c vasprintf.c\n## end   gnulib module vasprintf\n"
+    )
+
+    def emit(decisions: Decisions) -> tuple[Package, list[str]]:
+        package = Package(path="", docstring="")
+        state = ProjectState()
+        state.gnulib_packages = {p: "@rules_cc_autoconf//" + p for p in ("gnulib/m4/vasprintf", "gnulib/m4/dummy")}
+        notes: list[str] = []
+        _emit_gnulib_library(package, lib / "gnulib.mk", tmp_path, state, ["config"], notes, decisions)
+        return package, notes
+
+    asked = Decisions()
+    emit(asked)
+    assert {k for k in asked.pending} >= {"src_condition:GL_COND_OBJ_ASPRINTF", "src_condition:GL_COND_OBJ_VASPRINTF"}
+    decided = Decisions.from_text(
+        'DECISIONS = {"src_condition:GL_COND_OBJ_ASPRINTF": "REPLACE_VASPRINTF==1", '
+        '"src_condition:GL_COND_OBJ_VASPRINTF": NEVER}'
+    )
+    package, notes = emit(decided)
+    assert any("vasprintf.c" in n and "left out" in n for n in notes)
+    table = next(s for s in package.after if isinstance(s, Assign) and s.name == "SRC_CONDITIONS")
+    assert table.value == {"GL_COND_OBJ_ASPRINTF": "REPLACE_VASPRINTF==1"}
+    conditional = next(r for r in package.after if isinstance(r, Rule) and r.kind == "autoconf_srcs")
+    assert '"lib/asprintf.c": "GL_COND_OBJ_ASPRINTF"' in as_raw(conditional.attrs["srcs"]).text
+    assert "lib/vasprintf.c" not in as_raw(conditional.attrs["srcs"]).text
+    assert decided.unused == []
 
 
 def test_library_linked_under_option_brings_private_headers_into_the_arm(tmp_path: Path) -> None:
