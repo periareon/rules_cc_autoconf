@@ -134,6 +134,9 @@ class ProjectResult:
     """AC_INIT's tarname: `flex`, where the name is "the fast lexical analyser generator"."""
     extra_files: dict[str, str] = field(default_factory=dict)
     """Written next to BUILD.bazel (autoheader's config.h.in)."""
+    option_names: list[str] = field(default_factory=list)
+    """The options this package declares flags for; a sub-configure declaring one of them keys
+    on this package's setting instead of a flag of its own (`ProjectState.shared_options`)."""
     state: ProjectState | None = None
     """What the translation learned (templates, conditions): vendoring reads it."""
     source_tree_modules: list[str] = field(default_factory=list)
@@ -429,6 +432,7 @@ def convert_project(
     repo_file: bool = True,
     root_package: str = "",
     gate: SubdirGate | None = None,
+    shared_options: AbstractSet[str] = frozenset(),
 ) -> ProjectResult:
     """Translate a whole project into a root package.  `command` is the
     `bazel run` line that reproduces the conversion, for the banners; `source_root` the
@@ -476,6 +480,7 @@ def convert_project(
         hand_targets=dict(hand_targets or {}),
         hand_packages=set(hand_packages),
         hand_build=hand_build,
+        shared_options=set(shared_options),
     )
     options = Options(repo="@rules_cc_autoconf", in_repo=False, layout="package")
     translator = Translator(
@@ -803,6 +808,7 @@ def convert_project(
         external_modules=dict(state.external_modules),
         subdirs=subdirs,
         subdir_gates=subdir_gates,
+        option_names=state.option_names,
         manual_package=gate.manual_reason if gate is not None else None,
         tarname=state.tarname or "",
         module_attrs=dict(module_attrs or {}),
@@ -1447,6 +1453,11 @@ def _option_rules(package: Package, state: ProjectState) -> list[Statement]:
     for name in state.flags:
         if f'":{name}_enabled"' in body or f'":{name}_enabled"' in state.hand_build:
             by_option.setdefault(name, set()).add("yes")
+    # An option a sub-configure shares with the root is the root's flag (`shared_options`): the
+    # sub-package keys on `//:<name>_enabled` and declares nothing of its own.
+    for name in state.shared_options:
+        by_option.pop(name, None)
+    state.option_names = sorted(by_option)
     rules: list[Statement] = []
     taken = {s.name for s in [*package.targets, *package.after] if hasattr(s, "name")}
     # The yes/no options, as one table with a `bool_flag` and a `config_setting` comprehension
@@ -1458,7 +1469,7 @@ def _option_rules(package: Package, state: ProjectState) -> list[Statement]:
     for name in sorted(by_option):
         flag = state.flags[name]
         if by_option[name] <= {"yes"} and name not in taken and not {name, f"{name}_enabled"} & set(state.hand_targets):
-            table[name] = flag.default
+            table[name] = flag.generated_default
             table_comments.append(f"{name}: configure.ac: {flag.macro}([{flag.option}]): {flag.help}".rstrip(": "))
     if len(table) < 2:
         table = {}
@@ -1504,7 +1515,7 @@ def _option_rules(package: Package, state: ProjectState) -> list[Statement]:
                 Rule(
                     "bool_flag",
                     flag_name,
-                    {"build_setting_default": flag.default, "visibility": ["//visibility:public"]},
+                    {"build_setting_default": flag.generated_default, "visibility": ["//visibility:public"]},
                     comments=[comment],
                     load_from="@bazel_skylib//rules:common_settings.bzl",
                 )
@@ -1517,7 +1528,7 @@ def _option_rules(package: Package, state: ProjectState) -> list[Statement]:
                 )
             )
             continue
-        default = state.flag_defaults.get(name) or ("yes" if flag.default else "no")
+        default = state.flag_defaults.get(name) or ("yes" if flag.generated_default else "no")
         allowed = sorted(values | {default, "yes", "no"})
         if all(re.fullmatch(r"-?[0-9]+", v) for v in values | {default}):
             rules.append(
