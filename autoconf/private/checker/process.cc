@@ -1,12 +1,13 @@
 #include "autoconf/private/checker/process.h"
 
 #ifndef _WIN32
-#include <cerrno>
 #include <fcntl.h>
 #include <spawn.h>
 #include <sys/wait.h>
-#include <system_error>
 #include <unistd.h>
+
+#include <cerrno>
+#include <system_error>
 
 extern char** environ;
 
@@ -30,10 +31,10 @@ struct FileActions {
     ~FileActions() { posix_spawn_file_actions_destroy(&actions); }
 
     void redirect(int fd, const std::filesystem::path& path) {
-        check_error(posix_spawn_file_actions_addopen(
-                        &actions, fd, path.c_str(), O_WRONLY | O_CREAT | O_TRUNC,
-                        0666),
-                    "redirect child output to " + path.string());
+        check_error(
+            posix_spawn_file_actions_addopen(
+                &actions, fd, path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666),
+            "redirect child output to " + path.string());
     }
 };
 
@@ -56,7 +57,7 @@ int run_process(const std::vector<std::string>& args,
     const std::string operation = "start " + args.front();
     pid_t pid;
     check_error(posix_spawnp(&pid, argv.front(), &actions.actions, nullptr,
-                            argv.data(), environ),
+                             argv.data(), environ),
                 operation);
     int status;
     while (waitpid(pid, &status, 0) == -1) {
@@ -64,10 +65,9 @@ int run_process(const std::vector<std::string>& args,
         if (err != EINTR) check_error(err, "wait for " + args.front());
     }
     if (WIFSIGNALED(status)) {
-        throw std::system_error(
-            std::make_error_code(std::errc::interrupted),
-            args.front() + " terminated by signal " +
-                std::to_string(WTERMSIG(status)));
+        throw std::system_error(std::make_error_code(std::errc::interrupted),
+                                args.front() + " terminated by signal " +
+                                    std::to_string(WTERMSIG(status)));
     }
     const int exit_code = WEXITSTATUS(status);
     // POSIX allows spawn setup/exec failures to be reported by the child.
@@ -75,7 +75,8 @@ int run_process(const std::vector<std::string>& args,
     if (exit_code == 127) {
         throw std::system_error(
             std::make_error_code(std::errc::io_error),
-            args.front() + " exited with status 127 (possible startup failure)");
+            args.front() +
+                " exited with status 127 (possible startup failure)");
     }
     return exit_code;
 }

@@ -1,4 +1,6 @@
 // Re-execute this binary so process checks need no shell or installed tools.
+#include "autoconf/private/checker/process.h"
+
 #include <csignal>
 #include <cstdlib>
 #include <filesystem>
@@ -9,7 +11,6 @@
 #include <system_error>
 #include <vector>
 
-#include "autoconf/private/checker/process.h"
 #include "tools/json/json.h"
 
 namespace {
@@ -46,7 +47,7 @@ int main(int argc, char** argv) {
     const auto stdout_path = dir / "stdout";
     const auto stderr_path = dir / "stderr";
     const std::vector<std::string> args{executable.string(), "--child", "a b",
-                                      "", "$HOME;*'\"\\"};
+                                        "", "$HOME;*'\"\\"};
     if (run_process(args, stdout_path, stderr_path) != 23 ||
         read_file(stdout_path) != "[a b]\n[]\n[$HOME;*'\"\\]\n" ||
         read_file(stderr_path) != "child stderr\n") {
@@ -71,8 +72,8 @@ int main(int argc, char** argv) {
 
     // A missing compiler is an execution error, including inside the integer
     // probes whose out-of-range answers otherwise become false capabilities.
-    const auto checker = std::filesystem::path(std::getenv("TEST_SRCDIR")) /
-                         argv[1];
+    const auto checker =
+        std::filesystem::path(std::getenv("TEST_SRCDIR")) / argv[1];
     const auto config_path = dir / "config.json";
     const auto check_path = dir / "check.json";
     const auto result_path = dir / "result.json";
