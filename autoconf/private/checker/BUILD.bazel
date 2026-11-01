@@ -62,10 +62,12 @@ cc_library(
     srcs = [
         "check_runner.cc",
         "compilation.cc",
+        "process.cc",
         "system_header.cc",
     ],
     hdrs = [
         "check_runner.h",
+        "process.h",
         "system_header.h",
     ],
     cxxopts = cxxopts(),
@@ -130,6 +132,22 @@ cc_test(
     name = "library_check_test",
     srcs = ["library_check_test.cc"],
     cxxopts = cxxopts(),
+    deps = [
+        ":check_runner",
+        "//tools/json",
+    ],
+)
+
+cc_test(
+    name = "process_test",
+    srcs = ["process_test.cc"],
+    args = ["$(rlocationpath :checker_bin)"],
+    cxxopts = cxxopts(),
+    data = [":checker_bin"],
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
     deps = [
         ":check_runner",
         "//tools/json",
