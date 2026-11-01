@@ -7,6 +7,7 @@
 #include <nlohmann/json.hpp>
 #include <sstream>
 #include <stdexcept>
+#include <system_error>
 #include <vector>
 
 #include "autoconf/private/checker/check.h"
@@ -486,6 +487,8 @@ CheckResult CheckRunner::check_sizeof(const Check& check) {
         size = find_compile_time_int_bisect(code_template, check.language(),
                                             /*search_begin=*/0,
                                             /*search_end=*/65536, extra_copts);
+    } catch (const std::system_error&) {
+        throw;
     } catch (const std::runtime_error&) {
         size = std::nullopt;
     }
@@ -530,6 +533,8 @@ CheckResult CheckRunner::check_alignof(const Check& check) {
             find_compile_time_int_bisect(code_template, check.language(),
                                          /*search_begin=*/1,
                                          /*search_end=*/4096, extra_copts);
+    } catch (const std::system_error&) {
+        throw;
     } catch (const std::runtime_error&) {
         alignment = std::nullopt;
     }

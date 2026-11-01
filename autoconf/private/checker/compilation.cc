@@ -8,14 +8,13 @@
 #include <string_view>
 #include <system_error>
 
-#ifndef _WIN32
-#include <sys/wait.h>
-#else
+#ifdef _WIN32
 #include <windows.h>
 #endif
 
 #include "autoconf/private/checker/check_runner.h"
 #include "autoconf/private/checker/debug_logger.h"
+#include "autoconf/private/checker/process.h"
 #include "autoconf/private/common/file_util.h"
 
 namespace rules_cc_autoconf {
@@ -167,33 +166,31 @@ std::string build_command_string(const std::vector<std::string>& cmd) {
 }
 
 /**
- * @brief Execute a shell command, optionally suppressing output.
+ * @brief Execute a compiler command, optionally suppressing output.
  *
  * If verbose debug is not enabled, stdout and stderr are redirected to
  * /dev/null (or NUL on Windows).
  *
  * @param label A label for debug logging (e.g., "compile", "link").
  * @param cmd Vector of command parts.
- * @return The process exit code (already WEXITSTATUS-unwrapped on Unix).
+ * @return The process exit code.
  */
 int run_command(const std::string& label, const std::vector<std::string>& cmd) {
+    const bool quiet = !DebugLogger::is_verbose_debug_enabled();
+#ifdef _WIN32
     std::string full_cmd = build_command_string(cmd);
-
-    if (!DebugLogger::is_verbose_debug_enabled()) {
-#ifdef _WIN32
+    if (quiet) {
         full_cmd += " >NUL 2>&1";
-#else
-        full_cmd += " >/dev/null 2>&1";
-#endif
     }
-
     DebugLogger::debug("Executing " + label + " command: " + full_cmd);
-
-    int result = std::system(full_cmd.c_str());
-#ifdef _WIN32
-    return result;
+    return std::system(full_cmd.c_str());
 #else
-    return WEXITSTATUS(result);
+    if (!quiet) {
+        DebugLogger::debug("Executing " + label + " command: " +
+                           build_command_string(cmd));
+    }
+    return run_process(cmd, quiet ? "/dev/null" : "",
+                       quiet ? "/dev/null" : "");
 #endif
 }
 

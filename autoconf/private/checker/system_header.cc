@@ -5,19 +5,29 @@
 #include <sstream>
 #include <vector>
 
-#ifndef _WIN32
-#include <sys/wait.h>
-#else
+#ifdef _WIN32
 #include <windows.h>
 #endif
 
 #include "autoconf/private/checker/config.h"
 #include "autoconf/private/checker/debug_logger.h"
+#include "autoconf/private/checker/process.h"
 #include "autoconf/private/common/file_util.h"
 
 namespace rules_cc_autoconf {
 
 namespace {
+
+struct PreprocessorFiles {
+    std::filesystem::path source;
+    std::filesystem::path output;
+
+    ~PreprocessorFiles() {
+        std::error_code ec;
+        file_remove(source, ec);
+        file_remove(output, ec);
+    }
+};
 
 #ifdef _WIN32
 std::string get_short_path_sys(const std::string& long_path) {
@@ -113,6 +123,7 @@ std::optional<std::filesystem::path> find_system_header_path(
     std::filesystem::path src_path =
         source_dir / (source_id + ".gl_next" + extension);
     std::filesystem::path pp_out = source_dir / (source_id + ".gl_next.i");
+    PreprocessorFiles cleanup{src_path, pp_out};
 
     {
         std::ofstream src = open_ofstream(src_path);
@@ -124,7 +135,13 @@ std::optional<std::filesystem::path> find_system_header_path(
         src << src_code;
     }
 
-    // Build the preprocessor command
+    // Build the preprocessor command.
+    std::vector<std::string> args{compiler};
+    args.insert(args.end(), flags.begin(), flags.end());
+    // /E retains the MSVC line markers needed to locate the header.
+    args.insert(args.end(), {msvc ? "/E" : "-E", src_path.string()});
+    if (!msvc) args.insert(args.end(), {"-o", pp_out.string()});
+
     std::ostringstream cmd;
 #ifdef _WIN32
     cmd << get_short_path_sys(compiler);
@@ -132,41 +149,33 @@ std::optional<std::filesystem::path> find_system_header_path(
     cmd << quote_arg(compiler);
 #endif
 
-    for (const std::string& f : flags) {
-        cmd << " " << quote_arg(f);
+    for (size_t i = 1; i < args.size(); ++i) {
+        cmd << " " << quote_arg(args[i]);
     }
 
     if (msvc) {
-        // MSVC: /E writes preprocessed output to stdout, /EP suppresses #line
-        // markers so we use /E to keep them
-        cmd << " /E " << quote_arg(src_path.string());
         cmd << " > " << quote_arg(pp_out.string()) << " 2>NUL";
     } else {
-        cmd << " -E " << quote_arg(src_path.string());
-        cmd << " -o " << quote_arg(pp_out.string()) << " 2>/dev/null";
+        cmd << " 2>/dev/null";
     }
 
     DebugLogger::debug("GL_NEXT_HEADER: running preprocessor: " + cmd.str());
 
+#ifdef _WIN32
     int rc = std::system(cmd.str().c_str());
-#ifndef _WIN32
-    rc = WEXITSTATUS(rc);
+#else
+    int rc = run_process(args, msvc ? pp_out : std::filesystem::path{},
+                         "/dev/null");
 #endif
-
-    // Clean up source file
-    std::error_code ec;
-    file_remove(src_path, ec);
 
     if (rc != 0) {
         DebugLogger::debug("GL_NEXT_HEADER: preprocessor failed for " + header +
                            " (rc=" + std::to_string(rc) + ")");
-        file_remove(pp_out, ec);
         return std::nullopt;
     }
 
     // Read and parse preprocessor output
     auto pp_content = read_file_content(pp_out);
-    file_remove(pp_out, ec);
 
     if (!pp_content.has_value()) {
         DebugLogger::warn("GL_NEXT_HEADER: could not read preprocessor output");
