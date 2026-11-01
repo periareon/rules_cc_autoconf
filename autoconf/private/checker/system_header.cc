@@ -164,8 +164,8 @@ std::optional<std::filesystem::path> find_system_header_path(
 #ifdef _WIN32
     int rc = std::system(cmd.str().c_str());
 #else
-    int rc = run_process(args, msvc ? pp_out : std::filesystem::path{},
-                         "/dev/null");
+    int rc =
+        run_process(args, msvc ? pp_out : std::filesystem::path{}, "/dev/null");
 #endif
 
     if (rc != 0) {

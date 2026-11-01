@@ -186,11 +186,10 @@ int run_command(const std::string& label, const std::vector<std::string>& cmd) {
     return std::system(full_cmd.c_str());
 #else
     if (!quiet) {
-        DebugLogger::debug("Executing " + label + " command: " +
-                           build_command_string(cmd));
+        DebugLogger::debug("Executing " + label +
+                           " command: " + build_command_string(cmd));
     }
-    return run_process(cmd, quiet ? "/dev/null" : "",
-                       quiet ? "/dev/null" : "");
+    return run_process(cmd, quiet ? "/dev/null" : "", quiet ? "/dev/null" : "");
 #endif
 }
 
