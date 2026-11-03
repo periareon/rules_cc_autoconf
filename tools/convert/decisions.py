@@ -109,7 +109,13 @@ FORMS = {
     "never requested)",
     "conlyopts": '["<flag>", ...] (C-only compiler options every target of the package compiles with; never requested)',
     "cxxopts": '["<flag>", ...] (C++-only compiler options every target of the package compiles with; never requested)',
+    "standard": '"<standard>" as -std= spells it ("gnu11", "c++17"): the mode every target and check of the package '
+    "compiles in, per compiler family (/std: on MSVC and clang-cl), when the script pins none; never requested",
 }
+
+
+_STANDARD_RE = re.compile(r"(gnu|c)(\+\+)?[0-9][0-9a-z]*")
+"""A standard as `-std=` spells it: `gnu11`, `c99`, `c++17`, `gnu++2b`."""
 
 
 _SPDX_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9.+-]*")
@@ -619,6 +625,15 @@ def normalize(kind: str, key: str, value: DecisionValue) -> Decision:
         raise bad()
     if kind == "cppflag":
         if isinstance(value, str):
+            return Decision(kind, key, value=value)
+        raise bad()
+    if kind == "standard":
+        if isinstance(value, str) and _STANDARD_RE.fullmatch(value):
+            lang = key.rsplit(":", 1)[1]
+            if lang not in ("C", "CXX"):
+                raise DecisionError(f"decision {key!r}: the key ends in the language, `:C` or `:CXX`")
+            if ("++" in value) != (lang == "CXX"):
+                raise DecisionError(f"decision {key!r}: {value!r} is not a {'C++' if lang == 'CXX' else 'C'} standard")
             return Decision(kind, key, value=value)
         raise bad()
     if kind == "link":

@@ -259,7 +259,8 @@ def standard_statement(lang: str, standard: str, origin: str) -> Assign:
             "})"
         ),
         comments=[
-            f"{origin}: every target and check compiles in {standard} mode, as configure set CC.",
+            f"{origin}: every target and check compiles in {standard} mode"
+            + ("." if origin.startswith("decisions.bzl") else ", as configure set CC."),
             "A consumer's --conlyopt / --cxxopt comes later on the command line and wins.",
             STANDARD_FEATURES_TODO,
         ],
