@@ -98,6 +98,7 @@ from tools.convert.translate import (
     condition_names,
     default_tarname,
     describe,
+    iso_standard,
     provided_names,
     slug,
 )
@@ -751,6 +752,7 @@ def convert_project(
     if any(isinstance(st, Rule) and st.kind in ("cc_library", "cc_binary", "cc_test") for st in package.after):
         package.before.append(no_warnings_statement())
         notes += _module_flags(package, decisions, package_path or ".")
+    notes += _standard_decisions(state, decisions, package_path or ".")
     _standard_flags(package, state)
     root = package_path in ("", ".")
     license_loads = _license_rules(package, src, decisions, package_path, notes, repo_defaults=repo_file and root)
@@ -1292,6 +1294,12 @@ def _module_flags(package: Package, decisions: dec.Decisions, package_path: str)
             Assign(name, value, comments=[f"decisions.bzl: {kind}:{package_path}, for every target of the package."])
         )
         notes.append(f"{kind}:{package_path}: every target compiles with {' '.join(words)}")
+        for word in words:
+            if word.startswith(("-std=", "/std:")):
+                notes.append(
+                    f"{kind}:{package_path} carries {word}, which the checks do not see: a language standard is a "
+                    f"standard:{package_path}:<C|CXX> decision, pinned on every target and check alike"
+                )
     at = next(i for i, st in enumerate(package.before) if isinstance(st, Assign) and st.name == NO_WARNINGS) + 1
     package.before[at:at] = constants
     for rule in package.after:
@@ -1310,6 +1318,30 @@ def _module_flags(package: Package, decisions: dec.Decisions, package_path: str)
 
 
 _STANDARD_ATTRS = {"C": "conlyopts", "CXX": "cxxopts"}
+
+
+def _standard_decisions(state: ProjectState, decisions: dec.Decisions, package_path: str) -> list[str]:
+    """The never-requested `standard:<package>:C` / `standard:<package>:CXX` decisions: the mode
+    every target and check of the package compiles in when the script pins none and the project
+    must (gawk's gnu11: its vendored regex makes implicit declarations clang >= 16 rejects in
+    strict ISO modes).  Taken as a macro's or a Makefile's pin is (`pinned_standards`, rendered
+    by `_standard_flags` as `C_STD_OPTS` / `CXX_STD_OPTS` on the cc targets and the autoconf
+    targets alike), over whatever the script set: a `-std=` on the hand-written targets alone
+    would leave the checks in the toolchain's default mode, and the two disagree on gcc >= 15,
+    where C23 has `bool` built in and config.h then skips <stdbool.h>."""
+    notes: list[str] = []
+    for lang in ("C", "CXX"):
+        key = f"standard:{package_path}:{lang}"
+        decision = decisions.optional(key, "standard")
+        if decision is None or not isinstance(decision.value, str):
+            continue
+        previous = state.pinned_standards.get(lang)
+        state.pinned_standards[lang] = decision.value
+        state.standard_origins[lang] = f"decisions.bzl: {key}"
+        state.required_standards.add(iso_standard(decision.value))
+        over = f", over the {previous} the script set" if previous and previous != decision.value else ""
+        notes.append(f"{key}: every target and check compiles in {decision.value} mode{over}")
+    return notes
 
 
 def _standard_flags(package: Package, state: ProjectState) -> None:

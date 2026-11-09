@@ -18,7 +18,7 @@ from tools.convert.common import (
     headers_glob,
     no_warnings_statement,
 )
-from tools.convert.decisions import Decisions, Word
+from tools.convert.decisions import DecisionError, Decisions, Word
 from tools.convert.emit import render_statement
 from tools.convert.gnulib_lib import (
     _classify_sources,
@@ -45,6 +45,7 @@ from tools.convert.project import (
     _pinned_defines,
     _repo_bazel,
     _root_includes,
+    _standard_decisions,
     _standard_flags,
     _subdir_gates,
 )
@@ -617,7 +618,43 @@ def test_module_flags_decisions() -> None:
     assert as_raw(x.attrs["copts"]).text == 'COPTS + ["-DX"]'
     assert as_raw(y.attrs["copts"]).text == "COPTS"
     assert as_raw(x.attrs["cxxopts"]).text == "CXXOPTS"
-    assert len(notes) == 2
+    # The -std= in cxxopts is noted: a standard belongs in a `standard:` decision the checks share.
+    assert len(notes) == 3
+    assert "standard:.:<C|CXX>" in notes[2]
+
+
+def test_standard_decision_pins_every_target_and_check() -> None:
+    """A `standard:.:C` decision, for a script that pins no mode: C_STD_OPTS as a macro's pin
+    renders it, on the cc targets and the autoconf target alike (gawk's gnu11, which a -std= on
+    the hand-written targets alone kept from the checks)."""
+    package = Package(path="", docstring="")
+    package.before.append(no_warnings_statement())
+    package.after.append(Rule("cc_library", "x", {"srcs": ["x.c"]}))
+    package.targets.append(Target(name="autoconf"))
+    state = ProjectState()
+    notes = _standard_decisions(state, Decisions({"standard:.:C": "gnu11"}), ".")
+    _standard_flags(package, state)
+    assert notes == ["standard:.:C: every target and check compiles in gnu11 mode"]
+    pin = next(st for st in package.before if isinstance(st, Assign) and st.name == "C_STD_OPTS")
+    assert '"-std=gnu11"' in as_raw(pin.value).text
+    assert '"/std:c11"' in as_raw(pin.value).text
+    assert "decisions.bzl: standard:.:C: every target and check compiles in gnu11 mode." in pin.comments
+    (x,) = package.after
+    assert isinstance(x, Rule)
+    assert as_raw(x.attrs["conlyopts"]).text == "C_STD_OPTS"
+    assert as_raw(package.targets[0].attrs["conlyopts"]).text == "C_STD_OPTS"
+
+    # The value must be a standard of the key's language.
+    with pytest.raises(DecisionError):
+        Decisions({"standard:.:C": "c++17"}).optional("standard:.:C", "standard")
+    with pytest.raises(DecisionError):
+        Decisions({"standard:.:CXX": "latest"}).optional("standard:.:CXX", "standard")
+
+    # A -std= in a flags decision is pointed at the standard decision: the checks would not see it.
+    package = Package(path="", docstring="")
+    package.before.append(no_warnings_statement())
+    notes = _module_flags(package, Decisions({"conlyopts:.": ["-std=gnu11"]}), ".")
+    assert any("standard:.:<C|CXX>" in note for note in notes)
 
 
 def test_port_provided_names_drop_local_checks() -> None:
