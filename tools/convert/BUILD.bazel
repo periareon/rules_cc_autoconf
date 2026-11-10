@@ -47,6 +47,7 @@ py_binary(
         "markers.py",
         "modulebazel.py",
         "ownership.py",
+        "ports.py",
         "project.py",
         "results.py",
         "sedtext.py",
@@ -84,8 +85,12 @@ autotools_cc_binary(
 py_binary(
     name = "update_index",
     srcs = ["update_index.py"],
+    data = ["@buildifier_prebuilt//:buildifier"],
     main = "update_index.py",
-    deps = [":convert_bin"],
+    deps = [
+        ":convert_bin",
+        "@rules_venv//python/runfiles",
+    ],
 )
 
 py_library(
@@ -146,6 +151,7 @@ py_library(
         "index_test",
         "libraries_test",
         "licenses_test",
+        "ports_test",
         "m4args_test",
         "markers_test",
         "modulebazel_test",

@@ -50,6 +50,7 @@ is what regenerates the conversion. Options:
 | `--annotate` | Comment every check, dep and rule with the m4 call or Makefile line it came from. |
 | `--subdir DIR` | Convert the `configure.ac` in a subdirectory of the tree. |
 | `--vendor-ports` | Copy the gnulib ports the conversion uses into the module, see [Vendoring the ports](#vendoring-the-ports). |
+| `--inline-checks` | Declare the gnulib ports the conversion uses as targets of the project's own packages, in place of the dependencies on them, see [Inlining the checks](#inlining-the-checks). |
 | `--only FILE` | Convert one m4 file in the layout of the hand ports, see [Converting single m4 files](#converting-single-m4-files). |
 | `--bcr-entry DIR` | Write a registry entry in place and take the inputs from it, see [A registry entry](#a-registry-entry). |
 | `--http-archive-entry DIR` | Write the one generated BUILD file into a consumer's `3rdparty/<name>/` for `http_archive`, see [An http_archive](#an-http_archive). |
@@ -341,6 +342,33 @@ are rule implementations (`AC_C_INLINE`, `AC_C_RESTRICT`), still come from
 rules_cc_autoconf; the report names them. The converter needs the checkout
 the ports come from: run it there with `bazel run`, or pass `--index
 <checkout>`.
+
+## Inlining the checks
+
+A dependency's checks run in the dependency's configuration. A project that
+pins a language standard (`C_STD_OPTS`, from a macro, a `-std=` in its flags
+or a `standard:` decision) pins its own checks and targets, not the ports it
+depends on: gnulib's `gl_C_BOOL` then answers for the toolchain's default
+mode, C23 on gcc 15 and later, and `config.h` leaves `<stdbool.h>` out of a
+compile that runs in gnu11. `--inline-checks` declares every gnulib port the
+conversion resolved, and every port those reach, as a target of the project's
+package: the same rule graph with the same names flattened
+(`:gnulib/m4/c-bool/c-bool`), each attribute the text of the port's BUILD
+file with the labels rewritten, the ports' `:defaults` and config settings
+mirrored alongside. `GNULIB_M4_DEPS` and `GNULIB_M4_DEFAULT_DEPS` then name the
+mirrors, which take the package's `C_STD_OPTS` like its own targets. The
+`//autoconf/...` ports stay dependencies. Each check's JSON is the port's, so
+the content cache still matches the toolchain's results wherever the flags
+agree; only a pinned project reruns.
+
+The text is lifted from the port BUILD files with a parser at every run,
+from the checkout `bazel run` started in or the one `--index <checkout>`
+names; there is no snapshot, and an entry carries the ports of the tree its
+rules version names. `//autoconf/tests/ports_mirror` declares every port again
+through the same emitter (`bazel run //tools/convert:update_index` writes its
+BUILD file beside `index.toml`) and compares the evaluated attributes with the
+port's, so a port the lift cannot reproduce, or a mirror that fell behind its
+port, fails there before it reaches an entry.
 
 ## Converting single m4 files
 

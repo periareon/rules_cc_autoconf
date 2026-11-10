@@ -70,6 +70,7 @@ from tools.convert.modulebazel import (  # noqa: F401
     load_repos,
     source_tree_loads,
 )
+from tools.convert.ports import PortSnapshot, is_mirrored, mirror
 from tools.convert.results import (
     SYSTEM_EXTENSION_DEFINES,
     _condition_providers,
@@ -434,6 +435,7 @@ def convert_project(
     root_package: str = "",
     gate: SubdirGate | None = None,
     shared_options: AbstractSet[str] = frozenset(),
+    ports: PortSnapshot | None = None,
 ) -> ProjectResult:
     """Translate a whole project into a root package.  `command` is the
     `bazel run` line that reproduces the conversion, for the banners; `source_root` the
@@ -752,6 +754,8 @@ def convert_project(
     if any(isinstance(st, Rule) and st.kind in ("cc_library", "cc_binary", "cc_test") for st in package.after):
         package.before.append(no_warnings_statement())
         notes += _module_flags(package, decisions, package_path or ".")
+    if ports is not None:
+        notes += _inline_ports(package, ports)
     notes += _standard_decisions(state, decisions, package_path or ".")
     _standard_flags(package, state)
     root = package_path in ("", ".")
@@ -1318,6 +1322,42 @@ def _module_flags(package: Package, decisions: dec.Decisions, package_path: str)
 
 
 _STANDARD_ATTRS = {"C": "conlyopts", "CXX": "cxxopts"}
+
+_GNULIB_CONSTANTS = ("GNULIB_M4_DEPS", "GNULIB_M4_DEFAULT_DEPS")
+
+
+def _inline_ports(package: Package, ports: PortSnapshot) -> list[str]:
+    """`--inline-checks`: the gnulib ports `GNULIB_M4_DEPS` and `GNULIB_M4_DEFAULT_DEPS` name,
+    and every port those reach, declared in the package (`ports.mirror`) in place of the
+    dependencies on `@rules_cc_autoconf//gnulib/...`, so their checks compile under the
+    package's own flags: a dependency's checks run in the dependency's configuration, which
+    knows nothing of the package's `C_STD_OPTS`, and gnulib's gl_C_BOOL then answers for the
+    toolchain's default mode while the package compiles in another.  `_standard_flags` pins the
+    mirrors as it pins the package's own targets.  `//autoconf/...` ports stay dependencies."""
+    assigns = [st for st in package.before if isinstance(st, Assign) and st.name in _GNULIB_CONSTANTS]
+    if not assigns:
+        return []
+    roots = [label for assign in assigns for label in strings(assign.value)]
+    mirrored = mirror(ports, roots, repo="@rules_cc_autoconf", local=":")
+    for assign in assigns:
+        assign.value = sorted(
+            {mirrored.labels[ports.resolve(label)] if is_mirrored(label) else label for label in strings(assign.value)}
+        )
+        assign.comments.append(
+            "--inline-checks: the ports are declared below, their checks compiled under this package's flags."
+        )
+    at = package.before.index(assigns[0])
+    package.before[at:at] = mirrored.constants
+    package.targets.extend(mirrored.targets)
+    package.after.extend(mirrored.rules)
+    package.loads.extend(mirrored.loads)
+    return [
+        (
+            f"--inline-checks: {len(mirrored.targets)} gnulib port targets and {len(mirrored.rules)} defaults and "
+            "settings are declared in the package in place of the @rules_cc_autoconf//gnulib dependencies; their "
+            "checks compile under the package's flags"
+        )
+    ]
 
 
 def _standard_decisions(state: ProjectState, decisions: dec.Decisions, package_path: str) -> list[str]:
