@@ -4,7 +4,7 @@
 #if HAVE_LINUX_XATTR_H && HAVE_LISTXATTR && USE_SELINUX_SELINUX_H
 #include <selinux/selinux.h>
 #else
-#define lgetfilecon(path, con) (-1)
+#define lgetfilecon(path, con) ((void)(path), (void)(con), -1)
 #endif
 
 int main(void) {
