@@ -3811,6 +3811,7 @@ is what regenerates the conversion. Options:</p>
 <tr><td><code>--annotate</code></td><td>Comment every check, dep and rule with the m4 call or Makefile line it came from.</td></tr>
 <tr><td><code>--subdir DIR</code></td><td>Convert the <code>configure.ac</code> in a subdirectory of the tree.</td></tr>
 <tr><td><code>--vendor-ports</code></td><td>Copy the gnulib ports the conversion uses into the module, see <a href="convert.html#vendoring-the-ports">Vendoring the ports</a>.</td></tr>
+<tr><td><code>--inline-checks</code></td><td>Declare the gnulib ports the conversion uses as targets of the project's own packages, in place of the dependencies on them, see <a href="convert.html#inlining-the-checks">Inlining the checks</a>.</td></tr>
 <tr><td><code>--only FILE</code></td><td>Convert one m4 file in the layout of the hand ports, see <a href="convert.html#converting-single-m4-files">Converting single m4 files</a>.</td></tr>
 <tr><td><code>--bcr-entry DIR</code></td><td>Write a registry entry in place and take the inputs from it, see <a href="convert.html#a-registry-entry">A registry entry</a>.</td></tr>
 <tr><td><code>--http-archive-entry DIR</code></td><td>Write the one generated BUILD file into a consumer's <code>3rdparty/&lt;name&gt;/</code> for <code>http_archive</code>, see <a href="convert.html#an-http_archive">An http_archive</a>.</td></tr>
@@ -4080,6 +4081,30 @@ diff shows what gnulib changed. The rules themselves, and the two ports that
 are rule implementations (<code>AC_C_INLINE</code>, <code>AC_C_RESTRICT</code>), still come from
 rules_cc_autoconf; the report names them. The converter needs the checkout
 the ports come from: run it there with <code>bazel run</code>, or pass <code>--index &lt;checkout&gt;</code>.</p>
+<h2 id="inlining-the-checks"><a class="header" href="#inlining-the-checks">Inlining the checks</a></h2>
+<p>A dependency's checks run in the dependency's configuration. A project that
+pins a language standard (<code>C_STD_OPTS</code>, from a macro, a <code>-std=</code> in its flags
+or a <code>standard:</code> decision) pins its own checks and targets, not the ports it
+depends on: gnulib's <code>gl_C_BOOL</code> then answers for the toolchain's default
+mode, C23 on gcc 15 and later, and <code>config.h</code> leaves <code>&lt;stdbool.h&gt;</code> out of a
+compile that runs in gnu11. <code>--inline-checks</code> declares every gnulib port the
+conversion resolved, and every port those reach, as a target of the project's
+package: the same rule graph with the same names flattened
+(<code>:gnulib/m4/c-bool/c-bool</code>), each attribute the text of the port's BUILD
+file with the labels rewritten, the ports' <code>:defaults</code> and config settings
+mirrored alongside. <code>GNULIB_M4_DEPS</code> and <code>GNULIB_M4_DEFAULT_DEPS</code> then name the
+mirrors, which take the package's <code>C_STD_OPTS</code> like its own targets. The
+<code>//autoconf/...</code> ports stay dependencies. Each check's JSON is the port's, so
+the content cache still matches the toolchain's results wherever the flags
+agree; only a pinned project reruns.</p>
+<p>The text is lifted from the port BUILD files with a parser at every run,
+from the checkout <code>bazel run</code> started in or the one <code>--index &lt;checkout&gt;</code>
+names; there is no snapshot, and an entry carries the ports of the tree its
+rules version names. <code>//autoconf/tests/ports_mirror</code> declares every port again
+through the same emitter (<code>bazel run //tools/convert:update_index</code> writes its
+BUILD file beside <code>index.toml</code>) and compares the evaluated attributes with the
+port's, so a port the lift cannot reproduce, or a mirror that fell behind its
+port, fails there before it reaches an entry.</p>
 <h2 id="converting-single-m4-files"><a class="header" href="#converting-single-m4-files">Converting single m4 files</a></h2>
 <p>To port one m4 file the way the hand ports under <code>//gnulib/m4</code> are written,
 name the file and give a <code>configure.ac</code> that invokes its macros:</p>
