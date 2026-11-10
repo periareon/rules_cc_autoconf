@@ -325,6 +325,16 @@ def _logical_lines(lines: list[str]) -> list[list[str]]:
     return groups
 
 
+# configure builds library variables by concatenation (gl_FILE_HAS_ACL's
+# "$FILE_HAS_ACL_LIB $LIB_SELINUX"), which can leave whitespace at either end
+# of a value; it separates nothing there.
+_SUBST_EDGE_WHITESPACE = re.compile(r'^(#define SUBST_\S+ )"\s*(.*?)\s*"$')
+
+
+def _strip_subst_edge_whitespace(lines: list[str]) -> list[str]:
+    return [_SUBST_EDGE_WHITESPACE.sub(r'\1"\2"', line) for line in lines]
+
+
 def _mask(
     lines: list[str],
     names: list[str],
@@ -758,8 +768,8 @@ class GnuAutoconfConformanceTest(unittest.TestCase):
         patterns = (MSVC_INCLUDE_NEXT_VARIABLES,) if self.msvc else ()
         bazel_lines = bazel.read_text(encoding="utf-8").splitlines()
         output = diff(
-            file1_content=_mask(gnu_lines, masked, patterns),
-            file2_content=_mask(bazel_lines, masked, patterns),
+            file1_content=_strip_subst_edge_whitespace(_mask(gnu_lines, masked, patterns)),
+            file2_content=_strip_subst_edge_whitespace(_mask(bazel_lines, masked, patterns)),
             file1_name=f"gnu/{label}",
             file2_name=f"bazel/{label}",
         )
