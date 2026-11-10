@@ -225,12 +225,13 @@ class CheckRunner {
     /**
      * @brief Get compiler command and flags for a language.
      *
-     * Per-check copts replace the copts marker at the toolchain-determined
-     * position for user compile flags, matching cc_library behavior.
+     * The target's copts, then per-check copts, replace the copts marker at
+     * the toolchain-determined position for user compile flags, matching
+     * cc_library behavior.  Warnings-as-errors flags are filtered from the
+     * toolchain's flags only.
      *
      * @param language Language ("c" or "cpp").
-     * @param extra_copts Per-check compiler flags that replace the copts
-     * marker.
+     * @param extra_copts Per-check compiler flags, after the target's.
      * @return Vector of compiler command parts (compiler path followed by
      * flags).
      */
