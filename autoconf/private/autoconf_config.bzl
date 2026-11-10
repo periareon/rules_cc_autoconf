@@ -581,6 +581,28 @@ def create_config_dict(toolchain_info):
         "linker": toolchain_info.linker_path,
     }
 
+def _mapped_config(item):
+    """Returns the config as JSON, with the bin directory replaced by its mapped path.
+
+    `item.witness` is the config file itself. Under path mapping its path is mapped, so
+    removing `item.tail` from it gives the mapped bin directory.
+
+    Args:
+        item (struct): `config`, `bin_dir`, `witness` and `tail` from `write_config_json`.
+
+    Returns:
+        str: The config JSON.
+    """
+    path = item.witness.path
+    mapped_bin = path[:len(path) - len(item.tail) - 1]
+    config = {}
+    for key, value in item.config.items():
+        if type(value) == "list":
+            config[key] = [flag.replace(item.bin_dir, mapped_bin) for flag in value]
+        else:
+            config[key] = value.replace(item.bin_dir, mapped_bin)
+    return json.encode_indent(config, indent = " " * 4)
+
 def write_config_json(ctx, config_dict):
     """Write a config dictionary to a JSON file.
 
@@ -592,10 +614,19 @@ def write_config_json(ctx, config_dict):
         A File representing the config JSON file.
     """
     config_json = ctx.actions.declare_file("{}.ac.json".format(ctx.label.name))
+    bin_dir = ctx.bin_dir.path
+    content = ctx.actions.args()
+    content.set_param_file_format("multiline")
+    content.add_all([struct(
+        config = config_dict,
+        bin_dir = bin_dir,
+        witness = config_json,
+        tail = config_json.path[len(bin_dir) + 1:],
+    )], map_each = _mapped_config)
     write(
         actions = ctx.actions,
         output = config_json,
-        content = json.encode_indent(config_dict, indent = " " * 4) + "\n",
+        content = content,
     )
     return config_json
 
