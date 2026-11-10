@@ -43,6 +43,7 @@ from tools.convert.common import DEFAULT_COMMAND, TOP_HEADERS
 from tools.convert.decisions import MIGRATION_GUIDE, Decisions
 from tools.convert.index import PortIndex, ports_checkout
 from tools.convert.ir import Package
+from tools.convert.ports import PortSnapshot
 from tools.convert.translate import Options, Translator
 
 
@@ -253,6 +254,13 @@ def _cleanup(args: argparse.Namespace, work: Path, tooldir: Path) -> None:
     else:
         shutil.rmtree(work, ignore_errors=True)
     shutil.rmtree(tooldir, ignore_errors=True)
+
+
+def load_ports(args: argparse.Namespace) -> PortSnapshot:
+    """The ports for `--inline-checks`, lifted from their BUILD files: those of the checkout
+    `bazel run` started from, else of the one `--index` names (`_ports_workspace`).  The BUILD
+    files are the only source; an entry carries the ports of the tree its rules version names."""
+    return PortSnapshot.from_workspace(_ports_workspace(args, "--inline-checks"))
 
 
 def load_index(spec: str) -> PortIndex | None:
@@ -515,6 +523,7 @@ def cmd_convert(args: argparse.Namespace) -> int:
     args.reproduce = _reproduce_command(args)  # as given, before the flags below are adjusted
     out = _resolve(args.out)
     index = load_index(args.index)
+    ports = load_ports(args) if getattr(args, "inline_checks", False) else None
     # Library macros with a port are recorded as calls so they become deps;
     # in project mode every public autoconf macro is, so that the internals
     # of AC_PROG_CC and friends do not pass for the project's own checks.
@@ -532,7 +541,7 @@ def cmd_convert(args: argparse.Namespace) -> int:
     try:
         tree = markers.parse(expansion.read())
         if args.wrap_library:
-            return _convert_project(args, out, expansion, tree, index)
+            return _convert_project(args, out, expansion, tree, index, ports)
         return _convert_files(args, out, expansion, tree, index, work, layout)
     finally:
         _cleanup(args, work, tooldir)
@@ -910,17 +919,17 @@ def _bundled_decisions(args: argparse.Namespace) -> Decisions | None:
     return Decisions.load(Path(found)) if found and Path(found).is_file() else None
 
 
-def _ports_workspace(args: argparse.Namespace) -> Path:
-    """The rules_cc_autoconf checkout whose ports are vendored: the one `bazel run` started
-    from, else `--index <path>`."""
+def _ports_workspace(args: argparse.Namespace, flag: str = "--vendor-ports") -> Path:
+    """The rules_cc_autoconf checkout whose ports `flag` copies or inlines: the one `bazel run`
+    started from, else `--index <path>`."""
     root = ports_checkout()
     if root is not None:
         return root
     if args.index not in ("auto", "snapshot", "none") and (_resolve(args.index) / "gnulib/m4").is_dir():
         return _resolve(args.index)
     raise SystemExit(
-        "--vendor-ports needs the rules_cc_autoconf checkout the ports are copied from: run the "
-        "converter from it with `bazel run`, or pass --index <path-to-checkout>"
+        f"{flag} needs the rules_cc_autoconf checkout the ports come from: run the converter from it "
+        "with `bazel run`, or pass --index <path-to-checkout>"
     )
 
 
@@ -960,7 +969,12 @@ def _vendor(
 
 
 def _convert_project(
-    args: argparse.Namespace, out: Path, expansion: expand_mod.Expansion, tree: markers.Tree, index: PortIndex | None
+    args: argparse.Namespace,
+    out: Path,
+    expansion: expand_mod.Expansion,
+    tree: markers.Tree,
+    index: PortIndex | None,
+    ports: PortSnapshot | None = None,
 ) -> int:
     """Project mode: the root package from `project.convert_project`, written as `autoconf.bzl`
     (formatted with buildifier when available) beside the hand-written BUILD.bazel that loads
@@ -1021,6 +1035,7 @@ def _convert_project(
         extra_modules=extra_modules,
         root_package=_root_package(args, out),
         repo_file=not args.http_archive_entry,
+        ports=ports,
     )
     # Rendered into a staging directory, then placed: the destination (the scratch output, a
     # registry entry's overlay, the project tree) holds hand-written files too, and the converter
@@ -1056,6 +1071,7 @@ def _convert_project(
             hand,
             gates=result.subdir_gates,
             shared_options=set(result.option_names),
+            ports=ports,
         )
         # The packages that got an autoconf.bzl: each gets its hand-written BUILD.bazel once placed.
         generated = sorted(
@@ -1202,6 +1218,7 @@ def _convert_subprojects(
     gates: dict[str, project_mod.SubdirGate] | None = None,
     inherited_gate: project_mod.SubdirGate | None = None,
     shared_options: AbstractSet[str] = frozenset(),
+    ports: PortSnapshot | None = None,
 ) -> list[Path]:
     """`AC_CONFIG_SUBDIRS`: each sub-configure becomes a package of the same
     module, at its directory (texlive's `libs/*`, `texk/*`), converted from its
@@ -1242,6 +1259,7 @@ def _convert_subprojects(
                 root_package=_root_package(args, out),
                 gate=gate,
                 shared_options=shared_options,
+                ports=ports,
             )
             result.package.path = package_path
             directory = out / package_path
@@ -1270,6 +1288,7 @@ def _convert_subprojects(
                 f"{package_path}/",
                 gates=result.subdir_gates,
                 shared_options=shared_options,
+                ports=ports,
                 inherited_gate=gate,
             )
         finally:
@@ -1451,6 +1470,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="copy the gnulib ports the project uses into third_party/rules_cc_autoconf/ of the "
         "project (no dependency on rules_cc_autoconf's ports; run from its checkout, or "
         "pass --index <checkout>)",
+    )
+    convert_parser.add_argument(
+        "--inline-checks",
+        action="store_true",
+        help="declare the gnulib ports the project uses as targets of its own packages, in place of "
+        "the dependencies on @rules_cc_autoconf//gnulib/..., so their checks compile under the "
+        "project's flags (its pinned language standard); //autoconf/... ports stay dependencies",
     )
     convert_parser.add_argument(
         "--allow-upstream",
