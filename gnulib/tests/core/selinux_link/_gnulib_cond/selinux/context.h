@@ -3,6 +3,9 @@
 #define SELINUX_CONTEXT_H
 #include <stddef.h>
 typedef int context_t;
-static inline context_t context_new(char const* s) { (void)s; return 0; }
+static inline context_t context_new(char const* s) {
+    (void)s;
+    return 0;
+}
 static inline void context_free(context_t c) { (void)c; }
 #endif

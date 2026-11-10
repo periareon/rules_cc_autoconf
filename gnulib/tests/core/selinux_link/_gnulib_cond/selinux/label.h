@@ -4,7 +4,9 @@
 #include <stddef.h>
 #define SELABEL_CTX_FILE 0
 struct selabel_handle;
-static inline struct selabel_handle* selabel_open(unsigned int backend, void const* opts, unsigned int nopts) {
+static inline struct selabel_handle* selabel_open(unsigned int backend,
+                                                  void const* opts,
+                                                  unsigned int nopts) {
     (void)backend;
     (void)opts;
     (void)nopts;

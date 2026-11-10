@@ -1,9 +1,8 @@
 /* As gnulib's consumers of selinux/context.h and selinux/label.h: the system
  * headers, or the replacements the port asks to generate. */
-#include <stddef.h>
-
 #include <selinux/context.h>
 #include <selinux/label.h>
+#include <stddef.h>
 
 int main(void) {
     struct selabel_handle* h = selabel_open(SELABEL_CTX_FILE, NULL, 0);
