@@ -141,7 +141,6 @@ autoconf(
 )
 
 # M4: gl_FILE_HAS_ACL — checks for xattr/smack/selinux support.
-# Sets FILE_HAS_ACL_LIB (empty in Bazel — no library search).
 autoconf(
     name = "gl_FILE_HAS_ACL",
     checks = [
@@ -155,14 +154,31 @@ autoconf(
             "listxattr",
             define = "HAVE_LISTXATTR",
         ),
-        # M4: FILE_HAS_ACL_LIB depends on smack/selinux/LIB_ACL.
-        # In Bazel, no library search — always empty.
-        checks.AC_SUBST("FILE_HAS_ACL_LIB", ""),
+        # M4: FILE_HAS_ACL_LIB is LIB_SELINUX with <linux/xattr.h>, listxattr
+        # and USE_SELINUX_SELINUX_H, else LIB_ACL, which the port does not
+        # search for.  The smack branch is not ported.  gl_LIBSELINUX's search
+        # is repeated under its own name: a result carries one subst.
+        checks.AC_SEARCH_LIBS(
+            "getfilecon_raw",
+            [
+                "android-selinux",
+                "selinux",
+            ],
+            name = "gl_cv_file_has_acl_lib_selinux",
+            requires = [
+                "HAVE_LINUX_XATTR_H",
+                "HAVE_LISTXATTR",
+                "USE_SELINUX_SELINUX_H",
+            ],
+            subst = "FILE_HAS_ACL_LIB",
+        ),
     ],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_FUNC_ACL",
         ":gl_FUNC_ACL_ARG",
+        # AC_REQUIRE([gl_CHECK_HEADER_SELINUX_SELINUX_H])
+        "//gnulib/m4/selinux-selinux-h:gl_CHECK_HEADER_SELINUX_SELINUX_H",
     ],
 )
 

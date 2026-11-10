@@ -90,7 +90,6 @@ SKIPPED_OUTPUT_VARIABLES = frozenset(
         "LIB_PTHREAD",
         "LIB_SCHED_YIELD",
         "LIB_SELECT",
-        "LIB_SELINUX",
         "LIB_SEMAPHORE",
         "LIB_SETLOCALE_NULL",
         "LIB_TIMER_TIME",

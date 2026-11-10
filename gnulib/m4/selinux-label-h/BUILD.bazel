@@ -7,12 +7,13 @@ autoconf(
     name = "selinux-label-h",
     checks = [
         # GL_GENERATE_SELINUX_LABEL_H (gl_CONDITIONAL_HEADER): the replacement header is generated
-        # unless <selinux/label.h> exists (and --with-selinux is not "no", which the
-        # port assumes: the option is the project's).  The probe carries no
-        # define: the port leaves HAVE_* for the headers to the project.
+        # unless <selinux/label.h> exists and with_selinux is not "no".  The option is not
+        # ported; its default, maybe, becomes "no" when gl_LIBSELINUX finds no library.
+        # The probe carries no define: the port leaves HAVE_* for the headers to the project.
         checks.AC_CHECK_HEADER(
             "selinux/label.h",
             name = "ac_cv_header_selinux_label_h",
+            requires = ["ac_cv_search_getfilecon_raw"],
         ),
         checks.M4_VARIABLE(
             "GL_GENERATE_SELINUX_LABEL_H",
@@ -20,13 +21,12 @@ autoconf(
             if_false = "true",
             if_true = "false",
         ),
-        # gl_HEADERS_SELINUX_LABEL_H checks for selinux/label.h header
-        # On macOS, SELinux is not available, so the header check would fail
-        # But the golden file only shows basic header defines
     ],
     visibility = ["//visibility:public"],
     deps = [
         # For test compatibility - need basic header defines
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        # AC_REQUIRE([gl_LIBSELINUX])
+        "//gnulib/m4/selinux-selinux-h:gl_LIBSELINUX",
     ],
 )

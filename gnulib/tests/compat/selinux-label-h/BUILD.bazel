@@ -5,6 +5,9 @@ gnu_gnulib_diff_test_suite(
     bazel_autoconf_target = "//gnulib/m4/selinux-label-h",
     config_h_in = "config.h.in",
     configure_ac = "configure.ac",
+    known_divergences = {
+        "HAVE_SELINUX_LABEL_H": "the port's header probe carries no define; HAVE_* for headers is the project's",
+    },
     m4_files = ["@gnulib//:all_m4"],
     subst_h_in = "subst.h.in",
     test_c = "test_selinux-label-h.c",
