@@ -18,6 +18,7 @@
 #undef HAVE_INTTYPES_H
 #undef HAVE_LINUX_XATTR_H
 #undef HAVE_LISTXATTR
+#undef HAVE_SELINUX_SELINUX_H
 #undef HAVE_STDINT_H
 #undef HAVE_STDIO_H
 #undef HAVE_STDLIB_H
@@ -27,6 +28,7 @@
 #undef HAVE_SYS_STAT_H
 #undef HAVE_SYS_TYPES_H
 #undef HAVE_UNISTD_H
+#undef LIB_SELINUX
 #undef QCOPY_ACL_LIB
 #undef STDC_HEADERS
 #undef USE_ACL

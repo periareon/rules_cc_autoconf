@@ -1,0 +1,69 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:autoconf_linkopts.bzl", "autoconf_linkopts")
+load("//gnulib:conditional_hdrs.bzl", "cc_gnulib_conditional_hdrs")
+
+# Each test uses the SELinux API only where the port selects it, linked with
+# only the library variable the port pairs with it, so each links on every host.
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    mode = "defines",
+    template = "config.h.in",
+    deps = [
+        "//gnulib/m4/acl",
+        "//gnulib/m4/selinux-selinux-h",
+    ],
+)
+
+autoconf_linkopts(
+    name = "linkopts",
+    vars = ["LIB_SELINUX"],
+    deps = ["//gnulib/m4/selinux-selinux-h"],
+)
+
+cc_test(
+    name = "test_selinux_link",
+    srcs = [
+        "test_selinux_link.c",
+        ":config",
+    ],
+    deps = [":linkopts"],
+)
+
+autoconf_linkopts(
+    name = "file_has_acl_linkopts",
+    vars = ["FILE_HAS_ACL_LIB"],
+    deps = ["//gnulib/m4/acl"],
+)
+
+cc_test(
+    name = "test_file_has_acl_link",
+    srcs = [
+        "test_file_has_acl_link.c",
+        ":config",
+    ],
+    deps = [":file_has_acl_linkopts"],
+)
+
+cc_gnulib_conditional_hdrs(
+    name = "selinux_replacement_hdrs",
+    hdrs = {
+        "_gnulib_cond/selinux/context.h": "GL_GENERATE_SELINUX_CONTEXT_H",
+        "_gnulib_cond/selinux/label.h": "GL_GENERATE_SELINUX_LABEL_H",
+    },
+    strip_include_prefix = "_gnulib_cond",
+    deps = [
+        "//gnulib/m4/selinux-context-h",
+        "//gnulib/m4/selinux-label-h",
+    ],
+)
+
+cc_test(
+    name = "test_selinux_headers_link",
+    srcs = ["test_selinux_headers_link.c"],
+    deps = [
+        ":linkopts",
+        ":selinux_replacement_hdrs",
+    ],
+)

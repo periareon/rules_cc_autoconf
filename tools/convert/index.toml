@@ -677,8 +677,10 @@ cache = [
     "ac_cv_func_listxattr",
     "ac_cv_header_linux_xattr_h",
     "ac_cv_header_sys_acl_h",
+    "gl_cv_file_has_acl_lib_selinux",
 ]
 dual = [
+    "FILE_HAS_ACL_LIB",
     "USE_ACL",
 ]
 probes = { HAVE_ACL_COPY_EXT_NATIVE = "ac_cv_func_acl_copy_ext_native", HAVE_ACL_CREATE_ENTRY_NP = "ac_cv_func_acl_create_entry_np", HAVE_ACL_DELETE_DEF_FILE = "ac_cv_func_acl_delete_def_file", HAVE_ACL_DELETE_FD_NP = "ac_cv_func_acl_delete_fd_np", HAVE_ACL_DELETE_FILE_NP = "ac_cv_func_acl_delete_file_np", HAVE_ACL_ENTRIES = "ac_cv_func_acl_entries", HAVE_ACL_FREE = "ac_cv_func_acl_free", HAVE_ACL_FROM_TEXT = "ac_cv_func_acl_from_text", HAVE_ACL_GET_FD = "ac_cv_func_acl_get_fd", HAVE_ACL_GET_FILE = "ac_cv_func_acl_get_file", HAVE_ACL_GET_LINK_NP = "ac_cv_func_acl_get_link_np", HAVE_ACL_SET_FD = "ac_cv_func_acl_set_fd", HAVE_ACL_SET_FILE = "ac_cv_func_acl_set_file", HAVE_FCHMOD = "ac_cv_func_fchmod", HAVE_LINUX_XATTR_H = "ac_cv_header_linux_xattr_h", HAVE_LISTXATTR = "ac_cv_func_listxattr", HAVE_SYS_ACL_H = "ac_cv_header_sys_acl_h" }
@@ -15017,6 +15019,7 @@ targets = [
 ]
 deps = [
     "autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    "gnulib/m4/selinux-selinux-h",
 ]
 variables = [
     "GL_GENERATE_SELINUX_CONTEXT_H",
@@ -15035,6 +15038,7 @@ targets = [
 ]
 deps = [
     "autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    "gnulib/m4/selinux-selinux-h",
 ]
 variables = [
     "GL_GENERATE_SELINUX_LABEL_H",
@@ -15055,7 +15059,7 @@ targets = [
     "selinux-selinux-h",
 ]
 substs = [
-    "HAVE_SELINUX_SELINUX_H",
+    "LIB_SELINUX",
     "NEXT_AS_FIRST_DIRECTIVE_SELINUX_SELINUX_H",
     "NEXT_SELINUX_SELINUX_H",
     "USE_SELINUX_SELINUX_H",
@@ -15072,7 +15076,7 @@ cache = [
     "ac_cv_header_selinux_selinux_h",
 ]
 dual = [
-    "HAVE_SELINUX_SELINUX_H",
+    "LIB_SELINUX",
     "USE_SELINUX_SELINUX_H",
 ]
 probes = { HAVE_SELINUX_SELINUX_H = "ac_cv_header_selinux_selinux_h" }
