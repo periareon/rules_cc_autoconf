@@ -1,0 +1,147 @@
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("//autoconf:autoconf.bzl", "autoconf")
+load("//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("//autoconf:autoconf_package_info.bzl", "autoconf_package_info")
+load("//autoconf:checks.bzl", "checks")
+load("//autoconf/tests:diff_test.bzl", "diff_test")
+load("//autoconf/tests/gnu:conformance.bzl", "gnu_autoconf_conformance_test")
+
+autoconf_package_info(
+    name = "package",
+    package_name = "test_hdr_directives",
+    package_version = "1.0.0",
+)
+
+autoconf(
+    name = "autoconf",
+    checks = [
+        checks.AC_DEFINE("DEF1", 1),
+        checks.AC_DEFINE("EMPTY_DEF", None),
+        checks.AC_DEFINE("FN(a)", "((a) + 1)"),
+        checks.AC_DEFINE("TRAIL", 1),
+        checks.AC_DEFINE("TRAIL_WS", 1),
+        checks.AC_DEFINE("TAB_DEF", 1),
+        checks.AC_DEFINE("PAREN_DEF", 1),
+        checks.AC_DEFINE("CONT", 1),
+        checks.AC_DEFINE("EOF_DEF", 1),
+        checks.AC_DEFINE("CRLF_DEF", 1),
+        checks.AC_DEFINE("CRLF_WS_DEF", 1),
+        checks.AC_CHECK_HEADER(
+            "nonexistent_header_abc.h",
+            define = "HAVE_NONEXISTENT_HEADER_ABC_H",
+        ),
+    ],
+    deps = [":package"],
+)
+
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    template = "config.h.in",
+    deps = [":autoconf"],
+)
+
+gnu_autoconf_conformance_test(
+    name = "gnu_autoconf_conformance_test",
+    bazel_config_h = ":config",
+    config_h_in = "config.h.in",
+    configure_ac = "configure.ac",
+)
+
+# Line terminators a checked-in file cannot hold reliably: CRLF lines and a
+# directive with no final newline.
+write_file(
+    name = "edge_config_h_in",
+    out = "edge/config.h.in",
+    content = [
+        "#undef CRLF_DEF\r",
+        "#undef CRLF_WS_DEF \r",
+        "#undef EOF_DEF",
+    ],
+    newline = "unix",
+)
+
+autoconf_hdr(
+    name = "edge_config",
+    out = "edge_config.h",
+    template = ":edge_config_h_in",
+    deps = [":autoconf"],
+)
+
+gnu_autoconf_conformance_test(
+    name = "edge_gnu_autoconf_conformance_test",
+    bazel_config_h = ":edge_config",
+    config_h_in = ":edge_config_h_in",
+    configure_ac = "configure.ac",
+)
+
+write_file(
+    name = "unterminated_config_h_in",
+    out = "unterminated/config.h.in",
+    content = [
+        "#undef DEF1",
+        "/* last line, no newline */",
+    ],
+    newline = "unix",
+)
+
+autoconf_hdr(
+    name = "unterminated_config",
+    out = "unterminated_config.h",
+    template = ":unterminated_config_h_in",
+    deps = [":autoconf"],
+)
+
+gnu_autoconf_conformance_test(
+    name = "unterminated_gnu_autoconf_conformance_test",
+    bazel_config_h = ":unterminated_config",
+    config_h_in = ":unterminated_config_h_in",
+    configure_ac = "configure.ac",
+)
+
+# Inserted content is rewritten as if it were in the template; a directive a
+# substitution writes is kept as written, even over a result.
+autoconf_hdr(
+    name = "inline_config",
+    out = "inline_config.h",
+    inlines = {"/* fallback */": ":inline_fallback.h.in"},
+    substitutions = {"#  define SUBST_DEF1 0": "#  define DEF1 0"},
+    template = "inline_config.h.in",
+    deps = [":autoconf"],
+)
+
+diff_test(
+    name = "inline_diff_test",
+    file1 = "golden_inline_config.h.in",
+    file2 = ":inline_config",
+)
+
+# Modes other than `defines`: `subst` only comments out the `#undef`s of known
+# defines, and `all` rewrites directives alongside `@VAR@` substitution.
+autoconf_hdr(
+    name = "subst_config",
+    out = "subst_config.h",
+    mode = "subst",
+    template = "modes.h.in",
+    deps = [":autoconf"],
+)
+
+diff_test(
+    name = "subst_diff_test",
+    file1 = "golden_subst_config.h.in",
+    file2 = ":subst_config",
+)
+
+autoconf_hdr(
+    name = "all_config",
+    out = "all_config.h",
+    mode = "all",
+    template = "modes.h.in",
+    deps = [":autoconf"],
+)
+
+diff_test(
+    name = "all_diff_test",
+    file1 = "golden_all_config.h.in",
+    file2 = ":all_config",
+)
