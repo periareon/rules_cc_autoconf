@@ -1326,14 +1326,30 @@ autoconf(
             "listxattr",
             define = "HAVE_LISTXATTR",
         ),
-        # M4: FILE_HAS_ACL_LIB depends on smack/selinux/LIB_ACL.
-        # In Bazel, no library search — always empty.
-        checks.AC_SUBST("FILE_HAS_ACL_LIB", ""),
+        # M4: FILE_HAS_ACL_LIB is LIB_SELINUX with <linux/xattr.h>, listxattr
+        # and USE_SELINUX_SELINUX_H, else LIB_ACL, which the port does not
+        # search for.  The smack branch is not ported.  gl_LIBSELINUX's search
+        # is repeated under its own name: a result carries one subst.
+        checks.AC_SEARCH_LIBS(
+            "getfilecon_raw",
+            [
+                "android-selinux",
+                "selinux",
+            ],
+            name = "gl_cv_file_has_acl_lib_selinux",
+            requires = [
+                "HAVE_LINUX_XATTR_H",
+                "HAVE_LISTXATTR",
+                "USE_SELINUX_SELINUX_H",
+            ],
+            subst = "FILE_HAS_ACL_LIB",
+        ),
     ],
     visibility = ["//visibility:private"],
     deps = [
         ":gnulib/m4/acl/gl_FUNC_ACL",
         ":gnulib/m4/acl/gl_FUNC_ACL_ARG",
+        ":gnulib/m4/selinux-selinux-h/gl_CHECK_HEADER_SELINUX_SELINUX_H",
     ],
 )
 
@@ -27745,12 +27761,13 @@ autoconf(
     name = "gnulib/m4/selinux-context-h/selinux-context-h",
     checks = [
         # GL_GENERATE_SELINUX_CONTEXT_H (gl_CONDITIONAL_HEADER): the replacement header is generated
-        # unless <selinux/context.h> exists (and --with-selinux is not "no", which the
-        # port assumes: the option is the project's).  The probe carries no
-        # define: the port leaves HAVE_* for the headers to the project.
+        # unless <selinux/context.h> exists and with_selinux is not "no".  The option is not
+        # ported; its default, maybe, becomes "no" when gl_LIBSELINUX finds no library.
+        # The probe carries no define: the port leaves HAVE_* for the headers to the project.
         checks.AC_CHECK_HEADER(
             "selinux/context.h",
             name = "ac_cv_header_selinux_context_h",
+            requires = ["ac_cv_search_getfilecon_raw"],
         ),
         checks.M4_VARIABLE(
             "GL_GENERATE_SELINUX_CONTEXT_H",
@@ -27758,12 +27775,12 @@ autoconf(
             if_false = "true",
             if_true = "false",
         ),
-        # gl_HEADERS_SELINUX_CONTEXT_H checks for selinux/context.h header
-        # On macOS, SELinux is not available, so the header check would fail
-        # But the golden file only shows basic header defines
     ],
     visibility = ["//visibility:private"],
-    deps = ["//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT"],
+    deps = [
+        ":gnulib/m4/selinux-selinux-h/gl_LIBSELINUX",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )
 
 # //gnulib/m4/selinux-label-h:selinux-label-h
@@ -27771,12 +27788,13 @@ autoconf(
     name = "gnulib/m4/selinux-label-h/selinux-label-h",
     checks = [
         # GL_GENERATE_SELINUX_LABEL_H (gl_CONDITIONAL_HEADER): the replacement header is generated
-        # unless <selinux/label.h> exists (and --with-selinux is not "no", which the
-        # port assumes: the option is the project's).  The probe carries no
-        # define: the port leaves HAVE_* for the headers to the project.
+        # unless <selinux/label.h> exists and with_selinux is not "no".  The option is not
+        # ported; its default, maybe, becomes "no" when gl_LIBSELINUX finds no library.
+        # The probe carries no define: the port leaves HAVE_* for the headers to the project.
         checks.AC_CHECK_HEADER(
             "selinux/label.h",
             name = "ac_cv_header_selinux_label_h",
+            requires = ["ac_cv_search_getfilecon_raw"],
         ),
         checks.M4_VARIABLE(
             "GL_GENERATE_SELINUX_LABEL_H",
@@ -27784,12 +27802,12 @@ autoconf(
             if_false = "true",
             if_true = "false",
         ),
-        # gl_HEADERS_SELINUX_LABEL_H checks for selinux/label.h header
-        # On macOS, SELinux is not available, so the header check would fail
-        # But the golden file only shows basic header defines
     ],
     visibility = ["//visibility:private"],
-    deps = ["//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT"],
+    deps = [
+        ":gnulib/m4/selinux-selinux-h/gl_LIBSELINUX",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )
 
 # //gnulib/m4/selinux-selinux-h:gl_CHECK_HEADER_SELINUX_SELINUX_H
@@ -27799,14 +27817,13 @@ autoconf(
         checks.AC_CHECK_HEADER(
             "selinux/selinux.h",
             define = "HAVE_SELINUX_SELINUX_H",
-            # AC_SUBST too so downstream modules (e.g. gl_HEADERS_SELINUX_SELINUX_H's
-            # condition = "HAVE_SELINUX_SELINUX_H") can resolve via subst lookup,
-            # matching upstream's AC_CHECK_HEADERS_ONCE behavior.
-            subst = "HAVE_SELINUX_SELINUX_H",
         ),
+        # AC_CHECK_HEADERS_ONCE probes the header regardless of with_selinux;
+        # USE_SELINUX_SELINUX_H also needs the library, as with_selinux=maybe
+        # becomes "no" when the search fails.
         checks.AC_DEFINE(
             "USE_SELINUX_SELINUX_H",
-            condition = "HAVE_SELINUX_SELINUX_H",
+            condition = "ac_cv_search_getfilecon_raw && HAVE_SELINUX_SELINUX_H",
             if_false = "0",
             if_true = "1",
             subst = True,
@@ -27825,7 +27842,7 @@ autoconf(
     name = "gnulib/m4/selinux-selinux-h/gl_HEADERS_SELINUX_SELINUX_H",
     checks = gl_macros.GL_NEXT_HEADERS(
         ["selinux/selinux.h"],
-        condition = "HAVE_SELINUX_SELINUX_H",
+        condition = "USE_SELINUX_SELINUX_H",
     ),
     visibility = ["//visibility:private"],
     deps = [":gnulib/m4/selinux-selinux-h/gl_CHECK_HEADER_SELINUX_SELINUX_H"],
@@ -27834,6 +27851,16 @@ autoconf(
 # //gnulib/m4/selinux-selinux-h:gl_LIBSELINUX
 autoconf(
     name = "gnulib/m4/selinux-selinux-h/gl_LIBSELINUX",
+    checks = [
+        checks.AC_SEARCH_LIBS(
+            "getfilecon_raw",
+            [
+                "android-selinux",
+                "selinux",
+            ],
+            subst = "LIB_SELINUX",
+        ),
+    ],
     visibility = ["//visibility:private"],
 )
 
