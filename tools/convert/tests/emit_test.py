@@ -180,10 +180,10 @@ def test_omit_replaced() -> None:
     package.after.append(Rule("cc_binary", "bar", {"srcs": ["bar.c"], "deps": [":foo"]}))
     package.after.append(Raw('genrule(\n    name = "gen_h",\n    outs = ["gen.h"],\n    cmd = "touch $@",\n)'))
     hand = textwrap.dedent("""\
-        load(":autoconf.bzl", "autoconf_targets")
+        load(":autoconf.bzl", "configure")
         load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
-        autoconf_targets()
+        configure()
 
         cc_library(
             name = "foo",
@@ -239,7 +239,7 @@ def test_omit_replaced_keeps_no_warnings_behind_copts() -> None:
     package.before.append(no_warnings_statement())
     package.after.append(Rule("cc_binary", "prog", {"srcs": ["prog.c"], "copts": Raw(NO_WARNINGS)}))
     hand = (
-        'load(":autoconf.bzl", "NO_WARNINGS", "autoconf_targets")\n\nautoconf_targets()\n\n'
+        'load(":autoconf.bzl", "NO_WARNINGS", "configure")\n\nconfigure()\n\n'
         'cc_binary(\n    name = "prog",\n    srcs = ["prog.c"],\n    copts = NO_WARNINGS,\n)\n'
     )
     emit.omit_replaced(package, {"prog"}, hand)

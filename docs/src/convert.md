@@ -146,9 +146,11 @@ when it runs from elsewhere.
 
 In project mode every package the conversion writes to has two files.
 `autoconf.bzl` is generated: the package's targets are the body of one
-macro, `autoconf_targets()`, the constants several rules share stand at the
-top level, and `visibility("private")` keeps the file loadable from its own
-package alone. The converter writes it whole on every run, formatted twice,
+macro, `configure()`, named as the script it stands for, the constants several
+rules share stand at the top level, and `visibility("private")` keeps the file
+loadable from its own package alone. A `BUILD.bazel` that still calls the
+macro by its former name, `autoconf_targets()`, keeps working: the generated
+file aliases it and the report asks for the switch. The converter writes it whole on every run, formatted twice,
 as a BUILD file first (where buildifier expands every rule call and sorts
 the lists it sorts) and then as the `.bzl` file the statements move into, so
 it reads like a BUILD file. `BUILD.bazel` is hand-written: the converter
@@ -507,7 +509,7 @@ own concern from there; the converter's part is the same regeneration
 command, with the tree as both input and output. A source tree that ships
 its own `BUILD.bazel` files keeps them: the converter writes `autoconf.bzl`
 beside each, and the report names the BUILD files that do not call
-`autoconf_targets()` yet.
+`configure()` yet.
 
 ## Keeping the converter current
 

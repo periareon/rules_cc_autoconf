@@ -625,12 +625,28 @@ def _write_build(build: Path, package: Package, *, repo: str, in_repo: bool, bui
     )
 
 
-def _write_targets(directory: Path, package: Package, *, buildifier: str | None, replaced: list[str]) -> Path:
+def _write_targets(
+    directory: Path,
+    package: Package,
+    *,
+    buildifier: str | None,
+    replaced: list[str],
+    hand_text: str = "",
+    report_lines: list[str] | None = None,
+) -> Path:
     """Project mode: the package's generated targets as `autoconf.bzl`, formatted twice: as a
     BUILD file first, where buildifier expands every rule call and sorts the lists it sorts,
-    then as the .bzl file the statements move into."""
+    then as the .bzl file the statements move into.  A hand-written BUILD.bazel (`hand_text`)
+    that still calls the macro by its former name gets an alias, and the report says so."""
+    former = re.search(rf"^{bzl.FORMER_MACRO}\(", hand_text, re.MULTILINE) is not None
+    if former and report_lines is not None:
+        shown = f"{package.path}/" if package.path else ""
+        report_lines.append(
+            f"- `{shown}{bzl.BUILD_NAME}` calls `{bzl.FORMER_MACRO}()`, the macro's former name: "
+            f"`{bzl.BZL_NAME}` keeps it as an alias of `{bzl.MACRO}()`; switch the load and the call to `{bzl.MACRO}`"
+        )
     text = _format(buildifier, emit.render_package(package, repo=bzl.RULES_REPO, in_repo=False), "build")
-    text = _format(buildifier, bzl.to_bzl(text, replaced=replaced), "bzl")
+    text = _format(buildifier, bzl.to_bzl(text, replaced=replaced, former_alias=former), "bzl")
     path = directory / bzl.BZL_NAME
     path.write_text(text, encoding="utf-8", newline="\n")
     return path
@@ -655,7 +671,7 @@ def _place_hand_builds(root: Path, packages: list[str], report_lines: list[str],
         elif not build.is_file():
             build.write_text(_format(buildifier, bzl.build_file(), "build"), encoding="utf-8", newline="\n")
             written.append(build)
-        elif not re.search(rf"^{bzl.MACRO}\(", build.read_text(encoding="utf-8"), re.MULTILINE):
+        elif not bzl.MACRO_CALL_RE.search(build.read_text(encoding="utf-8")):
             missing.append(f"{package_path}/{bzl.BUILD_NAME}" if package_path else bzl.BUILD_NAME)
     if moved:
         report_lines += [
@@ -1053,7 +1069,14 @@ def _convert_project(
             _write_build(build, result.package, repo="@rules_cc_autoconf", in_repo=False, buildifier=buildifier)
         else:
             replaced = _omit_replaced(result.package, root_hand, report_lines)
-            _write_targets(staging, result.package, buildifier=buildifier, replaced=replaced)
+            _write_targets(
+                staging,
+                result.package,
+                buildifier=buildifier,
+                replaced=replaced,
+                hand_text=root_hand.text,
+                report_lines=report_lines,
+            )
         (staging / "MODULE.bazel").write_text(result.module_bazel, encoding="utf-8", newline="\n")
         _write_extra_files(staging, result.extra_files)
         if result.notes:
@@ -1268,7 +1291,16 @@ def _convert_subprojects(
             if not args.annotate:
                 emit.strip_annotations(result.package)
             replaced = _omit_replaced(result.package, hand_package, report_lines)
-            written.append(_write_targets(directory, result.package, buildifier=buildifier, replaced=replaced))
+            written.append(
+                _write_targets(
+                    directory,
+                    result.package,
+                    buildifier=buildifier,
+                    replaced=replaced,
+                    hand_text=hand_package.text,
+                    report_lines=report_lines,
+                )
+            )
             written += _write_extra_files(directory, result.extra_files)
             report_lines += ["", f"## {package_path} ({result.name} {result.version or ''})".rstrip(" ()"), ""]
             report_lines += [f"- {n}" for n in result.notes] or ["- no notes"]
