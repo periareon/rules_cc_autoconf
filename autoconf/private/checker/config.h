@@ -28,6 +28,12 @@ struct Config {
     /** C++ compiler flags */
     std::vector<std::string> cpp_flags{};
 
+    /** The target's copts and conlyopts, unfiltered */
+    std::vector<std::string> c_target_flags{};
+
+    /** The target's copts and cxxopts, unfiltered */
+    std::vector<std::string> cpp_target_flags{};
+
     /** C linker flags */
     std::vector<std::string> c_link_flags{};
 

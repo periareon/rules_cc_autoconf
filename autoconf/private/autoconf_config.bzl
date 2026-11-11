@@ -353,6 +353,8 @@ def get_cc_toolchain_info(ctx):
             - linker_path: Path to linker
             - c_flags: List of C compiler flags
             - cpp_flags: List of C++ compiler flags
+            - c_target_flags: The target's copts and conlyopts
+            - cpp_target_flags: The target's copts and cxxopts
             - c_link_flags: List of C linker flags
             - cpp_link_flags: List of C++ linker flags
             - compiler_type: The compiler type
@@ -381,17 +383,15 @@ def get_cc_toolchain_info(ctx):
         action_name = ACTION_NAMES.cpp_link_executable,
     )
 
-    # The command line's --copt / --conlyopt / --cxxopt, then the target's own
-    # copts / conlyopts / cxxopts, as on a cc_library: for its checks only,
-    # before a check's own copts.  `--conlyopt=-std=c11` is how a build sets
-    # its C standard without touching C++, so it must reach every C probe.
+    # The command line's --copt / --conlyopt / --cxxopt.  `--conlyopt=-std=c11`
+    # is how a build sets its C standard without touching C++, so it must reach
+    # every C probe.  The target's own copts / conlyopts / cxxopts are kept
+    # apart, out of the checker's -Werror filter.
     copts = getattr(ctx.attr, "copts", [])
-    conlyopts = getattr(ctx.attr, "conlyopts", [])
-    cxxopts = getattr(ctx.attr, "cxxopts", [])
     c_compile_variables = cc_common.create_compile_variables(
         feature_configuration = feature_configuration,
         cc_toolchain = cc_toolchain,
-        user_compile_flags = ctx.fragments.cpp.copts + ctx.fragments.cpp.conlyopts + copts + conlyopts + [_COPTS_MARKER],
+        user_compile_flags = ctx.fragments.cpp.copts + ctx.fragments.cpp.conlyopts + [_COPTS_MARKER],
     )
 
     c_flags = cc_common.get_memory_inefficient_command_line(
@@ -403,7 +403,7 @@ def get_cc_toolchain_info(ctx):
     cpp_compile_variables = cc_common.create_compile_variables(
         feature_configuration = feature_configuration,
         cc_toolchain = cc_toolchain,
-        user_compile_flags = ctx.fragments.cpp.copts + ctx.fragments.cpp.cxxopts + copts + cxxopts + [_COPTS_MARKER],
+        user_compile_flags = ctx.fragments.cpp.copts + ctx.fragments.cpp.cxxopts + [_COPTS_MARKER],
     )
 
     cpp_flags = cc_common.get_memory_inefficient_command_line(
@@ -440,6 +440,8 @@ def get_cc_toolchain_info(ctx):
         linker_path = linker_path,
         c_flags = c_flags,
         cpp_flags = cpp_flags,
+        c_target_flags = copts + getattr(ctx.attr, "conlyopts", []),
+        cpp_target_flags = copts + getattr(ctx.attr, "cxxopts", []),
         c_link_flags = c_link_flags,
         cpp_link_flags = cpp_link_flags,
         compiler_type = cc_toolchain.compiler,
@@ -574,12 +576,36 @@ def create_config_dict(toolchain_info):
         "c_compiler": toolchain_info.c_compiler_path,
         "c_flags": toolchain_info.c_flags,
         "c_link_flags": toolchain_info.c_link_flags,
+        "c_target_flags": toolchain_info.c_target_flags,
         "compiler_type": toolchain_info.compiler_type,
         "cpp_compiler": toolchain_info.cpp_compiler_path,
         "cpp_flags": toolchain_info.cpp_flags,
         "cpp_link_flags": toolchain_info.cpp_link_flags,
+        "cpp_target_flags": toolchain_info.cpp_target_flags,
         "linker": toolchain_info.linker_path,
     }
+
+def _mapped_config(item):
+    """Returns the config as JSON, with the bin directory replaced by its mapped path.
+
+    `item.witness` is the config file itself. Under path mapping its path is mapped, so
+    removing `item.tail` from it gives the mapped bin directory.
+
+    Args:
+        item (struct): `config`, `bin_dir`, `witness` and `tail` from `write_config_json`.
+
+    Returns:
+        str: The config JSON.
+    """
+    path = item.witness.path
+    mapped_bin = path[:len(path) - len(item.tail) - 1]
+    config = {}
+    for key, value in item.config.items():
+        if type(value) == "list":
+            config[key] = [flag.replace(item.bin_dir, mapped_bin) for flag in value]
+        else:
+            config[key] = value.replace(item.bin_dir, mapped_bin)
+    return json.encode_indent(config, indent = " " * 4)
 
 def write_config_json(ctx, config_dict):
     """Write a config dictionary to a JSON file.
@@ -592,10 +618,19 @@ def write_config_json(ctx, config_dict):
         A File representing the config JSON file.
     """
     config_json = ctx.actions.declare_file("{}.ac.json".format(ctx.label.name))
+    bin_dir = ctx.bin_dir.path
+    content = ctx.actions.args()
+    content.set_param_file_format("multiline")
+    content.add_all([struct(
+        config = config_dict,
+        bin_dir = bin_dir,
+        witness = config_json,
+        tail = config_json.path[len(bin_dir) + 1:],
+    )], map_each = _mapped_config)
     write(
         actions = ctx.actions,
         output = config_json,
-        content = json.encode_indent(config_dict, indent = " " * 4) + "\n",
+        content = content,
     )
     return config_json
 

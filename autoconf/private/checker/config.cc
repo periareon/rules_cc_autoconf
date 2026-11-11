@@ -4,6 +4,7 @@
 #include <fstream>
 #include <set>
 #include <sstream>
+#include <utility>
 
 #include "autoconf/private/checker/check.h"
 #include "autoconf/private/common/file_util.h"
@@ -65,6 +66,22 @@ std::unique_ptr<Config> Config::from_file(
     for (const nlohmann::json& flag : doc["cpp_flags"]) {
         if (flag.is_string()) {
             config->cpp_flags.push_back(flag.get<std::string>());
+        }
+    }
+
+    // Optional: the target's own flags.
+    for (const auto& [field, flags] :
+         {std::pair{"c_target_flags", &config->c_target_flags},
+          std::pair{"cpp_target_flags", &config->cpp_target_flags}}) {
+        if (!doc.contains(field)) continue;
+        if (!doc[field].is_array()) {
+            throw std::runtime_error(std::string("Invalid '") + field +
+                                     "' field: must be an array");
+        }
+        for (const nlohmann::json& flag : doc[field]) {
+            if (flag.is_string()) {
+                flags->push_back(flag.get<std::string>());
+            }
         }
     }
 

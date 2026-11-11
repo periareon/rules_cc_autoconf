@@ -325,7 +325,10 @@ std::vector<std::string> CheckRunner::get_compiler_and_flags(
     std::vector<std::string> cmd{compiler};
     auto filtered =
         filter_error_flags(cpp ? config_.cpp_flags : config_.c_flags);
-    auto processed = replace_marker(filtered, kCoptsMarker, extra_copts);
+    std::vector<std::string> copts =
+        cpp ? config_.cpp_target_flags : config_.c_target_flags;
+    copts.insert(copts.end(), extra_copts.begin(), extra_copts.end());
+    auto processed = replace_marker(filtered, kCoptsMarker, copts);
     cmd.insert(cmd.end(), processed.begin(), processed.end());
     if (is_msvc_like(config_.compiler_type)) {
         // Probes must see the real library symbol, not a compiler builtin.
