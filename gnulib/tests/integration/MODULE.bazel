@@ -65,7 +65,12 @@ bazel_dep(name = "zziplib", version = "0.13.72.bcr.1")
 # toolchains on its own, so without a config the default toolchain is used.
 
 # hermeticbuild/hermetic-llvm
-bazel_dep(name = "llvm", version = "0.8.26")
+# 0.8.26 enables shared cc_library outputs (hermeticbuild/hermetic-llvm#865); on
+# macOS a cc_library dylib is then linked without its deps' symbols and ld64.lld
+# rejects it (readline against ncurses, libzip and teckit against zlib, libheif
+# against libde265, xpdf against its own goo library). Hold 0.8.24 until that is
+# tolerated the way Bazel's own Apple toolchain does (-undefined dynamic_lookup).
+bazel_dep(name = "llvm", version = "0.8.24")
 
 # hermetic-llvm trims the macOS SDK to a handful of frameworks. gnulib's
 # INTL_MACOSX_LIBS links CoreServices as well ("framework not found for
@@ -117,6 +122,12 @@ single_version_override(
 )
 
 single_version_override(
+    module_name = "libzip",
+    patch_strip = 1,
+    patches = ["//patches:libzip.patch"],
+)
+
+single_version_override(
     module_name = "iverilog",
     patch_strip = 1,
     patches = ["//patches:iverilog.patch"],
@@ -132,4 +143,14 @@ single_version_override(
     module_name = "wget2",
     patch_strip = 1,
     patches = ["//patches:wget2.patch"],
+)
+
+# openssl: the graph resolves to 3.5.8.bcr.0, whose configs/BUILD.bazel only
+# recognises msvc-cl, clang-cl and mingw-gcc on Windows; plain clang targeting
+# MinGW (the hermetic_llvm config) fell through to an empty perlasm flavour and
+# the COFF assembler rejected the ELF-syntax .s files. The later registry
+# revisions of the same release treat clang like mingw-gcc there.
+single_version_override(
+    module_name = "openssl",
+    version = "3.5.8.bcr.3",
 )
