@@ -3893,9 +3893,11 @@ when it runs from elsewhere.</p>
 <h3 id="buildbazel-and-autoconfbzl"><a class="header" href="#buildbazel-and-autoconfbzl">BUILD.bazel and autoconf.bzl</a></h3>
 <p>In project mode every package the conversion writes to has two files.
 <code>autoconf.bzl</code> is generated: the package's targets are the body of one
-macro, <code>autoconf_targets()</code>, the constants several rules share stand at the
-top level, and <code>visibility("private")</code> keeps the file loadable from its own
-package alone. The converter writes it whole on every run, formatted twice,
+macro, <code>configure()</code>, named as the script it stands for, the constants several
+rules share stand at the top level, and <code>visibility("private")</code> keeps the file
+loadable from its own package alone. A <code>BUILD.bazel</code> that still calls the
+macro by its former name, <code>autoconf_targets()</code>, keeps working: the generated
+file aliases it and the report asks for the switch. The converter writes it whole on every run, formatted twice,
 as a BUILD file first (where buildifier expands every rule call and sorts
 the lists it sorts) and then as the <code>.bzl</code> file the statements move into, so
 it reads like a BUILD file. <code>BUILD.bazel</code> is hand-written: the converter
@@ -4212,7 +4214,7 @@ own concern from there; the converter's part is the same regeneration
 command, with the tree as both input and output. A source tree that ships
 its own <code>BUILD.bazel</code> files keeps them: the converter writes <code>autoconf.bzl</code>
 beside each, and the report names the BUILD files that do not call
-<code>autoconf_targets()</code> yet.</p>
+<code>configure()</code> yet.</p>
 <h2 id="keeping-the-converter-current"><a class="header" href="#keeping-the-converter-current">Keeping the converter current</a></h2>
 <ul>
 <li><code>tools/convert/index.toml</code> is a snapshot of the hand ports: which macro
