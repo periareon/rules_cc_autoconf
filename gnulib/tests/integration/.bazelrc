@@ -55,6 +55,10 @@ build --incompatible_config_setting_private_default_visibility
 # hermeticbuild/hermetic-llvm (`llvm` module)
 common:hermetic_llvm --extra_toolchains=@llvm//toolchain:all
 common:hermetic_llvm --//:toolchain=hermetic_llvm
+# openssl's pre-generated Windows assembly is MASM for every compiler. clang
+# targeting MinGW needs the perlasm mingw64 flavour, which only the Perl
+# generation path selects on @rules_cc//cc/compiler.
+common:hermetic_llvm --@openssl//:use-pregenerated=false
 
 # bazel-contrib/toolchains_llvm
 common:toolchains_llvm --extra_toolchains=@llvm_toolchain//:all
