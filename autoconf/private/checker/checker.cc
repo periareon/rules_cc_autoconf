@@ -161,10 +161,14 @@ int Checker::run_check_from_file(
     const std::filesystem::path& results_path,
     const std::vector<DepMapping>& dep_mappings,
     const std::vector<std::string>& cc_flags,
-    const std::vector<std::string>& link_libraries) {
+    const std::vector<std::string>& link_libraries,
+    const std::vector<std::pair<std::string, std::string>>& bin_dir_mappings) {
     try {
         // Load config for compiler info only
         std::unique_ptr<Config> config = Config::from_file(config_path);
+        for (const auto& [from, to] : bin_dir_mappings) {
+            config->map_bin_dir(from, to);
+        }
         // The target's cc_deps arrive on the command line, not in the config:
         // their paths are action inputs that Bazel's path mapping rewrites
         // (--experimental_output_paths=strip), which a file written at

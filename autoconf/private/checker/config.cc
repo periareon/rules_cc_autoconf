@@ -136,4 +136,22 @@ std::unique_ptr<Config> Config::from_file(
     return config;
 }
 
+void Config::map_bin_dir(const std::string& from, const std::string& to) {
+    if (from.empty() || from == to) return;
+    auto map = [&](std::string& value) {
+        for (size_t pos = value.find(from); pos != std::string::npos;
+             pos = value.find(from, pos + to.size())) {
+            value.replace(pos, from.size(), to);
+        }
+    };
+    for (std::string* value : {&c_compiler, &cpp_compiler, &linker}) {
+        map(*value);
+    }
+    for (std::vector<std::string>* values :
+         {&c_flags, &cpp_flags, &c_target_flags, &cpp_target_flags,
+          &c_link_flags, &cpp_link_flags, &link_libraries}) {
+        for (std::string& value : *values) map(value);
+    }
+}
+
 }  // namespace rules_cc_autoconf
