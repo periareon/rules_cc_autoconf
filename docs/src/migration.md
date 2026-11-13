@@ -93,7 +93,7 @@ Holds literal values that a check may override: gnulib's `*_H_DEFAULTS` (`HAVE_F
 
 ### 2. `autoconf_hdr` Rule
 Takes check results from `autoconf` targets and generates header files by processing templates. Supports two modes:
-- `mode = "defines"` — For `config.h` files (processes `#undef` directives)
+- `mode = "defines"` — For `config.h` files. As in config.status, a `#define` or `#undef` line for a name the checks define becomes that definition; for any other name an `#undef` line is commented out and a `#define` line is kept
 - `mode = "subst"` — For substitution files (processes `@VAR@` placeholders)
 
 ### 3. `autoconf_package_info` Rule

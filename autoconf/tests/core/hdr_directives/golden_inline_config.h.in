@@ -1,0 +1,8 @@
+#define DEF1 1
+#ifndef DEF1
+# define DEF1 1
+#endif
+
+#ifndef DEF1
+#  define DEF1 0
+#endif

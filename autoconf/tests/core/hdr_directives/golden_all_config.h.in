@@ -1,0 +1,6 @@
+#define DEF1 1
+#ifndef DEF1
+# define DEF1 1
+#endif
+/* #undef UNCONFIGURED_UNDEF */
+#define NAME "test_hdr_directives"
