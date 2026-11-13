@@ -1,0 +1,14 @@
+AC_INIT([test_pthread-rwlock], [1.0])
+AC_CONFIG_HEADERS([config.h])
+AC_CANONICAL_HOST
+
+# The wait queue test is timing dependent; take its cross-compile guess.
+case "$host_os" in
+  linux*-gnu*) gl_cv_func_pthread_rwlock_good_waitqueue="guessing no" ;;
+esac
+
+# Invoke macros from pthread-rwlock.m4
+gl_PTHREAD_RWLOCK
+
+AC_CONFIG_FILES([subst.h:subst.h.in])
+AC_OUTPUT

@@ -13248,6 +13248,7 @@ deps = [
     "gnulib/m4/pthread_h",
 ]
 cache = [
+    "_gl_host_os_linux_gnu",
     "ac_cv_have_decl_pthread_rwlock_timedrdlock",
 ]
 probes = { HAVE_DECL_PTHREAD_RWLOCK_TIMEDRDLOCK = "ac_cv_have_decl_pthread_rwlock_timedrdlock" }
