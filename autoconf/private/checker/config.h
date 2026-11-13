@@ -62,6 +62,15 @@ struct Config {
      */
     static std::unique_ptr<Config> from_file(
         const std::filesystem::path& config_path);
+
+    /**
+     * @brief Replace every occurrence of `from` with `to` in the compiler,
+     * linker and flag paths.
+     *
+     * Maps the bin directory the config file was written with to the one the
+     * checker action sees under path mapping.
+     */
+    void map_bin_dir(const std::string& from, const std::string& to);
 };
 
 /**

@@ -7,6 +7,7 @@
 #include <iostream>
 #include <optional>
 #include <sstream>
+#include <utility>
 #include <vector>
 
 #include "autoconf/private/checker/checker.h"
@@ -41,6 +42,10 @@ struct CheckerArgs {
      * each probe */
     std::vector<std::string> link_libraries{};
 
+    /** Optional: bin directories in the config file and their path-mapped
+     * spellings */
+    std::vector<std::pair<std::string, std::string>> bin_dir_mappings{};
+
     /** Whether to show help */
     bool show_help = false;
 };
@@ -58,6 +63,9 @@ void print_usage(const char* program_name) {
     std::cout
         << "  --link-library <path>  Archive or link flag of the target's "
            "cc_deps, linked after each probe (repeatable)\n";
+    std::cout << "  --map-bin-dir <from>=<to>\n"
+                 "                         Bin directory in the config file "
+                 "and its path-mapped spelling (repeatable)\n";
     std::cout << "  --results <file>       Path to JSON results file to write "
                  "(required)\n";
     std::cout << "  --dep <name>=<file>    Mapping of lookup name to result "
@@ -150,6 +158,17 @@ std::optional<CheckerArgs> parse_args(int argc, char* argv[]) {
             }
             (arg == "--cc-flag" ? args.cc_flags : args.link_libraries)
                 .push_back(std::string(expanded_argv_ptr[++i]));
+        } else if (arg == "--map-bin-dir") {
+            std::string value =
+                i + 1 < expanded_argc ? expanded_argv_ptr[++i] : "";
+            size_t eq_pos = value.find('=');
+            if (eq_pos == std::string::npos || eq_pos == 0) {
+                std::cerr << "Error: --map-bin-dir requires from=to format"
+                          << std::endl;
+                return std::nullopt;
+            }
+            args.bin_dir_mappings.emplace_back(value.substr(0, eq_pos),
+                                               value.substr(eq_pos + 1));
         } else {
             std::cerr << "Error: Unknown argument: " << arg << std::endl;
             return std::nullopt;
@@ -199,7 +218,8 @@ int main(int argc, char* argv[]) {
     if (!args.check_path.empty()) {
         return Checker::run_check_from_file(
             args.check_path, args.config_path, args.results_path,
-            args.dep_mappings, args.cc_flags, args.link_libraries);
+            args.dep_mappings, args.cc_flags, args.link_libraries,
+            args.bin_dir_mappings);
     }
 
     // --check is required
