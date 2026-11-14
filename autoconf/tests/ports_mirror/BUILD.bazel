@@ -19757,9 +19757,12 @@ autoconf(
         ),
 
         # AC_CHECK_DECLS_ONCE([memmem]) defines HAVE_DECL_MEMMEM to 1 or 0.
+        # The declaration needs _GNU_SOURCE before glibc 2.38 (memmem.m4
+        # requires AC_USE_SYSTEM_EXTENSIONS).
         checks.AC_CHECK_DECL(
             "memmem",
             name = "ac_cv_have_decl_memmem",
+            compile_defines = ["_GNU_SOURCE"],
             includes = ["#include <string.h>"],
         ),
         checks.AC_DEFINE(
@@ -21765,32 +21768,24 @@ autoconf(
             "obstack_printf",
             define = "HAVE_OBSTACK_PRINTF",
         ),
-        # gl_DECL_OBSTACK_PRINTF checks for obstack_printf declaration
+        # gl_REPLACE_OBSTACK_PRINTF: glibc's obstack_printf does not work
+        # with gnulib's struct obstack.
+        checks.AC_SUBST(
+            "REPLACE_OBSTACK_PRINTF",
+            condition = "ac_cv_func_obstack_printf && (HAVE_OBSTACK==0 || REPLACE_OBSTACK==1)",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # gl_DECL_OBSTACK_PRINTF.  The declaration needs _GNU_SOURCE on glibc
+        # (the m4 requires AC_USE_SYSTEM_EXTENSIONS).
         checks.AC_CHECK_DECL(
             "obstack_printf",
-            name = "_gl_cv_have_decl_obstack_printf",
+            compile_defines = ["_GNU_SOURCE"],
+            define = "HAVE_DECL_OBSTACK_PRINTF",
             includes = ["#include <stdio.h>"],
+            subst = True,
         ),
-    ] + select({
-        # On Linux: obstack_printf is declared in stdio.h (glibc)
-        "@platforms//os:linux": [
-            checks.AC_DEFINE(
-                "HAVE_DECL_OBSTACK_PRINTF",
-                "1",
-                subst = True,
-            ),
-            checks.AC_SUBST("REPLACE_OBSTACK_PRINTF", "1"),
-        ],
-        # On macOS: obstack_printf is not declared
-        "//conditions:default": [
-            checks.AC_DEFINE(
-                "HAVE_DECL_OBSTACK_PRINTF",
-                "0",
-                subst = True,
-            ),
-            checks.AC_SUBST("REPLACE_OBSTACK_PRINTF", "0"),
-        ],
-    }),
+    ],
     default_deps = [":gnulib/m4/stdio_h/defaults"],
     visibility = ["//visibility:private"],
     deps = [
@@ -30935,23 +30930,25 @@ int main(void) { return 0; }
 
         # Use subst=True to create both subst variables and config.h defines
         # The original m4 sets HAVE_DECL_*=0 if not found, otherwise uses default (1)
+        # gnulib-tool enables the system extensions first (stdio-h depends on
+        # extensions), so the declarations are probed with _GNU_SOURCE.
         checks.AC_CHECK_DECL(
             "fcloseall",
+            compile_defines = ["_GNU_SOURCE"],
             define = "HAVE_DECL_FCLOSEALL",
             includes = ["#include <stdio.h>"],
             subst = True,
-            # Note: stdio_h itself needs HAVE_DECL_FCLOSEALL=0 when not found (for its test)
-            # But modules that depend on stdio_h transitively shouldn't have it at all
-            # This is handled by making vasnprintf check for _snprintf directly instead of depending on stdio_h
         ),
         checks.AC_CHECK_DECL(
             "getw",
+            compile_defines = ["_GNU_SOURCE"],
             define = "HAVE_DECL_GETW",
             includes = ["#include <stdio.h>"],
             subst = True,
         ),
         checks.AC_CHECK_DECL(
             "putw",
+            compile_defines = ["_GNU_SOURCE"],
             define = "HAVE_DECL_PUTW",
             includes = ["#include <stdio.h>"],
             subst = True,
@@ -30984,6 +30981,7 @@ int main(void) { return 0; }
     default_deps = [":gnulib/m4/stdio_h/defaults"],
     visibility = ["//visibility:private"],
     deps = [
+        ":gnulib/m4/extensions/extensions",
         ":gnulib/m4/include_next/include_next",
         ":gnulib/m4/sigpipe/gl_SIGNAL_SIGPIPE",
         ":gnulib/m4/stdio_h/gl_HAVE_DECL__SNPRINTF",
@@ -36677,6 +36675,7 @@ autoconf(
         ),
         checks.AC_CHECK_DECL(
             "execvpe",
+            compile_defines = ["_GNU_SOURCE"],
             define = "HAVE_DECL_EXECVPE",
             subst = "HAVE_DECL_EXECVPE",
         ),
