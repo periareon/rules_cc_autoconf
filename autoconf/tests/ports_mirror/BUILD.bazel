@@ -24365,14 +24365,38 @@ autoconf(
             ),
         ],
     }) + select({
-        # The upstream m4 runs AC_RUN_IFELSE for pthread_rwlock wait queue
-        # behavior on linux*-gnu* (m4 lines ~89-112). The cross-compile
-        # default is "guessing no" (bad waitqueue). On non-Linux the default
-        # is "guessing yes" (good), so no action needed.
+        # gl_cv_func_pthread_rwlock_good_waitqueue: on linux*-gnu* the m4 runs
+        # a timing test whose cross-compile guess is "guessing no"; elsewhere
+        # it guesses yes. config.guess names a Linux libc "gnu" by this test.
         "@platforms//os:linux": [
-            checks.AC_DEFINE("PTHREAD_RWLOCK_BAD_WAITQUEUE"),
-            checks.AC_SUBST("REPLACE_PTHREAD_RWLOCK_INIT", "1"),
-            checks.AC_SUBST("REPLACE_PTHREAD_RWLOCKATTR_INIT", "1"),
+            checks.AC_TRY_COMPILE(
+                name = "_gl_host_os_linux_gnu",
+                code = """#include <stdlib.h>
+#if defined __ANDROID__ || defined __UCLIBC__ || defined __dietlibc__ || !defined __GLIBC__
+  #error "not glibc"
+#endif
+int main(void) { return 0; }""",
+                language = "c",
+                requires = ["ac_cv_header_pthread_h"],
+            ),
+            checks.AC_DEFINE(
+                "PTHREAD_RWLOCK_BAD_WAITQUEUE",
+                condition = "_gl_host_os_linux_gnu",
+                if_false = None,
+                if_true = 1,
+            ),
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_RWLOCK_INIT",
+                condition = "_gl_host_os_linux_gnu",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_RWLOCKATTR_INIT",
+                condition = "_gl_host_os_linux_gnu",
+                if_false = "0",
+                if_true = "1",
+            ),
         ],
         "//conditions:default": [],
     }),
