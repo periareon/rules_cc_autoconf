@@ -585,54 +585,44 @@ def create_config_dict(toolchain_info):
         "linker": toolchain_info.linker_path,
     }
 
-def map_bin_dirs(value, output_root, mapped_bin):
-    """Replaces every `<output_root>/<configuration>/bin` in `value` with `mapped_bin`.
+def _bin_dir_mapping(item):
+    """The `--map-bin-dir` argument for a checker action, or None without path mapping.
 
-    Path mapping maps the bin directory of every configuration, including the exec
-    configuration that builds tools such as a linker wrapper, to the same directory.
-
-    Args:
-        value (str): A path or flag.
-        output_root (str): The output root, such as `bazel-out`.
-        mapped_bin (str): The mapped bin directory.
-
-    Returns:
-        str: `value` with each bin directory mapped.
-    """
-    parts = value.split(output_root + "/")
-    result = parts[0]
-    for part in parts[1:]:
-        _, sep, rest = part.partition("/")
-        if sep and (rest == "bin" or rest.startswith("bin/")):
-            result += mapped_bin + rest[len("bin"):]
-        else:
-            result += output_root + "/" + part
-    return result
-
-def _mapped_config(item):
-    """Returns the config as JSON, with bin directories replaced by the mapped path.
-
-    `item.witness` is the config file itself. Under path mapping its path is mapped, so
-    removing `item.tail` from it gives the mapped bin directory.
+    `item.witness` is the config file. In an action that path mapping rewrites, its path
+    is mapped, so removing `item.tail` from it gives the mapped bin directory.
 
     Args:
-        item (struct): `config`, `bin_dir`, `witness` and `tail` from `write_config_json`.
+        item (struct): `bin_dir`, `witness` and `tail` from `config_args`.
 
     Returns:
-        str: The config JSON.
+        list[str] | None: `["--map-bin-dir", "<bin dir>=<mapped bin dir>"]`, or None
+        when the action is not path mapped.
     """
     path = item.witness.path
     mapped_bin = path[:len(path) - len(item.tail) - 1]
     if mapped_bin == item.bin_dir:
-        return json.encode_indent(item.config, indent = " " * 4)
-    output_root = item.bin_dir.rpartition("/")[0].rpartition("/")[0]
-    config = {}
-    for key, value in item.config.items():
-        if type(value) == "list":
-            config[key] = [map_bin_dirs(flag, output_root, mapped_bin) for flag in value]
-        else:
-            config[key] = map_bin_dirs(value, output_root, mapped_bin)
-    return json.encode_indent(config, indent = " " * 4)
+        return None
+    return ["--map-bin-dir", "{}={}".format(item.bin_dir, mapped_bin)]
+
+def config_args(ctx, args, config_json):
+    """Add the config file to a checker command line.
+
+    The config file holds the toolchain's paths as written at analysis time. The
+    checker maps them with `--map-bin-dir`, derived from this action's own arguments,
+    so they match the action's path mapping even when it is excluded from mapping.
+
+    Args:
+        ctx (ctx): The rule context.
+        args (Args): The checker action's arguments.
+        config_json (File): From `write_config_json`.
+    """
+    args.add("--config", config_json)
+    bin_dir = ctx.bin_dir.path
+    args.add_all([struct(
+        bin_dir = bin_dir,
+        witness = config_json,
+        tail = config_json.path[len(bin_dir) + 1:],
+    )], map_each = _bin_dir_mapping)
 
 def write_config_json(ctx, config_dict):
     """Write a config dictionary to a JSON file.
@@ -645,19 +635,10 @@ def write_config_json(ctx, config_dict):
         A File representing the config JSON file.
     """
     config_json = ctx.actions.declare_file("{}.ac.json".format(ctx.label.name))
-    bin_dir = ctx.bin_dir.path
-    content = ctx.actions.args()
-    content.set_param_file_format("multiline")
-    content.add_all([struct(
-        config = config_dict,
-        bin_dir = bin_dir,
-        witness = config_json,
-        tail = config_json.path[len(bin_dir) + 1:],
-    )], map_each = _mapped_config)
     write(
         actions = ctx.actions,
         output = config_json,
-        content = content,
+        content = json.encode_indent(config_dict, indent = " " * 4) + "\n",
     )
     return config_json
 

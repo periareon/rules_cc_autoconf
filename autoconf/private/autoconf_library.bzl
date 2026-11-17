@@ -12,6 +12,7 @@ load(
     "collect_defaults",
     "collect_deps",
     "collect_transitive_results",
+    "config_args",
     "constant_check_result",
     "create_config_dict",
     "encode_result",
@@ -520,7 +521,7 @@ def autoconf_impl_common(ctx, resolve_toolchain):
         args = ctx.actions.args()
         args.use_param_file("@%s", use_always = True)
         args.set_param_file_format("multiline")
-        args.add("--config", config_json)
+        config_args(ctx, args, config_json)
         args.add("--check", check_json)
         args.add("--results", check_result_file)
         cc_deps_args(args, cc_deps)

@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "autoconf/private/checker/check.h"
@@ -39,6 +40,10 @@ class Checker {
      * @param results_path Path where results JSON will be written.
      * @param dep_mappings Vector of name->file mappings for dependent check
      * results.
+     * @param cc_flags Compile flags for the target's cc_deps.
+     * @param link_libraries Archives and link flags of the target's cc_deps.
+     * @param bin_dir_mappings Bin directories in the config file and their
+     * path-mapped spellings.
      * @return 0 on success, 1 on error.
      */
     static int run_check_from_file(
@@ -47,7 +52,9 @@ class Checker {
         const std::filesystem::path& results_path,
         const std::vector<DepMapping>& dep_mappings,
         const std::vector<std::string>& cc_flags = {},
-        const std::vector<std::string>& link_libraries = {});
+        const std::vector<std::string>& link_libraries = {},
+        const std::vector<std::pair<std::string, std::string>>&
+            bin_dir_mappings = {});
 };
 
 }  // namespace rules_cc_autoconf
