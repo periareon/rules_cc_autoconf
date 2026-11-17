@@ -585,8 +585,32 @@ def create_config_dict(toolchain_info):
         "linker": toolchain_info.linker_path,
     }
 
+def map_bin_dirs(value, output_root, mapped_bin):
+    """Replaces every `<output_root>/<configuration>/bin` in `value` with `mapped_bin`.
+
+    Path mapping maps the bin directory of every configuration, including the exec
+    configuration that builds tools such as a linker wrapper, to the same directory.
+
+    Args:
+        value (str): A path or flag.
+        output_root (str): The output root, such as `bazel-out`.
+        mapped_bin (str): The mapped bin directory.
+
+    Returns:
+        str: `value` with each bin directory mapped.
+    """
+    parts = value.split(output_root + "/")
+    result = parts[0]
+    for part in parts[1:]:
+        _, sep, rest = part.partition("/")
+        if sep and (rest == "bin" or rest.startswith("bin/")):
+            result += mapped_bin + rest[len("bin"):]
+        else:
+            result += output_root + "/" + part
+    return result
+
 def _mapped_config(item):
-    """Returns the config as JSON, with the bin directory replaced by its mapped path.
+    """Returns the config as JSON, with bin directories replaced by the mapped path.
 
     `item.witness` is the config file itself. Under path mapping its path is mapped, so
     removing `item.tail` from it gives the mapped bin directory.
@@ -599,12 +623,15 @@ def _mapped_config(item):
     """
     path = item.witness.path
     mapped_bin = path[:len(path) - len(item.tail) - 1]
+    if mapped_bin == item.bin_dir:
+        return json.encode_indent(item.config, indent = " " * 4)
+    output_root = item.bin_dir.rpartition("/")[0].rpartition("/")[0]
     config = {}
     for key, value in item.config.items():
         if type(value) == "list":
-            config[key] = [flag.replace(item.bin_dir, mapped_bin) for flag in value]
+            config[key] = [map_bin_dirs(flag, output_root, mapped_bin) for flag in value]
         else:
-            config[key] = value.replace(item.bin_dir, mapped_bin)
+            config[key] = map_bin_dirs(value, output_root, mapped_bin)
     return json.encode_indent(config, indent = " " * 4)
 
 def write_config_json(ctx, config_dict):
