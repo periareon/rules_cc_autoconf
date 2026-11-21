@@ -11,32 +11,24 @@ autoconf(
             "obstack_printf",
             define = "HAVE_OBSTACK_PRINTF",
         ),
-        # gl_DECL_OBSTACK_PRINTF checks for obstack_printf declaration
+        # gl_REPLACE_OBSTACK_PRINTF: glibc's obstack_printf does not work
+        # with gnulib's struct obstack.
+        checks.AC_SUBST(
+            "REPLACE_OBSTACK_PRINTF",
+            condition = "ac_cv_func_obstack_printf && (HAVE_OBSTACK==0 || REPLACE_OBSTACK==1)",
+            if_false = "0",
+            if_true = "1",
+        ),
+        # gl_DECL_OBSTACK_PRINTF.  The declaration needs _GNU_SOURCE on glibc
+        # (the m4 requires AC_USE_SYSTEM_EXTENSIONS).
         checks.AC_CHECK_DECL(
             "obstack_printf",
-            name = "_gl_cv_have_decl_obstack_printf",
+            compile_defines = ["_GNU_SOURCE"],
+            define = "HAVE_DECL_OBSTACK_PRINTF",
             includes = ["#include <stdio.h>"],
+            subst = True,
         ),
-    ] + select({
-        # On Linux: obstack_printf is declared in stdio.h (glibc)
-        "@platforms//os:linux": [
-            checks.AC_DEFINE(
-                "HAVE_DECL_OBSTACK_PRINTF",
-                "1",
-                subst = True,
-            ),
-            checks.AC_SUBST("REPLACE_OBSTACK_PRINTF", "1"),
-        ],
-        # On macOS: obstack_printf is not declared
-        "//conditions:default": [
-            checks.AC_DEFINE(
-                "HAVE_DECL_OBSTACK_PRINTF",
-                "0",
-                subst = True,
-            ),
-            checks.AC_SUBST("REPLACE_OBSTACK_PRINTF", "0"),
-        ],
-    }),
+    ],
     default_deps = [
         "//gnulib/m4/stdio_h:defaults",  # through a macro it invokes: gl_STDIO_H_DEFAULTS
     ],

@@ -16,6 +16,7 @@ autoconf(
         ),
         checks.AC_CHECK_DECL(
             "execvpe",
+            compile_defines = ["_GNU_SOURCE"],
             define = "HAVE_DECL_EXECVPE",
             subst = "HAVE_DECL_EXECVPE",
         ),

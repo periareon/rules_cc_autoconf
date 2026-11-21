@@ -1,6 +1,9 @@
 AC_INIT([test_stdio_h], [1.0])
 AC_CONFIG_HEADERS([config.h])
 
+# gnulib-tool emits this first for modules that depend on extensions.
+gl_USE_SYSTEM_EXTENSIONS
+
 # Invoke macros from stdio_h.m4
 gl_STDIO_H_EARLY
 gl_STDIO_H
