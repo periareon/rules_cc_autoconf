@@ -99,3 +99,47 @@ cc_test(
         ":config.h",
     ],
 )
+
+# A declaration that a strict C mode hides until a feature macro reaches the
+# probe: glibc and musl declare getw only with the default or GNU extensions,
+# which -std=c11 withdraws. The gnulib ports probe such declarations with
+# compile_defines = ["_GNU_SOURCE"]; the toolchain's default mode does not
+# show a probe that lost the define, this target does.
+autoconf(
+    name = "strict_c11",
+    checks = [
+        checks.AC_CHECK_DECL(
+            "getw",
+            name = "_gl_cv_have_decl_getw_strict",
+            define = "HAVE_DECL_GETW_STRICT",
+            includes = ["#include <stdio.h>"],
+        ),
+        checks.AC_CHECK_DECL(
+            "getw",
+            name = "_gl_cv_have_decl_getw_gnu",
+            compile_defines = ["_GNU_SOURCE"],
+            define = "HAVE_DECL_GETW_GNU",
+            includes = ["#include <stdio.h>"],
+        ),
+    ],
+    conlyopts = ["-std=c11"],
+    target_compatible_with = ["@platforms//os:linux"],
+    deps = [
+        "//autoconf/macros/AC_USE_SYSTEM_EXTENSIONS",
+    ],
+)
+
+autoconf_hdr(
+    name = "config_strict_c11",
+    out = "config_strict_c11.h",
+    target_compatible_with = ["@platforms//os:linux"],
+    template = "config_strict_c11.h.in",
+    deps = [":strict_c11"],
+)
+
+diff_test(
+    name = "diff_test_strict_c11",
+    file1 = "golden_config_strict_c11.h.in",
+    file2 = ":config_strict_c11",
+    target_compatible_with = ["@platforms//os:linux"],
+)
