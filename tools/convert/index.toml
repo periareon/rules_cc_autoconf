@@ -13241,6 +13241,7 @@ substs = [
 defines = [
     "PTHREAD_RWLOCK_BAD_WAITQUEUE",
     "PTHREAD_RWLOCK_LACKS_TIMEOUT",
+    "PTHREAD_RWLOCK_UNIMPLEMENTED",
 ]
 deps = [
     "autoconf/macros/AC_CANONICAL_HOST",
@@ -13248,7 +13249,9 @@ deps = [
     "gnulib/m4/pthread_h",
 ]
 cache = [
+    "_gl_host_os_linux_gnu",
     "ac_cv_have_decl_pthread_rwlock_timedrdlock",
+    "gl_cv_func_pthread_rwlock_init",
 ]
 probes = { HAVE_DECL_PTHREAD_RWLOCK_TIMEDRDLOCK = "ac_cv_have_decl_pthread_rwlock_timedrdlock" }
 

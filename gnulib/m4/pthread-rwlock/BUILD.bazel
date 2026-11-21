@@ -79,46 +79,198 @@ autoconf(
                 if_false = "0",
                 if_true = "1",
             ),
+        ],
+    }) + select({
+        # AC_CACHE_CHECK([for pthread_rwlock_init]) (m4 lines 47-79). On
+        # darwin* it compiles a PTHREAD_RWLOCK_INITIALIZER use (Mac OS X 10.4
+        # lacked the macro); elsewhere it links pthread_rwlock_init with
+        # LIBPMULTITHREAD (Android 4.3 declares the functions but has none in
+        # libc). Windows takes the first select's mingw arm and never gets here.
+        "@platforms//os:macos": [
+            checks.AC_TRY_COMPILE(
+                name = "gl_cv_func_pthread_rwlock_init",
+                code = """\
+#include <pthread.h>
+pthread_rwlock_t l = PTHREAD_RWLOCK_INITIALIZER;
+""",
+                language = "c",
+                requires = ["ac_cv_header_pthread_h"],
+            ),
+        ],
+        "@platforms//os:windows": [],
+        "//conditions:default": [
+            checks.AC_TRY_LINK(
+                name = "gl_cv_func_pthread_rwlock_init",
+                code = """\
+extern
+#ifdef __cplusplus
+"C"
+#endif
+int pthread_rwlock_init (void);
+int main ()
+{
+  return pthread_rwlock_init ();
+}
+""",
+                language = "c",
+                requires = ["ac_cv_header_pthread_h"],
+            ),
+        ],
+    }) + select({
+        "@platforms//os:windows": [],
+        # if test $gl_cv_func_pthread_rwlock_init = no (m4 lines 80-93): every
+        # REPLACE_* is 1 and PTHREAD_RWLOCK_UNIMPLEMENTED is defined.
+        # REPLACE_PTHREAD_RWLOCK_INIT and REPLACE_PTHREAD_RWLOCKATTR_INIT are
+        # in the wait queue select below, which also sets them.
+        "//conditions:default": [
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_RWLOCKATTR_DESTROY",
+                condition = "ac_cv_header_pthread_h && !gl_cv_func_pthread_rwlock_init",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_RWLOCK_RDLOCK",
+                condition = "ac_cv_header_pthread_h && !gl_cv_func_pthread_rwlock_init",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_RWLOCK_WRLOCK",
+                condition = "ac_cv_header_pthread_h && !gl_cv_func_pthread_rwlock_init",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_RWLOCK_TRYRDLOCK",
+                condition = "ac_cv_header_pthread_h && !gl_cv_func_pthread_rwlock_init",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_RWLOCK_TRYWRLOCK",
+                condition = "ac_cv_header_pthread_h && !gl_cv_func_pthread_rwlock_init",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_RWLOCK_TIMEDRDLOCK",
+                condition = "ac_cv_header_pthread_h && !gl_cv_func_pthread_rwlock_init",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_RWLOCK_TIMEDWRLOCK",
+                condition = "ac_cv_header_pthread_h && !gl_cv_func_pthread_rwlock_init",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_RWLOCK_UNLOCK",
+                condition = "ac_cv_header_pthread_h && !gl_cv_func_pthread_rwlock_init",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_RWLOCK_DESTROY",
+                condition = "ac_cv_header_pthread_h && !gl_cv_func_pthread_rwlock_init",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_DEFINE(
+                "PTHREAD_RWLOCK_UNIMPLEMENTED",
+                condition = "ac_cv_header_pthread_h && !gl_cv_func_pthread_rwlock_init",
+                if_false = None,
+                if_true = 1,
+            ),
 
-            # AC_CHECK_DECL([pthread_rwlock_timedrdlock], , [...], [[#include <pthread.h>]])
-            # Declared on Linux (glibc); NOT declared on macOS.
+            # else (m4 lines 94-104): AC_CHECK_DECL([pthread_rwlock_timedrdlock],
+            # , [...], [[#include <pthread.h>]]). Declared on Linux (glibc); NOT
+            # declared on macOS. When not declared: PTHREAD_RWLOCK_LACKS_TIMEOUT=1
+            # and HAVE_PTHREAD_RWLOCK_TIMED{RD,WR}LOCK=0. The not-found arm above
+            # leaves HAVE_PTHREAD_RWLOCK_TIMED{RD,WR}LOCK at their default, 1.
             checks.AC_CHECK_DECL(
                 "pthread_rwlock_timedrdlock",
                 includes = ["#include <pthread.h>"],
-                requires = ["ac_cv_header_pthread_h"],
+                requires = [
+                    "ac_cv_header_pthread_h",
+                    "gl_cv_func_pthread_rwlock_init",
+                ],
             ),
-            # When not declared: PTHREAD_RWLOCK_LACKS_TIMEOUT=1 and
-            # HAVE_PTHREAD_RWLOCK_TIMED{RD,WR}LOCK=0 (m4 line ~83)
             checks.AC_DEFINE(
                 "PTHREAD_RWLOCK_LACKS_TIMEOUT",
-                condition = "ac_cv_header_pthread_h && !ac_cv_have_decl_pthread_rwlock_timedrdlock",
+                condition = "ac_cv_header_pthread_h && gl_cv_func_pthread_rwlock_init && !ac_cv_have_decl_pthread_rwlock_timedrdlock",
                 if_false = None,
                 if_true = 1,
             ),
             checks.AC_SUBST(
                 "HAVE_PTHREAD_RWLOCK_TIMEDRDLOCK",
-                condition = "ac_cv_header_pthread_h && ac_cv_have_decl_pthread_rwlock_timedrdlock",
+                condition = "ac_cv_header_pthread_h && (!gl_cv_func_pthread_rwlock_init || ac_cv_have_decl_pthread_rwlock_timedrdlock)",
                 if_false = "0",
                 if_true = "1",
             ),
             checks.AC_SUBST(
                 "HAVE_PTHREAD_RWLOCK_TIMEDWRLOCK",
-                condition = "ac_cv_header_pthread_h && ac_cv_have_decl_pthread_rwlock_timedrdlock",
+                condition = "ac_cv_header_pthread_h && (!gl_cv_func_pthread_rwlock_init || ac_cv_have_decl_pthread_rwlock_timedrdlock)",
                 if_false = "0",
                 if_true = "1",
             ),
         ],
     }) + select({
-        # The upstream m4 runs AC_RUN_IFELSE for pthread_rwlock wait queue
-        # behavior on linux*-gnu* (m4 lines ~89-112). The cross-compile
-        # default is "guessing no" (bad waitqueue). On non-Linux the default
-        # is "guessing yes" (good), so no action needed.
+        # gl_cv_func_pthread_rwlock_good_waitqueue (m4 lines 113-237), reached
+        # only when pthread_rwlock_init was found: on linux*-gnu* the m4 runs a
+        # timing test whose cross-compile guess is "guessing no"; elsewhere it
+        # guesses yes. config.guess names a Linux libc "gnu" by this test. The
+        # guess sets REPLACE_PTHREAD_RWLOCK_INIT and
+        # REPLACE_PTHREAD_RWLOCKATTR_INIT, which the not-found arm also sets.
         "@platforms//os:linux": [
-            checks.AC_DEFINE("PTHREAD_RWLOCK_BAD_WAITQUEUE"),
-            checks.AC_SUBST("REPLACE_PTHREAD_RWLOCK_INIT", "1"),
-            checks.AC_SUBST("REPLACE_PTHREAD_RWLOCKATTR_INIT", "1"),
+            checks.AC_TRY_COMPILE(
+                name = "_gl_host_os_linux_gnu",
+                code = """#include <stdlib.h>
+#if defined __ANDROID__ || defined __UCLIBC__ || defined __dietlibc__ || !defined __GLIBC__
+  #error "not glibc"
+#endif
+int main(void) { return 0; }""",
+                language = "c",
+                requires = [
+                    "ac_cv_header_pthread_h",
+                    "gl_cv_func_pthread_rwlock_init",
+                ],
+            ),
+            checks.AC_DEFINE(
+                "PTHREAD_RWLOCK_BAD_WAITQUEUE",
+                condition = "_gl_host_os_linux_gnu",
+                if_false = None,
+                if_true = 1,
+            ),
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_RWLOCK_INIT",
+                condition = "ac_cv_header_pthread_h && (!gl_cv_func_pthread_rwlock_init || _gl_host_os_linux_gnu)",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_RWLOCKATTR_INIT",
+                condition = "ac_cv_header_pthread_h && (!gl_cv_func_pthread_rwlock_init || _gl_host_os_linux_gnu)",
+                if_false = "0",
+                if_true = "1",
+            ),
         ],
-        "//conditions:default": [],
+        "@platforms//os:windows": [],
+        "//conditions:default": [
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_RWLOCK_INIT",
+                condition = "ac_cv_header_pthread_h && !gl_cv_func_pthread_rwlock_init",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_RWLOCKATTR_INIT",
+                condition = "ac_cv_header_pthread_h && !gl_cv_func_pthread_rwlock_init",
+                if_false = "0",
+                if_true = "1",
+            ),
+        ],
     }),
     visibility = ["//visibility:public"],
     deps = [
