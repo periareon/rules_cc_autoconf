@@ -152,7 +152,7 @@ autoconf_hdr(
 ```
 
 Valid `mode` values:
-- `"defines"` (default): Only process defines (AC_DEFINE, AC_CHECK_*, etc.), not substitution variables (AC_SUBST). This is for config.h files.
+- `"defines"` (default): Only process defines (AC_DEFINE, AC_CHECK_*, etc.), not substitution variables (AC_SUBST). This is for config.h files. As in config.status, a `#define` or `#undef` line for a name the checks define becomes that definition; for any other name an `#undef` line is commented out and a `#define` line is kept.
 - `"subst"`: Only process substitution variables (AC_SUBST), not defines. This is for subst.h files.
 - `"all"`: Process both defines and substitution variables.
 
@@ -182,7 +182,8 @@ no longer carries any.  Accepted so existing BUILD files keep loading.""",
 
             The exact string in the template is replaced with the content of the associated file.
             Any `@VAR@` style placeholders in the inline file content will be replaced with their
-            corresponding define values (package info, check results, etc.) after insertion.""",
+            corresponding define values (package info, check results, etc.) after insertion.
+            Inserted `#define` and `#undef` lines are rewritten like the template's.""",
             allow_files = True,
         ),
         "mode": attr.string(
@@ -199,7 +200,8 @@ no longer carries any.  Accepted so existing BUILD files keep loading.""",
 
             Each entry performs an exact text replacement in the template - the key
             string is replaced with the value string. No special patterns or wrappers
-            are added.
+            are added. A `#define` or `#undef` line a replacement writes is kept as
+            written, even for a name with a result.
 
             Example:
             ```python

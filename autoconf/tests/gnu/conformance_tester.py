@@ -30,6 +30,7 @@ import sys
 import tempfile
 import unittest
 from collections.abc import Callable
+from dataclasses import dataclass
 from pathlib import Path
 from typing import ClassVar
 
@@ -335,6 +336,32 @@ def _strip_subst_edge_whitespace(lines: list[str]) -> list[str]:
     return [_SUBST_EDGE_WHITESPACE.sub(r'\1"\2"', line) for line in lines]
 
 
+@dataclass(frozen=True)
+class Header:
+    """A header split on `\\n` only.
+
+    `str.splitlines` folds `\\r\\n` into `\\n` and forgets whether the file
+    ended with a newline, so the comparison keeps both.
+    """
+
+    lines: list[str]
+    final_newline: bool
+
+    @classmethod
+    def read(cls, path: Path) -> Header:
+        lines = path.read_bytes().decode("utf-8").split("\n")
+        final_newline = lines[-1] == ""
+        if final_newline:
+            lines.pop()
+        return cls(lines, final_newline)
+
+    def display(self) -> list[str]:
+        lines = [line.replace("\r", "\\r") for line in self.lines]
+        if not self.final_newline:
+            lines.append("\\ No newline at end of file")
+        return lines
+
+
 def _mask(
     lines: list[str],
     names: list[str],
@@ -417,9 +444,9 @@ class GnuAutoconfConformanceTest(unittest.TestCase):
     cc_path: ClassVar[str]
     configure_env: ClassVar[dict[str, str]]
     gnu_config_h: ClassVar[Path]
-    gnu_config_lines: ClassVar[list[str]]
+    gnu_config: ClassVar[Header]
     gnu_subst_h: ClassVar[Path]
-    gnu_subst_lines: ClassVar[list[str] | None]
+    gnu_subst: ClassVar[Header | None]
     fingerprint: ClassVar[dict[str, str]]
 
     @classmethod
@@ -650,13 +677,14 @@ class GnuAutoconfConformanceTest(unittest.TestCase):
         cls.gnu_config_h = cls.work_dir / "config.h"
         assert cls.gnu_config_h.exists(), "configure did not write config.h"
         # Drop the `/* config.h.  Generated from config.h.in by configure.  */` line.
-        cls.gnu_config_lines = cls.gnu_config_h.read_text(encoding="utf-8").splitlines()[1:]
+        gnu_config = Header.read(cls.gnu_config_h)
+        cls.gnu_config = Header(gnu_config.lines[1:], gnu_config.final_newline)
 
-        cls.gnu_subst_lines = None
+        cls.gnu_subst = None
         if cls.subst_h_in:
             cls.gnu_subst_h = cls.work_dir / "subst.h"
             assert cls.gnu_subst_h.exists(), "configure did not write subst.h"
-            cls.gnu_subst_lines = cls.gnu_subst_h.read_text(encoding="utf-8").splitlines()
+            cls.gnu_subst = Header.read(cls.gnu_subst_h)
 
     @classmethod
     def _prune_work_dir(cls) -> None:
@@ -763,16 +791,27 @@ class GnuAutoconfConformanceTest(unittest.TestCase):
             return ""
         return "\nKnown divergences masked from the comparison:\n" + "\n".join(lines)
 
-    def _compare_with_bazel(self, gnu_lines: list[str], bazel: Path, label: str) -> None:
+    def _compare_with_bazel(self, gnu: Header, bazel: Path, label: str) -> None:
         masked = sorted(self.known_divergences)
         patterns = (MSVC_INCLUDE_NEXT_VARIABLES,) if self.msvc else ()
-        bazel_lines = bazel.read_text(encoding="utf-8").splitlines()
-        output = diff(
-            file1_content=_strip_subst_edge_whitespace(_mask(gnu_lines, masked, patterns)),
-            file2_content=_strip_subst_edge_whitespace(_mask(bazel_lines, masked, patterns)),
-            file1_name=f"gnu/{label}",
-            file2_name=f"bazel/{label}",
-        )
+
+        def normalize(header: Header) -> Header:
+            lines = _strip_subst_edge_whitespace(_mask(header.lines, masked, patterns))
+            return Header(lines, header.final_newline)
+
+        expected = normalize(gnu)
+        actual = normalize(Header.read(bazel))
+        output = ""
+        if expected != actual:
+            output = diff(
+                file1_content=expected.display(),
+                file2_content=actual.display(),
+                file1_name=f"gnu/{label}",
+                file2_name=f"bazel/{label}",
+            )
+            # A literal `\r` or no-newline marker in a header displays like the real thing.
+            if not output:
+                output = f"gnu/{label}: {expected!r}\nbazel/{label}: {actual!r}"
         note = self._divergence_note()
         if note:
             print(note, file=sys.stderr)
@@ -834,13 +873,13 @@ class GnuAutoconfConformanceTest(unittest.TestCase):
         """Bazel's config.h must equal GNU autoconf's config.h."""
         if self.bazel_config_h is None:
             self.skipTest("No Bazel config.h provided")
-        self._compare_with_bazel(self.gnu_config_lines, self.bazel_config_h, "config.h")
+        self._compare_with_bazel(self.gnu_config, self.bazel_config_h, "config.h")
 
     def test_subst_h_matches_bazel(self) -> None:
         """Bazel's subst header must equal GNU autoconf's."""
-        if self.bazel_subst_h is None or self.gnu_subst_lines is None:
+        if self.bazel_subst_h is None or self.gnu_subst is None:
             self.skipTest("No Bazel subst header provided")
-        self._compare_with_bazel(self.gnu_subst_lines, self.bazel_subst_h, "subst.h")
+        self._compare_with_bazel(self.gnu_subst, self.bazel_subst_h, "subst.h")
 
 
 if __name__ == "__main__":

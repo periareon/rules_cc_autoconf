@@ -1,0 +1,29 @@
+/* Directives config.status rewrites when the checks define the name. */
+#undef DEF1
+#ifndef DEF1
+#  define DEF1 0
+#endif
+	#	define DEF1 7 /* dropped */
+#define EMPTY_DEF 0
+#define FN(x) x
+#undef TRAIL /* dropped */
+#undef TRAIL_WS	 
+#	undef	TAB_DEF
+#undef PAREN_DEF(
+/* config.status rewrites only the first physical line, orphaning the body. */
+#define CONT \
+  7
+
+/* Names the checks leave undefined. */
+#define UNCONFIGURED 5
+#undef UNCONFIGURED_UNDEF
+  #  undef UNCONFIGURED_INDENTED
+#undef HAVE_NONEXISTENT_HEADER_ABC_H
+#ifndef HAVE_NONEXISTENT_HEADER_ABC_H
+# define HAVE_NONEXISTENT_HEADER_ABC_H 0
+#endif
+
+/* Not placeholders. */
+#undef DEF1/* no blank after the name */
+/* see #undef DEF1
+   mid-line */

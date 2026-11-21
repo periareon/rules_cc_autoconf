@@ -1,8 +1,11 @@
 #include "autoconf/private/resolver/source_generator.h"
 
+#include <algorithm>
 #include <cctype>
 #include <fstream>
+#include <optional>
 #include <sstream>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -15,12 +18,10 @@ namespace rules_cc_autoconf {
 namespace {
 
 /**
- * @brief Describes how to replace a single #undef line.
+ * @brief What a template directive for one name becomes: its definition after
+ * `define ` (e.g., "FOO 1"), or nullopt if the name is undefined.
  */
-struct UndefReplacement {
-    std::string replacement;  ///< The replacement text (e.g., "#define FOO 1")
-    bool is_comment;          ///< If true, comment out instead of replacing
-};
+using Definition = std::optional<std::string>;
 
 /**
  * @brief Extract the bare identifier from a define name, stripping any
@@ -42,142 +43,151 @@ std::string strip_macro_args(const std::string& define_name) {
 }
 
 /**
- * @brief Parse a single #undef line, extracting the spacing, name, and trailing
- * newlines.
- *
- * Given a position pointing at '#' in the content, attempts to parse
- * "#<spacing>undef<ws><NAME><newlines>".
- *
- * @param content The full content string.
- * @param pos Position of the '#' character.
- * @param[out] spacing Spacing between '#' and 'undef'.
- * @param[out] name The define name after 'undef'.
- * @param[out] newlines Trailing newline characters.
- * @param[out] match_end Position after the full match.
- * @return true if a valid #undef was parsed.
+ * @brief A `#define` or `#undef` template directive.
  */
-bool parse_undef_at(const std::string& content, size_t pos,
-                    std::string& spacing, std::string& name,
-                    std::string& newlines, size_t& match_end) {
-    size_t len = content.size();
-    size_t i = pos + 1;  // skip '#'
+struct Directive {
+    std::string prefix;  ///< Everything before the keyword ("  #  ").
+    bool is_undef;       ///< `#undef` rather than `#define`.
+    std::string name;    ///< The macro name, without any parameter list.
+};
 
-    // Capture spacing between '#' and 'undef'
-    spacing.clear();
-    while (i < len && (content[i] == ' ' || content[i] == '\t')) {
-        spacing += content[i];
+/**
+ * @brief Match a template directive the way config.status does.
+ *
+ * config.status rewrites lines matching
+ * `^[\t ]*#[\t ]*(define|undef)[\t ]+NAME([\t (]|$)`, so a directive must start
+ * its line and its name must end the line or be followed by a blank or `(`.
+ *
+ * @param line One line of the template, without its `\n`.
+ * @return The directive, or nullopt if the line is not one.
+ */
+std::optional<Directive> match_directive(std::string_view line) {
+    size_t i = 0;
+    auto is_blank = [&line](size_t pos) {
+        return pos < line.size() && (line[pos] == ' ' || line[pos] == '\t');
+    };
+    while (is_blank(i)) {
+        ++i;
+    }
+    if (i >= line.size() || line[i] != '#') {
+        return std::nullopt;
+    }
+    ++i;
+    while (is_blank(i)) {
         ++i;
     }
 
-    // Expect "undef"
-    if (i + 5 > len || content.compare(i, 5, "undef") != 0) {
-        return false;
+    size_t keyword = i;
+    bool is_undef = false;
+    if (line.substr(i, 6) == "define") {
+        i += 6;
+    } else if (line.substr(i, 5) == "undef") {
+        is_undef = true;
+        i += 5;
+    } else {
+        return std::nullopt;
     }
-    i += 5;
-
-    // Expect at least one whitespace after "undef"
-    if (i >= len || (content[i] != ' ' && content[i] != '\t')) {
-        return false;
+    if (!is_blank(i)) {
+        return std::nullopt;
     }
-    while (i < len && (content[i] == ' ' || content[i] == '\t')) {
+    while (is_blank(i)) {
         ++i;
     }
 
-    // Capture identifier name
-    name.clear();
-    if (i >= len || (!std::isalpha(static_cast<unsigned char>(content[i])) &&
-                     content[i] != '_')) {
-        return false;
+    size_t name_start = i;
+    if (i >= line.size() ||
+        (!std::isalpha(static_cast<unsigned char>(line[i])) &&
+         line[i] != '_')) {
+        return std::nullopt;
     }
-    while (i < len && (std::isalnum(static_cast<unsigned char>(content[i])) ||
-                       content[i] == '_')) {
-        name += content[i];
+    while (
+        i < line.size() &&
+        (std::isalnum(static_cast<unsigned char>(line[i])) || line[i] == '_')) {
         ++i;
     }
-
-    // Skip trailing whitespace (spaces/tabs) before newline
-    while (i < len && (content[i] == ' ' || content[i] == '\t')) {
-        ++i;
+    if (i < line.size() && !is_blank(i) && line[i] != '(') {
+        return std::nullopt;
     }
 
-    // Capture trailing newlines (at least one required)
-    newlines.clear();
-    while (i < len && content[i] == '\n') {
-        newlines += '\n';
-        ++i;
-    }
-    if (newlines.empty()) {
-        return false;
-    }
-
-    match_end = i;
-    return true;
+    return Directive{std::string(line.substr(0, keyword)), is_undef,
+                     std::string(line.substr(name_start, i - name_start))};
 }
 
 /**
- * @brief Single-pass replacement of all #undef statements in content.
+ * @brief Rewrite every template directive in content.
  *
- * Scans content once, looking for "#undef NAME" patterns. For each match,
- * looks up the define name in the replacements map. If found, applies the
- * replacement (either a #define or a comment). If not found, either comments
- * out the undef or leaves it unchanged, depending on comment_remaining.
- *
- * This replaces the previous approach of compiling a separate regex and
- * scanning the entire content for each individual define name.
- *
- * @param content The template content to process.
- * @param replacements Map from define name to replacement info.
- * @param comment_remaining If true, undefs not in the map are commented out.
- * @return Processed content.
+ * A directive for a name with a definition becomes that definition, keeping
+ * the whitespace around the `#` and dropping the rest of the line, whether it
+ * was `#define` or `#undef`. Otherwise an `#undef` is commented out and a
+ * `#define` is kept. Names missing from replacements are treated as undefined
+ * when comment_remaining is set and left alone when it is not.
  */
-std::string batch_replace_undefs(
+std::string replace_directives(
     const std::string& content,
-    const std::unordered_map<std::string, UndefReplacement>& replacements,
+    const std::unordered_map<std::string, Definition>& replacements,
     bool comment_remaining) {
     std::string output;
     output.reserve(content.size());
 
-    size_t len = content.size();
-    size_t i = 0;
-
-    while (i < len) {
-        // Look for '#' that could start a #undef
-        if (content[i] == '#') {
-            std::string spacing, name, newlines;
-            size_t match_end = 0;
-
-            if (parse_undef_at(content, i, spacing, name, newlines,
-                               match_end)) {
-                std::unordered_map<std::string,
-                                   UndefReplacement>::const_iterator it =
-                    replacements.find(name);
-                if (it != replacements.end()) {
-                    if (it->second.is_comment) {
-                        output += "/* #" + spacing + "undef " + name + " */";
-                    } else {
-                        const std::string& repl = it->second.replacement;
-                        if (!repl.empty() && repl[0] == '#') {
-                            output += "#" + spacing + repl.substr(1);
-                        } else {
-                            output += repl;
-                        }
-                    }
-                } else if (comment_remaining) {
-                    output += "/* #" + spacing + "undef " + name + " */";
-                } else {
-                    // Leave unchanged
-                    output.append(content, i, match_end - i);
-                }
-                output += newlines;
-                i = match_end;
-                continue;
-            }
+    size_t start = 0;
+    while (start < content.size()) {
+        size_t end = content.find('\n', start);
+        bool terminated = end != std::string::npos;
+        if (!terminated) {
+            end = content.size();
         }
-        output += content[i];
-        ++i;
+        std::string_view line(content.data() + start, end - start);
+
+        std::optional<Directive> directive = match_directive(line);
+        std::unordered_map<std::string, Definition>::const_iterator it =
+            directive ? replacements.find(directive->name) : replacements.end();
+        bool known = it != replacements.end();
+        if (known && it->second) {
+            output += directive->prefix + "define " + *it->second;
+        } else if (directive && directive->is_undef &&
+                   (known || comment_remaining)) {
+            output +=
+                "/* " + directive->prefix + "undef " + directive->name + " */";
+        } else {
+            output += line;
+        }
+        if (terminated) {
+            output += '\n';
+        }
+        start = end + 1;
     }
 
     return output;
+}
+
+/// Starts each directive line a substitution writes, so that no rewrite
+/// matches it; process_template removes it before writing the header.
+constexpr char kSubstituted = '\x01';
+
+/**
+ * @brief Mark the directive lines of a substitution's value.
+ *
+ * A directive a substitution writes is the user's, not the template's, so it
+ * is kept as written.
+ */
+std::string mark_directives(const std::string& value) {
+    std::string marked;
+    size_t start = 0;
+    while (true) {
+        size_t end = value.find('\n', start);
+        std::string_view line(
+            value.data() + start,
+            (end == std::string::npos ? value.size() : end) - start);
+        if (match_directive(line)) {
+            marked += kSubstituted;
+        }
+        marked += line;
+        if (end == std::string::npos) {
+            return marked;
+        }
+        marked += '\n';
+        start = end + 1;
+    }
 }
 
 }  // namespace
@@ -199,19 +209,17 @@ void SourceGenerator::generate_config_header(
     std::string content =
         process_template(template_content, inlines, substitutions);
 
-    // Preserve trailing newline behavior from template
-    // If template had no trailing newline, remove any trailing newlines we
-    // added
+    // A subst file keeps the template's last line as it was.
     bool template_has_trailing_newline =
         !template_content.empty() && template_content.back() == '\n';
-    if (!template_has_trailing_newline) {
-        // Remove trailing newlines to match template
+    if (mode_ == Mode::kSubst && !template_has_trailing_newline) {
         while (!content.empty() && content.back() == '\n') {
             content.pop_back();
         }
     }
 
-    std::ofstream file = open_ofstream(output_path);
+    std::ofstream file =
+        open_ofstream(output_path, std::ios::out | std::ios::binary);
     if (!file.is_open()) {
         throw std::runtime_error("Failed to open output file: " +
                                  output_path.string());
@@ -246,7 +254,12 @@ std::string SourceGenerator::process_template(
     // (In defines mode, this is already handled by process_defines_replacement)
     if (mode_ == Mode::kSubst) {
         content = comment_out_define_undefs(content, data);
+    } else if (!content.empty() && content.back() != '\n') {
+        // config.status prints every line of a header with a newline.
+        content += '\n';
     }
+    content.erase(std::remove(content.begin(), content.end(), kSubstituted),
+                  content.end());
 
     // Step 5: Clean up end of file
     return cleanup_end_of_file(content);
@@ -313,7 +326,7 @@ std::string SourceGenerator::process_defines_replacement(
     }
 
     // Build a replacement map for all defines in a single pass
-    std::unordered_map<std::string, UndefReplacement> replacements;
+    std::unordered_map<std::string, Definition> replacements;
 
     for (const auto& [lookup_key, result_ptr] : data.define_entries) {
         const CheckResult& result = *result_ptr;
@@ -337,7 +350,7 @@ std::string SourceGenerator::process_defines_replacement(
         }
 
         if (should_create_define) {
-            std::string replacement_text = "#define " + define_name;
+            std::string replacement_text = define_name;
 
             if (result.value.has_value() && !result.value->empty()) {
                 std::string value =
@@ -350,9 +363,9 @@ std::string SourceGenerator::process_defines_replacement(
                 // space; the GNU conformance tests pin autoconf 2.73).
                 replacement_text += " /**/";
             }
-            replacements[lookup_key] = {replacement_text, false};
+            replacements[lookup_key] = replacement_text;
         } else {
-            replacements[lookup_key] = {"", true};
+            replacements[lookup_key] = std::nullopt;
         }
     }
 
@@ -365,18 +378,17 @@ std::string SourceGenerator::process_defines_replacement(
             value = value_it->second;
         }
 
-        std::string replacement_text = "#define " + builtin;
+        std::string replacement_text = builtin;
         if (!value.empty()) {
             std::string processed_value = format_value_for_define(value);
             replacement_text += " " + processed_value;
         } else {
             replacement_text += " \"\"";
         }
-        replacements[builtin] = {replacement_text, false};
+        replacements[builtin] = replacement_text;
     }
 
-    // Single pass: replace all known #undefs and comment out any remaining
-    return batch_replace_undefs(content, replacements, true);
+    return replace_directives(content, replacements, true);
 }
 
 // Step 3: Process subst replacements (if in subst/all mode)
@@ -490,12 +502,12 @@ std::string SourceGenerator::process_subst_replacements(
 std::string SourceGenerator::comment_out_define_undefs(
     std::string content, const ProcessedData& data) const {
     // Build a map of all define names → comment out
-    std::unordered_map<std::string, UndefReplacement> replacements;
+    std::unordered_map<std::string, Definition> replacements;
     for (const auto& [lookup_key, _] : data.define_entries) {
-        replacements[lookup_key] = {"", true};
+        replacements[lookup_key] = std::nullopt;
     }
 
-    return batch_replace_undefs(content, replacements, false);
+    return replace_directives(content, replacements, false);
 }
 
 // Step 4: Process inlines and direct substitutions
@@ -504,7 +516,8 @@ std::string SourceGenerator::process_inlines_and_direct_subst(
     const std::map<std::string, std::filesystem::path>& inlines,
     const std::map<std::string, std::string>& substitutions) const {
     // Process direct substitutions first (exact text replacement)
-    for (const auto& [search_text, replacement] : substitutions) {
+    for (const auto& [search_text, value] : substitutions) {
+        std::string replacement = mark_directives(value);
         size_t pos = 0;
         while ((pos = content.find(search_text, pos)) != std::string::npos) {
             content.replace(pos, search_text.length(), replacement);
@@ -551,8 +564,8 @@ std::string SourceGenerator::cleanup_end_of_file(
     bool first_line = true;
 
     while (std::getline(stream, line)) {
-        // Check if this line is a "#define NAME /**/" or "#define NAME "
-        // pattern that should preserve trailing whitespace.
+        // Check if this line is a "#define NAME " pattern that should
+        // preserve trailing whitespace.
         bool preserve_trailing = false;
         if (line.size() >= 8 && line.compare(0, 8, "#define ") == 0) {
             // Find where the identifier ends (skip #define + spaces + name)
@@ -571,28 +584,9 @@ std::string SourceGenerator::cleanup_end_of_file(
                      line[name_end] == '_')) {
                     ++name_end;
                 }
-                // After identifier, check what remains
-                if (name_end < line.size()) {
-                    std::string suffix = line.substr(name_end);
-                    // "#define NAME /**/" - empty AC_DEFINE value
-                    if (suffix == " /**/") {
-                        preserve_trailing = true;
-                    }
-                    // "#define NAME " - empty define with trailing space
-                    // (all remaining chars are whitespace)
-                    if (!preserve_trailing) {
-                        bool all_ws = true;
-                        for (char c : suffix) {
-                            if (c != ' ' && c != '\t') {
-                                all_ws = false;
-                                break;
-                            }
-                        }
-                        if (all_ws) {
-                            preserve_trailing = true;
-                        }
-                    }
-                }
+                preserve_trailing = name_end < line.size() &&
+                                    line.find_first_not_of(" \t", name_end) ==
+                                        std::string::npos;
             }
         }
 

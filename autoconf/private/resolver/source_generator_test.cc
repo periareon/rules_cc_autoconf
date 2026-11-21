@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -19,9 +20,13 @@ using rules_cc_autoconf::SourceGenerator;
 
 namespace {
 
-std::string render(const std::vector<CheckResult>& substs,
-                   const std::string& template_content) {
-    SourceGenerator generator({}, {}, substs, Mode::kSubst);
+std::string render(
+    const std::vector<CheckResult>& substs, const std::string& template_content,
+    Mode mode = Mode::kSubst,
+    const std::map<std::string, std::string>& substitutions = {}) {
+    // The generator keeps references to its results, so none is a temporary.
+    const std::vector<CheckResult> none;
+    SourceGenerator generator(none, none, substs, mode);
     // Bazel's test temp directory: temp_directory_path() needs TMP / TEMP,
     // which the Windows test sandbox does not pass through.
     const char* tmpdir = std::getenv("TEST_TMPDIR");
@@ -29,7 +34,7 @@ std::string render(const std::vector<CheckResult>& substs,
         (tmpdir ? std::filesystem::path(tmpdir)
                 : std::filesystem::temp_directory_path()) /
         "source_generator_test.h";
-    generator.generate_config_header(out, template_content);
+    generator.generate_config_header(out, template_content, {}, substitutions);
     std::stringstream buffer;
     {
         // Closed before the remove: Windows refuses to delete an open file.
@@ -89,6 +94,25 @@ int run() {
     expect_eq("a comment closed on the same line does not swallow the rest",
               render(substs, "/* a */ #define X _@GUARD_PREFIX@_X\n"),
               "/* a */ #define X _GL_X\n");
+    // config.status ends every line of a header with a newline, including a
+    // final one the generator strips to nothing.
+    expect_eq("a blank unterminated final line keeps its newline",
+              render({}, "x\n ", Mode::kDefines), "x\n\n");
+    expect_eq("a lone blank line keeps its newline",
+              render({}, " ", Mode::kDefines), "\n");
+    expect_eq("all mode ends the last line with a newline",
+              render({}, "x", Mode::kAll), "x\n");
+    expect_eq("subst mode keeps an unterminated last line",
+              render({}, "x", Mode::kSubst), "x");
+    expect_eq("a directive a substitution writes is kept",
+              render({}, "KEY\n", Mode::kDefines, {{"KEY", "#undef A"}}),
+              "#undef A\n");
+    expect_eq("a directive a substitution writes mid-line is plain text",
+              render({}, "/* KEY */\n", Mode::kDefines, {{"KEY", "#undef A"}}),
+              "/* #undef A */\n");
+    expect_eq("a directive a substitution writes in subst mode is kept",
+              render({}, "x\nKEY", Mode::kSubst, {{"KEY", "#undef A\ny"}}),
+              "x\n#undef A\ny");
     if (failures != 0) {
         std::cout << failures << " test(s) failed" << std::endl;
         return 1;
