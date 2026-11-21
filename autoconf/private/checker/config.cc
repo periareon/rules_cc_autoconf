@@ -1,29 +1,22 @@
 #include "autoconf/private/checker/config.h"
 
 #include <algorithm>
-#include <fstream>
 #include <set>
 #include <sstream>
 #include <utility>
 
 #include "autoconf/private/checker/check.h"
-#include "autoconf/private/common/file_util.h"
 #include "tools/json/json.h"
 
 namespace rules_cc_autoconf {
 
-std::unique_ptr<Config> Config::from_file(
-    const std::filesystem::path& config_path) {
+std::unique_ptr<Config> Config::from_json(const std::string& json) {
     std::unique_ptr<Config> config = std::make_unique<Config>();
 
-    std::ifstream file = open_ifstream(config_path);
-    if (!file.is_open()) {
-        throw std::runtime_error("Failed to open config file: " +
-                                 config_path.string());
+    nlohmann::json doc = nlohmann::json::parse(json, nullptr, false);
+    if (doc.is_discarded() || !doc.is_object()) {
+        throw std::runtime_error("Invalid config: must be a JSON object");
     }
-
-    nlohmann::json doc{};
-    file >> doc;
 
     // List of required fields
     const std::vector<std::string> required_fields = {

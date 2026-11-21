@@ -12,6 +12,7 @@ load(
     "collect_defaults",
     "collect_deps",
     "collect_transitive_results",
+    "config_args",
     "constant_check_result",
     "create_config_dict",
     "encode_result",
@@ -19,7 +20,6 @@ load(
     "get_cc_toolchain_info",
     "get_environment_variables",
     "merge_defaults",
-    "write_config_json",
 )
 load("//autoconf/private:condition_utils.bzl", "extract_condition_vars", "strip_macro_args")
 load("//autoconf/private:ctx_actions_write.bzl", "write")
@@ -446,10 +446,7 @@ def autoconf_impl_common(ctx, resolve_toolchain):
     )
     template_variables = _template_variables(ctx, settings)
 
-    # Write config to JSON
-    config_json = write_config_json(ctx, create_config_dict(
-        toolchain_info = toolchain_info,
-    ))
+    config = create_config_dict(toolchain_info = toolchain_info)
 
     # Get environment variables from the toolchain (like LIB, INCLUDE, PATH for MSVC)
     # We need environment variables from both compile and link actions since the autoconf
@@ -457,7 +454,7 @@ def autoconf_impl_common(ctx, resolve_toolchain):
     # variable from the compile action is crucial for finding standard headers like stdint.h
     env = get_environment_variables(ctx, toolchain_info)
 
-    inputs = [config_json]
+    inputs = []
 
     # Check for conflicts when merging local results with dependency results.
     # Cache variable conflicts are relaxed: same name from different actions is
@@ -520,7 +517,7 @@ def autoconf_impl_common(ctx, resolve_toolchain):
         args = ctx.actions.args()
         args.use_param_file("@%s", use_always = True)
         args.set_param_file_format("multiline")
-        args.add("--config", config_json)
+        config_args(ctx, args, config, check_json)
         args.add("--check", check_json)
         args.add("--results", check_result_file)
         cc_deps_args(args, cc_deps)

@@ -35,15 +35,16 @@ class Checker {
     /**
      * @brief Run a single check from a JSON file.
      * @param check_path Path to JSON file containing a single check.
-     * @param config_path Path to JSON config file (for compiler info).
+     * @param config The toolchain, from the `--config` arguments.
      * @param results_path Path where results JSON will be written.
      * @param dep_mappings Vector of name->file mappings for dependent check
      * results.
+     * @param cc_flags Compile flags for the target's cc_deps.
+     * @param link_libraries Archives and link flags of the target's cc_deps.
      * @return 0 on success, 1 on error.
      */
     static int run_check_from_file(
-        const std::filesystem::path& check_path,
-        const std::filesystem::path& config_path,
+        const std::filesystem::path& check_path, const Config& config,
         const std::filesystem::path& results_path,
         const std::vector<DepMapping>& dep_mappings,
         const std::vector<std::string>& cc_flags = {},
