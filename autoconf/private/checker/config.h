@@ -1,6 +1,5 @@
 #pragma once
 
-#include <filesystem>
 #include <map>
 #include <memory>
 #include <string>
@@ -55,13 +54,18 @@ struct Config {
     std::string compiler_type{};
 
     /**
-     * @brief Load configuration from a JSON file.
-     * @param config_path Path to the JSON configuration file.
+     * @brief Load configuration from its JSON encoding.
+     *
+     * The config arrives on the command line (`--config <json>`) rather than
+     * in a file, so that path mapping rewrites its paths with the action
+     * that uses them.
+     *
+     * @param json The JSON object, as the Starlark rules encode it.
      * @return Unique pointer to the loaded Config.
-     * @throws std::runtime_error if the file cannot be opened or parsed.
+     * @throws std::runtime_error if the JSON cannot be parsed or lacks a
+     * required field.
      */
-    static std::unique_ptr<Config> from_file(
-        const std::filesystem::path& config_path);
+    static std::unique_ptr<Config> from_json(const std::string& json);
 };
 
 /**

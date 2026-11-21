@@ -74,10 +74,9 @@ int main(int argc, char** argv) {
     // probes whose out-of-range answers otherwise become false capabilities.
     const auto checker =
         std::filesystem::path(std::getenv("TEST_SRCDIR")) / argv[1];
-    const auto config_path = dir / "config.json";
     const auto check_path = dir / "check.json";
     const auto result_path = dir / "result.json";
-    nlohmann::json config = {
+    const nlohmann::json config = {
         {"c_compiler", (dir / "missing-compiler").string()},
         {"cpp_compiler", ""},
         {"c_flags", nlohmann::json::array()},
@@ -87,7 +86,6 @@ int main(int argc, char** argv) {
         {"compiler_type", "clang"},
         {"linker", ""},
     };
-    std::ofstream(config_path) << config;
     for (const char* type : {"compile", "sizeof", "alignof"}) {
         nlohmann::json json = {
             {"name", "missing_compiler"},
@@ -97,7 +95,7 @@ int main(int argc, char** argv) {
         };
         std::ofstream(check_path) << json;
         const int status = run_process(
-            {checker.string(), "--config", config_path.string(), "--check",
+            {checker.string(), "--config", config.dump(), "--check",
              check_path.string(), "--results", result_path.string()},
             stdout_path, stderr_path);
         if (status != 1 || std::filesystem::exists(result_path) ||

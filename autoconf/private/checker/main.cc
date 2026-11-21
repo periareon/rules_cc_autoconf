@@ -5,8 +5,11 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <optional>
 #include <sstream>
+#include <stdexcept>
+#include <string>
 #include <vector>
 
 #include "autoconf/private/checker/checker.h"
@@ -20,11 +23,10 @@ namespace {
  * @brief Parsed command-line arguments for checker binary.
  */
 struct CheckerArgs {
-    /** Path to JSON config file (required if --check is not provided) */
-    std::filesystem::path config_path{};
+    /** The toolchain, as `--config` gave it: a JSON object */
+    std::string config_json{};
 
-    /** Path to JSON file containing a single check to run (required if --config
-     * is not provided) */
+    /** Path to JSON file containing a single check to run */
     std::filesystem::path check_path{};
 
     /** Path to JSON results file to write */
@@ -48,10 +50,10 @@ struct CheckerArgs {
 void print_usage(const char* program_name) {
     std::cout << "Usage: " << program_name << " [options]\n";
     std::cout << "Options:\n";
-    std::cout << "  --config <file>        Path to JSON config file (required "
-                 "if --check is not provided)\n";
+    std::cout << "  --config <json>        The toolchain as a JSON object: "
+                 "compilers, linker, flags and compiler type (required)\n";
     std::cout << "  --check <file>         Path to JSON file containing a "
-                 "single check to run (required if --config is not provided)\n";
+                 "single check to run (required)\n";
     std::cout
         << "  --cc-flag <flag>       Compile flag for the target's cc_deps "
            "(repeatable)\n";
@@ -89,9 +91,9 @@ std::optional<CheckerArgs> parse_args(int argc, char* argv[]) {
             return args;
         } else if (arg == "--config") {
             if (i + 1 < expanded_argc) {
-                args.config_path = std::string(expanded_argv_ptr[++i]);
+                args.config_json = std::string(expanded_argv_ptr[++i]);
             } else {
-                std::cerr << "Error: --config requires a file path"
+                std::cerr << "Error: --config requires a JSON object"
                           << std::endl;
                 return std::nullopt;
             }
@@ -157,17 +159,14 @@ std::optional<CheckerArgs> parse_args(int argc, char* argv[]) {
     }
 
     // Validate required arguments
-    // --check requires --config (config provides compiler info, check provides
-    // the check to run)
-    if (args.check_path.empty() && args.config_path.empty()) {
+    if (args.check_path.empty()) {
         std::cerr << "Error: --check is required to specify which check to run"
                   << std::endl;
         return std::nullopt;
     }
 
-    if (!args.check_path.empty() && args.config_path.empty()) {
-        std::cerr << "Error: --config is required when using --check (provides "
-                     "compiler information)"
+    if (args.config_json.empty()) {
+        std::cerr << "Error: --config is required (provides the toolchain)"
                   << std::endl;
         return std::nullopt;
     }
@@ -195,16 +194,15 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-    // If --check is provided, run a single check from file
-    if (!args.check_path.empty()) {
-        return Checker::run_check_from_file(
-            args.check_path, args.config_path, args.results_path,
-            args.dep_mappings, args.cc_flags, args.link_libraries);
+    std::unique_ptr<Config> config;
+    try {
+        config = Config::from_json(args.config_json);
+    } catch (const std::exception& err) {
+        std::cerr << "Error: " << err.what() << std::endl;
+        return 1;
     }
 
-    // --check is required
-    std::cerr << "Error: --check is required to specify which check to run."
-              << std::endl;
-    print_usage(argv[0]);
-    return 1;
+    return Checker::run_check_from_file(args.check_path, *config,
+                                        args.results_path, args.dep_mappings,
+                                        args.cc_flags, args.link_libraries);
 }

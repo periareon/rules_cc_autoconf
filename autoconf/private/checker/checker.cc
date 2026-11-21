@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <set>
 #include <stdexcept>
 #include <unordered_map>
@@ -156,15 +157,16 @@ class ResultLookup {
 }  // namespace
 
 int Checker::run_check_from_file(
-    const std::filesystem::path& check_path,
-    const std::filesystem::path& config_path,
+    const std::filesystem::path& check_path, const Config& toolchain,
     const std::filesystem::path& results_path,
     const std::vector<DepMapping>& dep_mappings,
     const std::vector<std::string>& cc_flags,
     const std::vector<std::string>& link_libraries) {
     try {
-        // Load config for compiler info only
-        std::unique_ptr<Config> config = Config::from_file(config_path);
+        // The toolchain arrived on the command line, as did the cc_deps below:
+        // path mapping rewrites both with this action, where a file written by
+        // another action could be mapped while this one is not.
+        std::unique_ptr<Config> config = std::make_unique<Config>(toolchain);
         // The target's cc_deps arrive on the command line, not in the config:
         // their paths are action inputs that Bazel's path mapping rewrites
         // (--experimental_output_paths=strip), which a file written at
