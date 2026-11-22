@@ -19757,12 +19757,16 @@ autoconf(
         ),
 
         # AC_CHECK_DECLS_ONCE([memmem]) defines HAVE_DECL_MEMMEM to 1 or 0.
-        # The declaration needs _GNU_SOURCE before glibc 2.38 (memmem.m4
-        # requires AC_USE_SYSTEM_EXTENSIONS).
+        # The declaration needs _GNU_SOURCE before glibc 2.38 and
+        # _DARWIN_C_SOURCE under a POSIX pin on macOS (memmem.m4 requires
+        # AC_USE_SYSTEM_EXTENSIONS, so GNU probes with both in confdefs.h).
         checks.AC_CHECK_DECL(
             "memmem",
             name = "ac_cv_have_decl_memmem",
-            compile_defines = ["_GNU_SOURCE"],
+            compile_defines = [
+                "_DARWIN_C_SOURCE",
+                "_GNU_SOURCE",
+            ],
             includes = ["#include <string.h>"],
         ),
         checks.AC_DEFINE(
@@ -21751,36 +21755,29 @@ autoconf(
     ],
 )
 
-# //gnulib/m4/obstack-printf:gl_DECL_OBSTACK_PRINTF
+# //gnulib/m4/obstack-printf:AC_CHECK_FUNCS_ONCE_obstack_printf
 autoconf(
-    name = "gnulib/m4/obstack-printf/gl_DECL_OBSTACK_PRINTF",
+    name = "gnulib/m4/obstack-printf/AC_CHECK_FUNCS_ONCE_obstack_printf",
     checks = [
-    ],
-    visibility = ["//visibility:private"],
-)
-
-# //gnulib/m4/obstack-printf:gl_FUNC_OBSTACK_PRINTF
-autoconf(
-    name = "gnulib/m4/obstack-printf/gl_FUNC_OBSTACK_PRINTF",
-    checks = [
-        # gl_FUNC_OBSTACK_PRINTF checks for obstack_printf function
         checks.AC_CHECK_FUNC(
             "obstack_printf",
             define = "HAVE_OBSTACK_PRINTF",
         ),
-        # gl_REPLACE_OBSTACK_PRINTF: glibc's obstack_printf does not work
-        # with gnulib's struct obstack.
-        checks.AC_SUBST(
-            "REPLACE_OBSTACK_PRINTF",
-            condition = "ac_cv_func_obstack_printf && (HAVE_OBSTACK==0 || REPLACE_OBSTACK==1)",
-            if_false = "0",
-            if_true = "1",
-        ),
-        # gl_DECL_OBSTACK_PRINTF.  The declaration needs _GNU_SOURCE on glibc
-        # (the m4 requires AC_USE_SYSTEM_EXTENSIONS).
+    ],
+    visibility = ["//visibility:private"],
+    deps = ["//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT"],
+)
+
+# //gnulib/m4/obstack-printf:gl_DECL_OBSTACK_PRINTF
+autoconf(
+    name = "gnulib/m4/obstack-printf/gl_DECL_OBSTACK_PRINTF",
+    checks = [
         checks.AC_CHECK_DECL(
             "obstack_printf",
-            compile_defines = ["_GNU_SOURCE"],
+            compile_defines = [
+                "_DARWIN_C_SOURCE",
+                "_GNU_SOURCE",
+            ],
             define = "HAVE_DECL_OBSTACK_PRINTF",
             includes = ["#include <stdio.h>"],
             subst = True,
@@ -21790,9 +21787,39 @@ autoconf(
     visibility = ["//visibility:private"],
     deps = [
         ":gnulib/m4/extensions/extensions",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# //gnulib/m4/obstack-printf:gl_FUNC_OBSTACK_PRINTF
+autoconf(
+    name = "gnulib/m4/obstack-printf/gl_FUNC_OBSTACK_PRINTF",
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gnulib/m4/obstack-printf/gl_DECL_OBSTACK_PRINTF",
+        ":gnulib/m4/obstack-printf/gl_FUNC_OBSTACK_PRINTF_REPLACE",
+    ],
+)
+
+# //gnulib/m4/obstack-printf:gl_FUNC_OBSTACK_PRINTF_REPLACE
+autoconf(
+    name = "gnulib/m4/obstack-printf/gl_FUNC_OBSTACK_PRINTF_REPLACE",
+    checks = [
+        checks.AC_SUBST(
+            "REPLACE_OBSTACK_PRINTF",
+            condition = "ac_cv_func_obstack_printf && (HAVE_OBSTACK==0 || REPLACE_OBSTACK==1)",
+            if_false = "0",
+            if_true = "1",
+        ),
+    ],
+    default_deps = [":gnulib/m4/stdio_h/defaults"],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gnulib/m4/extensions/extensions",
         ":gnulib/m4/inttypes_h/inttypes_h",
         ":gnulib/m4/math_h/long-double-vs-double",
         ":gnulib/m4/multiarch/multiarch",
+        ":gnulib/m4/obstack-printf/AC_CHECK_FUNCS_ONCE_obstack_printf",
         ":gnulib/m4/obstack/gl_FUNC_OBSTACK",
         ":gnulib/m4/stdint_h/stdint_h",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
@@ -21803,21 +21830,23 @@ autoconf(
 autoconf(
     name = "gnulib/m4/obstack-printf/gl_REPLACE_OBSTACK_PRINTF",
     checks = [
+        checks.AC_SUBST(
+            "REPLACE_OBSTACK_PRINTF",
+            condition = "ac_cv_func_obstack_printf",
+            if_false = "0",
+            if_true = "1",
+        ),
     ],
     default_deps = [":gnulib/m4/stdio_h/defaults"],
     visibility = ["//visibility:private"],
+    deps = [":gnulib/m4/obstack-printf/AC_CHECK_FUNCS_ONCE_obstack_printf"],
 )
 
 # //gnulib/m4/obstack-printf:obstack-printf
 autoconf(
     name = "gnulib/m4/obstack-printf/obstack-printf",
-    default_deps = [":gnulib/m4/stdio_h/defaults"],
     visibility = ["//visibility:private"],
-    deps = [
-        ":gnulib/m4/obstack-printf/gl_DECL_OBSTACK_PRINTF",
-        ":gnulib/m4/obstack-printf/gl_FUNC_OBSTACK_PRINTF",
-        ":gnulib/m4/obstack-printf/gl_REPLACE_OBSTACK_PRINTF",
-    ],
+    deps = [":gnulib/m4/obstack-printf/gl_FUNC_OBSTACK_PRINTF"],
 )
 
 # //gnulib/m4/obstack:gl_FUNC_OBSTACK
@@ -31083,24 +31112,35 @@ int main(void) { return 0; }
         # Use subst=True to create both subst variables and config.h defines
         # The original m4 sets HAVE_DECL_*=0 if not found, otherwise uses default (1)
         # gnulib-tool enables the system extensions first (stdio-h depends on
-        # extensions), so the declarations are probed with _GNU_SOURCE.
+        # extensions), so the declarations are probed with the
+        # AC_USE_SYSTEM_EXTENSIONS defines in confdefs.h: _GNU_SOURCE for
+        # glibc, _DARWIN_C_SOURCE for getw and putw under a POSIX pin on macOS.
         checks.AC_CHECK_DECL(
             "fcloseall",
-            compile_defines = ["_GNU_SOURCE"],
+            compile_defines = [
+                "_DARWIN_C_SOURCE",
+                "_GNU_SOURCE",
+            ],
             define = "HAVE_DECL_FCLOSEALL",
             includes = ["#include <stdio.h>"],
             subst = True,
         ),
         checks.AC_CHECK_DECL(
             "getw",
-            compile_defines = ["_GNU_SOURCE"],
+            compile_defines = [
+                "_DARWIN_C_SOURCE",
+                "_GNU_SOURCE",
+            ],
             define = "HAVE_DECL_GETW",
             includes = ["#include <stdio.h>"],
             subst = True,
         ),
         checks.AC_CHECK_DECL(
             "putw",
-            compile_defines = ["_GNU_SOURCE"],
+            compile_defines = [
+                "_DARWIN_C_SOURCE",
+                "_GNU_SOURCE",
+            ],
             define = "HAVE_DECL_PUTW",
             includes = ["#include <stdio.h>"],
             subst = True,
@@ -36827,7 +36867,11 @@ autoconf(
         ),
         checks.AC_CHECK_DECL(
             "execvpe",
-            compile_defines = ["_GNU_SOURCE"],
+            # AC_USE_SYSTEM_EXTENSIONS defines, as GNU has them in confdefs.h.
+            compile_defines = [
+                "_DARWIN_C_SOURCE",
+                "_GNU_SOURCE",
+            ],
             define = "HAVE_DECL_EXECVPE",
             subst = "HAVE_DECL_EXECVPE",
         ),
@@ -45304,8 +45348,10 @@ ports_mirror_test(
         ":gnulib/m4/nullptr/nullptr",
         ":gnulib/m4/obstack-printf-gnu/obstack-printf-gnu",
         ":gnulib/m4/obstack-printf-posix/obstack-printf-posix",
+        ":gnulib/m4/obstack-printf/AC_CHECK_FUNCS_ONCE_obstack_printf",
         ":gnulib/m4/obstack-printf/gl_DECL_OBSTACK_PRINTF",
         ":gnulib/m4/obstack-printf/gl_FUNC_OBSTACK_PRINTF",
+        ":gnulib/m4/obstack-printf/gl_FUNC_OBSTACK_PRINTF_REPLACE",
         ":gnulib/m4/obstack-printf/gl_REPLACE_OBSTACK_PRINTF",
         ":gnulib/m4/obstack-printf/obstack-printf",
         ":gnulib/m4/obstack/gl_FUNC_OBSTACK",
@@ -47224,8 +47270,10 @@ ports_mirror_test(
         "//gnulib/m4/nullptr:nullptr",
         "//gnulib/m4/obstack-printf-gnu:obstack-printf-gnu",
         "//gnulib/m4/obstack-printf-posix:obstack-printf-posix",
+        "//gnulib/m4/obstack-printf:AC_CHECK_FUNCS_ONCE_obstack_printf",
         "//gnulib/m4/obstack-printf:gl_DECL_OBSTACK_PRINTF",
         "//gnulib/m4/obstack-printf:gl_FUNC_OBSTACK_PRINTF",
+        "//gnulib/m4/obstack-printf:gl_FUNC_OBSTACK_PRINTF_REPLACE",
         "//gnulib/m4/obstack-printf:gl_REPLACE_OBSTACK_PRINTF",
         "//gnulib/m4/obstack-printf:obstack-printf",
         "//gnulib/m4/obstack:gl_FUNC_OBSTACK",

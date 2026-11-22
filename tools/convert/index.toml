@@ -12044,8 +12044,10 @@ package = "gnulib/m4/obstack-printf"
 m4_file = "obstack-printf.m4"
 url = "https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/obstack-printf.m4"
 targets = [
+    "AC_CHECK_FUNCS_ONCE_obstack_printf",
     "gl_DECL_OBSTACK_PRINTF",
     "gl_FUNC_OBSTACK_PRINTF",
+    "gl_FUNC_OBSTACK_PRINTF_REPLACE",
     "gl_REPLACE_OBSTACK_PRINTF",
     "obstack-printf",
 ]

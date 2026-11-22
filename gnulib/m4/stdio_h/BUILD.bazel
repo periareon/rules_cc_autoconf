@@ -67,24 +67,35 @@ int main(void) { return 0; }
         # Use subst=True to create both subst variables and config.h defines
         # The original m4 sets HAVE_DECL_*=0 if not found, otherwise uses default (1)
         # gnulib-tool enables the system extensions first (stdio-h depends on
-        # extensions), so the declarations are probed with _GNU_SOURCE.
+        # extensions), so the declarations are probed with the
+        # AC_USE_SYSTEM_EXTENSIONS defines in confdefs.h: _GNU_SOURCE for
+        # glibc, _DARWIN_C_SOURCE for getw and putw under a POSIX pin on macOS.
         checks.AC_CHECK_DECL(
             "fcloseall",
-            compile_defines = ["_GNU_SOURCE"],
+            compile_defines = [
+                "_DARWIN_C_SOURCE",
+                "_GNU_SOURCE",
+            ],
             define = "HAVE_DECL_FCLOSEALL",
             includes = ["#include <stdio.h>"],
             subst = True,
         ),
         checks.AC_CHECK_DECL(
             "getw",
-            compile_defines = ["_GNU_SOURCE"],
+            compile_defines = [
+                "_DARWIN_C_SOURCE",
+                "_GNU_SOURCE",
+            ],
             define = "HAVE_DECL_GETW",
             includes = ["#include <stdio.h>"],
             subst = True,
         ),
         checks.AC_CHECK_DECL(
             "putw",
-            compile_defines = ["_GNU_SOURCE"],
+            compile_defines = [
+                "_DARWIN_C_SOURCE",
+                "_GNU_SOURCE",
+            ],
             define = "HAVE_DECL_PUTW",
             includes = ["#include <stdio.h>"],
             subst = True,
