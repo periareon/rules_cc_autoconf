@@ -152,3 +152,9 @@ single_version_override(
     patch_strip = 1,
     patches = ["//patches:wget2.patch"],
 )
+
+single_version_override(
+    module_name = "texlive",
+    patch_strip = 1,
+    patches = ["//patches:texlive.patch"],
+)

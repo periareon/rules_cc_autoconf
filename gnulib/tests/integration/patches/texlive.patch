@@ -1,0 +1,43 @@
+# `c-auto.in` ships `#define WEB2CVERSION "REPLACE-WITH-WEB2CVERSION"` rather
+# than an `#undef`. config.status rewrites a `#define` line for a name configure
+# defines just like an `#undef`, and so does `autoconf_hdr` since #279, so the
+# `expand_template` that first turned the line into an `#undef` is gone. The
+# header is public so //:texlive_web2cversion_test can check the rewrite.
+--- a/texk/web2c/BUILD.bazel
++++ b/texk/web2c/BUILD.bazel
+@@ -1,6 +1,5 @@
+ """web2c - TeX engines, METAFONT, MetaPost, and related programs."""
+ 
+-load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
+ load("@bazel_skylib//rules:write_file.bzl", "write_file")
+ load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+ load("@rules_cc//cc:cc_library.bzl", "cc_library")
+@@ -103,26 +102,11 @@
+ # Web2c config headers (w2c/config.h + w2c/c-auto.h)
+ # =============================================================================
+ 
+-# Upstream `configure.ac` does
+-#   AC_DEFINE_UNQUOTED([WEB2CVERSION], [" (TeX Live ...)"])
+-# but the c-auto.in template ships with `#define WEB2CVERSION
+-# "REPLACE-WITH-WEB2CVERSION"` (NOT `#undef`), so autoconf_hdr's
+-# substitution can't touch it. Rewrite the literal here to `#undef
+-# WEB2CVERSION` so the AC_BUILD_SETTING -> :web2c_version_banner wiring
+-# in //:configure can fill the actual value.
+-expand_template(
+-    name = "c_auto_in_substituted",
+-    out = "c-auto.in.substituted",
+-    substitutions = {
+-        "#define WEB2CVERSION \"REPLACE-WITH-WEB2CVERSION\"": "#undef WEB2CVERSION",
+-    },
+-    template = "c-auto.in",
+-)
+-
+ autoconf_hdr(
+     name = "w2c_c_auto_h",
+     out = "w2c/c-auto.h",
+-    template = ":c_auto_in_substituted",
++    template = "c-auto.in",
++    visibility = ["//visibility:public"],
+     deps = ["//:configure"],
+ )
+ 

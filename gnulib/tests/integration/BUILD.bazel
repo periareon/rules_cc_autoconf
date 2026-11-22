@@ -1,6 +1,8 @@
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
+load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
 
 # Which C++ toolchain the run was configured with; set by the matching
 # `--config` in .bazelrc so targets can opt out of one toolchain on one OS.
@@ -278,6 +280,41 @@ alias(
     actual = "@texlive//texk/chktex:chktex",
     target_compatible_with = select({
         ":hermetic_llvm_windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
+# TeX Live's `c-auto.in` ships `#define WEB2CVERSION "REPLACE-WITH-WEB2CVERSION"`
+# rather than an `#undef`. config.status rewrites it all the same, and so does
+# `autoconf_hdr` since #279; patches/texlive.patch drops the overlay's
+# `expand_template` workaround so the rewrite is checked on the real template.
+# texlive has no Windows configuration (see :texlive).
+genrule(
+    name = "texlive_web2cversion",
+    srcs = ["@texlive//texk/web2c:w2c_c_auto_h"],
+    outs = ["texlive_web2cversion.h"],
+    cmd = "grep '^#define WEB2CVERSION ' $(execpath @texlive//texk/web2c:w2c_c_auto_h) > $@",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
+write_file(
+    name = "texlive_web2cversion_expected",
+    out = "texlive_web2cversion_expected.h",
+    content = [
+        '#define WEB2CVERSION " (TeX Live 2026)"',
+        "",
+    ],
+)
+
+diff_test(
+    name = "texlive_web2cversion_test",
+    file1 = ":texlive_web2cversion_expected",
+    file2 = ":texlive_web2cversion",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
         "//conditions:default": [],
     }),
 )
