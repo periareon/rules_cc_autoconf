@@ -234,7 +234,7 @@ autoconf_hdr(
 <h3 id="2-autoconf_hdr-rule"><a class="header" href="#2-autoconf_hdr-rule">2. <code>autoconf_hdr</code> Rule</a></h3>
 <p>Takes check results from <code>autoconf</code> targets and generates header files by processing templates. Supports two modes:</p>
 <ul>
-<li><code>mode = "defines"</code> — For <code>config.h</code> files (processes <code>#undef</code> directives)</li>
+<li><code>mode = "defines"</code> — For <code>config.h</code> files. As in config.status, a <code>#define</code> or <code>#undef</code> line for a name the checks define becomes that definition; for any other name an <code>#undef</code> line is commented out and a <code>#define</code> line is kept</li>
 <li><code>mode = "subst"</code> — For substitution files (processes <code>@VAR@</code> placeholders)</li>
 </ul>
 <h3 id="3-autoconf_package_info-rule"><a class="header" href="#3-autoconf_package_info-rule">3. <code>autoconf_package_info</code> Rule</a></h3>
