@@ -12044,8 +12044,10 @@ package = "gnulib/m4/obstack-printf"
 m4_file = "obstack-printf.m4"
 url = "https://github.com/coreutils/gnulib/blob/1039a5f2cee3cda1c11f64a5eb3a15b2e87cd2f0/m4/obstack-printf.m4"
 targets = [
+    "AC_CHECK_FUNCS_ONCE_obstack_printf",
     "gl_DECL_OBSTACK_PRINTF",
     "gl_FUNC_OBSTACK_PRINTF",
+    "gl_FUNC_OBSTACK_PRINTF_REPLACE",
     "gl_REPLACE_OBSTACK_PRINTF",
     "obstack-printf",
 ]
@@ -12068,13 +12070,13 @@ deps = [
     "gnulib/m4/stdio_h",
 ]
 cache = [
-    "_gl_cv_have_decl_obstack_printf",
     "ac_cv_func_obstack_printf",
+    "ac_cv_have_decl_obstack_printf",
 ]
 dual = [
     "HAVE_DECL_OBSTACK_PRINTF",
 ]
-probes = { HAVE_DECL_OBSTACK_PRINTF = "_gl_cv_have_decl_obstack_printf", HAVE_OBSTACK_PRINTF = "ac_cv_func_obstack_printf" }
+probes = { HAVE_DECL_OBSTACK_PRINTF = "ac_cv_have_decl_obstack_printf", HAVE_OBSTACK_PRINTF = "ac_cv_func_obstack_printf" }
 
 [[ports]]
 package = "gnulib/m4/obstack-printf-gnu"
@@ -13241,6 +13243,7 @@ substs = [
 defines = [
     "PTHREAD_RWLOCK_BAD_WAITQUEUE",
     "PTHREAD_RWLOCK_LACKS_TIMEOUT",
+    "PTHREAD_RWLOCK_UNIMPLEMENTED",
 ]
 deps = [
     "autoconf/macros/AC_CANONICAL_HOST",
@@ -13248,7 +13251,9 @@ deps = [
     "gnulib/m4/pthread_h",
 ]
 cache = [
+    "_gl_host_os_linux_gnu",
     "ac_cv_have_decl_pthread_rwlock_timedrdlock",
+    "gl_cv_func_pthread_rwlock_init",
 ]
 probes = { HAVE_DECL_PTHREAD_RWLOCK_TIMEDRDLOCK = "ac_cv_have_decl_pthread_rwlock_timedrdlock" }
 
@@ -16708,6 +16713,7 @@ defines = [
 ]
 deps = [
     "autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    "gnulib/m4/extensions",
     "gnulib/m4/include_next",
     "gnulib/m4/sigpipe",
     "gnulib/m4/stdlib_h",

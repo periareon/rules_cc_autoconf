@@ -81,7 +81,7 @@ def generated_docstring(title: str, what: str, command: str | None = None) -> st
             "",
             *textwrap.wrap(
                 f"{GENERATED_MARK}. BUILD.bazel beside this file is hand-written: it loads this file and "
-                "calls autoconf_targets(), and a rule it declares with a generated target's name replaces "
+                "calls configure(), and a rule it declares with a generated target's name replaces "
                 "that target here.",
                 79,
             ),

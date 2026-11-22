@@ -50,6 +50,19 @@ def test_parse_call() -> None:
     assert m4args.parse_call("AC_DEFINE([A])dnl") is not None
 
 
+def test_parse_calls() -> None:
+    calls = m4args.parse_calls("AC_DEFINE([A], [2])\n  AC_DEFINE([B]) dnl trailing\n AC_PROG_CC")
+    assert calls is not None
+    assert [(c.name, c.args) for c in calls] == [
+        ("AC_DEFINE", ["A", "2"]),
+        ("AC_DEFINE", ["B"]),
+        ("AC_PROG_CC", []),
+    ]
+    assert m4args.parse_calls("AC_DEFINE([A]) x=yes") is None
+    assert m4args.parse_calls("x=yes") is None
+    assert m4args.parse_calls("") is None
+
+
 def test_lang_program() -> None:
     program = m4args.lang_program("AC_LANG_PROGRAM([[#include <stdlib.h>\n  int x;]], [[return x;]])")
     assert program is not None

@@ -29,9 +29,16 @@ autoconf(
         ),
 
         # AC_CHECK_DECLS_ONCE([memmem]) defines HAVE_DECL_MEMMEM to 1 or 0.
+        # The declaration needs _GNU_SOURCE before glibc 2.38 and
+        # _DARWIN_C_SOURCE under a POSIX pin on macOS (memmem.m4 requires
+        # AC_USE_SYSTEM_EXTENSIONS, so GNU probes with both in confdefs.h).
         checks.AC_CHECK_DECL(
             "memmem",
             name = "ac_cv_have_decl_memmem",
+            compile_defines = [
+                "_DARWIN_C_SOURCE",
+                "_GNU_SOURCE",
+            ],
             includes = ["#include <string.h>"],
         ),
         checks.AC_DEFINE(

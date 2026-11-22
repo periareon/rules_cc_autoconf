@@ -1,8 +1,8 @@
 """The second rendering of a project-mode package: the BUILD text `emit` renders, as the
 generated `autoconf.bzl` and the hand-written `BUILD.bazel` that loads it.
 
-`autoconf.bzl` holds the package's targets as the body of one macro, `autoconf_targets()`, with
-the constants several rules share at the top level and `visibility("private")`, so only its own
+`autoconf.bzl` holds the package's targets as the body of one macro, `configure()`, with the
+constants several rules share at the top level and `visibility("private")`, so only its own
 package loads it.  It is made from the BUILD text after buildifier formatted that as a BUILD
 file (one argument per line, the lists it sorts sorted), so the statements read as they would
 in a BUILD file.  `BUILD.bazel` is written once, as a stub that calls the macro, and then
@@ -29,8 +29,14 @@ from tools.convert.emit import (
     split_loads,
 )
 
-MACRO = "autoconf_targets"
-"""The macro `autoconf.bzl` defines: the package's generated targets, called from its BUILD.bazel."""
+MACRO = "configure"
+"""The macro `autoconf.bzl` defines: the package's generated targets, called from its BUILD.bazel,
+named as the script it stands for."""
+FORMER_MACRO = "autoconf_targets"
+"""The macro's name before `configure`: a BUILD.bazel that still calls it gets an alias
+(`to_bzl(former_alias=True)`), so a regeneration never breaks a hand-written file."""
+MACRO_CALL_RE = re.compile(rf"^({MACRO}|{FORMER_MACRO})\(", re.MULTILINE)
+"""A BUILD text's call of the macro, by either name."""
 BZL_NAME = "autoconf.bzl"
 """The generated file of a project-mode package, beside the hand-written BUILD.bazel that loads it."""
 BUILD_NAME = "BUILD.bazel"
@@ -154,14 +160,15 @@ def _without_unread_constants(chunks: list[list[str]]) -> list[list[str]]:
         chunks = [c for i, c in enumerate(chunks) if i not in unread]
 
 
-def to_bzl(text: str, *, replaced: list[str] | None = None) -> str:
+def to_bzl(text: str, *, replaced: list[str] | None = None, former_alias: bool = False) -> str:
     """A rendered (and buildifier-formatted) BUILD text as the package's `autoconf.bzl`: the
     docstring and the `load()`s stay at the top, `visibility("private")` follows, a constant
     stays at the top level unless it calls `glob()` or reads one that moved, and everything else
-    goes into the `autoconf_targets()` macro: indented, `native.` on what a BUILD file calls
-    without a load, a comprehension statement written as a `for` loop.  Lines that continue a
-    multi-line string keep their column.  `replaced` names the generated targets left out for
-    BUILD.bazel's own; the macro's docstring says so."""
+    goes into the `configure()` macro: indented, `native.` on what a BUILD file calls without a
+    load, a comprehension statement written as a `for` loop.  Lines that continue a multi-line
+    string keep their column.  `replaced` names the generated targets left out for BUILD.bazel's
+    own; the macro's docstring says so.  `former_alias` adds `autoconf_targets = configure` for a
+    BUILD.bazel that still calls the macro by its former name."""
     lines = text.splitlines()
     module = ast.parse(text)
     loaded = _loaded_symbols(module)
@@ -231,6 +238,12 @@ def to_bzl(text: str, *, replaced: list[str] | None = None) -> str:
         out += chunk + [""]
     out += ["# buildifier: disable=unnamed-macro", f"def {MACRO}():", *doc]
     body = [line for chunk in inner for line in [""] + chunk] or ["", f"{INDENT}pass"]
+    if former_alias:
+        body += [
+            "",
+            f"# The macro's former name, which BUILD.bazel still calls; load `{MACRO}` instead.",
+            f"{FORMER_MACRO} = {MACRO}",
+        ]
     return "\n".join(out + body) + "\n"
 
 
@@ -306,7 +319,7 @@ def build_file(hand_text: str = "", *, symbols: list[str] | None = None, loads: 
     ours = load_statement(f":{BZL_NAME}", [quote(s) for s in sorted({MACRO, *(symbols or ())})])
     parts = [docstring] if docstring else []
     parts.append("\n".join(merge_loads([*hand_loads, *(loads or []), ours])))
-    if not re.search(rf"^{MACRO}\(", body, re.MULTILINE):
+    if not MACRO_CALL_RE.search(body):
         parts.append(f"{_STUB_COMMENT}\n{MACRO}()")
     if body:
         parts.append(body)

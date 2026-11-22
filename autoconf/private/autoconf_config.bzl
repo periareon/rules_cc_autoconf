@@ -6,7 +6,6 @@ Common utilities for autoconf rules.
 load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
-load("//autoconf/private:ctx_actions_write.bzl", "write")
 load("//autoconf/private:providers.bzl", "CcAutoconfDefaultsInfo", "CcAutoconfInfo")
 
 _TOOLCHAIN_TYPE = "//autoconf:toolchain_type"
@@ -585,54 +584,82 @@ def create_config_dict(toolchain_info):
         "linker": toolchain_info.linker_path,
     }
 
-def _mapped_config(item):
-    """Returns the config as JSON, with the bin directory replaced by its mapped path.
+def map_bin_dirs(value, output_root, mapped_bin):
+    """Replaces every `<output_root>/<configuration>/bin` in `value` with `mapped_bin`.
 
-    `item.witness` is the config file itself. Under path mapping its path is mapped, so
-    removing `item.tail` from it gives the mapped bin directory.
+    Path mapping maps the bin directory of every configuration, including the exec
+    configuration that builds tools such as a linker wrapper, to the same directory.
 
     Args:
-        item (struct): `config`, `bin_dir`, `witness` and `tail` from `write_config_json`.
+        value (str): A path or flag.
+        output_root (str): The output root, such as `bazel-out`.
+        mapped_bin (str): The mapped bin directory.
 
     Returns:
-        str: The config JSON.
+        str: `value` with each bin directory mapped.
+    """
+    parts = value.split(output_root + "/")
+    result = parts[0]
+    for part in parts[1:]:
+        _, sep, rest = part.partition("/")
+        if sep and (rest == "bin" or rest.startswith("bin/")):
+            result += mapped_bin + rest[len("bin"):]
+        else:
+            result += output_root + "/" + part
+    return result
+
+def _config_args(item):
+    """The `--config` argument for a checker action: the config as JSON, with bin directories as path mapping spells them.
+
+    `item.witness` is an input of the action under the bin directory. Its `path` is
+    read at execution time, when `map_each` runs, so under path mapping it carries the
+    mapped bin directory; removing `item.tail` from it gives that directory. Path mapping
+    rewrites the bin directory of every configuration, including the exec configuration
+    that builds tools such as a linker wrapper, to the same directory, so each
+    `<output root>/<configuration>/bin` in the config is mapped, not only the target's.
+
+    Args:
+        item (struct): `config`, `bin_dir`, `witness` and `tail` from `config_args`.
+
+    Returns:
+        list[str]: `--config` and the config JSON, on one line for the param file.
     """
     path = item.witness.path
     mapped_bin = path[:len(path) - len(item.tail) - 1]
+    if mapped_bin == item.bin_dir:
+        return ["--config", json.encode(item.config)]
+    output_root = item.bin_dir.rpartition("/")[0].rpartition("/")[0]
     config = {}
     for key, value in item.config.items():
         if type(value) == "list":
-            config[key] = [flag.replace(item.bin_dir, mapped_bin) for flag in value]
+            config[key] = [map_bin_dirs(flag, output_root, mapped_bin) for flag in value]
         else:
-            config[key] = value.replace(item.bin_dir, mapped_bin)
-    return json.encode_indent(config, indent = " " * 4)
+            config[key] = map_bin_dirs(value, output_root, mapped_bin)
+    return ["--config", json.encode(config)]
 
-def write_config_json(ctx, config_dict):
-    """Write a config dictionary to a JSON file.
+def config_args(ctx, args, config, witness):
+    """Add the toolchain config to a checker command line.
+
+    The config travels in this action's own `Args` rather than in a file written by
+    another action, so its paths follow this action's path mapping exactly: mapped when
+    it is mapped, plain when it is excluded with `--modify_execution_info`. Under
+    mapping the command line then names no configuration, and checks in different
+    configurations share a cache key, which is what path mapping is for.
 
     Args:
         ctx (ctx): The rule context.
-        config_dict (dict): The config dictionary from create_config_dict().
-
-    Returns:
-        A File representing the config JSON file.
+        args (Args): The checker action's arguments.
+        config (dict): The config dictionary from `create_config_dict`.
+        witness (File): An input of the action under the bin directory, such as the
+            check file, whose execution-time path reveals the mapped bin directory.
     """
-    config_json = ctx.actions.declare_file("{}.ac.json".format(ctx.label.name))
     bin_dir = ctx.bin_dir.path
-    content = ctx.actions.args()
-    content.set_param_file_format("multiline")
-    content.add_all([struct(
-        config = config_dict,
+    args.add_all([struct(
+        config = config,
         bin_dir = bin_dir,
-        witness = config_json,
-        tail = config_json.path[len(bin_dir) + 1:],
-    )], map_each = _mapped_config)
-    write(
-        actions = ctx.actions,
-        output = config_json,
-        content = content,
-    )
-    return config_json
+        witness = witness,
+        tail = witness.path[len(bin_dir) + 1:],
+    )], map_each = _config_args)
 
 def get_environment_variables(ctx, toolchain_info):
     """Get environment variables for running autoconf checks.

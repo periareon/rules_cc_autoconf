@@ -16,6 +16,11 @@ autoconf(
         ),
         checks.AC_CHECK_DECL(
             "execvpe",
+            # AC_USE_SYSTEM_EXTENSIONS defines, as GNU has them in confdefs.h.
+            compile_defines = [
+                "_DARWIN_C_SOURCE",
+                "_GNU_SOURCE",
+            ],
             define = "HAVE_DECL_EXECVPE",
             subst = "HAVE_DECL_EXECVPE",
         ),

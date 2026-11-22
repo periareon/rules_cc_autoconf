@@ -19757,9 +19757,16 @@ autoconf(
         ),
 
         # AC_CHECK_DECLS_ONCE([memmem]) defines HAVE_DECL_MEMMEM to 1 or 0.
+        # The declaration needs _GNU_SOURCE before glibc 2.38 and
+        # _DARWIN_C_SOURCE under a POSIX pin on macOS (memmem.m4 requires
+        # AC_USE_SYSTEM_EXTENSIONS, so GNU probes with both in confdefs.h).
         checks.AC_CHECK_DECL(
             "memmem",
             name = "ac_cv_have_decl_memmem",
+            compile_defines = [
+                "_DARWIN_C_SOURCE",
+                "_GNU_SOURCE",
+            ],
             includes = ["#include <string.h>"],
         ),
         checks.AC_DEFINE(
@@ -21748,49 +21755,63 @@ autoconf(
     ],
 )
 
+# //gnulib/m4/obstack-printf:AC_CHECK_FUNCS_ONCE_obstack_printf
+autoconf(
+    name = "gnulib/m4/obstack-printf/AC_CHECK_FUNCS_ONCE_obstack_printf",
+    checks = [
+        checks.AC_CHECK_FUNC(
+            "obstack_printf",
+            define = "HAVE_OBSTACK_PRINTF",
+        ),
+    ],
+    visibility = ["//visibility:private"],
+    deps = ["//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT"],
+)
+
 # //gnulib/m4/obstack-printf:gl_DECL_OBSTACK_PRINTF
 autoconf(
     name = "gnulib/m4/obstack-printf/gl_DECL_OBSTACK_PRINTF",
     checks = [
+        checks.AC_CHECK_DECL(
+            "obstack_printf",
+            compile_defines = [
+                "_DARWIN_C_SOURCE",
+                "_GNU_SOURCE",
+            ],
+            define = "HAVE_DECL_OBSTACK_PRINTF",
+            includes = ["#include <stdio.h>"],
+            subst = True,
+        ),
     ],
+    default_deps = [":gnulib/m4/stdio_h/defaults"],
     visibility = ["//visibility:private"],
+    deps = [
+        ":gnulib/m4/extensions/extensions",
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
 )
 
 # //gnulib/m4/obstack-printf:gl_FUNC_OBSTACK_PRINTF
 autoconf(
     name = "gnulib/m4/obstack-printf/gl_FUNC_OBSTACK_PRINTF",
+    visibility = ["//visibility:private"],
+    deps = [
+        ":gnulib/m4/obstack-printf/gl_DECL_OBSTACK_PRINTF",
+        ":gnulib/m4/obstack-printf/gl_FUNC_OBSTACK_PRINTF_REPLACE",
+    ],
+)
+
+# //gnulib/m4/obstack-printf:gl_FUNC_OBSTACK_PRINTF_REPLACE
+autoconf(
+    name = "gnulib/m4/obstack-printf/gl_FUNC_OBSTACK_PRINTF_REPLACE",
     checks = [
-        # gl_FUNC_OBSTACK_PRINTF checks for obstack_printf function
-        checks.AC_CHECK_FUNC(
-            "obstack_printf",
-            define = "HAVE_OBSTACK_PRINTF",
+        checks.AC_SUBST(
+            "REPLACE_OBSTACK_PRINTF",
+            condition = "ac_cv_func_obstack_printf && (HAVE_OBSTACK==0 || REPLACE_OBSTACK==1)",
+            if_false = "0",
+            if_true = "1",
         ),
-        # gl_DECL_OBSTACK_PRINTF checks for obstack_printf declaration
-        checks.AC_CHECK_DECL(
-            "obstack_printf",
-            name = "_gl_cv_have_decl_obstack_printf",
-            includes = ["#include <stdio.h>"],
-        ),
-    ] + select({
-        # On Linux: obstack_printf is declared in stdio.h (glibc)
-        "@platforms//os:linux": [
-            checks.AC_DEFINE(
-                "HAVE_DECL_OBSTACK_PRINTF",
-                "1",
-                subst = True,
-            ),
-            checks.AC_SUBST("REPLACE_OBSTACK_PRINTF", "1"),
-        ],
-        # On macOS: obstack_printf is not declared
-        "//conditions:default": [
-            checks.AC_DEFINE(
-                "HAVE_DECL_OBSTACK_PRINTF",
-                "0",
-                subst = True,
-            ),
-            checks.AC_SUBST("REPLACE_OBSTACK_PRINTF", "0"),
-        ],
-    }),
+    ],
     default_deps = [":gnulib/m4/stdio_h/defaults"],
     visibility = ["//visibility:private"],
     deps = [
@@ -21798,6 +21819,7 @@ autoconf(
         ":gnulib/m4/inttypes_h/inttypes_h",
         ":gnulib/m4/math_h/long-double-vs-double",
         ":gnulib/m4/multiarch/multiarch",
+        ":gnulib/m4/obstack-printf/AC_CHECK_FUNCS_ONCE_obstack_printf",
         ":gnulib/m4/obstack/gl_FUNC_OBSTACK",
         ":gnulib/m4/stdint_h/stdint_h",
         "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
@@ -21808,21 +21830,23 @@ autoconf(
 autoconf(
     name = "gnulib/m4/obstack-printf/gl_REPLACE_OBSTACK_PRINTF",
     checks = [
+        checks.AC_SUBST(
+            "REPLACE_OBSTACK_PRINTF",
+            condition = "ac_cv_func_obstack_printf",
+            if_false = "0",
+            if_true = "1",
+        ),
     ],
     default_deps = [":gnulib/m4/stdio_h/defaults"],
     visibility = ["//visibility:private"],
+    deps = [":gnulib/m4/obstack-printf/AC_CHECK_FUNCS_ONCE_obstack_printf"],
 )
 
 # //gnulib/m4/obstack-printf:obstack-printf
 autoconf(
     name = "gnulib/m4/obstack-printf/obstack-printf",
-    default_deps = [":gnulib/m4/stdio_h/defaults"],
     visibility = ["//visibility:private"],
-    deps = [
-        ":gnulib/m4/obstack-printf/gl_DECL_OBSTACK_PRINTF",
-        ":gnulib/m4/obstack-printf/gl_FUNC_OBSTACK_PRINTF",
-        ":gnulib/m4/obstack-printf/gl_REPLACE_OBSTACK_PRINTF",
-    ],
+    deps = [":gnulib/m4/obstack-printf/gl_FUNC_OBSTACK_PRINTF"],
 )
 
 # //gnulib/m4/obstack:gl_FUNC_OBSTACK
@@ -24335,46 +24359,198 @@ autoconf(
                 if_false = "0",
                 if_true = "1",
             ),
+        ],
+    }) + select({
+        # AC_CACHE_CHECK([for pthread_rwlock_init]) (m4 lines 47-79). On
+        # darwin* it compiles a PTHREAD_RWLOCK_INITIALIZER use (Mac OS X 10.4
+        # lacked the macro); elsewhere it links pthread_rwlock_init with
+        # LIBPMULTITHREAD (Android 4.3 declares the functions but has none in
+        # libc). Windows takes the first select's mingw arm and never gets here.
+        "@platforms//os:macos": [
+            checks.AC_TRY_COMPILE(
+                name = "gl_cv_func_pthread_rwlock_init",
+                code = """\
+#include <pthread.h>
+pthread_rwlock_t l = PTHREAD_RWLOCK_INITIALIZER;
+""",
+                language = "c",
+                requires = ["ac_cv_header_pthread_h"],
+            ),
+        ],
+        "@platforms//os:windows": [],
+        "//conditions:default": [
+            checks.AC_TRY_LINK(
+                name = "gl_cv_func_pthread_rwlock_init",
+                code = """\
+extern
+#ifdef __cplusplus
+"C"
+#endif
+int pthread_rwlock_init (void);
+int main ()
+{
+  return pthread_rwlock_init ();
+}
+""",
+                language = "c",
+                requires = ["ac_cv_header_pthread_h"],
+            ),
+        ],
+    }) + select({
+        "@platforms//os:windows": [],
+        # if test $gl_cv_func_pthread_rwlock_init = no (m4 lines 80-93): every
+        # REPLACE_* is 1 and PTHREAD_RWLOCK_UNIMPLEMENTED is defined.
+        # REPLACE_PTHREAD_RWLOCK_INIT and REPLACE_PTHREAD_RWLOCKATTR_INIT are
+        # in the wait queue select below, which also sets them.
+        "//conditions:default": [
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_RWLOCKATTR_DESTROY",
+                condition = "ac_cv_header_pthread_h && !gl_cv_func_pthread_rwlock_init",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_RWLOCK_RDLOCK",
+                condition = "ac_cv_header_pthread_h && !gl_cv_func_pthread_rwlock_init",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_RWLOCK_WRLOCK",
+                condition = "ac_cv_header_pthread_h && !gl_cv_func_pthread_rwlock_init",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_RWLOCK_TRYRDLOCK",
+                condition = "ac_cv_header_pthread_h && !gl_cv_func_pthread_rwlock_init",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_RWLOCK_TRYWRLOCK",
+                condition = "ac_cv_header_pthread_h && !gl_cv_func_pthread_rwlock_init",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_RWLOCK_TIMEDRDLOCK",
+                condition = "ac_cv_header_pthread_h && !gl_cv_func_pthread_rwlock_init",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_RWLOCK_TIMEDWRLOCK",
+                condition = "ac_cv_header_pthread_h && !gl_cv_func_pthread_rwlock_init",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_RWLOCK_UNLOCK",
+                condition = "ac_cv_header_pthread_h && !gl_cv_func_pthread_rwlock_init",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_RWLOCK_DESTROY",
+                condition = "ac_cv_header_pthread_h && !gl_cv_func_pthread_rwlock_init",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_DEFINE(
+                "PTHREAD_RWLOCK_UNIMPLEMENTED",
+                condition = "ac_cv_header_pthread_h && !gl_cv_func_pthread_rwlock_init",
+                if_false = None,
+                if_true = 1,
+            ),
 
-            # AC_CHECK_DECL([pthread_rwlock_timedrdlock], , [...], [[#include <pthread.h>]])
-            # Declared on Linux (glibc); NOT declared on macOS.
+            # else (m4 lines 94-104): AC_CHECK_DECL([pthread_rwlock_timedrdlock],
+            # , [...], [[#include <pthread.h>]]). Declared on Linux (glibc); NOT
+            # declared on macOS. When not declared: PTHREAD_RWLOCK_LACKS_TIMEOUT=1
+            # and HAVE_PTHREAD_RWLOCK_TIMED{RD,WR}LOCK=0. The not-found arm above
+            # leaves HAVE_PTHREAD_RWLOCK_TIMED{RD,WR}LOCK at their default, 1.
             checks.AC_CHECK_DECL(
                 "pthread_rwlock_timedrdlock",
                 includes = ["#include <pthread.h>"],
-                requires = ["ac_cv_header_pthread_h"],
+                requires = [
+                    "ac_cv_header_pthread_h",
+                    "gl_cv_func_pthread_rwlock_init",
+                ],
             ),
-            # When not declared: PTHREAD_RWLOCK_LACKS_TIMEOUT=1 and
-            # HAVE_PTHREAD_RWLOCK_TIMED{RD,WR}LOCK=0 (m4 line ~83)
             checks.AC_DEFINE(
                 "PTHREAD_RWLOCK_LACKS_TIMEOUT",
-                condition = "ac_cv_header_pthread_h && !ac_cv_have_decl_pthread_rwlock_timedrdlock",
+                condition = "ac_cv_header_pthread_h && gl_cv_func_pthread_rwlock_init && !ac_cv_have_decl_pthread_rwlock_timedrdlock",
                 if_false = None,
                 if_true = 1,
             ),
             checks.AC_SUBST(
                 "HAVE_PTHREAD_RWLOCK_TIMEDRDLOCK",
-                condition = "ac_cv_header_pthread_h && ac_cv_have_decl_pthread_rwlock_timedrdlock",
+                condition = "ac_cv_header_pthread_h && (!gl_cv_func_pthread_rwlock_init || ac_cv_have_decl_pthread_rwlock_timedrdlock)",
                 if_false = "0",
                 if_true = "1",
             ),
             checks.AC_SUBST(
                 "HAVE_PTHREAD_RWLOCK_TIMEDWRLOCK",
-                condition = "ac_cv_header_pthread_h && ac_cv_have_decl_pthread_rwlock_timedrdlock",
+                condition = "ac_cv_header_pthread_h && (!gl_cv_func_pthread_rwlock_init || ac_cv_have_decl_pthread_rwlock_timedrdlock)",
                 if_false = "0",
                 if_true = "1",
             ),
         ],
     }) + select({
-        # The upstream m4 runs AC_RUN_IFELSE for pthread_rwlock wait queue
-        # behavior on linux*-gnu* (m4 lines ~89-112). The cross-compile
-        # default is "guessing no" (bad waitqueue). On non-Linux the default
-        # is "guessing yes" (good), so no action needed.
+        # gl_cv_func_pthread_rwlock_good_waitqueue (m4 lines 113-237), reached
+        # only when pthread_rwlock_init was found: on linux*-gnu* the m4 runs a
+        # timing test whose cross-compile guess is "guessing no"; elsewhere it
+        # guesses yes. config.guess names a Linux libc "gnu" by this test. The
+        # guess sets REPLACE_PTHREAD_RWLOCK_INIT and
+        # REPLACE_PTHREAD_RWLOCKATTR_INIT, which the not-found arm also sets.
         "@platforms//os:linux": [
-            checks.AC_DEFINE("PTHREAD_RWLOCK_BAD_WAITQUEUE"),
-            checks.AC_SUBST("REPLACE_PTHREAD_RWLOCK_INIT", "1"),
-            checks.AC_SUBST("REPLACE_PTHREAD_RWLOCKATTR_INIT", "1"),
+            checks.AC_TRY_COMPILE(
+                name = "_gl_host_os_linux_gnu",
+                code = """#include <stdlib.h>
+#if defined __ANDROID__ || defined __UCLIBC__ || defined __dietlibc__ || !defined __GLIBC__
+  #error "not glibc"
+#endif
+int main(void) { return 0; }""",
+                language = "c",
+                requires = [
+                    "ac_cv_header_pthread_h",
+                    "gl_cv_func_pthread_rwlock_init",
+                ],
+            ),
+            checks.AC_DEFINE(
+                "PTHREAD_RWLOCK_BAD_WAITQUEUE",
+                condition = "_gl_host_os_linux_gnu",
+                if_false = None,
+                if_true = 1,
+            ),
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_RWLOCK_INIT",
+                condition = "ac_cv_header_pthread_h && (!gl_cv_func_pthread_rwlock_init || _gl_host_os_linux_gnu)",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_RWLOCKATTR_INIT",
+                condition = "ac_cv_header_pthread_h && (!gl_cv_func_pthread_rwlock_init || _gl_host_os_linux_gnu)",
+                if_false = "0",
+                if_true = "1",
+            ),
         ],
-        "//conditions:default": [],
+        "@platforms//os:windows": [],
+        "//conditions:default": [
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_RWLOCK_INIT",
+                condition = "ac_cv_header_pthread_h && !gl_cv_func_pthread_rwlock_init",
+                if_false = "0",
+                if_true = "1",
+            ),
+            checks.AC_SUBST(
+                "REPLACE_PTHREAD_RWLOCKATTR_INIT",
+                condition = "ac_cv_header_pthread_h && !gl_cv_func_pthread_rwlock_init",
+                if_false = "0",
+                if_true = "1",
+            ),
+        ],
     }),
     visibility = ["//visibility:private"],
     deps = [
@@ -30935,23 +31111,36 @@ int main(void) { return 0; }
 
         # Use subst=True to create both subst variables and config.h defines
         # The original m4 sets HAVE_DECL_*=0 if not found, otherwise uses default (1)
+        # gnulib-tool enables the system extensions first (stdio-h depends on
+        # extensions), so the declarations are probed with the
+        # AC_USE_SYSTEM_EXTENSIONS defines in confdefs.h: _GNU_SOURCE for
+        # glibc, _DARWIN_C_SOURCE for getw and putw under a POSIX pin on macOS.
         checks.AC_CHECK_DECL(
             "fcloseall",
+            compile_defines = [
+                "_DARWIN_C_SOURCE",
+                "_GNU_SOURCE",
+            ],
             define = "HAVE_DECL_FCLOSEALL",
             includes = ["#include <stdio.h>"],
             subst = True,
-            # Note: stdio_h itself needs HAVE_DECL_FCLOSEALL=0 when not found (for its test)
-            # But modules that depend on stdio_h transitively shouldn't have it at all
-            # This is handled by making vasnprintf check for _snprintf directly instead of depending on stdio_h
         ),
         checks.AC_CHECK_DECL(
             "getw",
+            compile_defines = [
+                "_DARWIN_C_SOURCE",
+                "_GNU_SOURCE",
+            ],
             define = "HAVE_DECL_GETW",
             includes = ["#include <stdio.h>"],
             subst = True,
         ),
         checks.AC_CHECK_DECL(
             "putw",
+            compile_defines = [
+                "_DARWIN_C_SOURCE",
+                "_GNU_SOURCE",
+            ],
             define = "HAVE_DECL_PUTW",
             includes = ["#include <stdio.h>"],
             subst = True,
@@ -30984,6 +31173,7 @@ int main(void) { return 0; }
     default_deps = [":gnulib/m4/stdio_h/defaults"],
     visibility = ["//visibility:private"],
     deps = [
+        ":gnulib/m4/extensions/extensions",
         ":gnulib/m4/include_next/include_next",
         ":gnulib/m4/sigpipe/gl_SIGNAL_SIGPIPE",
         ":gnulib/m4/stdio_h/gl_HAVE_DECL__SNPRINTF",
@@ -36677,6 +36867,11 @@ autoconf(
         ),
         checks.AC_CHECK_DECL(
             "execvpe",
+            # AC_USE_SYSTEM_EXTENSIONS defines, as GNU has them in confdefs.h.
+            compile_defines = [
+                "_DARWIN_C_SOURCE",
+                "_GNU_SOURCE",
+            ],
             define = "HAVE_DECL_EXECVPE",
             subst = "HAVE_DECL_EXECVPE",
         ),
@@ -45153,8 +45348,10 @@ ports_mirror_test(
         ":gnulib/m4/nullptr/nullptr",
         ":gnulib/m4/obstack-printf-gnu/obstack-printf-gnu",
         ":gnulib/m4/obstack-printf-posix/obstack-printf-posix",
+        ":gnulib/m4/obstack-printf/AC_CHECK_FUNCS_ONCE_obstack_printf",
         ":gnulib/m4/obstack-printf/gl_DECL_OBSTACK_PRINTF",
         ":gnulib/m4/obstack-printf/gl_FUNC_OBSTACK_PRINTF",
+        ":gnulib/m4/obstack-printf/gl_FUNC_OBSTACK_PRINTF_REPLACE",
         ":gnulib/m4/obstack-printf/gl_REPLACE_OBSTACK_PRINTF",
         ":gnulib/m4/obstack-printf/obstack-printf",
         ":gnulib/m4/obstack/gl_FUNC_OBSTACK",
@@ -47073,8 +47270,10 @@ ports_mirror_test(
         "//gnulib/m4/nullptr:nullptr",
         "//gnulib/m4/obstack-printf-gnu:obstack-printf-gnu",
         "//gnulib/m4/obstack-printf-posix:obstack-printf-posix",
+        "//gnulib/m4/obstack-printf:AC_CHECK_FUNCS_ONCE_obstack_printf",
         "//gnulib/m4/obstack-printf:gl_DECL_OBSTACK_PRINTF",
         "//gnulib/m4/obstack-printf:gl_FUNC_OBSTACK_PRINTF",
+        "//gnulib/m4/obstack-printf:gl_FUNC_OBSTACK_PRINTF_REPLACE",
         "//gnulib/m4/obstack-printf:gl_REPLACE_OBSTACK_PRINTF",
         "//gnulib/m4/obstack-printf:obstack-printf",
         "//gnulib/m4/obstack:gl_FUNC_OBSTACK",

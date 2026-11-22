@@ -3,45 +3,44 @@
 load("//autoconf:autoconf_toolchain.bzl", autoconf = "autoconf_cache")
 load("//autoconf:checks.bzl", "checks")
 
+# AC_CHECK_FUNCS_ONCE([obstack_printf]) - shared by gl_FUNC_OBSTACK_PRINTF_REPLACE
+# and gl_REPLACE_OBSTACK_PRINTF. Defines HAVE_OBSTACK_PRINTF only when found.
 autoconf(
-    name = "gl_FUNC_OBSTACK_PRINTF",
+    name = "AC_CHECK_FUNCS_ONCE_obstack_printf",
     checks = [
-        # gl_FUNC_OBSTACK_PRINTF checks for obstack_printf function
         checks.AC_CHECK_FUNC(
             "obstack_printf",
             define = "HAVE_OBSTACK_PRINTF",
         ),
-        # gl_DECL_OBSTACK_PRINTF checks for obstack_printf declaration
-        checks.AC_CHECK_DECL(
-            "obstack_printf",
-            name = "_gl_cv_have_decl_obstack_printf",
-            includes = ["#include <stdio.h>"],
-        ),
-    ] + select({
-        # On Linux: obstack_printf is declared in stdio.h (glibc)
-        "@platforms//os:linux": [
-            checks.AC_DEFINE(
-                "HAVE_DECL_OBSTACK_PRINTF",
-                "1",
-                subst = True,
-            ),
-            checks.AC_SUBST("REPLACE_OBSTACK_PRINTF", "1"),
-        ],
-        # On macOS: obstack_printf is not declared
-        "//conditions:default": [
-            checks.AC_DEFINE(
-                "HAVE_DECL_OBSTACK_PRINTF",
-                "0",
-                subst = True,
-            ),
-            checks.AC_SUBST("REPLACE_OBSTACK_PRINTF", "0"),
-        ],
-    }),
-    default_deps = [
-        "//gnulib/m4/stdio_h:defaults",  # through a macro it invokes: gl_STDIO_H_DEFAULTS
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+    ],
+)
+
+# gl_FUNC_OBSTACK_PRINTF_REPLACE (m4 lines 12-35): the obstack_printf of glibc
+# does not work with the struct obstack of gnulib's <obstack.h>, so
+#   if test $HAVE_OBSTACK = 0 || test $REPLACE_OBSTACK = 1; then
+#     gl_REPLACE_OBSTACK_PRINTF
+#   fi
+# which is REPLACE_OBSTACK_PRINTF=1 when the function exists.
+autoconf(
+    name = "gl_FUNC_OBSTACK_PRINTF_REPLACE",
+    checks = [
+        checks.AC_SUBST(
+            "REPLACE_OBSTACK_PRINTF",
+            condition = "ac_cv_func_obstack_printf && (HAVE_OBSTACK==0 || REPLACE_OBSTACK==1)",
+            if_false = "0",
+            if_true = "1",
+        ),
+    ],
+    default_deps = [
+        "//gnulib/m4/stdio_h:defaults",  # AC_REQUIRE: gl_STDIO_H_DEFAULTS
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":AC_CHECK_FUNCS_ONCE_obstack_printf",
         "//gnulib/m4/obstack:gl_FUNC_OBSTACK",  # AC_REQUIRE([gl_FUNC_OBSTACK])
         "//gnulib/m4/extensions",  # AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
         # Transitive deps from vasnprintf/printf chain
@@ -53,32 +52,75 @@ autoconf(
     ],
 )
 
+# gl_FUNC_OBSTACK_PRINTF (m4 lines 37-42): gl_FUNC_OBSTACK_PRINTF_REPLACE then
+# gl_DECL_OBSTACK_PRINTF.
+autoconf(
+    name = "gl_FUNC_OBSTACK_PRINTF",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_DECL_OBSTACK_PRINTF",
+        ":gl_FUNC_OBSTACK_PRINTF_REPLACE",
+    ],
+)
+
+# gl_REPLACE_OBSTACK_PRINTF (m4 lines 44-50), when invoked unconditionally
+# (obstack-printf-posix, obstack-printf-gnu): REPLACE_OBSTACK_PRINTF=1 when
+# obstack_printf exists. Not in the :obstack-printf umbrella, whose value
+# comes from gl_FUNC_OBSTACK_PRINTF_REPLACE.
 autoconf(
     name = "gl_REPLACE_OBSTACK_PRINTF",
     checks = [
+        checks.AC_SUBST(
+            "REPLACE_OBSTACK_PRINTF",
+            condition = "ac_cv_func_obstack_printf",
+            if_false = "0",
+            if_true = "1",
+        ),
     ],
-    default_deps = [
-        "//gnulib/m4/stdio_h:defaults",  # AC_REQUIRE: gl_STDIO_H_DEFAULTS
-    ],
-    visibility = ["//visibility:public"],
-)
-
-autoconf(
-    name = "gl_DECL_OBSTACK_PRINTF",
-    checks = [
-    ],
-    visibility = ["//visibility:public"],
-)
-
-autoconf(
-    name = "obstack-printf",
     default_deps = [
         "//gnulib/m4/stdio_h:defaults",  # AC_REQUIRE: gl_STDIO_H_DEFAULTS
     ],
     visibility = ["//visibility:public"],
     deps = [
-        ":gl_DECL_OBSTACK_PRINTF",
+        ":AC_CHECK_FUNCS_ONCE_obstack_printf",
+    ],
+)
+
+# gl_DECL_OBSTACK_PRINTF (m4 lines 54-60): AC_CHECK_DECLS_ONCE([obstack_printf])
+# and HAVE_DECL_OBSTACK_PRINTF=0 when not declared. glibc declares it only
+# under _GNU_SOURCE; GNU probes with the AC_USE_SYSTEM_EXTENSIONS defines
+# that gl_FUNC_OBSTACK_PRINTF_REPLACE requires in confdefs.h.
+autoconf(
+    name = "gl_DECL_OBSTACK_PRINTF",
+    checks = [
+        checks.AC_CHECK_DECL(
+            "obstack_printf",
+            compile_defines = [
+                "_DARWIN_C_SOURCE",
+                "_GNU_SOURCE",
+            ],
+            define = "HAVE_DECL_OBSTACK_PRINTF",
+            includes = ["#include <stdio.h>"],
+            subst = True,
+        ),
+    ],
+    default_deps = [
+        "//gnulib/m4/stdio_h:defaults",  # HAVE_DECL_OBSTACK_PRINTF is a gl_STDIO_H_DEFAULTS variable
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//autoconf/macros/AC_CHECK_INCLUDES_DEFAULT",
+        "//gnulib/m4/extensions",
+    ],
+)
+
+# Umbrella mirroring the conformance configure.ac (gl_FUNC_OBSTACK_PRINTF);
+# gl_REPLACE_OBSTACK_PRINTF is the unconditional-replace entry point and is
+# deliberately not included.
+autoconf(
+    name = "obstack-printf",
+    visibility = ["//visibility:public"],
+    deps = [
         ":gl_FUNC_OBSTACK_PRINTF",
-        ":gl_REPLACE_OBSTACK_PRINTF",
     ],
 )

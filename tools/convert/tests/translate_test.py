@@ -67,10 +67,12 @@ from tools.convert.translate import (
     Options,
     ProjectState,
     Translator,
+    action_defines,
     condition_names,
     default_from_help,
     default_tarname,
     describe,
+    fatal_only,
     fold_define,
     list_append_words,
     m4_cache_name,
@@ -293,6 +295,16 @@ def test_fold_define() -> None:
     assert fold_define("AC_DEFINE([HAVE_X])") == "HAVE_X"
     assert fold_define("AC_DEFINE([HAVE_X], [2])") is None
     assert fold_define("x=yes") is None
+
+
+def test_action_defines_and_fatal_only() -> None:
+    assert action_defines("AC_DEFINE([A], [2])\n AC_DEFINE([b_t], [__b], [desc])") == [("A", "2"), ("b_t", "__b")]
+    assert action_defines("AC_DEFINE([A]) x=yes") == []
+    assert action_defines("x=yes") == []
+    assert fatal_only("AC_MSG_ERROR([no])")
+    assert fatal_only('if test "$enable_x" = yes; then\n AC_MSG_ERROR([no x])\n fi')
+    assert not fatal_only("x=no\nAC_MSG_ERROR([no])")
+    assert not fatal_only("")
 
 
 # ---- Translator helpers and project assembly ----
@@ -1266,6 +1278,97 @@ def test_probe_arms_substituting_one_name() -> None:
     assert calls[1].args == ["MPC_HAVE_COMPLEX_H"]
     assert calls[1].kwargs == {"condition": probe_name, "if_true": 1, "if_false": 0}
     assert decisions.pending == {}
+
+
+def test_fallback_probe_in_not_found_action() -> None:
+    """mpfr: the not-found action of the `_Float128` probe is a `__float128` probe whose found action
+    defines MPFR_WANT_FLOAT128 again (2, not 1) and mpfr_float128, and whose not-found action only
+    aborts configure.  The fallback follows the probe under its failure, and the define both produce
+    is one conditional define (the rules take one producer per define)."""
+    gnu_program = "AC_LANG_PROGRAM([[]], [[volatile __float128 x = 0x1.fp+16383q; return x == 0;]])"
+    gnu_yes = "AC_DEFINE([MPFR_WANT_FLOAT128],2,[fallback])\n AC_DEFINE([mpfr_float128],[__float128],[fallback])"
+    gnu_no = 'if test "$enable_float128" = yes; then\n AC_MSG_ERROR([no float128])\n fi'
+    inner = call(
+        3,
+        "AC_LINK_IFELSE",
+        gnu_program,
+        "AC_MSG_RESULT(yes)\n " + gnu_yes,
+        "AC_MSG_RESULT(no)\n " + gnu_no,
+        body="\n".join(['if test "$enable_float128" = yes; then'] + call(4, "AC_MSG_ERROR", "no float128") + ["fi"]),
+    )
+    lines = ["#! /bin/sh"] + call(
+        2,
+        "AC_LINK_IFELSE",
+        "AC_LANG_PROGRAM([[]], [[volatile _Float128 x = 0x1.fp+16383f128; return x == 0;]])",
+        "AC_MSG_RESULT(yes)\n AC_DEFINE([MPFR_WANT_FLOAT128],1,[Build float128 functions])",
+        f"AC_MSG_RESULT(no)\n AC_LINK_IFELSE([{gnu_program}],\n [AC_MSG_RESULT(yes)\n {gnu_yes}],\n [AC_MSG_RESULT(no)\n {gnu_no}])",
+        body="\n".join(inner),
+    )
+    tree = markers.parse("\n".join(lines) + "\n")
+    decisions = Decisions()
+    translator = Translator(
+        tree,
+        index=INDEX,
+        selected_files={"configure.ac"},
+        m4_sources={},
+        options=Options(),
+        decisions=decisions,
+        project=ProjectState(),
+    )
+    translator.translate()
+    target = translator.translate_root("autoconf", loc_file="configure.ac")
+    calls = as_calls(target.checks)
+    assert [c.fn for c in calls] == [
+        "checks.AC_TRY_LINK",
+        "checks.AC_TRY_LINK",
+        "checks.AC_DEFINE",
+        "checks.AC_DEFINE",
+    ], (calls, translator.report.notes)
+    std, gnu, fallback_type, want = calls
+    std_name, gnu_name = str(std.kwargs["name"]), str(gnu.kwargs["name"])
+    assert std_name != gnu_name
+    assert "define" not in std.kwargs and "define" not in gnu.kwargs
+    assert gnu.kwargs["requires"] == [f"!{std_name}"]
+    assert fallback_type.args == ["mpfr_float128"]
+    assert fallback_type.kwargs == {"value": "__float128", "requires": [gnu_name]}
+    assert want.args == ["MPFR_WANT_FLOAT128"]
+    assert want.kwargs == {
+        "condition": std_name,
+        "if_true": 1,
+        "if_false": 2,
+        "requires": [f"{std_name} || {gnu_name}"],
+    }
+    assert decisions.pending == {}
+    assert any("only aborts configure" in note for note in translator.report.notes), translator.report.notes
+
+
+def test_sanity_probe_left_out() -> None:
+    """mpfr: `AC_LINK_IFELSE([gmp program], [AC_MSG_RESULT(yes)], [AC_MSG_RESULT(no) AC_MSG_ERROR(...)])`
+    records nothing, it stops configure; no check, no decision."""
+    lines = ["#! /bin/sh"] + call(
+        2,
+        "AC_LINK_IFELSE",
+        "AC_LANG_PROGRAM([[#include <gmp.h>]], [[mpz_t x; mpz_init (x);]])",
+        "AC_MSG_RESULT(yes)",
+        "AC_MSG_RESULT(no)\n AC_MSG_ERROR([libgmp not found or uses a different ABI.])",
+        body="\n".join(call(3, "AC_MSG_ERROR", "libgmp not found or uses a different ABI.")),
+    )
+    tree = markers.parse("\n".join(lines) + "\n")
+    decisions = Decisions()
+    translator = Translator(
+        tree,
+        index=INDEX,
+        selected_files={"configure.ac"},
+        m4_sources={},
+        options=Options(),
+        decisions=decisions,
+        project=ProjectState(),
+    )
+    translator.translate()
+    target = translator.translate_root("autoconf", loc_file="configure.ac")
+    assert as_calls(target.checks) == []
+    assert decisions.pending == {}
+    assert any("a sanity check" in note for note in translator.report.notes), translator.report.notes
 
 
 def test_program_lookup_seeds_the_shell() -> None:

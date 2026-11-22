@@ -46,7 +46,8 @@ def gnu_gnulib_diff_test_suite(
         aux_files (list[Label]): Auxiliary files (e.g., config.rpath) to copy to work directory root
         known_divergences (dict[str, str]): Variable name -> reason for intentional
             differences between the Bazel port and upstream m4. Masked in the
-            GNU comparison and always reported in the test log.
+            GNU comparison and always reported in the test log. May be a
+            `select()`: the macro passes it to the test rule untouched.
         size (str): Test size (default: "medium")
         tags (list[str]): Test tags
         **kwargs: Additional arguments

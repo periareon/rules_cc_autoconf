@@ -26,10 +26,10 @@ load("//autoconf:cc_autoconf_info.bzl", "CcAutoconfInfo")
 load(
     "//autoconf/private:autoconf_config.bzl",
     "AUTOCONF_EXEC_GROUP",
+    "config_args",
     "create_config_dict",
     "get_cc_toolchain_info",
     "get_environment_variables",
-    "write_config_json",
 )
 load("//autoconf/private:ctx_actions_write.bzl", "write")
 
@@ -64,9 +64,7 @@ def _ac_c_restrict_impl(ctx):
 
     # Set up the CC toolchain (same as the core autoconf rule).
     toolchain_info = get_cc_toolchain_info(ctx)
-    config_json = write_config_json(ctx, create_config_dict(
-        toolchain_info = toolchain_info,
-    ))
+    config = create_config_dict(toolchain_info = toolchain_info)
     env = get_environment_variables(ctx, toolchain_info)
 
     # Phase 1: Run the standard checker for each keyword variant.
@@ -100,7 +98,7 @@ def _ac_c_restrict_impl(ctx):
         args = ctx.actions.args()
         args.use_param_file("@%s", use_always = True)
         args.set_param_file_format("multiline")
-        args.add("--config", config_json)
+        config_args(ctx, args, config, check_json)
         args.add("--check", check_json)
         args.add("--results", result_file)
 
@@ -108,7 +106,7 @@ def _ac_c_restrict_impl(ctx):
             exec_group = AUTOCONF_EXEC_GROUP,
             executable = ctx.executable._checker,
             arguments = [args],
-            inputs = depset([config_json, check_json]),
+            inputs = depset([check_json]),
             outputs = [result_file],
             mnemonic = "CcAutoconfCheck",
             progress_message = "CcAutoconfCheck %{label} - " + cache_name,

@@ -96,7 +96,7 @@ def test_hand_builds_and_packages(tmp_path: Path) -> None:
     autoconf.bzl is not hand-written; its BUILD.additions.bazel is); a hand-written package
     elsewhere is a package boundary, not a text to read."""
     root = tmp_path
-    (root / "BUILD.bazel").write_text('load(":autoconf.bzl", "autoconf_targets")\n\nautoconf_targets()\n')
+    (root / "BUILD.bazel").write_text('load(":autoconf.bzl", "configure")\n\nconfigure()\n')
     (root / "autoconf.bzl").write_text(OURS)
     (root / "extension").mkdir()
     (root / "extension/BUILD.bazel").write_text(OURS + "old = 1\n")
@@ -105,7 +105,7 @@ def test_hand_builds_and_packages(tmp_path: Path) -> None:
     (root / "tests/BUILD.bazel").write_text('cc_test(name = "t")\n')
     hand = cli._hand_builds(root)
     assert sorted(hand) == ["", "extension"]
-    assert hand[""] == cli.HandBuild('load(":autoconf.bzl", "autoconf_targets")\n\nautoconf_targets()\n', "BUILD.bazel")
+    assert hand[""] == cli.HandBuild('load(":autoconf.bzl", "configure")\n\nconfigure()\n', "BUILD.bazel")
     assert hand["extension"] == cli.HandBuild('cc_library(name = "ext")\n', "BUILD.additions.bazel")
     assert cli._hand_packages(root) == {"extension", "tests"}
     assert cli._hand_builds(None) == {} and cli._hand_packages(None) == set()
@@ -119,7 +119,7 @@ def test_place_hand_builds(tmp_path: Path) -> None:
     root = tmp_path
     bzl_text = (
         '"""x"""\n\nload("@rules_cc//cc:cc_library.bzl", "cc_library")\n\nvisibility("private")\n\n'
-        'NO_WARNINGS = ["-w"]\n\ndef autoconf_targets():\n'
+        'NO_WARNINGS = ["-w"]\n\ndef configure():\n'
         '    SRC_HDRS = native.glob(["*.h"])\n    native.filegroup(name = "h", srcs = SRC_HDRS)\n'
     )
     for package in ("", "extension", "other"):
@@ -136,7 +136,7 @@ def test_place_hand_builds(tmp_path: Path) -> None:
     assert (root / "BUILD.bazel").read_text() == bzl.build_file()
     moved = (root / "extension/BUILD.bazel").read_text()
     assert moved.startswith(
-        'load(":autoconf.bzl", "NO_WARNINGS", "autoconf_targets")\nload("@rules_cc//cc:cc_library.bzl", "cc_library")\n'
+        'load(":autoconf.bzl", "NO_WARNINGS", "configure")\nload("@rules_cc//cc:cc_library.bzl", "cc_library")\n'
     )
     assert "old = 1" not in moved
     assert 'cc_library(\n    name = "ext",' in moved
@@ -144,6 +144,6 @@ def test_place_hand_builds(tmp_path: Path) -> None:
     text = "\n".join(report)
     assert "## Hand-written files moved" in text
     assert "`extension/BUILD.additions.bazel` into `extension/BUILD.bazel`; it reads SRC_HDRS" in text
-    assert "## BUILD files that do not call autoconf_targets()" in text
+    assert "## BUILD files that do not call configure()" in text
     assert "- `other/BUILD.bazel`" in text
     assert cli._place_hand_builds(root, ["", "extension"], [], None) == []

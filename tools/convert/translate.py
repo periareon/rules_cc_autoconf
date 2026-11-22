@@ -3624,16 +3624,98 @@ class Translator:
         """The checks a probe `call` named `var` and its two actions amount to: the probe alone for
         canonical yes/no actions (its cache variable bound), with a `define =` or trailing defines
         for AC_DEFINE actions, with a conditional subst when both arms substitute one name; anything
-        else makes the probe a `probe:` decision.  May rename the probe after its action variable."""
-        kwargs = call.kwargs
+        else makes the probe a `probe:` decision.  May rename the probe after its action variable.
+        A not-found action that is itself a probe (mpfr tries `__float128` when `_Float128` does
+        not link) follows this probe, under its failure."""
         # AC_MSG_RESULT(yes) / AC_MSG_RESULT(no) around the real action is
         # configure's progress output, not a result.
         yes, no = strip_messages(yes), strip_messages(no)
+        if no and fatal_only(no):
+            # mpfr's `if test "$enable_float128" = yes; then AC_MSG_ERROR(...) fi` when neither
+            # float128 type links: configure stops there, which records nothing.  With nothing in
+            # the found action either, the probe is a sanity check (gmp.h links): no result at all.
+            if not yes:
+                self.report.note(
+                    f"{self._source_comment(node, ctx)}: a sanity check (configure aborts when it fails); left out"
+                )
+                ctx.dropped.add(var)
+                return []
+            self.report.note(
+                f"{self._source_comment(node, ctx)}: the not-found action only aborts configure; not modeled"
+            )
+            no = ""
         # `[AC_DEFINE(HAVE_VA_COPY)], [AC_COMPILE_IFELSE(... __va_copy ...)]`: the
-        # not-found branch is another probe, translated as its own node.
+        # not-found action is another probe, tried when this one fails.
+        fallback: Node | None = None
         nested = m4args.parse_call(no)
         if nested is not None and nested.name in PROBES:
+            fallback = _nested_probe(node, nested)
+            if fallback is None:
+                self.report.note(
+                    f"{self._source_comment(node, ctx)}: the not-found action is a probe the expansion "
+                    "did not record; left out"
+                )
             no = ""
+        items = self._probe_own_actions(node, ctx, call, var, yes, no, program)
+        if fallback is None:
+            return items
+        var = str(call.kwargs["name"])
+        if var not in ctx.probe_vars:
+            self.report.note(
+                f"{self._source_comment(fallback, ctx)}: the fallback probe of {var}, which is not a "
+                "probe here; left out"
+            )
+            return items
+        return items + self._fallback_probe(node, fallback, var, ctx, call, items)
+
+    def _fallback_probe(
+        self, outer: Node, inner: Node, outer_var: str, ctx: _Ctx, outer_call: Call, own: list[CheckItem]
+    ) -> list[CheckItem]:
+        """The probe `inner` written in `outer`'s not-found action: translated as any probe, under
+        `!outer_var`.  A name both probes define is one define (the rules take one producer per
+        define): required under either probe when the values agree, conditional on the outer probe
+        otherwise (mpfr's `MPFR_WANT_FLOAT128` is 1 with `_Float128`, 2 with `__float128`).  The
+        defines merged out of `own` are removed from it in place."""
+        handler = getattr(self, "_m_" + inner.name)
+        items = self._expand_program_shell(handler(inner, ctx) or [], inner, ctx)
+        calls = [item for item in items if isinstance(item, Call)]
+        if not calls or calls[0].fn not in ("checks.AC_TRY_COMPILE", "checks.AC_TRY_LINK"):
+            return items
+        probe = calls[0]
+        inner_var = str(probe.kwargs["name"])
+        comment = self._source_comment(inner, ctx)
+        for call in calls:
+            call.comments.insert(0, comment)
+        probe.comments.append(f"{outer.name}: the not-found action of {outer_var}; tried when it fails")
+        probe.kwargs["requires"] = strings(probe.kwargs.get("requires")) + [f"!{outer_var}"]
+        either = f"{outer_var} || {inner_var}"
+        outer_defines = _probe_defines(outer_call, own, outer_var)
+        for name, inner_value in _probe_defines(probe, items, inner_var).items():
+            if name not in outer_defines:
+                continue
+            outer_value = outer_defines[name]
+            _remove_define(outer_call, own, name)
+            _remove_define(probe, items, name)
+            if outer_value == inner_value:
+                merged = Call(
+                    "checks.AC_DEFINE", [name] + ([] if outer_value == 1 else [outer_value]), {"requires": [either]}
+                )
+            else:
+                merged = Call(
+                    "checks.AC_DEFINE",
+                    [name],
+                    {"condition": outer_var, "if_true": outer_value, "if_false": inner_value, "requires": [either]},
+                )
+            merged.comments.append(f"{name}: defined by {outer_var} and its fallback {inner_var}; one define")
+            items.append(merged)
+        return items
+
+    def _probe_own_actions(
+        self, node: Node, ctx: _Ctx, call: Call, var: str, yes: str, no: str, program: str
+    ) -> list[CheckItem]:
+        """`_probe_actions` for the probe's own two actions (messages stripped, a fallback probe
+        taken out of the not-found action)."""
+        kwargs = call.kwargs
         renamed = action_var(yes)
         if not ctx.cache and renamed and renamed != var:
             var = kwargs["name"] = renamed  # `AC_MSG_RESULT([yes]) mpfr_pthread_ok=yes`
@@ -3658,7 +3740,7 @@ class Translator:
                     Call(
                         "checks.AC_DEFINE",
                         [name],
-                        {"value": value, "requires": [var]} if value != "1" else {"requires": [var]},
+                        {"value": literal(value), "requires": [var]} if value != "1" else {"requires": [var]},
                     )
                 )
                 ctx.defines.add(name)
@@ -4855,13 +4937,73 @@ def strip_messages(action: str) -> str:
 
 
 def action_defines(action: str) -> list[tuple[str, str]]:
-    """`[(NAME, VALUE)]` when `action` is one AC_DEFINE call (`parse_call` accepts nothing else), else `[]`."""
-    call = m4args.parse_call((action or "").strip())
-    if call is None or call.name != "AC_DEFINE" or not call.args:
+    """`[(NAME, VALUE), ...]` when `action` is AC_DEFINE calls and nothing else (mpfr defines
+    `MPFR_WANT_FLOAT128` and `mpfr_float128` in one action), else `[]`."""
+    calls = m4args.parse_calls((action or "").strip())
+    if not calls or any(call.name != "AC_DEFINE" or not call.args for call in calls):
         return []
-    name = call.args[0].strip()
-    value = call.args[1].strip() if len(call.args) > 1 and call.args[1].strip() else "1"
-    return [(name, value)]
+    return [
+        (call.args[0].strip(), call.args[1].strip() if len(call.args) > 1 and call.args[1].strip() else "1")
+        for call in calls
+    ]
+
+
+def fatal_only(action: str) -> bool:
+    """An action that only stops configure: `AC_MSG_ERROR(...)` / `AC_MSG_FAILURE(...)` alone, or as
+    the only command of an `if` (mpfr's `if test "$enable_float128" = yes; then AC_MSG_ERROR(...) fi`)."""
+    text = (action or "").strip()
+    if not text or not _FATAL_RE.search(text):
+        return False
+    rest = _FATAL_RE.sub("", text).strip()
+    return not rest or re.fullmatch(r"if\s+[^\n]*?[;\n]\s*then\s*fi", rest, re.DOTALL) is not None
+
+
+def _nested_probe(outer: Node, nested: m4args.Call) -> Node | None:
+    """The call node of the probe `nested` written in `outer`'s not-found action: its expansion is
+    recorded inside the outer call's, after whatever the found action expanded."""
+    candidates = [child for child in outer.children if child.kind == "call" and child.name == nested.name]
+    if not candidates:
+        return None
+    if nested.args:
+        wanted = re.sub(r"\s+", "", nested.args[0])
+        for child in candidates:
+            if child.args and re.sub(r"\s+", "", child.args[0]) == wanted:
+                return child
+    return candidates[-1]
+
+
+def _define_value(call: Call) -> str | int:
+    """The value a `checks.AC_DEFINE` call gives (`[name, value]`, `value =`, or 1)."""
+    value = call.args[1] if len(call.args) > 1 else call.kwargs.get("value", 1)
+    if isinstance(value, str):
+        return literal(value)
+    return value if isinstance(value, int) else 1
+
+
+def _probe_defines(probe: Call, items: list[CheckItem], var: str) -> dict[str, str | int]:
+    """name -> value for what a probe `var` defines: its `define =` (value 1) and the
+    `checks.AC_DEFINE` items of `items` that require exactly it."""
+    out: dict[str, str | int] = {}
+    define = probe.kwargs.get("define")
+    if isinstance(define, str):
+        out[define] = 1
+    for item in items:
+        if not isinstance(item, Call) or item.fn != "checks.AC_DEFINE" or not item.args:
+            continue
+        if strings(item.kwargs.get("requires")) == [var] and isinstance(item.args[0], str):
+            out[item.args[0]] = _define_value(item)
+    return out
+
+
+def _remove_define(probe: Call, items: list[CheckItem], name: str) -> None:
+    """Take the define `name` off `probe` (its `define =`) or out of `items` (its AC_DEFINE)."""
+    if probe.kwargs.get("define") == name:
+        del probe.kwargs["define"]
+        return
+    for item in list(items):
+        if isinstance(item, Call) and item.fn == "checks.AC_DEFINE" and item.args and item.args[0] == name:
+            items.remove(item)
+            return
 
 
 def action_subst(action: str) -> tuple[str, str] | None:

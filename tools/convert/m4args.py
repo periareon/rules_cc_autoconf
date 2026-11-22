@@ -121,6 +121,34 @@ def parse_call(text: str) -> Call | None:
     return Call(name, [unquote(a) for a in split_args(rest[1:end])])
 
 
+def parse_calls(text: str) -> list[Call] | None:
+    """The macro calls `text` consists of, when it is nothing but calls (mpfr's
+    `AC_DEFINE([MPFR_WANT_FLOAT128], [2]) AC_DEFINE([mpfr_float128], [__float128])` as one
+    action), separated by whitespace or `dnl` comments; None for anything else."""
+    calls: list[Call] = []
+    rest = text.strip()
+    while rest:
+        match = _NAME_RE.match(rest)
+        if not match:
+            return None
+        name = match.group(1)
+        rest = rest[match.end() :]
+        if not rest.startswith("("):
+            if rest and not rest[0].isspace():
+                return None
+            calls.append(Call(name, []))
+            continue
+        end = call_end(rest, 0)
+        if end is None:
+            return None
+        calls.append(Call(name, [unquote(a) for a in split_args(rest[1:end])]))
+        rest = rest[end + 1 :].strip()
+        while rest.startswith("dnl"):
+            newline = rest.find("\n")
+            rest = "" if newline < 0 else rest[newline + 1 :].strip()
+    return calls or None
+
+
 def words(text: str) -> list[str]:
     """Whitespace-separated words of a (literal) m4 list argument.
 

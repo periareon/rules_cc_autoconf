@@ -1,0 +1,6 @@
+/* Define to 1 if getw is declared with the compiler in C11 mode, 0 if not. */
+#undef HAVE_DECL_GETW_STRICT
+
+/* Define to 1 if getw is declared with _GNU_SOURCE from compile_defines, 0
+   if not. */
+#undef HAVE_DECL_GETW_GNU

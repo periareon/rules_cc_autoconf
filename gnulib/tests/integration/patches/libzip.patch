@@ -1,20 +1,20 @@
-# libzip 1.12: `_snprintf_s`, `_snwprintf_s` and `localtime_s` are
-# inline functions in the UCRT headers, not exports of ucrt.lib (only
-# legacy_stdio_definitions.lib carries out-of-line copies). CMake's
-# check_symbol_exists, which the overlay mirrors, compiles a call with the
-# header included and finds them; an AC_CHECK_FUNC link probe without the
-# header does not, so HAVE__SNWPRINTF_S stays undefined and lib/compat.h then
-# redefines `_snwprintf_s` as a macro over the SDK's own inline definition
-# (corecrt_wstdio.h: "error C2059: syntax error: '('"). Probe them the way
-# CMake does. Elsewhere the calls fail to compile or link, as before.
-#
-# `/w` is an MSVC-style flag: select it by compiler, not by OS, so clang
-# targeting MinGW gets `-w` ("clang: error: no such file or directory: '/w'").
+# libzip 1.12.1: `_snprintf_s`, `_snwprintf_s` and `localtime_s` are
+# inline functions in the UCRT headers (and MinGW's), not exports of the
+# import library (only legacy_stdio_definitions.lib carries out-of-line
+# copies). CMake's check_symbol_exists, which the overlay mirrors, compiles a
+# call with the header included and finds them; an AC_CHECK_FUNC link probe
+# without the header does not, so HAVE__SNWPRINTF_S stays undefined and
+# lib/compat.h then redefines `_snwprintf_s` as a macro over the header's own
+# inline definition (clang targeting MinGW, the hermetic_llvm config:
+# "static declaration of '_snwprintf' follows non-static declaration" in
+# sec_api/stdio_s.h; MSVC: "error C2059: syntax error: '('" in
+# corecrt_wstdio.h). Probe them the way CMake does. Elsewhere the calls fail
+# to compile or link, as before.
 #
 # Remove once the overlay on the Bazel Central Registry is updated.
 --- a/BUILD.bazel
 +++ b/BUILD.bazel
-@@ -145,10 +145,18 @@
+@@ -185,10 +185,18 @@
          ),
          checks.AC_CHECK_FUNC(
              "_snprintf_s",
@@ -33,7 +33,7 @@
              define = "HAVE__SNWPRINTF_S",
          ),
          checks.AC_CHECK_FUNC(
-@@ -217,6 +225,10 @@
+@@ -257,6 +265,10 @@
          ),
          checks.AC_CHECK_FUNC(
              "localtime_s",
@@ -44,13 +44,3 @@
              define = "HAVE_LOCALTIME_S",
          ),
          checks.AC_CHECK_FUNC(
-@@ -532,7 +544,8 @@
-         ":lib/zipconf.h",
-     ],
-     copts = select({
--        "@platforms//os:windows": ["/w"],
-+        "@rules_cc//cc/compiler:clang-cl": ["/w"],
-+        "@rules_cc//cc/compiler:msvc-cl": ["/w"],
-         "//conditions:default": ["-w"],
-     }),
-     implementation_deps = [

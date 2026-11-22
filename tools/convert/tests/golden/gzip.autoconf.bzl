@@ -5,8 +5,8 @@ regenerate, from a clone of rules_cc_autoconf:
     bazel run //tools/convert -- convert --src <sources> --out <this directory>
 
 @generated. BUILD.bazel beside this file is hand-written: it loads this file
-and calls autoconf_targets(), and a rule it declares with a generated target's
-name replaces that target here.
+and calls configure(), and a rule it declares with a generated target's name
+replaces that target here.
 
 https://periareon.github.io/rules_cc_autoconf/convert.html
 """
@@ -483,7 +483,7 @@ GZIP_PLATFORM_SRCS = select({
 })
 
 # buildifier: disable=unnamed-macro
-def autoconf_targets():
+def configure():
     """The targets configure.ac and the Makefile.am files describe, in the package that calls this."""
 
     native.exports_files(["COPYING"])
