@@ -1,0 +1,5 @@
+#undef DEF1
+/* fallback */
+#ifndef DEF1
+#  define SUBST_DEF1 0
+#endif

@@ -45,7 +45,7 @@ class SourceGenerator {
      * @brief Generate a config.h header file from a template string.
      * @param output_path Path where the config.h file will be written.
      * @param template_content Template content as a string (with @PLACEHOLDER@
-     * markers and #undef statements).
+     * markers and #define/#undef directives).
      * @param inlines Map from search strings to file paths for inline
      * replacements.
      * @param substitutions Map from placeholder names to values for direct
@@ -110,8 +110,8 @@ class SourceGenerator {
      * @brief Step 2: Process defines replacement (if in defines/all mode).
      * @param content Template content to process.
      * @param data Processed data from step 1.
-     * @return Content with #undef replaced by #define and remaining #undef
-     * commented out.
+     * @return Content with each directive for a defined name replaced by its
+     * definition and each remaining #undef commented out.
      */
     std::string process_defines_replacement(std::string content,
                                             const ProcessedData& data) const;

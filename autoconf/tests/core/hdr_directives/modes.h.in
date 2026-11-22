@@ -1,0 +1,6 @@
+#undef DEF1
+#ifndef DEF1
+# define DEF1 0
+#endif
+#undef UNCONFIGURED_UNDEF
+#define NAME @PACKAGE_NAME@
