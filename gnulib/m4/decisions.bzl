@@ -17,7 +17,8 @@ Reference: https://periareon.github.io/rules_cc_autoconf/convert.html#decisions
 
 # The words a decision may be, besides a literal, a select() or checks.X(...).
 decision = struct(
-    # Not decided yet: the construct stays out and the run exits 3.
+    # The placeholder written for a key the converter asks about; not an answer.
+    # The next run rejects the file while one remains.
     UNDECIDED = "UNDECIDED",
     # Leave the construct out for good.
     IGNORE = "IGNORE",

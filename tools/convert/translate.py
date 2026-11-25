@@ -1369,8 +1369,7 @@ class Translator:
     def _decided_probe(self, node: Node) -> bool:
         """The decisions file has a value for this cache check's variable."""
         var = cache_node_var(node)
-        value = self.decisions.lookup(f"probe:{var}") if var else None
-        return value is not None and not (isinstance(value, dec.Word) and value.name == "UNDECIDED")
+        return bool(var) and self.decisions.lookup(f"probe:{var}") is not None
 
     def _cond_if_shell(self, node: Node) -> str:
         """The shell that stands in for `AM_COND_IF([COND], [if-true], [if-false])` in the

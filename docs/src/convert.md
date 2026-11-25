@@ -75,7 +75,11 @@ not translate under "Decisions required" in the report. Each is an entry of
 `decisions.bzl` with `decision.UNDECIDED` as its value: replace the value and
 run the same command again. The outputs are written even while decisions are
 missing, so the project can be looked at, but a conversion is complete only
-when the file answers every question.
+when the file answers every question. `UNDECIDED` is the placeholder the
+converter writes, not an answer: a run that finds one still in the file stops
+with an error naming the keys, and neither `DEFAULTS` nor the bundled
+decisions answer for it. Every key gets an explicit decision, `IGNORE` when
+the construct is to stay out.
 
 The file is read with a parser, never evaluated; its header names the
 rules_cc_autoconf that wrote it. New entries are added in key order with a
@@ -85,7 +89,7 @@ converter stops asking for are reported as unused. A `checks.X(...)` value reads
 as in a BUILD file: add `load("@rules_cc_autoconf//autoconf:checks.bzl",
 "checks")` at the top.
 
-A `DEFAULTS` table answers every undecided key of a kind at once, for a
+A `DEFAULTS` table answers every key of a kind the table has no entry for, for a
 construct that never matters for the module (a firmware compiler's probes, a
 toolchain's warning flags); the report lists what a default answered:
 
@@ -134,8 +138,8 @@ The questions every gnulib project raises the same way, the gettext probes
 and substitutions of a project that builds no message catalogs, gnulib's
 own witness variables, are answered once, in `gnulib/m4/decisions.bzl`
 beside the ports. The converter reads it beneath the project's decisions
-file: a key the project's file answers wins, a key it leaves out or
-`UNDECIDED` takes the bundled answer, and only then does `DEFAULTS` apply.
+file: a key the project's file answers wins, a key it leaves out takes the
+bundled answer, and only then does `DEFAULTS` apply.
 The report lists every answer taken from it under "Decisions inherited",
 so nothing applies silently; the bundled file's own keys never count as
 unused. `--bundled-decisions FILE` reads another file, `none` reads none;

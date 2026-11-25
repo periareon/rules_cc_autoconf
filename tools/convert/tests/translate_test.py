@@ -2958,7 +2958,7 @@ def test_subdir_gates(tmp_path: Path) -> None:
     notes: list[str] = []
     kept, gates = _subdir_gates(root, state, decisions, ["extension", "doc", "linuxonly"], notes)
     assert kept == ["extension", "doc", "linuxonly"]
-    assert "subdir:extension" in decisions.missing
+    assert "subdir:extension" in decisions.pending
     assert "doc" not in gates
     # Undecided: defined but manual, as a probe-conditioned program is.
     assert gates["extension"].compatible_with is None
@@ -2976,7 +2976,7 @@ def test_subdir_gates(tmp_path: Path) -> None:
     assert '"@rules_cc//cc/compiler:msvc-cl": ["@platforms//:incompatible"]' in text
     assert '"//:extensions_off": ["@platforms//:incompatible"]' in text
     assert '"//conditions:default": []' in text
-    assert decisions.missing == []
+    assert decisions.pending == {}
     decisions = Decisions.from_text('DECISIONS = {"subdir:extension": decision.MANUAL}')
     kept, gates = _subdir_gates(root, state, decisions, ["extension"], [])
     assert kept == ["extension"]
@@ -2986,7 +2986,7 @@ def test_subdir_gates(tmp_path: Path) -> None:
     kept, gates = _subdir_gates(root, state, decisions, ["extension"], [])
     assert kept == ["extension"]
     assert '":extensions_on": []' in must(gates["extension"].compatible_with).text
-    assert decisions.missing == []
+    assert decisions.pending == {}
 
 
 def test_gate_package() -> None:

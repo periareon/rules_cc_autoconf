@@ -6,8 +6,11 @@ computed by a shell command, a macro without a port...), it looks the
 construct up in a decisions file by a stable key.  A missing decision is
 reported, the construct is left out of the output, and the key is added to
 the decisions file with its context as comments and `UNDECIDED` as its
-value; nothing is guessed.  Regenerating with the same sources and the same
-decisions file reproduces the same output.
+value; nothing is guessed.  `UNDECIDED` is that placeholder and not an
+answer: a file that still holds one is rejected at load, so every key gets
+an explicit decision (`IGNORE` when the construct is to stay out).
+Regenerating with the same sources and the same decisions file reproduces
+the same output.
 
 The decisions file is Starlark, written in the vocabulary of the output and
 read with Python's `ast` module (never executed).  It defines the `decision`
@@ -26,10 +29,10 @@ struct inline (`STRUCT`), so that the words read as `decision.IGNORE`:
         "flag:gcc_warnings": False,
     }
 
-A value is a word of the struct (`decision.UNDECIDED`, `decision.IGNORE`,
-`decision.ACCEPT`, `decision.ACCEPT_PARTIAL`, `decision.ALWAYS`,
-`decision.NEVER`, `decision.MANUAL`; the bare word is still read, for files
-written before the struct); a literal; a `select({...})` over configuration labels; or
+A value is a word of the struct (`decision.IGNORE`, `decision.ACCEPT`,
+`decision.ACCEPT_PARTIAL`, `decision.ALWAYS`, `decision.NEVER`,
+`decision.MANUAL`; the bare word is still read, for files written before
+the struct); a literal; a `select({...})` over configuration labels; or
 `checks.*` / `macros.*` / `utils.*` calls exactly as they would appear in
 `BUILD.bazel` (one call or a list of calls).  Which of these a key accepts
 depends on its kind; see `FORMS`.
@@ -357,6 +360,24 @@ def _parse(text: str, source: str) -> tuple[dict[str, DecisionValue], ast.Dict |
             f"`{DEFAULTS_NAME} = {{...}}` and `{VARIABLE_NAME} = {{...}}` are allowed"
         )
     return table, node, defaults
+
+
+def _reject_undecided(table: dict[str, DecisionValue], node: ast.Dict | None, source: str) -> None:
+    """`UNDECIDED` is the placeholder the skeleton writes for a key the converter asked about,
+    not an answer: a file that still holds one is rejected, naming the keys, so that every
+    question gets an explicit decision rather than a silent omission or a default."""
+    undecided = [key for key, value in table.items() if isinstance(value, Word) and value.name == "UNDECIDED"]
+    if not undecided:
+        return
+    lines = {k.value: k.lineno for k in node.keys if isinstance(k, ast.Constant)} if node is not None else {}
+    where = f"{source}:{lines[undecided[0]]}" if undecided[0] in lines else source
+    count = f"{len(undecided)} {'entry is' if len(undecided) == 1 else 'entries are'}"
+    shown = ", ".join(undecided[:6]) + (", ..." if len(undecided) > 6 else "")
+    raise DecisionError(
+        f"{where}: {count} still {STRUCT_NAME}.UNDECIDED ({shown}); that is the placeholder the "
+        f"converter writes, not an answer: decide each ({STRUCT_NAME}.IGNORE leaves the construct out) "
+        "and run again"
+    )
 
 
 def _attr_value(value: DecisionValue, where: str) -> AttrValue:
@@ -689,11 +710,13 @@ class Decisions:
             return cls(source=str(path) if path else None)
         text = path.read_text(encoding="utf-8").replace("\r\n", "\n")
         data, node, defaults = _parse(text, str(path))
+        _reject_undecided(data, node, str(path))
         return cls(data, str(path), node, text, defaults)
 
     @classmethod
     def from_text(cls, text: str, source: str = "<decisions>") -> Decisions:
         data, node, defaults = _parse(text, source)
+        _reject_undecided(data, node, source)
         return cls(data, source, node, text, defaults)
 
     def _record(self, request: Request) -> None:
@@ -704,9 +727,7 @@ class Decisions:
         """The normalized decision for `request`: the key's, else the kind's default (recorded
         under `defaulted`), else None and the request is pending."""
         value = self.data.get(request.key)
-        if value is not None:
-            self.used.add(request.key)
-        if value is None or (isinstance(value, Word) and value.name == "UNDECIDED"):
+        if value is None:
             shared = self._shared(request.key)
             if shared is not None:
                 return normalize(request.kind, request.key, shared)
@@ -715,6 +736,7 @@ class Decisions:
                 return normalize(request.kind, request.key, self.defaults[request.kind])
             self._record(request)
             return None
+        self.used.add(request.key)
         return normalize(request.kind, request.key, value)
 
     def lookup(self, key: str) -> DecisionValue | None:
@@ -738,7 +760,7 @@ class Decisions:
         if self.shared is None:
             return None
         value = self.shared.data.get(key)
-        if value is None or (isinstance(value, Word) and value.name == "UNDECIDED"):
+        if value is None:
             return None
         self.shared.used.add(key)
         self.inherited.setdefault(key, _spell(value))
@@ -747,30 +769,21 @@ class Decisions:
     def optional(self, key: str, kind: str) -> Decision | None:
         """A decision that is applied when present and never requested."""
         value = self.data.get(key)
-        if value is None or (isinstance(value, Word) and value.name == "UNDECIDED"):
+        if value is None:
             shared = self._shared(key)
             return normalize(kind, key, shared) if shared is not None else None
         self.used.add(key)
         return normalize(kind, key, value)
 
     def decided(self, key: str) -> bool:
-        """Whether the file, or the bundled one beneath it, answers `key`: an entry whose value is
-        not `UNDECIDED`.  Reading the tables directly, it does not count the key as used
-        (`optional` and `resolve` do)."""
-        value = self.data.get(key)
-        if value is not None and not (isinstance(value, Word) and value.name == "UNDECIDED"):
-            return True
-        return self.shared is not None and self.shared.decided(key)
+        """Whether the file, or the bundled one beneath it, has an entry for `key`.  Reading the
+        tables directly, it does not count the key as used (`optional` and `resolve` do)."""
+        return key in self.data or (self.shared is not None and self.shared.decided(key))
 
     @property
     def unused(self) -> list[str]:
         """Decisions the conversion never asked for."""
         return sorted(k for k in self.data if k not in self.used)
-
-    @property
-    def missing(self) -> list[str]:
-        """Pending keys that are not in the file at all (as opposed to UNDECIDED)."""
-        return sorted(k for k in self.pending if k not in self.data)
 
     # -- writing the skeleton -------------------------------------------------
 
@@ -795,8 +808,9 @@ class Decisions:
 
         The table stays sorted by key (buildifier's `unsorted-dict-items`): a new entry goes in
         front of the first existing key that sorts after it, above that key's comment block,
-        or at the end when none does."""
-        keys = self.missing
+        or at the end when none does.  Every pending key is absent from the file: an entry
+        still `UNDECIDED` from an earlier run is rejected at load."""
+        keys = sorted(self.pending)
         if not keys:
             return []
         if self._node is None or not self._text:
@@ -869,7 +883,8 @@ def _spell(value: DecisionValue) -> str:
 
 STRUCT = """# The words a decision may be, besides a literal, a select() or checks.X(...).
 decision = struct(
-    # Not decided yet: the construct stays out and the run exits 3.
+    # The placeholder written for a key the converter asks about; not an answer.
+    # The next run rejects the file while one remains.
     UNDECIDED = "UNDECIDED",
     # Leave the construct out for good.
     IGNORE = "IGNORE",
