@@ -2165,7 +2165,17 @@ class Translator:
                 # AC_CHECK_FUNCS, plus AC_LIBOBJ for each function found missing (tcpdump's
                 # `AC_REPLACE_FUNCS(... getopt_long)`: HAVE_GETOPT_LONG picks the getopt.h
                 # tcpdump.c includes, and missing/getopt_long.c is compiled only without it).
-                self._place([Call("macros.AC_CHECK_FUNCS", [words], {}, returns_list=True)], guard, ctx)
+                # A member a `check:` / `define:` IGNORE decision names is probed by a port
+                # already (bash's strnlen, through printf-posix): the probe goes, the
+                # replacement keeps following the port's cache variable.
+                probed = [
+                    w
+                    for w in words
+                    if not self._dropped_by_decision("check", cache_var("AC_CHECK_FUNCS", w))
+                    and not self._dropped_by_decision("define", define_of("AC_CHECK_FUNCS", w))
+                ]
+                if probed:
+                    self._place([Call("macros.AC_CHECK_FUNCS", [probed], {}, returns_list=True)], guard, ctx)
                 for word in words:
                     self._libobj(word, df.conj(guard, df.neg(df.Truthy(cache_var("AC_CHECK_FUNCS", word)))))
                 return True
