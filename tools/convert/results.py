@@ -43,6 +43,11 @@ _SINGULAR_OF = {
     "macros.AC_CHECK_MEMBERS": "checks.AC_CHECK_MEMBER",
 }
 
+# The single checks a script re-runs for one cache variable, which
+# `_rename_repeated_probes` folds or renames; a library check's cache variable
+# names the library and the function (bash's termcap search).
+_REPEATABLE_PROBES = set(_SINGULAR_OF.values()) | {"checks.AC_CHECK_LIB"}
+
 # Checks that compile a program and so see configure's confdefs.h: in the
 # rules a probe sees an earlier define only when it lists it in
 # `compile_defines`, and only results of *dependencies* are available.
@@ -553,7 +558,11 @@ def _local_provided(item: Call) -> tuple[set[str], set[str]]:
 
 
 def _drop_duplicate_defines(
-    main: Target, others: list[Target], index: PortIndex | None = None, extra_labels: Sequence[str] = ()
+    main: Target,
+    others: list[Target],
+    index: PortIndex | None = None,
+    extra_labels: Sequence[str] = (),
+    decisions: dec.Decisions | None = None,
 ) -> list[str]:
     """configure.ac's `AC_CHECK_FUNCS([lstat])` next to a project macro that
     defines HAVE_LSTAT itself: configure defines it twice, consistently; the
@@ -572,7 +581,7 @@ def _drop_duplicate_defines(
                     for name in provided_names(item):
                         produced.setdefault(name, target.name)
     notes: list[str] = []
-    notes += _merge_duplicate_defines(main)
+    notes += _merge_duplicate_defines(main, decisions)
     notes += _drop_arm_constant_duplicates(others + [main])
     for target in others + [main]:
         for items in [target.checks] + target.arm_lists:
@@ -620,7 +629,9 @@ def _drop_duplicate_defines(
                 continue
             singular = _SINGULAR_OF[item.fn]
             carried = {
-                k: v for k, v in item.kwargs.items() if k in ("includes", "compile_defines", "language", "copts")
+                k: v
+                for k, v in item.kwargs.items()
+                if k in ("includes", "compile_defines", "language", "copts", "requires")
             }
             at = items.index(item)
             for subject, owner in dropped:
@@ -637,6 +648,29 @@ def _drop_duplicate_defines(
                     "defines the result (configure defines it twice, consistently); its cache variable "
                     "stays as a define-less check"
                 )
+                # bash's BASH_FUNC_LSTAT defines HAVE_LSTAT only on its fallback path, when
+                # `AC_CHECK_FUNCS([lstat])` failed and a link test then succeeded: the list
+                # entry's define was the one that held where lstat exists.  The project's
+                # conditional define takes the list entry's success as another way to hold.
+                # (Read from the targets as they are now: the merges above may have removed
+                # a define since `produced` was collected.)
+                cache = next(
+                    (n for n in provided_names(Call(singular, [subject])) if n.startswith(("ac_cv_", "gl_cv_"))), None
+                )
+                for name in sorted(_local_provided(Call(item.fn, [[subject]]))[0]):
+                    own = [
+                        c
+                        for target in others + [main]
+                        for checks in [target.checks] + target.arm_lists
+                        for c in checks
+                        if isinstance(c, Call) and c.fn in _DEFINE_FNS and c.args and str(c.args[0]) == name
+                    ]
+                    if cache and own and all(strings(c.kwargs.get("requires")) for c in own):
+                        _widen_requires(own[0], [cache])
+                        notes.append(
+                            f"configure.ac: {name}: {owner}'s define held only on its own path; "
+                            f"now also where {cache} holds, as the list entry's define did"
+                        )
                 # gnulib.mk conditions read `ac_cv_func_memrchr` even where the
                 # port defines HAVE_MEMRCHR without it: the probe stays, defining nothing.
                 at += 1
@@ -752,11 +786,18 @@ def _rename_repeated_probes(target: Target) -> list[str]:
     `AC_CHECK_DECL` after an `unset ac_cv_have_decl_ether_hostton` and a `!= yes` test of the
     previous answer: the same cache variable, re-probed.  The rules want one producer per
     name, so the later probes get `name = <cache>_<n>` and run only when the previous one
-    failed (the chain's `!= yes`), and what follows reads the latest name, as the shell did."""
+    failed (the chain's `!= yes`), and what follows reads the latest name, as the shell did.
+
+    bash's BASH_TYPE_BITS16_T is the other shape: the same `AC_CHECK_TYPE(bits16_t, ...)` in
+    each branch of an `if`/`elif`/`else` over sizeof results, so the probe repeats with other
+    `requires` and nothing else different.  The rules compare `requires` too (a check is its
+    whole definition), so the repeats fold into the first, which then runs where any of the
+    branches would have."""
     notes: list[str] = []
     for items in [target.checks] + target.arm_lists:
         latest: dict[str, str] = {}  # base cache variable -> the name its latest probe carries
-        seen: dict[str, tuple[int, str]] = {}  # base -> (count, first probe's key)
+        seen: dict[str, tuple[int, str, Call]] = {}  # base -> (count, first probe's key, first probe)
+        folded: list[Call] = []  # repeats merged into their first probe, to drop from `items`
         for item in items:
             if not isinstance(item, Call):
                 continue
@@ -768,20 +809,28 @@ def _rename_repeated_probes(target: Target) -> list[str]:
                     item.kwargs[attr] = list(dict.fromkeys(rewritten))  # a duplicate entry says nothing twice
                 elif isinstance(value, str):
                     item.kwargs[attr] = _rename_in(value, latest)
-            if item.fn not in _SINGULAR_OF.values() or "name" in item.kwargs:
+            if item.fn not in _REPEATABLE_PROBES or "name" in item.kwargs:
                 continue
             base = next((n for n in provided_names(item) if n.startswith(("ac_cv_", "gl_cv_"))), None)
             if base is None:
                 continue
             key = repr(sorted((k, v) for k, v in item.kwargs.items() if k != "requires"))
             if base not in seen:
-                seen[base] = (1, key)
+                seen[base] = (1, key, item)
                 continue
-            count, first_key = seen[base]
+            count, first_key, first = seen[base]
             if key == first_key:
-                continue  # the same probe again: one producer, shared by content
+                # The same probe again under another condition: one producer, run where
+                # either branch would have run it.
+                _widen_requires(first, strings(item.kwargs.get("requires")))
+                folded.append(item)
+                notes.append(
+                    f"{check_key(item)}: the same probe repeated under another condition; folded into "
+                    "the first, whose `requires` now covers both"
+                )
+                continue
             count += 1
-            seen[base] = (count, first_key)
+            seen[base] = (count, first_key, first)
             previous = latest.get(base, base)
             name = f"{base}_{count}"
             item.kwargs["name"] = name
@@ -794,7 +843,24 @@ def _rename_repeated_probes(target: Target) -> list[str]:
                 f"{check_key(item)}: probed again with other includes; named {name}, run when {previous} "
                 "failed (the chain's `!= yes` test), and read by the checks after it"
             )
+        if folded:
+            items[:] = [i for i in items if not any(i is f for f in folded)]
     return notes
+
+
+def _widen_requires(first: Call, other: list[str]) -> None:
+    """`first` runs where its own `requires` held or where `other` (a repeat's) would: the
+    conjunctions joined by `||`; a repeat without a condition makes the probe unconditional."""
+    own = strings(first.kwargs.get("requires"))
+    if own == other:
+        return  # the same check twice (bash's termcap probe, once per arm of its shell): one is enough
+    if not own or not other:
+        first.kwargs.pop("requires", None)
+        return
+    if len(own) == 1 and own[0].startswith("(") and ") || (" in own[0]:
+        first.kwargs["requires"] = [f"{own[0]} || ({' && '.join(other)})"]
+    else:
+        first.kwargs["requires"] = [f"({' && '.join(own)}) || ({' && '.join(other)})"]
 
 
 def _rename_in(text: str, latest: dict[str, str]) -> str:
@@ -886,31 +952,91 @@ def _drop_arm_constant_duplicates(targets: list[Target]) -> list[str]:
     return notes
 
 
-def _merge_duplicate_defines(target: Target) -> list[str]:
+def _merge_duplicate_defines(target: Target, decisions: dec.Decisions | None = None) -> list[str]:
     """`AC_DEFINE([HAVE_X])` reached on two paths of configure.ac: one define,
     required under either condition (configure writes it twice, identically).
     The same for a substitution (libtool looks OBJDUMP up twice)."""
     notes: list[str] = []
     seen: dict[tuple[str, tuple[str, ...], str], Call] = {}
     for item in list(target.checks):
-        if not isinstance(item, Call) or item.fn not in (
-            "checks.AC_DEFINE",
-            "checks.AC_DEFINE_UNQUOTED",
-            "checks.AC_SUBST",
-        ):
+        if not isinstance(item, Call) or item.fn not in (*_DEFINE_FNS, "checks.AC_SUBST"):
             continue
         key = (item.fn, tuple(str(a) for a in item.args), str(item.kwargs.get("condition")))
         first = seen.get(key)
         if first is None:
             seen[key] = item
             continue
-        a, b = strings(first.kwargs.get("requires")), strings(item.kwargs.get("requires"))
-        if a and b:
-            first.kwargs["requires"] = [f"({' && '.join(a)}) || ({' && '.join(b)})"]
-        else:
-            first.kwargs.pop("requires", None)
+        _widen_requires(first, strings(item.kwargs.get("requires")))
         target.checks.remove(item)
         notes.append(f"configure.ac: {item.args[0]} is defined on two paths; merged into one define")
+    # One name, other values on other paths (bash's `AC_CHECK_TYPE(bits64_t, char *)` where a
+    # pointer is 8 bytes, `(bits64_t, double)` where it is not): the rules take one producer
+    # per define, so the first path's define stays, which is wrong wherever another path's
+    # condition holds.  The value there is a `define:<NAME>` decision (a value, or a select()
+    # of values), asked for here and pinned in the config header over the check's result.
+    first_by_name: dict[str, Call] = {}
+    other_paths: dict[str, list[tuple[Call, Call]]] = {}  # name -> (first define, a dropped one)
+    for item in list(target.checks):
+        if not isinstance(item, Call) or item.fn not in _DEFINE_FNS or not item.args:
+            continue
+        name = str(item.args[0])
+        first = first_by_name.get(name)
+        if first is None:
+            first_by_name[name] = item
+            continue
+        if not strings(first.kwargs.get("requires")) or not strings(item.kwargs.get("requires")):
+            continue  # an unconditional producer beside a conditional one is reported by the rules as is
+        target.checks.remove(item)
+        other_paths.setdefault(name, []).append((first, item))
+        notes.append(
+            f"configure.ac: {name} is defined as {_define_value(item)} on another path "
+            f"({' && '.join(strings(item.kwargs.get('requires')))}); left out, the first path's define "
+            f"({_define_value(first)} under {' && '.join(strings(first.kwargs.get('requires')))}) stays: the rules "
+            f"take one producer per define, so `define:{name}` says what the other paths' platforms get"
+        )
+    for name, pairs in other_paths.items():
+        if decisions is None:
+            continue
+        first = pairs[0][0]
+        paths = [f"{_define_value(first)} under {' && '.join(strings(first.kwargs.get('requires')))}"] + [
+            f"{_define_value(dropped)} under {' && '.join(strings(dropped.kwargs.get('requires')))}"
+            for _, dropped in pairs
+        ]
+        decisions.resolve(
+            dec.Request(
+                f"define:{name}",
+                "define",
+                f"{target.name}: configure.ac",
+                f"configure defines {name} to another value on another path, and the rules take one "
+                f"producer per define: only the first path's define is emitted; pin the value the other "
+                f"paths' platforms get (a value, or a select() of values)",
+                {"paths": paths},
+            )
+        )
+    # A probe's own define spelled out again by the script (bash's BASH_CHECK_LIB_SOCKET:
+    # `AC_CHECK_LIB(socket, getpeername, bash_cv_have_socklib=yes, ...)` whose explicit
+    # action keeps autoconf from defining HAVE_LIBSOCKET, then `AC_DEFINE(HAVE_LIBSOCKET)` by
+    # hand when it was found): the rules' library check always defines HAVE_LIB<LIB>, so the
+    # explicit define would be a second producer of what the probe already says.  Only a
+    # conditional define of the probe's value (1) is the same statement; another value, or an
+    # unconditional define, says more and is left for the rules to report.
+    probe_defines: dict[str, Call] = {}
+    for item in target.checks:
+        if isinstance(item, Call) and item.fn not in _DEFINE_FNS and item.fn not in _LIST_CHECKS:
+            for name in _local_provided(item)[0]:
+                probe_defines.setdefault(name, item)
+    for item in list(target.checks):
+        if not isinstance(item, Call) or item.fn not in _DEFINE_FNS or not item.args:
+            continue
+        name = str(item.args[0])
+        probe = probe_defines.get(name)
+        if probe is None or _define_value(item) != "1" or not strings(item.kwargs.get("requires")):
+            continue
+        target.checks.remove(item)
+        notes.append(
+            f"configure.ac: AC_DEFINE({name}) left out: {check_key(probe)} defines it when it succeeds "
+            "(configure defines it once either way; the rules take one producer per define)"
+        )
     # The same probe twice, or two probes producing one define
     # (tcl's AC_CHECK_LIB([inet], [main]) and AC_CHECK_LIB([inet], [strncasecmp]) both
     # define HAVE_LIBINET): configure defines it once either way; the first stays.

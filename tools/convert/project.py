@@ -520,7 +520,7 @@ def convert_project(
             )
             for var, flag in sorted(state.template_vars.items())
         ]
-    notes += _drop_duplicate_defines(main, package.targets, index, list(state.gnulib_packages.values()))
+    notes += _drop_duplicate_defines(main, package.targets, index, list(state.gnulib_packages.values()), decisions)
     for target in [*package.targets, main]:
         notes += _rename_repeated_probes(target)
     notes += _sink_into_producing_arms(main)
@@ -745,8 +745,11 @@ def convert_project(
             "tree (or hand-written Makefile.in files)"
         )
 
-    state.literal_substs = _literal_substs(main)
-    state.subst_values = _subst_values(main)
+    # Over the earlier segments too: `_confdefs` moved the checks before the first
+    # self-dependent probe into autoconf_1, bash's `AC_SUBST(LOCAL_DEFS, -DSHELL)` among them,
+    # and the Makefiles' `$(LOCAL_DEFS)` must still resolve.
+    state.literal_substs = {k: v for target in [*segments, main] for k, v in _literal_substs(target).items()}
+    state.subst_values = {k: v for target in [*segments, main] for k, v in _subst_values(target).items()}
     state.produced_results = _produced_results(main, package, state, index)
     _programs_tree(package, src, decisions, state, notes)
     _require_standards(main, state, notes)

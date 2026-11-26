@@ -156,7 +156,20 @@ def _discover_makefile_in_targets(
     where = f"{directory}/{makefile_name}" if directory else makefile_name
     # `tftp$(X)` / `tftp.$(O)` with `X = @EXEEXT@`, `O = @OBJEXT@` from the included configured file: the
     # names on a POSIX host, which is where the sources are looked up.
-    substs = {"EXEEXT": "", "OBJEXT": "o", **(state.literal_substs if state is not None else {})}
+    # configure's directory substitutions keep their make-variable spelling: the flag pass
+    # (`sources._preprocessor_flags`) resolves `-I$(srcdir)/include` and `-I$(top_srcdir)/lib`
+    # against the Makefile's directory, as it does for a Makefile.am's.  bash's
+    # `BASHINCDIR = ${srcdir}/include` and `topdir = @top_srcdir@` otherwise lose every
+    # `-I` that names them.
+    substs = {
+        "EXEEXT": "",
+        "OBJEXT": "o",
+        "srcdir": "$(srcdir)",
+        "top_srcdir": "$(top_srcdir)",
+        "builddir": "$(builddir)",
+        "top_builddir": "$(top_builddir)",
+        **(state.literal_substs if state is not None else {}),
+    }
     conditions: dict[str, str | None] = {}  # expanded word -> the source condition it is under
 
     def computed(name: str) -> list[str] | None:
@@ -224,10 +237,15 @@ def _discover_makefile_in_targets(
             out.append(word)
         return out
 
+    # `$(top_srcdir)/foo.c` is next to the top-level Makefile; from a subdirectory's it names
+    # another directory, which no source of this Makefile's targets is looked up in (reported
+    # below as having no source next to the Makefile).
+    source_prefix = re.compile(r"^(?:\$\(srcdir\)/|\./)" if directory else r"^(?:\$\((?:top_)?srcdir\)/|\./)")
+
     def sources_of(objects: list[str], owner: str) -> list[gnulibmk.Source]:
         found = []
         for obj in objects:
-            stem = re.sub(r"^(?:\$\(srcdir\)/|\./)", "", obj)
+            stem = source_prefix.sub("", obj)
             condition = conditions.get(obj)
             if stem.endswith(_SOURCE_SUFFIXES) and (here / stem).is_file():
                 found.append(gnulibmk.Source(stem, condition, None))  # a computed list names sources
