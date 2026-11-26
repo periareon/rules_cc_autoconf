@@ -40,6 +40,7 @@ from tools.convert.project import (
     SubdirGate,
     _gate_package,
     _gnulib_file_list,
+    _license_rules,
     _module_flags,
     _option_rules,
     _pinned_defines,
@@ -1528,6 +1529,20 @@ def test_standard_macro_error_is_the_scripts_own() -> None:
         ("checks.AC_LANG_STANDARD", ["c99"], {"error": "a C99 compiler is required"})
     ]
     assert translator.decisions.pending == {}
+
+
+def test_license_metadata_targets_are_public(tmp_path: Path) -> None:
+    """The `license` and `package_metadata` targets are public whatever the confinement pass
+    would give them: a consumer or an SBOM rule names them from outside the module, as the
+    registry's hand-written entries allow."""
+    (tmp_path / "COPYING").write_text("custom notice\n")
+    package = Package(path="", docstring="")
+    notes: list[str] = []
+    decisions = Decisions({"license:COPYING": "GPL-3.0-or-later"})
+    assert _license_rules(package, tmp_path, decisions, "", notes, repo_defaults=False) == {"package_metadata"}
+    rules = {s.name: s for s in package.before if isinstance(s, Rule)}
+    assert rules["license_COPYING"].attrs["visibility"] == ["//visibility:public"]
+    assert rules["package_metadata"].attrs["visibility"] == ["//visibility:public"]
 
 
 def test_repo_bazel_carries_the_module_defaults() -> None:

@@ -189,8 +189,10 @@ outright: there is no generated output to replace.
 **Visibility.** Every generated target carries an explicit `visibility`, so
 a `package(default_visibility = ...)` in `BUILD.bazel` never publishes them.
 Public is deliberate and small: what `make install` ships, the libraries,
-programs and headers and their aliases, and the option flags, which are the
-module's configure options. Everything else, the `autoconf` targets, the
+programs and headers and their aliases, the option flags, which are the
+module's configure options, and the `license` and `package_metadata` targets,
+which a consumer or an SBOM rule names from outside the module. Everything
+else, the `autoconf` targets, the
 config headers, `autoconf_linkopts`, the option settings, the gnulib and
 private header libraries and the generated-file rules, is private, or
 `//:__subpackages__` when the module has other packages (a sub-configure,

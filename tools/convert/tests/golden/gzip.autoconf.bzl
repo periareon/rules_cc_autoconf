@@ -492,7 +492,7 @@ def configure():
         name = "license_COPYING",
         kind = "@package_metadata//licenses/spdx:GPL-3.0-or-later",
         text = "COPYING",
-        visibility = ["//visibility:private"],
+        visibility = ["//visibility:public"],
     )
 
     package_metadata(
@@ -502,7 +502,7 @@ def configure():
             native.module_name(),
             native.module_version(),
         ),
-        visibility = ["//visibility:private"],
+        visibility = ["//visibility:public"],
     )
 
     autoconf_package_info(

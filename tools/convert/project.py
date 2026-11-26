@@ -395,8 +395,10 @@ def confined_visibility(root_package: str, shared: bool) -> str:
 def _confine_visibility(package: Package, confined: str) -> None:
     """Every generated target gets an explicit visibility, so a `default_visibility` in the
     hand-written BUILD.bazel never reaches them.  Public is what a builder marked so: what
-    `make install` ships (the libraries, programs and headers, under their aliases too) and the
-    option flags, the module's configure options.  The `autoconf` targets and every rule left
+    `make install` ships (the libraries, programs and headers, under their aliases too), the
+    option flags, the module's configure options, and the `license` and `package_metadata`
+    targets, which consumers and SBOM rules name from outside the module as the registry's
+    hand-written entries let them.  The `autoconf` targets and every rule left
     unmarked, or marked `//:__subpackages__` (the config headers, `autoconf_linkopts`, the option
     settings, the gnulib and private header libraries, the generated-file rules,
     `autoconf_package_info`), are `confined`.  A Raw statement (a `generated:` decision's rule) is
@@ -1446,6 +1448,8 @@ def _license_rules(
     `license()` per file with its SPDX identifier, the `package_metadata` that carries them with
     the module's purl, and `package(default_package_metadata = ...)` so every target has them (REPO.bazel's
     `repo(default_package_metadata = ...)` instead, for every package of the module, with `repo_defaults`).
+    Both are public, as the registry's hand-written entries make them: a consumer that ships the
+    notice file or lists the module's metadata names them from outside the module.
     The identifier comes from a `license:<file>` decision, else from the text and the source
     headers (`licenses.detect`); a file neither settles is requested, with its opening lines.
     `IGNORE` leaves a file exported without metadata.  Returns the repositories the rules load,
@@ -1495,6 +1499,7 @@ def _license_rules(
                 {
                     "kind": f"@package_metadata//licenses/spdx:{spdx}",
                     "text": file,
+                    "visibility": ["//visibility:public"],
                 },
                 comments=[f"decisions.bzl: license:{file} is {spdx}."],
                 load_from="@package_metadata//licenses/rules:license.bzl",
@@ -1508,6 +1513,7 @@ def _license_rules(
                 {
                     "attributes": [f":{n}" for n in names],
                     "purl": Raw("purl.bazel(\n        module_name(),\n        module_version(),\n    )"),
+                    "visibility": ["//visibility:public"],
                 },
                 load_from="@package_metadata//rules:package_metadata.bzl",
             )
