@@ -40,7 +40,7 @@ from tools.convert import modulebazel as modulebazel_mod
 from tools.convert import project as project_mod
 from tools.convert import source as source_mod
 from tools.convert.common import DEFAULT_COMMAND, TOP_HEADERS
-from tools.convert.decisions import MIGRATION_GUIDE, Decisions
+from tools.convert.decisions import MIGRATION_GUIDE, DecisionError, Decisions
 from tools.convert.index import PortIndex, ports_checkout
 from tools.convert.ir import Package
 from tools.convert.ports import PortSnapshot
@@ -876,7 +876,8 @@ def _write_report(
             "",
             "The constructs below have no mechanical translation and were left out. Decide each",
             f"key in `{decisions_path}` (the migration guide, {MIGRATION_GUIDE}, is the reference",
-            "for how each construct maps) and run the same command again"
+            "for how each construct maps) and run the same command again; an entry left `UNDECIDED`"
+            " is an error on that run"
             + (f" ({len(added)} new entries were added with `UNDECIDED` as the value)." if added else "."),
             "",
         ]
@@ -895,7 +896,7 @@ def _write_report(
             "",
             f"## Decisions taken by default ({len(decisions.defaulted)})",
             "",
-            "Keys the table leaves undecided that `DEFAULTS` answered by kind; an entry for a key",
+            "Keys the table has no entry for that `DEFAULTS` answered by kind; an entry for a key",
             "overrides its kind's default.",
             "",
         ] + decisions.defaulted_lines()
@@ -910,7 +911,10 @@ def _write_report(
         print(f"wrote {path}")
     print(f"report: {out / 'CONVERSION_REPORT.md'}")
     if pending:
-        print(f"{len(pending)} decision(s) required; fill in {decisions_path} and rerun", file=sys.stderr)
+        print(
+            f"{len(pending)} decision(s) required; answer every UNDECIDED entry in {decisions_path} and rerun",
+            file=sys.stderr,
+        )
         return 3
     return 0
 
@@ -1611,21 +1615,26 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     """Run the command line. The exit code is 0, 1 when the expansion fails, 2 on a usage or
-    environment error, 3 when decisions are required.
+    environment error or a decisions file the converter rejects (an entry still `UNDECIDED`,
+    a value of the wrong shape), 3 when decisions are required.
     """
     args = build_parser().parse_args(argv)
     command: Callable[[argparse.Namespace], int] = args.func
-    if args.profile:
-        profile_path = _resolve(args.profile)
-        profiler = cProfile.Profile()
-        code = profiler.runcall(command, args)
-        profiler.dump_stats(profile_path)
-        with profile_path.with_suffix(profile_path.suffix + ".txt").open("w", encoding="utf-8") as out:
-            stats = pstats.Stats(profiler, stream=out).sort_stats("cumulative")
-            stats.print_stats(40)
-            stats.sort_stats("tottime").print_stats(25)
-        return code
-    return command(args)
+    try:
+        if args.profile:
+            profile_path = _resolve(args.profile)
+            profiler = cProfile.Profile()
+            code = profiler.runcall(command, args)
+            profiler.dump_stats(profile_path)
+            with profile_path.with_suffix(profile_path.suffix + ".txt").open("w", encoding="utf-8") as out:
+                stats = pstats.Stats(profiler, stream=out).sort_stats("cumulative")
+                stats.print_stats(40)
+                stats.sort_stats("tottime").print_stats(25)
+            return code
+        return command(args)
+    except DecisionError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":
