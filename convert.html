@@ -218,14 +218,18 @@ not translate under "Decisions required" in the report. Each is an entry of
 <code>decisions.bzl</code> with <code>decision.UNDECIDED</code> as its value: replace the value and
 run the same command again. The outputs are written even while decisions are
 missing, so the project can be looked at, but a conversion is complete only
-when the file answers every question.</p>
+when the file answers every question. <code>UNDECIDED</code> is the placeholder the
+converter writes, not an answer: a run that finds one still in the file stops
+with an error naming the keys, and neither <code>DEFAULTS</code> nor the bundled
+decisions answer for it. Every key gets an explicit decision, <code>IGNORE</code> when
+the construct is to stay out.</p>
 <p>The file is read with a parser, never evaluated; its header names the
 rules_cc_autoconf that wrote it. New entries are added in key order with a
 comment block showing the construct: the upstream text in a fenced block tagged
 with its language, where it was found, and why it is asked. Entries the
 converter stops asking for are reported as unused. A <code>checks.X(...)</code> value reads
 as in a BUILD file: add <code>load("@rules_cc_autoconf//autoconf:checks.bzl", "checks")</code> at the top.</p>
-<p>A <code>DEFAULTS</code> table answers every undecided key of a kind at once, for a
+<p>A <code>DEFAULTS</code> table answers every key of a kind the table has no entry for, for a
 construct that never matters for the module (a firmware compiler's probes, a
 toolchain's warning flags); the report lists what a default answered:</p>
 <pre><code class="language-python">DEFAULTS = {
@@ -267,8 +271,8 @@ to a check, a rule or a <code>select</code>, which is what a replacement is writ
 and substitutions of a project that builds no message catalogs, gnulib's
 own witness variables, are answered once, in <code>gnulib/m4/decisions.bzl</code>
 beside the ports. The converter reads it beneath the project's decisions
-file: a key the project's file answers wins, a key it leaves out or
-<code>UNDECIDED</code> takes the bundled answer, and only then does <code>DEFAULTS</code> apply.
+file: a key the project's file answers wins, a key it leaves out takes the
+bundled answer, and only then does <code>DEFAULTS</code> apply.
 The report lists every answer taken from it under "Decisions inherited",
 so nothing applies silently; the bundled file's own keys never count as
 unused. <code>--bundled-decisions FILE</code> reads another file, <code>none</code> reads none;
